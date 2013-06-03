@@ -18,7 +18,7 @@ all:
 	$(MAKE) $(CFLAGS) -C $(KDIR) SUBDIRS=$(PWD)/xdma 
 
 clean: 
-	   rm -rf *.o *.ko *.mod.* .c* .t* 
+	   rm -rf *.o *.ko *.mod.* .c* .t* .*.mod.* .*.cmd *.ko.unsigned Module.symvers modules.order
 
 # LOGGING: ---------------------------------------------------------------
 # Add to EXTRA_CFLAGS, based on the logging level desired:

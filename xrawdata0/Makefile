@@ -11,7 +11,7 @@ all:
 	$(MAKE) $(CFLAGS) -C $(KDIR) SUBDIRS=$(PWD)/xrawdata0 
 	#$(MAKE) $(CFLAGS) -C $(KDIR) SUBDIRS=$(PWD)/xaui modules
 clean: 
-	   rm -rf *.o *.ko *.mod.* .c* .t*
+	   rm -rf *.o *.ko *.mod.* .c* .t* .*.cmd *.ko.unsigned Module.symvers modules.order
 
 # LOGGING: ---------------------------------------------------------------
 # Add to EXTRA_CFLAGS, based on the logging level desired:
