@@ -1,0 +1,54 @@
+echo "MAKEFLAGS=KCFLAGS=-DDEBUG_VERBOSE"
+MAKEFLAGS=KCFLAGS=-DDEBUG_VERBOSE
+make -C xdma
+make[1]: Entering directory `/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xdma'
+echo "xdma MAKEFLAGS=w -- KCFLAGS=-DDEBUG_VERBOSE EXTRA_CFLAGS=-DK7_TRD -DX86_PC -DNWLDMA -DXENV_LINUX -DUSE_IO_MACROS -DXLITTLE_ENDIAN -DPCI_LINUX -I /home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xdma -I /home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/include  CFLAGS="
+xdma MAKEFLAGS=w -- KCFLAGS=-DDEBUG_VERBOSE EXTRA_CFLAGS=-DK7_TRD -DX86_PC -DNWLDMA -DXENV_LINUX -DUSE_IO_MACROS -DXLITTLE_ENDIAN -DPCI_LINUX -I /home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xdma -I /home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/include  CFLAGS=
+make  -C /lib/modules/2.6.32-279.el6.x86_64/build SUBDIRS=/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xdma 
+make[2]: Entering directory `/usr/src/kernels/2.6.32-279.el6.x86_64'
+Makefile:626: "WARNING: Appending $KCFLAGS (-DDEBUG_VERBOSE) from command line to kernel $CFLAGS"
+  Building modules, stage 2.
+  MODPOST 1 modules
+make[2]: Leaving directory `/usr/src/kernels/2.6.32-279.el6.x86_64'
+make[1]: Leaving directory `/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xdma'
+make -C xrawdata0 KBUILD_EXTRA_SYMBOLS=$PWD/xdma/Module.symvers
+make[1]: Entering directory `/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0'
+make  -C /lib/modules/2.6.32-279.el6.x86_64/build SUBDIRS=/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0 
+make[2]: Entering directory `/usr/src/kernels/2.6.32-279.el6.x86_64'
+Makefile:626: "WARNING: Appending $KCFLAGS (-DDEBUG_VERBOSE) from command line to kernel $CFLAGS"
+  CC [M]  /home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/sguser.o
+/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/sguser.c: In function 'FormatBuffer':
+/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/sguser.c:416: warning: cast to pointer from integer of different size
+/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/sguser.c:416: warning: assignment makes integer from pointer without a cast
+/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/sguser.c: In function 'DmaSetupTransmit':
+/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/sguser.c:974: warning: unused variable 'origseqno'
+/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/sguser.c:973: warning: unused variable 'pbuf'
+/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/sguser.c:972: warning: unused variable 'bufVA'
+/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/sguser.c:971: warning: unused variable 'bufindex'
+/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/sguser.c:970: warning: unused variable 'fragment'
+/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/sguser.c:970: warning: unused variable 'bufsize'
+/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/sguser.c:970: warning: unused variable 'total'
+/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/sguser.c:969: warning: unused variable 'pktsize'
+/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/sguser.c:968: warning: unused variable 'result'
+/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/sguser.c:968: warning: unused variable 'i'
+/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/sguser.c: At top level:
+/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/sguser.c:396: warning: 'FormatBuffer' defined but not used
+  LD [M]  /home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/xrawdata0.o
+  Building modules, stage 2.
+  MODPOST 1 modules
+  CC      /home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/xrawdata0.mod.o
+  LD [M]  /home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/xrawdata0.ko.unsigned
+  NO SIGN [M] /home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0/xrawdata0.ko
+make[2]: Leaving directory `/usr/src/kernels/2.6.32-279.el6.x86_64'
+#make  -C /lib/modules/2.6.32-279.el6.x86_64/build SUBDIRS=/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xaui modules
+make[1]: Leaving directory `/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata0'
+make -C xrawdata1 KBUILD_EXTRA_SYMBOLS=$PWD/xdma/Module.symvers
+make[1]: Entering directory `/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata1'
+make  -C /lib/modules/2.6.32-279.el6.x86_64/build SUBDIRS=/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata1 
+make[2]: Entering directory `/usr/src/kernels/2.6.32-279.el6.x86_64'
+Makefile:626: "WARNING: Appending $KCFLAGS (-DDEBUG_VERBOSE) from command line to kernel $CFLAGS"
+  Building modules, stage 2.
+  MODPOST 1 modules
+make[2]: Leaving directory `/usr/src/kernels/2.6.32-279.el6.x86_64'
+make[1]: Leaving directory `/home/ron/work/mu2ePrj/PCIe_module/k7_pcie_dma_ddr3_base/linux_driver/xrawdata1'
+***** Driver Compiled *****
