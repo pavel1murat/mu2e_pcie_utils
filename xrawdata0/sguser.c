@@ -149,7 +149,8 @@
 #endif
 
 #define MINPKTSIZE      (64)
-#define NUM_BUFS        4000
+//#define NUM_BUFS        4000
+#define NUM_BUFS        1000	/* FNAL devel */
 #define BUFALIGN        8
 #define BYTEMULTIPLE    8   /**< Lowest sub-multiple of memory path */
 
@@ -219,7 +220,7 @@ static void FormatBuffer(unsigned char * buf, int pktsize, int bufsize, int frag
 static void VerifyBuffer(unsigned char * buf, int size, unsigned long long uinfo);
 #endif
 
-int myInit(unsigned int, unsigned int);
+int myInit(unsigned long, unsigned int);
 int myFreePkt(void *, unsigned int *, int, unsigned int);
 static int DmaSetupTransmit(void *, int);
 int myGetRxPkt(void *, PktBuf *, unsigned int, int, unsigned int);
@@ -592,11 +593,12 @@ static void poll_routine(unsigned long __opaque)
     }
 }   // poll_routine
 
-int myInit(unsigned int barbase, unsigned int privdata)
+int myInit(unsigned long barbase, unsigned int privdata)
 {
-    log_normal("Reached myInit with barbase %x and privdata %x\n",
+    /*log_normal(*/printk(KERN_INFO"Reached myInit with barbase %lx and privdata %x\n",
                 barbase, privdata);
 
+# if 1 // FNAL devel
     spin_lock_bh(&RawLock);
     if(privdata == 0x54545454)  // So that this is done only once
     {
@@ -617,6 +619,7 @@ int myInit(unsigned int barbase, unsigned int privdata)
     XIo_Out32(TXbarbase+RX_CONFIG_ADDRESS, 0);
 
     spin_unlock_bh(&RawLock);
+# endif // FNAL devel
 
     return 0;
 }
@@ -639,7 +642,7 @@ int myPutRxPkt(void * hndl, PktBuf * vaddr, int numpkts, unsigned int privdata)
     /* Check handle value */
     if(hndl != handle[2])
     {
-        log_normal("Came with wrong handle %p\n", hndl);
+        log_normal("Came with wrong handle-1 %p\n", hndl);
         return -1;
     }
 
@@ -697,7 +700,7 @@ int myGetRxPkt(void * hndl, PktBuf * vaddr, unsigned int size, int numpkts, unsi
     /* Check handle value */
     if(hndl != handle[2])
     {
-        printk("Came with wrong handle\n");
+        printk("Came with wrong handle-2 %p\n", hndl );
         return 0;
     }
 
@@ -750,7 +753,7 @@ int myPutTxPkt(void * hndl, PktBuf * vaddr, int numpkts, unsigned int privdata)
     /* Check handle value */
     if(hndl != handle[0])
     {
-        printk("Came with wrong handle\n");
+        printk("Came with wrong handle-2 %p\n", hndl );
         return -1;
     }
 
@@ -797,7 +800,7 @@ int mySetState(void * hndl, UserState * ustate, unsigned int privdata)
     /* Check handle value */
     if((hndl != handle[0]) && (hndl != handle[2]))
     {
-        printk("Came with wrong handle\n");
+        printk("Came with wrong handle-3 %p\n", hndl );
         return EBADF;
     }
 
@@ -986,7 +989,7 @@ static int DmaSetupTransmit(void * hndl, int num)
     /* Check handle value */
     if(hndl != handle[0])
     {
-        printk("Came with wrong handle\n");
+        printk("Came with wrong handle-4 %p\n", hndl );
         return 0;
     }
 
@@ -997,7 +1000,7 @@ static int DmaSetupTransmit(void * hndl, int num)
         return 0;
     }
 
-# if 0 // FNAL devel
+# if 1 // FNAL devel
     /* Hold the spinlock only when calling the buffer management APIs. */
     spin_lock_bh(&RawLock);
     origseqno = TxSeqNo;
@@ -1158,10 +1161,10 @@ static void __exit rawdata_cleanup(void)
     del_timer_sync(&poll_timer);
     //DriverState = CLOSED;
 
-# if 0 // FNAL devel
     /* Stop any running tests, else the hardware's packet checker &
      * generator will continue to run.
      */
+# if 1 // FNAL devel
     XIo_Out32(TXbarbase+TX_CONFIG_ADDRESS, 0);
 
     XIo_Out32(TXbarbase+RX_CONFIG_ADDRESS, 0);

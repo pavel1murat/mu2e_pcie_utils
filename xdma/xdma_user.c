@@ -140,7 +140,7 @@ void * DmaRegister(int engine, int bar, UserPtrs * uptr, int pktsize)
     }
     eptr = &(dmaData->Dma[engine]);
     barbase = (unsigned long)(dmaData->barInfo[bar].baseVAddr);
-# if 0 // FNAL devel
+    printk(KERN_INFO"DmaRegister: barbase=%p\n", (void*)barbase );
 
     if(eptr->EngineState != INITIALIZED) {
         printk(KERN_ERR "Requested engine %d is not free\n", engine);
@@ -160,13 +160,14 @@ void * DmaRegister(int engine, int bar, UserPtrs * uptr, int pktsize)
 
     /* Should check for errors returned here !!!! */
     (uptr->UserInit)(barbase, uptr->privData);
+# if 1 // FNAL devel
 
     spin_lock_bh(&DmaLock);
 
     /* Should inform the user of the errors !!!! */
-  result = descriptor_init(eptr->pdev, eptr);
-  if (result) {
-        /* At this point, handle has not been returned to the user.
+    result = descriptor_init(eptr->pdev, eptr);
+    if (result)
+    {   /* At this point, handle has not been returned to the user.
          * So, user refuses to prepare buffers. Will be trying again in
          * the poll_routine. So, do not abort here.
          */
@@ -179,10 +180,10 @@ void * DmaRegister(int engine, int bar, UserPtrs * uptr, int pktsize)
     dmaData->userCount ++ ;
 
     /* Start the DMA engine */
-  if (Dma_BdRingStart(&(eptr->BdRing)) == XST_FAILURE) {
-    log_normal(KERN_ERR "DmaRegister: Could not start Dma channel\n");
-    return NULL;
-  }
+    if (Dma_BdRingStart(&(eptr->BdRing)) == XST_FAILURE)
+    {   log_normal(KERN_ERR "DmaRegister: Could not start Dma channel\n");
+	return NULL;
+    }
 
 #ifdef TH_BH_ISR
     printk("Now enabling interrupts\n");

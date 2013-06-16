@@ -314,7 +314,7 @@ typedef struct {
  */
 typedef struct {
     unsigned int privData;  /**< User-specified private data */
-    int (* UserInit)(unsigned int barbase, unsigned int privdata);
+    int (* UserInit)(unsigned long barbase, unsigned int privdata);
                         /**< User instance register completion callback */
     int (* UserRemove)(void * handle, unsigned int privdata);
             /**< User instance de-register completion callback - not

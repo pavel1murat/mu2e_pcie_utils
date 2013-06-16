@@ -851,8 +851,8 @@ static void DmaSetupRecvBuffers(struct pci_dev *pdev, Dma_Engine * eptr)
 
             pbuf = &((ppool->pbuf)[i]);
             bufPA = pci_map_single(pdev, (u32 *)(pbuf->pktBuf), pbuf->size, PCI_DMA_FROMDEVICE);
-            log_verbose(KERN_INFO "The buffer after alloc is at VA %p PA %p size %d\n",
-			pbuf->pktBuf, (void*)bufPA, pbuf->size);
+            log_verbose(KERN_INFO "The buffer after alloc is at VA %p PA %p size %d (numgot=%d)\n",
+			pbuf->pktBuf, (void*)bufPA, pbuf->size, numgot);
 
             Dma_mBdSetBufAddr(BdCurPtr, bufPA);
             Dma_mBdSetCtrlLength(BdCurPtr, pbuf->size);
@@ -1346,7 +1346,7 @@ static void ReadRoot(struct pci_dev * pdev)
   printk("Is_busmaster %d\n", pdev->is_busmaster);
   printk("No_msi %d\n", pdev->no_msi);
   printk("No_dld2 %d\n", pdev->no_d1d2);
-  printk("Block_ucfg_access %d\n", pdev->block_ucfg_access);
+  //printk("Block_ucfg_access %d\n", pdev->block_ucfg_access);
   printk("Broken_parity_status %d\n", pdev->broken_parity_status);
   printk("Msi_enabled %d\n", pdev->msi_enabled);
   printk("Msix_enabled %d\n", pdev->msix_enabled);
@@ -1362,8 +1362,8 @@ static void ReadRoot(struct pci_dev * pdev)
   printk("Procdir %p\n", me->procdir);
   printk("Number %d\n", me->number);
   printk("Primary %d\n", me->primary);
-  printk("Secondary %d\n", me->secondary);
-  printk("Subordinate %d\n", me->subordinate);
+  //printk("Secondary %d\n", me->secondary);
+  //printk("Subordinate %d\n", me->subordinate);
   printk("Name %s\n", me->name);
   printk("Bridge_ctl %d\n", me->bridge_ctl);
   printk("Bridge %p\n", me->bridge);
@@ -1433,8 +1433,6 @@ static void ReadDMAEngineConfiguration(struct pci_dev * pdev, struct privData * 
             eptr = &(dmaInfo->Dma[i]);
             Dma_Initialize(eptr, (base + offset), dirn);
             eptr->pdev = pdev;
-#if 0       /* FNAL DEVEL */
-#endif
             dmaInfo->engineMask |= (1LL << i);
         }
     }
@@ -1657,7 +1655,7 @@ static long xdma_dev_ioctl(struct file * filp,
         if((eptr->EngineState != USER_ASSIGNED) ||
            (uptr->UserGetState == NULL))
         {
-            log_normal(KERN_ERR "UserGetState function does not exist\n");
+            /*log_normal*/printk(KERN_ERR "UserGetState function does not exist\n");
             retval = -EFAULT;
             break;
         }
@@ -2077,7 +2075,7 @@ static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id
             (dmaData->barMask) &= ~( 1 << i );
         }
         else
-            log_verbose(KERN_INFO "[BAR %d] Base PA %lx Len %d VA %p\n", i,
+            /*log_verbose*/printk(KERN_INFO "[BAR %d] Base PA %lx Len %d VA %p\n", i,
 			dmaData->barInfo[i].basePAddr,
 			(u32) (dmaData->barInfo[i].baseLen),
 			dmaData->barInfo[i].baseVAddr );
@@ -2325,7 +2323,7 @@ static int __init xdma_init(void)
     return pci_register_driver(&xdma_driver);
 }   // xdma_init
 
-static void __exit xdma_cleanup(void)
+static void /*__exit*/ xdma_cleanup(void)
 {
     struct PktPool * ppool;
     int oldstate;
