@@ -109,27 +109,27 @@ void Dma_Initialize(Dma_Engine * InstancePtr, unsigned long BaseAddress, u32 Typ
 {
     log_verbose(KERN_INFO "Initializing DMA()\n");
 
-  /* Set up the instance */
+    /* Set up the instance */
     log_verbose(KERN_INFO "Clearing DMA instance %p\n", InstancePtr);
-  memset(InstancePtr, 0, sizeof(Dma_Engine));
+    memset(InstancePtr, 0, sizeof(Dma_Engine));
 
-    log_verbose(KERN_INFO "DMA base address is 0x%lx\n", BaseAddress);
-  InstancePtr->RegBase = BaseAddress;
+    /*log_verbose*/printk(KERN_INFO "Dma_Initialize: DMA base address is 0x%lx\n", BaseAddress);
+    InstancePtr->RegBase = BaseAddress;
     InstancePtr->Type = Type;
 
     /* Initialize the engine and ring states. */
     InstancePtr->BdRing.RunState = XST_DMA_SG_IS_STOPPED;
     InstancePtr->EngineState = INITIALIZED;
 
-  /* Initialize the ring structure */
-  InstancePtr->BdRing.ChanBase = BaseAddress;
+    /* Initialize the ring structure */
+    InstancePtr->BdRing.ChanBase = BaseAddress;
     if(Type == DMA_ENG_C2S)
         InstancePtr->BdRing.IsRxChannel = 1;
     else
         InstancePtr->BdRing.IsRxChannel = 0;
 
-  /* Reset the device and return */
-  Dma_Reset(InstancePtr);
+    /* Reset the device and return */
+    Dma_Reset(InstancePtr);
 }   // Dma_Initialize
 
 /*****************************************************************************/

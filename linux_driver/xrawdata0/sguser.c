@@ -150,7 +150,7 @@
 
 #define MINPKTSIZE      (64)
 //#define NUM_BUFS        4000
-#define NUM_BUFS        1000	/* FNAL devel */
+#define NUM_BUFS        40	/* FNAL devel */
 #define BUFALIGN        8
 #define BYTEMULTIPLE    8   /**< Lowest sub-multiple of memory path */
 
@@ -418,6 +418,7 @@ static void FormatBuffer(unsigned char * buf, int pktsize, int bufsize, int frag
     }
 
 #ifdef DEBUG_VERBOSE
+#if 0
     printk("TX Buffer has:\n");
     for(i=0; i<bufsize; i++)
     {
@@ -425,6 +426,7 @@ static void FormatBuffer(unsigned char * buf, int pktsize, int bufsize, int frag
         printk("%02x ", buf[i]);
     }
     printk("\n");
+#endif
 #endif
 }
 
@@ -699,8 +701,7 @@ int myGetRxPkt(void * hndl, PktBuf * vaddr, unsigned int size, int numpkts, unsi
 
     /* Check handle value */
     if(hndl != handle[2])
-    {
-        printk("Came with wrong handle-2 %p\n", hndl );
+    {   //printk("Came with wrong handle-2 %p\n", hndl );
         return 0;
     }
 

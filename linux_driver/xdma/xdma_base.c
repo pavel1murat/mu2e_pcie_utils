@@ -145,7 +145,8 @@ MODULE_DEVICE_TABLE(pci, ids);
  * BD Space needed is (DMA_BD_CNT*sizeof(Dma_Bd)).
  */
 
-#define DMA_BD_CNT 3999
+//#define DMA_BD_CNT 3999
+#define DMA_BD_CNT 39       /* FNAL devel -- linked to sguser.c:#define NUM_BUFS ??? */
 
 /* Size of packet pool */
 #define MAX_POOL    10
@@ -817,21 +818,21 @@ static void DmaSetupRecvBuffers(struct pci_dev *pdev, Dma_Engine * eptr)
     if(free_bd_count > 2) free_bd_count -= 2;
     else return;
 
-    log_verbose(KERN_INFO "SetupRecv: Free BD count is %d\n", free_bd_count);
+    //log_verbose(KERN_INFO "SetupRecv: Free BD count is %d\n", free_bd_count);
 
     /* First, get a pool of packets to work with */
     ppool = DQPool();
 
     numbds = 0;
-    do {
-        /* Get buffers from user */
+    do
+    {   /* Get buffers from user */
         num = free_bd_count;
-        log_verbose(KERN_INFO "Trying to get %d buffers from user driver\n", num);
-    numgot = (uptr->UserGetPkt)(eptr, ppool->pbuf, eptr->pktSize, num, uptr->privData);
-    if (!numgot) {
-            log_verbose(KERN_ERR "Could not get any packet for RX from user\n");
-      break;
-    }
+        //log_verbose(KERN_INFO "Trying to get %d buffers from user driver\n", num);
+	numgot = (uptr->UserGetPkt)(eptr, ppool->pbuf, eptr->pktSize, num, uptr->privData);
+	if (!numgot)
+	{   //log_verbose(KERN_ERR "Could not get any packet for RX from user\n");
+	    break;
+	}
 
         /* Allocate BDs from ring */
         result = Dma_BdRingAlloc(rptr, numgot, &BdPtr);
@@ -987,8 +988,8 @@ int descriptor_init(struct pci_dev *pdev, Dma_Engine * eptr)
         DmaSetupRecvBuffers(pdev, eptr);
 
 #ifdef DEBUG_VERBOSE
-  log_verbose(KERN_INFO "BD Ring buffers:\n");
-  disp_bd_ring(&eptr->BdRing);
+    //log_verbose(KERN_INFO "BD Ring buffers:\n");
+    //disp_bd_ring(&eptr->BdRing);
 #endif
 
   return 0;
@@ -1652,16 +1653,20 @@ static long xdma_dev_ioctl(struct file * filp,
         uptr = &(eptr->user);
 
         /* Then check if the user function registered */
-        if((eptr->EngineState != USER_ASSIGNED) ||
-           (uptr->UserGetState == NULL))
-        {
-            /*log_normal*/printk(KERN_ERR "UserGetState function does not exist\n");
+        if (eptr->EngineState != USER_ASSIGNED)
+        {   /*log_normal*/printk( KERN_ERR "IGET_ENG_STATE: engine=%d eptr(%p)EngineState(%u) not USER_ASSIGNED\n"
+				 ,i, (void*)eptr, eptr->EngineState );
+            retval = -EFAULT;
+            break;
+        }
+	if (uptr->UserGetState == NULL)
+        {   /*log_normal*/printk(KERN_ERR "UserGetState function does not exist\n");
             retval = -EFAULT;
             break;
         }
 
         /* First, get the user state */
-    if(!(uptr->UserGetState)(eptr, &ustate, uptr->privData))
+	if(!(uptr->UserGetState)(eptr, &ustate, uptr->privData))
         {
             eng.Buffers = ustate.Buffers;
             eng.MinPktSize = ustate.MinPktSize;

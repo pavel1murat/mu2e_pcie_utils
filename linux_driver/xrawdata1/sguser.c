@@ -149,7 +149,8 @@
 #endif
 
 #define MINPKTSIZE      (64)
-#define NUM_BUFS        4000
+//#define NUM_BUFS        4000
+#define NUM_BUFS        40	/* FNAL devel */
 #define BUFALIGN        8
 #define BYTEMULTIPLE    8   /**< Lowest sub-multiple of memory path */
 
@@ -181,7 +182,7 @@
 int DriverState = UNINITIALIZED;
 struct timer_list poll_timer;
 void * handle[4] = {NULL, NULL, NULL, NULL};
-u32 TXbarbase, RXbarbase;
+unsigned long TXbarbase, RXbarbase;
 u32 polldata = 0xaa55;
 u32 RawTestMode = TEST_STOP;
 u32 RawMinPktSize=MINPKTSIZE, RawMaxPktSize=MAXPKTSIZE;
@@ -219,7 +220,7 @@ static void FormatBuffer(unsigned char * buf, int pktsize, int bufsize, int frag
 static void VerifyBuffer(unsigned char * buf, int size, unsigned long long uinfo);
 #endif
 
-int myInit(unsigned int, unsigned int);
+int myInit(unsigned long, unsigned int);
 int myFreePkt(void *, unsigned int *, int, unsigned int);
 static int DmaSetupTransmit(void *, int);
 int myGetRxPkt(void *, PktBuf *, unsigned int, int, unsigned int);
@@ -417,6 +418,7 @@ static void FormatBuffer(unsigned char * buf, int pktsize, int bufsize, int frag
     }
 
 #ifdef DEBUG_VERBOSE
+#if 0
     printk("TX Buffer has:\n");
     for(i=0; i<bufsize; i++)
     {
@@ -424,6 +426,7 @@ static void FormatBuffer(unsigned char * buf, int pktsize, int bufsize, int frag
         printk("%02x ", buf[i]);
     }
     printk("\n");
+#endif
 #endif
 }
 
@@ -584,18 +587,20 @@ static void poll_routine(unsigned long __opaque)
             /* Do the next TX as soon as possible */
             offset = 0;
         }
+	/*FNAL*/else printk("RawTestMode=0x%x\n",RawTestMode);
 
         /* Reschedule poll routine */
         timer->expires = jiffies + offset;
         add_timer(timer);
     }
-}
+}   // poll_routine
 
-int myInit(unsigned int barbase, unsigned int privdata)
+int myInit(unsigned long barbase, unsigned int privdata)
 {
-    log_normal("Reached myInit with barbase %x and privdata %x\n",
+    /*log_normal(*/printk(KERN_INFO"Reached myInit with barbase %lx and privdata %x\n",
                 barbase, privdata);
 
+# if 1 // FNAL devel
     spin_lock_bh(&RawLock);
     if(privdata == 0x54545454)  // So that this is done only once
     {
@@ -616,6 +621,7 @@ int myInit(unsigned int barbase, unsigned int privdata)
     XIo_Out32(TXbarbase+RX_CONFIG_ADDRESS, 0);
 
     spin_unlock_bh(&RawLock);
+# endif // FNAL devel
 
     return 0;
 }
@@ -638,7 +644,7 @@ int myPutRxPkt(void * hndl, PktBuf * vaddr, int numpkts, unsigned int privdata)
     /* Check handle value */
     if(hndl != handle[2])
     {
-        log_normal("Came with wrong handle %x\n", (u32)hndl);
+        log_normal("Came with wrong handle-1 %p\n", hndl);
         return -1;
     }
 
@@ -695,8 +701,7 @@ int myGetRxPkt(void * hndl, PktBuf * vaddr, unsigned int size, int numpkts, unsi
 
     /* Check handle value */
     if(hndl != handle[2])
-    {
-        printk("Came with wrong handle\n");
+    {   //printk("Came with wrong handle-2 %p\n", hndl );
         return 0;
     }
 
@@ -712,8 +717,8 @@ int myGetRxPkt(void * hndl, PktBuf * vaddr, unsigned int size, int numpkts, unsi
         pbuf = &(vaddr[i]);
         /* Allocate a buffer. DMA driver will map to PCI space. */
         bufVA = AllocBuf(&RxBufs);
-        log_verbose(KERN_INFO "myGetRxPkt: The buffer after alloc is at address %x size %d\n",
-                            (u32) bufVA, (u32) BUFSIZE);
+        log_verbose(KERN_INFO "myGetRxPkt: The buffer after alloc is at address %p size %d\n",
+		    bufVA, (u32) BUFSIZE);
         if (bufVA == NULL)
         {
             log_normal(KERN_ERR "RX: AllocBuf failed\n");
@@ -749,7 +754,7 @@ int myPutTxPkt(void * hndl, PktBuf * vaddr, int numpkts, unsigned int privdata)
     /* Check handle value */
     if(hndl != handle[0])
     {
-        printk("Came with wrong handle\n");
+        printk("Came with wrong handle-2 %p\n", hndl );
         return -1;
     }
 
@@ -796,7 +801,7 @@ int mySetState(void * hndl, UserState * ustate, unsigned int privdata)
     /* Check handle value */
     if((hndl != handle[0]) && (hndl != handle[2]))
     {
-        printk("Came with wrong handle\n");
+        printk("Came with wrong handle-3 %p\n", hndl );
         return EBADF;
     }
 
@@ -985,7 +990,7 @@ static int DmaSetupTransmit(void * hndl, int num)
     /* Check handle value */
     if(hndl != handle[0])
     {
-        printk("Came with wrong handle\n");
+        printk("Came with wrong handle-4 %p\n", hndl );
         return 0;
     }
 
@@ -996,6 +1001,7 @@ static int DmaSetupTransmit(void * hndl, int num)
         return 0;
     }
 
+# if 1 // FNAL devel
     /* Hold the spinlock only when calling the buffer management APIs. */
     spin_lock_bh(&RawLock);
     origseqno = TxSeqNo;
@@ -1019,8 +1025,8 @@ static int DmaSetupTransmit(void * hndl, int num)
             /* Allocate a buffer. DMA driver will map to PCI space. */
             bufVA = AllocBuf(&TxBufs);
 
-            log_verbose(KERN_INFO "TX: The buffer after alloc is at address %x size %d\n",
-                                (u32) bufVA, (u32) BUFSIZE);
+            log_verbose(KERN_INFO "TX: The buffer after alloc is at address %p size %d\n",
+			bufVA, (u32) BUFSIZE);
             if (bufVA == NULL)
             {
                 //printk("TX: AllocBuf failed\n");
@@ -1112,6 +1118,9 @@ static int DmaSetupTransmit(void * hndl, int num)
         return 0;
     }
     else return 1;
+# else
+    return 0;
+# endif // FNAL devel
 }
 
 static int __init rawdata_init(void)
@@ -1156,6 +1165,7 @@ static void __exit rawdata_cleanup(void)
     /* Stop any running tests, else the hardware's packet checker &
      * generator will continue to run.
      */
+# if 1 // FNAL devel
     XIo_Out32(TXbarbase+TX_CONFIG_ADDRESS, 0);
 
     XIo_Out32(TXbarbase+RX_CONFIG_ADDRESS, 0);
@@ -1186,6 +1196,7 @@ static void __exit rawdata_cleanup(void)
 
     mdelay(1000);
 
+# endif // FNAL devel
     /* Not sure if free_page() sleeps or not. */
     spin_lock_bh(&RawLock);
     printk("Freeing user buffers\n");

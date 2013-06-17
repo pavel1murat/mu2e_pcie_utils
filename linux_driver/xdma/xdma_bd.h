@@ -208,7 +208,7 @@ typedef u32 Dma_Bd[DMA_BD_SW_NUM_WORDS];
 *
 ******************************************************************************/
 #define Dma_mBdWrite(BaseAddress, Offset, Data)     \
-  XIo_Out32((unsigned int *)((unsigned long)BaseAddress+(unsigned long)Offset), (unsigned long)Data)
+  XIo_Out32((u32*)((unsigned long)BaseAddress+(unsigned long)Offset), (u32)Data)
 
 
 /*****************************************************************************/
@@ -486,7 +486,7 @@ typedef u32 Dma_Bd[DMA_BD_SW_NUM_WORDS];
  *****************************************************************************/
 static inline unsigned long long Dma_mBdGetUserData(Dma_Bd * BdPtr)
 {
-    unsigned long long val;
+    unsigned long val;
     u32 val1, val2;
   val1 = (Dma_mBdRead((BdPtr), DMA_BD_USRH_OFFSET));
   val2 = (Dma_mBdRead((BdPtr), DMA_BD_USRL_OFFSET));
@@ -509,7 +509,7 @@ static inline unsigned long long Dma_mBdGetUserData(Dma_Bd * BdPtr)
  * @note RingPtr is an implicit parameter
  *****************************************************************************/
 #define Dma_mPhysToVirt(BdPtr) \
-  ((u32)(BdPtr) + (RingPtr->FirstBdAddr - RingPtr->FirstBdPhysAddr))
+  ((unsigned long)(BdPtr) + (RingPtr->FirstBdAddr - RingPtr->FirstBdPhysAddr))
 
 
 /*****************************************************************************/
@@ -524,7 +524,7 @@ static inline unsigned long long Dma_mBdGetUserData(Dma_Bd * BdPtr)
  * @note RingPtr is an implicit parameter
  *****************************************************************************/
 #define Dma_mVirtToPhys(BdPtr) \
-  ((u32)(BdPtr) - (RingPtr->FirstBdAddr - RingPtr->FirstBdPhysAddr))
+  ((unsigned long)(BdPtr) - (RingPtr->FirstBdAddr - RingPtr->FirstBdPhysAddr))
 
 
 /************************** Function Prototypes ******************************/

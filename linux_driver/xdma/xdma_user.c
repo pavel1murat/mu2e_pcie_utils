@@ -140,7 +140,8 @@ void * DmaRegister(int engine, int bar, UserPtrs * uptr, int pktsize)
     }
     eptr = &(dmaData->Dma[engine]);
     barbase = (unsigned long)(dmaData->barInfo[bar].baseVAddr);
-    printk(KERN_INFO"DmaRegister: barbase=%p\n", (void*)barbase );
+    printk( KERN_INFO"DmaRegister: engine=%d eptr=%p barbase=%p\n"
+	   ,engine, (void*)eptr, (void*)barbase );
 
     if(eptr->EngineState != INITIALIZED) {
         printk(KERN_ERR "Requested engine %d is not free\n", engine);
@@ -223,7 +224,7 @@ int DmaUnregister(void * handle)
     // todo: make sure that caller has ensure that the fifo's are empty
     // caller should have cleared the fifo before calling this function.
 
-    printk(KERN_INFO "User unregister for handle %p\n", handle);
+    printk(KERN_INFO "DmaUnregister: User unregister for handle %p\n", handle);
     if(DriverState != INITIALIZED)
     {
         printk(KERN_ERR "DMA driver state %d - not ready\n", DriverState);
