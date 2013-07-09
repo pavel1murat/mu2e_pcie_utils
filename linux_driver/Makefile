@@ -15,6 +15,7 @@ clean::
 		$(MAKE) -C xdma clean
 		$(MAKE) -C xrawdata0 clean
 		$(MAKE) -C xrawdata1 clean
+		$(MAKE) -C xpmon clean
 
 insert:: xdma/xdma_k7.ko xrawdata0/xrawdata0.ko xrawdata1/xrawdata1.ko
 		/sbin/insmod xdma/xdma_k7.ko; sleep 1

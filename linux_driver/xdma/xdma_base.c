@@ -146,7 +146,7 @@ MODULE_DEVICE_TABLE(pci, ids);
  */
 
 //#define DMA_BD_CNT 3999
-#define DMA_BD_CNT 39       /* FNAL devel -- linked to sguser.c:#define NUM_BUFS ??? */
+#define DMA_BD_CNT 399       /* FNAL devel -- linked to sguser.c:#define NUM_BUFS  and DmaSetupTransmit(handle[0],100) ??? */
 
 /* Size of packet pool */
 #define MAX_POOL    10
@@ -852,8 +852,8 @@ static void DmaSetupRecvBuffers(struct pci_dev *pdev, Dma_Engine * eptr)
 
             pbuf = &((ppool->pbuf)[i]);
             bufPA = pci_map_single(pdev, (u32 *)(pbuf->pktBuf), pbuf->size, PCI_DMA_FROMDEVICE);
-            log_verbose(KERN_INFO "The buffer after alloc is at VA %p PA %p size %d (numgot=%d)\n",
-			pbuf->pktBuf, (void*)bufPA, pbuf->size, numgot);
+            log_verbose(KERN_INFO "DmaSetupRecvBuffers: BdCurPtr=%p: buffer after alloc: VA=%p PA=%p size=%d (numgot=%d)\n",
+			(void*)BdCurPtr, pbuf->pktBuf, (void*)bufPA, pbuf->size, numgot);
 
             Dma_mBdSetBufAddr(BdCurPtr, bufPA);
             Dma_mBdSetCtrlLength(BdCurPtr, pbuf->size);
@@ -935,17 +935,17 @@ static void DmaSetupRecvBuffers(struct pci_dev *pdev, Dma_Engine * eptr)
  *****************************************************************************/
 int descriptor_init(struct pci_dev *pdev, Dma_Engine * eptr)
 {
-  int dftsize, numbds;
+    int dftsize, numbds;
     u32 * BdPtr;
     dma_addr_t BdPhyAddr ;
-  int result;
+    int result;
     u32 delta = 0;
 
-  /* Calculate size of descriptor space pool - extra to allow for
+    /* Calculate size of descriptor space pool - extra to allow for
      * alignment adjustment.
      */
-  dftsize = sizeof(u32) * DMA_BD_SW_NUM_WORDS * (DMA_BD_CNT + 1);
-  log_normal(KERN_INFO "XDMA: BD space: %d (0x%0x)\n", dftsize, dftsize);
+    dftsize = sizeof(u32) * DMA_BD_SW_NUM_WORDS * (DMA_BD_CNT + 1);
+    log_normal(KERN_INFO "XDMA: BD space: %d (0x%0x)\n", dftsize, dftsize);
 
     if((BdPtr = pci_alloc_consistent(pdev, dftsize, &BdPhyAddr)) == NULL)
     {
@@ -956,43 +956,40 @@ int descriptor_init(struct pci_dev *pdev, Dma_Engine * eptr)
     log_normal(KERN_INFO "BD ring space allocated from %p, PA %p\n",
 	       BdPtr, (void*)BdPhyAddr);
     numbds = Dma_BdRingAlign((unsigned long)BdPtr, dftsize, DMA_BD_MINIMUM_ALIGNMENT, &delta);
-    if(numbds <= 0) {
-        log_normal(KERN_ERR "Unable to align allocated BD space\n");
+    if(numbds <= 0)
+    {   log_normal(KERN_ERR "Unable to align allocated BD space\n");
         /* Free allocated space !!!! */
+	pci_free_consistent(pdev, dftsize, BdPtr, BdPhyAddr);
         return -1;
     }
 
     eptr->descSpacePA = BdPhyAddr + delta;
     eptr->descSpaceVA = BdPtr + delta;
-  eptr->descSpaceSize = dftsize - delta;
+    eptr->descSpaceSize = dftsize - delta;
     eptr->delta = delta;
 
-  if (eptr->descSpaceVA == 0) {
-    return -1;
-  }
+    log_normal(KERN_INFO
+	       "XDMA: (descriptor_init) PA: %p, VA: %p, Size: %d, Delta: %d\n",
+	       (void*)eptr->descSpacePA, eptr->descSpaceVA,
+	       eptr->descSpaceSize, eptr->delta);
 
-  log_normal(KERN_INFO
-        "XDMA: (descriptor_init) PA: %p, VA: %p, Size: %d, Delta: %d\n",
-	     (void*)eptr->descSpacePA, eptr->descSpaceVA,
-         eptr->descSpaceSize, eptr->delta);
-
-  result = Dma_BdRingCreate(&(eptr->BdRing), (unsigned long) eptr->descSpacePA,
-             (unsigned long) eptr->descSpaceVA, DMA_BD_MINIMUM_ALIGNMENT, numbds);
-  if (result != XST_SUCCESS)
-  {
-    printk(KERN_ERR "XDMA: DMA Ring Create. Error: %d\n", result);
-    return -EIO;
-  }
+    result = Dma_BdRingCreate(&(eptr->BdRing), (unsigned long) eptr->descSpacePA,
+			      (unsigned long) eptr->descSpaceVA, DMA_BD_MINIMUM_ALIGNMENT, numbds);
+    if (result != XST_SUCCESS)
+    {   printk(KERN_ERR "XDMA: DMA Ring Create. Error: %d\n", result);
+	pci_free_consistent(pdev, dftsize, BdPtr, BdPhyAddr);
+	return -EIO;
+    }
 
     if((eptr->Type & DMA_ENG_DIRECTION_MASK) == DMA_ENG_C2S)
         DmaSetupRecvBuffers(pdev, eptr);
 
-#ifdef DEBUG_VERBOSE
+#   ifdef DEBUG_VERBOSE
     //log_verbose(KERN_INFO "BD Ring buffers:\n");
     //disp_bd_ring(&eptr->BdRing);
-#endif
+#   endif
 
-  return 0;
+    return 0;
 }
 
 /*****************************************************************************/
@@ -1614,7 +1611,7 @@ static long xdma_dev_ioctl(struct file * filp,
         ustate.TestMode = tc.TestMode;
         ustate.MinPktSize = tc.MinPktSize;
         ustate.MaxPktSize = tc.MaxPktSize;
-    retval = (uptr->UserSetState)(eptr, &ustate, uptr->privData);
+	retval = (uptr->UserSetState)(eptr, &ustate, uptr->privData);
         if(retval)
             printk("UserSetState returned failure %d\n", retval);
         break;

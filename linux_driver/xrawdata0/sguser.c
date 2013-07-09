@@ -150,7 +150,7 @@
 
 #define MINPKTSIZE      (64)
 //#define NUM_BUFS        4000
-#define NUM_BUFS        40	/* FNAL devel */
+#define NUM_BUFS        400	/* FNAL devel -- linked with xdma/xdma_base.c:#define DMA_BD_CNT and DmaSetupTransmit(handle[0],100) */
 #define BUFALIGN        8
 #define BYTEMULTIPLE    8   /**< Lowest sub-multiple of memory path */
 
@@ -789,19 +789,17 @@ int mySetState(void * hndl, UserState * ustate, unsigned int privdata)
     int val;
     static unsigned int testmode;
 
-    log_verbose(KERN_INFO "Reached mySetState with privdata %x\n", privdata);
+    log_verbose(KERN_INFO "Reached mySetState with privdata=0x%x RawTestMode=0x%x\n", privdata, RawTestMode );
 
     /* Check driver state */
     if(DriverState != REGISTERED)
-    {
-        printk("Driver does not seem to be ready\n");
+    {   printk("Driver does not seem to be ready\n");
         return EFAULT;
     }
 
     /* Check handle value */
     if((hndl != handle[0]) && (hndl != handle[2]))
-    {
-        printk("Came with wrong handle-3 %p\n", hndl );
+    {   printk("Came with wrong handle-3 %p\n", hndl );
         return EBADF;
     }
 
@@ -821,8 +819,7 @@ int mySetState(void * hndl, UserState * ustate, unsigned int privdata)
             if(RawTestMode & ENABLE_PKTGEN) testmode |= PKTGENR;
         }
         else
-        {
-            /* Deliberately not clearing the loopback bit, incase a
+        {   /* Deliberately not clearing the loopback bit, incase a
              * loopback test was going on - allows the loopback path
              * to drain off packets. Just stopping the source of packets.
              */
@@ -855,10 +852,10 @@ int mySetState(void * hndl, UserState * ustate, unsigned int privdata)
             /* Set RX packet size for memory path */
             val = RawMaxPktSize;
             if(val % BYTEMULTIPLE)
-      {
-        printk("********** ODD PACKET SIZE **********\n");
-              //val -= (val % BYTEMULTIPLE);
-      }
+	    {
+		printk("********** ODD PACKET SIZE **********\n");
+		//val -= (val % BYTEMULTIPLE);
+	    }
             printk("Reg %x = %x\n", PKT_SIZE_ADDRESS, val);
             RawMinPktSize = RawMaxPktSize = val;
 

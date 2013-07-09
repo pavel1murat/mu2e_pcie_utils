@@ -230,9 +230,9 @@ typedef struct {
 *
 *****************************************************************************/
 #define Dma_mBdRingPrev(RingPtr, BdPtr)               \
-    (((u32)(BdPtr) <= (RingPtr)->FirstBdAddr) ?       \
+    (((ulong)(BdPtr) <= (RingPtr)->FirstBdAddr) ?       \
       (Dma_Bd*)(RingPtr)->LastBdAddr :                \
-      (Dma_Bd*)((u32)(BdPtr) - (RingPtr)->Separation))
+      (Dma_Bd*)((ulong)(BdPtr) - (RingPtr)->Separation))
 
 
 /******************************************************************************
@@ -251,10 +251,10 @@ typedef struct {
  *****************************************************************************/
 #define Dma_mRingSeekahead(RingPtr, BdPtr, NumBd)         \
   {                   \
-    u32 Addr = (u32)(BdPtr);            \
+    ulong Addr = (ulong)(BdPtr);            \
                       \
     Addr += ((RingPtr)->Separation * (NumBd));        \
-    if ((Addr > (RingPtr)->LastBdAddr) || ((u32)(BdPtr) > Addr))\
+    if ((Addr > (RingPtr)->LastBdAddr) || ((ulong)(BdPtr) > Addr))\
     {                 \
       Addr -= (RingPtr)->Length;          \
     }                 \
@@ -279,10 +279,10 @@ typedef struct {
  *****************************************************************************/
 #define Dma_mRingSeekback(RingPtr, BdPtr, NumBd)            \
   {                                                                     \
-    u32 Addr = (u32)(BdPtr);              \
+    ulong Addr = (ulong)(BdPtr);              \
                         \
     Addr -= ((RingPtr)->Separation * (NumBd));          \
-    if ((Addr < (RingPtr)->FirstBdAddr) || ((u32)(BdPtr) < Addr)) \
+    if ((Addr < (RingPtr)->FirstBdAddr) || ((ulong)(BdPtr) < Addr)) \
     {                   \
       Addr += (RingPtr)->Length;            \
     }                   \

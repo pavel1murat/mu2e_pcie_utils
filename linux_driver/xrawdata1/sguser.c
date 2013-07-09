@@ -150,7 +150,7 @@
 
 #define MINPKTSIZE      (64)
 //#define NUM_BUFS        4000
-#define NUM_BUFS        40	/* FNAL devel */
+#define NUM_BUFS        400	/* FNAL devel -- linked with xdma/xdma_base.c:#define DMA_BD_CNT and DmaSetupTransmit(handle[0],100) */
 #define BUFALIGN        8
 #define BYTEMULTIPLE    8   /**< Lowest sub-multiple of memory path */
 

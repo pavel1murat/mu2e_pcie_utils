@@ -122,103 +122,103 @@
  *****************************************************************************/
 int Dma_BdRingCreate(Dma_BdRing * RingPtr, unsigned long PhysAddr, unsigned long VirtAddr, u32 Alignment, unsigned BdCount)
 {
-  unsigned i;
-  unsigned long BdVirtAddr;
-  unsigned long BdPhysAddr;
+    unsigned i;
+    unsigned long BdVirtAddr;
+    unsigned long BdPhysAddr;
 
-  /* In case there is a failure prior to creating list, make sure the
-   * following attributes are 0 to prevent calls to other SG functions
-   * from doing anything
-   */
-  RingPtr->AllCnt = 0;
-  RingPtr->FreeCnt = 0;
-  RingPtr->HwCnt = 0;
-  RingPtr->PreCnt = 0;
-  RingPtr->PostCnt = 0;
+    /* In case there is a failure prior to creating list, make sure the
+     * following attributes are 0 to prevent calls to other SG functions
+     * from doing anything
+     */
+    RingPtr->AllCnt = 0;
+    RingPtr->FreeCnt = 0;
+    RingPtr->HwCnt = 0;
+    RingPtr->PreCnt = 0;
+    RingPtr->PostCnt = 0;
     RingPtr->BDerrs = 0;
     RingPtr->BDSerrs = 0;
 
-  /* Make sure Alignment parameter meets minimum requirements */
-  if (Alignment < DMA_BD_MINIMUM_ALIGNMENT) {
-    return (XST_INVALID_PARAM);
-  }
-
-  /* Make sure Alignment is a power of 2 */
-  if ((Alignment - 1) & Alignment) {
-    return (XST_INVALID_PARAM);
-  }
-
-  /* Make sure PhysAddr and VirtAddr are on same Alignment */
-  if ((PhysAddr % Alignment) || (VirtAddr % Alignment)) {
-    return (XST_INVALID_PARAM);
-  }
-
-  /* Is BdCount reasonable? */
-  if (BdCount == 0) {
-    return (XST_INVALID_PARAM);
-  }
-
-  /* Compute how many bytes will be between the start of adjacent BDs */
-  RingPtr->Separation =
-    (sizeof(Dma_Bd) + (Alignment - 1)) & ~(Alignment - 1);
-
-  /* Must make sure the ring doesn't span address 0x00000000. If it does,
-   * then the next/prev BD traversal macros will fail.
-   */
-  if (VirtAddr > (VirtAddr + (RingPtr->Separation * BdCount) - 1)) {
-    return (XST_DMA_SG_LIST_ERROR);
-  }
-
-  /* Initial ring setup:
-   *  - Clear the entire space
-   *  - Setup each BD's next pointer with the physical address of the
-   *    next BD
-   */
-  log_verbose(KERN_INFO "Zeroing out BD ring space - %d bytes\n",
-                                        (RingPtr->Separation * BdCount));
-  memset((void *) VirtAddr, 0, (RingPtr->Separation * BdCount));
-
-  BdVirtAddr = VirtAddr;
-  BdPhysAddr = PhysAddr + RingPtr->Separation;
-  for (i = 1; i < BdCount; i++) {
-    Dma_mBdWrite(BdVirtAddr, DMA_BD_NDESC_OFFSET, BdPhysAddr);
-    BdVirtAddr += RingPtr->Separation;
-    BdPhysAddr += RingPtr->Separation;
-  }
-
-  /* At the end of the ring, link the last BD back to the top */
-  Dma_mBdWrite(BdVirtAddr, DMA_BD_NDESC_OFFSET, PhysAddr);
-
-  /* Set up and initialize pointers and counters */
-  RingPtr->RunState = XST_DMA_SG_IS_STOPPED;
-  RingPtr->FirstBdAddr = VirtAddr;
-  RingPtr->FirstBdPhysAddr = PhysAddr;
-  RingPtr->LastBdAddr = BdVirtAddr;
-  RingPtr->Length = RingPtr->LastBdAddr - RingPtr->FirstBdAddr +
-    RingPtr->Separation;
-  RingPtr->AllCnt = BdCount;
-  RingPtr->FreeCnt = BdCount;
-  RingPtr->FreeHead = (Dma_Bd *) VirtAddr;
-  RingPtr->PreHead = (Dma_Bd *) VirtAddr;
-  RingPtr->HwHead = (Dma_Bd *) VirtAddr;
-  RingPtr->HwTail = (Dma_Bd *) VirtAddr;
-  RingPtr->PostHead = (Dma_Bd *) VirtAddr;
-  RingPtr->BdaRestart = (Dma_Bd *) PhysAddr;
-    {
-  if(RingPtr->IsRxChannel)
-    log_verbose(KERN_INFO "Seems to be an Rx channel\n");
-  log_verbose(KERN_INFO "Ring Ptr %p:\n", RingPtr);
-  log_verbose(KERN_INFO "ChanBase 0x%lx, ", RingPtr->ChanBase);
-  log_verbose(KERN_INFO "first Bd PA 0x%lx, first Bd VA 0x%lx, last BD VA 0x%lx\n",
-    RingPtr->FirstBdPhysAddr, RingPtr->FirstBdAddr, RingPtr->LastBdAddr);
-  log_verbose(KERN_INFO "length %d, state 0x%x, separation %d\n",
-    RingPtr->Length, RingPtr->RunState, RingPtr->Separation);
-  log_verbose(KERN_INFO "free count %d, pre count %d, HW count %d, post count %d, all count %d\n",
-    RingPtr->FreeCnt, RingPtr->PreCnt, RingPtr->HwCnt, RingPtr->PostCnt,
-    RingPtr->AllCnt);
-    log_verbose(KERN_INFO "HwTail is at %p\n", (RingPtr->HwTail));
+    /* Make sure Alignment parameter meets minimum requirements */
+    if (Alignment < DMA_BD_MINIMUM_ALIGNMENT) {
+	return (XST_INVALID_PARAM);
     }
-  return (XST_SUCCESS);
+
+    /* Make sure Alignment is a power of 2 */
+    if ((Alignment - 1) & Alignment) {
+	return (XST_INVALID_PARAM);
+    }
+
+    /* Make sure PhysAddr and VirtAddr are on same Alignment */
+    if ((PhysAddr % Alignment) || (VirtAddr % Alignment)) {
+	return (XST_INVALID_PARAM);
+    }
+
+    /* Is BdCount reasonable? */
+    if (BdCount == 0) {
+	return (XST_INVALID_PARAM);
+    }
+
+    /* Compute how many bytes will be between the start of adjacent BDs */
+    RingPtr->Separation =
+	(sizeof(Dma_Bd) + (Alignment - 1)) & ~(Alignment - 1);
+
+    /* Must make sure the ring doesn't span address 0x00000000. If it does,
+     * then the next/prev BD traversal macros will fail.
+     */
+    if (VirtAddr > (VirtAddr + (RingPtr->Separation * BdCount) - 1)) {
+	return (XST_DMA_SG_LIST_ERROR);
+    }
+
+    /* Initial ring setup:
+     *  - Clear the entire space
+     *  - Setup each BD's next pointer with the physical address of the
+     *    next BD
+     */
+    log_verbose(KERN_INFO "Zeroing out BD ring space - %d bytes\n",
+		(RingPtr->Separation * BdCount));
+    memset((void *) VirtAddr, 0, (RingPtr->Separation * BdCount));
+
+    BdVirtAddr = VirtAddr;
+    BdPhysAddr = PhysAddr + RingPtr->Separation;
+    for (i = 1; i < BdCount; i++) {
+	Dma_mBdWrite(BdVirtAddr, DMA_BD_NDESC_OFFSET, BdPhysAddr);
+	BdVirtAddr += RingPtr->Separation;
+	BdPhysAddr += RingPtr->Separation;
+    }
+
+    /* At the end of the ring, link the last BD back to the top */
+    Dma_mBdWrite(BdVirtAddr, DMA_BD_NDESC_OFFSET, PhysAddr);
+
+    /* Set up and initialize pointers and counters */
+    RingPtr->RunState = XST_DMA_SG_IS_STOPPED;
+    RingPtr->FirstBdAddr = VirtAddr;
+    RingPtr->FirstBdPhysAddr = PhysAddr;
+    RingPtr->LastBdAddr = BdVirtAddr;
+    RingPtr->Length = RingPtr->LastBdAddr - RingPtr->FirstBdAddr +
+	RingPtr->Separation;
+    RingPtr->AllCnt = BdCount;
+    RingPtr->FreeCnt = BdCount;
+    RingPtr->FreeHead = (Dma_Bd *) VirtAddr;
+    RingPtr->PreHead = (Dma_Bd *) VirtAddr;
+    RingPtr->HwHead = (Dma_Bd *) VirtAddr;
+    RingPtr->HwTail = (Dma_Bd *) VirtAddr;
+    RingPtr->PostHead = (Dma_Bd *) VirtAddr;
+    RingPtr->BdaRestart = (Dma_Bd *) PhysAddr;
+    {
+	if(RingPtr->IsRxChannel)
+	    log_verbose(KERN_INFO "Seems to be an Rx channel\n");
+	log_verbose(KERN_INFO "Ring Ptr %p:\n", RingPtr);
+	log_verbose(KERN_INFO "ChanBase 0x%lx, ", RingPtr->ChanBase);
+	log_verbose(KERN_INFO "first Bd PA 0x%lx, first Bd VA 0x%lx, last BD VA 0x%lx\n",
+		    RingPtr->FirstBdPhysAddr, RingPtr->FirstBdAddr, RingPtr->LastBdAddr);
+	log_verbose(KERN_INFO "length %d, state 0x%x, separation %d\n",
+		    RingPtr->Length, RingPtr->RunState, RingPtr->Separation);
+	log_verbose(KERN_INFO "free count %d, pre count %d, HW count %d, post count %d, all count %d\n",
+		    RingPtr->FreeCnt, RingPtr->PreCnt, RingPtr->HwCnt, RingPtr->PostCnt,
+		    RingPtr->AllCnt);
+	log_verbose(KERN_INFO "HwTail is at %p\n", (RingPtr->HwTail));
+    }
+    return (XST_SUCCESS);
 }
 
 /*****************************************************************************/
@@ -236,23 +236,21 @@ int Dma_BdRingCreate(Dma_BdRing * RingPtr, unsigned long PhysAddr, unsigned long
 int Dma_BdRingStart(Dma_BdRing * RingPtr)
 {
 
-  /* BD list has yet to be created for this channel */
-  if (RingPtr->AllCnt == 0) {
-    return (XST_DMA_SG_NO_LIST);
-  }
+    /* BD list has yet to be created for this channel */
+    if (RingPtr->AllCnt == 0)
+	return (XST_DMA_SG_NO_LIST);
 
-  /* Do nothing if already started */
-  if (RingPtr->RunState == XST_DMA_SG_IS_STARTED) {
-    return (XST_SUCCESS);
-  }
+    /* Do nothing if already started */
+    if (RingPtr->RunState == XST_DMA_SG_IS_STARTED)
+	return (XST_SUCCESS);
 
-  /* Flag ring as started */
-  RingPtr->RunState = XST_DMA_SG_IS_STARTED;
+    /* Flag ring as started */
+    RingPtr->RunState = XST_DMA_SG_IS_STARTED;
 
-  /* Sync hardware and driver with the last unprocessed BD or the 1st BD
-   * in the ring since this is the first time starting the channel. Update
+    /* Sync hardware and driver with the last unprocessed BD or the 1st BD
+     * in the ring since this is the first time starting the channel. Update
      * tail pointer as well, so that both pointers are equal before enabling.
-   */
+     */
     Dma_mWriteReg(RingPtr->ChanBase, REG_DMA_ENG_NEXT_BD,
                                             (u32) RingPtr->BdaRestart);
     Dma_mWriteReg(RingPtr->ChanBase, REG_SW_NEXT_BD,
@@ -265,17 +263,17 @@ int Dma_BdRingStart(Dma_BdRing * RingPtr)
 
     wmb();
 
-  /* If there are unprocessed BDs then we want the channel to begin
-   * processing right away.
-   */
-  if (RingPtr->HwCnt > 0) {
-        Dma_mWriteReg(RingPtr->ChanBase, REG_SW_NEXT_BD,
-           Dma_mVirtToPhys(RingPtr->HwTail));
-  }
+    /* If there are unprocessed BDs then we want the channel to begin
+     * processing right away.
+     */
+    if (RingPtr->HwCnt > 0)
+    {   Dma_mWriteReg(RingPtr->ChanBase, REG_SW_NEXT_BD,
+		      Dma_mVirtToPhys(RingPtr->HwTail));
+    }
     if (RingPtr->IsRxChannel)
         Dma_mReadReg(RingPtr->ChanBase, 0x18);
 
-  return (XST_SUCCESS);
+    return (XST_SUCCESS);
 }
 
 /*****************************************************************************/
@@ -351,27 +349,26 @@ int Dma_BdRingStart(Dma_BdRing * RingPtr)
  *****************************************************************************/
 int Dma_BdRingAlloc(Dma_BdRing * RingPtr, unsigned NumBd, Dma_Bd ** BdSetPtr)
 {
-  /* Enough free BDs available for the request? */
-  if (RingPtr->FreeCnt < NumBd) {
-    log_verbose(KERN_INFO "Ring %x free count is only %d\n",
-                                        (u32) RingPtr, (RingPtr->FreeCnt));
-    return (XST_FAILURE);
-  }
+    /* Enough free BDs available for the request? */
+    if (RingPtr->FreeCnt < NumBd)
+    {   log_verbose(KERN_INFO "Ring %p free count is only %d\n",
+		    (void*)RingPtr, (RingPtr->FreeCnt));
+	return (XST_FAILURE);
+    }
 
 
-  /* Set the return argument and move FreeHead forward */
-  *BdSetPtr = RingPtr->FreeHead;
-  Dma_mRingSeekahead(RingPtr, RingPtr->FreeHead, NumBd);
-  RingPtr->FreeCnt -= NumBd;
-  RingPtr->PreCnt += NumBd;
+    /* Set the return argument and move FreeHead forward */
+    *BdSetPtr = RingPtr->FreeHead;
+    Dma_mRingSeekahead(RingPtr, RingPtr->FreeHead, NumBd);
+    RingPtr->FreeCnt -= NumBd;
+    RingPtr->PreCnt += NumBd;
 
+    log_verbose(KERN_INFO "Ring %p free %d pre %d hw %d post %d\n",
+		(void*)RingPtr, RingPtr->FreeCnt, RingPtr->PreCnt, RingPtr->HwCnt,
+		RingPtr->PostCnt);
 
-    log_verbose(KERN_INFO "Ring %x free %d pre %d hw %d post %d\n",
-        (u32) RingPtr, RingPtr->FreeCnt, RingPtr->PreCnt, RingPtr->HwCnt,
-        RingPtr->PostCnt);
-
-  return (XST_SUCCESS);
-}
+    return (XST_SUCCESS);
+}   // Dma_BdRingAlloc
 
 
 /*****************************************************************************/
@@ -481,75 +478,75 @@ int Dma_BdRingUnAlloc(Dma_BdRing * RingPtr, unsigned NumBd, Dma_Bd * BdSetPtr)
  *****************************************************************************/
 int Dma_BdRingToHw(Dma_BdRing * RingPtr, unsigned NumBd, Dma_Bd * BdSetPtr)
 {
-  Dma_Bd *CurBdPtr;
-  unsigned i;
-  u32 BdStsCr;
+    Dma_Bd *CurBdPtr;
+    unsigned i;
+    u32 BdStsCr;
 
-  /* If the commit set is empty, do nothing */
-  if (NumBd == 0) {
-    return (XST_SUCCESS);
-  }
+    /* If the commit set is empty, do nothing */
+    if (NumBd == 0)
+    {   return (XST_SUCCESS);
+    }
 
-  /* Make sure we are in sync with Dma_BdRingAlloc() */
-  if ((RingPtr->PreCnt < NumBd) || (RingPtr->PreHead != BdSetPtr)) {
-        printk(KERN_INFO "PreCnt is %d, PreHead is %x\n",
-                            RingPtr->PreCnt, (u32) (RingPtr->PreHead));
+    /* Make sure we are in sync with Dma_BdRingAlloc() */
+    if ((RingPtr->PreCnt < NumBd) || (RingPtr->PreHead != BdSetPtr))
+    {   printk(KERN_INFO "PreCnt is %d, PreHead is %x\n",
+	       RingPtr->PreCnt, (u32) (RingPtr->PreHead));
         printk(KERN_INFO "returning XST_DMA_SG_LIST_ERROR\n");
-    return (XST_DMA_SG_LIST_ERROR);
-  }
+	return (XST_DMA_SG_LIST_ERROR);
+    }
 
-  CurBdPtr = BdSetPtr;
+    CurBdPtr = BdSetPtr;
     BdStsCr = Dma_mBdRead(CurBdPtr, DMA_BD_BUFL_CTRL_OFFSET);
 
     /* In case of Tx channel, the first BD should have been marked
      * as start-of-packet.
      */
-    if (!(RingPtr->IsRxChannel) && !(BdStsCr & DMA_BD_SOP_MASK)) {
-        printk(KERN_WARNING "First TX BD should have SOP\n");
+    if (!(RingPtr->IsRxChannel) && !(BdStsCr & DMA_BD_SOP_MASK))
+    {   printk(KERN_WARNING "First TX BD should have SOP\n");
         return (XST_FAILURE);
     }
 
-  /* For each BD being submitted, do checks, and clear the status field. */
-  for (i = 0; i < NumBd; i++) {
-        /* Check for the control flags */
+    /* For each BD being submitted, do checks, and clear the status field. */
+    for (i = 0; i < NumBd; i++)
+    {   /* Check for the control flags */
         BdStsCr = Dma_mBdRead(CurBdPtr, DMA_BD_BUFL_CTRL_OFFSET);
 
-    /* Make sure the length value in the BD is non-zero. Actually, the
+	/* Make sure the length value in the BD is non-zero. Actually, the
          * last TX BD need not have non-zero length, but to simplify things,
          * that is ignored.
          */
-    if ((BdStsCr & DMA_BD_BUFL_MASK) == 0) {
-            printk(KERN_WARNING "BDs should have length.\n");
-      break;
-    }
+	if ((BdStsCr & DMA_BD_BUFL_MASK) == 0)
+	{   printk(KERN_WARNING "BDs should have length.\n");
+	    break;
+	}
 
         /* Clear status field. */
-    Dma_mBdSetStatus(CurBdPtr, 0);
+	Dma_mBdSetStatus(CurBdPtr, 0);
 
-    CurBdPtr = Dma_mBdRingNext(RingPtr, CurBdPtr);
+	CurBdPtr = Dma_mBdRingNext(RingPtr, CurBdPtr);
     }
 
-    if(i != NumBd) {
-        printk(KERN_ERR "%d BDs instead of %d\n", i, NumBd);
-    return (XST_FAILURE);
+    if(i != NumBd)
+    {   printk(KERN_ERR "%d BDs instead of %d\n", i, NumBd);
+	return (XST_FAILURE);
     }
 
     /* Last TX BD should have end-of-packet bit set */
-    if (!(RingPtr->IsRxChannel) && !(BdStsCr & DMA_BD_EOP_MASK)) {
-        log_normal(KERN_WARNING "Last TX BD should have EOP\n");
+    if (!(RingPtr->IsRxChannel) && !(BdStsCr & DMA_BD_EOP_MASK))
+    {   log_normal(KERN_WARNING "Last TX BD should have EOP\n");
     }
 
-  /* This set has completed pre-processing, adjust ring pointers and
-   * counters
-   */
-  Dma_mRingSeekahead(RingPtr, RingPtr->PreHead, NumBd);
-  RingPtr->PreCnt -= NumBd;
-  RingPtr->HwTail = CurBdPtr;
-  RingPtr->HwCnt += NumBd;
+    /* This set has completed pre-processing, adjust ring pointers and
+     * counters
+     */
+    Dma_mRingSeekahead(RingPtr, RingPtr->PreHead, NumBd);
+    RingPtr->PreCnt -= NumBd;
+    RingPtr->HwTail = CurBdPtr;
+    RingPtr->HwCnt += NumBd;
 
-  /* If it was enabled, tell the engine to begin processing */
-  if (RingPtr->RunState == XST_DMA_SG_IS_STARTED) {
-
+    /* If it was enabled, tell the engine to begin processing */
+    if (RingPtr->RunState == XST_DMA_SG_IS_STARTED)
+    {
         /* Ensure that all the descriptor updates are completed before
          * informing the hardware.
          */
@@ -558,16 +555,16 @@ int Dma_BdRingToHw(Dma_BdRing * RingPtr, unsigned NumBd, Dma_Bd * BdSetPtr)
         /* In NWL DMA engine, the tail descriptor pointer should actually
          * point to the next (unused BD).
          */
-    Dma_mWriteReg(RingPtr->ChanBase, REG_SW_NEXT_BD,
-                         Dma_mVirtToPhys(RingPtr->HwTail));
+	Dma_mWriteReg(RingPtr->ChanBase, REG_SW_NEXT_BD,
+		      Dma_mVirtToPhys(RingPtr->HwTail));
         log_verbose(KERN_INFO "Writing %x into %x\n",
                     Dma_mVirtToPhys(RingPtr->HwTail),
                     (RingPtr->ChanBase+ REG_SW_NEXT_BD));
-  }
+    }
     log_verbose(KERN_INFO "ToHw with %d BDs\n", NumBd);
 
-  return (XST_SUCCESS);
-}
+    return (XST_SUCCESS);
+}   // Dma_BdRingToHw
 
 
 /*****************************************************************************/
