@@ -152,8 +152,6 @@ extern "C" {
 /* Selecting magic number for our ioctls */
 #define XPMON_MAGIC 'C'     /**< Magic number for use in IOCTLs */
 
-#define XPMON_MAX_CMD 8     /**< Total number of IOCTLs */
-
 /** Get the current test state from the driver */
 #define IGET_TEST_STATE     _IOR(XPMON_MAGIC, 1, TestCmd)
 

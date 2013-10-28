@@ -1508,7 +1508,6 @@ static long xdma_dev_ioctl(struct file * filp,
 
     /* Check cmd type and value */
     if(_IOC_TYPE(cmd) != XPMON_MAGIC) return -ENOTTY;
-    if(_IOC_NR(cmd) > XPMON_MAX_CMD) return -ENOTTY;
 
     /* Check read/write and corresponding argument */
     if(_IOC_DIR(cmd) & _IOC_READ)
