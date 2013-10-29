@@ -176,6 +176,17 @@ extern "C" {
 /** Get driver software statistics from the driver */
 #define IGET_SW_STATISTICS  _IOR(XPMON_MAGIC, 8, SWStatsArray)
 
+typedef struct
+{   unsigned long adr;
+    unsigned int  val;
+    unsigned long loops;
+} RegOp;
+#define IREG_READ         _IOWR(XPMON_MAGIC,  9, RegOp )
+#define IREG_WRITE        _IOW( XPMON_MAGIC, 10, RegOp )
+#define IREG_SETBITS      _IOWR(XPMON_MAGIC, 11, RegOp )
+#define IREG_CLRBITS      _IOWR(XPMON_MAGIC, 12, RegOp )
+
+
 /* State of test - shared in TestMode flag */
 #define TEST_STOP           0x00000000  /**< Stop the test */
 #define TEST_START          0x00008000  /**< Start the test */

@@ -1840,6 +1840,9 @@ static long xdma_dev_ioctl(struct file * filp,
         }
         break;
 
+    case IREG_READ:
+	printk("IREG_READ called\n");
+	break;
     default:
         printk("Invalid command %d\n", cmd);
         retval = -1;
