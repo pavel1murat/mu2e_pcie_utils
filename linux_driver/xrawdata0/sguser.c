@@ -414,7 +414,7 @@ static void FormatBuffer(unsigned char * buf, int pktsize, int bufsize, int frag
 
    if(bufsize % 2)
     {
-        *(buf + bufsize - 1) = (unsigned char *)TxSeqNo;
+        *(unsigned short *)(buf + bufsize - 1) = TxSeqNo;
     }
 
 #ifdef DEBUG_VERBOSE

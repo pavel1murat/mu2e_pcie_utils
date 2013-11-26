@@ -164,15 +164,8 @@ void Dma_Reset(Dma_Engine * InstancePtr)
 
   /* Disable engine interrupts before issuing software reset */
   log_verbose(KERN_INFO "Dma_Reset: %p\n", (unsigned int *)(((InstancePtr)->RegBase) + (0x00000004)) );
-  {
-      //u32 Reg = Dma_mGetCrSr(InstancePtr);
-      //u32 Reg = Dma_mReadReg((InstancePtr)->RegBase, REG_DMA_ENG_CTRL_STATUS);
-      //u32 Reg = Dma_mReadReg((InstancePtr)->RegBase, 0x00000004);
-      //u32 Reg = Dma_mIn32(((InstancePtr)->RegBase) + (0x00000004));
-      //u32 Reg =  XIo_In32(((InstancePtr)->RegBase) + (0x00000004));
-      u32 Reg = readl((unsigned int *)(((InstancePtr)->RegBase) + (0x00000004)));
-    log_verbose(KERN_INFO "Control/Status Register = 0x%x\n", Reg );
-  }
+  log_verbose(KERN_INFO "Control/Status Register = 0x%x\n"
+	      , readl((unsigned int *)(((InstancePtr)->RegBase) + (0x00000004))) );
   Dma_mEngIntDisable(InstancePtr);
 
   /* Start reset process then wait for completion. Disable DMA and
