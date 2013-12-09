@@ -1,21 +1,19 @@
-obj-m := xdma_base.c
-obj-m += xdma.o
-obj-m += xdma_bdring.o
-obj-m += xdma_user.o
 obj-m := xdma_k7.o
 xdma_k7-objs :=  xdma_base.o xdma.o xdma_bdring.o xdma_user.o
 
 KDIR= /lib/modules/$(shell uname -r)/build
-ROOTDIR = $(PWD)
 
-EXTRA_CFLAGS += -DK7_TRD -DX86_PC -DNWLDMA -DXENV_LINUX -DUSE_IO_MACROS -DXLITTLE_ENDIAN -DPCI_LINUX -I $(ROOTDIR)/xdma -I $(ROOTDIR)/include 
+EXTRA_CFLAGS += -DK7_TRD -DX86_PC -DNWLDMA -DXENV_LINUX -DUSE_IO_MACROS
+EXTRA_CFLAGS += -DXLITTLE_ENDIAN -DPCI_LINUX
+EXTRA_CFLAGS += -I $(ROOTDIR)/xdma -I $(ROOTDIR)/include 
 
 # Add the following to EXTRA_CFLAGS to enable interrupt mode
 #-DTH_BH_ISR
 
 all:
-	echo "xdma MAKEFLAGS=$(MAKEFLAGS) EXTRA_CFLAGS=$(EXTRA_CFLAGS) CFLAGS=$(CFLAGS)"
-	$(MAKE) $(CFLAGS) -C $(KDIR) SUBDIRS=$(PWD)/xdma 
+	@echo "xdma MAKEFLAGS=$(MAKEFLAGS) EXTRA_CFLAGS=$(EXTRA_CFLAGS) CFLAGS=$(CFLAGS)"
+	@echo "\$$(PWD)=$(PWD) \$$\$$PWD=$$PWD"
+	$(MAKE) -C $(KDIR) M=$$PWD ROOTDIR=`dirname $$PWD`
 
 clean: 
 	   rm -rf *.o *.ko *.mod.* .c* .t* .*.mod.* .*.cmd *.ko.unsigned Module.symvers modules.order
