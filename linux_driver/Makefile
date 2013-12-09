@@ -2,7 +2,7 @@
 #	Makefile for Xilinx Kintex-7 PCIe-DMA-DDR3 Base Targeted Reference Design
 #
 
-MKNOD = `awk '/xdma_stat/ {print $$1}' /proc/devices`
+MKNOD=`awk '/xdma_stat/ {print $$1}' /proc/devices`
 
 all::
 		echo "MAKEFLAGS=$(MAKEFLAGS)"
@@ -19,7 +19,7 @@ clean::
 
 insert:: xdma/xdma_k7.ko xrawdata0/xrawdata0.ko xrawdata1/xrawdata1.ko
 		/sbin/insmod xdma/xdma_k7.ko; sleep 1
-		/bin/mknod /dev/xdma_stat c $(MKNOD) 0
+		/bin/mknod /dev/xdma_stat c ${MKNOD} 0
 		/sbin/insmod xrawdata0/xrawdata0.ko; sleep 1
 		/sbin/insmod xrawdata1/xrawdata1.ko
 		@echo "***** Driver Loaded *****"
