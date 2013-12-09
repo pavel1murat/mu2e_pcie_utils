@@ -35,6 +35,6 @@ lsmod
 # Remove driver modules
 
 cd linux_driver
-sudo make remove
-cd ..# Remove driver objects
+sudo make remove # Remove driver objects
+cd ..
 
