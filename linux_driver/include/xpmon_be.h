@@ -131,7 +131,9 @@ extern "C" {
 #endif
 
 /***************************** Include Files *********************************/
-
+#ifndef __KERNEL__
+# include <sys/ioctl.h>		/* _IO* */
+#endif
 
 /************************** Constant Definitions *****************************/
 
