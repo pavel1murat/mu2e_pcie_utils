@@ -9,7 +9,7 @@ EXTRA_CFLAGS += -DXLITTLE_ENDIAN -DPCI_LINUX
 EXTRA_CFLAGS += -I $(ROOTDIR)/xdma -I $(ROOTDIR)/include 
 
 # Add the following to EXTRA_CFLAGS to enable interrupt mode
-#-DTH_BH_ISR
+#EXTRA_CFLAGS += -DTH_BH_ISR
 
 all:
 	@echo "xdma MAKEFLAGS=$(MAKEFLAGS) CFLAGS=$(CFLAGS)"
