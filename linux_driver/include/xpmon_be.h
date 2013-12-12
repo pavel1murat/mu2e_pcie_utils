@@ -179,7 +179,7 @@ extern "C" {
 #define IGET_SW_STATISTICS  _IOR(XPMON_MAGIC, 8, SWStatsArray)
 
 typedef struct
-{   unsigned long adr;
+{   unsigned long reg;
     unsigned int  val;
     unsigned long loops;
 } RegOp;

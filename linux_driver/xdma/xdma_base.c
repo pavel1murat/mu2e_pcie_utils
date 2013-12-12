@@ -200,13 +200,6 @@ static void __devexit  xdma_remove(struct pci_dev *pdev);
 static int xdma_dev_open(struct inode * in, struct file * filp);
 static int xdma_dev_release(struct inode * in, struct file * filp);
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36)
-static int xdma_dev_ioctl(struct inode * in, struct file * filp,
-                          unsigned int cmd, unsigned long arg);
-#else
-static long xdma_dev_ioctl(struct file * filp,
-                          unsigned int cmd, unsigned long arg);
-#endif
 static int ReadPCIState(struct pci_dev * pdev, PCIState * pcistate);
 
 #ifdef DEBUG_VERBOSE
@@ -1389,12 +1382,14 @@ static void ReadDMAEngineConfiguration(struct pci_dev * pdev, struct privData * 
     /* Walk through the capability register of all DMA engines */
     for(offset = DMA_OFFSET, i=0; offset < DMA_SIZE; offset += DMA_ENGINE_PER_SIZE, i++)
     {
-        log_verbose(KERN_INFO "Reading engine capability from %lx\n",
-                                            (base+offset+REG_DMA_ENG_CAP));
+        log_verbose(KERN_INFO "Reading engine capability from offset=0x%04lx addr=%lx\n"
+	       , offset, (base+offset+REG_DMA_ENG_CAP));
         val = Dma_mReadReg((base+offset), REG_DMA_ENG_CTRL_STATUS);
-        log_verbose(KERN_INFO "REG_DMA_ENG_CAP (capability) returned %x %p\n", val, (unsigned int*)((base+offset)+REG_DMA_ENG_CTRL_STATUS) );
+        log_verbose(KERN_INFO "REG_DMA_ENG_CAP (capability) returned %x %p\n"
+		    , val, (unsigned int*)((base+offset)+REG_DMA_ENG_CTRL_STATUS) );
         val = Dma_mReadReg((base+offset), REG_DMA_ENG_CAP);
-        log_verbose(KERN_INFO "REG_DMA_ENG_CAP (capability) returned %x\n", val);
+        printk( "REG_DMA_ENG_CAP (capability, offset=0x%04lx) returned 0x%x\n"
+	       , offset+REG_DMA_ENG_CAP, val);
 
         if(val & DMA_ENG_PRESENT_MASK)
         {
@@ -1483,22 +1478,26 @@ static long xdma_dev_ioctl(struct file * filp,
                           unsigned int cmd, unsigned long arg)
 #endif
 {
-    int retval=0;
-    EngState eng;
-    EngStatsArray es;
-    TRNStatsArray tsa;
-    SWStatsArray ssa;
-    DMAStatistics * ds;
-    TRNStatistics * ts;
-    SWStatistics * ss;
-    TestCmd tc;
-    UserState ustate;
-    PCIState pcistate;
-    int len, i;
-    Dma_Engine * eptr;
-    Dma_BdRing * rptr;
-    UserPtrs * uptr;
+    int			retval=0;
+    EngState		eng;
+    EngStatsArray	es;
+    TRNStatsArray	tsa;
+    SWStatsArray	ssa;
+    DMAStatistics 	*ds;
+    TRNStatistics	*ts;
+    SWStatistics	*ss;
+    TestCmd		tc;
+    RegOp		regop;
+    UserState		ustate;
+    PCIState		pcistate;
+    int			len, i;
+    Dma_Engine		*eptr;
+    Dma_BdRing		*rptr;
+    UserPtrs		*uptr;
+    unsigned long	base;
+    uint32_t		regval;
 
+    //printk("xdma_dev_ioctl: start\n");
     if(DriverState != INITIALIZED)
     {
         /* Should not come here */
@@ -1573,6 +1572,7 @@ static long xdma_dev_ioctl(struct file * filp,
 
     case ISTART_TEST:
     case ISTOP_TEST:
+	printk("xdma_dev_ioctl: ISTART_TEST/ISTOP_TEST\n");
         if(copy_from_user(&tc, (TestCmd *)arg, sizeof(TestCmd)))
         {
             printk("copy_from_user failed\n");
@@ -1587,7 +1587,7 @@ static long xdma_dev_ioctl(struct file * filp,
         if((i >= MAX_DMA_ENGINES) ||
           (!((dmaData->engineMask) & (1LL << i))))
         {
-            printk("Invalid engine %d\n", i);
+            printk("Invalid engine %d. engineMask=0x%llx\n", i, dmaData->engineMask );
             retval = -EFAULT;
             break;
         }
@@ -1598,6 +1598,8 @@ static long xdma_dev_ioctl(struct file * filp,
         if((eptr->EngineState != USER_ASSIGNED) ||
            (uptr->UserGetState == NULL))
         {
+            printk("UserSetState function does not exist: UserGetState=%p UserSetState=%p\n"
+		   ,uptr->UserGetState,uptr->UserSetState );
             log_normal(KERN_ERR "UserSetState function does not exist\n");
             retval = -EFAULT;
             break;
@@ -1841,7 +1843,27 @@ static long xdma_dev_ioctl(struct file * filp,
         break;
 
     case IREG_READ:
-	printk("IREG_READ called\n");
+	//printk("IREG_READ called\n");
+        if(copy_from_user(&regop, (RegOp *)arg, sizeof(regop)))
+        {   printk("copy_from_user failed\n");
+            retval = -EFAULT;
+            break;
+        }
+
+	if (regop.reg > 0x933c)
+	{   printk("reg offset to large\n");
+            retval = -EFAULT;
+            break;
+        }  
+	base = (unsigned long)(dmaData->barInfo[0].baseVAddr);
+
+	regval = XIo_In32( base+regop.reg );
+
+	regop.val = regval;
+	if(copy_to_user((RegOp *)arg, &regop, sizeof(regop)))
+	{   printk("copy_to_user failed\n");
+	    retval = -EFAULT;
+	}
 	break;
     default:
         printk("Invalid command %d\n", cmd);
@@ -1849,8 +1871,9 @@ static long xdma_dev_ioctl(struct file * filp,
         break;
     }
 
+    //if (retval == 0) printk("xdma_dev_ioctl: SUCCESS\n" );
     return retval;
-}
+}   // xdma_dev_ioctl
 
 static int ReadPCIState(struct pci_dev * pdev, PCIState * pcistate)
 {
