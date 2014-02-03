@@ -120,10 +120,10 @@ MODULE_LICENSE("GPL");
 
 /** PCI device structure which probes for targeted design */
 static struct pci_device_id ids[] = {
-        { PCI_VENDOR_ID_DMA,    PCI_DEVICE_ID_DMA,
-          PCI_ANY_ID,               PCI_ANY_ID,
-          0,            0,          0UL },
-          { }     /* terminate list with empty entry */
+    { PCI_VENDOR_ID_DMA,    PCI_DEVICE_ID_DMA,
+      PCI_ANY_ID,               PCI_ANY_ID,
+      0,            0,          0UL },
+    { }     /* terminate list with empty entry */
 };
 
 /**
@@ -399,7 +399,7 @@ int IntrCheck(struct pci_dev * dev)
             else if(i==1) count1++;
             retval = XST_SUCCESS;
         }
-else if(dirqval & DMA_ENG_INT_ACTIVE_MASK) log_normal("1");
+	else if(dirqval & DMA_ENG_INT_ACTIVE_MASK) log_normal("1");
     }
 
     /* Now, check each C2S DMA engine (32 to 39) */
@@ -518,7 +518,7 @@ static void PktHandler(int eng, Dma_Engine * eptr)
 
             bufPA = (dma_addr_t) Dma_mBdGetBufAddr(BdCurPtr);
             pbuf->size = Dma_mBdGetStatLength(BdCurPtr);
-#if 0 // FNAL devel
+#          if 0 // FNAL devel
             pbuf->bufInfo = (unsigned char *)Dma_mBdGetId(BdCurPtr);
 
             /* For now, do this. Temac driver does not actually look
@@ -526,7 +526,7 @@ static void PktHandler(int eng, Dma_Engine * eptr)
              * thing to do.
              */
             pbuf->pktBuf = pbuf->bufInfo;
-#endif
+#          endif
             pbuf->flags = Dma_mBdGetStatus(BdCurPtr);
             pbuf->userInfo = Dma_mBdGetUserData(BdCurPtr);
 
@@ -591,12 +591,12 @@ static void poll_routine(unsigned long __opaque)
     //printk("p%d ", get_cpu());
     for(i=0; i<MAX_DMA_ENGINES; i++)
     {
-#ifdef TH_BH_ISR
+#      ifdef TH_BH_ISR
         /* Do housekeeping only if adequate time has elapsed since
          * last ISR.
          */
         if(jiffies < (LastIntr[i] + (HZ/50))) continue;
-#endif
+#      endif
 
         if(!((lp->engineMask) & (1LL << i)))
             continue;
@@ -614,11 +614,11 @@ static void poll_routine(unsigned long __opaque)
     /* Reschedule poll routine. Incase interrupts are enabled, the
      * bulk of processing should happen in the ISR.
      */
-#ifdef TH_BH_ISR
+#  ifdef TH_BH_ISR
     offset = HZ / 50;
-#else
+#  else
     offset = 0;
-#endif
+#  endif
     poll_timer.expires = jiffies + offset;
     add_timer(&poll_timer);
 }
@@ -649,7 +649,6 @@ static void poll_stats(unsigned long __opaque)
         rptr = &(eptr->BdRing);
 
         spin_lock(&DmaStatsLock);
-#if 1     // FNAL devel
 
         /* First, read the DMA engine payload registers */
         at = Dma_mReadReg(rptr->ChanBase, REG_DMA_ENG_ACTIVE_TIME);
@@ -695,7 +694,6 @@ static void poll_stats(unsigned long __opaque)
                 i, (at&0x3), 4*(at>>2), (wt&0x3), 4*(wt>>2),
                 (cb&0x3), 4*(cb>>2), t1);
 
-#endif   // FNAL devel
         spin_unlock(&DmaStatsLock);
     }
 
@@ -704,10 +702,9 @@ static void poll_stats(unsigned long __opaque)
     /* Registers to be read for TRN stats */
     base = (unsigned long)(dmaData->barInfo[0].baseVAddr);
 
-#if 1     // FNAL devel
     /* This counts all TLPs including header */
-   // t1 = XIo_In32(base+0x8200);
-   // t2 = XIo_In32(base+0x8204);
+    // t1 = XIo_In32(base+0x8200);
+    // t2 = XIo_In32(base+0x8204);
     t1 = XIo_In32(base+0x900c);
     t2 = XIo_In32(base+0x9010);
     //printk(KERN_INFO "TRN util: TX [%d]%u, RX [%d]%u\n",
@@ -732,7 +729,6 @@ static void poll_stats(unsigned long __opaque)
     //printk(KERN_INFO "TRN payload: TX [%d]%u, RX [%d]%u\n",
     //      (t1&0x3), 4*(t1>>2), (t2&0x3), 4*(t2>>2));
 
-#endif   // FNAL devel
     /* Reschedule poll routine */
     offset = -3;
     stats_timer.expires = jiffies + HZ + offset;
@@ -780,24 +776,24 @@ static void PutUnusedPkts(Dma_Engine * eptr, PktBuf * pbuf, int numpkts)
  */
 static void DmaSetupRecvBuffers(struct pci_dev *pdev, Dma_Engine * eptr)
 {
-  struct privData *lp = NULL;
+    struct privData *lp = NULL;
     Dma_BdRing * rptr;
     UserPtrs * uptr;
-  int free_bd_count ;
+    int free_bd_count ;
     int numbds;
-  dma_addr_t bufPA;
-  Dma_Bd *BdPtr, *BdCurPtr;
-  int result, num, numgot;
+    dma_addr_t bufPA;
+    Dma_Bd *BdPtr, *BdCurPtr;
+    int result, num, numgot;
     int i, len;
     struct PktPool * ppool;
-#ifdef TH_BH_ISR
+#  ifdef TH_BH_ISR
     u32 mask;
-#endif
+#  endif
 
-#if defined DEBUG_NORMAL || defined DEBUG_VERBOSE
+#  if defined DEBUG_NORMAL || defined DEBUG_VERBOSE
     //static int recv_count=1;
     //log_normal(KERN_INFO "DmaSetupRecvBuffers: #%d\n", recv_count++);
-#endif
+#  endif
 
     lp = pci_get_drvdata(pdev);
     rptr = &(eptr->BdRing);
@@ -850,13 +846,13 @@ static void DmaSetupRecvBuffers(struct pci_dev *pdev, Dma_Engine * eptr)
 
             Dma_mBdSetBufAddr(BdCurPtr, bufPA);
             Dma_mBdSetCtrlLength(BdCurPtr, pbuf->size);
-#if 0 // FNAL devel
+#          if 0 // FNAL devel
             Dma_mBdSetId(BdCurPtr, pbuf->bufInfo);
-#endif
+#          endif
             Dma_mBdSetCtrl(BdCurPtr, 0);        // Disable interrupts also.
             Dma_mBdSetUserData(BdCurPtr, 0LL);
 
-#ifdef TH_BH_ISR
+#          ifdef TH_BH_ISR
             /* Enable interrupts for errors and completion based on
              * coalesce count.
              */
@@ -865,7 +861,7 @@ static void DmaSetupRecvBuffers(struct pci_dev *pdev, Dma_Engine * eptr)
                 mask |= DMA_BD_INT_COMP_MASK;
             eptr->intrCount += 1;
             Dma_mBdSetCtrl(BdCurPtr, mask);
-#endif
+#          endif
 
             BdCurPtr = Dma_mBdRingNext(rptr, BdCurPtr);
         }
@@ -903,11 +899,11 @@ static void DmaSetupRecvBuffers(struct pci_dev *pdev, Dma_Engine * eptr)
     /* Return packet pool to list */
     EQPool(ppool);
 
-#ifdef DEBUG_VERBOSE
+#  ifdef DEBUG_VERBOSE
     if(numbds)
         log_verbose(KERN_INFO "DmaSetupRecvBuffers: %d new RX BDs queued up\n",
                                         numbds);
-#endif
+#  endif
 }
 
 /*****************************************************************************/
@@ -1014,7 +1010,7 @@ void descriptor_free(struct pci_dev *pdev, Dma_Engine * eptr)
     dma_addr_t bufPA;
     int j, result;
     struct PktPool * ppool;
-u32 flag;
+    u32 flag;
 
     log_verbose(KERN_INFO "descriptor_free: \n");
 
@@ -1043,9 +1039,9 @@ u32 flag;
 
             bufPA = (dma_addr_t) Dma_mBdGetBufAddr(BdCurPtr);
             pbuf->size = Dma_mBdGetCtrlLength(BdCurPtr);
-# if 0 // FNAL devel
+#          if 0 // FNAL devel
             pbuf->bufInfo = (unsigned char *)Dma_mBdGetId(BdCurPtr);
-# endif
+#          endif
             /* For now, do this. Temac driver does not actually look
              * at pbuf->pktBuf, but eventually, this is not the right
              * thing to do.
@@ -1055,9 +1051,9 @@ u32 flag;
             pbuf->userInfo = Dma_mBdGetUserData(BdCurPtr);
 
             /* Now unmap this buffer */
-#ifdef DEBUG_VERBOSE
+#          ifdef DEBUG_VERBOSE
             log_verbose(KERN_INFO "Length %d Buf %x\n", pbuf->size, (u32) bufPA);
-#endif
+#          endif
             pci_unmap_single(pdev, bufPA, pbuf->size, flag);
 
             /* reset BD id */
@@ -1090,19 +1086,19 @@ u32 flag;
     spin_unlock_bh(&DmaLock);
 
     /* Now free BD ring itself */
-  if (eptr->descSpaceVA == 0) {
+    if (eptr->descSpaceVA == 0) {
         printk(KERN_ERR "Unable to free BD ring NULL\n");
-    return;
-  }
+	return;
+    }
     //spin_lock_bh(&DmaLock);
-  log_verbose(KERN_INFO
-        "XDMA: (descriptor_free) BD ring PA: %p, VA: %p, Size: %d, Delta: %d\n",
-	      (void*)(eptr->descSpacePA - eptr->delta),
-           (eptr->descSpaceVA - eptr->delta),
-         (eptr->descSpaceSize + eptr->delta), eptr->delta);
+    log_verbose(KERN_INFO
+		"XDMA: (descriptor_free) BD ring PA: %p, VA: %p, Size: %d, Delta: %d\n",
+		(void*)(eptr->descSpacePA - eptr->delta),
+		(eptr->descSpaceVA - eptr->delta),
+		(eptr->descSpaceSize + eptr->delta), eptr->delta);
     pci_free_consistent(pdev, (eptr->descSpaceSize + eptr->delta),
-                       (eptr->descSpaceVA - eptr->delta),
-                       (eptr->descSpacePA - eptr->delta));
+			(eptr->descSpaceVA - eptr->delta),
+			(eptr->descSpacePA - eptr->delta));
     //spin_unlock_bh(&DmaLock);
 }
 
@@ -1110,56 +1106,56 @@ u32 flag;
 
 void disp_bd_ring(Dma_BdRing *bd_ring)
 {
-  int num_bds = bd_ring->AllCnt;
-  u32 *dptr ;
-  int idx;
+    int num_bds = bd_ring->AllCnt;
+    u32 *dptr ;
+    int idx;
 
-/*
-  printk("ChanBase: %p\n", (void *) bd_ring->ChanBase);
-  printk("FirstBdPhysAddr: %p\n", (void *) bd_ring->FirstBdPhysAddr);
-  printk("FirstBdAddr: %p\n", (void *) bd_ring->FirstBdAddr);
-  printk("LastBdAddr: %p\n", (void *) bd_ring->LastBdAddr);
-  printk("Length: %d (0x%0x)\n", bd_ring->Length, bd_ring->Length);
-  printk("RunState: %d (0x%0x)\n", bd_ring->RunState, bd_ring->RunState);
-  printk("Separation: %d (0x%0x)\n", bd_ring->Separation,
-         bd_ring->Separation);
-  printk("BD Count: %d\n", bd_ring->AllCnt);
+    /*
+      printk("ChanBase: %p\n", (void *) bd_ring->ChanBase);
+      printk("FirstBdPhysAddr: %p\n", (void *) bd_ring->FirstBdPhysAddr);
+      printk("FirstBdAddr: %p\n", (void *) bd_ring->FirstBdAddr);
+      printk("LastBdAddr: %p\n", (void *) bd_ring->LastBdAddr);
+      printk("Length: %d (0x%0x)\n", bd_ring->Length, bd_ring->Length);
+      printk("RunState: %d (0x%0x)\n", bd_ring->RunState, bd_ring->RunState);
+      printk("Separation: %d (0x%0x)\n", bd_ring->Separation,
+      bd_ring->Separation);
+      printk("BD Count: %d\n", bd_ring->AllCnt);
 
-  printk("\n");
+      printk("\n");
 
-  printk("FreeHead: %p\n", (void *) bd_ring->FreeHead);
-  printk("PreHead: %p\n", (void *) bd_ring->PreHead);
-  printk("HwHead: %p\n", (void *) bd_ring->HwHead);
-  printk("HwTail: %p\n", (void *) bd_ring->HwTail);
-  printk("PostHead: %p\n", (void *) bd_ring->PostHead);
-  printk("BdaRestart: %p\n", (void *) bd_ring->BdaRestart);
-*/
-  printk("Ring %p Contents:\n", bd_ring);
-  printk("Idx Status / UStatusL UStatusH  CAddrL  Control/ SysAddrL SysAddrH NextBD\n");
-  printk("      BC                               CAddrH/BC \n");
-  printk("--- -------- -------- -------- -------- -------- -------- -------- --------\n");
+      printk("FreeHead: %p\n", (void *) bd_ring->FreeHead);
+      printk("PreHead: %p\n", (void *) bd_ring->PreHead);
+      printk("HwHead: %p\n", (void *) bd_ring->HwHead);
+      printk("HwTail: %p\n", (void *) bd_ring->HwTail);
+      printk("PostHead: %p\n", (void *) bd_ring->PostHead);
+      printk("BdaRestart: %p\n", (void *) bd_ring->BdaRestart);
+    */
+    printk("Ring %p Contents:\n", bd_ring);
+    printk("Idx Status / UStatusL UStatusH  CAddrL  Control/ SysAddrL SysAddrH NextBD\n");
+    printk("      BC                               CAddrH/BC \n");
+    printk("--- -------- -------- -------- -------- -------- -------- -------- --------\n");
 
-  dptr = (u32 *)bd_ring->FirstBdAddr;
-  for (idx = 0; idx < num_bds; idx++)
-  {
-    int i;
-    printk("%3d ", idx);
-    for(i=0; i<8; i++)
+    dptr = (u32 *)bd_ring->FirstBdAddr;
+    for (idx = 0; idx < num_bds; idx++)
     {
+	int i;
+	printk("%3d ", idx);
+	for(i=0; i<8; i++)
+	{
             printk("%08x ", *dptr);
             dptr++;
-    }
+	}
         printk("\n");
-    printk("    ");
-    for(i=0; i<8; i++)
-    {
+	printk("    ");
+	for(i=0; i<8; i++)
+	{
             printk("%08x ", *dptr);
             dptr++;
-    }
+	}
         printk("\n");
-  }
+    }
 
-  printk("--------------------------------------- Done ---------------------------------------\n");
+    printk("--------------------------------------- Done ---------------------------------------\n");
 }
 
 #endif
@@ -1167,197 +1163,197 @@ void disp_bd_ring(Dma_BdRing *bd_ring)
 #if defined(DEBUG_VERBOSE) || defined(DEBUG_NORMAL)
 static void ReadConfig(struct pci_dev * pdev)
 {
-  int i;
-  u8 valb;
-  u16 valw;
-  u32 valdw;
-  unsigned long reg_base, reg_len;
+    int i;
+    u8 valb;
+    u16 valw;
+    u32 valdw;
+    unsigned long reg_base, reg_len;
 
-  /* Read PCI configuration space */
-  printk(KERN_INFO "PCI Configuration Space:\n");
-  for(i=0; i<0x40; i++)
-  {
-    pci_read_config_byte(pdev, i, &valb);
-    printk("0x%x ", valb);
-    if((i % 0x10) == 0xf)
-      printk("\n");
-  }
-  printk("\n");
-
-  /* Now read each element - one at a time */
-
-  /* Read Vendor ID */
-  pci_read_config_word(pdev, PCI_VENDOR_ID, &valw);
-  printk("Vendor ID: 0x%x, ", valw);
-
-  /* Read Device ID */
-  pci_read_config_word(pdev, PCI_DEVICE_ID, &valw);
-  printk("Device ID: 0x%x, ", valw);
-
-  /* Read Command Register */
-  pci_read_config_word(pdev, PCI_COMMAND, &valw);
-  printk("Cmd Reg: 0x%x, ", valw);
-
-  /* Read Status Register */
-  pci_read_config_word(pdev, PCI_STATUS, &valw);
-  printk("Stat Reg: 0x%x, ", valw);
-
-  /* Read Revision ID */
-  pci_read_config_byte(pdev, PCI_REVISION_ID, &valb);
-  printk("Revision ID: 0x%x, ", valb);
-
-  /* Read Class Code */
-/*
-  pci_read_config_dword(pdev, PCI_CLASS_PROG, &valdw);
-  printk("Class Code: 0x%lx, ", valdw);
-  valdw &= 0x00ffffff;
-  printk("Class Code: 0x%lx, ", valdw);
-*/
-  /* Read Reg-level Programming Interface */
-  pci_read_config_byte(pdev, PCI_CLASS_PROG, &valb);
-  printk("Class Prog: 0x%x, ", valb);
-
-  /* Read Device Class */
-  pci_read_config_word(pdev, PCI_CLASS_DEVICE, &valw);
-  printk("Device Class: 0x%x, ", valw);
-
-  /* Read Cache Line */
-  pci_read_config_byte(pdev, PCI_CACHE_LINE_SIZE, &valb);
-  printk("Cache Line Size: 0x%x, ", valb);
-
-  /* Read Latency Timer */
-  pci_read_config_byte(pdev, PCI_LATENCY_TIMER, &valb);
-  printk("Latency Timer: 0x%x, ", valb);
-
-  /* Read Header Type */
-  pci_read_config_byte(pdev, PCI_HEADER_TYPE, &valb);
-  printk("Header Type: 0x%x, ", valb);
-
-  /* Read BIST */
-  pci_read_config_byte(pdev, PCI_BIST, &valb);
-  printk("BIST: 0x%x\n", valb);
-
-  /* Read all 6 BAR registers */
-  for(i=0; i<=5; i++)
-  {
-    /* Physical address & length */
-    reg_base = pci_resource_start(pdev, i);
-    reg_len = pci_resource_len(pdev, i);
-    printk("BAR%d: Addr:0x%lx Len:0x%lx,  ", i, reg_base, reg_len);
-
-    /* Flags */
-    if((pci_resource_flags(pdev, i) & IORESOURCE_MEM))
-      printk("Region is for memory\n");
-    else if((pci_resource_flags(pdev, i) & IORESOURCE_IO))
-      printk("Region is for I/O\n");
-  }
+    /* Read PCI configuration space */
+    printk(KERN_INFO "PCI Configuration Space:\n");
+    for(i=0; i<0x40; i++)
+    {
+	pci_read_config_byte(pdev, i, &valb);
+	printk("0x%x ", valb);
+	if((i % 0x10) == 0xf)
+	    printk("\n");
+    }
     printk("\n");
 
-  /* Read CIS Pointer */
-  pci_read_config_dword(pdev, PCI_CARDBUS_CIS, &valdw);
-  printk("CardBus CIS Pointer: 0x%x, ", valdw);
+    /* Now read each element - one at a time */
 
-  /* Read Subsystem Vendor ID */
-  pci_read_config_word(pdev, PCI_SUBSYSTEM_VENDOR_ID, &valw);
-  printk("Subsystem Vendor ID: 0x%x, ", valw);
+    /* Read Vendor ID */
+    pci_read_config_word(pdev, PCI_VENDOR_ID, &valw);
+    printk("Vendor ID: 0x%x, ", valw);
 
-  /* Read Subsystem Device ID */
-  pci_read_config_word(pdev, PCI_SUBSYSTEM_ID, &valw);
-  printk("Subsystem Device ID: 0x%x\n", valw);
+    /* Read Device ID */
+    pci_read_config_word(pdev, PCI_DEVICE_ID, &valw);
+    printk("Device ID: 0x%x, ", valw);
 
-  /* Read Expansion ROM Base Address */
-  pci_read_config_dword(pdev, PCI_ROM_ADDRESS, &valdw);
-  printk("Expansion ROM Base Address: 0x%x\n", valdw);
+    /* Read Command Register */
+    pci_read_config_word(pdev, PCI_COMMAND, &valw);
+    printk("Cmd Reg: 0x%x, ", valw);
 
-  /* Read IRQ Line */
-  pci_read_config_byte(pdev, PCI_INTERRUPT_LINE, &valb);
-  printk("IRQ Line: 0x%x, ", valb);
+    /* Read Status Register */
+    pci_read_config_word(pdev, PCI_STATUS, &valw);
+    printk("Stat Reg: 0x%x, ", valw);
 
-  /* Read IRQ Pin */
-  pci_read_config_byte(pdev, PCI_INTERRUPT_PIN, &valb);
-  printk("IRQ Pin: 0x%x, ", valb);
+    /* Read Revision ID */
+    pci_read_config_byte(pdev, PCI_REVISION_ID, &valb);
+    printk("Revision ID: 0x%x, ", valb);
 
-  /* Read Min Gnt */
-  pci_read_config_byte(pdev, PCI_MIN_GNT, &valb);
-  printk("Min Gnt: 0x%x, ", valb);
+    /* Read Class Code */
+    /*
+      pci_read_config_dword(pdev, PCI_CLASS_PROG, &valdw);
+      printk("Class Code: 0x%lx, ", valdw);
+      valdw &= 0x00ffffff;
+      printk("Class Code: 0x%lx, ", valdw);
+    */
+    /* Read Reg-level Programming Interface */
+    pci_read_config_byte(pdev, PCI_CLASS_PROG, &valb);
+    printk("Class Prog: 0x%x, ", valb);
 
-  /* Read Max Lat */
-  pci_read_config_byte(pdev, PCI_MAX_LAT, &valb);
-  printk("Max Lat: 0x%x\n", valb);
+    /* Read Device Class */
+    pci_read_config_word(pdev, PCI_CLASS_DEVICE, &valw);
+    printk("Device Class: 0x%x, ", valw);
+
+    /* Read Cache Line */
+    pci_read_config_byte(pdev, PCI_CACHE_LINE_SIZE, &valb);
+    printk("Cache Line Size: 0x%x, ", valb);
+
+    /* Read Latency Timer */
+    pci_read_config_byte(pdev, PCI_LATENCY_TIMER, &valb);
+    printk("Latency Timer: 0x%x, ", valb);
+
+    /* Read Header Type */
+    pci_read_config_byte(pdev, PCI_HEADER_TYPE, &valb);
+    printk("Header Type: 0x%x, ", valb);
+
+    /* Read BIST */
+    pci_read_config_byte(pdev, PCI_BIST, &valb);
+    printk("BIST: 0x%x\n", valb);
+
+    /* Read all 6 BAR registers */
+    for(i=0; i<=5; i++)
+    {
+	/* Physical address & length */
+	reg_base = pci_resource_start(pdev, i);
+	reg_len = pci_resource_len(pdev, i);
+	printk("BAR%d: Addr:0x%lx Len:0x%lx,  ", i, reg_base, reg_len);
+
+	/* Flags */
+	if((pci_resource_flags(pdev, i) & IORESOURCE_MEM))
+	    printk("Region is for memory\n");
+	else if((pci_resource_flags(pdev, i) & IORESOURCE_IO))
+	    printk("Region is for I/O\n");
+    }
+    printk("\n");
+
+    /* Read CIS Pointer */
+    pci_read_config_dword(pdev, PCI_CARDBUS_CIS, &valdw);
+    printk("CardBus CIS Pointer: 0x%x, ", valdw);
+
+    /* Read Subsystem Vendor ID */
+    pci_read_config_word(pdev, PCI_SUBSYSTEM_VENDOR_ID, &valw);
+    printk("Subsystem Vendor ID: 0x%x, ", valw);
+
+    /* Read Subsystem Device ID */
+    pci_read_config_word(pdev, PCI_SUBSYSTEM_ID, &valw);
+    printk("Subsystem Device ID: 0x%x\n", valw);
+
+    /* Read Expansion ROM Base Address */
+    pci_read_config_dword(pdev, PCI_ROM_ADDRESS, &valdw);
+    printk("Expansion ROM Base Address: 0x%x\n", valdw);
+
+    /* Read IRQ Line */
+    pci_read_config_byte(pdev, PCI_INTERRUPT_LINE, &valb);
+    printk("IRQ Line: 0x%x, ", valb);
+
+    /* Read IRQ Pin */
+    pci_read_config_byte(pdev, PCI_INTERRUPT_PIN, &valb);
+    printk("IRQ Pin: 0x%x, ", valb);
+
+    /* Read Min Gnt */
+    pci_read_config_byte(pdev, PCI_MIN_GNT, &valb);
+    printk("Min Gnt: 0x%x, ", valb);
+
+    /* Read Max Lat */
+    pci_read_config_byte(pdev, PCI_MAX_LAT, &valb);
+    printk("Max Lat: 0x%x\n", valb);
 }
 #endif
 
 #ifdef DEBUG_VERBOSE
 static void ReadRoot(struct pci_dev * pdev)
 {
-  int i;
-  u8 valb;
-  struct pci_bus * parent;
-  struct pci_bus * me;
+    int i;
+    u8 valb;
+    struct pci_bus * parent;
+    struct pci_bus * me;
 
-  /* Read PCI configuration space for all devices on this bus */
-  parent = pdev->bus->parent;
-  for(i=0; i<256; i++)
-  {
-    pci_bus_read_config_byte(parent, 8, i, &valb);
-    printk("%02x ", valb);
-    if(!((i+1) % 16)) printk("\n");
-  }
+    /* Read PCI configuration space for all devices on this bus */
+    parent = pdev->bus->parent;
+    for(i=0; i<256; i++)
+    {
+	pci_bus_read_config_byte(parent, 8, i, &valb);
+	printk("%02x ", valb);
+	if(!((i+1) % 16)) printk("\n");
+    }
 
-  printk("Device %p details:\n", pdev);
-  printk("Bus_list %p\n", &(pdev->bus_list));
-  printk("Bus %p\n", pdev->bus);
-  printk("Subordinate %p\n", pdev->subordinate);
-  printk("Sysdata %p\n", pdev->sysdata);
-  printk("Procent %p\n", pdev->procent);
-  printk("Devfn %d\n", pdev->devfn);
-  printk("Vendor %x\n", pdev->vendor);
-  printk("Device %x\n", pdev->device);
-  printk("Subsystem_vendor %x\n", pdev->subsystem_vendor);
-  printk("Subsystem_device %x\n", pdev->subsystem_device);
-  printk("Class %d\n", pdev->class);
-  printk("Hdr_type %d\n", pdev->hdr_type);
-  printk("Rom_base_reg %d\n", pdev->rom_base_reg);
-  printk("Pin %d\n", pdev->pin);
-  printk("Driver %p\n", pdev->driver);
-  printk("Dma_mask %lx\n", (unsigned long)(pdev->dma_mask));
-  printk("Vendor_compatible: ");
-  //for(i=0; i<DEVICE_COUNT_COMPATIBLE; i++)
-  //  printk("%x ", pdev->vendor_compatible[i]);
-  //printk("\n");
-  //printk("Device_compatible: ");
-  //for(i=0; i<DEVICE_COUNT_COMPATIBLE; i++)
-  //  printk("%x ", pdev->device_compatible[i]);
-  //printk("\n");
-  printk("Cfg_size %d\n", pdev->cfg_size);
-  printk("Irq %d\n", pdev->irq);
-  printk("Transparent %d\n", pdev->transparent);
-  printk("Multifunction %d\n", pdev->multifunction);
-  //printk("Is_enabled %d\n", pdev->is_enabled);
-  printk("Is_busmaster %d\n", pdev->is_busmaster);
-  printk("No_msi %d\n", pdev->no_msi);
-  printk("No_dld2 %d\n", pdev->no_d1d2);
-  //printk("Block_ucfg_access %d\n", pdev->block_ucfg_access);
-  printk("Broken_parity_status %d\n", pdev->broken_parity_status);
-  printk("Msi_enabled %d\n", pdev->msi_enabled);
-  printk("Msix_enabled %d\n", pdev->msix_enabled);
-  printk("Rom_attr_enabled %d\n", pdev->rom_attr_enabled);
+    printk("Device %p details:\n", pdev);
+    printk("Bus_list %p\n", &(pdev->bus_list));
+    printk("Bus %p\n", pdev->bus);
+    printk("Subordinate %p\n", pdev->subordinate);
+    printk("Sysdata %p\n", pdev->sysdata);
+    printk("Procent %p\n", pdev->procent);
+    printk("Devfn %d\n", pdev->devfn);
+    printk("Vendor %x\n", pdev->vendor);
+    printk("Device %x\n", pdev->device);
+    printk("Subsystem_vendor %x\n", pdev->subsystem_vendor);
+    printk("Subsystem_device %x\n", pdev->subsystem_device);
+    printk("Class %d\n", pdev->class);
+    printk("Hdr_type %d\n", pdev->hdr_type);
+    printk("Rom_base_reg %d\n", pdev->rom_base_reg);
+    printk("Pin %d\n", pdev->pin);
+    printk("Driver %p\n", pdev->driver);
+    printk("Dma_mask %lx\n", (unsigned long)(pdev->dma_mask));
+    printk("Vendor_compatible: ");
+    //for(i=0; i<DEVICE_COUNT_COMPATIBLE; i++)
+    //  printk("%x ", pdev->vendor_compatible[i]);
+    //printk("\n");
+    //printk("Device_compatible: ");
+    //for(i=0; i<DEVICE_COUNT_COMPATIBLE; i++)
+    //  printk("%x ", pdev->device_compatible[i]);
+    //printk("\n");
+    printk("Cfg_size %d\n", pdev->cfg_size);
+    printk("Irq %d\n", pdev->irq);
+    printk("Transparent %d\n", pdev->transparent);
+    printk("Multifunction %d\n", pdev->multifunction);
+    //printk("Is_enabled %d\n", pdev->is_enabled);
+    printk("Is_busmaster %d\n", pdev->is_busmaster);
+    printk("No_msi %d\n", pdev->no_msi);
+    printk("No_dld2 %d\n", pdev->no_d1d2);
+    //printk("Block_ucfg_access %d\n", pdev->block_ucfg_access);
+    printk("Broken_parity_status %d\n", pdev->broken_parity_status);
+    printk("Msi_enabled %d\n", pdev->msi_enabled);
+    printk("Msix_enabled %d\n", pdev->msix_enabled);
+    printk("Rom_attr_enabled %d\n", pdev->rom_attr_enabled);
 
-  me = pdev->bus;
-  printk("Bus details:\n");
-  printk("Parent %p\n", me->parent);
-  printk("Children %p\n", &(me->children));
-  printk("Devices %p\n", &(me->devices));
-  printk("Self %p\n", me->self);
-  printk("Sysdata %p\n", me->sysdata);
-  printk("Procdir %p\n", me->procdir);
-  printk("Number %d\n", me->number);
-  printk("Primary %d\n", me->primary);
-  //printk("Secondary %d\n", me->secondary);
-  //printk("Subordinate %d\n", me->subordinate);
-  printk("Name %s\n", me->name);
-  printk("Bridge_ctl %d\n", me->bridge_ctl);
-  printk("Bridge %p\n", me->bridge);
+    me = pdev->bus;
+    printk("Bus details:\n");
+    printk("Parent %p\n", me->parent);
+    printk("Children %p\n", &(me->children));
+    printk("Devices %p\n", &(me->devices));
+    printk("Self %p\n", me->self);
+    printk("Sysdata %p\n", me->sysdata);
+    printk("Procdir %p\n", me->procdir);
+    printk("Number %d\n", me->number);
+    printk("Primary %d\n", me->primary);
+    //printk("Secondary %d\n", me->secondary);
+    //printk("Subordinate %d\n", me->subordinate);
+    printk("Name %s\n", me->name);
+    printk("Bridge_ctl %d\n", me->bridge_ctl);
+    printk("Bridge %p\n", me->bridge);
 }
 #endif
 
@@ -1550,7 +1546,7 @@ static long xdma_dev_ioctl(struct file * filp,
             break;
         }
 
-    if(!(uptr->UserGetState)(eptr, &ustate, uptr->privData))
+	if(!(uptr->UserGetState)(eptr, &ustate, uptr->privData))
         {
             tc.TestMode = ustate.TestMode;
             tc.MinPktSize = ustate.MinPktSize;
@@ -1682,11 +1678,11 @@ static long xdma_dev_ioctl(struct file * filp,
         eng.BDs = DMA_BD_CNT;
         eng.BDerrs = rptr->BDerrs;
         eng.BDSerrs = rptr->BDSerrs;
-#ifdef TH_BH_ISR
+#      ifdef TH_BH_ISR
         eng.IntEnab = 1;
-#else
+#      else
         eng.IntEnab = 0;
-#endif
+#      endif
         if(copy_to_user((EngState *)arg, &eng, sizeof(EngState)))
         {
             printk("copy_to_user failed\n");
@@ -1877,12 +1873,12 @@ static long xdma_dev_ioctl(struct file * filp,
 
 static int ReadPCIState(struct pci_dev * pdev, PCIState * pcistate)
 {
-  int pos;
-  u16 valw;
-  u8 valb;
-#if defined(K7_TRD)
+    int pos;
+    u16 valw;
+    u8  valb;
+#  if defined(K7_TRD)
     unsigned long base;
-#endif
+#  endif
 
     /* Since probe has succeeded, indicates that link is up. */
     pcistate->LinkState = LINK_UP;
@@ -1924,17 +1920,9 @@ static int ReadPCIState(struct pci_dev * pdev, PCIState * pcistate)
         pcistate->MPS = pcistate->MRRS = 0;
     }
 
-#if defined(K7_TRD)
+#  if defined(K7_TRD)
     /* Read Initial Flow Control Credits information */
     base = (unsigned long)(dmaData->barInfo[0].baseVAddr);
-#if 0
-    pcistate->InitFCCplD = XIo_In32(base+0x8210) & 0x00000FFF;
-    pcistate->InitFCCplH = XIo_In32(base+0x8214) & 0x000000FF;
-    pcistate->InitFCNPD  = XIo_In32(base+0x8218) & 0x00000FFF;
-    pcistate->InitFCNPH  = XIo_In32(base+0x821C) & 0x000000FF;
-    pcistate->InitFCPD   = XIo_In32(base+0x8220) & 0x00000FFF;
-    pcistate->InitFCPH   = XIo_In32(base+0x8224) & 0x000000FF;
-#endif
 
     pcistate->InitFCCplD = XIo_In32(base+0x901c) & 0x00000FFF;
     pcistate->InitFCCplH = XIo_In32(base+0x9020) & 0x000000FF;
@@ -1944,7 +1932,7 @@ static int ReadPCIState(struct pci_dev * pdev, PCIState * pcistate)
     pcistate->InitFCPH   = XIo_In32(base+0x9030) & 0x000000FF;
    // printk("#####FCD %d FCH %d FCNPD %d FCNPH %d FCPD %d FCPH %d#####\n",pcistate->InitFCCplD,pcistate->InitFCCplH,pcistate->InitFCNPD,pcistate->InitFCNPH,pcistate->InitFCPD ,pcistate->InitFCPH);
     pcistate->Version    = XIo_In32(base+0x9000);
-#endif
+#  endif
 
     return 0;
 }   // ReadPCIState
@@ -1964,8 +1952,8 @@ static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id
      * code to enable I/O and memory. Wake up the device if it was
      * suspended. Beware, this function can fail.
      */
-  pciRet = pci_enable_device(pdev);
-  if (pciRet < 0)
+    pciRet = pci_enable_device(pdev);
+    if (pciRet < 0)
     {
         printk(KERN_ERR "PCI device enable failed.\n");
         return pciRet;
@@ -1985,11 +1973,11 @@ static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id
     }
     pktPoolTail = &pktPool[MAX_POOL-1];
     pktPoolHead = &pktPool[0];
-#ifdef DEBUG_VERBOSE
+#  ifdef DEBUG_VERBOSE
     for(i=0; i<MAX_POOL; i++)
         printk("pktPool[%d] %p pktarray %p\n", i, &pktPool[i], pktPool[i].pbuf);
     printk("pktPoolHead %p pktPoolTail %p\n", pktPoolHead, pktPoolTail);
-#endif
+#  endif
     /* Allocate space for holding driver-private data - for storing driver
      * context.
      */
@@ -2000,20 +1988,20 @@ static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id
         pci_disable_device(pdev);
         return XST_FAILURE;
     }
-//printk("dmaData at %p\n", dmaData);
+    //printk("dmaData at %p\n", dmaData);
     dmaData->barMask = 0;
     dmaData->engineMask = 0;
     dmaData->userCount = 0;
 
-#if defined(DEBUG_NORMAL) || defined(DEBUG_VERBOSE)
-  /* Display PCI configuration space of device. */
-  ReadConfig(pdev);
-#endif
+#  if defined(DEBUG_NORMAL) || defined(DEBUG_VERBOSE)
+    /* Display PCI configuration space of device. */
+    ReadConfig(pdev);
+#  endif
 
-#ifdef DEBUG_VERBOSE
-  /* Display PCI information on parent. */
-  ReadRoot(pdev);
-#endif
+#  ifdef DEBUG_VERBOSE
+    /* Display PCI information on parent. */
+    ReadRoot(pdev);
+#  endif
 
     /*
      * Enable bus-mastering on device. Calls pcibios_set_master() to do
@@ -2035,11 +2023,11 @@ static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id
     }
 
     /* Returns success if PCI is capable of 32-bit DMA */
-#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,36)
+#  if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,36)
     pciRet = pci_set_dma_mask(pdev, DMA_32BIT_MASK);
-#else
+#  else
     pciRet = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
-#endif
+#  endif
     if (pciRet < 0) {
         printk(KERN_ERR "pci_set_dma_mask failed\n");
         pci_release_regions(pdev);
@@ -2108,7 +2096,7 @@ static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id
 			dmaData->barInfo[i].baseVAddr );
     }
     log_verbose(KERN_INFO "Bar mask is 0x%x\n", (dmaData->barMask));
-  log_normal(KERN_INFO "DMA Base VA %p\n",
+    log_normal(KERN_INFO "DMA Base VA %p\n",
                                 (void*)(dmaData->barInfo[0].baseVAddr));
 
     /* Disable global interrupts */
@@ -2123,7 +2111,7 @@ static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id
     ReadDMAEngineConfiguration(pdev, dmaData);
 
     /* Save private data pointer in device structure */
-  pci_set_drvdata(pdev, dmaData);
+    pci_set_drvdata(pdev, dmaData);
 
     /* The following code is for registering as a character device driver.
      * The GUI will use /dev/xdma_state file to read state & statistics.
@@ -2149,11 +2137,11 @@ static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id
             xdmaDevFileOps.owner = THIS_MODULE;
             xdmaDevFileOps.open = xdma_dev_open;
             xdmaDevFileOps.release = xdma_dev_release;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36)
+#          if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36)
             xdmaDevFileOps.ioctl = xdma_dev_ioctl;
-#else
+#          else
             xdmaDevFileOps.unlocked_ioctl = xdma_dev_ioctl;
-#endif
+#          endif
             xdmaCdev->owner = THIS_MODULE;
             xdmaCdev->ops = &xdmaDevFileOps;
             xdmaCdev->dev = xdmaDev;
@@ -2187,9 +2175,7 @@ static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id
         stats_timer.expires=jiffies + HZ;
         stats_timer.data=(unsigned long) pdev;
         stats_timer.function = poll_stats;
-#if 1     // FNAL devel
         add_timer(&stats_timer);
-#endif
     }
 
     DriverState = INITIALIZED;
@@ -2203,18 +2189,18 @@ static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id
     add_timer(timer);
     //return 0;			// FNAL devel
 
-#ifdef TH_BH_ISR
+#  ifdef TH_BH_ISR
     /* Now enable interrupts using MSI mode */
     if(!pci_enable_msi(pdev))
     {
         log_normal(KERN_INFO "MSI enabled\n");
         MSIEnabled = 1;
     }
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,18)
+#  if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,18)
     pciRet = request_irq(pdev->irq, DmaInterrupt, SA_SHIRQ, "xdma", pdev);
-#else
+#  else
     pciRet = request_irq(pdev->irq, DmaInterrupt, IRQF_SHARED, "xdma", pdev);
-#endif
+#  endif
 
     if(pciRet)
     {
@@ -2231,7 +2217,7 @@ static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id
      */
     Dma_mIntEnable(dmaData->barInfo[0].baseVAddr);
 
-#endif
+#  endif
 
     printk("Value of HZ is %d\n", HZ);
     printk("End of probe\n");
@@ -2241,19 +2227,19 @@ static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id
 
 static void __devexit  xdma_remove(struct pci_dev *pdev)
 {
-  struct privData *lp;
+    struct privData *lp;
     int i;
-#ifdef TH_BH_ISR
+#  ifdef TH_BH_ISR
     u32 girqval;
     unsigned long base;
-#endif
+#  endif
 
-#ifdef FIFO_EMPTY_CHECK
+#  ifdef FIFO_EMPTY_CHECK
     unsigned long barBase = (unsigned long)(dmaData->barInfo[0].baseVAddr);  //todo: need to confirm that this will never change
     //printk("### value of 0x9008 ==> 0x%x", XIo_In32(barBase+0x9008));
-#endif
+#  endif
 
-printk("Came to xdma_remove\n");
+    printk("Came to xdma_remove\n");
     lp = pci_get_drvdata(pdev);
 
     /* The driver state flag has already been changed */
@@ -2266,15 +2252,13 @@ printk("Came to xdma_remove\n");
 	spin_lock_bh(&DmaStatsLock);
 	del_timer_sync(&stats_timer);
 	spin_unlock_bh(&DmaStatsLock);
-#if 1     // FNAL devel
 
 	spin_lock_bh(&DmaLock);
 	del_timer_sync(&poll_timer);
 	spin_unlock_bh(&DmaLock);
-#endif
     }
 
-#ifdef TH_BH_ISR
+#  ifdef TH_BH_ISR
     base = (unsigned long)(dmaData->barInfo[0].baseVAddr);
     Dma_mIntDisable(base);
 
@@ -2285,10 +2269,10 @@ printk("Came to xdma_remove\n");
     //if(girqval & (DMA_INT_ACTIVE_MASK|DMA_INT_PENDING_MASK|DMA_USER_INT_ACTIVE_MASK))
         //Dma_mWriteReg(base, REG_DMA_CTRL_STATUS, girqval);
     printk("While disabling interrupts, got %x\n", girqval);
-#endif
+#  endif
 
-#ifdef FIFO_EMPTY_CHECK
-// should be done in a loop so that when more channels are added, code doesn't change.
+#  ifdef FIFO_EMPTY_CHECK
+    // should be done in a loop so that when more channels are added, code doesn't change.
     DmaFifoEmptyWait(HANDLE_0,DIR_TYPE_S2C);
     DmaFifoEmptyWait(HANDLE_1,DIR_TYPE_S2C);
     DmaFifoEmptyWait(HANDLE_0,DIR_TYPE_C2S);
@@ -2297,19 +2281,18 @@ printk("Came to xdma_remove\n");
     // wait for appropriate time to stabalize
     mdelay(STABILITY_WAIT_TIME);
 
-#endif
+#  endif
 
-#if 1     // FNAL devel
     spin_lock_bh(&DmaLock);
 
-#ifdef FIFO_EMPTY_CHECK
+#  ifdef FIFO_EMPTY_CHECK
     // do axi-mig reset here.
     XIo_Out32(barBase + STATUS_REG_OFFSET, 1 << AXI_MIG_RST_SHIFT); //only this bit is writtable. so no need to read and mask.
 
-#endif
+#  endif
 
     /* Reset DMA - this includes disabling interrupts and DMA. */
-  log_normal(KERN_INFO "Doing DMA reset.\n");
+    log_normal(KERN_INFO "Doing DMA reset.\n");
     for(i=0; i<MAX_DMA_ENGINES; i++)
     {
         if((lp->engineMask) & (1LL << i))
@@ -2330,23 +2313,22 @@ printk("Came to xdma_remove\n");
         unregister_chrdev_region(xdmaCdev->dev, 1);
     }
 
-#endif  // FNAL devel
-  log_normal(KERN_INFO "PCI release regions and disable device.\n");
+    log_normal(KERN_INFO "PCI release regions and disable device.\n");
     pci_release_regions(pdev);
     pci_disable_device(pdev);
-  pci_set_drvdata(pdev, NULL);
+    pci_set_drvdata(pdev, NULL);
 }   // xdma_remove
 
 static int __init xdma_init(void)
 {
-  /* Initialize the locks */
-  spin_lock_init(&DmaLock);
-  spin_lock_init(&IntrLock);
-  spin_lock_init(&DmaStatsLock);
-  spin_lock_init(&PktPoolLock);
+    /* Initialize the locks */
+    spin_lock_init(&DmaLock);
+    spin_lock_init(&IntrLock);
+    spin_lock_init(&DmaStatsLock);
+    spin_lock_init(&PktPoolLock);
 
-  /* Just register the driver. No kernel boot options used. */
-  printk(KERN_INFO "XDMA: Inserting Xilinx base DMA driver in kernel.\n");
+    /* Just register the driver. No kernel boot options used. */
+    printk(KERN_INFO "XDMA: Inserting Xilinx base DMA driver in kernel.\n");
     return pci_register_driver(&xdma_driver);
 }   // xdma_init
 
