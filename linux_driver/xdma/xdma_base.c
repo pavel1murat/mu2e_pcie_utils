@@ -195,8 +195,7 @@ u32 SWrate[MAX_DMA_ENGINES];
 
 
 /************************** Function Prototypes ******************************/
-static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id *ent);
-static void __devexit  xdma_remove(struct pci_dev *pdev);
+
 static int xdma_dev_open(struct inode * in, struct file * filp);
 static int xdma_dev_release(struct inode * in, struct file * filp);
 
@@ -218,13 +217,6 @@ void disp_frag(unsigned char *, u32);
 static void ReadConfig(struct pci_dev *);
 #endif
 
-/** xdma Driver information */
-static struct pci_driver xdma_driver = {
-    .name = DRIVER_NAME,
-    .id_table = ids,
-    .probe = xdma_probe,
-    .remove = __devexit_p(xdma_remove)
-};
 
 /* The callback function for completed frames sent in SGDMA mode.
  * In the interrupt-mode, these functions are scheduled as bottom-halves.
@@ -1937,8 +1929,10 @@ static int ReadPCIState(struct pci_dev * pdev, PCIState * pcistate)
     return 0;
 }   // ReadPCIState
 
+
+
 /********************************************************************/
-/*  PCI probing function */
+/*  PCI probing function      WHERE IT ALL BEGINS                   */
 /********************************************************************/
 static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 {
@@ -2225,6 +2219,7 @@ static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id
   return 0;
 }   // xdma_probe
 
+
 static void __devexit  xdma_remove(struct pci_dev *pdev)
 {
     struct privData *lp;
@@ -2319,6 +2314,16 @@ static void __devexit  xdma_remove(struct pci_dev *pdev)
     pci_set_drvdata(pdev, NULL);
 }   // xdma_remove
 
+
+
+static struct pci_driver xdma_driver = {
+    .name = DRIVER_NAME,
+    .id_table = ids,
+    .probe = xdma_probe,
+    .remove = __devexit_p(xdma_remove)
+};
+
+
 static int __init xdma_init(void)
 {
     /* Initialize the locks */
@@ -2331,6 +2336,7 @@ static int __init xdma_init(void)
     printk(KERN_INFO "XDMA: Inserting Xilinx base DMA driver in kernel.\n");
     return pci_register_driver(&xdma_driver);
 }   // xdma_init
+
 
 static void /*__exit*/ xdma_cleanup(void)
 {
