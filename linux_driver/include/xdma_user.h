@@ -97,7 +97,7 @@
 * following, while specifying the engine number and BAR number it requires,
 * a set of function callback pointers, and the minimum packet size it
 * normally uses -
-* <pre> Handle = DmaRegister(int Engine, int Bar, UserPtrs * uptr, int PktSize); </pre>
+* <pre> Handle = DmaRegister(int Engine, int Bar, UserFuncPtrs * uptr, int PktSize); </pre>
 * The application-specific driver requires to know the kernel logical
 * address of the desired BAR in order to do any device-specific
 * initializations that may be required. For example, the xgbeth driver
@@ -330,7 +330,7 @@ typedef struct {
                         /**< User instance callback - set state */
     int (* UserGetState)(void * handle, UserState * ustate, unsigned int privdata);
                         /**< User instance callback - get state */
-} UserPtrs;
+} UserFuncPtrs;
 
 /***************** Macros (Inline Functions) Definitions *********************/
 
@@ -340,7 +340,7 @@ typedef struct {
 /** @name Initialization and control functions in xdma.c
  *  @{
  */
-void * DmaRegister(int engine, int bar, UserPtrs * uptr, int pktsize);
+void * DmaRegister(int engine, int bar, UserFuncPtrs * uptr, int pktsize);
 int DmaUnregister(void * handle);
 
 #ifdef FIFO_EMPTY_CHECK

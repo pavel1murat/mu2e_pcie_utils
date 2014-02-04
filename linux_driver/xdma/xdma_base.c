@@ -156,19 +156,19 @@ MODULE_DEVICE_TABLE(pci, ids);
 
 /************************** Variable Names ***********************************/
 /** Pool of packet arrays to use while processing packets */
-struct PktPool
+struct PktBufPool
 {
     PktBuf * pbuf;
-    struct PktPool * next;
+    struct PktBufPool * next;
 };
 
 PktBuf pktArray[MAX_POOL][DMA_BD_CNT]; // used for passing pkts between drivers.
-struct PktPool pktPool[MAX_POOL];
-struct PktPool * pktPoolHead=NULL;
-struct PktPool * pktPoolTail=NULL;
+struct PktBufPool pktPool[MAX_POOL];
+struct PktBufPool * pktPoolHead=NULL;
+struct PktBufPool * pktPoolTail=NULL;
 
 struct timer_list stats_timer;
-struct timer_list poll_timer;
+struct timer_list packets_timer;
 
 struct cdev * xdmaCdev=NULL;
 
@@ -180,7 +180,7 @@ u32 DriverState = UNINITIALIZED;
 static DEFINE_SPINLOCK(DmaStatsLock);
 DEFINE_SPINLOCK(DmaLock);
 static DEFINE_SPINLOCK(IntrLock);
-static DEFINE_SPINLOCK(PktPoolLock);
+static DEFINE_SPINLOCK(PktBufPoolLock);
 
 /* Statistics-related variables */
 int UserOpen=0;
@@ -224,7 +224,6 @@ static void ReadConfig(struct pci_dev *);
  */
 static void PktHandler(int eng, Dma_Engine * eptr);
 
-static void poll_routine(unsigned long __opaque);
 
 #ifdef TH_BH_ISR
 unsigned long long PendingMask = 0x0LL;
@@ -235,33 +234,32 @@ DECLARE_TASKLET(DmaBH, IntrBH, 0);
 #endif
 
 static void ReadDMAEngineConfiguration(struct pci_dev *, struct privData *);
-static void poll_stats(unsigned long __opaque);
 
 /* Functions to enqueue and dequeue packet arrays in packet pools */
-struct PktPool * DQPool(void)
+struct PktBufPool * DQPool(void)
 {
-    struct PktPool * ppool;
+    struct PktBufPool * ppool;
     unsigned long flags;
 
-    spin_lock_irqsave(&PktPoolLock, flags);
+    spin_lock_irqsave(&PktBufPoolLock, flags);
     ppool = pktPoolHead;
     pktPoolHead = ppool->next;
     if(pktPoolHead == NULL)
         printk(KERN_ERR "pktPoolHead is NULL. This should never happen\n");
-    spin_unlock_irqrestore(&PktPoolLock, flags);
+    spin_unlock_irqrestore(&PktBufPoolLock, flags);
 
     return ppool;
 }
 
-void EQPool(struct PktPool * pp)
+void EQPool(struct PktBufPool * pp)
 {
     unsigned long flags;
 
-    spin_lock_irqsave(&PktPoolLock, flags);
+    spin_lock_irqsave(&PktBufPoolLock, flags);
     pktPoolTail->next = pp;
     pp->next = NULL;
     pktPoolTail = pp;
-    spin_unlock_irqrestore(&PktPoolLock, flags);
+    spin_unlock_irqrestore(&PktBufPoolLock, flags);
 }
 
 #ifdef TH_BH_ISR
@@ -305,7 +303,7 @@ static void IntrBH(unsigned long unused)
         spin_lock_irqsave(&IntrLock, flags);
         Dma_mEngIntEnable(eptr);
 
-        /* Update flag to synchronise between ISR and poll_routine */
+        /* Update flag to synchronise between ISR and poll_packets */
         LastIntr[i] = jiffies;
         spin_unlock_irqrestore(&IntrLock, flags);
     }
@@ -465,7 +463,7 @@ static void PktHandler(int eng, Dma_Engine * eptr)
 {
     struct pci_dev * pdev;
     Dma_BdRing * rptr;
-    UserPtrs * uptr;
+    UserFuncPtrs * uptr;
     Dma_Bd *BdPtr, *BdCurPtr;
     int result = XST_SUCCESS;
     unsigned int bd_processed, bd_processed_save;
@@ -474,7 +472,7 @@ static void PktHandler(int eng, Dma_Engine * eptr)
     static int txcount = 0;
     static int rxcount = 0;
     PktBuf * pbuf;
-    struct PktPool * ppool;
+    struct PktBufPool * ppool;
     u32 flag;
 
     rptr = &(eptr->BdRing);
@@ -568,7 +566,8 @@ static void PktHandler(int eng, Dma_Engine * eptr)
     spin_unlock_bh(&DmaLock);
 }
 
-static void poll_routine(unsigned long __opaque)
+
+static void poll_packets(unsigned long __opaque)
 {
     struct pci_dev *pdev = (struct pci_dev *)__opaque;
     Dma_Engine * eptr;
@@ -611,9 +610,10 @@ static void poll_routine(unsigned long __opaque)
 #  else
     offset = 0;
 #  endif
-    poll_timer.expires = jiffies + offset;
-    add_timer(&poll_timer);
-}
+    packets_timer.expires = jiffies + offset;
+    add_timer(&packets_timer);
+}   // poll_packets
+
 
 static void poll_stats(unsigned long __opaque)
 {
@@ -751,7 +751,7 @@ void disp_frag(unsigned char * addr, u32 len)
 static void PutUnusedPkts(Dma_Engine * eptr, PktBuf * pbuf, int numpkts)
 {
     int i;
-    UserPtrs * uptr;
+    UserFuncPtrs * uptr;
 
     uptr = &(eptr->user);
 
@@ -759,7 +759,7 @@ static void PutUnusedPkts(Dma_Engine * eptr, PktBuf * pbuf, int numpkts)
         pbuf[i].flags = PKT_UNUSED;
 
     (uptr->UserPutPkt)(eptr, pbuf, numpkts, uptr->privData);
-}
+}   // PutUnusedPkts
 
 /*
  * DmaSetupRecvBuffers allocates as many packet buffers as it can up to
@@ -770,14 +770,14 @@ static void DmaSetupRecvBuffers(struct pci_dev *pdev, Dma_Engine * eptr)
 {
     struct privData *lp = NULL;
     Dma_BdRing * rptr;
-    UserPtrs * uptr;
+    UserFuncPtrs * uptr;
     int free_bd_count ;
     int numbds;
     dma_addr_t bufPA;
     Dma_Bd *BdPtr, *BdCurPtr;
     int result, num, numgot;
     int i, len;
-    struct PktPool * ppool;
+    struct PktBufPool * ppool;
 #  ifdef TH_BH_ISR
     u32 mask;
 #  endif
@@ -896,7 +896,7 @@ static void DmaSetupRecvBuffers(struct pci_dev *pdev, Dma_Engine * eptr)
         log_verbose(KERN_INFO "DmaSetupRecvBuffers: %d new RX BDs queued up\n",
                                         numbds);
 #  endif
-}
+}   // DmaSetupRecvBuffers
 
 /*****************************************************************************/
 /**
@@ -971,7 +971,7 @@ int descriptor_init(struct pci_dev *pdev, Dma_Engine * eptr)
 #   endif
 
     return 0;
-}
+}   // descriptor_init
 
 /*****************************************************************************/
 /**
@@ -997,11 +997,11 @@ void descriptor_free(struct pci_dev *pdev, Dma_Engine * eptr)
     Dma_Bd *BdPtr, *BdCurPtr;
     unsigned int bd_processed, bd_processed_save;
     Dma_BdRing * rptr;
-    UserPtrs * uptr;
+    UserFuncPtrs * uptr;
     PktBuf * pbuf;
     dma_addr_t bufPA;
     int j, result;
-    struct PktPool * ppool;
+    struct PktBufPool * ppool;
     u32 flag;
 
     log_verbose(KERN_INFO "descriptor_free: \n");
@@ -1092,7 +1092,7 @@ void descriptor_free(struct pci_dev *pdev, Dma_Engine * eptr)
 			(eptr->descSpaceVA - eptr->delta),
 			(eptr->descSpacePA - eptr->delta));
     //spin_unlock_bh(&DmaLock);
-}
+}   // descriptor_free
 
 #ifdef DEBUG_VERBOSE
 
@@ -1148,7 +1148,7 @@ void disp_bd_ring(Dma_BdRing *bd_ring)
     }
 
     printk("--------------------------------------- Done ---------------------------------------\n");
-}
+}   // disp_bd_ring
 
 #endif
 
@@ -1272,7 +1272,7 @@ static void ReadConfig(struct pci_dev * pdev)
     /* Read Max Lat */
     pci_read_config_byte(pdev, PCI_MAX_LAT, &valb);
     printk("Max Lat: 0x%x\n", valb);
-}
+}   // ReadConfig
 #endif
 
 #ifdef DEBUG_VERBOSE
@@ -1346,7 +1346,7 @@ static void ReadRoot(struct pci_dev * pdev)
     printk("Name %s\n", me->name);
     printk("Bridge_ctl %d\n", me->bridge_ctl);
     printk("Bridge %p\n", me->bridge);
-}
+}   // ReadRoot
 #endif
 
 static void ReadDMAEngineConfiguration(struct pci_dev * pdev, struct privData * dmaInfo)
@@ -1440,7 +1440,7 @@ static int xdma_dev_open(struct inode * in, struct file * filp)
     spin_unlock_bh(&DmaStatsLock);
 
     return 0;
-}
+}   // xdma_dev_open
 
 static int xdma_dev_release(struct inode * in, struct file * filp)
 {
@@ -1456,7 +1456,7 @@ static int xdma_dev_release(struct inode * in, struct file * filp)
     spin_unlock_bh(&DmaStatsLock);
 
     return 0;
-}
+}   // xdma_dev_release
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,36)
 static int xdma_dev_ioctl(struct inode * in, struct file * filp,
@@ -1481,7 +1481,7 @@ static long xdma_dev_ioctl(struct file * filp,
     int			len, i;
     Dma_Engine		*eptr;
     Dma_BdRing		*rptr;
-    UserPtrs		*uptr;
+    UserFuncPtrs		*uptr;
     unsigned long	base;
     uint32_t		regval;
 
@@ -1934,13 +1934,14 @@ static int ReadPCIState(struct pci_dev * pdev, PCIState * pcistate)
 /********************************************************************/
 /*  PCI probing function      WHERE IT ALL BEGINS                   */
 /********************************************************************/
-static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
+static int __devinit xdma_probe(  struct pci_dev             *pdev
+				, const struct pci_device_id *ent )
 {
     int pciRet, chrRet;
     int i;
     dev_t xdmaDev;
     static struct file_operations xdmaDevFileOps;
-    struct timer_list * timer = &poll_timer;
+    struct timer_list * timer = &packets_timer;
 
     /* Initialize device before it is used by driver. Ask low-level
      * code to enable I/O and memory. Wake up the device if it was
@@ -1957,7 +1958,7 @@ static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id
      * and user drivers.
      */
     for(i=0; i<MAX_POOL; i++)
-    {
+    {/* global array of struct PktBufPool.PktBuf* =             */
         pktPool[i].pbuf = pktArray[i];      // Associate array with pool.
 
         if(i == (MAX_POOL-1))
@@ -2001,7 +2002,7 @@ static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id
      * Enable bus-mastering on device. Calls pcibios_set_master() to do
      * the needed architecture-specific settings.
      */
-  pci_set_master(pdev);
+    pci_set_master(pdev);
 
     /* Reserve PCI I/O and memory resources. Mark all PCI regions
      * associated with PCI device as being reserved by owner. Do not
@@ -2108,7 +2109,7 @@ static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id
     pci_set_drvdata(pdev, dmaData);
 
     /* The following code is for registering as a character device driver.
-     * The GUI will use /dev/xdma_state file to read state & statistics.
+     * The GUI will use /dev/xdma_stat file to read state & statistics.
      * Incase of any failure, the driver will come up without device
      * file support, but statistics will still be visible in the system log.
      */
@@ -2179,7 +2180,7 @@ static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id
     init_timer(timer);
     timer->expires=jiffies+(HZ/500);
     timer->data=(unsigned long) pdev;
-    timer->function = poll_routine;
+    timer->function = poll_packets;
     add_timer(timer);
     //return 0;			// FNAL devel
 
@@ -2202,7 +2203,7 @@ static int __devinit xdma_probe(struct pci_dev *pdev, const struct pci_device_id
         printk(KERN_ERR "Unload driver and try running with polled mode instead\n");
     }
 
-    /* Set flag to synchronise between ISR and poll_routine */
+    /* Set flag to synchronise between ISR and poll_packets */
     for(i=0; i<MAX_DMA_ENGINES; i++)
         LastIntr[i] = jiffies;
 
@@ -2249,7 +2250,7 @@ static void __devexit  xdma_remove(struct pci_dev *pdev)
 	spin_unlock_bh(&DmaStatsLock);
 
 	spin_lock_bh(&DmaLock);
-	del_timer_sync(&poll_timer);
+	del_timer_sync(&packets_timer);
 	spin_unlock_bh(&DmaLock);
     }
 
@@ -2330,7 +2331,7 @@ static int __init xdma_init(void)
     spin_lock_init(&DmaLock);
     spin_lock_init(&IntrLock);
     spin_lock_init(&DmaStatsLock);
-    spin_lock_init(&PktPoolLock);
+    spin_lock_init(&PktBufPoolLock);
 
     /* Just register the driver. No kernel boot options used. */
     printk(KERN_INFO "XDMA: Inserting Xilinx base DMA driver in kernel.\n");
@@ -2340,7 +2341,7 @@ static int __init xdma_init(void)
 
 static void /*__exit*/ xdma_cleanup(void)
 {
-    struct PktPool * ppool;
+    struct PktBufPool * ppool;
     int oldstate;
 
     printk("Came to xdma_cleanup\n");

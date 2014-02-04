@@ -114,7 +114,7 @@ extern void disp_frag(unsigned char * addr, u32 len);
  * @note This function should not be called in an interrupt context
  *
  *****************************************************************************/
-void * DmaRegister(int engine, int bar, UserPtrs * uptr, int pktsize)
+void * DmaRegister(int engine, int bar, UserFuncPtrs * uptr, int pktsize)
 {
     Dma_Engine * eptr;
     unsigned long barbase;

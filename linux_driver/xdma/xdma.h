@@ -446,7 +446,7 @@ typedef struct {
     u32 EngineState;        /**< State of the DMA engine */
   Dma_BdRing BdRing;      /**< BD container for DMA engine */
     u32 Type;               /**< Type of DMA engine - C2S or S2C */
-    UserPtrs user;          /**< User callback functions */
+    UserFuncPtrs user;          /**< User callback functions */
     int pktSize;            /**< User-specified usual size of packets */
 
 #ifdef TH_BH_ISR

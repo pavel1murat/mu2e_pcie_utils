@@ -490,7 +490,7 @@ static void VerifyBuffer(unsigned char * buf, int size, unsigned long long uinfo
 static void poll_routine(unsigned long __opaque)
 {
     struct timer_list *timer = &poll_timer;
-    UserPtrs ufuncs;
+    UserFuncPtrs ufuncs;
     int offset = (2*HZ);
 
     //printk("Came to poll_routine with %x\n", (u32)(__opaque));
