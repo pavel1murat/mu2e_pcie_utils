@@ -97,6 +97,7 @@
 #include "xdma_bdring.h"
 #include "xdma_user.h"
 
+#include "../trace/trace.h"
 
 /************************** Constant Definitions *****************************/
 
@@ -275,7 +276,7 @@ static void IntrBH(unsigned long unused)
     pdev = dmaData->pdev;
     lp = pci_get_drvdata(pdev);
 
-    log_verbose("IntrBH with PendingMask %llx\n", PendingMask);
+    TRACE( 0, "IntrBH with PendingMask %llx", PendingMask );
 
     //while(PendingMask)
     for(i=0; PendingMask && i<MAX_DMA_ENGINES; i++)
@@ -343,7 +344,7 @@ int IntrCheck(struct pci_dev * dev)
     static int count0=0, count1=0, count2=0, count3=0;
 
     lp = pci_get_drvdata(dev);
-    log_verbose(KERN_INFO "IntrCheck: device %x\n", (u32) dev);
+    TRACE( 1, "IntrCheck: device %x", (u32)dev );
 
     base = (unsigned long)(lp->barInfo[0].baseVAddr);
     girqval = Dma_mReadReg(base, REG_DMA_CTRL_STATUS);
@@ -579,6 +580,7 @@ static void poll_packets(unsigned long __opaque)
 
     lp = pci_get_drvdata(pdev);
 
+    TRACE( 2, "poll_packets" );
     //printk("p%d ", get_cpu());
     for(i=0; i<MAX_DMA_ENGINES; i++)
     {
@@ -629,7 +631,7 @@ static void poll_stats(unsigned long __opaque)
         return;
 
     lp = pci_get_drvdata(pdev);
-    log_verbose("s%d ", get_cpu());
+    TRACE( 3, "poll_stats: cpu:%d", get_cpu() );
 
     /* First, get DMA payload statistics */
     for(i=0; i<MAX_DMA_ENGINES; i++)
@@ -2090,7 +2092,7 @@ static int __devinit xdma_probe(  struct pci_dev             *pdev
 			(u32) (dmaData->barInfo[i].baseLen),
 			dmaData->barInfo[i].baseVAddr );
     }
-    log_verbose(KERN_INFO "Bar mask is 0x%x\n", (dmaData->barMask));
+    TRACE( 4, "Bar mask is 0x%x", (dmaData->barMask) );
     log_normal(KERN_INFO "DMA Base VA %p\n",
                                 (void*)(dmaData->barInfo[0].baseVAddr));
 

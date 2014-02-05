@@ -1097,7 +1097,7 @@ static int DmaSetupTransmit(void * hndl, int num)
 
     log_verbose("%s: Sending packet length %d seqno %d\n",
                                         MYNAME, pktsize, TxSeqNo);
-    result = DmaSendPkt(hndl, pkts, bufindex);
+    result = DmaSendPkt(hndl, pkts, bufindex);            /* THIS IS EXPORTED FROM XDMA_BASE.C */
     TxBufCnt += result;
     if(result != bufindex)
     {

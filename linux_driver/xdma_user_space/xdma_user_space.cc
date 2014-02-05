@@ -100,6 +100,11 @@ main(  int	argc
     }
     else if (cmd == "stop")
     {   printf("cmd==stop\n");
+	tc.TestMode=0;
+	tc.Engine=0; tc.TestMode=TEST_STOP; tc.MinPktSize=64; tc.MaxPktSize=8*4096;
+	sts = ioctl( fd, ISTOP_TEST, &tc );
+	if (sts == -1) { perror("ISTOP_TEST");exit(1); }
+	printf("sts=%d\n", sts );
     }
     else if (cmd == "reg")
     {   //printf("cmd==reg\n");
