@@ -5,11 +5,19 @@
 MKNOD=`awk '/xdma_stat/ {print $$1}' /proc/devices`
 
 all::
-		echo "MAKEFLAGS=$(MAKEFLAGS)"
-		$(MAKE) -C xdma KBUILD_EXTRA_SYMBOLS="$$PWD/trace/Module.symvers"
-		$(MAKE) -C xrawdata0 KBUILD_EXTRA_SYMBOLS="$$PWD/xdma/Module.symvers $$PWD/trace/Module.symvers"
-		$(MAKE) -C xrawdata1 KBUILD_EXTRA_SYMBOLS="$$PWD/xdma/Module.symvers $$PWD/trace/Module.symvers"
-		@echo "***** Driver Compiled *****"
+	echo "MAKEFLAGS=$(MAKEFLAGS)"
+	$(MAKE) -C trace
+	$(MAKE) -C xdma KBUILD_EXTRA_SYMBOLS="$$PWD/trace/Module.symvers"
+	$(MAKE) -C xrawdata0 KBUILD_EXTRA_SYMBOLS="$$PWD/xdma/Module.symvers $$PWD/trace/Module.symvers"
+	$(MAKE) -C xrawdata1 KBUILD_EXTRA_SYMBOLS="$$PWD/xdma/Module.symvers $$PWD/trace/Module.symvers"
+	@echo "***** Driver Compiled *****"
+
+.PHONY: trace
+trace:
+	$(MAKE) -C $@
+
+mymod:
+	$(MAKE) -C mymodule
 
 clean::
 	@for dd in */.;do test $dd = include/. || $(MAKE) -C $$dd clean;done
