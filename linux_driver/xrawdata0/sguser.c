@@ -256,7 +256,7 @@ static void InitBuffers(Buffer * bptr)
     bptr->FreePtr = 0;
     bptr->AllocPtr = 0;
 
-    /* Allocate for TX buffer pool - have not taken care of alignment */
+    /* Allocate for TX/RX buffer pool - have not taken care of alignment */
     for(i = 0; i < NUM_BUFS; i++)
     {
         if((bufVA = (unsigned char *)__get_free_pages(GFP_KERNEL, get_order(BUFSIZE))) == NULL)
@@ -681,7 +681,7 @@ int myPutRxPkt(void * hndl, PktBuf * vaddr, int numpkts, unsigned int privdata)
     spin_unlock_bh(&RawLock);
 
     return 0;
-}
+}   // myPutRxPkt
 
 int myGetRxPkt(void * hndl, PktBuf * vaddr, unsigned int size, int numpkts, unsigned int privdata)
 {

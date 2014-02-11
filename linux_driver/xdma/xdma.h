@@ -444,7 +444,7 @@ typedef struct {
     unsigned long RegBase;            /**< Virtual base address of DMA engine */
 
     u32 EngineState;        /**< State of the DMA engine */
-  Dma_BdRing BdRing;      /**< BD container for DMA engine */
+  Dma_BdRing BdRing;      /**< BD (Buffer Descriptor) container for DMA engine */
     u32 Type;               /**< Type of DMA engine - C2S or S2C */
     UserFuncPtrs user;          /**< User callback functions */
     int pktSize;            /**< User-specified usual size of packets */

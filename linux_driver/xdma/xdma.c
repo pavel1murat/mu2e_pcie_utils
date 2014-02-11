@@ -105,7 +105,8 @@
  * @return None.
  *
  *****************************************************************************/
-void Dma_Initialize(Dma_Engine * InstancePtr, unsigned long BaseAddress, u32 Type)
+void Dma_Initialize(  Dma_Engine * InstancePtr, unsigned long BaseAddress
+		    , u32 Type)
 {
     log_verbose(KERN_INFO "Initializing DMA()\n");
 

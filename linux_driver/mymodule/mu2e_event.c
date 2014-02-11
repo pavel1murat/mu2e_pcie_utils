@@ -9,7 +9,9 @@
 #include <linux/timer.h>	/* del_timer_sync  */
 #include <linux/mm.h>
 
+#include "xdma_hw.h"		/* S2C, C2S, Dma_mReadChReg, Dma_mWriteReg */
 #include "../trace/trace.h"	/* TRACE */
+#include "mu2e_pci.h"		/* bar_info_t, extern mu2e_pci*  */
 #include "mu2e_event.h"
 
 #define PACKET_POLL_HZ 100
@@ -19,9 +21,29 @@ struct timer_list packets_timer;
 
 static void poll_packets(unsigned long __opaque)
 {
-    int offset;
-    TRACE( 2, "poll_packets" );
+    unsigned long       base;
+    int                 offset;
 
+    /* DMA registers are in BAR0 */
+    base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
+
+    // check channel 0 reciever
+    TRACE( 2, "poll_packets: "
+	  "CNTL=0x%08x "
+	  "HW_NEXT=0x%08x "
+	  "SW_NEXT=0x%08x "
+	  "HW_LAST=0x%08x "
+	  "COMPBYTS=0x%08x "
+	  , Dma_mReadChReg( 0, C2S, REG_DMA_ENG_CTRL_STATUS )
+	  , Dma_mReadChReg( 0, C2S, REG_DMA_ENG_NEXT_BD )
+	  , Dma_mReadChReg( 0, C2S, REG_SW_NEXT_BD )
+	  , Dma_mReadChReg( 0, C2S, REG_DMA_ENG_LAST_BD )
+	  , Dma_mReadChReg( 0, C2S, REG_DMA_ENG_COMP_BYTES )
+	  );
+    TRACE( 3, "poll_packets: App0: gen=0x%x pktlen=0x%04x chk/loop=0x%x"
+	  , Dma_mReadReg(base,0x9100), Dma_mReadReg(base,0x9104)
+	  , Dma_mReadReg(base,0x9108)
+	  );
 
     // Reschedule poll routine.
     offset = HZ / PACKET_POLL_HZ;
@@ -29,6 +51,8 @@ static void poll_packets(unsigned long __opaque)
     add_timer( &packets_timer );
 }
 
+
+//////////////////////////////////////////////////////////////////////////////
 
 int mu2e_event_up( void )
 {

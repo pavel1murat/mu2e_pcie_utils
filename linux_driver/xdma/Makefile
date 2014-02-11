@@ -2,6 +2,8 @@ obj-m := xdma_k7.o
 xdma_k7-objs :=  xdma_base.o xdma.o xdma_bdring.o xdma_user.o
 
 KDIR= /lib/modules/$(shell uname -r)/build
+PWD := $(shell pwd)
+PARENT_DIR := $(shell dirname $(PWD))
 
 EXTRA_CFLAGS += -DK7_TRD -DX86_PC -DNWLDMA -DXENV_LINUX -DUSE_IO_MACROS
 EXTRA_CFLAGS += -DXLITTLE_ENDIAN -DPCI_LINUX
@@ -14,7 +16,8 @@ EXTRA_CFLAGS += -I $(ROOTDIR)/xdma -I $(ROOTDIR)/include
 all:
 	@echo "xdma MAKEFLAGS=$(MAKEFLAGS) CFLAGS=$(CFLAGS)"
 	@echo "\$$(PWD)=$(PWD) \$$\$$PWD=$$PWD"
-	$(MAKE) -C $(KDIR) M=$$PWD ROOTDIR=`dirname $$PWD`
+	$(MAKE) -C $(KDIR) M=$$PWD ROOTDIR=`dirname $$PWD` \
+KBUILD_EXTRA_SYMBOLS=$(PARENT_DIR)/trace/Module.symvers
 
 clean: 
 	   rm -rf *.o *.ko *.mod.* .c* .t* .*.mod.* .*.cmd *.ko.unsigned Module.symvers modules.order

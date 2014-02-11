@@ -3,7 +3,7 @@
     or COPYING file. If you do not have such a file, one can be obtained by
     contacting Ron or Fermi Lab in Batavia IL, 60510, phone: 630-840-3000.
     $RCSfile: Trace_cntl.c,v $
-    rev="$Revision: 1.35 $$Date: 2014/02/03 18:48:38 $";
+    rev="$Revision: 1.37 $$Date: 2014/02/08 03:50:18 $";
     */
 /*
 gxx_standards.sh Trace_test.c
@@ -17,7 +17,11 @@ done
 #include <sys/time.h>           /* gettimeofday, struct timeval */
 #include <pthread.h>		/* pthread_self */
 #include <sys/syscall.h>	/* syscall */
-#include "../trace/trace.h"
+#ifndef   VA_PARSE_ARGS
+# include "../trace/trace.h"
+#else
+# include "Trace_mmap2.h"
+#endif
 
 #define NUMTHREADS 4
 
@@ -142,7 +146,9 @@ main(  int	argc
 	}
 	printf("myIdx=0x%016lx\n", myIdx );
 # if defined(TEST_WRITE_PROTECT)
+	printf("try write to (presumably kernel memory) write-protected 1st page...\n");
 	traceControl_p->trace_initialized = 2;
+	printf("write succeeded.\n");
 # elif defined(TEST_WRITE_PAST_END)
 	*(((uint8_t*)traceControl_p)+traceControl_p->memlen) = 6;
 # endif
@@ -254,6 +260,8 @@ main(  int	argc
 	case 2: sts=TRACE_CNTL( argv[1] ); break;
 	case 3: sts=TRACE_CNTL( argv[1], strtoull(argv[2],NULL,0) ); break;
 	case 4: sts=TRACE_CNTL( argv[1], strtoull(argv[2],NULL,0), strtoull(argv[3],NULL,0) ); break;
+	case 5: sts=TRACE_CNTL( argv[1], strtoull(argv[2],NULL,0), strtoull(argv[3],NULL,0)
+			       , strtoull(argv[4],NULL,0) ); break;
 	}
 	if (sts < 0)
 	{   printf("invalid command: %s\n", argv[1] );

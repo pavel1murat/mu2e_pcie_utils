@@ -69,8 +69,9 @@ extern "C" {
 /***************************** Include Files *********************************/
 
 #include "xbasic_types.h"
+#ifdef __KERNEL__
 #include <asm/io.h>
-#include "../trace/trace.h"
+#endif
 
 
 /**************************** Type Definitions *******************************/
@@ -84,15 +85,15 @@ typedef Xuint32 XIo_Address;
 
 /* NWL DMA design is little-endian, so values need not be swapped.
  */
-#define XIo_In32(addr)        \
+#define XIo_In32(addr) \
 ({ u32 xx=readl((unsigned int *)(addr));\
-    TRACE( 1, "read: 0x%x=%p",xx,(void*)(addr));	\
+    TRACE( 1, "read: 0x%x=%p",xx,(void*)(addr));        \
     xx;\
  })
 
 #define XIo_Out32(addr, data) \
     ({  TRACE( 1, "write %p=0x%x",(void*)(addr),data);\
-	writel((data), (unsigned int *)(addr));	     \
+        writel((data), (unsigned int *)(addr));      \
     })
 
 

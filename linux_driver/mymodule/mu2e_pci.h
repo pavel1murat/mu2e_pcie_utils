@@ -8,6 +8,20 @@
 #ifndef MU2E_PCI_H
 #define MU2E_PCI_H
 
+#define XILINX_VENDOR_ID 0x10EE
+#define XILINX_DEVICE_ID 0x7042
+
+
+typedef struct
+{   unsigned long basePAddr;    /**< Base address of device memory */
+    unsigned long baseLen;      /**< Length of device memory */
+    void __iomem * baseVAddr;   /**< VA - mapped address */
+} bar_info_t;
+
+extern bar_info_t      mu2e_pcie_bar_info;
+extern struct pci_dev *mu2e_pci_dev;
+
+
 int  mu2e_pci_up( void );
 void mu2e_pci_down( void );
 

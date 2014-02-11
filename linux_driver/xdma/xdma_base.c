@@ -276,7 +276,7 @@ static void IntrBH(unsigned long unused)
     pdev = dmaData->pdev;
     lp = pci_get_drvdata(pdev);
 
-    TRACE( 0, "IntrBH with PendingMask %llx", PendingMask );
+    TRACE( 1, "IntrBH with PendingMask %llx", PendingMask );
 
     //while(PendingMask)
     for(i=0; PendingMask && i<MAX_DMA_ENGINES; i++)
@@ -2087,7 +2087,7 @@ static int __devinit xdma_probe(  struct pci_dev             *pdev
             (dmaData->barMask) &= ~( 1 << i );
         }
         else
-            /*log_verbose*/printk(KERN_INFO "[BAR %d] Base PA %lx Len %d VA %p\n", i,
+            TRACE( 1, "[BAR %d] Base PA %lx Len %d VA %p", i,
 			dmaData->barInfo[i].basePAddr,
 			(u32) (dmaData->barInfo[i].baseLen),
 			dmaData->barInfo[i].baseVAddr );
