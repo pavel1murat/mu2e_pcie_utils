@@ -71,7 +71,7 @@ int mu2e_ioctl(  struct inode *inode, struct file *filp
         if(!access_ok(VERIFY_READ, (void *)arg, _IOC_SIZE(cmd)))
             return -EFAULT;
 
-    /* DMA registers are in BAR0 */
+    /* DMA registers are offset from BAR0 */
     base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
 
     switch(cmd)

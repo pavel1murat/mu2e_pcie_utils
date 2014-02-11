@@ -31,7 +31,7 @@ static void ReadDMAEngineConfiguration(  struct pci_dev * pdev
     //    Dma_Engine *  eptr;
     u32		  Hardware_design_version;
 
-    /* DMA registers are in BAR0 */
+    /* DMA registers are offset from BAR0 */
     base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
 
     Hardware_design_version = XIo_In32(base+0x8000);

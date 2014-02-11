@@ -24,7 +24,7 @@ static void poll_packets(unsigned long __opaque)
     unsigned long       base;
     int                 offset;
 
-    /* DMA registers are in BAR0 */
+    /* DMA registers are offset from BAR0 */
     base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
 
     // check channel 0 reciever
