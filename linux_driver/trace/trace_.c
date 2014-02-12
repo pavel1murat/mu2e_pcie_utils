@@ -21,7 +21,7 @@
 #include <trace/events/sched.h> /* register/unregister_trace_sched_switch */
 #include <trace/events/irq.h>	/*  */
 
-#include "../trace/trace.h"
+#include "trace.h"
 
 struct traceControl_s  *traceControl_p=NULL;
 struct traceEntryHdr_s *traceEntries_p;
