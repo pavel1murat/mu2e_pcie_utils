@@ -15,6 +15,15 @@ int
 main(  int	argc
      , char	*argv[] )
 {
-    printf("sizeof(mu2e_buffdesc_S2C_t)=%lu\n",sizeof(mu2e_buffdesc_S2C_t));
+    printf( "sizeof(mu2e_buffdesc_S2C_t)=%lu (u32)=%lu (u64)=%lu\n"
+	   , sizeof(mu2e_buffdesc_S2C_t), sizeof(u32), sizeof(u64) );
+    printf("UserControl   offset: %lu\n"
+	   "CardAddress   offset: %lu\n"
+	   "SystemAddress offset: %lu\n"
+	   "NextDescPtr   offset: %lu\n"
+	   , (unsigned long)&((mu2e_buffdesc_S2C_t*)0)->UserControl
+	   , (unsigned long)&((mu2e_buffdesc_S2C_t*)0)->CardAddress
+	   , (unsigned long)&((mu2e_buffdesc_S2C_t*)0)->SystemAddress
+	   , (unsigned long)&((mu2e_buffdesc_S2C_t*)0)->NextDescPtr );
     return (0);
 }   // main

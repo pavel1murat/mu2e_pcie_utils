@@ -44,7 +44,7 @@ typedef struct
     u32    EndOfPkt   : 1;
     u64    SystemAddress;
     u32    NextDescPtr;
-} __attribute__ ((packed)) mu2e_buffdesc_S2C_t;
+} __attribute__((packed)) mu2e_buffdesc_S2C_t;
 
 typedef struct
 {   u32    ByteCount  :20;
