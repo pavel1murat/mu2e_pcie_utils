@@ -161,6 +161,7 @@ int mu2e_ioctl(  struct inode *inode, struct file *filp
     return (0);
 }   // mu2e_ioctl
 
+
 void free_mem( void )
 {
     unsigned       ii, jj;
@@ -227,6 +228,8 @@ static int __init init_mu2e(void)
     int             ret=0;          /* SUCCESS */
     unsigned        ii, jj;
     void           *va;
+    unsigned long   databuff_sz;
+    unsigned long   buffdesc_sz;
 
     TRACE( 2, "init_mu2e" );
 
@@ -239,15 +242,15 @@ static int __init init_mu2e(void)
 
     for (ii=0; ii<MU2E_NUM_RECV_CHANNELS; ++ii)
     {
-	TRACE( 1,"init_mu2e alloc %ld",sizeof(mu2e_databuff_t)*MU2E_NUM_RECV_BUFFS );
-	va = dma_alloc_coherent(  &mu2e_pci_dev->dev
-				, sizeof(mu2e_databuff_t)*MU2E_NUM_RECV_BUFFS
+	databuff_sz = sizeof(mu2e_databuff_t)*MU2E_NUM_RECV_BUFFS;
+	buffdesc_sz = sizeof(mu2e_buffdesc_C2S_t)*MU2E_NUM_RECV_BUFFS;
+	TRACE( 1,"init_mu2e alloc %lu %lu", databuff_sz, buffdesc_sz  );
+	va = dma_alloc_coherent(  &mu2e_pci_dev->dev, databuff_sz
 				, &mu2e_pci_recver[ii].databuffs_dma
 				, GFP_KERNEL );
 	if (va == NULL) goto out;
 	mu2e_pci_recver[ii].databuffs = va;
-	va = dma_alloc_coherent(  &mu2e_pci_dev->dev
-				, sizeof(mu2e_buffdesc_C2S_t)*MU2E_NUM_RECV_BUFFS
+	va = dma_alloc_coherent(  &mu2e_pci_dev->dev, buffdesc_sz
 				, &mu2e_pci_recver[ii].buffdesc_ring_dma
 				, GFP_KERNEL );
 	if (va == NULL) goto out;
@@ -258,14 +261,15 @@ static int __init init_mu2e(void)
 	      , mu2e_pci_recver[ii].databuffs_dma
 	      , mu2e_pci_recver[ii].buffdesc_ring_dma );
 	for (jj=0; jj<MU2E_NUM_RECV_BUFFS; ++jj)
-	{   /* link/ring */
+	{   /* ring -> link to next (and last to 1st via modulus) */
 	    mu2e_pci_recver[ii].buffdesc_ring[jj].NextDescPtr =
 		mu2e_pci_recver[ii].buffdesc_ring_dma
 		+ sizeof(mu2e_buffdesc_C2S_t) * ((jj+1)%MU2E_NUM_RECV_BUFFS);
-	    /* buffer */
+	    /* put the _buffer_ address in the descriptor */
 	    mu2e_pci_recver[ii].buffdesc_ring[jj].SystemAddress =
 		mu2e_pci_recver[ii].databuffs_dma
 		+ sizeof(mu2e_databuff_t) * jj;
+	    /* and the size of the buffer also */
 	    mu2e_pci_recver[ii].buffdesc_ring[jj].RsvdByteCnt =
 		sizeof(mu2e_databuff_t);
 	}
