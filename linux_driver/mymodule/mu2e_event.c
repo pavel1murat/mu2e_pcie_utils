@@ -54,9 +54,9 @@ static void poll_packets(unsigned long __opaque)
 	    u32 regval=((dir==C2S)
 			?Dma_mReadChnReg( chn, dir, REG_DMA_ENG_LAST_BD )
 			:Dma_mReadChnReg( chn, dir, REG_DMA_ENG_NEXT_BD ) );
-	    mu2e_channel_info[chn][dir].hwIdx = descAdr2idx( regval,chn,dir );
+	    mu2e_channel_info_[chn][dir].hwIdx = descAdr2idx( regval,chn,dir );
 	    regval=Dma_mReadChnReg( chn, dir, REG_SW_NEXT_BD );
-	    mu2e_channel_info[chn][dir].swIdx = descAdr2idx( regval,chn,dir );
+	    mu2e_channel_info_[chn][dir].swIdx = descAdr2idx( regval,chn,dir );
 	}
     }
 

@@ -150,7 +150,7 @@ int mu2e_ioctl(  struct inode *inode, struct file *filp
 	if(copy_from_user(&get_info, (void*)arg, sizeof(m_ioc_get_info_t)))
         {   printk("copy_from_user failed\n"); return (-EFAULT);
         }
-	get_info = mu2e_channel_info[get_info.chn][get_info.dir];
+	get_info = mu2e_channel_info_[get_info.chn][get_info.dir];
 	if(copy_to_user((void*)arg, &get_info, sizeof(m_ioc_get_info_t)))
 	{   printk("copy_to_user failed\n"); return (-EFAULT);
 	}
@@ -162,7 +162,7 @@ int mu2e_ioctl(  struct inode *inode, struct file *filp
 	TRACE( 11, "mu2e_ioctl: BUF_GIVE chn:%u dir:%u num:%u",chn,dir,num );
 	myIdx = swIdx_add( num, chn, dir );
 	Dma_mWriteChnReg( chn,dir, REG_SW_NEXT_BD, idx2descAdr(myIdx,chn,dir) );
-	mu2e_channel_info[chn][dir].swIdx = myIdx; 
+	mu2e_channel_info_[chn][dir].swIdx = myIdx; 
 	break;
     case M_IOC_DUMP:
 	for (jj=0; jj<MU2E_NUM_RECV_BUFFS; ++jj)
@@ -297,10 +297,10 @@ static int __init init_mu2e(void)
 	      , chn, mu2e_pci_recver[chn].databuffs
 	      , mu2e_pci_recver[chn].databuffs_dma
 	      , mu2e_pci_recver[chn].buffdesc_ring_dma );
-	mu2e_channel_info[chn][C2S].chn = chn;
-	mu2e_channel_info[chn][C2S].dir = C2S;
-	mu2e_channel_info[chn][C2S].buff_size = sizeof(mu2e_databuff_t);
-	mu2e_channel_info[chn][C2S].num_buffs = MU2E_NUM_RECV_BUFFS;
+	mu2e_channel_info_[chn][C2S].chn = chn;
+	mu2e_channel_info_[chn][C2S].dir = C2S;
+	mu2e_channel_info_[chn][C2S].buff_size = sizeof(mu2e_databuff_t);
+	mu2e_channel_info_[chn][C2S].num_buffs = MU2E_NUM_RECV_BUFFS;
 	for (jj=0; jj<MU2E_NUM_RECV_BUFFS; ++jj)
 	{   /* ring -> link to next (and last to 1st via modulus) */
 	    mu2e_pci_recver[chn].buffdesc_ring[jj].NextDescPtr =
@@ -319,13 +319,13 @@ static int __init init_mu2e(void)
 	msleep( 20 );
 	Dma_mWriteChnReg( chn, C2S, REG_DMA_ENG_NEXT_BD
 			, (u32)mu2e_pci_recver[chn].buffdesc_ring_dma );
-	mu2e_channel_info[chn][C2S].hwIdx = 0;	
+	mu2e_channel_info_[chn][C2S].hwIdx = 0;	
 
 	// set "DMA_ENG" (ie. HW) last/complete == SW NEXT to show "num avail" == 0
 	descDmaAdr = idx2descAdr( MU2E_NUM_RECV_BUFFS-1, chn, C2S );
 	Dma_mWriteChnReg( chn, C2S, REG_SW_NEXT_BD,      descDmaAdr );
 	Dma_mWriteChnReg( chn, C2S, REG_DMA_ENG_LAST_BD, descDmaAdr );
-	mu2e_channel_info[chn][C2S].swIdx = MU2E_NUM_RECV_BUFFS-1;
+	mu2e_channel_info_[chn][C2S].swIdx = MU2E_NUM_RECV_BUFFS-1;
     }
     for (chn=0; chn<MU2E_NUM_SEND_CHANNELS; ++chn)
     {
@@ -350,8 +350,8 @@ static int __init init_mu2e(void)
 	      , chn, mu2e_pci_sender[chn].databuffs
 	      , mu2e_pci_sender[chn].databuffs_dma
 	      , mu2e_pci_sender[chn].buffdesc_ring_dma );
-	mu2e_channel_info[chn][S2C].buff_size = sizeof(mu2e_databuff_t);
-	mu2e_channel_info[chn][S2C].num_buffs = MU2E_NUM_SEND_BUFFS;
+	mu2e_channel_info_[chn][S2C].buff_size = sizeof(mu2e_databuff_t);
+	mu2e_channel_info_[chn][S2C].num_buffs = MU2E_NUM_SEND_BUFFS;
 	for (jj=0; jj<MU2E_NUM_SEND_BUFFS; ++jj)
 	{   mu2e_pci_sender[chn].buffdesc_ring[jj].NextDescPtr =
 		mu2e_pci_sender[chn].buffdesc_ring_dma
