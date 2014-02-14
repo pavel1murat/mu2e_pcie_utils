@@ -11,7 +11,7 @@
 #include <string.h>		// strcmp
 #include <stdlib.h>		// strtoul
 
-#include "../mymodule/mu2e_ioctl.h" // m_ioc_cmd_t
+#include "../mymodule/mu2e_mmap_ioctl.h" // m_ioc_cmd_t
 
 #define USAGE "\
    usage: %s <start|stop>\n\
@@ -35,8 +35,8 @@ main(  int	argc
     if (argc < 2) { printf(USAGE); return (1); }
     cmd = argv[1];
 
-    fd = open( "/dev/mu2e_dev", O_RDONLY );
-    if (fd == -1) { perror("open /dev/mu2e_dev"); return (1); }
+    fd = open( "/dev/" MU2E_DEV_FILE, O_RDONLY );
+    if (fd == -1) { perror("open /dev/" MU2E_DEV_FILE); return (1); }
 
     if      (strcmp(cmd,"start") == 0)
     {

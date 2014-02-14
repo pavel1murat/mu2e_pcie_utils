@@ -5,15 +5,42 @@
  // $RCSfile: .emacs.gnu,v $
  // rev="$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
 
-#ifndef MU2E_IOCTL_H
-#define MU2E_IOCTL_H
+#ifndef MU2E_MMAP_IOCTL_H
+#define MU2E_MMAP_IOCTL_H
 
 #ifdef __KERNEL__
 # include <asm/ioctl.h>		// _IOWR
 #else
 # include <sys/ioctl.h>		// _IOWR
+# include <sys/types.h>
+# include <unistd.h>		// sysconf
 #endif
 
+
+#define MU2E_DEV_FILE       "mu2e"
+#define MU2E_MAX_CHANNELS	2
+
+// Used in kernel mmap function
+#define page2chDirMap( pg, chn, dir, map ) \
+    chn =  pg   /4; \
+    dir = (pg%4)/2;				\
+    map = (pg%2)/1
+
+// Used in user space interface library
+#define chnDirMap2offset( chn, dir, map ) \
+    sysconf(_SC_PAGE_SIZE)*(chn*4)*((dir&1)*2)*(map&1)
+
+
+#define swIdx_add( add, chn, dir )				\
+    ({unsigned num_buffs=mu2e_channel_info_[chn][dir].num_buffs; \
+	unsigned idx=mu2e_channel_info_[chn][dir].swIdx;			\
+	(add<0)								\
+	    ?(((unsigned)-add>idx)					\
+	      ?(num_buffs-(-add-idx))%num_buffs		\
+	      :(idx-(-add))%num_buffs				\
+	      )								\
+	    :(idx+add)%num_buffs;					\
+    })
 
 /*
  For _IO,_IOR,_IOW,_IORW ref. Documentation/ioctl/ioctl-number.txt
@@ -43,7 +70,9 @@ NOTE: for _IOR, _IOW: the size is only for the data at the address used in the
 #define M_IOC_REG_ACCESS     _IOWR( MU2E_IOC_MAGIC, 9, m_ioc_reg_access_t )
 #define M_IOC_RECV           _IOWR( MU2E_IOC_MAGIC,10, SWStatsArray )
 #define M_IOC_SEND           _IOWR( MU2E_IOC_MAGIC,11, SWStatsArray )
-#define M_IOC_DUMP           _IO  ( MU2E_IOC_MAGIC,12 )
+#define M_IOC_GET_INFO	     _IOWR( MU2E_IOC_MAGIC,12, m_ioc_get_info_t  )
+#define M_IOC_BUF_GIVE       _IO  ( MU2E_IOC_MAGIC,13 )//arg=(chn<<24)|(dir<<16)|num
+#define M_IOC_DUMP           _IO  ( MU2E_IOC_MAGIC,14 )
 
 typedef struct
 {   int reg_offset;
@@ -102,28 +131,44 @@ typedef struct
     DMAStatistics *engptr;  /**< Pointer to array to store statistics */
 } m_ioc_engstats_t;
 
-typedef struct {
-    unsigned int LTX;           /**< Last TX Byte Rate */
+typedef struct
+{   unsigned int LTX;           /**< Last TX Byte Rate */
     unsigned int LRX;           /**< Last RX Byte Rate */
 } TRNStatistics;
 
 /** Structure used in IOCTL to get PCIe TRN statistics from driver */
-typedef struct {
-    int Count;                  /**< Number of statistics captures */
+typedef struct
+{   int Count;                  /**< Number of statistics captures */
     TRNStatistics * trnptr;     /**< Pointer to array to store statistics */
 } TRNStatsArray;
 
 /** Structure used to hold software statistics */
-typedef struct {
-    int Engine;                 /**< Engine Number */
+typedef struct
+{   int Engine;                 /**< Engine Number */
     unsigned int LBR;           /**< Last Byte Rate */
 } SWStatistics;
 
 /** Structure used in IOCTL to get software statistics from driver */
-typedef struct {
-    int Count;                  /**< Number of statistics captures */
+typedef struct
+{   int Count;                  /**< Number of statistics captures */
     SWStatistics * swptr;       /**< Pointer to array to store statistics */
 } SWStatsArray;
 
+//------------------------------------------
 
-#endif // MU2E_IOCTL_H
+typedef unsigned char mu2e_databuff_t[0x10000];
+
+enum { C2S, S2C };
+enum { MU2E_MAP_BUFF, MU2E_MAP_META }; 
+
+typedef struct
+{   int chn;
+    int dir;
+    unsigned buff_size;
+    unsigned num_buffs;
+    unsigned hwIdx;
+    unsigned swIdx;
+} m_ioc_get_info_t;
+
+
+#endif // MU2E_MMAP_IOCTL_H

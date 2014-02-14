@@ -32,7 +32,22 @@
 #  define TRACE_THREAD_LOCAL      _Thread_local
 # else
 #  define TRACE_ATOMIC_T          uint64_t
-#  define TRACE_THREAD_LOCAL 
+#  define TRACE_THREAD_LOCAL
+#  if defined(__x86_64__)
+#    define cmpxchg(ptr, old, new) \
+    ({ uint64_t __ret;							\
+    uint64_t __old = (old);						\
+    uint64_t __new = (new);						\
+    volatile uint64_t *__ptr = (volatile uint64_t *)(ptr);		\
+    asm volatile("lock cmpxchgq %2,%1"					\
+		 : "=a" (__ret), "+m" (*__ptr)				\
+		 : "r" (__new), "0" (__old)				\
+		 : "memory");						\
+    __ret;								\
+    })
+#  else
+#    define cmpxchg(ptr, old, new) (*(ptr)=new,old)
+#  endif
 # endif
 # define TRACE_GETTIMEOFDAY( tv ) gettimeofday( tv, NULL )
 # define TRACE_DO_TID             if(traceTid==0)traceTid=syscall(SYS_gettid);
@@ -291,7 +306,12 @@ static void trace( unsigned lvl, unsigned nargs
 	    desired = IDXCNT_ADD( myIdxCnt,1);
 	}
 #       else
-	traceControl_p->wrIdxCnt = IDXCNT_ADD(myIdxCnt,1);
+	uint64_t desired=IDXCNT_ADD(myIdxCnt,1);
+	while (cmpxchg(&traceControl_p->wrIdxCnt,myIdxCnt,desired)!=myIdxCnt)
+	{   ++get_idxCnt_retries;
+	    myIdxCnt=traceControl_p->wrIdxCnt;
+	    desired = IDXCNT_ADD( myIdxCnt,1);
+	}
 #       endif
 
 	TRACE_GETTIMEOFDAY( &tv );  /* hopefully NOT a system call */
@@ -404,7 +424,7 @@ static int traceCntl( int nargs, const char *cmd, ... )
     {   
 	uint64_t lvl=va_arg(ap,uint64_t);
 	traceNamLvls_p[traceTID].M = lvl;
-	printf("set level for TID=%d to 0x%llx\n", traceTID, (unsigned long long)lvl );
+	/*printf("set level for TID=%d to 0x%llx\n", traceTID, (unsigned long long)lvl );*/
     }
     else if (strcmp(cmd,"lvlmskS") == 0)   /* CURRENTLY TAKE just 1 arg: lvl */
     {   
@@ -415,20 +435,29 @@ static int traceCntl( int nargs, const char *cmd, ... )
 		    "cause KERNEL issues\n");
 	} else
 	{   traceNamLvls_p[traceTID].S = lvl;
-	    printf("set level for TID=%d to 0x%llx\n", traceTID
-		   , (unsigned long long)lvl );
+	    /*printf("set level for TID=%d to 0x%llx\n", traceTID, (unsigned long long)lvl );*/
 	}
     }
     else if (strcmp(cmd,"lvlmskT") == 0)   /* CURRENTLY TAKE just 1 arg: lvl */
     {   
 	uint64_t lvl=va_arg(ap,uint64_t);
 	traceNamLvls_p[traceTID].T = lvl;
-	printf("set level for TID=%d to 0x%llx\n", traceTID, (unsigned long long)lvl );
+	/*printf("set level for TID=%d to 0x%llx\n", traceTID, (unsigned long long)lvl );*/
     }
     else if (strcmp(cmd,"mode") == 0)
     {   
 	uint32_t mode=va_arg(ap,uint64_t);
 	traceControl_p->mode.mode = mode;
+    }
+    else if (strcmp(cmd,"modeset") == 0)
+    {   
+	uint32_t mode=va_arg(ap,uint64_t);
+	traceControl_p->mode.mode |= mode;
+    }
+    else if (strcmp(cmd,"modeclr") == 0)
+    {   
+	uint32_t mode=va_arg(ap,uint64_t);
+	traceControl_p->mode.mode &= ~mode;
     }
     else if (strncmp(cmd,"info",4) == 0) 
     {
@@ -646,7 +675,7 @@ static int traceInit(void)
 	    /* MUST THINK ABOUT "lvlM" and/or "lvlP" ???
 	       AND        "modeM" and/or "modeP" ???
 	    */
-	    traceCntl( 2, "lvl",  strtoul(levl,NULL,0) );
+	    traceCntl( 2, "lvlmskM",  strtoul(levl,NULL,0) );
 	    traceCntl( 2, "mode", strtoul(mode,NULL,0) );
 	}
 	traceTID = name2tid( name );

@@ -12,6 +12,7 @@
 #include <linux/types.h>        /* dev_t */
 
 #include "../trace/trace.h"	/* TRACE */
+#include "mu2e_mmap_ioctl.h"	/* MU2E_DEV_FILE */
 #include "mu2e_fs.h"
 
 
@@ -41,7 +42,7 @@ struct cdev   mu2e_cdev;
 int mu2e_fs_up()
 {
     int sts;
-    sts = alloc_chrdev_region( &mu2e_dev_number, 0, 1, "dcm_fpga" );
+    sts = alloc_chrdev_region( &mu2e_dev_number, 0, 1, "mu2e_drv" );
 
     if(sts < 0)
     {   TRACE( 3, "dcm_init(): Failed to get device numbers" );
@@ -56,7 +57,7 @@ int mu2e_fs_up()
     mu2e_cdev.ops   = &mu2e_file_ops;
 
     sts = cdev_add ( &mu2e_cdev, mu2e_dev_number, 1 );
-    device_create( mu2e_dev_class, NULL, mu2e_dev_number, NULL, "mu2e_dev" );
+    device_create( mu2e_dev_class, NULL, mu2e_dev_number, NULL, MU2E_DEV_FILE );
 
     return (0);
 }   // mu2e_fs

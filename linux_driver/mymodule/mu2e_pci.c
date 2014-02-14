@@ -9,6 +9,7 @@
 #include <linux/pci.h>		/* pci_* */
 
 #include "../trace/trace.h"	/* TRACE */
+#include "mu2e_mmap_ioctl.h"	/* C2S */
 #include "xdma_hw.h"		/* Dma_mIntDisable nests xio.h -> xbasic_types.h */
 #include "mu2e_pci.h"
 
@@ -74,18 +75,8 @@ static void ReadDMAEngineConfiguration(  struct pci_dev * pdev
                 printk( KERN_ERR "This driver is capable of only Packet DMA\n");
                 continue;
             }
-
-#         if 0
-            /* Initialise this engine's data structure. This will also
-             * reset the DMA engine. */
-            eptr = &(dmaInfo->Dma[ii]);
-            Dma_Initialize(eptr, (base + reg_offset), dirn);
-            eptr->pdev = pdev;
-            dmaInfo->engineMask |= (1LL << ii);
-#         endif
         }
     }
-    //log_verbose(KERN_INFO "Engine mask is 0x%llx\n", dmaInfo->engineMask);
 }   // ReadDMAEngineConfiguration
 
 
@@ -153,7 +144,7 @@ static int __devinit mu2e_pci_probe(  struct pci_dev             *pdev
     Dma_mIntDisable( mu2e_pcie_bar_info.baseVAddr );
 
     TRACE( 1, "read a channel reg to quite compiler 0x%x"
-	  , Dma_mReadChReg(0,C2S,REG_DMA_ENG_LAST_BD) );
+	  , Dma_mReadChnReg(0,C2S,REG_DMA_ENG_LAST_BD) );
 
     // clear "App 0/1" registers
     Dma_mWriteReg( mu2e_pcie_bar_info.baseVAddr, 0x9100, 0 );

@@ -5,17 +5,15 @@
 extern "C" {
 #endif
 
-#ifdef __KERNEL__
-#include <asm/io.h>
-#endif
 
-#ifndef __KERNEL__
+#ifdef __KERNEL__
+# include <linux/types.h>
+# include <asm/io.h>
+#else
 typedef unsigned char      u8;
 typedef unsigned short     u16;
 typedef unsigned int       u32;
 typedef unsigned long long u64;
-#else
-#include <linux/types.h>
 #endif
 
 
@@ -99,38 +97,39 @@ typedef struct
     u32    NextDescPtr;
 } __attribute__ ((packed)) mu2e_buffdesc_C2S_t;
 
-/* At 10 Gigabits-per-second... (approx. 1 GigaByte/s)
-   60*65536 ~= 3.9 MB / 1000 MB/s ~= 3.9 ms.
-   250 Hz should work.
- */
-typedef unsigned char mu2e_databuff_t[0x10000];
-
-#define MU2E_NUM_RECV_BUFFS      60
-#define MU2E_NUM_RECV_CHANNELS   2
-extern mu2e_databuff_t       *mu2e_recv_databuff_rings[MU2E_NUM_RECV_CHANNELS];
-extern mu2e_buffdesc_C2S_t   *mu2e_recv_buffdesc_rings[MU2E_NUM_RECV_CHANNELS];
-
-#define MU2E_NUM_SEND_BUFFS      50
-#define MU2E_NUM_SEND_CHANNELS   2
-extern mu2e_databuff_t       *mu2e_send_databuff_rings[MU2E_NUM_SEND_CHANNELS];
-extern mu2e_buffdesc_S2C_t   *mu2e_send_buffdesc_rings[MU2E_NUM_SEND_CHANNELS];
 
 
 #ifdef __KERNEL__
-typedef enum { C2S, S2C } direction_t;
 /*                                    [ch][dir]    */
 static unsigned long mu2e_ch_reg_offset[2][2] ={ {0x2000,0x0}, {0x2100,0x100} };
 
-#define Dma_mReadChReg( ch, dir, reg )		\
+#define Dma_mReadChnReg( chn, dir, reg )		\
     Dma_mReadReg( \
-    (unsigned long)mu2e_pcie_bar_info.baseVAddr+mu2e_ch_reg_offset[ch][dir]\
+    (unsigned long)mu2e_pcie_bar_info.baseVAddr+mu2e_ch_reg_offset[chn][dir]\
 		 , reg )
 
-#define Dma_mWriteChReg( ch, dir, reg, val )	\
+#define Dma_mWriteChnReg( chn, dir, reg, val )	\
     Dma_mWriteReg( \
-    (unsigned long)mu2e_pcie_bar_info.baseVAddr+mu2e_ch_reg_offset[ch][dir]\
+    (unsigned long)mu2e_pcie_bar_info.baseVAddr+mu2e_ch_reg_offset[chn][dir]\
 		  , reg, val )
 #endif
+
+
+#define descAdr2idx( regval, chn, dir ) \
+    (dir == C2S)					\
+    ? ( (regval-mu2e_pci_recver[chn].buffdesc_ring_dma) \
+       /sizeof(mu2e_buffdesc_C2S_t) )			\
+    : ( (regval-mu2e_pci_sender[chn].buffdesc_ring_dma) \
+	       /sizeof(mu2e_buffdesc_S2C_t) )
+
+    //
+#define idx2descAdr( idx, chn, dir ) \
+    (dir == C2S)					\
+    ? ( (u32)mu2e_pci_recver[chn].buffdesc_ring_dma		\
+       +(u32)sizeof(mu2e_buffdesc_C2S_t)*idx )		\
+    : ( (u32)mu2e_pci_sender[chn].buffdesc_ring_dma		\
+       +(u32)sizeof(mu2e_buffdesc_S2C_t)*idx )
+
 
 /** @name Device register offset definitions. Register access is 32-bit.
  *  @{

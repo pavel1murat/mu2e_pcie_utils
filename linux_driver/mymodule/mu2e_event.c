@@ -11,6 +11,7 @@
 
 #include "xdma_hw.h"		/* S2C, C2S, Dma_mReadChReg, Dma_mWriteReg */
 #include "../trace/trace.h"	/* TRACE */
+#include "mu2e_proto_globals.h"	/* mu2e_channel_info */
 #include "mu2e_pci.h"		/* bar_info_t, extern mu2e_pci*  */
 #include "mu2e_event.h"
 
@@ -23,6 +24,7 @@ static void poll_packets(unsigned long __opaque)
 {
     unsigned long       base;
     int                 offset;
+    unsigned		chn, dir;
 
     /* DMA registers are offset from BAR0 */
     base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
@@ -34,16 +36,29 @@ static void poll_packets(unsigned long __opaque)
 	  "SW_NEXT=0x%08x "
 	  "HW_LAST=0x%08x "
 	  "COMPBYTS=0x%08x "
-	  , Dma_mReadChReg( 0, C2S, REG_DMA_ENG_CTRL_STATUS )
-	  , Dma_mReadChReg( 0, C2S, REG_DMA_ENG_NEXT_BD )
-	  , Dma_mReadChReg( 0, C2S, REG_SW_NEXT_BD )
-	  , Dma_mReadChReg( 0, C2S, REG_DMA_ENG_LAST_BD )
-	  , Dma_mReadChReg( 0, C2S, REG_DMA_ENG_COMP_BYTES )
+	  , Dma_mReadChnReg( 0, C2S, REG_DMA_ENG_CTRL_STATUS )
+	  , Dma_mReadChnReg( 0, C2S, REG_DMA_ENG_NEXT_BD )
+	  , Dma_mReadChnReg( 0, C2S, REG_SW_NEXT_BD )
+	  , Dma_mReadChnReg( 0, C2S, REG_DMA_ENG_LAST_BD )
+	  , Dma_mReadChnReg( 0, C2S, REG_DMA_ENG_COMP_BYTES )
 	  );
     TRACE( 3, "poll_packets: App0: gen=0x%x pktlen=0x%04x chk/loop=0x%x"
 	  , Dma_mReadReg(base,0x9100), Dma_mReadReg(base,0x9104)
 	  , Dma_mReadReg(base,0x9108)
 	  );
+
+    for (chn=0; chn<MU2E_MAX_CHANNELS; ++chn)
+    {
+	for (dir=0; dir<2; ++dir)
+	{   // read sw and hw registers
+	    u32 regval=((dir==C2S)
+			?Dma_mReadChnReg( chn, dir, REG_DMA_ENG_LAST_BD )
+			:Dma_mReadChnReg( chn, dir, REG_DMA_ENG_NEXT_BD ) );
+	    mu2e_channel_info[chn][dir].hwIdx = descAdr2idx( regval,chn,dir );
+	    regval=Dma_mReadChnReg( chn, dir, REG_SW_NEXT_BD );
+	    mu2e_channel_info[chn][dir].swIdx = descAdr2idx( regval,chn,dir );
+	}
+    }
 
     // Reschedule poll routine.
     offset = HZ / PACKET_POLL_HZ;
