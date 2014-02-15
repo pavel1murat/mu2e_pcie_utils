@@ -15,23 +15,56 @@ OR
 
 #include <stdio.h>		// printf
 #include <stdint.h>		// uint16_t
+#include <sys/time.h>		// gettimeofday
 #include "mu2edev.hh"
+
+
+uint64_t get_us_timeofday()
+{   struct timeval tv;
+    gettimeofday( &tv, NULL );
+    return (uint64_t)tv.tv_sec*1000000+tv.tv_usec;
+}
+
+
 
 int
 main(  int	argc
      , char	*argv[] )
 {
     mu2edev  dev;
+    uint64_t total_bytes=0;
+    uint64_t delta, mark=get_us_timeofday();
+    uint16_t expect;
+    int      reads_with_data=0;
 
-    for (unsigned ii=0; ii<10; ++ii)
+    //dev.meta_dump( 0, C2S );
+    for (unsigned ii=0; ii<10000000; ++ii)
     {
 	uint16_t *bufp;
 	int       tmo_ms=10;
 
 	int sts=dev.read_data( 0, (void**)&bufp, tmo_ms );
-	printf( "dev.read_data=%d\n", sts );
-	if (sts) dev.read_release( 0, 1 );
+	if (sts > 0)
+	{
+	    total_bytes+=sts;
+	    //printf( "dev.read_data=%d 0x%04x 0x%04x\n", sts, bufp[0], bufp[1]  );
+	    if (reads_with_data==0) expect=bufp[1]+1;
+	    else
+	    {
+		if (bufp[1] != expect)
+		{   printf("bufp[1] != expect\n");
+		    return (1);
+		}
+		expect++;
+	    }
+	    reads_with_data++;
+	    dev.read_release( 0, 1 );
+	}
+	//else
+	//  printf( "dev.read_data=%d\n", sts );
     }
-
+    delta=get_us_timeofday()-mark;
+    printf( "%lu bytes in %lu microseconds reads_with_data=%d expect=0x%04x\n"
+	   ,total_bytes, delta, reads_with_data, expect );
     return (0);
 }   // main

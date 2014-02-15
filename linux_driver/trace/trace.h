@@ -64,7 +64,8 @@
 # include <linux/time.h>              /* do_gettimeofday */
 /*# include <linux/printk.h>	       printk, vprintk */
 # include <linux/kernel.h>	      /* printk, vprintk */
-# include <linux/mm.h>		      /* kmalloc */
+# include <linux/mm.h>		      /* kmalloc OR __get_free_pages */
+# include <linux/vmalloc.h>	      /* __vmalloc, vfree */
 # include <linux/spinlock.h>	      /* cmpxchg */
 # define TRACE_ATOMIC_T           uint64_t
 # define TRACE_THREAD_LOCAL 
@@ -77,8 +78,9 @@
 #endif /* __KERNEL__ */
 
 
-#define TRACE_DFLT_MAX_MSG_SZ       88
-#define TRACE_DFLT_MAX_PARAMS        7
+/* 88,7=192 bytes/ent   96,6=192   128,10=256*/
+#define TRACE_DFLT_MAX_MSG_SZ      128
+#define TRACE_DFLT_MAX_PARAMS       10
 #define TRACE_DFLT_NAMTBL_ENTS      20
 #define TRACE_DFLT_NUM_ENTRIES   20000
 #define TRACE_DFLT_NAM_SZ            8
@@ -700,9 +702,15 @@ static int traceInit(void)
     printk(  KERN_INFO "init_trace_3 called -- attempt to allocate %d bytes\n"
 	   , memlen );
 
+    traceControl_p = (struct traceControl_s *)vmalloc( memlen );
+#if 0
+    traceControl_p = (struct traceControl_s *)__vmalloc( memlen,GFP_KERNEL,PAGE_KERNEL );
+    traceControl_p = (struct traceControl_s *)__vmalloc( memlen,GFP_KERNEL|GFP_DMA32,PAGE_KERNEL_IO );
+    traceControl_p = (struct traceControl_s *)__get_free_pages( GFP_KERNEL, get_order(memlen) );
     traceControl_p = (struct traceControl_s *)kmalloc( memlen, GFP_KERNEL );
+#endif
     if (!traceControl_p) return -ENOMEM;
-    printk("init_trace_3 kmalloc(%d)=%p\n",memlen,traceControl_p);
+    printk("init_trace_3 alloc(%d)=%p\n",memlen,traceControl_p);
 
     traceControl_p->num_params        = num_params;
     traceControl_p->siz_msg           = siz_msg;

@@ -144,7 +144,7 @@ static int __devinit mu2e_pci_probe(  struct pci_dev             *pdev
     Dma_mIntDisable( mu2e_pcie_bar_info.baseVAddr );
 
     TRACE( 1, "read a channel reg to quite compiler 0x%x"
-	  , Dma_mReadChnReg(0,C2S,REG_DMA_ENG_LAST_BD) );
+	  , Dma_mReadChnReg(0,C2S,REG_HW_CMPLT_BD) );
 
     // clear "App 0/1" registers
     Dma_mWriteReg( mu2e_pcie_bar_info.baseVAddr, 0x9100, 0 );

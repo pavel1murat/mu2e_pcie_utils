@@ -15,7 +15,7 @@
 #include "mu2e_pci.h"		/* bar_info_t, extern mu2e_pci*  */
 #include "mu2e_event.h"
 
-#define PACKET_POLL_HZ 100
+#define PACKET_POLL_HZ 1000
 
 struct timer_list packets_timer;
 
@@ -24,7 +24,9 @@ static void poll_packets(unsigned long __opaque)
 {
     unsigned long       base;
     int                 offset;
-    unsigned		chn, dir;
+    int			chn, dir;
+    unsigned            nxtCachedCmpltIdx;
+    mu2e_buffdesc_C2S_t *buffdesc_C2S_p;
 
     /* DMA registers are offset from BAR0 */
     base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
@@ -32,14 +34,14 @@ static void poll_packets(unsigned long __opaque)
     // check channel 0 reciever
     TRACE( 2, "poll_packets: "
 	  "CNTL=0x%08x "
-	  "HW_NEXT=0x%08x "
-	  "SW_NEXT=0x%08x "
-	  "HW_LAST=0x%08x "
-	  "COMPBYTS=0x%08x "
+	  "H_NEXT=%u "
+	  "S_NEXT=%u "
+	  "H_CPLT=%u "
+	  "CPBYTS=0x%08x "
 	  , Dma_mReadChnReg( 0, C2S, REG_DMA_ENG_CTRL_STATUS )
-	  , Dma_mReadChnReg( 0, C2S, REG_DMA_ENG_NEXT_BD )
-	  , Dma_mReadChnReg( 0, C2S, REG_SW_NEXT_BD )
-	  , Dma_mReadChnReg( 0, C2S, REG_DMA_ENG_LAST_BD )
+	  , descDmaAdr2idx( Dma_mReadChnReg(0,C2S,REG_HW_NEXT_BD),0,C2S )
+	  , descDmaAdr2idx( Dma_mReadChnReg(0,C2S,REG_SW_NEXT_BD),0,C2S )
+	  , descDmaAdr2idx( Dma_mReadChnReg(0,C2S,REG_HW_CMPLT_BD),0,C2S )
 	  , Dma_mReadChnReg( 0, C2S, REG_DMA_ENG_COMP_BYTES )
 	  );
     TRACE( 3, "poll_packets: App0: gen=0x%x pktlen=0x%04x chk/loop=0x%x"
@@ -47,18 +49,25 @@ static void poll_packets(unsigned long __opaque)
 	  , Dma_mReadReg(base,0x9108)
 	  );
 
+    dir=C2S;
     for (chn=0; chn<MU2E_MAX_CHANNELS; ++chn)
-    {
-	for (dir=0; dir<2; ++dir)
-	{   // read sw and hw registers
-	    u32 regval=((dir==C2S)
-			?Dma_mReadChnReg( chn, dir, REG_DMA_ENG_LAST_BD )
-			:Dma_mReadChnReg( chn, dir, REG_DMA_ENG_NEXT_BD ) );
-	    mu2e_channel_info_[chn][dir].hwIdx = descAdr2idx( regval,chn,dir );
-	    regval=Dma_mReadChnReg( chn, dir, REG_SW_NEXT_BD );
-	    mu2e_channel_info_[chn][dir].swIdx = descAdr2idx( regval,chn,dir );
+    {   u32 newCmpltIdx=descDmaAdr2idx( Dma_mReadChnReg(chn,dir,REG_HW_CMPLT_BD)
+			       ,chn,dir );
+	while (newCmpltIdx != mu2e_channel_info_[chn][dir].hwIdx/*ie.cachedCmplt*/)
+	{   // need to update Receive Byte Counts
+	    int * BC_p=(int*)mu2e_mmap_ptrs[chn][dir][MU2E_MAP_META];
+	    nxtCachedCmpltIdx = idx_add( mu2e_channel_info_[chn][dir].hwIdx,1,chn,dir );
+	    buffdesc_C2S_p = idx2descVirtAdr( nxtCachedCmpltIdx, chn, dir );
+	    BC_p[nxtCachedCmpltIdx] = buffdesc_C2S_p->ByteCount;
+	    TRACE( 4, "poll_packets: chn=%d dir=%d %p[idx=%u]=byteCnt=%d"
+		  , chn, dir, (void*)BC_p, nxtCachedCmpltIdx
+		  , buffdesc_C2S_p->ByteCount );
+	    mu2e_channel_info_[chn][dir].hwIdx = nxtCachedCmpltIdx;
+	    // Now system SW can see another buffer with valid meta data
 	}
     }
+
+    // S2C later
 
     // Reschedule poll routine.
     offset = HZ / PACKET_POLL_HZ;

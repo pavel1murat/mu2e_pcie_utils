@@ -11,9 +11,10 @@
 struct mu2edev
 {
     mu2edev();
-    int init( void );
-    int read_data( int chn, void **buffer, int tmo_ms );
-    int read_release( int chn, unsigned num );
+    int  init( void );
+    int  read_data( int chn, void **buffer, int tmo_ms );
+    int  read_release( int chn, unsigned num );
+    void meta_dump( int chn, int dir );
 
 private:
     unsigned         delta_( int chn, int dir );

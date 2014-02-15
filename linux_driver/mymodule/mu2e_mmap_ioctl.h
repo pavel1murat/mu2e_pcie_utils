@@ -28,12 +28,13 @@
 
 // Used in user space interface library
 #define chnDirMap2offset( chn, dir, map ) \
-    sysconf(_SC_PAGE_SIZE)*(chn*4)*((dir&1)*2)*(map&1)
+    ( sysconf(_SC_PAGE_SIZE)*(chn*4)		\
+     +sysconf(_SC_PAGE_SIZE)*((dir&1)*2)	\
+     +sysconf(_SC_PAGE_SIZE)*(map&1) )
 
 
-#define swIdx_add( add, chn, dir )				\
+#define idx_add( idx, add, chn, dir )				 \
     ({unsigned num_buffs=mu2e_channel_info_[chn][dir].num_buffs; \
-	unsigned idx=mu2e_channel_info_[chn][dir].swIdx;			\
 	(add<0)								\
 	    ?(((unsigned)-add>idx)					\
 	      ?(num_buffs-(-add-idx))%num_buffs		\
@@ -164,6 +165,7 @@ enum { MU2E_MAP_BUFF, MU2E_MAP_META };
 typedef struct
 {   int chn;
     int dir;
+    int	tmo_ms;
     unsigned buff_size;
     unsigned num_buffs;
     unsigned hwIdx;

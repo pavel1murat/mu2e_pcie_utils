@@ -115,20 +115,26 @@ static unsigned long mu2e_ch_reg_offset[2][2] ={ {0x2000,0x0}, {0x2100,0x100} };
 #endif
 
 
-#define descAdr2idx( regval, chn, dir ) \
+#define descDmaAdr2idx( regval, chn, dir ) \
     (dir == C2S)					\
-    ? ( (regval-mu2e_pci_recver[chn].buffdesc_ring_dma) \
-       /sizeof(mu2e_buffdesc_C2S_t) )			\
-    : ( (regval-mu2e_pci_sender[chn].buffdesc_ring_dma) \
-	       /sizeof(mu2e_buffdesc_S2C_t) )
+    ? ( (u32)(regval-mu2e_pci_recver[chn].buffdesc_ring_dma) \
+       /(u32)sizeof(mu2e_buffdesc_C2S_t) )		\
+    : ( (u32)(regval-mu2e_pci_sender[chn].buffdesc_ring_dma) \
+       /(u32)sizeof(mu2e_buffdesc_S2C_t) )
 
-    //
-#define idx2descAdr( idx, chn, dir ) \
+#define idx2descDmaAdr( idx, chn, dir ) \
     (dir == C2S)					\
     ? ( (u32)mu2e_pci_recver[chn].buffdesc_ring_dma		\
        +(u32)sizeof(mu2e_buffdesc_C2S_t)*idx )		\
     : ( (u32)mu2e_pci_sender[chn].buffdesc_ring_dma		\
        +(u32)sizeof(mu2e_buffdesc_S2C_t)*idx )
+
+#define idx2descVirtAdr( idx, chn, dir ) \
+    ((dir == C2S)						\
+     ? (void*)( (ulong)mu2e_pci_recver[chn].buffdesc_ring		\
+	       +sizeof(mu2e_buffdesc_C2S_t)*idx )			\
+     : (void*)( (ulong)mu2e_pci_sender[chn].buffdesc_ring		\
+	       +sizeof(mu2e_buffdesc_S2C_t)*idx ) )
 
 
 /** @name Device register offset definitions. Register access is 32-bit.
@@ -144,9 +150,9 @@ static unsigned long mu2e_ch_reg_offset[2][2] ={ {0x2000,0x0}, {0x2100,0x100} };
 
 #define REG_DMA_ENG_CAP         0x00000000  /**< DMA Engine Capabilities */
 #define REG_DMA_ENG_CTRL_STATUS 0x00000004  /**< DMA Engine Control */
-#define REG_DMA_ENG_NEXT_BD     0x00000008  /**< HW Next desc pointer */
+#define REG_HW_NEXT_BD          0x00000008  /**< HW Next desc pointer */
 #define REG_SW_NEXT_BD          0x0000000C  /**< SW Next desc pointer */
-#define REG_DMA_ENG_LAST_BD     0x00000010  /**< HW Last completed pointer */
+#define REG_HW_CMPLT_BD        0x00000010  /**< HW Last completed pointer */
 #define REG_DMA_ENG_ACTIVE_TIME 0x00000014  /**< DMA Engine Active Time */
 #define REG_DMA_ENG_WAIT_TIME   0x00000018  /**< DMA Engine Wait Time */
 #define REG_DMA_ENG_COMP_BYTES  0x0000001C  /**< DMA Engine Completed Bytes */

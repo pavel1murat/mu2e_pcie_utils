@@ -84,9 +84,12 @@ all: $(executables)
 # Note: "objects" can be controlled: make hello objects=hello.o
 #$(executables): $(objects)
 
+mu2e_main: mu2e_main.o mu2edev.o
+	$(CXX) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
+
 tags:
-	#find . -name '*.[ch]' | etags --ignore-indentation --no-defines -
 	find . -name '*.[ch]' -o -name '*.cc' | ctags -e -L -
+#	find . -name '*.[ch]' | etags --ignore-indentation --no-defines -
 
 clean:
 	rm -f $(executables) $(exeobjs) $(objects) *~ mk.dep *.d
