@@ -24,7 +24,7 @@ PWD := $(shell pwd)
 	$(MAKE) -C $(KDIR) M=$(PWD) $@
 
 all default:
-	$(MAKE) -C $(KDIR) M=$(PWD)
+	$(MAKE) -C $(KDIR) M=$(PWD) CFLAGS_MODULE=-I$(PWD)/../include
 
 .PHONY: /
 /:

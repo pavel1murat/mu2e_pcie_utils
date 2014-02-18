@@ -6,4 +6,6 @@
  # rev="$Revision: 1.1 $$Date: 2014/01/26 18:28:39 $";
 
 obj-m := TRACE.o
+#ccflags-y := -I$(src)/../include
 TRACE-y := trace_.o
+
