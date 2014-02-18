@@ -8,7 +8,7 @@
 
 #include <linux/pci.h>		/* pci_* */
 
-#include "../trace/trace.h"	/* TRACE */
+#include "../include/trace.h"	/* TRACE */
 #include "mu2e_mmap_ioctl.h"	/* C2S */
 #include "xdma_hw.h"		/* Dma_mIntDisable nests xio.h -> xbasic_types.h */
 #include "mu2e_pci.h"

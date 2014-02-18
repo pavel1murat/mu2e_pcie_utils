@@ -10,7 +10,7 @@
  */
 
 #define TRACE_NAME "MU2EDEV"
-#include "../trace/trace.h"
+#include "../include/trace.h"
 #include "../mymodule/mu2e_mmap_ioctl.h" // MU2E_DEV_FILE, M_IOC_*, etc
 #include "mu2edev.hh"
 

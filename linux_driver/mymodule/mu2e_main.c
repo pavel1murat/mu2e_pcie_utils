@@ -15,7 +15,7 @@
 
 #include "xdma_hw.h"		/* struct BuffDesc */
 
-#include "../trace/trace.h"	/* TRACE */
+#include "../include/trace.h"	/* TRACE */
 #include "mu2e_fs.h"
 #include "mu2e_pci.h"		/* bar_info_t, extern mu2e_pci*  */
 #include "mu2e_event.h"
@@ -55,7 +55,7 @@ int mu2e_mmap( struct file *file, struct vm_area_struct *vma )
     int           sts;
 
     page2chDirMap( vma->vm_pgoff, ch, dir, map );
-    TRACE( 1, "mu2e_mmap: vm_pgoff:%u ch:%d dir:%d map:%d: %p"
+    TRACE( 1, "mu2e_mmap: vm_pgoff:%lu ch:%d dir:%d map:%d: %p"
 	  , vma->vm_pgoff, ch, dir, map, mu2e_mmap_ptrs[ch][dir][map] );
     if (map == MU2E_MAP_META)
 	vma->vm_flags&=~VM_WRITE;

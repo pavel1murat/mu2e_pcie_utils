@@ -21,14 +21,14 @@ PARENT_DIR := $(shell dirname $(PWD))
 #           make TRACE.ko
 # Ref. Documentation/kbuild/modules.txt
 %.o %.lst %.ko:
-	$(MAKE) -C $(KDIR) M=$(PWD) $@
+	$(MAKE) -C $(KDIR) M=$(PWD) CFLAGS_MODULE=-I$(PWD)/../include $@
 
 all default:
-	$(MAKE) -C $(KDIR) M=$(PWD) KBUILD_EXTRA_SYMBOLS=$(PARENT_DIR)/trace/Module.symvers
+	$(MAKE) -C $(KDIR) M=$(PWD) CFLAGS_MODULE=-I$(PWD)/../include KBUILD_EXTRA_SYMBOLS=$(PARENT_DIR)/trace/Module.symvers
 
-.PHONY: /
-/:
-	$(MAKE) -C $(KDIR) M=$(PWD) $@
+#.PHONY: /
+#/:
+#	$(MAKE) -C $(KDIR) M=$(PWD) $@
 
 # After testing with just "insmod TRACE.ko". Of course, this needs to be done
 # as user root.

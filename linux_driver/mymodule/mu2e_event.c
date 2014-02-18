@@ -10,7 +10,7 @@
 #include <linux/mm.h>
 
 #include "xdma_hw.h"		/* S2C, C2S, Dma_mReadChReg, Dma_mWriteReg */
-#include "../trace/trace.h"	/* TRACE */
+#include "../include/trace.h"	/* TRACE */
 #include "mu2e_proto_globals.h"	/* mu2e_channel_info */
 #include "mu2e_pci.h"		/* bar_info_t, extern mu2e_pci*  */
 #include "mu2e_event.h"

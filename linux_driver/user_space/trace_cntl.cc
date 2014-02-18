@@ -17,11 +17,8 @@ done
 #include <sys/time.h>           /* gettimeofday, struct timeval */
 #include <pthread.h>		/* pthread_self */
 #include <sys/syscall.h>	/* syscall */
-#ifndef   VA_PARSE_ARGS
-# include "../trace/trace.h"
-#else
-# include "Trace_mmap2.h"
-#endif
+
+#include "../include/trace.h"
 
 #define NUMTHREADS 4
 
