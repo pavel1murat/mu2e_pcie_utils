@@ -21,10 +21,10 @@ PARENT_DIR := $(shell dirname $(PWD))
 #           make TRACE.ko
 # Ref. Documentation/kbuild/modules.txt
 %.o %.lst %.ko:
-	$(MAKE) -C $(KDIR) M=$(PWD) CFLAGS_MODULE=-I$(PWD)/../include $@
+	$(MAKE) -C $(KDIR) M=$(PWD) EXTRA_CFLAGS=-I$(PWD)/../include $@
 
 all default:
-	$(MAKE) -C $(KDIR) M=$(PWD) CFLAGS_MODULE=-I$(PWD)/../include KBUILD_EXTRA_SYMBOLS=$(PARENT_DIR)/trace/Module.symvers
+	$(MAKE) -C $(KDIR) M=$(PWD) EXTRA_CFLAGS=-I$(PWD)/../include KBUILD_EXTRA_SYMBOLS=$(PARENT_DIR)/trace/Module.symvers
 
 #.PHONY: /
 #/:
