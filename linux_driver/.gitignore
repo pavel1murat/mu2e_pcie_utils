@@ -1,0 +1,12 @@
+*.cmd
+*.mod.*
+*.o
+*.ko
+*.ko.unsigned
+Module.symvers
+modules.order
+.tmp_versions
+*.d
+mu2e_main
+my_cntl
+trace_cntl
