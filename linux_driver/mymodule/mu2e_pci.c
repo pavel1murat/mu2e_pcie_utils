@@ -23,7 +23,9 @@ static struct pci_device_id xilinx_ids[] = {
 };
 
 
-static void ReadDMAEngineConfiguration(  struct pci_dev * pdev
+/* Return 0==SUCCESS, 1=FAIL
+ */
+static int ReadDMAEngineConfiguration(  struct pci_dev * pdev
 				       /*, struct privData * dmaInfo*/ )
 {
     unsigned long base, reg_offset;
@@ -39,7 +41,7 @@ static void ReadDMAEngineConfiguration(  struct pci_dev * pdev
     printk(KERN_INFO "Hardware design version %x from %lx\n", Hardware_design_version, base );
     if (Hardware_design_version == 0xffffffff)
     {   printk(KERN_ERR "ReadDMAEngineConfiguration: Invalid Hardware_design_version 0x%x\n", Hardware_design_version );
-	return;
+	return (1);
     }
 
     /* Walk through the capability register of all DMA engines */
@@ -77,6 +79,7 @@ static void ReadDMAEngineConfiguration(  struct pci_dev * pdev
             }
         }
     }
+    return (0);
 }   // ReadDMAEngineConfiguration
 
 
@@ -153,13 +156,15 @@ static int __devinit mu2e_pci_probe(  struct pci_dev             *pdev
     Dma_mWriteReg( mu2e_pcie_bar_info.baseVAddr, 0x9208, 0 );
 
     /* Read DMA engine configuration and initialise data structures */
-    ReadDMAEngineConfiguration( pdev/*, dmaData*/ );
+    if (ReadDMAEngineConfiguration( pdev/*, dmaData*/ ) != 0)
+	goto out2;
 
     mu2e_pci_dev = pdev;   /* GLOBAL */
 
     return (0);			/* SUCCESS */
 
  out2:
+    printk( "mu2e_pci_probe - out2\n" );
     pci_release_regions( pdev );
     pci_disable_device( pdev );
     return (1);		/* error */
@@ -168,9 +173,13 @@ static int __devinit mu2e_pci_probe(  struct pci_dev             *pdev
 
 static void __devexit  mu2e_pci_remove(struct pci_dev *pdev)
 {
+    printk( "mu2e_pci_remove start\n ");
     pci_release_regions( pdev );
+    printk( "mu2e_pci_remove after release_regions, before disable_device\n" );
     pci_disable_device( pdev );
+    printk( "mu2e_pci_remove after disable_device, before set_drvdata\n" );
     pci_set_drvdata( pdev, NULL );
+    printk( "mu2e_pci_remove complete\n" );
 }   // mu2e_remove
 
 
@@ -193,3 +202,5 @@ void mu2e_pci_down( void )
 {
     pci_unregister_driver( &mu2e_driver );
 }   // mu2e_pci_down
+
+
