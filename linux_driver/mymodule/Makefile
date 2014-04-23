@@ -15,6 +15,7 @@
 KDIR ?= /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)
 PARENT_DIR := $(shell dirname $(PWD))
+KBUILD_EXTRA_SYMBOLS=$(PARENT_DIR)/trace/Module.symvers
 
 # to allow: make trace_proc.lst    # not working?
 #           make trace_proc.o
@@ -24,7 +25,7 @@ PARENT_DIR := $(shell dirname $(PWD))
 	$(MAKE) -C $(KDIR) M=$(PWD) EXTRA_CFLAGS=-I$(PWD)/../include $@
 
 all default:
-	$(MAKE) -C $(KDIR) M=$(PWD) EXTRA_CFLAGS=-I$(PWD)/../include KBUILD_EXTRA_SYMBOLS=$(PARENT_DIR)/trace/Module.symvers
+	$(MAKE) -C $(KDIR) M=$(PWD) EXTRA_CFLAGS=-I$(PWD)/../include KBUILD_EXTRA_SYMBOLS=$(KBUILD_EXTRA_SYMBOLS)
 
 #.PHONY: /
 #/:
