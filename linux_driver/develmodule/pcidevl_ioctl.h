@@ -5,8 +5,8 @@
  // $RCSfile: .emacs.gnu,v $
  // rev="$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
 
-#ifndef DVL_IOCTL_H
-#define DVL_IOCTL_H
+#ifndef DEVL_IOCTL_H
+#define DEVL_IOCTL_H
 
 #ifdef __KERNEL__
 # include <asm/ioctl.h>		// _IOWR
@@ -34,8 +34,8 @@ NOTE: for _IOR, _IOW: the size is only for the data at the address used in the
       large buffer, the only thing that these macros should consider is the
       pointer used (directly) in the ioctl call. 
  */
-#define DVL_IOC_MAGIC 'D'
+#define DEVL_IOC_MAGIC 'D'
 
 
 
-#endif // DVL_IOCTL_H
+#endif // DEVL_IOCTL_H
