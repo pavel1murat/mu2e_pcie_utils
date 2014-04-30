@@ -36,6 +36,14 @@ NOTE: for _IOR, _IOW: the size is only for the data at the address used in the
  */
 #define DEVL_IOC_MAGIC 'D'
 
+#define IOC_HELLO	_IO  ( DEVL_IOC_MAGIC,14 )
 
+#define IOC_REGISTER	_IO  ( DEVL_IOC_MAGIC,15 )
+#define IOC_UNREGISTER	_IO  ( DEVL_IOC_MAGIC,16 )
+
+#define IOC_IOREMAP	_IO  ( DEVL_IOC_MAGIC,17 )
+#define IOC_IOUNMAP	_IO  ( DEVL_IOC_MAGIC,18 )
+
+#define IOC_UINT32	_IOWR( DEVL_IOC_MAGIC,18, uint32_t )
 
 #endif // DEVL_IOCTL_H

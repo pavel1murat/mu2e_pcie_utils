@@ -37,7 +37,7 @@ static int ReadDMAEngineConfiguration(  struct pci_dev * pdev
     /* DMA registers are offset from BAR0 */
     base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
 
-    Hardware_design_version = XIo_In32(base+0x8000);
+    Hardware_design_version = XIo_In32(base+0x9000);
     printk(KERN_INFO "Hardware design version %x from %lx\n", Hardware_design_version, base );
     if (Hardware_design_version == 0xffffffff)
     {   printk(KERN_ERR "ReadDMAEngineConfiguration: Invalid Hardware_design_version 0x%x\n", Hardware_design_version );

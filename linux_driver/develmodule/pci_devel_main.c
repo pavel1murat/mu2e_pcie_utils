@@ -20,6 +20,11 @@
 
 #include "pcidevl_ioctl.h"	/* PCIDEVL_DEV_FILE */
 
+#define DRIVER_NAME      "devl_driver"
+#define XILINX_VENDOR_ID 0x10ee
+#define XILINX_DEVICE_ID 0x7042
+
+
 /* GLOBALS */
 
 struct pci_dev *pci_dev_sp=0;
@@ -30,17 +35,101 @@ typedef struct
     void __iomem * baseVAddr;   /**< VA - mapped address */
 } bar_info_t;
 
-bar_info_t      pcie_bar_info;
+bar_info_t      pcie_bar_info={0};
 
 
 //////////////////////////////////////////////////////////////////////////////
+
+
+static int devl_pci_probe( struct pci_dev *pdev, const struct pci_device_id *ent )
+{
+    int pciRet;
+
+    TRACE( 6, "devl_pci_probe pdev=%p", pdev );
+    /* Initialize device before it is used by driver. Ask low-level
+     * code to enable I/O and memory. Wake up the device if it was
+     * suspended. Beware, this function can fail.
+     */
+    pciRet = pci_enable_device( pdev );
+    if (pciRet < 0)
+    {
+        TRACE( 0, KERN_ERR "PCI device enable failed." );
+        return (pciRet);
+    }
+
+    /*
+     * Enable bus-mastering on device. Calls pcibios_set_master() to do
+     * the needed architecture-specific settings.
+     */
+    pci_set_master( pdev );
+
+    pciRet = pci_request_regions( pdev, DRIVER_NAME );
+    if (pciRet < 0)
+    {   TRACE( 0, KERN_ERR "Could not request PCI regions." );
+        pci_disable_device( pdev );
+        return (pciRet);
+    }
+
+    pciRet = pci_set_dma_mask( pdev, DMA_32BIT_MASK );
+    if (pciRet < 0)
+    {   TRACE( 0, KERN_ERR "pci_set_dma_mask failed." );
+        goto out2;
+    }
+
+    pci_dev_sp = pdev;		/* GLOBAL */
+    return (0);
+
+ out2:
+    TRACE( 0, "devl_pci_probe - out2" );
+    pci_release_regions( pdev );
+    pci_disable_device( pdev );
+    return (1);         /* error */
+}   // devl_pci_probe
+
+static void devl_pci_remove(struct pci_dev *pdev)
+{
+    TRACE( 6, "devl_pci_remove start pdev=%p", pdev );
+    pci_release_regions( pdev );
+    TRACE( 6, "devl_pci_remove after release_regions, before disable_device" );
+    pci_disable_device( pdev );
+    TRACE( 6, "devl_pci_remove complete" );
+}   // devl_remove
+
+
+static struct pci_device_id xilinx_ids[] = {
+    { XILINX_VENDOR_ID, XILINX_DEVICE_ID, PCI_ANY_ID,PCI_ANY_ID,0,0,0UL },
+    { }     /* terminate list with empty entry */
+};
+
+static struct pci_driver devl_driver =
+    {   .name     = DRIVER_NAME,
+        .id_table = xilinx_ids,
+        .probe    =             devl_pci_probe,
+        .remove   = __devexit_p(devl_pci_remove)
+    };
+
+void devl_pci_down( void )
+{
+    if (pcie_bar_info.baseVAddr != 0)
+    {   TRACE( 6, "devl_pci_down - iounmap( pcie_bar_info.baseVAddr )" );
+	iounmap( pcie_bar_info.baseVAddr );
+	pcie_bar_info.baseVAddr = 0;
+    }
+    if (pci_dev_sp == 0)
+	TRACE( 6, "devl_pci_down - pci_unregister - device NOT registered" );
+    else
+    {   pci_dev_sp =  0;
+	pci_unregister_driver( &devl_driver );
+	TRACE( 6, "devl_pci_down - pci_unregister called" );
+    }
+}   // devl_pci_down
 
 
 
 int devl_ioctl(  struct inode *inode, struct file *filp
 	       , unsigned int cmd, unsigned long arg )
 {
-    unsigned long       base;
+    int			sts=0;
 
     if(_IOC_TYPE(cmd) != DEVL_IOC_MAGIC) return -ENOTTY;
 
@@ -52,16 +141,78 @@ int devl_ioctl(  struct inode *inode, struct file *filp
         if(!access_ok(VERIFY_READ, (void *)arg, _IOC_SIZE(cmd)))
             return -EFAULT;
 
-    /* DMA registers are offset from BAR0 */
-    base = (unsigned long)(pcie_bar_info.baseVAddr);
-
     switch(cmd)
     {
+    case IOC_HELLO:
+	TRACE( 6, "devl_ioctl - hello" );
+	break;
+    case IOC_REGISTER:
+	if (pci_dev_sp == 0)
+	{   sts = pci_register_driver( &devl_driver );
+	    TRACE( 6, "devl_ioctl - pci_register=%d", sts );
+	}
+	else
+	    TRACE( 6, "devl_ioctl - already registered" );
+	break;
+    case IOC_UNREGISTER:
+	devl_pci_down();
+	break;
+    case IOC_IOREMAP:
+	if (pci_dev_sp == 0)
+	{   TRACE( 6, "devl_ioctl - IOREMAP first need to register" );
+	    sts = pci_register_driver( &devl_driver );
+	    TRACE( 6, "devl_ioctl - pci_register=%d", sts );
+	}
+	if (sts == 0)
+	{   u32 size;
+	    if ((size=pci_resource_len(pci_dev_sp,0/*bar*/)) == 0)
+	    {   TRACE( 1, KERN_ERR "BAR 0 not valid, aborting." );
+		return (-1);
+	    }
+	    if (!(pci_resource_flags(pci_dev_sp,0/*bar*/) & IORESOURCE_MEM))
+	    {   TRACE( 1, KERN_ERR "BAR 0 is of wrong type, aborting." );
+		return (-1);
+	    }
+	    pcie_bar_info.basePAddr = pci_resource_start( pci_dev_sp, 0/*bar*/ );
+	    pcie_bar_info.baseLen   = size;
+
+	    pcie_bar_info.baseVAddr = ioremap( pcie_bar_info.basePAddr, size );
+	    if (pcie_bar_info.baseVAddr == 0UL)
+	    {   TRACE( 1, KERN_ERR "Cannot map BAR 0 space, invalidating." );
+		return (-1);
+	    }
+	    TRACE( 6, "devl_ioctl - IOREMAP - pcie_bar_info.baseVAddr=%p len=%u"
+		  , pcie_bar_info.baseVAddr, size );
+	}
+	break;
+    case IOC_IOUNMAP:
+	if (pcie_bar_info.baseVAddr == 0)
+	    TRACE( 6, "nothing to unmap" );
+	else
+	{   TRACE( 6, "iounmap-ing %p", pcie_bar_info.baseVAddr );
+	    iounmap( pcie_bar_info.baseVAddr );
+	    pcie_bar_info.baseVAddr  = 0;
+	}
+	break;
+    case IOC_UINT32:
+	if (pcie_bar_info.baseVAddr == 0)
+	    sts =devl_ioctl( inode, filp, IOC_IOREMAP, 0 );
+	if (sts == 0)
+	{   u32 off, val;
+	    ulong base=(ulong)pcie_bar_info.baseVAddr;
+	    if (get_user(off, (u32 __user *)arg))
+		return -EFAULT;
+	    base+=off;
+	    val = *(u32*)base;
+	    TRACE( 7, "reading base(%p) + offset(%u/0x%x) = 0x%08x"
+		  , pcie_bar_info.baseVAddr, off, off, val );
+	    return put_user( val, (u32 __user *)arg );
+	}
     default:
-	TRACE( 10, "devl_ioctl: unknown cmd" );
+	TRACE( 0, "devl_ioctl: unknown cmd" );
 	return (-1); // some error
     }
-    return (0);
+    return (sts);
 }   // devl_ioctl
 
 
@@ -154,8 +305,10 @@ static void __exit exit_devl(void)
 {
     TRACE( 1, "exit_devl() called");
 
+    devl_pci_down();
 
     devl_fs_down();
+
 }   // exit_devl
 
 
