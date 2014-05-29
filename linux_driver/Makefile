@@ -12,8 +12,8 @@ all::
 	$(MAKE) -C xrawdata1 KBUILD_EXTRA_SYMBOLS="$$PWD/xdma/Module.symvers $$PWD/trace/Module.symvers"
 	@echo "***** Driver Compiled *****"
 
-.PHONY: trace mymodule user_space
-trace mymodule user_space:
+.PHONY: trace mymodule user_space develmodule develuser
+trace mymodule user_space develmodule develuser:
 	$(MAKE) -C $@
 
 clean::

@@ -6,6 +6,22 @@
  # rev="$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
 
 
+CFLAGS=-I${TRACE_INC} -I${MU2E_PCIE_INC}
 
-mcs: msc.cc
-	$(CC) -o mcs mcs.cc
+# build depends for main exe (not .o file)
+%.d: %.cc
+	set -e; rm -f $@; \
+	$(CXX) -MM $(CFLAGS) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1 $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+mainre       = '(^| |   )main\ *\('
+c++exesrc   := $(shell egrep -l $(mainre) *.cc 2>/dev/null)
+include $(c++exesrc:.cc=.d)
+
+mcs: mcs.cc
+	$(CXX) -std=c++0x ${CFLAGS} -Wall -pedantic -g -o mcs mcs.cc
+
+
+clean:
+	rm -f mcs mcs.[od]

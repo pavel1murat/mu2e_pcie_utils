@@ -196,8 +196,9 @@ int devl_ioctl(  struct inode *inode, struct file *filp
 	break;
     case IOC_UINT32:
 	if (pcie_bar_info.baseVAddr == 0)
-	    sts =devl_ioctl( inode, filp, IOC_IOREMAP, 0 );
-	if (sts == 0)
+	{   sts =devl_ioctl( inode, filp, IOC_IOREMAP, 0 );
+	    if (sts != 0) { return -1; }
+	}
 	{   u32 off, val;
 	    ulong base=(ulong)pcie_bar_info.baseVAddr;
 	    if (get_user(off, (u32 __user *)arg))
@@ -208,6 +209,27 @@ int devl_ioctl(  struct inode *inode, struct file *filp
 		  , pcie_bar_info.baseVAddr, off, off, val );
 	    return put_user( val, (u32 __user *)arg );
 	}
+	break;
+    case IOC_IOOP:
+	if (pcie_bar_info.baseVAddr == 0)
+	{   sts =devl_ioctl( inode, filp, IOC_IOREMAP, 0 );
+	    if (sts != 0) { return -1; }
+	}
+	{   struct ioc_ioop ioop;
+	    ulong addr=(ulong)pcie_bar_info.baseVAddr;
+	    if (copy_from_user( &ioop, (void*)arg, sizeof(struct ioc_ioop) ))
+	    {   TRACE( 0, "devl_ioctl IOC_IOOP: copy_from_user failed" );
+		return -EFAULT;
+	    }
+	    addr += ioop.offset;
+	    if (ioop.ops_mask & ioop_write) *(u32*)addr   = ioop.write_val;
+	    if (ioop.ops_mask & ioop_read)  ioop.read_val = *(u32*)addr;
+	    if (copy_to_user( (void*)arg, &ioop, sizeof(struct ioc_ioop) ))
+	    {   TRACE( 0, "devl_ioctl IOC_IOOP: copy_to_user failed" );
+		return -EFAULT;
+	    }
+	}
+	break;
     default:
 	TRACE( 0, "devl_ioctl: unknown cmd" );
 	return (-1); // some error

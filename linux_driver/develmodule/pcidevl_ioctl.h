@@ -16,10 +16,7 @@
 # include <unistd.h>		// sysconf
 #endif
 
-
 #define PCIDEVL_DEV_FILE       "pcidev"
-
-
 /*
  For _IO,_IOR,_IOW,_IORW ref. Documentation/ioctl/ioctl-number.txt
  _IO   - implementation has neither copy_from nor copy_to user (or equivalents)
@@ -45,5 +42,18 @@ NOTE: for _IOR, _IOW: the size is only for the data at the address used in the
 #define IOC_IOUNMAP	_IO  ( DEVL_IOC_MAGIC,18 )
 
 #define IOC_UINT32	_IOWR( DEVL_IOC_MAGIC,18, uint32_t )
+
+enum ioc_ioop_ops
+    { ioop_read  = 0x1,
+      ioop_write = 0x2
+    };
+struct ioc_ioop
+{   uint32_t offset;  /* register offset */
+    enum ioc_ioop_ops ops_mask;
+    uint32_t write_val;
+    uint32_t read_val;
+};
+
+#define IOC_IOOP        _IOWR( DEVL_IOC_MAGIC,19, struct ioc_ioop )
 
 #endif // DEVL_IOCTL_H
