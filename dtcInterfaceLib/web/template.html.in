@@ -1,0 +1,157 @@
+<!DOCTYPE html><html>
+<head>
+<title>DTC Node.js Interface</title>
+</head>
+<script type="text/javascript" src="jquery.min.js"></script>
+<script type="text/javascript">
+var oldbase = 16;
+// Define a method that handles nothing but the actual
+// form population. This helps us decouple the data
+// insertion from the data retrieval.
+function PopulateValueBox( value, base ){
+  $( "#value" ).val( parseInt(value,16).toString(base) );
+}
+
+// I take the given option selection and return the
+// associated data using a remote method call.
+function GetAJAXValues( strOption, address, value, fnCallback ){
+  // Check to see if there is currently an AJAX
+  // request on this method.
+  if (GetAJAXValues.Xhr){
+    // Abort the current request.
+    GetAJAXValues.Xhr.abort();
+  }
+  // Get data via AJAX. Store the XHR (AJAX request
+  // object in the method in case we need to abort
+  // it on subsequent requests.
+  GetAJAXValues.Xhr = $.ajax({
+    type: "post",
+    url: "./dtc_registers",
+    data: {
+      option: strOption,
+      address: address,
+      value: value
+    },
+    dataType: "json",
+    // Our success handler.
+    success: function( objData ){
+      // At this point, we have data coming back
+      // from the server.
+      fnCallback({
+        Value1: objData
+      });
+    },
+    // An error handler for the request.
+    error: function(){
+      alert( "An error occurred" );
+    },
+    // I get called no matter what.
+    complete: function(){
+      // Remove completed request object.
+      GetAJAXValues.Xhr = null;
+    }
+  });
+}
+
+// I handle the updating of the form fields based on the
+// selected option of the combo box.
+function UpdateFormFields(){
+var jSelect = $( "#mode" );
+var jAddr = $( "#address" );
+var jVal = $( "#value" );
+var jBase = $( 'input[name=base]:checked' );
+var jAJAX = $( "#ajax" );
+var objData = null;
+// Check to see if we are using AJAX or static data
+// to re-populate the form.
+
+ // Make a remote call to get the remote data.
+ // Because we have to do this asynchronously,
+ // we have to provide a callback method that
+ // will hook the results up to the populate
+ // fields method.
+ GetAJAXValues(
+  jSelect.val(),
+  jAddr.val(),
+  jVal.val(),
+  // Callback method for results.
+  function( objRemoteData ){
+   PopulateValueBox(
+    objRemoteData.Value1,
+    jBase.val()
+   );
+  }
+ );
+}
+// When the DOM is ready to be interacted with, init.
+$(function(){
+// Bind the change event to the select box. We're
+// just going to hand that control off to the
+// handler method.
+  $( "#post").click(function(){
+    UpdateFormFields();
+  });
+  $( 'input[name=base]' ).change(function(){
+    var jVal = $( "#value" );
+    var jBase = $( 'input[name=base]:checked' ).val();
+    var oldval = parseInt(jVal.val(),oldbase);
+    jVal.val(oldval.toString(jBase));
+    oldbase = jBase;
+  });
+});
+</script> 
+<body>
+<form>
+<fieldset><legend>DTC Register Read/Write</legend>
+<table style="width:100%">
+<tr>
+  <td>Address</td>
+  <td><select id="address">
+    <option value="0x9000">DTC F/W Version (RO, 0x9000)</option>
+    <option value="0x900C">PCIe Tx Byte Count (RO, 0x900C)</option>
+    <option value="0x9010">PCIe Rx Byte Count (RO, 0x9010)</option>
+    <option value="0x9014">PCIe Upstream Memory Write Count (RO, 0x9014)</option>
+    <option value="0x9018">PCIe Downstream Completion Byte Count (RO, 0x9018)</option>
+    <option value="0x901C">PCIe Initial Completion Data Credits for Downstream Port (RO, 0x901C)</option>
+    <option value="0x9020">PCIe Initial Completion Header Credits for Downstream Port (RO, 0x9020)</option>
+    <option value="0x9024">PCIe Initial Non-Posted Data Credits for Downstream Port (RO, 0x9024)</option>
+    <option value="0x9028">PCIe Initial Non-Posted Header Credits for Downstream Port (RO, 0x9028)</option>
+    <option value="0x902C">PCIe Initial Posted Data Credits for Downstream Port (RO, 0x902C)</option>
+    <option value="0x9030">PCIe Initial Posted Header Credits for Downstream Port (RO, 0x9030)</option>
+    <option value="0x9100">Enable traffic generator C2S0 (0x9100)</option>
+    <option value="0x9104">Packet Length (0x9104)</option>
+    <option value="0x9108">Enable Loopback/Traffic Checker (0x9108)</option>
+    <option value="0x910C">Checker Status (RW1C, 0x910C)</option>
+    <option value="0x9100">DTC Control (0x9100)</option>
+    <option value="0x9108">SERDES Loopback Enable (0x9108)</option>
+    <option value="0x9110">ROC Emulation Enable (0x9110)</option>
+    <option value="0x9114">Ring Enable (0x9114)</option>
+    <option value="0x9118">SERDES Reset (0x9118)</option>
+    <option value="0x911C">SERDES RX Disparity Error (RO, 0x911C)</option>
+    <option value="0x9120">SERDES RX Character Not In Table Error (RO, 0x9120)</option>
+    <option value="0x9124">SERDES Unlock Error (RO, 0x9124)</option>
+    <option value="0x9128">SERDES PLL Locked (RO, 0x9128)</option>
+    <option value="0x912C">SERDES TX Buffer Status (RO, 0x912C)</option>
+    <option value="0x9130">SERDES RX Buffer Status (RO, 0x9130)</option>
+    <option value="0x9138">SERDES Reset Done (RO, 0x9138)</option>
+    <option value="0x9180">Timestamp Preset 0 (0x9180)</option>
+    <option value="0x9184">Timestamp Preset 1 (0x9184)</option>
+    <option value="0x91A0">FPGA PROM Program Data (WO, 0x91A0)</option>
+    <option value="0x91A4">FPGA PROM Program Status (RO, 0x91A4)</option>
+  </select></td>
+</tr>
+<tr>
+  <td>Value</td>
+  <td><input type="text" id="value" size="32" value=""></td>
+  <td><input type="radio" name="base" id="base" value="16" checked>Hex</td>
+  <td><input type="radio" name="base" id="base" value="10">Dec</td>
+  <td><input type="radio" name="base" id="base" value="2">Bin</td>
+</tr>
+<tr>
+  <td><select id="mode"><option value="read">Read</option><option value="write">Write</option></select></td>
+  <td><input type="button" id="post" value="Run"></td>
+</tr>
+</fieldset>
+</form>
+</body>
+</html>
