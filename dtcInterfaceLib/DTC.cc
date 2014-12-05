@@ -164,17 +164,35 @@ uint8_t DTC::DTC::ReadControlRegister()
 {
 	return ReadRegister(DTCControlRegister);
 }
+uint8_t DTC::DTC::ReadResetDTC()
+{
+        uint8_t err = ReadControlRegister();
+	std::bitset<32> data = dataWord;
+        booleanValue = data[31];
+        return err;
+}
 uint8_t DTC::DTC::ResetDTC()
 {
-	std::bitset<32> data;
+  uint8_t err = ReadControlRegister();
+  if(err != DTC_ErrorCode_Success){return err;}
+  std::bitset<32> data = dataWord;
 	data[31] = 1; // DTC Reset bit
 	return WriteControlRegister(data.to_ulong());
 }
 uint8_t DTC::DTC::ClearLatchedErrors()
 {
-	std::bitset<32> data;
+  uint8_t err = ReadControlRegister();
+  if(err != DTC_ErrorCode_Success) { return err; }
+  std::bitset<32> data = dataWord;
 	data[30] = 1; // Clear Latched Errors bit
 	return WriteControlRegister(data.to_ulong());
+}
+uint8_t DTC::DTC::ReadClearLatchedErrors() 
+{
+  uint8_t err = ReadControlRegister();
+  std::bitset<32> data = dataWord;
+  booleanValue = data[30];
+  return err;
 }
 
 uint8_t DTC::DTC::WriteSERDESLoopbackEnableRegister(uint32_t data)

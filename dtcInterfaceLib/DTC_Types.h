@@ -79,6 +79,7 @@ namespace DTC
 		void SetTimestamp(uint32_t timestampLow, uint16_t timestampHigh);
 		void GetTimestamp(uint64_t *timestamp){ *timestamp = timestamp_; }
 		void GetTimestamp(uint8_t* arr);
+                uint64_t GetTimestamp(bool output) { if(output) return timestamp_; return 0;}
 		std::bitset<48> GetTimestamp() { return timestamp_; }
 
 	};
@@ -215,7 +216,7 @@ namespace DTC
 
 		void SetData(std::bitset<2> data) { data_ = data; }
 		std::bitset<2> GetData() { return data_; }
-		void GetData(int *out) { *out = static_cast<int>(data_.to_ulong()); }
+		int GetData(bool output) { if(output) return static_cast<int>(data_.to_ulong()); return 0;}
 	};
 
 	class DTC_CharacterNotInTableError {
@@ -234,7 +235,7 @@ namespace DTC
 
 		void SetData(std::bitset<2> data) { data_ = data; }
 		std::bitset<2> GetData() { return data_; }
-		void GetData(int *out) { *out = static_cast<int>(data_.to_ulong()); }
+		int GetData(bool output) { if(output) return static_cast<int>(data_.to_ulong()); return 0; }
 	};
 
 	struct DTC_SERDESRXBufferStatus {

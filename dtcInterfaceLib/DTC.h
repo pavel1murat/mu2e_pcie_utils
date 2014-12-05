@@ -67,7 +67,9 @@ namespace DTC {
 
 	public:
 		uint8_t ResetDTC();
+                uint8_t ReadResetDTC();
 		uint8_t ClearLatchedErrors();
+                uint8_t ReadClearLatchedErrors();
 
 		uint8_t EnableSERDESLoopback(const uint8_t ring);
 		uint8_t DisableSERDESLoopback(const uint8_t ring);
