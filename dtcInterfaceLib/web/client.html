@@ -67,42 +67,42 @@
   <td><input type="text" id="dtcVersion" size="8" value=""></td>
 </tr>
 <tr>
-  <td>DTC Reset</td><td><canvas id="dtcResetLED" width="20" height="10"></canvas></td>
-  <td>Clear Errors</td><td><canvas id="clearErrorsLED" width="20" height="10"></canvas></td>
+  <td>DTC Reset</td><td><canvas id="dtcResetLED" width="20" height="10" onclick="AjaxPost('./DTC/resetDTC',null)"></canvas></td>
+  <td>Clear Errors</td><td><canvas id="clearErrorsLED" width="20" height="10" onclick="AjaxPost('./DTC/clearLatchedErrors',null)"></canvas></td>
 </tr>
 <tr>
-  <td>ROC Emulator</td><td><canvas id="ROCEmulatorEnabledLED" width="20" height="10"></canvas></td>
+  <td>ROC Emulator</td><td><canvas id="ROCEmulatorEnabledLED" width="20" height="10" onclick="AjaxPost('./toggleROCEmulator',null)"></canvas></td>
 </tr>
 </table>
 </fieldset>
 <fieldset><legend>Ring Enable</legend>
 <table>
-  <tr><td>Ring 0</td><td><canvas id="Ring0EnabledLED" width="20" height="10"></canvas></td></tr>
-  <tr><td>Ring 1</td><td><canvas id="Ring1EnabledLED" width="20" height="10"></canvas></td></tr>
-  <tr><td>Ring 2</td><td><canvas id="Ring2EnabledLED" width="20" height="10"></canvas></td></tr>
-  <tr><td>Ring 3</td><td><canvas id="Ring3EnabledLED" width="20" height="10"></canvas></td></tr>
-  <tr><td>Ring 4</td><td><canvas id="Ring4EnabledLED" width="20" height="10"></canvas></td></tr>
-  <tr><td>Ring 5</td><td><canvas id="Ring5EnabledLED" width="20" height="10"></canvas></td></tr>
+  <tr><td>Ring 0</td><td><canvas id="Ring0EnabledLED" width="20" height="10" onclick="AjaxPost('./DTC/toggleRingEnabled', 0)"></canvas></td></tr>
+  <tr><td>Ring 1</td><td><canvas id="Ring1EnabledLED" width="20" height="10" onclick="AjaxPost('./DTC/toggleRingEnabled', 1)"></canvas></td></tr>
+  <tr><td>Ring 2</td><td><canvas id="Ring2EnabledLED" width="20" height="10" onclick="AjaxPost('./DTC/toggleRingEnabled', 2)"></canvas></td></tr>
+  <tr><td>Ring 3</td><td><canvas id="Ring3EnabledLED" width="20" height="10" onclick="AjaxPost('./DTC/toggleRingEnabled', 3)"></canvas></td></tr>
+  <tr><td>Ring 4</td><td><canvas id="Ring4EnabledLED" width="20" height="10" onclick="AjaxPost('./DTC/toggleRingEnabled', 4)"></canvas></td></tr>
+  <tr><td>Ring 5</td><td><canvas id="Ring5EnabledLED" width="20" height="10" onclick="AjaxPost('./DTC/toggleRingEnabled', 5)"></canvas></td></tr>
 </table>
 </fieldset>
 <fieldset><legend>SERDES Loopback Enable</legend>
 <table>
-  <tr><td>Ring 0</td><td><canvas id="SERDESLoopbackRing0LED" width="20" height="10"></canvas></td></tr>
-  <tr><td>Ring 1</td><td><canvas id="SERDESLoopbackRing1LED" width="20" height="10"></canvas></td></tr>
-  <tr><td>Ring 2</td><td><canvas id="SERDESLoopbackRing2LED" width="20" height="10"></canvas></td></tr>
-  <tr><td>Ring 3</td><td><canvas id="SERDESLoopbackRing3LED" width="20" height="10"></canvas></td></tr>
-  <tr><td>Ring 4</td><td><canvas id="SERDESLoopbackRing4LED" width="20" height="10"></canvas></td></tr>
-  <tr><td>Ring 5</td><td><canvas id="SERDESLoopbackRing5LED" width="20" height="10"></canvas></td></tr>
+  <tr><td>Ring 0</td><td><canvas id="SERDESLoopbackRing0LED" width="20" height="10" onclick="AjaxPost('./DTC/toggleSERDESLoopback', 0)"></canvas></td></tr>
+  <tr><td>Ring 1</td><td><canvas id="SERDESLoopbackRing1LED" width="20" height="10" onclick="AjaxPost('./DTC/toggleSERDESLoopback', 1)"></canvas></td></tr>
+  <tr><td>Ring 2</td><td><canvas id="SERDESLoopbackRing2LED" width="20" height="10" onclick="AjaxPost('./DTC/toggleSERDESLoopback', 2)"></canvas></td></tr>
+  <tr><td>Ring 3</td><td><canvas id="SERDESLoopbackRing3LED" width="20" height="10" onclick="AjaxPost('./DTC/toggleSERDESLoopback', 3)"></canvas></td></tr>
+  <tr><td>Ring 4</td><td><canvas id="SERDESLoopbackRing4LED" width="20" height="10" onclick="AjaxPost('./DTC/toggleSERDESLoopback', 4)"></canvas></td></tr>
+  <tr><td>Ring 5</td><td><canvas id="SERDESLoopbackRing5LED" width="20" height="10" onclick="AjaxPost('./DTC/toggleSERDESLoopback', 5)"></canvas></td></tr>
 </table>
 </fieldset>
 <fieldset><legend>SERDES Reset</legend>
 <table>
-  <tr><td>Ring 0</td><td><canvas id="SERDESResetRing0LED" width="20" height="10"></canvas></td></tr>
-  <tr><td>Ring 1</td><td><canvas id="SERDESResetRing1LED" width="20" height="10"></canvas></td></tr>
-  <tr><td>Ring 2</td><td><canvas id="SERDESResetRing2LED" width="20" height="10"></canvas></td></tr>
-  <tr><td>Ring 3</td><td><canvas id="SERDESResetRing3LED" width="20" height="10"></canvas></td></tr>
-  <tr><td>Ring 4</td><td><canvas id="SERDESResetRing4LED" width="20" height="10"></canvas></td></tr>
-  <tr><td>Ring 5</td><td><canvas id="SERDESResetRing5LED" width="20" height="10"></canvas></td></tr>
+  <tr><td>Ring 0</td><td><canvas id="SERDESResetRing0LED" width="20" height="10" onclick="AjaxPost('./DTC/resetSERDES', 0)"></canvas></td></tr>
+  <tr><td>Ring 1</td><td><canvas id="SERDESResetRing1LED" width="20" height="10" onclick="AjaxPost('./DTC/resetSERDES', 1)"></canvas></td></tr>
+  <tr><td>Ring 2</td><td><canvas id="SERDESResetRing2LED" width="20" height="10" onclick="AjaxPost('./DTC/resetSERDES', 2)"></canvas></td></tr>
+  <tr><td>Ring 3</td><td><canvas id="SERDESResetRing3LED" width="20" height="10" onclick="AjaxPost('./DTC/resetSERDES', 3)"></canvas></td></tr>
+  <tr><td>Ring 4</td><td><canvas id="SERDESResetRing4LED" width="20" height="10" onclick="AjaxPost('./DTC/resetSERDES', 4)"></canvas></td></tr>
+  <tr><td>Ring 5</td><td><canvas id="SERDESResetRing5LED" width="20" height="10" onclick="AjaxPost('./DTC/resetSERDES', 5)"></canvas></td></tr>
 </table>
 </fieldset>
 <fieldset><legend>SERDES RX Disparity</legend>
@@ -292,6 +292,7 @@
 <fieldset><legend>Timestamp Preset</legend>
 <table style="width:100%">
   <tr><td>Timestamp Preset</td><td><input type="text" id="timestamp" width="12" value=""></td></tr>
+    <tr><td><input type="button" id="setTimestamp" value="Set Timestamp" onclick="SetTimestamp()"></td></tr>
 </table>
 </fieldset>
 <fieldset><legend>FPGA PROM Registers</legend>
