@@ -140,6 +140,7 @@ if (cluster.isMaster) {
             res.end("<html><body><p>You need to have a Fermi KCA Certificate to view this page</body></html>");
         }
     });
+    /*
     var io = require('socket.io').listen(server);
 
     io.sockets.on('connection', function (socket) {
@@ -162,6 +163,7 @@ if (cluster.isMaster) {
             delete member_sockets[user_id];
         });
     });
+    */
     //Listen on port 8080
     server.listen(8080);
 }

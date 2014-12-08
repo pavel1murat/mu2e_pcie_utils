@@ -1,4 +1,4 @@
-var socket = io.connect('http://localhost');
+/*var socket = io.connect('http://localhost');
 socket.on('txt_change', function (data) {
     console.log(data);
     $("#txt").val(data.txt);
@@ -7,7 +7,7 @@ $(document).ready(function () {
     $("#txt").keyup(function () {
         socket.emit('txt_change', { "txt" : $(this).val() });
     });
-});
+});*/
 
 function setPixel(led, bit) {
     ctx = led.getContext("2d");
