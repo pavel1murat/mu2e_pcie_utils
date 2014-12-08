@@ -301,7 +301,9 @@ uint8_t DTC::DTC::ReadSERDESResetRegister()
 }
 uint8_t DTC::DTC::ResetSERDES(uint8_t ring)
 {
-	std::bitset<32> data;
+        uint8_t err = ReadSERDESResetRegister();
+        if(err != DTC_ErrorCode_Success) { return err; }
+	std::bitset<32> data = dataWord;
 	data[(uint8_t)ring] = 1;
 	return WriteSERDESResetRegister(data.to_ulong());
 }
