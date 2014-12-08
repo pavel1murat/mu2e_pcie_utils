@@ -12,156 +12,192 @@ var DTC;
 // So that we can send events back to serverbase
 var dtcem = new emitter();
 
-dtcem.init = function() {
+dtcem.init = function () {
     DTC = new dtc.DTC();
 }
 
-dtcem.read = function(address) {
-    var addr = parseInt(address,16);
+dtcem.read = function (address) {
+    var addr = parseInt(address, 16);
     DTC.ReadRegister(addr);
     return DTC.dataWord;
 }
 
-dtcem.write = function(address, value) {
-    var addr = parseInt(address,16);
-    var val = parseInt(value,16);
+dtcem.write = function (address, value) {
+    var addr = parseInt(address, 16);
+    var val = parseInt(value, 16);
     console.log("Writing " + val + " to " + addr);
     DTC.WriteRegister(val, addr);
     console.log("Reading " + address);
     return dtcem.read(address);
 }
 
-dtcem.readResetDTC = function() {
+dtcem.readResetDTC = function () {
     DTC.ReadResetDTC();
     return DTC.booleanValue;
 }
 
-dtcem.resetDTC = function() {
+dtcem.resetDTC = function () {
     DTC.ResetDTC();
     return dtcem.readResetDTC();
 }
 
-dtcem.readClearLatchedErrors = function() {
+dtcem.readClearLatchedErrors = function () {
     DTC.ReadClearLatchedErrors();
     return DTC.booleanValue;
 }
 
-dtcem.clearLatchedErrors = function(){
+dtcem.clearLatchedErrors = function () {
     DTC.ClearLatchedErrors();
     return dtcem.readClearLatchedErrors();
 }
 
-dtcem.readSERDESLoopback = function(ring) {
+dtcem.readSERDESLoopback = function (ring) {
     DTC.ReadSERDESLoopback(ring);
     return DTC.booleanValue;
 }
 
-dtcem.toggleSERDESLoopback = function(ring) {
+dtcem.toggleSERDESLoopback = function (ring) {
     var val = dtcem.ReadSERDESLoopback(ring);
-    if(val) {
-	DTC.DisableSERDESLoopback(ring);
+    if (val) {
+        DTC.DisableSERDESLoopback(ring);
     } else {
-	DTC.EnableSERDESLoopback(ring);
+        DTC.EnableSERDESLoopback(ring);
     }
     return dtcem.ReadSERDESLoopback(ring);
 }
 
-dtcem.readROCEmulator = function() {
+dtcem.readROCEmulator = function () {
     DTC.ReadROCEmulatorEnabled();
     return DTC.booleanValue;
 }
 
-dtcem.toggleROCEmulator = function() {
+dtcem.toggleROCEmulator = function () {
     var val = dtcem.readROCEmulator();
-    if(val) {
-	DTC.DisableROCEmulator();
+    if (val) {
+        DTC.DisableROCEmulator();
     } else {
-	DTC.EnableROCEmulator();
+        DTC.EnableROCEmulator();
     }
     return dtcem.readROCEmulator();
 }
 
-dtcem.readRingEnabled = function(ring) {
+dtcem.readRingEnabled = function (ring) {
     DTC.ReadRingEnabled(ring);
     return DTC.booleanValue;
 }
 
-dtcem.toggleRingEnabled = function(ring) {
+dtcem.toggleRingEnabled = function (ring) {
     var val = dtcem.readRingEnabled(ring);
-    if(val) {
-	DTC.DisableRing(ring);
+    if (val) {
+        DTC.DisableRing(ring);
     } else {
         DTC.EnableRing(ring);
     }
     return dtcem.readRingEnabled(ring);
 }
 
-dtcem.readResetSERDES = function(ring) {
+dtcem.readResetSERDES = function (ring) {
     DTC.ReadResetSERDES(ring);
     return DTC.booleanValue;
 }
 
-dtcem.resetSERDES = function(ring) {
+dtcem.resetSERDES = function (ring) {
     DTC.ResetSERDES(ring);
     return dtcem.readResetSERDES(ring);
 }
 
-dtcem.readSERDESRXDisparity = function(ring) {
+dtcem.readSERDESRXDisparity = function (ring) {
     DTC.ReadSERDESRXDisparityError(ring);
-    return DTC.SERDESRXDisparityError.GetData(true);
+    switch (DTC.SERDESRXDisparityError.GetData(true)) {
+        case 0:
+            return { low: 0, high: 0 };
+        case 1:
+            return { low: 1, high: 0 };
+        case 2:
+            return { low: 0, high: 1 };
+        case 3:
+            return { low: 1, high: 1 };
+    }
 }
 
-dtcem.readSERDESRXCharacterError = function(ring) {
+dtcem.readSERDESRXCharacterError = function (ring) {
     DTC.ReadSERDESRXCharacterNotInTableError(ring);
-    return DTC.CharacterNotInTableError.GetData(true);
+    switch (DTC.CharacterNotInTableError.GetData(true)) {
+        case 0:
+            return { low: 0, high: 0 };
+        case 1:
+            return { low: 1, high: 0 };
+        case 2:
+            return { low: 0, high: 1 };
+        case 3:
+            return { low: 1, high: 1 };
+    }
 }
 
-dtcem.readSERDESUnlockError = function(ring) {
+dtcem.readSERDESUnlockError = function (ring) {
     DTC.ReadSERDESUnlockError(ring);
     return DTC.booleanValue;
 }
 
-dtcem.readSERDESPLLLocked = function(ring) {
+dtcem.readSERDESPLLLocked = function (ring) {
     DTC.ReadSERDESPLLLocked(ring);
     return DTC.booleanValue;
 }
 
-dtcem.readSERDESOverflowOrUnderflow = function(ring) {
+dtcem.readSERDESOverflowOrUnderflow = function (ring) {
     DTC.ReadSERDESOverflowOrUnderflow(ring);
     return DTC.booleanValue;
 }
 
-dtcem.readSERDESBufferFIFOHalfFull = function(ring) {
+dtcem.readSERDESBufferFIFOHalfFull = function (ring) {
     DTC.ReadSERDESBufferFIFOHalfFull(ring);
     return DTC.booleanValue;
 }
 
-dtcem.readSERDESRXBufferStatus = function(ring) {
+dtcem.readSERDESRXBufferStatus = function (ring) {
     DTC.ReadSERDESRXBufferStatus(ring);
-    return DTC.SERDESRXBufferStatus.GetStatus();
+    var output = { Nominal: 0, Empty: 0, Full: 0, Underflow: 0, Overflow: 0 };
+    switch (DTC.SERDESRXBufferStatus.GetStatus()) {
+        case 0:
+            output.Nominal = 1;
+            break;
+        case 1:
+            output.Empty = 1;
+            break;
+        case 2:
+            output.Full = 1;
+            break;
+        case 5:
+            output.Underflow = 1;
+            break;
+        case 6:
+            output.Overflow = 1;
+            break;
+    }
+    return output;
 }
 
-dtcem.readSERDESResetDone = function(ring) {
+dtcem.readSERDESResetDone = function (ring) {
     DTC.ReadSERDESResetDone(ring);
     return DTC.booleanValue;
 }
 
-dtcem.readTimestampPreset = function() {
+dtcem.readTimestampPreset = function () {
     DTC.ReadTimestampPreset();
     return DTC.timestampPreset.GetTimestamp(true);
 }
 
-dtcem.setTimestampPreset = function(preset) {
-    DTC.WriteTimestampPreset(preset);
+dtcem.setTimestampPreset = function (preset) {
+    DTC.WriteTimestampPreset(parseInt(preset,16));
     return dtcem.readTimestampPreset();
 }
 
-dtcem.readFPGAPROMProgramFIFOFull = function() {
+dtcem.readFPGAPROMProgramFIFOFull = function () {
     DTC.ReadFPGAPROMProgramFIFOFull();
     return DTC.booleanValue;
 }
 
-dtcem.readFPGAPROMReady = function() {
+dtcem.readFPGAPROMReady = function () {
     DTC.ReadFPGAPROMReady();
     return DTC.booleanValue;
 }

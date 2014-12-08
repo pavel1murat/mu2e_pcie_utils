@@ -107,9 +107,28 @@ if (cluster.isMaster) {
                             res.end(value.toString(16));
                         });
                     }
-                    if (pathname.search("dtc_reg_dump") > 0) {
+                    else if (pathname.search("dtc_reg_dump") > 0) {
                         var dtcRegisters = dtcdriver.regDump();
                         res.end(JSON.stringify(dtcRegisters));
+                    }
+                    else {
+                        var body = "";
+                        // res.end('post');
+                        //console.log('Request found with POST method');     
+                        
+                        // Callback for request data (may come in async)
+                        req.on('data', function (data) {
+                            body += data;
+                        });
+                        
+                        // When the request is finished, run this callback:
+                        req.on('end', function () {
+                            var POST = qs.parse(body);
+                            var functionName = pathname.replace("/DTC/", "");
+                            dtcdriver[functionName](parseInt(POST.ring,16));
+                            var dtcRegisters = dtcdriver.regDump();
+                            res.end(JSON.stringify(dtcRegisters));
+                        });
                     }
                 }
                 //We got a GET request!
