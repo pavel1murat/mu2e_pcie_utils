@@ -8,9 +8,11 @@
 var emitter = require('events').EventEmitter;
 
 var dtc = require('./DTC');
+var fs = require('fs');
 var DTC;
 // So that we can send events back to serverbase
 var dtcem = new emitter();
+var date = new Date();
 
 dtcem.init = function () {
     DTC = new dtc.DTC();
@@ -57,7 +59,7 @@ dtcem.readSERDESLoopback = function (ring) {
 }
 
 dtcem.toggleSERDESLoopback = function (ring) {
-    var val = dtcem.ReadSERDESLoopback(ring);
+    var val = dtcem.readSERDESLoopback(ring);
     if (val) {
         DTC.DisableSERDESLoopback(ring);
     } else {
@@ -188,7 +190,7 @@ dtcem.readTimestampPreset = function () {
 }
 
 dtcem.setTimestampPreset = function (preset) {
-    DTC.WriteTimestampPreset(parseInt(preset,16));
+    DTC.WriteTimestampPreset(new dtc.DTC_Timestamp(parseInt(preset, 16)));
     return dtcem.readTimestampPreset();
 }
 
@@ -203,6 +205,9 @@ dtcem.readFPGAPROMReady = function () {
 }
 
 dtcem.regDump = function () {
+    if (!fs.existsSync("./DTC.log")) {
+        fs.writeFileSync("./DTC.log", "Log file created at " + (new Date()).toLocaleString());
+    }
     var dtcRegisters = {};
     dtcRegisters.Ring0 = {};
     dtcRegisters.Ring1 = {};
@@ -210,6 +215,7 @@ dtcem.regDump = function () {
     dtcRegisters.Ring3 = {};
     dtcRegisters.Ring4 = {};
     dtcRegisters.Ring5 = {};
+    dtcRegisters.Log = "" + fs.readFileSync("./DTC.log");
     dtcRegisters.Version = dtcem.read("0x9000");
     dtcRegisters.ResetDTC = dtcem.readResetDTC;
     dtcRegisters.ClearLatchedErrors = dtcem.readClearLatchedErrors();

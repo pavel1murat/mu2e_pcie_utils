@@ -130,6 +130,7 @@ function UpdateFormFields() {
 }
 
 function PopulateLEDS(dtcregdump) {
+    $("#log").val(dtcregdump.Log);
     $("#dtcVersion").val(dtcregdump.Version.toString(16));
     setPixel(document.getElementById("dtcResetLED"), dtcregdump.ResetDTC, "RW");
     setPixel(document.getElementById("clearErrorsLED"), dtcregdump.ClearLatchedErrors, "RW");
@@ -243,7 +244,50 @@ function PopulateLEDS(dtcregdump) {
   
 }
 
-function AjaxPost(urlString, ringNum) {
+function GetRegDumpAjax(fnCallback) {
+    // Check to see if there is currently an AJAX
+    // request on this method.
+    if (GetRegDumpAjax.Xhr) {
+        // Abort the current request.
+        GetRegDumpAjax.Xhr.abort();
+    }
+    // Get data via AJAX. Store the XHR (AJAX request
+    // object in the method in case we need to abort
+    // it on subsequent requests.
+    GetRegDumpAjax.Xhr = $.ajax({
+        type: "post",
+        url: "./dtc_reg_dump",
+        data: { data: "nullData" },
+        dataType: "json",
+        // Our success handler.
+        success: function (objData) {
+            // At this point, we have data coming back
+            // from the server.
+            fnCallback({
+                Value1: objData
+            });
+        },
+        // An error handler for the request.
+        error: function () {
+            alert("An error occurred");
+        },
+        // I get called no matter what.
+        complete: function () {
+            // Remove completed request object.
+            GetRegDumpAjax.Xhr = null;
+        }
+    });
+}
+
+function GetRegDump() {
+    var objData = null;
+    GetRegDumpAjax(function (regDump) {
+        PopulateLEDS(regDump.Value1);
+    })
+}
+
+
+function AjaxPost(urlString, ringNum, fnCallback) {
     // Check to see if there is currently an AJAX
     // request on this method.
     if (AjaxPost.Xhr) {
@@ -262,7 +306,9 @@ function AjaxPost(urlString, ringNum) {
         success: function (objData) {
             // At this point, we have data coming back
             // from the server.
-            PopulateLEDS(objData);
+            fnCallback({
+                Value1: objData
+            });
         },
         // An error handler for the request.
         error: function () {
@@ -276,17 +322,44 @@ function AjaxPost(urlString, ringNum) {
     });
 }
 
+
+function LEDAction(url, ring, id) {
+    var objData = null;
+    AjaxPost(url, ring, function (output) {
+        setPixel(document.getElementById(id), output.Value1, "RW");
+    });
+}
+
 function SetTimestamp() {
+    var objData = null;
     var value = $("#timestamp").val();
-    AjaxPost('./DTC/setTimestampPreset', value);
+    AjaxPost('./DTC/setTimestampPreset', value, function (returnValue) {
+        $("#timestamp").val(returnValue.Value1);
+    });
+}
+
+function PostLogMessage() {
+    var objData = null;
+    var message = $("#logMessage").val();
+    AjaxPost('./log_message', message, function (returnValue) {
+        $("#log").val(returnValue.Value1);
+    });
+}
+
+function RunScript() {
+    var objData = null;
+    AjaxPost('./run_script', $("#script").val(), function (returnValue) {
+        $("#script").val(returnValue);
+    });
 }
 
 // When the DOM is ready to be interacted with, init.
 $(function () {
-    AjaxPost("./dtc_reg_dump", null);
+    //Update the registers every second...is this too fast?
+    setInterval(function () { GetRegDump(); }, 1000);
     $("#post").click(function () {
         UpdateFormFields();
-        AjaxPost("./dtc_reg_dump", null);
+        GetRegDump();
     });
     $('input[name=base]').change(function () {
         var jVal = $("#value");
