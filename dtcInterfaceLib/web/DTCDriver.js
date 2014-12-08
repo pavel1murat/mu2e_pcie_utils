@@ -1,4 +1,4 @@
-// DTCDriver.js
+// dtcem.js
 // Author: Eric Flumerfelt, FNAL/RSI
 // Last Modified: October 30, 2014
 // Modified By: Eric Flumerfelt
@@ -164,6 +164,90 @@ dtcem.readFPGAPROMProgramFIFOFull = function() {
 dtcem.readFPGAPROMReady = function() {
     DTC.ReadFPGAPROMReady();
     return DTC.booleanValue;
+}
+
+dtcem.regDump = function () {
+    var dtcRegisters = {};
+    dtcRegisters.Ring0 = {};
+    dtcRegisters.Ring1 = {};
+    dtcRegisters.Ring2 = {};
+    dtcRegisters.Ring3 = {};
+    dtcRegisters.Ring4 = {};
+    dtcRegisters.Ring5 = {};
+    dtcRegisters.Version = dtcem.read("0x9000");
+    dtcRegisters.ResetDTC = dtcem.readResetDTC;
+    dtcRegisters.ClearLatchedErrors = dtcem.readClearLatchedErrors();
+    dtcRegisters.Ring0.SERDESLoopback = dtcem.readSERDESLoopback(0);
+    dtcRegisters.Ring1.SERDESLoopback = dtcem.readSERDESLoopback(1);
+    dtcRegisters.Ring2.SERDESLoopback = dtcem.readSERDESLoopback(2);
+    dtcRegisters.Ring3.SERDESLoopback = dtcem.readSERDESLoopback(3);
+    dtcRegisters.Ring4.SERDESLoopback = dtcem.readSERDESLoopback(4);
+    dtcRegisters.Ring5.SERDESLoopback = dtcem.readSERDESLoopback(5);
+    dtcRegisters.ROCEmulator = dtcem.readROCEmulator();
+    dtcRegisters.Ring0.Enabled = dtcem.readRingEnabled(0);
+    dtcRegisters.Ring1.Enabled = dtcem.readRingEnabled(1);
+    dtcRegisters.Ring2.Enabled = dtcem.readRingEnabled(2);
+    dtcRegisters.Ring3.Enabled = dtcem.readRingEnabled(3);
+    dtcRegisters.Ring4.Enabled = dtcem.readRingEnabled(4);
+    dtcRegisters.Ring5.Enabled = dtcem.readRingEnabled(5);
+    dtcRegisters.Ring0.ResetSERDES = dtcem.readResetSERDES(0);
+    dtcRegisters.Ring1.ResetSERDES = dtcem.readResetSERDES(1);
+    dtcRegisters.Ring2.ResetSERDES = dtcem.readResetSERDES(2);
+    dtcRegisters.Ring3.ResetSERDES = dtcem.readResetSERDES(3);
+    dtcRegisters.Ring4.ResetSERDES = dtcem.readResetSERDES(4);
+    dtcRegisters.Ring5.ResetSERDES = dtcem.readResetSERDES(5);
+    dtcRegisters.Ring0.SERDESRXDisparity = dtcem.readSERDESRXDisparity(0);
+    dtcRegisters.Ring1.SERDESRXDisparity = dtcem.readSERDESRXDisparity(1);
+    dtcRegisters.Ring2.SERDESRXDisparity = dtcem.readSERDESRXDisparity(2);
+    dtcRegisters.Ring3.SERDESRXDisparity = dtcem.readSERDESRXDisparity(3);
+    dtcRegisters.Ring4.SERDESRXDisparity = dtcem.readSERDESRXDisparity(4);
+    dtcRegisters.Ring5.SERDESRXDisparity = dtcem.readSERDESRXDisparity(5);
+    dtcRegisters.Ring0.CharacterError = dtcem.readSERDESRXCharacterError(0);
+    dtcRegisters.Ring1.CharacterError = dtcem.readSERDESRXCharacterError(1);
+    dtcRegisters.Ring2.CharacterError = dtcem.readSERDESRXCharacterError(2);
+    dtcRegisters.Ring3.CharacterError = dtcem.readSERDESRXCharacterError(3);
+    dtcRegisters.Ring4.CharacterError = dtcem.readSERDESRXCharacterError(4);
+    dtcRegisters.Ring5.CharacterError = dtcem.readSERDESRXCharacterError(5);
+    dtcRegisters.Ring0.UnlockError = dtcem.readSERDESUnlockError(0);
+    dtcRegisters.Ring1.UnlockError = dtcem.readSERDESUnlockError(1);
+    dtcRegisters.Ring2.UnlockError = dtcem.readSERDESUnlockError(2);
+    dtcRegisters.Ring3.UnlockError = dtcem.readSERDESUnlockError(3);
+    dtcRegisters.Ring4.UnlockError = dtcem.readSERDESUnlockError(4);
+    dtcRegisters.Ring5.UnlockError = dtcem.readSERDESUnlockError(5);
+    dtcRegisters.Ring0.PLLLocked = dtcem.readSERDESPLLLocked(0);
+    dtcRegisters.Ring1.PLLLocked = dtcem.readSERDESPLLLocked(1);
+    dtcRegisters.Ring2.PLLLocked = dtcem.readSERDESPLLLocked(2);
+    dtcRegisters.Ring3.PLLLocked = dtcem.readSERDESPLLLocked(3);
+    dtcRegisters.Ring4.PLLLocked = dtcem.readSERDESPLLLocked(4);
+    dtcRegisters.Ring5.PLLLocked = dtcem.readSERDESPLLLocked(5);
+    dtcRegisters.Ring0.OverflowOrUnderflow = dtcem.readSERDESOverflowOrUnderflow(0);
+    dtcRegisters.Ring1.OverflowOrUnderflow = dtcem.readSERDESOverflowOrUnderflow(1);
+    dtcRegisters.Ring2.OverflowOrUnderflow = dtcem.readSERDESOverflowOrUnderflow(2);
+    dtcRegisters.Ring3.OverflowOrUnderflow = dtcem.readSERDESOverflowOrUnderflow(3);
+    dtcRegisters.Ring4.OverflowOrUnderflow = dtcem.readSERDESOverflowOrUnderflow(4);
+    dtcRegisters.Ring5.OverflowOrUnderflow = dtcem.readSERDESOverflowOrUnderflow(5);
+    dtcRegisters.Ring0.FIFOHalfFull = dtcem.readSERDESBufferFIFOHalfFull(0);
+    dtcRegisters.Ring1.FIFOHalfFull = dtcem.readSERDESBufferFIFOHalfFull(1);
+    dtcRegisters.Ring2.FIFOHalfFull = dtcem.readSERDESBufferFIFOHalfFull(2);
+    dtcRegisters.Ring3.FIFOHalfFull = dtcem.readSERDESBufferFIFOHalfFull(3);
+    dtcRegisters.Ring4.FIFOHalfFull = dtcem.readSERDESBufferFIFOHalfFull(4);
+    dtcRegisters.Ring5.FIFOHalfFull = dtcem.readSERDESBufferFIFOHalfFull(5);
+    dtcRegisters.Ring0.RXBufferStatus = dtcem.readSERDESRXBufferStatus(0);
+    dtcRegisters.Ring1.RXBufferStatus = dtcem.readSERDESRXBufferStatus(1);
+    dtcRegisters.Ring2.RXBufferStatus = dtcem.readSERDESRXBufferStatus(2);
+    dtcRegisters.Ring3.RXBufferStatus = dtcem.readSERDESRXBufferStatus(3);
+    dtcRegisters.Ring4.RXBufferStatus = dtcem.readSERDESRXBufferStatus(4);
+    dtcRegisters.Ring5.RXBufferStatus = dtcem.readSERDESRXBufferStatus(5);
+    dtcRegisters.Ring0.ResetDone = dtcem.readSERDESResetDone(0);
+    dtcRegisters.Ring1.ResetDone = dtcem.readSERDESResetDone(1);
+    dtcRegisters.Ring2.ResetDone = dtcem.readSERDESResetDone(2);
+    dtcRegisters.Ring3.ResetDone = dtcem.readSERDESResetDone(3);
+    dtcRegisters.Ring4.ResetDone = dtcem.readSERDESResetDone(4);
+    dtcRegisters.Ring5.ResetDone = dtcem.readSERDESResetDone(5);
+    dtcRegisters.Timestamp = dtcem.readTimestampPreset();
+    dtcRegisters.PROMFIFOFull = dtcem.readFPGAPROMProgramFIFOFull();
+    dtcRegisters.PROMReady = dtcem.readFPGAPROMReady();
+    return dtcRegisters;
 }
 
 module.exports = dtcem;
