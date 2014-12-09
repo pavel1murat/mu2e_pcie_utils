@@ -70,7 +70,7 @@ if (cluster.isMaster) {
                             fs.writeFileSync("./DTC.log", "Log file created at " + (new Date()).toLocaleString());
                         }
                     });
-                    message = "\n" + (new Date()).toLocaleString() + " " + clientCertificate.subject.CN[0] + " " + method+" \"" + message + "\"";
+                    message = "\n" + (new Date()).toLocaleString() + " " + clientCertificate.subject.CN[0] + " " + method + " \"" + message + "\"";
                     console.log(message);
                     fs.appendFileSync("./DTC.log", message);
                 }
@@ -135,7 +135,7 @@ if (cluster.isMaster) {
                             var value = 0;
                             var success = true;
                             var text = POST.ring;
-                            var lines =text.split("\n");
+                            var lines = text.split("\n");
                             for (var i = 0; i < lines.length; i++) {
                                 var thisLine = lines[i];
                                 var thisLineSplit = thisLine.split(" ");
@@ -143,7 +143,7 @@ if (cluster.isMaster) {
                                 var val = thisLineSplit[1];
                                 log("a write: " + val + " to " + address, "scripted");
                                 value = dtcdriver.write(address, val);
-                                if(value != val) { success = false; }
+                                if (value != val) { success = false; }
                             }
                             if (success) {
                                 log("the script was run successfully.", "noticed that");

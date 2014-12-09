@@ -9,117 +9,132 @@ namespace DTC {
 	class DTC {
 	public:
 		DTC();
-                virtual ~DTC() = default;
+		virtual ~DTC() = default;
 		//	private:
 		//#if DTCLIB_DEBUG
 		//	public:
 		//#endif
-		DTC_DataPacket ReadDataPacket(int channel);
-		uint8_t WriteDataPacket(int channel, DTC_DataPacket packet);
+		DTC_ErrorCode ReadDataPacket(int channel);
+		DTC_ErrorCode WriteDataPacket(int channel, DTC_DataPacket packet);
 
-		DTC_DataPacket ReadDAQDataPacket();
-		uint8_t WriteDAQDataPacket(DTC_DataPacket packet);
+		DTC_ErrorCode ReadDAQDataPacket();
+		DTC_ErrorCode WriteDAQDataPacket(DTC_DataPacket packet);
 
-		DTC_DMAPacket ReadDMAPacket(int channel);
-		DTC_DMAPacket ReadDMADAQPacket();
-		DTC_DMAPacket ReadDMADCSPacket();
+		DTC_ErrorCode ReadDMAPacket(int channel);
+		DTC_ErrorCode ReadDMADAQPacket();
+		DTC_ErrorCode ReadDMADCSPacket();
 
-		uint8_t WriteDMAPacket(int channel, DTC_DMAPacket packet);
-		uint8_t WriteDMADAQPacket(DTC_DMAPacket packet);
-		uint8_t WriteDMADCSPacket(DTC_DMAPacket packet);
+		DTC_ErrorCode WriteDMAPacket(int channel, DTC_DMAPacket packet);
+		DTC_ErrorCode WriteDMADAQPacket(DTC_DMAPacket packet);
+		DTC_ErrorCode WriteDMADCSPacket(DTC_DMAPacket packet);
 	public:
-		uint8_t GetData(const uint8_t ring, uint8_t roc, DTC_Timestamp when);
-		uint8_t DCSRequestReply(const uint8_t ring, uint8_t roc, uint8_t dataIn[12]);
-		uint8_t SendReadoutRequestPacket(const uint8_t ring, DTC_Timestamp when, uint8_t roc = DTC_ROC_5);
+		DTC_ErrorCode GetData(const DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp when);
+		DTC_ErrorCode DCSRequestReply(const DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t dataIn[12]);
+		DTC_ErrorCode SendReadoutRequestPacket(const DTC_Ring_ID ring, DTC_Timestamp when, DTC_ROC_ID roc = DTC_ROC_5);
 
 		//private:
 		//#if DTCLIB_DEBUG
 		//public:
 		//#endif
-		uint8_t WriteRegister(uint32_t data, uint16_t address);
-		uint8_t ReadRegister(uint16_t address);
+		DTC_ErrorCode WriteRegister(uint32_t data, uint16_t address);
+		DTC_ErrorCode ReadRegister(uint16_t address);
 
-		uint8_t WriteControlRegister(uint32_t data);
-		uint8_t ReadControlRegister();
-		uint8_t WriteSERDESLoopbackEnableRegister(uint32_t data);
-		uint8_t ReadSERDESLoopbackEnableRegister();
-		uint8_t WriteROCEmulationEnableRegister(uint32_t data);
-		uint8_t ReadROCEmulationEnableRegister();
-		uint8_t WriteRingEnableRegister(uint32_t data);
-		uint8_t ReadRingEnableRegister();
-		uint8_t WriteSERDESResetRegister(uint32_t data);
-		uint8_t ReadSERDESResetRegister();
-		uint8_t ReadSERDESRXDisparityError();
-		uint8_t ReadSERDESRXCharacterNotInTableError();
-		uint8_t ReadSERDESUnlockError();
-		uint8_t ReadSERDESPLLLocked();
-		uint8_t ReadSERDESTXBufferStatus();
-		uint8_t ReadSERDESRXBufferStatus();
-		uint8_t ReadSERDESResetDone();
-		uint8_t WriteTimestampPreset0Register(uint32_t data);
-		uint8_t ReadTimestampPreset0Register();
-		uint8_t WriteTimestampPreset1Register(uint32_t data);
-		uint8_t ReadTimestampPreset1Register();
-		uint8_t WriteTimestampPreset1(uint16_t data);
-		uint8_t ReadTimestampPreset1();
-		uint8_t WriteFPGAPROMProgramDataRegister(uint32_t data);
-		uint8_t ReadFPGAPROMProgramStatusRegister();
+		DTC_ErrorCode WriteControlRegister(uint32_t data);
+		DTC_ErrorCode ReadControlRegister();
+		DTC_ErrorCode WriteSERDESLoopbackEnableRegister(uint32_t data);
+		DTC_ErrorCode ReadSERDESLoopbackEnableRegister();
+		DTC_ErrorCode WriteROCEmulationEnableRegister(uint32_t data);
+		DTC_ErrorCode ReadROCEmulationEnableRegister();
+		DTC_ErrorCode WriteRingEnableRegister(uint32_t data);
+		DTC_ErrorCode ReadRingEnableRegister();
+		DTC_ErrorCode WriteSERDESResetRegister(uint32_t data);
+		DTC_ErrorCode ReadSERDESResetRegister();
+		DTC_ErrorCode ReadSERDESRXDisparityError();
+		DTC_ErrorCode ReadSERDESRXCharacterNotInTableError();
+		DTC_ErrorCode ReadSERDESUnlockError();
+		DTC_ErrorCode ReadSERDESPLLLocked();
+		DTC_ErrorCode ReadSERDESTXBufferStatus();
+		DTC_ErrorCode ReadSERDESRXBufferStatus();
+		DTC_ErrorCode ReadSERDESResetDone();
+		DTC_ErrorCode WriteTimestampPreset0Register(uint32_t data);
+		DTC_ErrorCode ReadTimestampPreset0Register();
+		DTC_ErrorCode WriteTimestampPreset1Register(uint32_t data);
+		DTC_ErrorCode ReadTimestampPreset1Register();
+		DTC_ErrorCode WriteTimestampPreset1(uint16_t data);
+		DTC_ErrorCode ReadTimestampPreset1();
+		DTC_ErrorCode WriteFPGAPROMProgramDataRegister(uint32_t data);
+		DTC_ErrorCode ReadFPGAPROMProgramStatusRegister();
 
 	public:
-		uint8_t ResetDTC();
-                uint8_t ReadResetDTC();
-		uint8_t ClearLatchedErrors();
-                uint8_t ReadClearLatchedErrors();
+		DTC_ErrorCode ResetDTC();
+		DTC_ErrorCode ReadResetDTC();
+		DTC_ErrorCode ClearResetDTC();
+		DTC_ErrorCode ClearLatchedErrors();
+		DTC_ErrorCode ReadClearLatchedErrors();
+		DTC_ErrorCode ClearClearLatchedErrors();
 
-		uint8_t EnableSERDESLoopback(const uint8_t ring);
-		uint8_t DisableSERDESLoopback(const uint8_t ring);
-		uint8_t ReadSERDESLoopback(const uint8_t ring);
+		DTC_ErrorCode EnableSERDESLoopback(const DTC_Ring_ID ring);
+		DTC_ErrorCode DisableSERDESLoopback(const DTC_Ring_ID ring);
+		DTC_ErrorCode ReadSERDESLoopback(const DTC_Ring_ID ring);
 
-		uint8_t EnableROCEmulator();
-		uint8_t DisableROCEmulator();
-		uint8_t ReadROCEmulatorEnabled();
+		DTC_ErrorCode EnableROCEmulator();
+		DTC_ErrorCode DisableROCEmulator();
+		DTC_ErrorCode ReadROCEmulatorEnabled();
 
-		uint8_t EnableRing(const uint8_t ring);
-		uint8_t DisableRing(const uint8_t ring);
-		uint8_t ReadRingEnabled(const uint8_t ring);
+		DTC_ErrorCode EnableRing(const DTC_Ring_ID ring);
+		DTC_ErrorCode DisableRing(const DTC_Ring_ID ring);
+		DTC_ErrorCode ReadRingEnabled(const DTC_Ring_ID ring);
 
-		uint8_t ResetSERDES(const uint8_t ring);
-		uint8_t ReadResetSERDES(const uint8_t ring);
+		DTC_ErrorCode ResetSERDES(const DTC_Ring_ID ring);
+		DTC_ErrorCode ReadResetSERDES(const DTC_Ring_ID ring);
+		DTC_ErrorCode ClearResetSERDES(const DTC_Ring_ID ring);
 
-		uint8_t ReadSERDESRXDisparityError(const uint8_t ring);
+		DTC_ErrorCode ReadSERDESRXDisparityError(const DTC_Ring_ID ring);
 
-		uint8_t ReadSERDESRXCharacterNotInTableError(const uint8_t ring);
+		DTC_ErrorCode ReadSERDESRXCharacterNotInTableError(const DTC_Ring_ID ring);
 
-		uint8_t ReadSERDESUnlockError(const uint8_t ring);
+		DTC_ErrorCode ReadSERDESUnlockError(const DTC_Ring_ID ring);
 
-		uint8_t ReadSERDESPLLLocked(const uint8_t ring);
+		DTC_ErrorCode ReadSERDESPLLLocked(const DTC_Ring_ID ring);
 
-		uint8_t ReadSERDESOverflowOrUnderflow(const uint8_t ring);
-		uint8_t ReadSERDESBufferFIFOHalfFull(const uint8_t ring);
+		DTC_ErrorCode ReadSERDESOverflowOrUnderflow(const DTC_Ring_ID ring);
+		DTC_ErrorCode ReadSERDESBufferFIFOHalfFull(const DTC_Ring_ID ring);
 
-		uint8_t ReadSERDESRXBufferStatus(const uint8_t ring);
+		DTC_ErrorCode ReadSERDESRXBufferStatus(const DTC_Ring_ID ring);
 
-		uint8_t ReadSERDESResetDone(const uint8_t ring);
+		DTC_ErrorCode ReadSERDESResetDone(const DTC_Ring_ID ring);
 
 
-		uint8_t WriteTimestampPreset(DTC_Timestamp preset);
-		uint8_t ReadTimestampPreset();
+		DTC_ErrorCode WriteTimestampPreset(DTC_Timestamp preset);
+		DTC_ErrorCode ReadTimestampPreset();
 
-		uint8_t ReadFPGAPROMProgramFIFOFull();
-		uint8_t ReadFPGAPROMReady();
+		DTC_ErrorCode ReadFPGAPROMProgramFIFOFull();
+		DTC_ErrorCode ReadFPGAPROMReady();
 
-                DTC_Timestamp timestampPreset;
-                uint8_t lastError;
-                DTC_SERDESRXBufferStatus SERDESRXBufferStatus;
-                DTC_CharacterNotInTableError CharacterNotInTableError;
-                DTC_SERDESRXDisparityError SERDESRXDisparityError;
-                bool booleanValue;
-                uint32_t dataWord;
-                std::vector<uint8_t> dataVector;
+		DTC_DataPacket ReadDataPacket() { return dataPacket_; }
+		DTC_DMAPacket ReadDMAPacket() { return dmaPacket_; }
+		DTC_Timestamp ReadTimestamp() { return timestampPreset_; }
+		DTC_SERDESRXBufferStatus ReadRXBufferStatus() { return SERDESRXBufferStatus_; }
+		DTC_CharacterNotInTableError ReadCNITError() { return CharacterNotInTableError_; }
+		DTC_SERDESRXDisparityError ReadRXDisparityError() { return SERDESRXDisparityError_; }
+		bool ReadBooleanValue() { return booleanValue_; }
+		uint32_t ReadDataWord() { return dataWord_; }
+		std::vector<uint8_t> ReadDataVector() { return dataVector_; }
+
 	private:
-    int	             devfd_;
-    volatile void *  mu2e_mmap_ptrs_[MU2E_MAX_CHANNELS][2][2];
-    m_ioc_get_info_t mu2e_channel_info_[MU2E_MAX_CHANNELS][2];
+		int	             devfd_;
+		volatile void *  mu2e_mmap_ptrs_[MU2E_MAX_CHANNELS][2][2];
+		m_ioc_get_info_t mu2e_channel_info_[MU2E_MAX_CHANNELS][2];
+
+		DTC_DataPacket dataPacket_;
+		DTC_DMAPacket dmaPacket_;
+		DTC_Timestamp timestampPreset_;
+		DTC_SERDESRXBufferStatus SERDESRXBufferStatus_;
+		DTC_CharacterNotInTableError CharacterNotInTableError_;
+		DTC_SERDESRXDisparityError SERDESRXDisparityError_;
+		bool booleanValue_;
+		uint32_t dataWord_;
+		std::vector<uint8_t> dataVector_;
 	};
 };
 
