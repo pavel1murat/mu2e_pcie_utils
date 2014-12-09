@@ -75,11 +75,14 @@ namespace DTC
 		DTC_Timestamp(uint8_t* timeArr);
 		DTC_Timestamp(std::bitset<48> timestamp);
 		DTC_Timestamp(const DTC_Timestamp&) = default;
+#ifndef _WIN32
 		DTC_Timestamp(DTC_Timestamp&&) = default;
+#endif
 
 		virtual ~DTC_Timestamp() = default;
-
+#ifndef _WIN32
 		DTC_Timestamp& operator=(DTC_Timestamp&&) = default;
+#endif
 		DTC_Timestamp& operator=(const DTC_Timestamp&) = default;
 
 
@@ -100,12 +103,16 @@ namespace DTC
 		DTC_DataPacket() {}
 		DTC_DataPacket(uint8_t* data);
 		DTC_DataPacket(const DTC_DataPacket&) = default;
+#ifndef _WIN32
 		DTC_DataPacket(DTC_DataPacket&&) = default;
+#endif
 
 		virtual ~DTC_DataPacket() = default;
 
 		DTC_DataPacket& operator=(const DTC_DataPacket&) = default;
+#ifndef _WIN32
 		DTC_DataPacket& operator=(DTC_DataPacket&&) = default;
+#endif
 
 		void SetWord(int index, uint8_t data);
 		uint8_t GetWord(int index);
@@ -120,16 +127,21 @@ namespace DTC
 		uint8_t data_[12];
 	public:
 		DTC_DMAPacket() : packetType_(DTC_PacketType_Invalid) {}
-		DTC_DMAPacket(DTC_DataPacket in);
 		DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t packetCount = 0);
 		DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t* data, uint8_t packetCount = 0);
+
+		DTC_DMAPacket(DTC_DataPacket& in);
 		DTC_DMAPacket(const DTC_DMAPacket&) = default;
+#ifndef _WIN32
 		DTC_DMAPacket(DTC_DMAPacket&&) = default;
+#endif
 
 		virtual ~DTC_DMAPacket() = default;
 
 		DTC_DMAPacket& operator=(const DTC_DMAPacket&) = default;
+#ifndef _WIN32
 		DTC_DMAPacket& operator=(DTC_DMAPacket&&) = default;
+#endif
 
 		virtual DTC_DataPacket ConvertToDataPacket();
 
@@ -142,7 +154,11 @@ namespace DTC
 		DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc);
 		DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t* data);
 		DTC_DCSRequestPacket(const DTC_DCSRequestPacket&) = default;
+#ifndef _WIN32
 		DTC_DCSRequestPacket(DTC_DCSRequestPacket&&) = default;
+#endif
+		DTC_DCSRequestPacket(DTC_DataPacket& in) : DTC_DMAPacket(in) {}
+		DTC_DCSRequestPacket(DTC_DMAPacket&& in) : DTC_DMAPacket(in) {}
 
 		virtual ~DTC_DCSRequestPacket() = default;
 	};
@@ -151,12 +167,14 @@ namespace DTC
 	private:
 		DTC_Timestamp timestamp_;
 	public:
-		DTC_ReadoutRequestPacket(DTC_DataPacket in);
-		DTC_ReadoutRequestPacket(DTC_DMAPacket in);
 		DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC = DTC_ROC_5);
 		DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC = DTC_ROC_5);
 		DTC_ReadoutRequestPacket(const DTC_ReadoutRequestPacket& right) = default;
+#ifndef _WIN32
 		DTC_ReadoutRequestPacket(DTC_ReadoutRequestPacket&& right) = default;
+#endif
+		DTC_ReadoutRequestPacket(DTC_DataPacket& in);
+		DTC_ReadoutRequestPacket(DTC_DMAPacket& in);
 
 		virtual ~DTC_ReadoutRequestPacket() = default;
 
@@ -168,12 +186,14 @@ namespace DTC
 	private:
 		DTC_Timestamp timestamp_;
 	public:
-		DTC_DataRequestPacket(DTC_DataPacket in);
-		DTC_DataRequestPacket(DTC_DMAPacket in);
 		DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc);
 		DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp timestamp);
 		DTC_DataRequestPacket(const DTC_DataRequestPacket&) = default;
+#ifndef _WIN32
 		DTC_DataRequestPacket(DTC_DataRequestPacket&&) = default;
+#endif
+		DTC_DataRequestPacket(DTC_DataPacket& in);
+		DTC_DataRequestPacket(DTC_DMAPacket& in);
 
 		DTC_DMAPacket ConvertToDMAPacket();
 		virtual DTC_DataPacket ConvertToDataPacket() { return ConvertToDMAPacket().ConvertToDataPacket(); }
@@ -184,8 +204,11 @@ namespace DTC
 		DTC_DCSReplyPacket(DTC_Ring_ID ring);
 		DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t* data);
 		DTC_DCSReplyPacket(const DTC_DCSReplyPacket&) = default;
+#ifndef _WIN32
 		DTC_DCSReplyPacket(DTC_DCSReplyPacket&&) = default;
-		DTC_DCSReplyPacket(DTC_DMAPacket&& right);
+#endif
+		DTC_DCSReplyPacket(DTC_DataPacket& in) : DTC_DMAPacket(in){}
+		DTC_DCSReplyPacket(DTC_DMAPacket& in) : DTC_DMAPacket(in) {}
 	};
 
 	class DTC_DataHeaderPacket : public DTC_DMAPacket {
@@ -194,13 +217,15 @@ namespace DTC
 		uint8_t dataStart_[6];
 
 	public:
-		DTC_DataHeaderPacket(DTC_DataPacket in);
-		DTC_DataHeaderPacket(DTC_DMAPacket in);
 		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint8_t packetCount);
 		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint8_t packetCount, DTC_Timestamp timestamp);
 		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint8_t packetCount, DTC_Timestamp timestamp, uint8_t* data);
 		DTC_DataHeaderPacket(const DTC_DataHeaderPacket&) = default;
+#ifndef _WIN32
 		DTC_DataHeaderPacket(DTC_DataHeaderPacket&&) = default;
+#endif
+		DTC_DataHeaderPacket(DTC_DataPacket& in);
+		DTC_DataHeaderPacket(DTC_DMAPacket in);
 
 		DTC_DMAPacket ConvertToDMAPacket();
 		virtual DTC_DataPacket ConvertToDataPacket() { return ConvertToDMAPacket().ConvertToDataPacket(); }
@@ -217,10 +242,14 @@ namespace DTC
 		DTC_SERDESRXDisparityError(std::bitset<2> data);
 		DTC_SERDESRXDisparityError(uint32_t data, DTC_Ring_ID ring);
 		DTC_SERDESRXDisparityError(const DTC_SERDESRXDisparityError&) = default;
+#ifndef _WIN32
 		DTC_SERDESRXDisparityError(DTC_SERDESRXDisparityError&&) = default;
+#endif
 
 		DTC_SERDESRXDisparityError& operator=(const DTC_SERDESRXDisparityError&) = default;
+#ifndef _WIN32
 		DTC_SERDESRXDisparityError& operator=(DTC_SERDESRXDisparityError&&) = default;
+#endif
 
 		void SetData(std::bitset<2> data) { data_ = data; }
 		std::bitset<2> GetData() { return data_; }
@@ -236,10 +265,14 @@ namespace DTC
 		DTC_CharacterNotInTableError(std::bitset<2> data);
 		DTC_CharacterNotInTableError(uint32_t data, DTC_Ring_ID ring);
 		DTC_CharacterNotInTableError(const DTC_CharacterNotInTableError&) = default;
+#ifndef _WIN32
 		DTC_CharacterNotInTableError(DTC_CharacterNotInTableError&&) = default;
+#endif
 
 		DTC_CharacterNotInTableError& operator=(const DTC_CharacterNotInTableError&) = default;
+#ifndef _WIN32
 		DTC_CharacterNotInTableError& operator=(DTC_CharacterNotInTableError&&) = default;
+#endif
 
 		void SetData(std::bitset<2> data) { data_ = data; }
 		std::bitset<2> GetData() { return data_; }
@@ -255,10 +288,14 @@ namespace DTC
 		DTC_SERDESRXBufferStatus(std::bitset<3> data);
 		DTC_SERDESRXBufferStatus(uint32_t data, DTC_Ring_ID ring);
 		DTC_SERDESRXBufferStatus(const DTC_SERDESRXBufferStatus&) = default;
+#ifndef _WIN32
 		DTC_SERDESRXBufferStatus(DTC_SERDESRXBufferStatus&&) = default;
+#endif
 
 		DTC_SERDESRXBufferStatus& operator=(const DTC_SERDESRXBufferStatus&) = default;
+#ifndef _WIN32
 		DTC_SERDESRXBufferStatus& operator=(DTC_SERDESRXBufferStatus&&) = default;
+#endif
 
 		void SetData(std::bitset<3> data) { data_ = data; }
 		DTC_RXBufferStatus GetStatus();

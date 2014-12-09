@@ -86,7 +86,7 @@ DTC::DTC_DataPacket DTC::DTC_DMAPacket::ConvertToDataPacket()
 	return output;
 }
 
-DTC::DTC_DMAPacket::DTC_DMAPacket(DTC_DataPacket in)
+DTC::DTC_DMAPacket::DTC_DMAPacket(DTC_DataPacket& in)
 {
 	uint8_t word0 = in.GetWord(0);
 	std::bitset<4> roc = word0;
@@ -126,10 +126,9 @@ DTC::DTC_DMAPacket DTC::DTC_ReadoutRequestPacket::ConvertToDMAPacket()
 	return DTC_DMAPacket(DTC_PacketType_ReadoutRequest, ringID_, rocID_, data);
 }
 
-DTC::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_DMAPacket in) : DTC_DMAPacket(in), timestamp_(data_) {}
+DTC::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_DMAPacket& in) : DTC_DMAPacket(in), timestamp_(data_) {}
 
-DTC::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_DataPacket in) : DTC_DMAPacket(in), timestamp_(data_){
-}
+DTC::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_DataPacket& in) : DTC_DMAPacket(in), timestamp_(data_){}
 
 
 DTC::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc)
@@ -138,9 +137,9 @@ DTC::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID r
 DTC::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp timestamp)
 	: DTC_DMAPacket(DTC_PacketType_DataRequest, ring, roc), timestamp_(timestamp) {}
 
-DTC::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DataPacket in) : DTC_DMAPacket(in), timestamp_(data_) {}
+DTC::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DataPacket& in) : DTC_DMAPacket(in), timestamp_(data_) {}
 
-DTC::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DMAPacket in) : DTC_DMAPacket(in), timestamp_(data_) {}
+DTC::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DMAPacket& in) : DTC_DMAPacket(in), timestamp_(data_) {}
 
 DTC::DTC_DMAPacket DTC::DTC_DataRequestPacket::ConvertToDMAPacket()
 {
@@ -154,8 +153,6 @@ DTC::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring)
 
 DTC::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t* data)
 	: DTC_DMAPacket(DTC_PacketType_DCSReply, ring, DTC_ROC_Unused, data) {}
-
-DTC::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_DMAPacket&& right) : DTC_DMAPacket(right) {}
 
 DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint8_t packetCount)
 	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, packetCount) {}
@@ -172,7 +169,7 @@ DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint8_t packet
 	}
 }
 
-DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket in) : DTC_DMAPacket(in), timestamp_(data_)
+DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket& in) : DTC_DMAPacket(in), timestamp_(data_)
 {
 	for (int i = 0; i < 6; i++)
 	{

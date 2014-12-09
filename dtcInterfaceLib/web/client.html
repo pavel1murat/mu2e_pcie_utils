@@ -88,7 +88,7 @@
                     <td>DTC Reset</td>
                     <td><canvas id="dtcResetLED" width="20" height="10" onclick="LEDAction('./DTC/resetDTC', null, 'dtcResetLED')"></canvas></td>
                     <td>Clear Errors</td>
-                    <td><canvas id="clearErrorsLED" width="20" height="10" onclick="LEDAction('./DTC/clearLatchedErrors',null,'clearErrorsLED')"></canvas></td>
+                    <td><canvas id="clearErrorsLED" width="20" height="10" onclick="LEDAction('./DTC/toggleClearLatchedErrors',null,'clearErrorsLED')"></canvas></td>
                 </tr>
                 <tr>
                     <td>ROC Emulator</td>
@@ -121,12 +121,12 @@
         <fieldset>
             <legend>SERDES Reset</legend>
             <table>
-                <tr><td>Ring 0</td><td><canvas id="SERDESResetRing0LED" width="20" height="10" onclick="LEDAction('./DTC/resetSERDES', 0, 'SERDESResetRing0LED')"></canvas></td></tr>
-                <tr><td>Ring 1</td><td><canvas id="SERDESResetRing1LED" width="20" height="10" onclick="LEDAction('./DTC/resetSERDES', 1, 'SERDESResetRing1LED')"></canvas></td></tr>
-                <tr><td>Ring 2</td><td><canvas id="SERDESResetRing2LED" width="20" height="10" onclick="LEDAction('./DTC/resetSERDES', 2, 'SERDESResetRing2LED')"></canvas></td></tr>
-                <tr><td>Ring 3</td><td><canvas id="SERDESResetRing3LED" width="20" height="10" onclick="LEDAction('./DTC/resetSERDES', 3, 'SERDESResetRing3LED')"></canvas></td></tr>
-                <tr><td>Ring 4</td><td><canvas id="SERDESResetRing4LED" width="20" height="10" onclick="LEDAction('./DTC/resetSERDES', 4, 'SERDESResetRing4LED')"></canvas></td></tr>
-                <tr><td>Ring 5</td><td><canvas id="SERDESResetRing5LED" width="20" height="10" onclick="LEDAction('./DTC/resetSERDES', 5, 'SERDESResetRing5LED')"></canvas></td></tr>
+                <tr><td>Ring 0</td><td><canvas id="SERDESResetRing0LED" width="20" height="10" onclick="LEDAction('./DTC/toggleResetSERDES', 0, 'SERDESResetRing0LED')"></canvas></td></tr>
+                <tr><td>Ring 1</td><td><canvas id="SERDESResetRing1LED" width="20" height="10" onclick="LEDAction('./DTC/toggleResetSERDES', 1, 'SERDESResetRing1LED')"></canvas></td></tr>
+                <tr><td>Ring 2</td><td><canvas id="SERDESResetRing2LED" width="20" height="10" onclick="LEDAction('./DTC/toggleResetSERDES', 2, 'SERDESResetRing2LED')"></canvas></td></tr>
+                <tr><td>Ring 3</td><td><canvas id="SERDESResetRing3LED" width="20" height="10" onclick="LEDAction('./DTC/toggleResetSERDES', 3, 'SERDESResetRing3LED')"></canvas></td></tr>
+                <tr><td>Ring 4</td><td><canvas id="SERDESResetRing4LED" width="20" height="10" onclick="LEDAction('./DTC/toggleResetSERDES', 4, 'SERDESResetRing4LED')"></canvas></td></tr>
+                <tr><td>Ring 5</td><td><canvas id="SERDESResetRing5LED" width="20" height="10" onclick="LEDAction('./DTC/toggleResetSERDES', 5, 'SERDESResetRing5LED')"></canvas></td></tr>
             </table>
         </fieldset>
         <fieldset>

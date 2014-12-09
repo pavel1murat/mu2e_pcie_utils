@@ -37,7 +37,7 @@ function writeHTML() {
 // the same port so that an error doesn't bring the whole system down
 if (cluster.isMaster) {
     // Start workers for each CPU on the host
-    for (var i = 0; i < numCPUs; i++) {
+    for(var i = 0; i < numCPUs; i++) {
         cluster.fork();
     }
     
@@ -57,7 +57,7 @@ if (cluster.isMaster) {
             var clientCertificate = req.connection.getPeerCertificate();
             var useremail = clientCertificate.subject.CN[1].substr(4);
             var userFNAL = useremail + "@FNAL.GOV";
-            var userWIN = useremail + "@FERMI.WIN.FNAL.GOV"
+            var userWIN = useremail + "@FERMI.WIN.FNAL.GOV";
             var k5login = "" + fs.readFileSync(process.env.HOME + "/.k5login");
             if (!(k5login.search(userFNAL) > 0 || k5login.search(userWIN) > 0)) {
                 res.writeHeader(401, { 'Content-Type': 'text/html' });
@@ -81,7 +81,7 @@ if (cluster.isMaster) {
                 
                 // If we're recieving a POST to /runcommand (As defined in the module),
                 // handle that here
-                if (req.method == "POST") {
+                if (req.method === "POST") {
                     if (pathname.search("dtc_register_io") > 0) {
                         console.log("In POST handler");
                         var body = "";
@@ -89,12 +89,14 @@ if (cluster.isMaster) {
                         //console.log('Request found with POST method');     
                         
                         // Callback for request data (may come in async)
-                        req.on('data', function (data) {
+                        req.on('data', function (data) 
+                            {
                             body += data;
                         });
                         
                         // When the request is finished, run this callback:
-                        req.on('end', function () {
+                        req.on('end', function () 
+                            {
                             // Get the content of the POST request 
                             var POST = qs.parse(body);
                             var value = 0;
@@ -102,11 +104,11 @@ if (cluster.isMaster) {
                             // If the POST contains a "comm" value, this is the command the
                             // user typed in the "Command: " box
                             console.log("Option is: " + POST.option);
-                            if (POST.option == "read") {
+                            if (POST.option === "read") {
                                 log(POST.address, "read register");
                                 value = dtcdriver.read(POST.address);
                             }
-                            else if (POST.option == "write") {
+                            else if (POST.option === "write") {
                                 log(POST.value.toString(16) + " to " + POST.address.toString(16), "wrote");
                                 value = dtcdriver.write(POST.address, POST.value);
                             }
@@ -136,14 +138,14 @@ if (cluster.isMaster) {
                             var success = true;
                             var text = POST.ring;
                             var lines = text.split("\n");
-                            for (var i = 0; i < lines.length; i++) {
+                            for(var i = 0; i < lines.length; i++) {
                                 var thisLine = lines[i];
                                 var thisLineSplit = thisLine.split(" ");
                                 var address = thisLineSplit[0];
                                 var val = thisLineSplit[1];
                                 log("a write: " + val + " to " + address, "scripted");
                                 value = dtcdriver.write(address, val);
-                                if (value != val) { success = false; }
+                                if (value !== val) { success = false; }
                             }
                             if (success) {
                                 log("the script was run successfully.", "noticed that");
@@ -207,7 +209,7 @@ if (cluster.isMaster) {
                     }
                 }
                 //We got a GET request!
-                if (req.method == "GET") {
+                if (req.method === "GET") {
                     if (pathname.search("jquery") > 0) {
                         console.log("Sending jquery.min.js");
                         res.writeHeader(200, { 'Content-Type': 'text/javascript' });

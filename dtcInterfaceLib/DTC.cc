@@ -1,11 +1,14 @@
 #include "DTC.h"
+#ifndef _WIN32
 #include "../linux_driver/mymodule/mu2e_mmap_ioctl.h"
 #define TRACE_NAME "MU2EDEV"
 #include "../linux_driver/include/trace.h"
+#endif
 
 
 DTC::DTC::DTC()
 {
+#ifndef _WIN32
 	int sts;
 	devfd_ = open("/dev/" MU2E_DEV_FILE, O_RDWR);
 	if (devfd_ == -1) { perror("open /dev/" MU2E_DEV_FILE); exit(1); }
@@ -42,6 +45,7 @@ DTC::DTC::DTC()
 					, chn, dir, map, mu2e_mmap_ptrs_[chn][dir][map]);
 			}
 		}
+#endif
 }
 
 DTC::DTC_ErrorCode DTC::DTC::ReadDataPacket(int channel)
@@ -65,7 +69,10 @@ DTC::DTC_ErrorCode DTC::DTC::WriteDAQDataPacket(DTC_DataPacket packet)
 
 DTC::DTC_ErrorCode DTC::DTC::ReadDMAPacket(int channel)
 {
-	return DTC_DMAPacket(ReadDataPacket(channel));
+	DTC_ErrorCode err = ReadDataPacket(channel);
+	if (err != DTC_ErrorCode_Success) { return err; }
+	dmaPacket_ = DTC_DMAPacket(dataPacket_);
+	return err;
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadDMADAQPacket()
 {
@@ -91,29 +98,30 @@ DTC::DTC_ErrorCode DTC::DTC::WriteDMADCSPacket(DTC_DMAPacket packet)
 
 DTC::DTC_ErrorCode DTC::DTC::GetData(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp when)
 {
-	dataVector.clear();
-	uint8_t err;
+	dataVector_.clear();
+	DTC_ErrorCode err;
 	DTC_DataRequestPacket req(ring, roc, when);
 	err = WriteDMADAQPacket(req);
 	if (err != DTC_ErrorCode_Success) { return err; }
 
-	DTC_DataHeaderPacket packet = ReadDMADAQPacket();
-	if (lastError != DTC_ErrorCode_Success) { return lastError; }
-	if (packet.GetPacketType() != uint8_t_DataHeader)
+	err = ReadDMADAQPacket();
+	if (err != DTC_ErrorCode_Success) { return err; }
+	DTC_DataHeaderPacket packet(dmaPacket_);
+	if (packet.GetPacketType() != DTC_PacketType_DataHeader)
 	{
 		return DTC_ErrorCode_WrongPacketType;
 	}
 	for (int i = 0; i < 6; ++i)
 	{
-		dataVector.push_back(packet.GetData()[i]);
+		dataVector_.push_back(packet.GetData()[i]);
 	}
 	for (int ii = 0; ii < packet.GetPacketCount(); ++ii)
 	{
-		DTC_DataPacket dataPacket = ReadDAQDataPacket();
-		if (lastError != DTC_ErrorCode_Success) { return lastError; }
+		err = ReadDAQDataPacket();
+		if (err != DTC_ErrorCode_Success) { return err; }
 		for (int i = 0; i < 16; ++i)
 		{
-			dataVector.push_back(dataPacket.GetWord(i));
+			dataVector_.push_back(dataPacket_.GetWord(i));
 		}
 	}
 	return err;
@@ -121,16 +129,17 @@ DTC::DTC_ErrorCode DTC::DTC::GetData(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Times
 
 DTC::DTC_ErrorCode DTC::DTC::DCSRequestReply(DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t dataIn[12])
 {
-	dataVector.clear();
-	uint8_t err;
+	dataVector_.clear();
+	DTC_ErrorCode err;
 	DTC_DCSRequestPacket req(ring, roc, dataIn);
 	err = WriteDMADCSPacket(req);
 	if (err != DTC_ErrorCode_Success) { return err; }
-	DTC_DCSReplyPacket packet = static_cast<DTC_DCSReplyPacket>(ReadDMADCSPacket());
+	err = ReadDMADCSPacket();
+	DTC_DCSReplyPacket packet(dmaPacket_);
 	for (int ii = 0; ii < 12; ++ii) {
-		dataVector.push_back(packet.GetData()[ii]);
+		dataVector_.push_back(packet.GetData()[ii]);
 	}
-	return lastError;
+	return err;
 }
 
 DTC::DTC_ErrorCode DTC::DTC::SendReadoutRequestPacket(DTC_Ring_ID ring, DTC_Timestamp when, DTC_ROC_ID roc)
@@ -141,22 +150,28 @@ DTC::DTC_ErrorCode DTC::DTC::SendReadoutRequestPacket(DTC_Ring_ID ring, DTC_Time
 
 DTC::DTC_ErrorCode DTC::DTC::WriteRegister(uint32_t data, uint16_t address)
 {
+#ifndef _WIN32
 	m_ioc_reg_access_t reg;
 	reg.reg_offset = address;
 	reg.access_type = 1;
 	reg.val = data;
-	return static_cast<uint8_t>(-1 * ioctl(devfd_, M_IOC_REG_ACCESS, &reg));
-	//return DTC_ErrorCode_NotImplemented;
+	return static_cast<DTC_ErrorCode>(-1 * ioctl(devfd_, M_IOC_REG_ACCESS, &reg));
+#else
+	return DTC_ErrorCode_NotImplemented;
+#endif
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadRegister(uint16_t address)
 {
+#ifndef _WIN32
 	m_ioc_reg_access_t reg;
 	reg.reg_offset = address;
 	reg.access_type = 0;
 	int errCode = -1 * ioctl(devfd_, M_IOC_REG_ACCESS, &reg);
-	dataWord = reg.val;
-	return static_cast<uint8_t>(errCode);
-	//return DTC_ErrorCode_NotImplemented;
+	dataWord_ = reg.val;
+	return static_cast<DTC_ErrorCode>(errCode);
+#else
+	return DTC_ErrorCode_NotImplemented;
+#endif
 }
 
 DTC::DTC_ErrorCode DTC::DTC::WriteControlRegister(uint32_t data)
@@ -169,33 +184,42 @@ DTC::DTC_ErrorCode DTC::DTC::ReadControlRegister()
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadResetDTC()
 {
-	uint8_t err = ReadControlRegister();
-	std::bitset<32> data = dataWord;
-	booleanValue = data[31];
+	DTC_ErrorCode err = ReadControlRegister();
+	std::bitset<32> data = dataWord_;
+	booleanValue_ = data[31];
 	return err;
 }
 DTC::DTC_ErrorCode DTC::DTC::ResetDTC()
 {
-	uint8_t err = ReadControlRegister();
+	DTC_ErrorCode err = ReadControlRegister();
 	if (err != DTC_ErrorCode_Success){ return err; }
-	std::bitset<32> data = dataWord;
+	std::bitset<32> data = dataWord_;
 	data[31] = 1; // DTC Reset bit
 	return WriteControlRegister(data.to_ulong());
 }
 DTC::DTC_ErrorCode DTC::DTC::ClearLatchedErrors()
 {
-	uint8_t err = ReadControlRegister();
+	DTC_ErrorCode err = ReadControlRegister();
 	if (err != DTC_ErrorCode_Success) { return err; }
-	std::bitset<32> data = dataWord;
+	std::bitset<32> data = dataWord_;
 	data[30] = 1; // Clear Latched Errors bit
 	return WriteControlRegister(data.to_ulong());
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadClearLatchedErrors()
 {
-	uint8_t err = ReadControlRegister();
-	std::bitset<32> data = dataWord;
-	booleanValue = data[30];
+	DTC_ErrorCode err = ReadControlRegister();
+	if (err != DTC_ErrorCode_Success) { return err; }
+	std::bitset<32> data = dataWord_;
+	booleanValue_ = data[30];
 	return err;
+}
+DTC::DTC_ErrorCode DTC::DTC::ClearClearLatchedErrors()
+{
+	DTC_ErrorCode err = ReadControlRegister();
+	if (err != DTC_ErrorCode_Success) { return err; }
+	std::bitset<32> data = dataWord_;
+	data[30] = 0;
+	return WriteControlRegister(data.to_ulong());
 }
 
 DTC::DTC_ErrorCode DTC::DTC::WriteSERDESLoopbackEnableRegister(uint32_t data)
@@ -208,25 +232,25 @@ DTC::DTC_ErrorCode DTC::DTC::ReadSERDESLoopbackEnableRegister()
 }
 DTC::DTC_ErrorCode DTC::DTC::EnableSERDESLoopback(const DTC_Ring_ID ring)
 {
-	uint8_t err = ReadSERDESLoopbackEnableRegister();
+	DTC_ErrorCode err = ReadSERDESLoopbackEnableRegister();
 	if (err != DTC_ErrorCode_Success) { return err; }
-	std::bitset<32> data = dataWord;
+	std::bitset<32> data = dataWord_;
 	data[(uint8_t)ring] = 1;
 	return WriteSERDESLoopbackEnableRegister(data.to_ulong());
 }
 DTC::DTC_ErrorCode DTC::DTC::DisableSERDESLoopback(const DTC_Ring_ID ring)
 {
-	uint8_t err = ReadSERDESLoopbackEnableRegister();
+	DTC_ErrorCode err = ReadSERDESLoopbackEnableRegister();
 	if (err != DTC_ErrorCode_Success) { return err; }
-	std::bitset<32> data = dataWord;
+	std::bitset<32> data = dataWord_;
 	data[(uint8_t)ring] = 0;
 	return WriteSERDESLoopbackEnableRegister(data.to_ulong());
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadSERDESLoopback(const DTC_Ring_ID ring)
 {
-	uint8_t err = ReadSERDESLoopbackEnableRegister();
-	std::bitset<32> dataSet = dataWord;
-	booleanValue = dataSet[(uint8_t)ring];
+	DTC_ErrorCode err = ReadSERDESLoopbackEnableRegister();
+	std::bitset<32> dataSet = dataWord_;
+	booleanValue_ = dataSet[(uint8_t)ring];
 	return err;
 }
 
@@ -248,15 +272,15 @@ DTC::DTC_ErrorCode DTC::DTC::DisableROCEmulator()
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadROCEmulatorEnabled()
 {
-	uint8_t err = ReadROCEmulationEnableRegister();
-	std::bitset<32> dataSet = dataWord;
+	DTC_ErrorCode err = ReadROCEmulationEnableRegister();
+	std::bitset<32> dataSet = dataWord_;
 	if (dataSet[0] == 0)
 	{
-		booleanValue = false;
+		booleanValue_ = false;
 	}
 	else
 	{
-		booleanValue = true;
+		booleanValue_ = true;
 	}
 
 	return err;
@@ -272,25 +296,25 @@ DTC::DTC_ErrorCode DTC::DTC::ReadRingEnableRegister()
 }
 DTC::DTC_ErrorCode DTC::DTC::EnableRing(const DTC_Ring_ID ring)
 {
-	uint8_t err = ReadRingEnableRegister();
+	DTC_ErrorCode err = ReadRingEnableRegister();
 	if (err != DTC_ErrorCode_Success) { return err; }
-	std::bitset<32> data = dataWord;
+	std::bitset<32> data = dataWord_;
 	data[(uint8_t)ring] = 1;
 	return WriteRingEnableRegister(data.to_ulong());
 }
 DTC::DTC_ErrorCode DTC::DTC::DisableRing(const DTC_Ring_ID ring)
 {
-	uint8_t err = ReadRingEnableRegister();
+	DTC_ErrorCode err = ReadRingEnableRegister();
 	if (err != DTC_ErrorCode_Success) { return err; }
-	std::bitset<32> data = dataWord;
+	std::bitset<32> data = dataWord_;
 	data[(uint8_t)ring] = 0;
 	return WriteRingEnableRegister(data.to_ulong());
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadRingEnabled(const DTC_Ring_ID ring)
 {
-	uint8_t err = ReadRingEnableRegister();
-	std::bitset<32> dataSet = dataWord;
-	booleanValue = dataSet[(uint8_t)ring];
+	DTC_ErrorCode err = ReadRingEnableRegister();
+	std::bitset<32> dataSet = dataWord_;
+	booleanValue_ = dataSet[(uint8_t)ring];
 	return err;
 }
 
@@ -304,17 +328,25 @@ DTC::DTC_ErrorCode DTC::DTC::ReadSERDESResetRegister()
 }
 DTC::DTC_ErrorCode DTC::DTC::ResetSERDES(const DTC_Ring_ID ring)
 {
-	uint8_t err = ReadSERDESResetRegister();
+	DTC_ErrorCode err = ReadSERDESResetRegister();
 	if (err != DTC_ErrorCode_Success) { return err; }
-	std::bitset<32> data = dataWord;
+	std::bitset<32> data = dataWord_;
 	data[(uint8_t)ring] = 1;
+	return WriteSERDESResetRegister(data.to_ulong());
+}
+DTC::DTC_ErrorCode DTC::DTC::ClearResetSERDES(const DTC_Ring_ID ring)
+{
+	DTC_ErrorCode err = ReadSERDESResetRegister();
+	if (err != DTC_ErrorCode_Success) { return err; }
+	std::bitset<32> data = dataWord_;
+	data[(uint8_t)ring] = 0;
 	return WriteSERDESResetRegister(data.to_ulong());
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadResetSERDES(const DTC_Ring_ID ring)
 {
-	uint8_t err = ReadSERDESResetRegister();
-	std::bitset<32> dataSet = dataWord;
-	booleanValue = dataSet[(uint8_t)ring];
+	DTC_ErrorCode err = ReadSERDESResetRegister();
+	std::bitset<32> dataSet = dataWord_;
+	booleanValue_ = dataSet[(uint8_t)ring];
 	return err;
 }
 
@@ -324,8 +356,8 @@ DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXDisparityError()
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXDisparityError(const DTC_Ring_ID ring)
 {
-	uint8_t err = ReadSERDESRXDisparityError();
-	SERDESRXDisparityError = std::move(DTC_SERDESRXDisparityError(dataWord, ring));
+	DTC_ErrorCode err = ReadSERDESRXDisparityError();
+	SERDESRXDisparityError_ = std::move(DTC_SERDESRXDisparityError(dataWord_, ring));
 	return err;
 }
 
@@ -335,8 +367,8 @@ DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXCharacterNotInTableError()
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXCharacterNotInTableError(const DTC_Ring_ID ring)
 {
-	uint8_t err = ReadSERDESRXCharacterNotInTableError();
-	CharacterNotInTableError = std::move(DTC_CharacterNotInTableError(dataWord, ring));
+	DTC_ErrorCode err = ReadSERDESRXCharacterNotInTableError();
+	CharacterNotInTableError_ = std::move(DTC_CharacterNotInTableError(dataWord_, ring));
 	return err;
 }
 
@@ -346,9 +378,9 @@ DTC::DTC_ErrorCode DTC::DTC::ReadSERDESUnlockError()
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadSERDESUnlockError(const DTC_Ring_ID ring)
 {
-	uint8_t err = ReadSERDESUnlockError();
-	std::bitset<32> dataSet = dataWord;
-	booleanValue = dataSet[(uint8_t)ring];
+	DTC_ErrorCode err = ReadSERDESUnlockError();
+	std::bitset<32> dataSet = dataWord_;
+	booleanValue_ = dataSet[(uint8_t)ring];
 	return err;
 }
 
@@ -358,9 +390,9 @@ DTC::DTC_ErrorCode DTC::DTC::ReadSERDESPLLLocked()
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadSERDESPLLLocked(const DTC_Ring_ID ring)
 {
-	uint8_t err = ReadSERDESPLLLocked();
-	std::bitset<32> dataSet = dataWord;
-	booleanValue = dataSet[(uint8_t)ring];
+	DTC_ErrorCode err = ReadSERDESPLLLocked();
+	std::bitset<32> dataSet = dataWord_;
+	booleanValue_ = dataSet[(uint8_t)ring];
 	return err;
 }
 
@@ -370,16 +402,16 @@ DTC::DTC_ErrorCode DTC::DTC::ReadSERDESTXBufferStatus()
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadSERDESOverflowOrUnderflow(const DTC_Ring_ID ring)
 {
-	uint8_t err = ReadSERDESTXBufferStatus();
-	std::bitset<32> dataSet = dataWord;
-	booleanValue = dataSet[(uint8_t)ring * 2 + 1];
+	DTC_ErrorCode err = ReadSERDESTXBufferStatus();
+	std::bitset<32> dataSet = dataWord_;
+	booleanValue_ = dataSet[(uint8_t)ring * 2 + 1];
 	return err;
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadSERDESBufferFIFOHalfFull(const DTC_Ring_ID ring)
 {
-	uint8_t err = ReadSERDESTXBufferStatus();
-	std::bitset<32> dataSet = dataWord;
-	booleanValue = dataSet[(uint8_t)ring * 2];
+	DTC_ErrorCode err = ReadSERDESTXBufferStatus();
+	std::bitset<32> dataSet = dataWord_;
+	booleanValue_ = dataSet[(uint8_t)ring * 2];
 	return err;
 }
 
@@ -389,8 +421,8 @@ DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXBufferStatus()
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXBufferStatus(const DTC_Ring_ID ring)
 {
-	uint8_t err = ReadSERDESRXBufferStatus();
-	SERDESRXBufferStatus = std::move(DTC_SERDESRXBufferStatus(dataWord, ring));
+	DTC_ErrorCode err = ReadSERDESRXBufferStatus();
+	SERDESRXBufferStatus_ = std::move(DTC_SERDESRXBufferStatus(dataWord_, ring));
 	return err;
 }
 
@@ -400,9 +432,9 @@ DTC::DTC_ErrorCode DTC::DTC::ReadSERDESResetDone()
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadSERDESResetDone(const DTC_Ring_ID ring)
 {
-	uint8_t err = ReadSERDESResetDone();
-	std::bitset<32> dataSet = dataWord;
-	booleanValue = dataSet[(uint8_t)ring];
+	DTC_ErrorCode err = ReadSERDESResetDone();
+	std::bitset<32> dataSet = dataWord_;
+	booleanValue_ = dataSet[(uint8_t)ring];
 	return err;
 }
 
@@ -429,7 +461,7 @@ DTC::DTC_ErrorCode DTC::DTC::WriteTimestampPreset1(uint16_t data)
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadTimestampPreset1()
 {
-	uint8_t err = ReadTimestampPreset1Register();
+	DTC_ErrorCode err = ReadTimestampPreset1Register();
 	return err;
 }
 
@@ -440,7 +472,7 @@ DTC::DTC_ErrorCode DTC::DTC::WriteTimestampPreset(DTC_Timestamp preset)
 	timestamp >>= 32;
 	uint16_t timestampHigh = static_cast<uint16_t>(timestamp.to_ulong());
 
-	uint8_t err = WriteTimestampPreset0Register(timestampLow);
+	DTC_ErrorCode err = WriteTimestampPreset0Register(timestampLow);
 	if (err != DTC_ErrorCode_Success)
 	{
 		return err;
@@ -450,15 +482,15 @@ DTC::DTC_ErrorCode DTC::DTC::WriteTimestampPreset(DTC_Timestamp preset)
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadTimestampPreset()
 {
-	uint8_t err = ReadTimestampPreset0Register();
-	uint32_t timestampLow = dataWord;
+	DTC_ErrorCode err = ReadTimestampPreset0Register();
+	uint32_t timestampLow = dataWord_;
 	if (err != DTC_ErrorCode_Success)
 	{
 		return err;
 	}
 
 	err = ReadTimestampPreset1Register();
-	timestampPreset.SetTimestamp(timestampLow, dataWord);
+	timestampPreset_.SetTimestamp(timestampLow, static_cast<uint16_t>(dataWord_));
 
 	return err;
 }
@@ -473,15 +505,15 @@ DTC::DTC_ErrorCode DTC::DTC::ReadFPGAPROMProgramStatusRegister()
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadFPGAPROMProgramFIFOFull()
 {
-	uint8_t err = ReadFPGAPROMProgramStatusRegister();
-	std::bitset<32> dataSet = dataWord;
-	booleanValue = dataSet[1];
+	DTC_ErrorCode err = ReadFPGAPROMProgramStatusRegister();
+	std::bitset<32> dataSet = dataWord_;
+	booleanValue_ = dataSet[1];
 	return err;
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadFPGAPROMReady()
 {
-	uint8_t err = ReadFPGAPROMProgramStatusRegister();
-	std::bitset<32> dataSet = dataWord;
-	booleanValue = dataSet[0];
+	DTC_ErrorCode err = ReadFPGAPROMProgramStatusRegister();
+	std::bitset<32> dataSet = dataWord_;
+	booleanValue_ = dataSet[0];
 	return err;
 }

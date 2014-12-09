@@ -79,7 +79,8 @@ function GetAJAXValues(strOption, address, value, fnCallback) {
         },
         dataType: "json",
         // Our success handler.
-        success: function (objData) {
+        success: function (objData)
+        {
             // At this point, we have data coming back
             // from the server.
             fnCallback({
