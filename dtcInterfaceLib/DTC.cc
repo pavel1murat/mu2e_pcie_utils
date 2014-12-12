@@ -3,6 +3,11 @@
 #include "../linux_driver/mymodule/mu2e_mmap_ioctl.h"
 #define TRACE_NAME "MU2EDEV"
 #include "../linux_driver/include/trace.h"
+#include <unistd.h>
+#else
+#include <chrono>
+#include <thread>
+#define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
 #endif
 
 
@@ -155,7 +160,8 @@ DTC::DTC_ErrorCode DTC::DTC::WriteRegister(uint32_t data, uint16_t address)
 	reg.reg_offset = address;
 	reg.access_type = 1;
 	reg.val = data;
-	return static_cast<DTC_ErrorCode>(-1 * ioctl(devfd_, M_IOC_REG_ACCESS, &reg));
+	int errorCode = ioctl(devfd_, M_IOC_REG_ACCESS, &reg);
+	return errorCode == 0 ? DTC_ErrorCode_Success : DTC_ErrorCode_IOError;
 #else
 	return DTC_ErrorCode_NotImplemented;
 #endif
@@ -166,9 +172,9 @@ DTC::DTC_ErrorCode DTC::DTC::ReadRegister(uint16_t address)
 	m_ioc_reg_access_t reg;
 	reg.reg_offset = address;
 	reg.access_type = 0;
-	int errCode = -1 * ioctl(devfd_, M_IOC_REG_ACCESS, &reg);
+	int errorCode = ioctl(devfd_, M_IOC_REG_ACCESS, &reg);
 	dataWord_ = reg.val;
-	return static_cast<DTC_ErrorCode>(errCode);
+	return errorCode == 0 ? DTC_ErrorCode_Success : DTC_ErrorCode_IOError;
 #else
 	return DTC_ErrorCode_NotImplemented;
 #endif
@@ -326,21 +332,26 @@ DTC::DTC_ErrorCode DTC::DTC::ReadSERDESResetRegister()
 {
 	return ReadRegister(SERDESResetRegister);
 }
-DTC::DTC_ErrorCode DTC::DTC::ResetSERDES(const DTC_Ring_ID ring)
+DTC::DTC_ErrorCode DTC::DTC::ResetSERDES(const DTC_Ring_ID ring, int interval)
 {
-	DTC_ErrorCode err = ReadSERDESResetRegister();
-	if (err != DTC_ErrorCode_Success) { return err; }
-	std::bitset<32> data = dataWord_;
-	data[(uint8_t)ring] = 1;
-	return WriteSERDESResetRegister(data.to_ulong());
-}
-DTC::DTC_ErrorCode DTC::DTC::ClearResetSERDES(const DTC_Ring_ID ring)
-{
-	DTC_ErrorCode err = ReadSERDESResetRegister();
-	if (err != DTC_ErrorCode_Success) { return err; }
-	std::bitset<32> data = dataWord_;
-	data[(uint8_t)ring] = 0;
-	return WriteSERDESResetRegister(data.to_ulong());
+	bool resetDone = false;
+	DTC_ErrorCode err;
+	while (!resetDone)
+	{
+		err = ReadSERDESResetRegister();
+		if (err != DTC_ErrorCode_Success) { return DTC_ErrorCode_ResetFailed; }
+		std::bitset<32> data = dataWord_;
+		data[(uint8_t)ring] = 1;
+		err = WriteSERDESResetRegister(data.to_ulong());
+		if (err != DTC_ErrorCode_Success) { return DTC_ErrorCode_ResetFailed; }
+		usleep(interval);
+		data[(uint8_t)ring] = 0;
+		err = WriteSERDESResetRegister(data.to_ulong());
+		if (err != DTC_ErrorCode_Success) { return DTC_ErrorCode_ResetFailed; }
+		err = ReadSERDESResetDone(ring);
+		resetDone = booleanValue_;
+	}
+	return err;
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadResetSERDES(const DTC_Ring_ID ring)
 {
@@ -350,89 +361,89 @@ DTC::DTC_ErrorCode DTC::DTC::ReadResetSERDES(const DTC_Ring_ID ring)
 	return err;
 }
 
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXDisparityError()
+DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXDisparityErrorRegister()
 {
 	return ReadRegister(SERDESRXDisparityErrorRegister);
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXDisparityError(const DTC_Ring_ID ring)
 {
-	DTC_ErrorCode err = ReadSERDESRXDisparityError();
+	DTC_ErrorCode err = ReadSERDESRXDisparityErrorRegister();
 	SERDESRXDisparityError_ = std::move(DTC_SERDESRXDisparityError(dataWord_, ring));
 	return err;
 }
 
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXCharacterNotInTableError()
+DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXCharacterNotInTableErrorRegister()
 {
 	return ReadRegister(SERDESRXCharacterNotInTableErrorRegister);
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXCharacterNotInTableError(const DTC_Ring_ID ring)
 {
-	DTC_ErrorCode err = ReadSERDESRXCharacterNotInTableError();
+	DTC_ErrorCode err = ReadSERDESRXCharacterNotInTableErrorRegister();
 	CharacterNotInTableError_ = std::move(DTC_CharacterNotInTableError(dataWord_, ring));
 	return err;
 }
 
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESUnlockError()
+DTC::DTC_ErrorCode DTC::DTC::ReadSERDESUnlockErrorRegister()
 {
 	return ReadRegister(SERDESUnlockErrorRegister);
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadSERDESUnlockError(const DTC_Ring_ID ring)
 {
-	DTC_ErrorCode err = ReadSERDESUnlockError();
+	DTC_ErrorCode err = ReadSERDESUnlockErrorRegister();
 	std::bitset<32> dataSet = dataWord_;
 	booleanValue_ = dataSet[(uint8_t)ring];
 	return err;
 }
 
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESPLLLocked()
+DTC::DTC_ErrorCode DTC::DTC::ReadSERDESPLLLockedRegister()
 {
 	return ReadRegister(SERDESPLLLockedRegister);
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadSERDESPLLLocked(const DTC_Ring_ID ring)
 {
-	DTC_ErrorCode err = ReadSERDESPLLLocked();
+	DTC_ErrorCode err = ReadSERDESPLLLockedRegister();
 	std::bitset<32> dataSet = dataWord_;
 	booleanValue_ = dataSet[(uint8_t)ring];
 	return err;
 }
 
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESTXBufferStatus()
+DTC::DTC_ErrorCode DTC::DTC::ReadSERDESTXBufferStatusRegister()
 {
 	return ReadRegister(SERDESTXBufferStatusRegister);
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadSERDESOverflowOrUnderflow(const DTC_Ring_ID ring)
 {
-	DTC_ErrorCode err = ReadSERDESTXBufferStatus();
+	DTC_ErrorCode err = ReadSERDESTXBufferStatusRegister();
 	std::bitset<32> dataSet = dataWord_;
 	booleanValue_ = dataSet[(uint8_t)ring * 2 + 1];
 	return err;
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadSERDESBufferFIFOHalfFull(const DTC_Ring_ID ring)
 {
-	DTC_ErrorCode err = ReadSERDESTXBufferStatus();
+	DTC_ErrorCode err = ReadSERDESTXBufferStatusRegister();
 	std::bitset<32> dataSet = dataWord_;
 	booleanValue_ = dataSet[(uint8_t)ring * 2];
 	return err;
 }
 
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXBufferStatus()
+DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXBufferStatusRegister()
 {
 	return ReadRegister(SERDESRXBufferStatusRegister);
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXBufferStatus(const DTC_Ring_ID ring)
 {
-	DTC_ErrorCode err = ReadSERDESRXBufferStatus();
+	DTC_ErrorCode err = ReadSERDESRXBufferStatusRegister();
 	SERDESRXBufferStatus_ = std::move(DTC_SERDESRXBufferStatus(dataWord_, ring));
 	return err;
 }
 
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESResetDone()
+DTC::DTC_ErrorCode DTC::DTC::ReadSERDESResetDoneRegister()
 {
 	return ReadRegister(SERDESResetDoneRegister);
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadSERDESResetDone(const DTC_Ring_ID ring)
 {
-	DTC_ErrorCode err = ReadSERDESResetDone();
+	DTC_ErrorCode err = ReadSERDESResetDoneRegister();
 	std::bitset<32> dataSet = dataWord_;
 	booleanValue_ = dataSet[(uint8_t)ring];
 	return err;
@@ -455,22 +466,13 @@ DTC::DTC_ErrorCode DTC::DTC::ReadTimestampPreset1Register()
 {
 	return ReadRegister(TimestampPreset1Register);
 }
-DTC::DTC_ErrorCode DTC::DTC::WriteTimestampPreset1(uint16_t data)
-{
-	return WriteTimestampPreset1Register(data);
-}
-DTC::DTC_ErrorCode DTC::DTC::ReadTimestampPreset1()
-{
-	DTC_ErrorCode err = ReadTimestampPreset1Register();
-	return err;
-}
 
 DTC::DTC_ErrorCode DTC::DTC::WriteTimestampPreset(DTC_Timestamp preset)
 {
 	std::bitset<48> timestamp = preset.GetTimestamp();
 	uint32_t timestampLow = static_cast<uint32_t>(timestamp.to_ulong());
 	timestamp >>= 32;
-	uint16_t timestampHigh = static_cast<uint16_t>(timestamp.to_ulong());
+	uint16_t timestampHigh = static_cast<uint32_t>(timestamp.to_ulong());
 
 	DTC_ErrorCode err = WriteTimestampPreset0Register(timestampLow);
 	if (err != DTC_ErrorCode_Success)
@@ -478,7 +480,7 @@ DTC::DTC_ErrorCode DTC::DTC::WriteTimestampPreset(DTC_Timestamp preset)
 		return err;
 	}
 
-	return WriteTimestampPreset1(timestampHigh);
+	return WriteTimestampPreset1Register(timestampHigh);
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadTimestampPreset()
 {

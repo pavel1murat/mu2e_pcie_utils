@@ -25,7 +25,9 @@ namespace DTC
 {
 	enum DTC_ErrorCode {
 		DTC_ErrorCode_Success = 0,
-		DTC_ErrorCode_WrongPacketType = -1,
+		DTC_ErrorCode_IOError = -1,
+		DTC_ErrorCode_ResetFailed = -2,
+		DTC_ErrorCode_WrongPacketType = -89,
 		DTC_ErrorCode_NotImplemented = -99,
 	};
 

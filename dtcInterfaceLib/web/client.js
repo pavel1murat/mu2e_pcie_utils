@@ -1,16 +1,107 @@
-/*var socket = io.connect('http://localhost');
-socket.on('txt_change', function (data) {
-    console.log(data);
-    $("#txt").val(data.txt);
-});
-$(document).ready(function () {
-    $("#txt").keyup(function () {
-        socket.emit('txt_change', { "txt" : $(this).val() });
-    });
-});*/
+var sendData = [{ value: 0, time: new Date() }],
+    receiveData = [{ value: 0, time: new Date() }];
+
+var n = 100, //The number of points to plot
+    duration = 1000; //ms between updates
+
+function tick(path, line, data, axis, yaxis, x, y, id) {
+    var transition = d3.select("#" + id).transition()
+                .duration(duration)
+                .ease("linear");
+    transition = transition.each(function () {
+        
+        // update the domains
+        now = new Date();
+        x.domain([now - (n - 2) * duration, now - duration]);
+        var extent = d3.extent(data, function (d) { return d.value; });
+        y.domain(extent);
+        
+        d3.json("./json_" + id, function (json) {
+            data.push({ value: json.value, time: new Date(json.time) });
+        });
+        
+        // redraw the line
+        path
+                        .attr("d", line)
+                        .attr("transform", null);
+        
+        // slide the x-axis left
+        axis.call(x.axis);
+        yaxis.call(y.axis);
+        
+        // slide the line left
+        path.transition()
+            .duration(duration)
+            .ease("linear")
+                        .attr("transform", "translate(" + x(now - (n - 1) * duration) + ")");
+        
+        while (data.length > 0 && data[0].time < now - n * duration) {
+            data.shift();
+        }
+
+    }).transition().each("start", function () { setTimeout(tick(path, line, data, axis, yaxis, x, y, id),duration/2) });
+}
+
+function makeGraph(data, id, tick) {
+    var now = new Date(Date.now() - duration);
+    
+    var margin = { top: 6, right: 10, bottom: 20, left: 100 },
+        width = $("#" + id).width() - margin.left - margin.right,
+        height = 120 - margin.top - margin.bottom;
+    
+    var x = d3.time.scale()
+                .domain([now - (n - 2) * duration, now - duration])
+                .range([0, width]);
+    
+    var y = d3.scale.linear()
+                .range([height, 0]);
+    
+    var line = d3.svg.line()
+                .interpolate("linear")
+                .x(function (d) { return x(d.time); })
+                .y(function (d) { return y(d.value); });
+    
+    var svg = d3.select("#" + id).append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .style("margin-left", -margin.left + "px")
+              .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    
+    svg.append("defs").append("clipPath")
+                .attr("id", "clip")
+              .append("rect")
+                .attr("width", width)
+                .attr("height", height);
+    
+    var axis = svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + height + ")")
+                .call(x.axis = d3.svg.axis().scale(x).orient("bottom"));
+    
+    var formatTick = function (d) {
+        var prefix = d3.formatPrefix(d);
+        return prefix.scale(d) + " " + prefix.symbol + "B/s";
+    }
+    var yaxis = svg.append("g")
+                .attr("class", "y axis")
+                .call(y.axis = d3.svg.axis().scale(y).tickFormat(formatTick).orient("left"));
+    
+    var path = svg.append("g")
+                .attr("clip-path", "url(#clip)")
+              .append("path")
+                .datum(data)
+                .attr("class", "line");
+    
+    
+    tick(path, line, data, axis, yaxis, x, y, id);
+}
+
+var logIntervalHandle;
+var regIntervalHandle;
 
 function setPixel(led, bit, modestring) {
-    ctx = led.getContext("2d");
+    var ctx = led.getContext("2d");
     
     ctx.lineWidth = 2;
     
@@ -29,14 +120,13 @@ function setPixel(led, bit, modestring) {
         } else {
             ctx.fillStyle = 'black';
         }
-    }
-    else {
+    } else {
         ctx.strokeStype = "darkred";
         ctx.fillStyle = "red";
     }
     ctx.beginPath();
-    ctx.moveTo(led.width / 4, ctx.lineWidth); // Create a starting point
-    ctx.lineTo(led.width * 3 / 4, ctx.lineWidth); // Create a horizontal line
+    ctx.moveTo(led.width / 4, ctx.lineWidth); //Create a starting point
+    ctx.lineTo(led.width * 3 / 4, ctx.lineWidth); //Create a horizontal line
     ctx.arcTo(led.width - ctx.lineWidth, ctx.lineWidth, led.width - ctx.lineWidth, led.height / 4, led.width / 8); // Create an arc
     ctx.lineTo(led.width - ctx.lineWidth, led.height * 3 / 4); // Continue with vertical line
     ctx.arcTo(led.width - ctx.lineWidth, led.height - ctx.lineWidth, led.width * 3 / 4, led.height - ctx.lineWidth, led.width / 8);
@@ -66,6 +156,7 @@ function GetAJAXValues(strOption, address, value, fnCallback) {
         // Abort the current request.
         GetAJAXValues.Xhr.abort();
     }
+    setPixel(document.getElementById("FormAjaxLED"), 1, "RO");
     // Get data via AJAX. Store the XHR (AJAX request
     // object in the method in case we need to abort
     // it on subsequent requests.
@@ -79,17 +170,18 @@ function GetAJAXValues(strOption, address, value, fnCallback) {
         },
         dataType: "json",
         // Our success handler.
-        success: function (objData)
-        {
+        success: function (objData) {
             // At this point, we have data coming back
             // from the server.
+            setPixel(document.getElementById("FormAjaxLED"), 0, "RO");
             fnCallback({
                 Value1: objData
             });
         },
         // An error handler for the request.
-        error: function () {
-            alert("An error occurred");
+        error: function (xhr, textStatus, errorCode) {
+            //alert("An error occurred:\n" + textStatus + "\n" + errorCode);
+            setPixel(document.getElementById("FormAjaxLED"), 1, "ERR");
         },
         // I get called no matter what.
         complete: function () {
@@ -131,7 +223,6 @@ function UpdateFormFields() {
 }
 
 function PopulateLEDS(dtcregdump) {
-    $("#log").val(dtcregdump.Log);
     $("#dtcVersion").val(dtcregdump.Version.toString(16));
     setPixel(document.getElementById("dtcResetLED"), dtcregdump.ResetDTC, "RW");
     setPixel(document.getElementById("clearErrorsLED"), dtcregdump.ClearLatchedErrors, "RW");
@@ -252,6 +343,7 @@ function GetRegDumpAjax(fnCallback) {
         // Abort the current request.
         GetRegDumpAjax.Xhr.abort();
     }
+    setPixel(document.getElementById("RegDumpAjaxLED"), 1, "RO");
     // Get data via AJAX. Store the XHR (AJAX request
     // object in the method in case we need to abort
     // it on subsequent requests.
@@ -264,13 +356,15 @@ function GetRegDumpAjax(fnCallback) {
         success: function (objData) {
             // At this point, we have data coming back
             // from the server.
+            setPixel(document.getElementById("RegDumpAjaxLED"), 0, "RO");
             fnCallback({
                 Value1: objData
             });
         },
         // An error handler for the request.
-        error: function () {
-            alert("An error occurred");
+        error: function (xhr, textStatus, errorCode) {
+            setPixel(document.getElementById("RegDumpAjaxLED"), 0, "ERR");
+            //alert("An error occurred:\n" + textStatus + "\n" + errorCode);
         },
         // I get called no matter what.
         complete: function () {
@@ -284,7 +378,7 @@ function GetRegDump() {
     var objData = null;
     GetRegDumpAjax(function (regDump) {
         PopulateLEDS(regDump.Value1);
-    })
+    });
 }
 
 
@@ -295,6 +389,7 @@ function AjaxPost(urlString, ringNum, fnCallback) {
         // Abort the current request.
         AjaxPost.Xhr.abort();
     }
+    setPixel(document.getElementById("AjaxRequestLED"), 1, "RO");
     // Get data via AJAX. Store the XHR (AJAX request
     // object in the method in case we need to abort
     // it on subsequent requests.
@@ -307,13 +402,15 @@ function AjaxPost(urlString, ringNum, fnCallback) {
         success: function (objData) {
             // At this point, we have data coming back
             // from the server.
+            setPixel(document.getElementById("AjaxRequestLED"), 0, "RO");
             fnCallback({
                 Value1: objData
             });
         },
         // An error handler for the request.
-        error: function () {
-            alert("An error occurred");
+        error: function (xhr, textStatus, errorCode) {
+            setPixel(document.getElementById("AjaxRequestLED"), 0, "ERR");
+            //alert("An error occurred:\n" + textStatus + "\n" + errorCode);
         },
         // I get called no matter what.
         complete: function () {
@@ -347,6 +444,13 @@ function PostLogMessage() {
     });
 }
 
+function ReadLog() {
+    var objData = null;
+    AjaxPost('./log_read', null, function (returnValue) {
+        $("#log").val(returnValue.Value1);
+    });
+}
+
 function RunScript() {
     var objData = null;
     AjaxPost('./run_script', $("#script").val(), function (returnValue) {
@@ -356,11 +460,13 @@ function RunScript() {
 
 // When the DOM is ready to be interacted with, init.
 $(function () {
-    //Update the registers every second...is this too fast?
-    setInterval(function () { GetRegDump(); }, 1000);
+    setPixel(document.getElementById("RegDumpAjaxLED"), 0, "RO");
+    setPixel(document.getElementById("AjaxRequestLED"), 0, "RO");
+    setPixel(document.getElementById("FormAjaxLED"), 0, "RO");
+    GetRegDump();
+    ReadLog();
     $("#post").click(function () {
         UpdateFormFields();
-        GetRegDump();
     });
     $('input[name=base]').change(function () {
         var jVal = $("#value");
@@ -369,4 +475,37 @@ $(function () {
         jVal.val(oldval.toString(jBase));
         oldbase = jBase;
     });
+    $("#logInterval").change(function () {
+        if ($("#updateLog").is(':checked')) {
+            var newVal = parseInt($("#logInterval").val() * 1000, 10);
+            clearInterval(logIntervalHandle);
+            logIntervalHandle = setInterval(function () { ReadLog(); }, newVal);
+        }
+    });
+    $("#regInterval").change(function () {
+        if ($("#updateReg").is(':checked')) {
+            var newVal = parseInt($("#regInterval").val() * 1000, 10);
+            clearInterval(regIntervalHandle);
+            regIntervalHandle = setInterval(function () { GetRegDump(); }, newVal);
+        }
+    });
+    $("#updateLog").change(function () {
+        if ($("#updateLog").is(':checked')) {
+            logIntervalHandle = setInterval(function () { ReadLog(); }, parseInt($("#logInterval").val() * 1000, 10));
+        }
+        else {
+            clearInterval(logIntervalHandle);
+        }
+    });
+    logIntervalHandle = setInterval(function () { ReadLog(); }, parseInt($("#logInterval").val() * 1000, 10));
+    $("#updateReg").change(function () {
+        if ($("#updateReg").is(':checked')) {
+            regIntervalHandle = setInterval(function () { GetRegDump(); }, parseInt($("#regInterval").val() * 1000, 10));
+        }
+        else {
+            clearInterval(regIntervalHandle);
+        }
+    });
+    makeGraph(sendData, "send", tick);
+    makeGraph(receiveData, "receive", tick)
 });

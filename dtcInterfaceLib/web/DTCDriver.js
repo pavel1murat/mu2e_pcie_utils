@@ -8,18 +8,23 @@
 var emitter = require('events').EventEmitter;
 
 var dtc = require('./DTC');
-var fs = require('fs');
-var DTC;
+var DTC = new dtc.DTC();
 // So that we can send events back to serverbase
 var dtcem = new emitter();
 var date = new Date();
-
-dtcem.init = function () {
-    DTC = new dtc.DTC();
-};
+var regDump = {};
+var rdTime = date;
+rdTime.setTime(date.getTime() - 1000);
+var receive = 0;
+var rTime = date;
+rTime.setTime(date.getTime() - 1000);
+var send = 0;
+var sTime = date;
+sTime.setTime(date.getTime() - 1000);
 
 dtcem.read = function (address) {
     var addr = parseInt(address, 16);
+    console.log("Reading " + address);
     DTC.ReadRegister(addr);
     return DTC.ReadDataWord();
 };
@@ -29,7 +34,6 @@ dtcem.write = function (address, value) {
     var val = parseInt(value, 16);
     console.log("Writing " + val + " to " + addr);
     DTC.WriteRegister(val, addr);
-    console.log("Reading " + address);
     return dtcem.read(address);
 };
 
@@ -53,7 +57,7 @@ dtcem.toggleClearLatchedErrors = function () {
     if (val) {
         DTC.ClearClearLatchedErrors();
     }
-    else {    
+    else {
         DTC.ClearLatchedErrors();
     }
     return dtcem.readClearLatchedErrors();
@@ -114,14 +118,14 @@ dtcem.toggleResetSERDES = function (ring) {
     if (val) {
         DTC.ClearResetSERDES(ring);
     } else {
-        DTC.ResetSERDES(ring);
+        DTC.ResetSERDES(ring, 100);
     }
     return dtcem.readResetSERDES(ring);
 }
 
 dtcem.readSERDESRXDisparity = function (ring) {
     DTC.ReadSERDESRXDisparityError(ring);
-    switch(DTC.ReadRXDisparityError().GetData(true)) {
+    switch (DTC.ReadRXDisparityError().GetData(true)) {
         case 0:
             return { low: 0, high: 0 };
         case 1:
@@ -135,7 +139,7 @@ dtcem.readSERDESRXDisparity = function (ring) {
 
 dtcem.readSERDESRXCharacterError = function (ring) {
     DTC.ReadSERDESRXCharacterNotInTableError(ring);
-    switch(DTC.ReadCNITError().GetData(true)) {
+    switch (DTC.ReadCNITError().GetData(true)) {
         case 0:
             return { low: 0, high: 0 };
         case 1:
@@ -170,7 +174,7 @@ dtcem.readSERDESBufferFIFOHalfFull = function (ring) {
 dtcem.readSERDESRXBufferStatus = function (ring) {
     DTC.ReadSERDESRXBufferStatus(ring);
     var output = { Nominal: 0, Empty: 0, Full: 0, Underflow: 0, Overflow: 0 };
-    switch(DTC.ReadRXBufferStatus().GetStatus()) {
+    switch (DTC.ReadRXBufferStatus().GetStatus()) {
         case 0:
             output.Nominal = 1;
             break;
@@ -215,10 +219,7 @@ dtcem.readFPGAPROMReady = function () {
     return DTC.ReadBooleanValue();
 }
 
-dtcem.regDump = function () {
-    if (!fs.existsSync("./DTC.log")) {
-        fs.writeFileSync("./DTC.log", "Log file created at " + (new Date()).toLocaleString());
-    }
+var getRegDump = function () {
     var dtcRegisters = {};
     dtcRegisters.Ring0 = {};
     dtcRegisters.Ring1 = {};
@@ -226,7 +227,6 @@ dtcem.regDump = function () {
     dtcRegisters.Ring3 = {};
     dtcRegisters.Ring4 = {};
     dtcRegisters.Ring5 = {};
-    dtcRegisters.Log = "" + fs.readFileSync("./DTC.log");
     dtcRegisters.Version = dtcem.read("0x9000");
     dtcRegisters.ResetDTC = dtcem.readResetDTC;
     dtcRegisters.ClearLatchedErrors = dtcem.readClearLatchedErrors();
@@ -301,6 +301,34 @@ dtcem.regDump = function () {
     dtcRegisters.PROMFIFOFull = dtcem.readFPGAPROMProgramFIFOFull();
     dtcRegisters.PROMReady = dtcem.readFPGAPROMReady();
     return dtcRegisters;
+}
+
+dtcem.regDump = function () {
+    if (rdTime.getTime() + 1000 < new Date().getTime()) {
+        console.log("Getting new regDump");
+        regDump = getRegDump();
+        rdTime = new Date();
+    }
+    
+    return regDump;
+};
+
+dtcem.getSendStatistics = function () {
+    if (sTime.getTime() + 800 < new Date().getTime()) {
+        send = dtcem.read("0x900C");
+        sTime = new Date();
+    }
+    
+    return { value: send, time: sTime };
+}
+
+dtcem.getReceiveStatistics = function () {
+    if (rTime.getTime() + 800 < new Date().getTime()) {
+        receive = dtcem.read("0x9010");
+        rTime = new Date();
+    }
+    
+    return { value: receive, time: rTime };
 }
 
 module.exports = dtcem;
