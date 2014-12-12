@@ -94,7 +94,7 @@ if (cluster.isMaster) {
                 // If we're recieving a POST to /runcommand (As defined in the module),
                 // handle that here
                 if (req.method === "POST") {
-                    console.log("In POST handler, PID: " + cluster.process.id);
+                    console.log("In POST handler, PID: " + process.pid);
                     var body = "";
                     
                     // Callback for request data (may come in async)
@@ -210,7 +210,7 @@ if (cluster.isMaster) {
                 }
                 //We got a GET request!
                 if (req.method === "GET") {
-                    console.log("In GET handler, PID: " + cluster.process.id);
+                    console.log("In GET handler, PID: " + process.pid);
                     if (pathname.search(".js") > 0) {
                         console.log("Sending ./" + pathname);
                         res.setHeader("Content-Type", "text/javascript");
@@ -260,6 +260,6 @@ if (cluster.isMaster) {
     if (__dirname.search("dev") >= 0) {
         baseport = 9090;
     }
-    console.log("Listening on ports " + baseport + " and " + (baseport + cluster.process.id));
-    server.listen(baseport).listen(baseport + cluster.process.id);
+    console.log("Listening on ports " + baseport + " and " + (baseport + process.pid));
+    server.listen(baseport).listen(baseport + process.pid);
 }
