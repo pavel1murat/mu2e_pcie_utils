@@ -14,7 +14,7 @@ function tick(path, line, data, axis, yaxis, x, y, id) {
         now = new Date();
         x.domain([now - (n - 2) * duration, now - duration]);
         var extent = d3.extent(data, function (d) { return d.value; });
-        y.domain(extent);
+        y.domain([extent[0] * 9 / 10, extent[1] ]);
         
         d3.json("./json_" + id, function (json) {
             data.push({ value: json.value, time: new Date(json.time) });
