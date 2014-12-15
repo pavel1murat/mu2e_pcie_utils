@@ -54,7 +54,7 @@ if (cluster.isMaster) {
         var logContent = "" + fs.readFileSync("./DTC.log");
         return JSON.stringify(logContent);
     }
-        
+    
     console.log("Setting up options");
     var options = {
         key: fs.readFileSync('./certs/server.key'),
@@ -73,106 +73,105 @@ if (cluster.isMaster) {
         var pathname = url.parse(req.url, true).pathname;
         //console.log("req.client debug info: " + req.client + ", pathname: " + pathname);
         if (req.client.authorized) {
+            var readOnly = false;
             var clientCertificate = req.connection.getPeerCertificate();
             var username = clientCertificate.subject.CN[0];
             var useremail = clientCertificate.subject.CN[1].substr(4);
             var userFNAL = useremail + "@FNAL.GOV";
             var userWIN = useremail + "@FERMI.WIN.FNAL.GOV";
             if (!(k5login.search(userFNAL) >= 0 || k5login.search(userWIN) >= 0)) {
-                res.writeHeader(401, { 'Content-Type': 'text/html' });
-                res.end("Please Contact a DAQ Expert for authorization");
-                console.log("Unauthorized access attempt from " + useremail);
-            } else {
-                res.setHeader("Access-Control-Allow-Origin", "*");
-                res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-                res.setHeader("Content-Type", "application/json");
-                res.statusCode = 200;
-                // Log to console...
-                //console.log("Recieved " + req.method + " for " + pathname);
-                //console.log("Proceeding...");
+                readOnly = true;
+            }
+            
+            res.setHeader("Access-Control-Allow-Origin", "*");
+            res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+            res.setHeader("Content-Type", "application/json");
+            res.statusCode = 200;
+            // Log to console...
+            //console.log("Recieved " + req.method + " for " + pathname);
+            //console.log("Proceeding...");
+            
+            // If we're recieving a POST to /runcommand (As defined in the module),
+            // handle that here
+            if (req.method === "POST") {
+                console.log("In POST handler, PID: " + process.pid);
+                var body = "";
                 
-                // If we're recieving a POST to /runcommand (As defined in the module),
-                // handle that here
-                if (req.method === "POST") {
-                    console.log("In POST handler, PID: " + process.pid);
-                    var body = "";
-                    
-                    // Callback for request data (may come in async)
-                    req.on('data', function (data) {
-                        body += data;
+                // Callback for request data (may come in async)
+                req.on('data', function (data) {
+                    body += data;
+                });
+                
+                if (pathname.search("dtc_register_io") > 0 && !readOnly) {
+                    console.log("In Register IO handler");
+                    // When the request is finished, run this callback:
+                    req.on('end', function () {
+                        // Get the content of the POST request 
+                        var POST = qs.parse(body);
+                        var value = 0;
+                        
+                        // If the POST contains a "comm" value, this is the command the
+                        // user typed in the "Command: " box
+                        console.log("Option is: " + POST.option);
+                        if (POST.option === "read") {
+                            logMessage(POST.address, "read register", username);
+                            value = dtcdriver.read(POST.address);
+                        }
+                        else if (POST.option === "write") {
+                            logMessage(POST.value.toString(16) + " to " + POST.address.toString(16), "wrote", username);
+                            value = dtcdriver.write(POST.address, POST.value);
+                        }
+                        
+                        console.log("Replying with value " + value.toString(16));
+                        res.end(JSON.stringify(value.toString(16)));
+                        console.log("Done with reply");
+                        console.log("DTC Error Status: " + dtcdriver.Err);
                     });
+                }
+                else if (pathname.search("run_script") > 0 && !readOnly) {
+                    console.log("In Script handler");
                     
-                    if (pathname.search("dtc_register_io") > 0) {
-                        console.log("In Register IO handler");
-                        // When the request is finished, run this callback:
-                        req.on('end', function () {
-                            // Get the content of the POST request 
-                            var POST = qs.parse(body);
-                            var value = 0;
+                    // When the request is finished, run this callback:
+                    req.on('end', function () {
+                        // Get the content of the POST request 
+                        var POST = qs.parse(body);
+                        var value = 0;
+                        var success = true;
+                        var text = POST.ring;
+                        var lines = text.split("\n");
+                        for (var i = 0; i < lines.length; i++) {
+                            var thisLine = lines[i];
+                            var thisLineSplit = thisLine.split(" ");
+                            var address = thisLineSplit[0];
+                            var val = thisLineSplit[1];
+                            logMessage("a write: " + val + " to " + address, "scripted", username);
+                            value = dtcdriver.write(address, val);
+                            if (value !== val) { success = false; }
+                        }
+                        if (success) {
+                            logMessage("the script was run successfully.", "noticed that", username);
                             
-                            // If the POST contains a "comm" value, this is the command the
-                            // user typed in the "Command: " box
-                            console.log("Option is: " + POST.option);
-                            if (POST.option === "read") {
-                                logMessage(POST.address, "read register", username);
-                                value = dtcdriver.read(POST.address);
-                            }
-                            else if (POST.option === "write") {
-                                logMessage(POST.value.toString(16) + " to " + POST.address.toString(16), "wrote", username);
-                                value = dtcdriver.write(POST.address, POST.value);
-                            }
-                            
-                            console.log("Replying with value " + value.toString(16));
-                            res.end(JSON.stringify(value.toString(16)));
-                            console.log("Done with reply");
+                            res.setHeader("Content-Type", "text/plain");
+                            res.end("Success!");
+                        }
+                        else {
+                            logMessage("the script had an error!", "noticed that", username);
+                            res.setHeader("Content-Type", "text/plain");
+                            res.end("Script did not run successfully!!!");
                             console.log("DTC Error Status: " + dtcdriver.Err);
-                        });
-                    }
-                    else if (pathname.search("run_script") > 0) {
-                        console.log("In Script handler");
-                        
-                        // When the request is finished, run this callback:
-                        req.on('end', function () {
-                            // Get the content of the POST request 
-                            var POST = qs.parse(body);
-                            var value = 0;
-                            var success = true;
-                            var text = POST.ring;
-                            var lines = text.split("\n");
-                            for (var i = 0; i < lines.length; i++) {
-                                var thisLine = lines[i];
-                                var thisLineSplit = thisLine.split(" ");
-                                var address = thisLineSplit[0];
-                                var val = thisLineSplit[1];
-                                logMessage("a write: " + val + " to " + address, "scripted", username);
-                                value = dtcdriver.write(address, val);
-                                if (value !== val) { success = false; }
-                            }
-                            if (success) {
-                                logMessage("the script was run successfully.", "noticed that", username);
-                                
-                                res.setHeader("Content-Type", "text/plain");
-                                res.end("Success!");
-                            }
-                            else {
-                                logMessage("the script had an error!", "noticed that", username);
-                                res.setHeader("Content-Type", "text/plain");
-                                res.end("Script did not run successfully!!!");
-                                console.log("DTC Error Status: " + dtcdriver.Err);
-                            }
-                        });
-                    }
-                    else if (pathname.search("dtc_reg_dump") > 0) {
-                        console.log("Doing RegDump");
-                        var data = JSON.stringify(dtcdriver.regDump());
-                        
-                        console.log("Sending response");
-                        res.end(data);
-                        console.log("Done sending regdump");
-                    }
-                    else if (pathname.search("DTC") > 0) {
-                        console.log("Recieved POST to " + pathname);
-                        
+                        }
+                    });
+                }
+                else if (pathname.search("dtc_reg_dump") > 0) {
+                    console.log("Doing RegDump");
+                    var data = JSON.stringify(dtcdriver.regDump());
+                    
+                    console.log("Sending response");
+                    res.end(data);
+                    console.log("Done sending regdump");
+                }
+                else if (pathname.search("DTC") > 0 && !readOnly) {
+                    console.log("Recieved POST to " + pathname);
                         // When the request is finished, run this callback:
                         req.on('end', function () {
                             var POST = qs.parse(body);
@@ -186,87 +185,92 @@ if (cluster.isMaster) {
                             res.end(dataStr);
                             console.log("Done sending reply");
                         });
-                    }
-                    else if (pathname.search("log_message") > 0) {
-                        console.log("Logging message");
-                        
-                        // When the request is finished, run this callback:
-                        req.on('end', function () {
-                            console.log("Done recieving message");
-                            var POST = qs.parse(body);
-                            logMessage(POST.ring, "says", username);
-                            res.end(readLog());
-                            console.log("Done sending log message reply");
-                        });
-                    }
-                    else if (pathname.search("log_read") > 0) {
-                        //console.log("Sending log");
+                }
+                else if (pathname.search("log_message") > 0) {
+                    console.log("Logging message");
+                    
+                    // When the request is finished, run this callback:
+                    req.on('end', function () {
+                        console.log("Done recieving message");
+                        var POST = qs.parse(body);
+                        logMessage(POST.ring, "says", username);
                         res.end(readLog());
+                        console.log("Done sending log message reply");
+                    });
+                }
+                else if (pathname.search("log_read") > 0) {
+                    //console.log("Sending log");
+                    res.end(readLog());
                     //console.log("Done sending log");
-                    }
-                    else {
+                }
+                else {
+                    if (!readOnly) {
                         console.log("Unknown POST URL: " + pathname);
                         res.writeHeader(404, { 'Content-Type': 'text/html' });
                         res.end("Error");
                     }
-                }
-                //We got a GET request!
-                if (req.method === "GET") {
-                    console.log("In GET handler, PID: " + process.pid);
-                    if (pathname.search(".js") > 0) {
-                        console.log("Sending ./" + pathname);
-                        res.setHeader("Content-Type", "text/javascript");
-                        res.end(fs.readFileSync("./" + pathname), 'utf-8');
-                        console.log("Done sending ./" + pathname);
-                    } else if (pathname.search("css") > 0) {
-                        console.log("Sending style.css");
-                        // Write out the frame code
-                        res.setHeader("Content-Type", "text/css");
-                        res.end(fs.readFileSync("./style.css"), 'utf-8');
-                        console.log("Done sending style.css");
-                    } else if (pathname.search(".html") > 0) {
-                        console.log("Sending ./" + pathname);
-                        // Write out the frame code
-                        res.setHeader("Content-Type", "text/html");
-                        res.end(fs.readFileSync("./" + pathname), 'utf-8');
-                        console.log("Done sending ./" + pathname);
-                    } else if (pathname.search("json_") > 0) {
-                        //console.log("Sending JSON for " + pathname);
-                        // Write out the frame code
-                        if (pathname.search("send") > 0) {
-                            var result = dtcdriver.getSendStatistics();
-                            result.name = "send";
-                            res.end(JSON.stringify(result));
-                        }
-                        else if (pathname.search("receive") > 0) {
-                            var result = dtcdriver.getReceiveStatistics();
-                            result.name = "receive";
-                            res.end(JSON.stringify(result));
-                        }
-                        else if (pathname.search("spayload") > 0) {
-                            var result = dtcdriver.getSendPayloadStatistics();
-                            result.name = "spayload";
-                            res.end(JSON.stringify(result));
-                        }
-                        else if (pathname.search("rpayload") > 0) {
-                            var result = dtcdriver.getReceivePayloadStatistics();
-                            result.name = "rpayload";
-                            res.end(JSON.stringify(result));
-                        }
-                        else {
-                            res.end(JSON.stringify(0));
-                        }
-                        //console.log("Done sending ./" + pathname);
-                        console.log("DTC Error Status: " + dtcdriver.Err);
-                    } else {
-                        console.log("Sending client.html");
-                        // Write out the frame code
-                        res.setHeader("Content-Type", "text/html");
-                        res.end(fs.readFileSync("./client.html"), 'utf-8');
-                        console.log("Done sending client.html");
+                    else {
+                        logMessage("a POST to " + pathname + " (not authorized)", "attempted", username)
                     }
                 }
             }
+            //We got a GET request!
+            if (req.method === "GET") {
+                console.log("In GET handler, PID: " + process.pid);
+                if (pathname.search(".js") > 0) {
+                    console.log("Sending ./" + pathname);
+                    res.setHeader("Content-Type", "text/javascript");
+                    res.end(fs.readFileSync("./" + pathname), 'utf-8');
+                    console.log("Done sending ./" + pathname);
+                } else if (pathname.search("css") > 0) {
+                    console.log("Sending style.css");
+                    // Write out the frame code
+                    res.setHeader("Content-Type", "text/css");
+                    res.end(fs.readFileSync("./style.css"), 'utf-8');
+                    console.log("Done sending style.css");
+                } else if (pathname.search(".html") > 0) {
+                    console.log("Sending ./" + pathname);
+                    // Write out the frame code
+                    res.setHeader("Content-Type", "text/html");
+                    res.end(fs.readFileSync("./" + pathname), 'utf-8');
+                    console.log("Done sending ./" + pathname);
+                } else if (pathname.search("json_") > 0) {
+                    //console.log("Sending JSON for " + pathname);
+                    // Write out the frame code
+                    if (pathname.search("send") > 0) {
+                        var result = dtcdriver.getSendStatistics();
+                        result.name = "send";
+                        res.end(JSON.stringify(result));
+                    }
+                    else if (pathname.search("receive") > 0) {
+                        var result = dtcdriver.getReceiveStatistics();
+                        result.name = "receive";
+                        res.end(JSON.stringify(result));
+                    }
+                    else if (pathname.search("spayload") > 0) {
+                        var result = dtcdriver.getSendPayloadStatistics();
+                        result.name = "spayload";
+                        res.end(JSON.stringify(result));
+                    }
+                    else if (pathname.search("rpayload") > 0) {
+                        var result = dtcdriver.getReceivePayloadStatistics();
+                        result.name = "rpayload";
+                        res.end(JSON.stringify(result));
+                    }
+                    else {
+                        res.end(JSON.stringify(0));
+                    }
+                    //console.log("Done sending ./" + pathname);
+                    console.log("DTC Error Status: " + dtcdriver.Err);
+                } else {
+                    console.log("Sending client.html");
+                    // Write out the frame code
+                    res.setHeader("Content-Type", "text/html");
+                    res.end(fs.readFileSync("./client.html"), 'utf-8');
+                    console.log("Done sending client.html");
+                }
+            }
+            
         } else {
             res.writeHeader(500, { 'Content-Type': 'text/html' });
             res.end("You need to have a Fermi KCA Certificate to view this page");
