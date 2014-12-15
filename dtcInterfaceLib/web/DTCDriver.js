@@ -104,13 +104,10 @@ dtcem.readResetSERDES = function (ring) {
     return DTC.ReadBooleanValue();
 }
 
-dtcem.toggleResetSERDES = function (ring) {
+dtcem.resetSERDES = function (ring) {
     var val = dtcem.readResetSERDES(ring);
-    if (val) {
-        dtcem.Err =  DTC.ClearResetSERDES(ring);
-    } else {
+    
         dtcem.Err = DTC.ResetSERDES(ring, 100);
-    }
     return dtcem.readResetSERDES(ring);
 }
 
