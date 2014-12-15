@@ -12,20 +12,11 @@ var DTC = new dtc.DTC();
 // So that we can send events back to serverbase
 var dtcem = new emitter();
 var date = new Date();
-var regDump = {};
-var rdTime = date;
-rdTime.setTime(date.getTime() - 1000);
-var receive = 0;
-var rTime = date;
-rTime.setTime(date.getTime() - 1000);
-var send = 0;
-var sTime = date;
-sTime.setTime(date.getTime() - 1000);
 
 dtcem.read = function (address) {
     var addr = parseInt(address, 16);
     console.log("Reading " + address);
-    DTC.ReadRegister(addr);
+    dtcem.Err = DTC.ReadRegister(addr);
     return DTC.ReadDataWord();
 };
 
@@ -33,98 +24,98 @@ dtcem.write = function (address, value) {
     var addr = parseInt(address, 16);
     var val = parseInt(value, 16);
     console.log("Writing " + val + " to " + addr);
-    DTC.WriteRegister(val, addr);
+    dtcem.Err = DTC.WriteRegister(val, addr);
     return dtcem.read(address);
 };
 
 dtcem.readResetDTC = function () {
-    DTC.ReadResetDTC();
+    dtcem.Err = DTC.ReadResetDTC();
     return DTC.ReadBooleanValue();
 };
 
 dtcem.resetDTC = function () {
-    DTC.ResetDTC();
+    dtcem.Err = DTC.ResetDTC();
     return dtcem.readResetDTC();
 };
 
 dtcem.readClearLatchedErrors = function () {
-    DTC.ReadClearLatchedErrors();
+    dtcem.Err = DTC.ReadClearLatchedErrors();
     return DTC.ReadBooleanValue();
 };
 
 dtcem.toggleClearLatchedErrors = function () {
     var val = dtcem.readClearLatchedErrors();
     if (val) {
-        DTC.ClearClearLatchedErrors();
+        dtcem.Err = DTC.ClearClearLatchedErrors();
     }
     else {
-        DTC.ClearLatchedErrors();
+        dtcem.Err = DTC.ClearLatchedErrors();
     }
     return dtcem.readClearLatchedErrors();
 };
 
 dtcem.readSERDESLoopback = function (ring) {
-    DTC.ReadSERDESLoopback(ring);
+    dtcem.Err = DTC.ReadSERDESLoopback(ring);
     return DTC.ReadBooleanValue();
 };
 
 dtcem.toggleSERDESLoopback = function (ring) {
     var val = dtcem.readSERDESLoopback(ring);
     if (val) {
-        DTC.DisableSERDESLoopback(ring);
+        dtcem.Err = DTC.DisableSERDESLoopback(ring);
     } else {
-        DTC.EnableSERDESLoopback(ring);
+        dtcem.Err = DTC.EnableSERDESLoopback(ring);
     }
-    return dtcem.ReadSERDESLoopback(ring);
+    return dtcem.readSERDESLoopback(ring);
 };
 
 dtcem.readROCEmulator = function () {
-    DTC.ReadROCEmulatorEnabled();
+    dtcem.Err = DTC.ReadROCEmulatorEnabled();
     return DTC.ReadBooleanValue();
 }
 
 dtcem.toggleROCEmulator = function () {
     var val = dtcem.readROCEmulator();
     if (val) {
-        DTC.DisableROCEmulator();
+        dtcem.Err = DTC.DisableROCEmulator();
     } else {
-        DTC.EnableROCEmulator();
+        dtcem.Err = DTC.EnableROCEmulator();
     }
     return dtcem.readROCEmulator();
 }
 
 dtcem.readRingEnabled = function (ring) {
-    DTC.ReadRingEnabled(ring);
+    dtcem.Err = DTC.ReadRingEnabled(ring);
     return DTC.ReadBooleanValue();
 }
 
 dtcem.toggleRingEnabled = function (ring) {
     var val = dtcem.readRingEnabled(ring);
     if (val) {
-        DTC.DisableRing(ring);
+        dtcem.Err = DTC.DisableRing(ring);
     } else {
-        DTC.EnableRing(ring);
+        dtcem.Err = DTC.EnableRing(ring);
     }
     return dtcem.readRingEnabled(ring);
 }
 
 dtcem.readResetSERDES = function (ring) {
-    DTC.ReadResetSERDES(ring);
+    dtcem.Err = DTC.ReadResetSERDES(ring);
     return DTC.ReadBooleanValue();
 }
 
 dtcem.toggleResetSERDES = function (ring) {
     var val = dtcem.readResetSERDES(ring);
     if (val) {
-        DTC.ClearResetSERDES(ring);
+        dtcem.Err =  DTC.ClearResetSERDES(ring);
     } else {
-        DTC.ResetSERDES(ring, 100);
+        dtcem.Err = DTC.ResetSERDES(ring, 100);
     }
     return dtcem.readResetSERDES(ring);
 }
 
 dtcem.readSERDESRXDisparity = function (ring) {
-    DTC.ReadSERDESRXDisparityError(ring);
+    dtcem.Err = DTC.ReadSERDESRXDisparityError(ring);
     switch (DTC.ReadRXDisparityError().GetData(true)) {
         case 0:
             return { low: 0, high: 0 };
@@ -138,7 +129,7 @@ dtcem.readSERDESRXDisparity = function (ring) {
 }
 
 dtcem.readSERDESRXCharacterError = function (ring) {
-    DTC.ReadSERDESRXCharacterNotInTableError(ring);
+    dtcem.Err = DTC.ReadSERDESRXCharacterNotInTableError(ring);
     switch (DTC.ReadCNITError().GetData(true)) {
         case 0:
             return { low: 0, high: 0 };
@@ -152,27 +143,27 @@ dtcem.readSERDESRXCharacterError = function (ring) {
 }
 
 dtcem.readSERDESUnlockError = function (ring) {
-    DTC.ReadSERDESUnlockError(ring);
+    dtcem.Err = DTC.ReadSERDESUnlockError(ring);
     return DTC.ReadBooleanValue();
 }
 
 dtcem.readSERDESPLLLocked = function (ring) {
-    DTC.ReadSERDESPLLLocked(ring);
+    dtcem.Err = DTC.ReadSERDESPLLLocked(ring);
     return DTC.ReadBooleanValue();
 }
 
 dtcem.readSERDESOverflowOrUnderflow = function (ring) {
-    DTC.ReadSERDESOverflowOrUnderflow(ring);
+    dtcem.Err =  DTC.ReadSERDESOverflowOrUnderflow(ring);
     return DTC.ReadBooleanValue();
 }
 
 dtcem.readSERDESBufferFIFOHalfFull = function (ring) {
-    DTC.ReadSERDESBufferFIFOHalfFull(ring);
+    dtcem.Err = DTC.ReadSERDESBufferFIFOHalfFull(ring);
     return DTC.ReadBooleanValue();
 }
 
 dtcem.readSERDESRXBufferStatus = function (ring) {
-    DTC.ReadSERDESRXBufferStatus(ring);
+    dtcem.Err = DTC.ReadSERDESRXBufferStatus(ring);
     var output = { Nominal: 0, Empty: 0, Full: 0, Underflow: 0, Overflow: 0 };
     switch (DTC.ReadRXBufferStatus().GetStatus()) {
         case 0:
@@ -195,27 +186,27 @@ dtcem.readSERDESRXBufferStatus = function (ring) {
 }
 
 dtcem.readSERDESResetDone = function (ring) {
-    DTC.ReadSERDESResetDone(ring);
+    dtcem.Err = DTC.ReadSERDESResetDone(ring);
     return DTC.ReadBooleanValue();
 }
 
 dtcem.readTimestampPreset = function () {
-    DTC.ReadTimestampPreset();
+    dtcem.Err = DTC.ReadTimestampPreset();
     return DTC.ReadTimestamp().GetTimestamp(true);
 }
 
 dtcem.setTimestampPreset = function (preset) {
-    DTC.WriteTimestampPreset(new dtc.DTC_Timestamp(parseInt(preset, 16)));
+    dtcem.Err = DTC.WriteTimestampPreset(new dtc.DTC_Timestamp(parseInt(preset, 16)));
     return dtcem.readTimestampPreset();
 }
 
 dtcem.readFPGAPROMProgramFIFOFull = function () {
-    DTC.ReadFPGAPROMProgramFIFOFull();
+    dtcem.Err = DTC.ReadFPGAPROMProgramFIFOFull();
     return DTC.ReadBooleanValue();
 }
 
 dtcem.readFPGAPROMReady = function () {
-    DTC.ReadFPGAPROMReady();
+    dtcem.Err = DTC.ReadFPGAPROMReady();
     return DTC.ReadBooleanValue();
 }
 
@@ -303,6 +294,9 @@ var getRegDump = function () {
     return dtcRegisters;
 }
 
+var regDump = {};
+var rdTime = date;
+rdTime.setTime(date.getTime() - 1000);
 dtcem.regDump = function () {
     if (rdTime.getTime() + 1000 < new Date().getTime()) {
         console.log("Getting new regDump");
@@ -313,22 +307,51 @@ dtcem.regDump = function () {
     return regDump;
 };
 
+var send = 0;
+var sTime = date;
+sTime.setTime(date.getTime() - 1000);
 dtcem.getSendStatistics = function () {
     if (sTime.getTime() + 800 < new Date().getTime()) {
-        send = dtcem.read("0x900C");
+        send = dtcem.read("0x900C")/4;
         sTime = new Date();
     }
     
-    return { value: send, time: sTime };
+    return {  value: send, time: sTime };
 }
 
+var receive = 0;
+var rTime = date;
+rTime.setTime(date.getTime() - 1000);
 dtcem.getReceiveStatistics = function () {
     if (rTime.getTime() + 800 < new Date().getTime()) {
-        receive = dtcem.read("0x9010");
+        receive = dtcem.read("0x9010")/4;
         rTime = new Date();
     }
     
     return { value: receive, time: rTime };
 }
 
+var sendP = 0;
+var spTime = date;
+spTime.setTime(date.getTime() - 1000);
+dtcem.getSendPayloadStatistics = function () {
+    if (spTime.getTime() + 800 < new Date().getTime()) {
+        sendP = dtcem.read("0x9014") / 4;
+        spTime = new Date();
+    }
+    
+    return {value: sendP, time: spTime };
+}
+
+var receiveP = 0;
+var rpTime = date;
+rpTime.setTime(date.getTime() - 1000);
+dtcem.getReceivePayloadStatistics = function () {
+    if (rpTime.getTime() + 800 < new Date().getTime()) {
+        receiveP = dtcem.read("0x9018") / 4;
+        rpTime = new Date();
+    }
+    
+    return { value: receiveP, time: rpTime };
+}
 module.exports = dtcem;

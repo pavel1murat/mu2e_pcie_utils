@@ -125,6 +125,7 @@ if (cluster.isMaster) {
                             console.log("Replying with value " + value.toString(16));
                             res.end(JSON.stringify(value.toString(16)));
                             console.log("Done with reply");
+                            console.log("DTC Error Status: " + dtcdriver.Err);
                         });
                     }
                     else if (pathname.search("run_script") > 0) {
@@ -157,6 +158,7 @@ if (cluster.isMaster) {
                                 logMessage("the script had an error!", "noticed that", username);
                                 res.setHeader("Content-Type", "text/plain");
                                 res.end("Script did not run successfully!!!");
+                                console.log("DTC Error Status: " + dtcdriver.Err);
                             }
                         });
                     }
@@ -232,15 +234,30 @@ if (cluster.isMaster) {
                         //console.log("Sending JSON for " + pathname);
                         // Write out the frame code
                         if (pathname.search("send") > 0) {
-                            res.end(JSON.stringify(dtcdriver.getSendStatistics()));
+                            var result = dtcdriver.getSendStatistics();
+                            result.name = "send";
+                            res.end(JSON.stringify(result));
                         }
                         else if (pathname.search("receive") > 0) {
-                            res.end(JSON.stringify(dtcdriver.getReceiveStatistics()));
+                            var result = dtcdriver.getReceiveStatistics();
+                            result.name = "receive";
+                            res.end(JSON.stringify(result));
+                        }
+                        else if (pathname.search("spayload") > 0) {
+                            var result = dtcdriver.getSendPayloadStatistics();
+                            result.name = "spayload";
+                            res.end(JSON.stringify(result));
+                        }
+                        else if (pathname.search("rpayload") > 0) {
+                            var result = dtcdriver.getReceivePayloadStatistics();
+                            result.name = "rpayload";
+                            res.end(JSON.stringify(result));
                         }
                         else {
                             res.end(JSON.stringify(0));
                         }
                         //console.log("Done sending ./" + pathname);
+                        console.log("DTC Error Status: " + dtcdriver.Err);
                     } else {
                         console.log("Sending client.html");
                         // Write out the frame code

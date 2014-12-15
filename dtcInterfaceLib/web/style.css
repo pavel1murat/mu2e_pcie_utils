@@ -4,8 +4,19 @@ svg {
 
 .line {
     fill: none;
-    stroke: #000;
     stroke-width: 1.5px;
+}
+
+.send {
+    fill: none;
+    stroke-width: 1.5px;
+    color: 'red';
+}
+
+.receive {
+    fill: none;
+    stroke-width: 1.5px;
+    color: 'blue';
 }
 
 .axis path,

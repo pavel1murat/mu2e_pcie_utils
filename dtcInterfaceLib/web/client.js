@@ -1,11 +1,8 @@
-var sendData = [],
-    receiveData = [];
-
 var n = 100, //The number of points to plot
     duration = 1000; //ms between updates
 
-function tick(path, line, data, axis, yaxis, x, y, id) {
-    var transition = d3.select("#" + id).transition()
+function tick(paths, line, axes, x, y, ids, tag) {
+    var transition = d3.select(tag).transition()
                 .duration(duration)
                 .ease("linear");
     transition = transition.each(function () {
@@ -13,40 +10,50 @@ function tick(path, line, data, axis, yaxis, x, y, id) {
         // update the domains
         now = new Date();
         x.domain([now - (n - 2) * duration, now - duration]);
-        var extent = d3.extent(data, function (d) { return d.value; });
-        y.domain([extent[0] * 9 / 10, extent[1] ]);
         
-        d3.json("./json_" + id, function (json) {
-            data.push({ value: json.value, time: new Date(json.time) });
-        });
+        var extent = [0x1000000, 0];
+        for (var name in ids) {
+            var group = ids[name];
+            var thisExtent = d3.extent(group.data, function (d) { return d.value; });
+            if (thisExtent[0] < extent[0]) { extent[0] = thisExtent[0]; }
+            if (thisExtent[1] > extent[1]) { extent[1] = thisExtent[1]; }
+        }
+        y.domain([extent[0] * 92 / 100, extent[1] * 108 / 100]);
         
-        // redraw the line
-        path
-                        .attr("d", line)
-                        .attr("transform", null);
+        for (var name in ids) {
+            d3.json("./json_" + name, function (json) {
+                ids[json.name].data.push({ value: json.value, time: new Date(json.time) });
+            });
+            
+            // redraw the line
+            ids[name].path.attr("d", line)
+        }
         
         // slide the x-axis left
-        axis.call(x.axis);
-        yaxis.call(y.axis);
+        axes[0].call(x.axis);
+        axes[1].call(y.axis);
         
         // slide the line left
-        path.transition()
+        paths.attr("transform", null)
+            .transition()
             .duration(duration)
             .ease("linear")
-                        .attr("transform", "translate(" + x(now - (n - 1) * duration) + ")");
+            .attr("transform", "translate(" + x(now - (n - 1) * duration) + ")");
         
-        while (data.length > 0 && data[0].time < now - n * duration) {
-            data.shift();
+        for (var name in ids) {
+            while (ids[name].data.length > 0 && ids[name].data[0].time < now - n * duration) {
+                ids[name].data.shift();
+            }
         }
 
-    }).transition().each("start", function () { setTimeout(tick(path, line, data, axis, yaxis, x, y, id),duration/2) });
+    }).transition().each("start", function () { setTimeout(tick(paths, line, axes, x, y, ids, tag), duration / 2) });
 }
 
-function makeGraph(data, id, tick) {
+function makeGraph(tag, ids, tick) {
     var now = new Date(Date.now() - duration);
     
     var margin = { top: 6, right: 10, bottom: 20, left: 100 },
-        width = $("#" + id).width() - margin.left - margin.right,
+        width = $(tag).width() - margin.left - margin.right,
         height = 120 - margin.top - margin.bottom;
     
     var x = d3.time.scale()
@@ -61,7 +68,7 @@ function makeGraph(data, id, tick) {
                 .x(function (d) { return x(d.time); })
                 .y(function (d) { return y(d.value); });
     
-    var svg = d3.select("#" + id).append("svg")
+    var svg = d3.select(tag).append("svg")
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
                 .style("margin-left", -margin.left + "px")
@@ -74,7 +81,7 @@ function makeGraph(data, id, tick) {
                 .attr("width", width)
                 .attr("height", height);
     
-    var axis = svg.append("g")
+    var xaxis = svg.append("g")
                 .attr("class", "x axis")
                 .attr("transform", "translate(0," + height + ")")
                 .call(x.axis = d3.svg.axis().scale(x).orient("bottom"));
@@ -87,14 +94,22 @@ function makeGraph(data, id, tick) {
                 .attr("class", "y axis")
                 .call(y.axis = d3.svg.axis().scale(y).tickFormat(formatTick).orient("left"));
     
-    var path = svg.append("g")
+    /* var path = svg.append("g")
                 .attr("clip-path", "url(#clip)")
               .append("path")
                 .datum(data)
-                .attr("class", "line");
+                .attr("class", "line"); */
+    var paths = svg.append("g")
+                .attr("clip-path", "url(#clip)");
     
+    for (var name in ids) {
+        ids[name].path = paths.append('path')
+                .data([ids[name].data])
+                .attr('class', name + ' group')
+                .style('stroke', ids[name].color);
+    }
     
-    tick(path, line, data, axis, yaxis, x, y, id);
+    tick(paths, line, [xaxis, yaxis], x, y, ids, tag);
 }
 
 var logIntervalHandle;
@@ -506,6 +521,15 @@ $(function () {
             clearInterval(regIntervalHandle);
         }
     });
-    makeGraph(sendData, "send", tick);
-    makeGraph(receiveData, "receive", tick)
+    
+    var sendIds = {
+        send: { data: [{ time: 0, value: 0 }], color: 'black', },
+        spayload: { data: [{ time: 0, value: 0 }], color: 'red', },
+    };
+    makeGraph("#send", sendIds, tick);
+    var recIds = {
+        receive: { data: [{ time: 0, value: 0 }], color: 'black', },
+        rpayload: { data: [{ time: 0, value: 0 }], color: 'red', },
+    };
+    makeGraph("#receive", recIds, tick);
 });
