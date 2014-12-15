@@ -1,5 +1,5 @@
-var sendData = [{ value: 0, time: new Date() }],
-    receiveData = [{ value: 0, time: new Date() }];
+var sendData = [],
+    receiveData = [];
 
 var n = 100, //The number of points to plot
     duration = 1000; //ms between updates

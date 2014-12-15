@@ -3,6 +3,7 @@
 
 #include <bitset> // std::bitset
 #include <cstdint> // uint8_t, uint16_t
+#include "../linux_driver/mymodule/mu2e_mmap_ioctl.h"
 
 #define DTCControlRegister                        0x9100
 #define SERDESLoopbackEnableRegister              0x9108
@@ -103,6 +104,7 @@ namespace DTC
 
 	public:
 		DTC_DataPacket() {}
+		DTC_DataPacket(mu2e_databuff_t data, bool);
 		DTC_DataPacket(uint8_t* data);
 		DTC_DataPacket(const DTC_DataPacket&) = default;
 #ifndef _WIN32

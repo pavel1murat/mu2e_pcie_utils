@@ -3,9 +3,7 @@
 
 #include "DTC_Types.h"
 #include <vector>
-#ifndef _WIN32
-#include "../linux_driver/mymodule/mu2e_mmap_ioctl.h"
-#endif
+#include "../linux_driver/user_space/mu2edev.hh"
 
 namespace DTC {
 	class DTC {
@@ -121,12 +119,6 @@ namespace DTC {
 		std::vector<uint8_t> ReadDataVector() { return dataVector_; }
 
 	private:
-#ifndef _WIN32
-		int	             devfd_;
-		volatile void *  mu2e_mmap_ptrs_[MU2E_MAX_CHANNELS][2][2];
-		m_ioc_get_info_t mu2e_channel_info_[MU2E_MAX_CHANNELS][2];
-#endif
-
 		DTC_DataPacket dataPacket_;
 		DTC_DMAPacket dmaPacket_;
 		DTC_Timestamp timestampPreset_;
@@ -136,6 +128,7 @@ namespace DTC {
 		bool booleanValue_;
 		uint32_t dataWord_;
 		std::vector<uint8_t> dataVector_;
+		mu2edev device_;
 	};
 };
 

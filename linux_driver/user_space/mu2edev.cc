@@ -110,6 +110,27 @@ int mu2edev::read_release( int chn, unsigned num )
 }
 
 
+int  mu2edev::read_register(uint16_t address, int tmo_ms, uint32_t *output)
+{
+	m_ioc_reg_access_t reg;
+	reg.reg_offset = address;
+	reg.access_type = 0;
+	int errorCode = ioctl(devfd_, M_IOC_REG_ACCESS, &reg);
+	*output = reg.val;
+	return errorCode;
+}
+
+
+int  mu2edev::write_register(uint16_t address, int tmo_ms, uint32_t data)
+{
+	m_ioc_reg_access_t reg;
+	reg.reg_offset = address;
+	reg.access_type = 1;
+	reg.val = data;
+	return ioctl(devfd_, M_IOC_REG_ACCESS, &reg);
+}
+
+
 void mu2edev::meta_dump( int chn, int dir )
 {
     int retsts=0;

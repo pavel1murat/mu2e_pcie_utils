@@ -39,6 +39,21 @@ void DTC::DTC_Timestamp::SetTimestamp(uint32_t timestampLow, uint16_t timestampH
 }
 
 
+DTC::DTC_DataPacket::DTC_DataPacket(mu2e_databuff_t data, bool)
+{
+	for (int i = 0; i < 16; ++i)
+	{
+		int jmax = sizeof(uint8_t)/sizeof(data[0]);
+		uint8_t dataShort = data[i * jmax];
+		for (int j = 1; j < jmax; ++j)
+		{
+			dataShort <<= sizeof(data[0]);
+			dataShort += data[j + (i * jmax)];
+		}
+		dataWords_[i] = dataShort;
+	}
+}
+
 DTC::DTC_DataPacket::DTC_DataPacket(uint8_t* data)
 {
 	for (int i = 0; i < 16; ++i)

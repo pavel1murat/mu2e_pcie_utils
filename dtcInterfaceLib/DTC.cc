@@ -1,8 +1,5 @@
 #include "DTC.h"
 #ifndef _WIN32
-#include "../linux_driver/mymodule/mu2e_mmap_ioctl.h"
-#define TRACE_NAME "MU2EDEV"
-#include "../linux_driver/include/trace.h"
 #include <unistd.h>
 #else
 #include <chrono>
@@ -11,51 +8,17 @@
 #endif
 
 
-DTC::DTC::DTC()
+DTC::DTC::DTC() : device_()
 {
-#ifndef _WIN32
-	int sts;
-	devfd_ = open("/dev/" MU2E_DEV_FILE, O_RDWR);
-	if (devfd_ == -1) { perror("open /dev/" MU2E_DEV_FILE); exit(1); }
-	for (unsigned chn = 0; chn < MU2E_MAX_CHANNELS; ++chn)
-		for (unsigned dir = 0; dir < 2; ++dir)
-		{
-			m_ioc_get_info_t get_info;
-			get_info.chn = chn; get_info.dir = dir;
-			sts = ioctl(devfd_, M_IOC_GET_INFO, &get_info);
-			if (sts != 0) { perror("M_IOC_GET_INFO"); exit(1); }
-			mu2e_channel_info_[chn][dir] = get_info;
-			TRACE(1, "mu2edev::init %u:%u - num=%u size=%u hwIdx=%u, swIdx=%u"
-				, chn, dir
-				, get_info.num_buffs, get_info.buff_size
-				, get_info.hwIdx, get_info.swIdx);
-			for (unsigned map = 0; map < 2; ++map)
-			{
-				mu2e_mmap_ptrs_[chn][dir][map]
-					= mmap(0 /* hint address */
-					, get_info.num_buffs * ((map == MU2E_MAP_BUFF)
-					? get_info.buff_size
-					: sizeof(int))
-					, (((dir == S2C) && (map == MU2E_MAP_BUFF))
-					? PROT_WRITE : PROT_READ)
-					, MAP_SHARED
-					, devfd_
-					, chnDirMap2offset(chn, dir, map));
-				if (mu2e_mmap_ptrs_[chn][dir][map] == MAP_FAILED)
-				{
-					perror("mmap"); exit(1);
-				}
-				TRACE(1, "mu2edev::init chnDirMap2offset=%lu mu2e_mmap_ptrs_[%d][%d][%d]=%p"
-					, chnDirMap2offset(chn, dir, map)
-					, chn, dir, map, mu2e_mmap_ptrs_[chn][dir][map]);
-			}
-		}
-#endif
+	device_.init();
 }
 
 DTC::DTC_ErrorCode DTC::DTC::ReadDataPacket(int channel)
 {
-	return DTC_ErrorCode_NotImplemented;
+	mu2e_databuff_t buffer;
+	int errorCode = device_.read_data(channel, (void**)&buffer, 1000);
+	dataPacket_ = DTC_DataPacket(buffer, true);
+	return errorCode == 0 ? DTC_ErrorCode_Success : DTC_ErrorCode_IOError;
 }
 
 DTC::DTC_ErrorCode DTC::DTC::WriteDataPacket(int channel, DTC_DataPacket packet)
@@ -155,29 +118,13 @@ DTC::DTC_ErrorCode DTC::DTC::SendReadoutRequestPacket(DTC_Ring_ID ring, DTC_Time
 
 DTC::DTC_ErrorCode DTC::DTC::WriteRegister(uint32_t data, uint16_t address)
 {
-#ifndef _WIN32
-	m_ioc_reg_access_t reg;
-	reg.reg_offset = address;
-	reg.access_type = 1;
-	reg.val = data;
-	int errorCode = ioctl(devfd_, M_IOC_REG_ACCESS, &reg);
+	int errorCode = device_.write_register(address, 100, data);
 	return errorCode == 0 ? DTC_ErrorCode_Success : DTC_ErrorCode_IOError;
-#else
-	return DTC_ErrorCode_NotImplemented;
-#endif
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadRegister(uint16_t address)
 {
-#ifndef _WIN32
-	m_ioc_reg_access_t reg;
-	reg.reg_offset = address;
-	reg.access_type = 0;
-	int errorCode = ioctl(devfd_, M_IOC_REG_ACCESS, &reg);
-	dataWord_ = reg.val;
-	return errorCode == 0 ? DTC_ErrorCode_Success : DTC_ErrorCode_IOError;
-#else
-	return DTC_ErrorCode_NotImplemented;
-#endif
+	int err = device_.read_register(address, 100, &dataWord_);
+	return err == 0 ? DTC_ErrorCode_Success : DTC_ErrorCode_IOError;
 }
 
 DTC::DTC_ErrorCode DTC::DTC::WriteControlRegister(uint32_t data)
