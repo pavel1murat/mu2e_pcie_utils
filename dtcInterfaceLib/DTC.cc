@@ -13,7 +13,7 @@ DTC::DTC::DTC() : device_()
 	device_.init();
 }
 
-DTC::DTC_ErrorCode DTC::DTC::ReadDataPacket(int channel)
+DTC::DTC_ErrorCode DTC::DTC::ReadDataPacket(DTC_DMA_Engine channel)
 {
 	mu2e_databuff_t buffer;
 	int errorCode = device_.read_data(channel, (void**)&buffer, 1000);
@@ -21,21 +21,21 @@ DTC::DTC_ErrorCode DTC::DTC::ReadDataPacket(int channel)
 	return errorCode == 0 ? DTC_ErrorCode_Success : DTC_ErrorCode_IOError;
 }
 
-DTC::DTC_ErrorCode DTC::DTC::WriteDataPacket(int channel, DTC_DataPacket packet)
+DTC::DTC_ErrorCode DTC::DTC::WriteDataPacket(DTC_DMA_Engine channel, DTC_DataPacket packet)
 {
 	return DTC_ErrorCode_NotImplemented;
 }
 
 DTC::DTC_ErrorCode DTC::DTC::ReadDAQDataPacket()
 {
-	return ReadDataPacket(0);
+	return ReadDataPacket(DTC_DMA_Engine_DAQ);
 }
 DTC::DTC_ErrorCode DTC::DTC::WriteDAQDataPacket(DTC_DataPacket packet)
 {
-	return WriteDataPacket(0, packet);
+	return WriteDataPacket(DTC_DMA_Engine_DAQ, packet);
 }
 
-DTC::DTC_ErrorCode DTC::DTC::ReadDMAPacket(int channel)
+DTC::DTC_ErrorCode DTC::DTC::ReadDMAPacket(DTC_DMA_Engine channel)
 {
 	DTC_ErrorCode err = ReadDataPacket(channel);
 	if (err != DTC_ErrorCode_Success) { return err; }
@@ -44,24 +44,24 @@ DTC::DTC_ErrorCode DTC::DTC::ReadDMAPacket(int channel)
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadDMADAQPacket()
 {
-	return ReadDMAPacket(0);
+	return ReadDMAPacket(DTC_DMA_Engine_DAQ);
 }
 DTC::DTC_ErrorCode DTC::DTC::ReadDMADCSPacket()
 {
-	return ReadDMAPacket(1);
+	return ReadDMAPacket(DTC_DMA_Engine_DCS);
 }
 
-DTC::DTC_ErrorCode DTC::DTC::WriteDMAPacket(int channel, DTC_DMAPacket packet)
+DTC::DTC_ErrorCode DTC::DTC::WriteDMAPacket(DTC_DMA_Engine channel, DTC_DMAPacket packet)
 {
 	return WriteDataPacket(channel, packet.ConvertToDataPacket());
 }
 DTC::DTC_ErrorCode DTC::DTC::WriteDMADAQPacket(DTC_DMAPacket packet)
 {
-	return WriteDMAPacket(0, packet);
+	return WriteDMAPacket(DTC_DMA_Engine_DAQ, packet);
 }
 DTC::DTC_ErrorCode DTC::DTC::WriteDMADCSPacket(DTC_DMAPacket packet)
 {
-	return WriteDMAPacket(1, packet);
+	return WriteDMAPacket(DTC_DMA_Engine_DCS, packet);
 }
 
 DTC::DTC_ErrorCode DTC::DTC::GetData(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp when)
@@ -465,4 +465,73 @@ DTC::DTC_ErrorCode DTC::DTC::ReadFPGAPROMReady()
 	std::bitset<32> dataSet = dataWord_;
 	booleanValue_ = dataSet[0];
 	return err;
+}
+
+DTC::DTC_ErrorCode DTC::DTC::WriteTestCommand(DTC_TestCommand comm)
+{
+	int err = device_.write_test_command(comm.GetCommand());
+	if (err != 0) { return DTC_ErrorCode_IOError; }
+	return DTC_ErrorCode_Success;
+}
+DTC::DTC_ErrorCode DTC::DTC::ReadTestCommand()
+{
+	m_ioc_cmd_t comm;
+	int err = device_.read_test_command(&comm);
+	testCommand_ = DTC_TestCommand(comm);
+	if (err != 0) { return DTC_ErrorCode_IOError; }
+	return DTC_ErrorCode_Success;
+}
+DTC::DTC_ErrorCode DTC::DTC::StartTest(DTC_DMA_Engine dma, int packetSize, bool loopback, bool txChecker, bool rxGenerator)
+{
+	testCommand_ = DTC_TestCommand(dma, true, packetSize, loopback, txChecker, rxGenerator);
+	DTC_ErrorCode err = WriteTestCommand(testCommand_);
+	if (err != DTC_ErrorCode_Success){ return err; }
+	return ReadTestCommand();
+}
+DTC::DTC_ErrorCode DTC::DTC::StopTest(DTC_DMA_Engine dma)
+{
+	testCommand_ = DTC_TestCommand(dma);
+	DTC_ErrorCode err = WriteTestCommand(testCommand_);
+	if (err != DTC_ErrorCode_Success){ return err; }
+	return ReadTestCommand();
+}
+
+DTC::DTC_ErrorCode DTC::DTC::ReadDMAStateData(DTC_DMA_Engine dma, DTC_DMA_Direction dir)
+{
+	m_ioc_engstate_t state;
+	int err = device_.read_dma_state(dma, dir, &state);
+	dmaState_ = DTC_DMAState(state);
+	if (err != 0) { return DTC_ErrorCode_IOError; }
+	return DTC_ErrorCode_Success;
+}
+DTC::DTC_ErrorCode DTC::DTC::ReadDMAStatsData()
+{
+	DMAStatistics statData[350];
+	m_ioc_engstats_t stats;
+	stats.Count = 350;
+	stats.engptr = statData;
+	int err = device_.read_dma_stats(&stats);
+	dmaStats_ = DTC_DMAStats(stats);
+	if (err != 0) { return DTC_ErrorCode_IOError; }
+	return DTC_ErrorCode_Success;
+}
+
+DTC::DTC_ErrorCode DTC::DTC::ReadPCIeStateData()
+{
+	m_ioc_pcistate_t state;
+	int err = device_.read_pcie_state(&state);
+	pcieState_ = DTC_PCIeState(state);
+	if (err != 0) { return DTC_ErrorCode_IOError; }
+	return DTC_ErrorCode_Success;
+}
+DTC::DTC_ErrorCode DTC::DTC::ReadPCIeStatsData()
+{
+	TRNStatistics statData[1];
+	TRNStatsArray stats;
+	stats.Count = 1;
+	stats.trnptr = statData;
+	int err = device_.read_trn_stats(&stats);
+	pcieStats_ = DTC_PCIeStats(stats);
+	if (err != 0) { return DTC_ErrorCode_IOError; }
+	return DTC_ErrorCode_Success;
 }

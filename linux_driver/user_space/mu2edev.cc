@@ -143,6 +143,50 @@ void mu2edev::meta_dump( int chn, int dir )
     }
 }
 
+int mu2edev::read_pcie_state(m_ioc_pcistate_t *output)
+{
+	int error = ioctl(devfd_, M_IOC_GET_PCI_STATE, output);
+	if (error < 0)
+	{
+		printf("Error! : %s \n", strerror(errno));
+	}
+	return error;
+}
+
+int mu2edev::read_dma_state(int chn,int dir, m_ioc_engstate_t *output)
+{ 
+	m_ioc_engstate_t req;
+  req.Engine = chn + 0x20 * dir;
+  TRACE(0, "Output engine is: %u", req.Engine);
+  int error = ioctl(devfd_, M_IOC_GET_ENG_STATE, &req);
+  if (error < 0)
+  {
+	  printf("Error! : %s \n", strerror(errno));
+  }
+  *output = req;
+  return error;
+}
+
+int mu2edev::read_dma_stats(m_ioc_engstats_t *output)
+{
+	int error = ioctl(devfd_, M_IOC_GET_DMA_STATS, output);
+	if (error < 0)
+	{
+		printf("Error! : %s \n", strerror(errno));
+	}
+	return error;
+}
+
+int mu2edev::read_trn_stats(TRNStatsArray *output)
+{
+	int error = ioctl(devfd_, M_IOC_GET_TRN_STATS, output);
+	if (error < 0)
+	{
+		printf("Error! : %s \n", strerror(errno));
+	}
+	return error;
+}
+
 unsigned mu2edev::delta_( int chn, int dir )
 {   unsigned hw=mu2e_channel_info_[chn][dir].hwIdx;
     unsigned sw=mu2e_channel_info_[chn][dir].swIdx;

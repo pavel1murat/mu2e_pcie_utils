@@ -10,5 +10,7 @@
 using namespace DTC;
 %}
 
+%include "std_vector.i"
+
 %include "DTC_Types.h"
 %include "DTC.h"

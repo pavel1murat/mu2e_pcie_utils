@@ -172,19 +172,43 @@ if (cluster.isMaster) {
                 }
                 else if (pathname.search("DTC") > 0 && !readOnly) {
                     console.log("Recieved POST to " + pathname);
-                        // When the request is finished, run this callback:
-                        req.on('end', function () {
-                            var POST = qs.parse(body);
-                            var functionName = pathname.replace("/DTC/", "");
-                            console.log("Running " + functionName);
-                            var data = dtcdriver[functionName](parseInt(POST.ring, 16));
-                            logMessage(functionName + " " + POST.ring + " (" + data + ")", "executed", username);
-                            console.log(data);
-                            dataStr = JSON.stringify(data);
-                            console.log("That LED is now " + dataStr);
-                            res.end(dataStr);
-                            console.log("Done sending reply");
-                        });
+                    // When the request is finished, run this callback:
+                    req.on('end', function () {
+                        var POST = qs.parse(body);
+                        var functionName = pathname.replace("/DTC/", "");
+                        console.log("Running " + functionName);
+                        var data = dtcdriver[functionName](parseInt(POST.ring, 16));
+                        logMessage(functionName + " " + POST.ring + " (" + data + ")", "executed", username);
+                        console.log(data);
+                        dataStr = JSON.stringify(data);
+                        console.log("That LED is now " + dataStr);
+                        res.end(dataStr);
+                        console.log("Done sending reply");
+                    });
+                }
+                else if (pathname.search("SystemStatus") > 0) {
+                    console.log("Sending System Status");
+                    res.end(JSON.stringify(dtcdriver.systemStatus()));
+                    console.log("Done sending status");
+                }
+                else if (pathname.search("TestControl") > 0 && !readOnly) {
+                    console.log("Starting or Stopping a DMA test");
+                    req.on('end', function () {
+                        var POST = qs.parse(body);
+                        var dma = POST.dma;
+                        var started = POST.started;
+                        var packetSize = POST.size;
+                        var enableLoopback = POST.loopbackEnabled;
+                        var enableTXChecker = POST.txChecker;
+                        var enableRXGenerator = POST.rxGenerator;
+                        if (started) {
+                            started = dtcdriver.startTest(dma, packetSize, enableLoopback, enableTXChecker, enableRXGenerator);
+                        } else {
+                            started = dtcdriver.stopTest(dma);
+                        }
+                        
+                        res.end(JSON.stringify(started));
+                    });
                 }
                 else if (pathname.search("log_message") > 0) {
                     console.log("Logging message");
@@ -216,18 +240,17 @@ if (cluster.isMaster) {
             }
             //We got a GET request!
             if (req.method === "GET") {
-                console.log("In GET handler, PID: " + process.pid);
+                //console.log("In GET handler, PID: " + process.pid);
                 if (pathname.search(".js") > 0) {
                     console.log("Sending ./" + pathname);
                     res.setHeader("Content-Type", "text/javascript");
                     res.end(fs.readFileSync("./" + pathname), 'utf-8');
                     console.log("Done sending ./" + pathname);
                 } else if (pathname.search("css") > 0) {
-                    console.log("Sending style.css");
-                    // Write out the frame code
+                    console.log("Sending ./" + pathname);
                     res.setHeader("Content-Type", "text/css");
-                    res.end(fs.readFileSync("./style.css"), 'utf-8');
-                    console.log("Done sending style.css");
+                    res.end(fs.readFileSync("./" + pathname), 'utf-8');
+                    console.log("Done sending ./" + pathname);
                 } else if (pathname.search(".html") > 0) {
                     console.log("Sending ./" + pathname);
                     // Write out the frame code
@@ -257,11 +280,41 @@ if (cluster.isMaster) {
                         result.name = "rpayload";
                         res.end(JSON.stringify(result));
                     }
+                    else if (pathname.search("pcieTX") > 0) {
+                        var result = dtcdriver.getPCIeWriteRate();
+                        result.name = "pcieTX";
+                        res.end(JSON.stringify(result));
+                    }
+                    else if (pathname.search("pcieRX") > 0) {
+                        var result = dtcdriver.getPCIeReadRate();
+                        result.name = "pcieRX";
+                        res.end(JSON.stringify(result));
+                    }
+                    else if (pathname.search("dma0TX") > 0) {
+                        var result = dtcdriver.getDMAWriteRate(0);
+                        result.name = "dma0TX";
+                        res.end(JSON.stringify(result));
+                    }
+                    else if (pathname.search("dma0RX") > 0) {
+                        var result = dtcdriver.getDMAReadRate(0);
+                        result.name = "dma0RX";
+                        res.end(JSON.stringify(result));
+                    }
+                    else if (pathname.search("dma1TX") > 0) {
+                        var result = dtcdriver.getDMAWriteRate(1);
+                        result.name = "dma1TX";
+                        res.end(JSON.stringify(result));
+                    }
+                    else if (pathname.search("dma1RX") > 0) {
+                        var result = dtcdriver.getDMAReadRate(1);
+                        result.name = "dma1RX";
+                        res.end(JSON.stringify(result));
+                    }
                     else {
                         res.end(JSON.stringify(0));
                     }
                     //console.log("Done sending ./" + pathname);
-                    console.log("DTC Error Status: " + dtcdriver.Err);
+                    //console.log("DTC Error Status: " + dtcdriver.Err);
                 } else {
                     console.log("Sending client.html");
                     // Write out the frame code

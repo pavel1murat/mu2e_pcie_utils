@@ -14,22 +14,22 @@ namespace DTC {
 		//#if DTCLIB_DEBUG
 		//	public:
 		//#endif
-		 DTC_ErrorCode ReadDataPacket(int channel);
-		 DTC_ErrorCode WriteDataPacket(int channel, DTC_DataPacket packet);
+		DTC_ErrorCode ReadDataPacket(DTC_DMA_Engine channel);
+		DTC_ErrorCode WriteDataPacket(DTC_DMA_Engine channel, DTC_DataPacket packet);
 
-		 DTC_ErrorCode ReadDAQDataPacket();
-		 DTC_ErrorCode WriteDAQDataPacket(DTC_DataPacket packet);
+		DTC_ErrorCode ReadDAQDataPacket();
+		DTC_ErrorCode WriteDAQDataPacket(DTC_DataPacket packet);
 
-		 DTC_ErrorCode ReadDMAPacket(int channel);
-		 DTC_ErrorCode ReadDMADAQPacket();
-		 DTC_ErrorCode ReadDMADCSPacket();
+		DTC_ErrorCode ReadDMAPacket(DTC_DMA_Engine channel);
+		DTC_ErrorCode ReadDMADAQPacket();
+		DTC_ErrorCode ReadDMADCSPacket();
 
-		 DTC_ErrorCode WriteDMAPacket(int channel, DTC_DMAPacket packet);
-		 DTC_ErrorCode WriteDMADAQPacket(DTC_DMAPacket packet);
-		 DTC_ErrorCode WriteDMADCSPacket(DTC_DMAPacket packet);
+		DTC_ErrorCode WriteDMAPacket(DTC_DMA_Engine channel, DTC_DMAPacket packet);
+		DTC_ErrorCode WriteDMADAQPacket(DTC_DMAPacket packet);
+		DTC_ErrorCode WriteDMADCSPacket(DTC_DMAPacket packet);
 	public:
 		DTC_ErrorCode GetData(const DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp when);
-		 DTC_ErrorCode DCSRequestReply(const DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t dataIn[12]);
+		DTC_ErrorCode DCSRequestReply(const DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t dataIn[12]);
 		DTC_ErrorCode SendReadoutRequestPacket(const DTC_Ring_ID ring, DTC_Timestamp when, DTC_ROC_ID roc = DTC_ROC_5);
 
 		//private:
@@ -108,6 +108,19 @@ namespace DTC {
 		DTC_ErrorCode ReadFPGAPROMProgramFIFOFull();
 		DTC_ErrorCode ReadFPGAPROMReady();
 
+		//DMA/PCIe Monitoring Methods
+	public:
+		DTC_ErrorCode WriteTestCommand(DTC_TestCommand comm);
+		DTC_ErrorCode ReadTestCommand();
+	public:
+		DTC_ErrorCode StartTest(DTC_DMA_Engine dma, int packetSize, bool loopback, bool txChecker, bool rxGenerator);
+		DTC_ErrorCode StopTest(DTC_DMA_Engine dma);
+		DTC_ErrorCode ReadDMAStateData(DTC_DMA_Engine dma, DTC_DMA_Direction dir);
+		DTC_ErrorCode ReadDMAStatsData();
+			DTC_ErrorCode ReadPCIeStateData();
+			DTC_ErrorCode ReadPCIeStatsData();
+
+	public:
 		DTC_DataPacket ReadDataPacket() { return dataPacket_; }
 		DTC_DMAPacket ReadDMAPacket() { return dmaPacket_; }
 		DTC_Timestamp ReadTimestamp() { return timestampPreset_; }
@@ -117,6 +130,10 @@ namespace DTC {
 		bool ReadBooleanValue() { return booleanValue_; }
 		uint32_t ReadDataWord() { return dataWord_; }
 		std::vector<uint8_t> ReadDataVector() { return dataVector_; }
+		DTC_DMAState ReadDMAState() { return dmaState_; }
+		std::vector<DTC_DMAStat> ReadDMAStats(DTC_DMA_Engine dma, DTC_DMA_Direction dir) { return dmaStats_.getData(dma, dir); }
+		DTC_PCIeState ReadPCIeState() { return pcieState_; }
+		DTC_PCIeStats ReadPCIeStats() { return pcieStats_; }
 
 	private:
 		DTC_DataPacket dataPacket_;
@@ -125,6 +142,11 @@ namespace DTC {
 		DTC_SERDESRXBufferStatus SERDESRXBufferStatus_;
 		DTC_CharacterNotInTableError CharacterNotInTableError_;
 		DTC_SERDESRXDisparityError SERDESRXDisparityError_;
+		DTC_TestCommand testCommand_;
+		DTC_DMAState dmaState_;
+		DTC_DMAStats dmaStats_;
+		DTC_PCIeState pcieState_;
+		DTC_PCIeStats pcieStats_;
 		bool booleanValue_;
 		uint32_t dataWord_;
 		std::vector<uint8_t> dataVector_;

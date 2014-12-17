@@ -267,3 +267,163 @@ DTC::DTC_RXBufferStatus DTC::DTC_SERDESRXBufferStatus::GetStatus()
 		return DTC_RXBufferStatus_Unknown;
 	}
 }
+
+DTC::DTC_TestMode::DTC_TestMode() : mode_() {}
+DTC::DTC_TestMode::DTC_TestMode(bool state, bool loopback, bool txChecker, bool rxGenerator) : mode_()
+{
+	mode_[0] = txChecker;
+	mode_[1] = loopback;
+	mode_[2] = rxGenerator;
+	state_ = state;
+}
+DTC::DTC_TestMode::DTC_TestMode(uint32_t input) : mode_()
+{
+	mode_ = (input & 0x700) >> 8;
+	state_ = (input & 0xC000) != 0;
+}
+uint32_t DTC::DTC_TestMode::GetWord() 
+{
+	uint32_t output = 0;
+	switch (mode_.to_ulong())
+	{
+	case 1:
+		output += 0x100;
+		break;
+	case 2:
+		output += 0x200;
+		break;
+	case 4:
+		output += 0x400;
+		break;
+	case 5:
+		output += 0x500;
+		break;
+	}
+	if (state_)
+	{
+		output += 0x8000;
+	}
+	return output;
+}
+
+DTC::DTC_TestCommand::DTC_TestCommand() 
+	: TestMode_(), PacketSize_(0), Engine_(DTC_DMA_Engine_DAQ) {}
+DTC::DTC_TestCommand::DTC_TestCommand(DTC_DMA_Engine dma, bool state, 
+	int PacketSize, bool loopback, bool txChecker, bool rxGenerator)
+{
+	Engine_ = dma;
+	PacketSize_ = PacketSize;
+	TestMode_ = DTC_TestMode(state, loopback, txChecker, rxGenerator);
+}
+DTC::DTC_TestCommand::DTC_TestCommand(m_ioc_cmd_t in)
+{
+	if (in.Engine == 0)
+	{
+		Engine_ = DTC_DMA_Engine_DAQ;
+	}
+	else if (in.Engine == 1)
+	{
+		Engine_ = DTC_DMA_Engine_DCS;
+	}
+	
+	PacketSize_ = in.MinPktSize;
+	TestMode_ = DTC_TestMode(in.TestMode);
+}
+m_ioc_cmd_t DTC::DTC_TestCommand::GetCommand()
+{
+	m_ioc_cmd_t output;
+
+	output.Engine = Engine_;
+	output.MinPktSize = output.MaxPktSize = PacketSize_;
+	output.TestMode = TestMode_.GetWord();
+
+	return output;
+}
+
+DTC::DTC_DMAState::DTC_DMAState(m_ioc_engstate_t in)
+	: BDs(in.BDs), Buffers(in.Buffers), MinPktSize(in.MinPktSize),
+	MaxPktSize(in.MaxPktSize), BDerrs(in.BDerrs), BDSerrs(in.BDSerrs),
+	IntEnab(in.IntEnab), TestMode(in.TestMode)
+{
+	switch (in.Engine)
+	{
+	case 0:
+		Direction = DTC_DMA_Direction_C2S;
+		Engine = DTC_DMA_Engine_DAQ;
+		break;
+	case 0x20:
+		Direction = DTC_DMA_Direction_C2S;
+		Engine = DTC_DMA_Engine_DAQ;
+		break;
+	case 1:
+		Direction = DTC_DMA_Direction_S2C;
+		Engine = DTC_DMA_Engine_DCS;
+		break;
+	case 0x21:
+		Direction = DTC_DMA_Direction_S2C;
+		Engine = DTC_DMA_Engine_DCS;
+		break;
+	}
+}
+
+DTC::DTC_DMAStat::DTC_DMAStat(DMAStatistics in) : LBR(in.LBR), LAT(in.LAT), LWT(in.LWT)
+{
+	switch (in.Engine)
+	{
+	case 0:
+		Direction = DTC_DMA_Direction_C2S;
+		Engine = DTC_DMA_Engine_DAQ;
+		break;
+	case 0x20:
+		Direction = DTC_DMA_Direction_C2S;
+		Engine = DTC_DMA_Engine_DAQ;
+		break;
+	case 1:
+		Direction = DTC_DMA_Direction_S2C;
+		Engine = DTC_DMA_Engine_DCS;
+		break;
+	case 0x21:
+		Direction = DTC_DMA_Direction_S2C;
+		Engine = DTC_DMA_Engine_DCS;
+		break;
+	}
+}
+
+DTC::DTC_DMAStats::DTC_DMAStats(m_ioc_engstats_t in)
+{
+	for (int i = 0; i < in.Count; ++i)
+	{
+		Stats.push_back(DTC_DMAStat(in.engptr[i]));
+	}
+}
+std::vector<DTC::DTC_DMAStat> DTC::DTC_DMAStats::getData(DTC_DMA_Engine dma, DTC_DMA_Direction dir)
+{
+	std::vector<DTC_DMAStat> output;
+	for(auto i : Stats)
+	{
+		if (i.Engine == dma && i.Direction == dir)
+		{
+			output.push_back(i);
+		}
+	}
+
+	return output;
+}
+
+DTC::DTC_PCIeState::DTC_PCIeState(m_ioc_pcistate_t in) 
+	: Version(in.Version), LinkState(in.LinkState), LinkSpeed(in.LinkSpeed),
+	LinkWidth(in.LinkWidth), VendorId(in.VendorId), DeviceId(in.DeviceId),
+	IntMode(in.IntMode), MPS(in.MPS), MRRS(in.MRRS), InitFCCplD(in.InitFCCplD),
+	InitFCCplH(in.InitFCCplH), InitFCNPD(in.InitFCNPD), InitFCNPH(in.InitFCNPH),
+	InitFCPD(in.InitFCPD), InitFCPH(in.InitFCPH) {}
+
+DTC::DTC_PCIeStat::DTC_PCIeStat(TRNStatistics in)
+	: LTX(in.LTX), LRX(in.LRX) {}
+
+DTC::DTC_PCIeStats::DTC_PCIeStats(TRNStatsArray in) : Stats()
+{
+	for (int i = 0; i < in.Count; ++i)
+	{
+		Stats.push_back(DTC_PCIeStat(in.trnptr[i]));
+	}
+}

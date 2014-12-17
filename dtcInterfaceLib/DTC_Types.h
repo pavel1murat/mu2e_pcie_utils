@@ -3,6 +3,7 @@
 
 #include <bitset> // std::bitset
 #include <cstdint> // uint8_t, uint16_t
+#include <vector> // std::vector
 #include "../linux_driver/mymodule/mu2e_mmap_ioctl.h"
 
 #define DTCControlRegister                        0x9100
@@ -24,6 +25,16 @@
 
 namespace DTC
 {
+	enum DTC_DMA_Engine {
+		DTC_DMA_Engine_DAQ = 0,
+		DTC_DMA_Engine_DCS = 1,
+	};
+
+	enum DTC_DMA_Direction {
+		DTC_DMA_Direction_C2S = 0,
+		DTC_DMA_Direction_S2C = 1,
+	};
+
 	enum DTC_ErrorCode {
 		DTC_ErrorCode_Success = 0,
 		DTC_ErrorCode_IOError = -1,
@@ -303,6 +314,104 @@ namespace DTC
 
 		void SetData(std::bitset<3> data) { data_ = data; }
 		DTC_RXBufferStatus GetStatus();
+	};
+
+	struct DTC_TestMode {
+	private:
+		std::bitset<3> mode_;
+		bool state_;
+	public:
+		DTC_TestMode();
+		DTC_TestMode(bool state, bool loopback, bool txChecker, bool rxGenerator);
+		DTC_TestMode(uint32_t input);
+		bool GetLoopbackState() { return mode_[1]; }
+		bool GetTXCheckerState() { return mode_[0]; }
+		bool GetRXGeneratorState() { return mode_[2]; }
+		bool GetState() { return state_; }
+		uint32_t GetWord();
+	};
+
+	struct DTC_TestCommand {
+	private:
+		DTC_TestMode TestMode_;
+		int PacketSize_;
+		DTC_DMA_Engine Engine_;
+	public:
+		DTC_TestCommand();
+		DTC_TestCommand(DTC_DMA_Engine dma,bool state = false, int PacketSize = 0, bool loopback = false, bool txChecker = false, bool rxGenerator = false);
+		DTC_TestCommand(m_ioc_cmd_t in);
+		m_ioc_cmd_t GetCommand();
+		DTC_TestMode GetMode() { return TestMode_; }
+
+	};
+
+	struct DTC_DMAState {
+	public:
+		DTC_DMA_Engine Engine;
+		DTC_DMA_Direction Direction;
+		int BDs;
+		int Buffers;
+		uint32_t MinPktSize;
+		uint32_t MaxPktSize;
+		int BDerrs;
+		int BDSerrs;
+		int IntEnab;
+		DTC_TestMode TestMode;
+		DTC_DMAState() {}
+		DTC_DMAState(m_ioc_engstate_t in);
+	};
+
+	struct DTC_DMAStat {
+		DTC_DMA_Engine Engine;
+		DTC_DMA_Direction Direction;
+		uint32_t LBR;
+		uint32_t LAT;
+		uint32_t LWT;
+		DTC_DMAStat() {}
+		DTC_DMAStat(DMAStatistics in);
+	};
+	struct DTC_DMAStats {
+	public:
+		std::vector<DTC_DMAStat> Stats;
+		DTC_DMAStats() {}
+		DTC_DMAStats(m_ioc_engstats_t in);
+		std::vector<DTC_DMAStat> getData(DTC_DMA_Engine dma, DTC_DMA_Direction dir);
+	};
+
+	struct DTC_PCIeState {
+	public:
+		uint32_t Version;
+		bool LinkState;
+		int LinkSpeed;
+		int LinkWidth;
+		uint32_t VendorId;
+		uint32_t DeviceId;
+		int IntMode;
+		int MPS;
+		int MRRS;
+		int InitFCCplD;
+		int InitFCCplH;
+		int InitFCNPD;
+		int InitFCNPH;
+		int InitFCPD;
+		int InitFCPH;
+		DTC_PCIeState() {}
+		DTC_PCIeState(m_ioc_pcistate_t in);
+	};
+
+	struct DTC_PCIeStat {
+	public:
+		uint32_t LTX;
+		uint32_t LRX;
+		DTC_PCIeStat() {}
+		DTC_PCIeStat(TRNStatistics in);
+	};
+
+	struct DTC_PCIeStats {
+	public:
+		std::vector<DTC_PCIeStat> Stats;
+		DTC_PCIeStats() {}
+		DTC_PCIeStats(TRNStatsArray in);
 	};
 }
 

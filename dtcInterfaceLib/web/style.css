@@ -7,18 +7,6 @@ svg {
     stroke-width: 1.5px;
 }
 
-.send {
-    fill: none;
-    stroke-width: 1.5px;
-    color: 'red';
-}
-
-.receive {
-    fill: none;
-    stroke-width: 1.5px;
-    color: 'blue';
-}
-
 .axis path,
 .axis line {
     fill: none;
@@ -35,10 +23,9 @@ svg {
 }
 
 .p {
-    background: #fcfcfa;
     color: #333;
     font-family: "PT Serif", serif;
-    margin: 1em auto 4em 4em;
+    margin: 6px 10px 6px 10px;
     position: relative;
     width: 100%;
 }
