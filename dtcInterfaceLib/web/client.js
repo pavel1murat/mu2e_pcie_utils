@@ -359,6 +359,35 @@ function RunScript() {
     });
 }
 
+(function ($, sr) {
+    
+    // debouncing function from John Hann
+    // http://unscriptable.com/index.php/2009/03/20/debouncing-javascript-methods/
+    var debounce = function (func, threshold, execAsap) {
+        var timeout;
+        
+        return function debounced() {
+            var obj = this, args = arguments;
+            function delayed() {
+                if (!execAsap)
+                    func.apply(obj, args);
+                timeout = null;
+            }            ;
+            
+            if (timeout)
+                clearTimeout(timeout);
+            else if (execAsap)
+                func.apply(obj, args);
+            
+            timeout = setTimeout(delayed, threshold || 100);
+        };
+    }
+    // smartresize 
+    jQuery.fn[sr] = function (fn) { return fn ? this.bind('resize', debounce(fn)) : this.trigger(sr); };
+
+})(jQuery, 'smartresize');
+
+
 // When the DOM is ready to be interacted with, init.
 $(function () {
     setPixel(document.getElementById("RegDumpAjaxLED"), 0, "RO");
@@ -418,4 +447,11 @@ $(function () {
         rpayload: { data: [{ time: 0, value: 0 }], color: 'red', },
     };
     makeGraph("#receive", recIds);
+
+    $(window).smartresize( function () {
+        $("#send").empty();
+        $("#receive").empty();
+        makeGraph("#send", sendIds);
+        makeGraph("#receive", recIds);
+    })
 });
