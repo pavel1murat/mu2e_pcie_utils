@@ -10,6 +10,10 @@
 var cluster = require('cluster');
 var numCPUs = require("os").cpus().length;
 
+// Sub-Module files
+console.log("Initializing DTC Driver");
+var dtcdriver = require('./DTCDriver.js');
+console.log("Done initializing DTC Driver");
 
 // Node.js by default is single-threaded. Start multiple servers sharing
 // the same port so that an error doesn't bring the whole system down
@@ -23,6 +27,9 @@ if (cluster.isMaster) {
     cluster.on("exit", function (worker, code, signal) {
         cluster.fork();
     });
+
+    //Only the master should log Ganglia metrics
+    setInterval(dtcdriver.sendStatistics, 15000);
 } else {
     
     // Node.js framework "includes"
@@ -30,12 +37,7 @@ if (cluster.isMaster) {
     var url = require('url');
     var fs = require('fs');
     var qs = require('querystring');
-    
-    // Sub-Module files
-    console.log("Initializing DTC Driver");
-    var dtcdriver = require('./DTCDriver.js');
-    console.log("Done initializing DTC Driver");
-    
+        
     console.log("Setting up log file");
     if (!fs.existsSync("./DTC.log")) {
         console.log("Creating new log file");

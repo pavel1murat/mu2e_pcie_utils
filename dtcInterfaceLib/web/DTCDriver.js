@@ -8,6 +8,7 @@
 var emitter = require('events').EventEmitter;
 
 var dtc = require('./DTC');
+var gmetric = require('./gmetric');
 var DTC = new dtc.DTC();
 // So that we can send events back to serverbase
 var dtcem = new emitter();
@@ -500,6 +501,13 @@ dtcem.getDMAWriteRate = function (channel) {
         dmastats = systemStatus.ring1.TX.stats;
     }
     return { value: dmastats.Throughput, time: new Date() };
+};
+
+dtcem.sendStatistics = function () {
+    dtcem.getReceiveStatistics();
+    dtcem.getSendStatistics();
+    gmetric.send_gmetric("/etc/ganglia/gmond.conf", "PCIe Send Rate", send.toString(), "double", "B/s", "both", 15, 0, "DTC_PCIe", "mu2e DAQ", "PCIe Send Rate", "PCIe Send Rate");
+    gmetric.send_gmetric("/etc/ganglia/gmond.conf", "PCIe Receive Rate", receive.toString(), "double", "B/s", "both", 15, 0, "DTC_PCIe", "mu2e DAQ", "PCIe Receive Rate", "PCIe Receive Rate");
 };
 
 module.exports = dtcem;
