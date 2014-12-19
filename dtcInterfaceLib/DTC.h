@@ -27,6 +27,8 @@ namespace DTC {
 		DTC_ErrorCode WriteDMAPacket(DTC_DMA_Engine channel, DTC_DMAPacket packet);
 		DTC_ErrorCode WriteDMADAQPacket(DTC_DMAPacket packet);
 		DTC_ErrorCode WriteDMADCSPacket(DTC_DMAPacket packet);
+
+		std::vector<DTC_DataPacket> ReadBuffer(int packetOffset);
 	public:
 		DTC_ErrorCode GetData(const DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp when);
 		DTC_ErrorCode DCSRequestReply(const DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t dataIn[12]);
@@ -151,6 +153,7 @@ namespace DTC {
 		uint32_t dataWord_;
 		std::vector<uint8_t> dataVector_;
 		mu2edev device_;
+		mu2e_databuff_t buffer_;
 	};
 };
 

@@ -15,9 +15,8 @@ DTC::DTC::DTC() : device_()
 
 DTC::DTC_ErrorCode DTC::DTC::ReadDataPacket(DTC_DMA_Engine channel)
 {
-	mu2e_databuff_t buffer;
-	int errorCode = device_.read_data(channel, (void**)&buffer, 1000);
-	dataPacket_ = DTC_DataPacket(buffer, true);
+	int errorCode = device_.read_data(channel, (void**)&buffer_, 1000);
+	dataPacket_ = DTC_DataPacket(buffer_, true);
 	return errorCode == 0 ? DTC_ErrorCode_Success : DTC_ErrorCode_IOError;
 }
 
@@ -64,9 +63,33 @@ DTC::DTC_ErrorCode DTC::DTC::WriteDMADCSPacket(DTC_DMAPacket packet)
 	return WriteDMAPacket(DTC_DMA_Engine_DCS, packet);
 }
 
+std::vector<DTC::DTC_DataPacket> DTC::DTC::ReadBuffer(int packetOffset)
+{
+	std::vector<DTC_DataPacket> output;
+	int count = sizeof(buffer_) / (16 * sizeof(uint8_t));
+	for (int packetIt = packetOffset; packetIt < count; ++packetIt)
+	{
+		int pOff = packetIt * 16 * sizeof(uint8_t) / sizeof(buffer_[0]);
+		uint8_t data[16];
+		for (int word = 0; word < 16; ++word)
+		{
+			int jmax = sizeof(uint8_t) / sizeof(buffer_[0]);
+			uint8_t dataShort = buffer_[word * jmax + pOff];
+			for (int j = 1; j < jmax; ++j)
+			{
+				dataShort <<= sizeof(buffer_[0]);
+				dataShort += buffer_[j + (word * jmax) + pOff];
+			}
+			data[word] =  dataShort;
+		}
+		output.push_back(DTC_DataPacket(data));
+	}
+
+	return output;
+}
+
 DTC::DTC_ErrorCode DTC::DTC::GetData(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp when)
 {
-	dataVector_.clear();
 	DTC_ErrorCode err;
 	DTC_DataRequestPacket req(ring, roc, when);
 	err = WriteDMADAQPacket(req);
@@ -79,17 +102,26 @@ DTC::DTC_ErrorCode DTC::DTC::GetData(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Times
 	{
 		return DTC_ErrorCode_WrongPacketType;
 	}
+	dataVector_.swap(std::vector<uint8_t>());
+	dataVector_.reserve(6 + 16 * packet.GetPacketCount());
 	for (int i = 0; i < 6; ++i)
 	{
 		dataVector_.push_back(packet.GetData()[i]);
 	}
-	for (int ii = 0; ii < packet.GetPacketCount(); ++ii)
+	
+	int packetsProcessed = 0;
+	std::vector<DTC_DataPacket> packets = ReadBuffer(1);
+	while (packets.size() < packet.GetPacketCount())
 	{
-		err = ReadDAQDataPacket();
-		if (err != DTC_ErrorCode_Success) { return err; }
-		for (int i = 0; i < 16; ++i)
+		if (ReadDAQDataPacket() != DTC_ErrorCode_Success) { return err; }
+		std::vector<DTC_DataPacket> pTemp = ReadBuffer(0);
+		packets.insert(packets.end(), pTemp.begin(), pTemp.end());
+	}
+	for (int i = 0; i < packet.GetPacketCount(); ++i)
+	{
+		for (int j = 0; j < 16; ++j)
 		{
-			dataVector_.push_back(dataPacket_.GetWord(i));
+			dataVector_.push_back(packets[i].GetWord(j));
 		}
 	}
 	return err;
