@@ -102,14 +102,14 @@ DTC::DTC_ErrorCode DTC::DTC::GetData(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Times
 	{
 		return DTC_ErrorCode_WrongPacketType;
 	}
-	dataVector_.swap(std::vector<uint8_t>());
-	dataVector_.reserve(6 + 16 * packet.GetPacketCount());
+	std::vector<uint8_t> newVec(6 + 16 * packet.GetPacketCount());
+	dataVector_.swap(newVec);
+	newVec.clear();
 	for (int i = 0; i < 6; ++i)
 	{
 		dataVector_.push_back(packet.GetData()[i]);
 	}
 	
-	int packetsProcessed = 0;
 	std::vector<DTC_DataPacket> packets = ReadBuffer(1);
 	while (packets.size() < packet.GetPacketCount())
 	{
