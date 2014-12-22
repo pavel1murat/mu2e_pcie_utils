@@ -99,7 +99,7 @@ if (cluster.isMaster) {
                             res.end(JSON.stringify(module_holder[moduleName]["RO_" + functionName](POST)));
                         } catch (err) {
                             if (err instanceof TypeError) {
-                                console.log("Unauthorized access attempt: " + username + ": " + modulename + "/" + functionName);
+                                console.log("Unauthorized access attempt: " + username + ": " + moduleName + "/" + functionName);
                                 res.end(JSON.stringify(0));
                             }
                         }
