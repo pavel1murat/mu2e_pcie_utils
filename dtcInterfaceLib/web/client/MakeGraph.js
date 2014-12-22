@@ -1,5 +1,5 @@
-﻿var n = 75, //The number of points to plot
-    duration = 800; //ms between updates
+﻿var n = 120, //Displayed time range is n * duration, so default is 60 seconds.
+    duration = 500; //ms between updates
 
 function tick(paths, line, axes, x, y, ids, tag) {
     var transition = d3.select(tag).transition()
@@ -21,9 +21,8 @@ function tick(paths, line, axes, x, y, ids, tag) {
         y.domain([extent[0] * 98 / 100, extent[1] * 102 / 100]);
         
         for (var name in ids) {
-            d3.json("./json_" + name, function (json) {
+            d3.json(ids[name].jsonPath, function (json) {
                 ids[json.name].data.push({ value: json.value, time: new Date(json.time) });
-                ids[json.name].data.sort(function (a, b) { return b.time - a.time; });
             });
             
             // redraw the line
@@ -48,7 +47,7 @@ function tick(paths, line, axes, x, y, ids, tag) {
             }
         }
 
-    }).transition().each("start", function () { setTimeout(tick(paths, line, axes, x, y, ids, tag), duration / 2) });
+    }).transition().each("start", function () { setTimeout(tick(paths, line, axes, x, y, ids, tag), (duration * 3) / 4) });
 }
 
 function makeGraph(tag, ids) {

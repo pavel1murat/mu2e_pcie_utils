@@ -63,7 +63,7 @@ function GetAJAXValues(strOption, address, value, fnCallback) {
     // it on subsequent requests.
     GetAJAXValues.Xhr = $.ajax({
         type: "post",
-        url: "./dtc_register_io",
+        url: "./DTC/RegIO",
         data: {
             option: strOption,
             address: address,
@@ -250,7 +250,7 @@ function GetRegDumpAjax(fnCallback) {
     // it on subsequent requests.
     GetRegDumpAjax.Xhr = $.ajax({
         type: "post",
-        url: "./dtc_reg_dump",
+        url: "./DTC/regDump",
         data: { data: "nullData" },
         dataType: "json",
         // Our success handler.
@@ -340,21 +340,21 @@ function SetTimestamp() {
 function PostLogMessage() {
     var objData = null;
     var message = $("#logMessage").val();
-    AjaxPost('./log_message', message, function (returnValue) {
+    AjaxPost('./DTC/WriteLog', message, function (returnValue) {
         $("#log").val(returnValue.Value1);
     });
 }
 
 function ReadLog() {
     var objData = null;
-    AjaxPost('./log_read', null, function (returnValue) {
+    AjaxPost('./DTC/ReadLog', null, function (returnValue) {
         $("#log").val(returnValue.Value1);
     });
 }
 
 function RunScript() {
     var objData = null;
-    AjaxPost('./run_script', $("#script").val(), function (returnValue) {
+    AjaxPost('./DTC/RunScript', $("#script").val(), function (returnValue) {
         $("#script").val(returnValue);
     });
 }
@@ -438,13 +438,13 @@ $(function () {
     });
     
     var sendIds = {
-        send: { data: [{ time: 0, value: 0 }], color: 'black', },
-        spayload: { data: [{ time: 0, value: 0 }], color: 'red', },
+        send: { data: [{ time: 0, value: 0 }], color: 'black', jsonPath: "./DTC/Send" },
+        spayload: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "./DTC/SPayload" },
     };
     makeGraph("#send", sendIds);
     var recIds = {
-        receive: { data: [{ time: 0, value: 0 }], color: 'black', },
-        rpayload: { data: [{ time: 0, value: 0 }], color: 'red', },
+        receive: { data: [{ time: 0, value: 0 }], color: 'black', jsonPath: "./DTC/Receive" },
+        rpayload: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "./DTC/RPayload"},
     };
     makeGraph("#receive", recIds);
 
