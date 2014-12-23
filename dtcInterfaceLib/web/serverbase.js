@@ -24,14 +24,13 @@ function LoadModules(path) {
             f = path_module.join(path, files[i]);
             LoadModules(f);
         }
-            
-    } else if (path.search(".js") > 0) {
+    } else if (path.search("_module.js") > 0) {
         // we have a file: load it
         require(path)(module_holder);
         console.log("Initialized Submodule " + path);
     }
 }
-var DIR = path_module.join(__dirname, "server");
+var DIR = path_module.join(__dirname, "modules");
 LoadModules(DIR);
 
 // Node.js by default is single-threaded. Start multiple servers sharing
@@ -100,7 +99,7 @@ if (cluster.isMaster) {
                         } catch (err) {
                             if (err instanceof TypeError) {
                                 console.log("Unauthorized access attempt: " + username + ": " + moduleName + "/" + functionName);
-                                res.end(JSON.stringify(0));
+                                res.end(JSON.stringify(null));
                             }
                         }
                     } else {
@@ -123,30 +122,30 @@ if (cluster.isMaster) {
         //We got a GET request!
         if (req.method === "GET") {
             //console.log("In GET handler, PID: " + process.pid);
-            if (module_holder[moduleName] != null) {
-                //console.log("Module " + moduleName + ", function GET_" + functionName);
-                res.end(JSON.stringify(module_holder[moduleName]["GET_" + functionName]()));
-            } else if (pathname.search(".js") > 0) {
-                console.log("Sending ./client/" + pathname);
+            if (pathname.search(".js") > 0) {
+                console.log("Sending ./modules/" + moduleName + "/client/" + functionName);
                 res.setHeader("Content-Type", "text/javascript");
-                res.end(fs.readFileSync("./client/" + pathname), 'utf-8');
-                console.log("Done sending ./client/" + pathname);
+                res.end(fs.readFileSync("./modules/" + moduleName + "/client/" + functionName), 'utf-8');
+                console.log("Done sending ./modules/" + moduleName + "/client/" + functionName);
             } else if (pathname.search("css") > 0) {
-                console.log("Sending ./client/" + pathname);
+                console.log("Sending ./modules/" + moduleName + "/client/" + functionName);
                 res.setHeader("Content-Type", "text/css");
-                res.end(fs.readFileSync("./client/" + pathname), 'utf-8');
-                console.log("Done sending ./client/" + pathname);
+                res.end(fs.readFileSync("./modules/" + moduleName + "/client/" + functionName), 'utf-8');
+                console.log("Done sending ./modules/" + moduleName + "/client/" + functionName);
             } else if (pathname.search(".html") > 0) {
-                console.log("Sending ./client/" + pathname);
+                console.log("Sending ./modules/" + moduleName + "/client/" + functionName);
                 // Write out the frame code
                 res.setHeader("Content-Type", "text/html");
-                res.end(fs.readFileSync("./client/" + pathname), 'utf-8');
-                console.log("Done sending ./client/" + pathname);
+                res.end(fs.readFileSync("./modules/" + moduleName + "/client/" + functionName), 'utf-8');
+                console.log("Done sending ./modules/" + moduleName + "/client/" + functionName);
+            } else if (module_holder[moduleName] != null) {
+                //console.log("Module " + moduleName + ", function GET_" + functionName);
+                res.end(JSON.stringify(module_holder[moduleName]["GET_" + functionName]()));
             } else {
                 console.log("Sending client.html");
                 // Write out the frame code
                 res.setHeader("Content-Type", "text/html");
-                res.end(fs.readFileSync("./client/client.html"), 'utf-8');
+                res.end(fs.readFileSync("./client.html"), 'utf-8');
                 console.log("Done sending client.html");
             }
         }
@@ -187,6 +186,6 @@ if (cluster.isMaster) {
         baseport = 9090;
     }
     console.log("Listening on port " + baseport);
-    server.listen(baseport);
+    server.listen(baseport + 1);
     insecureServer.listen(baseport);
 }
