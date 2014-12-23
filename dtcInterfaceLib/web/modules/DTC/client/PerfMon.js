@@ -2,44 +2,9 @@
     path1Test = false;
 
 
-function AjaxPost(urlString, dataIn, fnCallback) {
-    // Check to see if there is currently an AJAX
-    // request on this method.
-    if (AjaxPost.Xhr) {
-        // Abort the current request.
-        AjaxPost.Xhr.abort();
-    }
-    // Get data via AJAX. Store the XHR (AJAX request
-    // object in the method in case we need to abort
-    // it on subsequent requests.
-    AjaxPost.Xhr = $.ajax({
-        type: "post",
-        url: urlString,
-        data: dataIn,
-        dataType: "json",
-        // Our success handler.
-        success: function (objData) {
-            // At this point, we have data coming back
-            // from the server.
-            fnCallback({
-                Value1: objData
-            });
-        },
-        // An error handler for the request.
-        error: function (xhr, textStatus, errorCode) {
-            //alert("An error occurred:\n" + textStatus + "\n" + errorCode);
-        },
-        // I get called no matter what.
-        complete: function () {
-            // Remove completed request object.
-            AjaxPost.Xhr = null;
-        }
-    });
-}
-
 function readSystemState() {
     AjaxPost("/DTC/SystemStatus", null, function (returnValue) {
-        var status = returnValue.Value1;
+        var status = returnValue;
         $('#path0TXThroughput').val(status.path0.TX.stats.Throughput);
         $('#path0RXThroughput').val(status.path0.RX.stats.Throughput);
         $("#path0TXDMAActive").val(status.path0.TX.stats.DMAActive);
@@ -97,7 +62,7 @@ function path0StartStopClicked() {
         rxGenerator: $('#path0RXGenerator').is(":checked"),
     };
     AjaxPost("DTC/TestControl", data, function (returnValue) {
-        if (returnValue.Value1) {
+        if (returnValue) {
             $("#path0StartStopButton").val("Stop Test");
             path0Test = true;
         } else {
@@ -117,7 +82,7 @@ function path1StartStopClicked() {
         rxGenerator: $('#path1RXGenerator').is(":checked"),
     };
     AjaxPost("DTC/TestControl", data, function (returnValue) {
-        if (returnValue.Value1) {
+        if (returnValue) {
             $("#path1StartStopButton").val("Stop Test");
             path1Test = true;
         } else {

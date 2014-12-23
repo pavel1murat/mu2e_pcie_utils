@@ -4,12 +4,10 @@
 // 
 // This module for serverbase.js performs register I/O on the mu2e DTC board
 
-// Node.js "includes"
-var emitter = require('events').EventEmitter;
-
 var dtc = require('./DTC');
 var gmetric = require('./gmetric');
 var fs = require('fs');
+var emitter = require('events').EventEmitter;
 var DTC = new dtc.DTC();
 // So that we can send events back to serverbase
 var dtcem = new emitter();
