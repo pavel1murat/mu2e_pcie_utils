@@ -166,8 +166,9 @@ if (cluster.isMaster) {
     var server = https.createServer(options, function (req, res) {
         var readOnly = true;
         var clientCertificate = req.connection.getPeerCertificate();
-        var username = clientCertificate.subject.CN[0];
+        var username = "HTTPS User";
         if (req.client.authorized) {
+            username = clientCertificate.subject.CN[0];
             var useremail = clientCertificate.subject.CN[1].substr(4);
             var userFNAL = useremail + "@FNAL.GOV";
             var userWIN = useremail + "@FERMI.WIN.FNAL.GOV";
