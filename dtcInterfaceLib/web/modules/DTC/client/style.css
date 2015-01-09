@@ -1,0 +1,31 @@
+svg {
+    font: 10px sans-serif;
+}
+
+.line {
+    fill: none;
+    stroke-width: 1.5px;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+
+.x.axis line {
+    shape-rendering: auto;
+}
+
+.y.axis line {
+    shape-rendering: auto;
+}
+
+.p {
+    color: #333;
+    font-family: "PT Serif", serif;
+    margin: 6px 10px 6px 10px;
+    position: relative;
+    width: 100%;
+}

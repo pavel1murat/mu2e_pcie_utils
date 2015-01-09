@@ -110,6 +110,27 @@ int mu2edev::read_release( int chn, unsigned num )
 }
 
 
+int  mu2edev::read_register(uint16_t address, int tmo_ms, uint32_t *output)
+{
+	m_ioc_reg_access_t reg;
+	reg.reg_offset = address;
+	reg.access_type = 0;
+	int errorCode = ioctl(devfd_, M_IOC_REG_ACCESS, &reg);
+	*output = reg.val;
+	return errorCode;
+}
+
+
+int  mu2edev::write_register(uint16_t address, int tmo_ms, uint32_t data)
+{
+	m_ioc_reg_access_t reg;
+	reg.reg_offset = address;
+	reg.access_type = 1;
+	reg.val = data;
+	return ioctl(devfd_, M_IOC_REG_ACCESS, &reg);
+}
+
+
 void mu2edev::meta_dump( int chn, int dir )
 {
     int retsts=0;
@@ -120,6 +141,50 @@ void mu2edev::meta_dump( int chn, int dir )
 	    printf( "buf_%02d: %u\n", buf, BC_p[buf] );
 	}
     }
+}
+
+int mu2edev::read_pcie_state(m_ioc_pcistate_t *output)
+{
+	int error = ioctl(devfd_, M_IOC_GET_PCI_STATE, output);
+	if (error < 0)
+	{
+		printf("Error! : %s \n", strerror(errno));
+	}
+	return error;
+}
+
+int mu2edev::read_dma_state(int chn,int dir, m_ioc_engstate_t *output)
+{ 
+	m_ioc_engstate_t req;
+  req.Engine = chn + 0x20 * dir;
+  TRACE(0, "Output engine is: %u", req.Engine);
+  int error = ioctl(devfd_, M_IOC_GET_ENG_STATE, &req);
+  if (error < 0)
+  {
+	  printf("Error! : %s \n", strerror(errno));
+  }
+  *output = req;
+  return error;
+}
+
+int mu2edev::read_dma_stats(m_ioc_engstats_t *output)
+{
+	int error = ioctl(devfd_, M_IOC_GET_DMA_STATS, output);
+	if (error < 0)
+	{
+		printf("Error! : %s \n", strerror(errno));
+	}
+	return error;
+}
+
+int mu2edev::read_trn_stats(TRNStatsArray *output)
+{
+	int error = ioctl(devfd_, M_IOC_GET_TRN_STATS, output);
+	if (error < 0)
+	{
+		printf("Error! : %s \n", strerror(errno));
+	}
+	return error;
 }
 
 unsigned mu2edev::delta_( int chn, int dir )
