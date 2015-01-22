@@ -4,8 +4,12 @@
 #include <bitset> // std::bitset
 #include <cstdint> // uint8_t, uint16_t
 #include <vector> // std::vector
-#include "../linux_driver/mymodule/mu2e_mmap_ioctl.h"
+#include "../linux_driver/mymodule2/mu2e_mmap_ioctl.h"
+#ifndef _WIN32
+#include "../linux_driver/include/trace.h"
+#endif
 
+#define DesignVersionRegister                     0x9000
 #define DTCControlRegister                        0x9100
 #define SERDESLoopbackEnableRegister              0x9108
 #define ROCEmulationEnableRegister                0x9110
@@ -33,14 +37,6 @@ namespace DTC
 	enum DTC_DMA_Direction {
 		DTC_DMA_Direction_C2S = 0,
 		DTC_DMA_Direction_S2C = 1,
-	};
-
-	enum DTC_ErrorCode {
-		DTC_ErrorCode_Success = 0,
-		DTC_ErrorCode_IOError = -1,
-		DTC_ErrorCode_ResetFailed = -2,
-		DTC_ErrorCode_WrongPacketType = -89,
-		DTC_ErrorCode_NotImplemented = -99,
 	};
 
 	enum DTC_Ring_ID : uint8_t {
@@ -71,6 +67,7 @@ namespace DTC
 		DTC_ROC_5 = 5,
 		DTC_ROC_Unused = 0x10,
 	};
+
 	enum DTC_RXBufferStatus {
 		DTC_RXBufferStatus_Nominal = 0,
 		DTC_RXBufferStatus_BufferEmpty = 1,
@@ -79,6 +76,27 @@ namespace DTC
 		DTC_RXBufferStatus_Overflow = 6,
 		DTC_RXBufferStatus_Unknown = 0x10,
 	};
+
+
+	class DTC_WrongPacketTypeException : std::exception {	
+		virtual const char* what() const throw()
+		{
+			return "Unexpected packet type encountered!";
+		}
+	};
+	class DTC_IOErrorException : std::exception {
+		virtual const char* what() const throw()
+		{
+			return "Unable to communicate with the DTC";
+		}
+	};
+	class DTC_NotImplementedException : std::exception {
+		virtual const char* what() const throw()
+		{
+			return "I don't think we're in Kansas anymore...";
+		}
+	};
+
 	class DTC_Timestamp {
 	private:
 		uint64_t timestamp_ : 48;
@@ -99,13 +117,9 @@ namespace DTC
 #endif
 		DTC_Timestamp& operator=(const DTC_Timestamp&) = default;
 
-
-		void SetTimestamp(uint64_t timestamp) { timestamp_ = timestamp; }
 		void SetTimestamp(uint32_t timestampLow, uint16_t timestampHigh);
-		void GetTimestamp(uint64_t *timestamp){ *timestamp = timestamp_; }
-		void GetTimestamp(uint8_t* arr);
-		uint64_t GetTimestamp(bool output) { if (output) return timestamp_; return 0; }
-		std::bitset<48> GetTimestamp() { return timestamp_; }
+		std::bitset<48> GetTimestamp() const { return timestamp_; }
+		void GetTimestamp(uint8_t* timeArr);
 
 	};
 
@@ -115,7 +129,7 @@ namespace DTC
 
 	public:
 		DTC_DataPacket() {}
-		DTC_DataPacket(mu2e_databuff_t data, bool);
+		DTC_DataPacket(mu2e_databuff_t* data);
 		DTC_DataPacket(uint8_t* data);
 		DTC_DataPacket(const DTC_DataPacket&) = default;
 #ifndef _WIN32
@@ -130,7 +144,7 @@ namespace DTC
 #endif
 
 		void SetWord(int index, uint8_t data);
-		uint8_t GetWord(int index);
+		uint8_t GetWord(int index) const;
 	};
 
 	class DTC_DMAPacket {
@@ -145,7 +159,7 @@ namespace DTC
 		DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t packetCount = 0);
 		DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t* data, uint8_t packetCount = 0);
 
-		DTC_DMAPacket(DTC_DataPacket& in);
+		DTC_DMAPacket(const DTC_DataPacket& in);
 		DTC_DMAPacket(const DTC_DMAPacket&) = default;
 #ifndef _WIN32
 		DTC_DMAPacket(DTC_DMAPacket&&) = default;
@@ -158,7 +172,7 @@ namespace DTC
 		DTC_DMAPacket& operator=(DTC_DMAPacket&&) = default;
 #endif
 
-		virtual DTC_DataPacket ConvertToDataPacket();
+		virtual DTC_DataPacket ConvertToDataPacket() const;
 
 		DTC_PacketType GetPacketType() { return packetType_; }
 		virtual uint8_t* GetData() { return data_; }
@@ -294,7 +308,7 @@ namespace DTC
 		int GetData(bool output) { if (output) return static_cast<int>(data_.to_ulong()); return 0; }
 	};
 
-	struct DTC_SERDESRXBufferStatus {
+	class DTC_SERDESRXBufferStatus {
 	private:
 		std::bitset<3> data_;
 
@@ -317,31 +331,32 @@ namespace DTC
 	};
 
 	struct DTC_TestMode {
-	private:
-		std::bitset<3> mode_;
+	public:
+		bool loopbackEnabled;
+		bool txChecker;
+		bool rxGenerator;
 		bool state_;
 	public:
 		DTC_TestMode();
 		DTC_TestMode(bool state, bool loopback, bool txChecker, bool rxGenerator);
 		DTC_TestMode(uint32_t input);
-		bool GetLoopbackState() { return mode_[1]; }
-		bool GetTXCheckerState() { return mode_[0]; }
-		bool GetRXGeneratorState() { return mode_[2]; }
+		bool GetLoopbackState() { return loopbackEnabled; }
+		bool GetTXCheckerState() { return txChecker; }
+		bool GetRXGeneratorState() { return rxGenerator; }
 		bool GetState() { return state_; }
-		uint32_t GetWord();
+		uint32_t GetWord() const;
 	};
 
 	struct DTC_TestCommand {
-	private:
-		DTC_TestMode TestMode_;
-		int PacketSize_;
-		DTC_DMA_Engine Engine_;
 	public:
+		DTC_TestMode TestMode;
+		int PacketSize;
+		DTC_DMA_Engine Engine;
 		DTC_TestCommand();
-		DTC_TestCommand(DTC_DMA_Engine dma,bool state = false, int PacketSize = 0, bool loopback = false, bool txChecker = false, bool rxGenerator = false);
+		DTC_TestCommand(DTC_DMA_Engine dma, bool state = false, int PacketSize = 0, bool loopback = false, bool txChecker = false, bool rxGenerator = false);
 		DTC_TestCommand(m_ioc_cmd_t in);
-		m_ioc_cmd_t GetCommand();
-		DTC_TestMode GetMode() { return TestMode_; }
+		m_ioc_cmd_t GetCommand() const;
+		DTC_TestMode GetMode() { return TestMode; }
 
 	};
 
@@ -349,24 +364,26 @@ namespace DTC
 	public:
 		DTC_DMA_Engine Engine;
 		DTC_DMA_Direction Direction;
-		int BDs;
-		int Buffers;
-		uint32_t MinPktSize;
-		uint32_t MaxPktSize;
-		int BDerrs;
-		int BDSerrs;
-		int IntEnab;
+		int BDs;                    /**< Total Number of BDs */
+		int Buffers;                /**< Total Number of buffers */
+		uint32_t MinPktSize;        /**< Minimum packet size */
+		uint32_t MaxPktSize;        /**< Maximum packet size */
+		int BDerrs;                 /**< Total BD errors */
+		int BDSerrs;                /**< Total BD short errors - only TX BDs */
+		int IntEnab;                /**< Interrupts enabled or not */
 		DTC_TestMode TestMode;
 		DTC_DMAState() {}
 		DTC_DMAState(m_ioc_engstate_t in);
 	};
 
-	struct DTC_DMAStat {
+	struct DTC_DMAStat
+	{
+	public:
 		DTC_DMA_Engine Engine;
 		DTC_DMA_Direction Direction;
-		uint32_t LBR;
-		uint32_t LAT;
-		uint32_t LWT;
+		uint32_t LBR;           /**< Last Byte Rate */
+		uint32_t LAT;           /**< Last Active Time */
+		uint32_t LWT;           /**< Last Wait Time */
 		DTC_DMAStat() {}
 		DTC_DMAStat(DMAStatistics in);
 	};
@@ -380,39 +397,33 @@ namespace DTC
 
 	struct DTC_PCIeState {
 	public:
-		uint32_t Version;
-		bool LinkState;
-		int LinkSpeed;
-		int LinkWidth;
-		uint32_t VendorId;
-		uint32_t DeviceId;
-		int IntMode;
-		int MPS;
-		int MRRS;
-		int InitFCCplD;
-		int InitFCCplH;
-		int InitFCNPD;
-		int InitFCNPH;
-		int InitFCPD;
-		int InitFCPH;
+		uint32_t Version;       /**< Hardware design version info */
+		bool LinkState;              /**< Link State - up or down */
+		int LinkSpeed;              /**< Link Speed */
+		int LinkWidth;              /**< Link Width */
+		uint32_t VendorId;     /**< Vendor ID */
+		uint32_t DeviceId;    /**< Device ID */
+		int IntMode;                /**< Legacy or MSI interrupts */
+		int MPS;                    /**< Max Payload Size */
+		int MRRS;                   /**< Max Read Request Size */
+		int InitFCCplD;             /**< Initial FC Credits for Completion Data */
+		int InitFCCplH;             /**< Initial FC Credits for Completion Header */
+		int InitFCNPD;              /**< Initial FC Credits for Non-Posted Data */
+		int InitFCNPH;              /**< Initial FC Credits for Non-Posted Data */
+		int InitFCPD;               /**< Initial FC Credits for Posted Data */
+		int InitFCPH;               /**< Initial FC Credits for Posted Data */
 		DTC_PCIeState() {}
 		DTC_PCIeState(m_ioc_pcistate_t in);
 	};
 
 	struct DTC_PCIeStat {
 	public:
-		uint32_t LTX;
-		uint32_t LRX;
+		uint32_t LTX;           /**< Last TX Byte Rate */
+		uint32_t LRX;           /**< Last RX Byte Rate */
 		DTC_PCIeStat() {}
 		DTC_PCIeStat(TRNStatistics in);
 	};
 
-	struct DTC_PCIeStats {
-	public:
-		std::vector<DTC_PCIeStat> Stats;
-		DTC_PCIeStats() {}
-		DTC_PCIeStats(TRNStatsArray in);
-	};
 }
 
 #endif //DTC_TYPES_H

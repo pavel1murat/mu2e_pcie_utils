@@ -7,563 +7,512 @@
 #define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
 #endif
 
-
-DTC::DTC::DTC() : device_()
+DTC::DTC::DTC() : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t))), device_()
 {
 	device_.init();
 }
 
-DTC::DTC_ErrorCode DTC::DTC::ReadDataPacket(DTC_DMA_Engine channel)
+//
+// DMA Functions
+//
+std::vector<void*> DTC::DTC::GetData(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const DTC_Timestamp& when, int* length)
 {
-	int errorCode = device_.read_data(channel, (void**)&buffer_, 1000);
-	dataPacket_ = DTC_DataPacket(buffer_, true);
-	return errorCode == 0 ? DTC_ErrorCode_Success : DTC_ErrorCode_IOError;
-}
+	std::vector<void*> output;
+	// Send a data request
+	DTC_DataRequestPacket req(ring, roc, when);
+	WriteDMADAQPacket(req);
 
-DTC::DTC_ErrorCode DTC::DTC::WriteDataPacket(DTC_DMA_Engine channel, DTC_DataPacket packet)
-{
-	return DTC_ErrorCode_NotImplemented;
-}
-
-DTC::DTC_ErrorCode DTC::DTC::ReadDAQDataPacket()
-{
-	return ReadDataPacket(DTC_DMA_Engine_DAQ);
-}
-DTC::DTC_ErrorCode DTC::DTC::WriteDAQDataPacket(DTC_DataPacket packet)
-{
-	return WriteDataPacket(DTC_DMA_Engine_DAQ, packet);
-}
-
-DTC::DTC_ErrorCode DTC::DTC::ReadDMAPacket(DTC_DMA_Engine channel)
-{
-	DTC_ErrorCode err = ReadDataPacket(channel);
-	if (err != DTC_ErrorCode_Success) { return err; }
-	dmaPacket_ = DTC_DMAPacket(dataPacket_);
-	return err;
-}
-DTC::DTC_ErrorCode DTC::DTC::ReadDMADAQPacket()
-{
-	return ReadDMAPacket(DTC_DMA_Engine_DAQ);
-}
-DTC::DTC_ErrorCode DTC::DTC::ReadDMADCSPacket()
-{
-	return ReadDMAPacket(DTC_DMA_Engine_DCS);
-}
-
-DTC::DTC_ErrorCode DTC::DTC::WriteDMAPacket(DTC_DMA_Engine channel, DTC_DMAPacket packet)
-{
-	return WriteDataPacket(channel, packet.ConvertToDataPacket());
-}
-DTC::DTC_ErrorCode DTC::DTC::WriteDMADAQPacket(DTC_DMAPacket packet)
-{
-	return WriteDMAPacket(DTC_DMA_Engine_DAQ, packet);
-}
-DTC::DTC_ErrorCode DTC::DTC::WriteDMADCSPacket(DTC_DMAPacket packet)
-{
-	return WriteDMAPacket(DTC_DMA_Engine_DCS, packet);
-}
-
-std::vector<DTC::DTC_DataPacket> DTC::DTC::ReadBuffer(int packetOffset)
-{
-	std::vector<DTC_DataPacket> output;
-	int count = sizeof(buffer_) / (16 * sizeof(uint8_t));
-	for (int packetIt = packetOffset; packetIt < count; ++packetIt)
+	// Read the header packet
+	DTC_DMAPacket dmaPacket = ReadDMADAQPacket();
+	if (dmaPacket.GetPacketType() != DTC_PacketType_DataHeader)
 	{
-		int pOff = packetIt * 16 * sizeof(uint8_t) / sizeof(buffer_[0]);
-		uint8_t data[16];
-		for (int word = 0; word < 16; ++word)
-		{
-			int jmax = sizeof(uint8_t) / sizeof(buffer_[0]);
-			uint8_t dataShort = buffer_[word * jmax + pOff];
-			for (int j = 1; j < jmax; ++j)
-			{
-				dataShort <<= sizeof(buffer_[0]);
-				dataShort += buffer_[j + (word * jmax) + pOff];
-			}
-			data[word] =  dataShort;
-		}
-		output.push_back(DTC_DataPacket(data));
+		throw DTC_WrongPacketTypeException();
+	}
+	DTC_DataHeaderPacket packet(dmaPacket);
+
+	*length = packet.GetPacketCount();
+	output.push_back(buffer_);
+
+	while (DTC_BUFFSIZE * output.size() < packet.GetPacketCount())
+	{
+		dmaPacket = ReadDMADAQPacket();
+		output.push_back(buffer_);
 	}
 
 	return output;
 }
 
-DTC::DTC_ErrorCode DTC::DTC::GetData(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp when)
+void DTC::DTC::DCSRequestReply(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, uint8_t* dataIn)
 {
-	DTC_ErrorCode err;
-	DTC_DataRequestPacket req(ring, roc, when);
-	err = WriteDMADAQPacket(req);
-	if (err != DTC_ErrorCode_Success) { return err; }
-
-	err = ReadDMADAQPacket();
-	if (err != DTC_ErrorCode_Success) { return err; }
-	DTC_DataHeaderPacket packet(dmaPacket_);
-	if (packet.GetPacketType() != DTC_PacketType_DataHeader)
-	{
-		return DTC_ErrorCode_WrongPacketType;
-	}
-	std::vector<uint8_t> newVec(6 + 16 * packet.GetPacketCount());
-	dataVector_.swap(newVec);
-	newVec.clear();
-	for (int i = 0; i < 6; ++i)
-	{
-		dataVector_.push_back(packet.GetData()[i]);
-	}
-	
-	std::vector<DTC_DataPacket> packets = ReadBuffer(1);
-	while (packets.size() < packet.GetPacketCount())
-	{
-		if (ReadDAQDataPacket() != DTC_ErrorCode_Success) { return err; }
-		std::vector<DTC_DataPacket> pTemp = ReadBuffer(0);
-		packets.insert(packets.end(), pTemp.begin(), pTemp.end());
-	}
-	for (int i = 0; i < packet.GetPacketCount(); ++i)
-	{
-		for (int j = 0; j < 16; ++j)
-		{
-			dataVector_.push_back(packets[i].GetWord(j));
-		}
-	}
-	return err;
-}
-
-DTC::DTC_ErrorCode DTC::DTC::DCSRequestReply(DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t dataIn[12])
-{
-	dataVector_.clear();
-	DTC_ErrorCode err;
 	DTC_DCSRequestPacket req(ring, roc, dataIn);
-	err = WriteDMADCSPacket(req);
-	if (err != DTC_ErrorCode_Success) { return err; }
-	err = ReadDMADCSPacket();
-	DTC_DCSReplyPacket packet(dmaPacket_);
+	WriteDMADCSPacket(req);
+
+	DTC_DMAPacket packet = ReadDMADCSPacket();
+	if (packet.GetPacketType() != DTC_PacketType_DCSReply)
+	{
+		throw DTC_WrongPacketTypeException();
+	}
+
+	DTC_DCSReplyPacket dcsPacket(packet);
 	for (int ii = 0; ii < 12; ++ii) {
-		dataVector_.push_back(packet.GetData()[ii]);
+		dataIn[ii] = dcsPacket.GetData()[ii];
 	}
-	return err;
 }
 
-DTC::DTC_ErrorCode DTC::DTC::SendReadoutRequestPacket(DTC_Ring_ID ring, DTC_Timestamp when, DTC_ROC_ID roc)
+void DTC::DTC::SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Timestamp& when)
 {
-	DTC_ReadoutRequestPacket req(ring, when, roc);
-	return WriteDMADAQPacket(req);
+	DTC_ReadoutRequestPacket req(ring, when, maxRocs_[ring]);
+	WriteDMADAQPacket(req);
 }
 
-DTC::DTC_ErrorCode DTC::DTC::WriteRegister(uint32_t data, uint16_t address)
+void DTC::DTC::SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc)
 {
-	int errorCode = device_.write_register(address, 100, data);
-	return errorCode == 0 ? DTC_ErrorCode_Success : DTC_ErrorCode_IOError;
-}
-DTC::DTC_ErrorCode DTC::DTC::ReadRegister(uint16_t address)
-{
-	int err = device_.read_register(address, 100, &dataWord_);
-	return err == 0 ? DTC_ErrorCode_Success : DTC_ErrorCode_IOError;
+	maxRocs_[ring] = lastRoc;
 }
 
-DTC::DTC_ErrorCode DTC::DTC::WriteControlRegister(uint32_t data)
+//
+// Register IO Functions
+//
+uint32_t DTC::DTC::ReadDesignVersion()
 {
-	return WriteRegister(data, DTCControlRegister);
+	return ReadRegister(DesignVersionRegister);
 }
-DTC::DTC_ErrorCode DTC::DTC::ReadControlRegister()
+
+void DTC::DTC::ResetDTC()
 {
-	return ReadRegister(DTCControlRegister);
-}
-DTC::DTC_ErrorCode DTC::DTC::ReadResetDTC()
-{
-	DTC_ErrorCode err = ReadControlRegister();
-	std::bitset<32> data = dataWord_;
-	booleanValue_ = data[31];
-	return err;
-}
-DTC::DTC_ErrorCode DTC::DTC::ResetDTC()
-{
-	DTC_ErrorCode err = ReadControlRegister();
-	if (err != DTC_ErrorCode_Success){ return err; }
-	std::bitset<32> data = dataWord_;
+	std::bitset<32> data = ReadControlRegister();
 	data[31] = 1; // DTC Reset bit
-	return WriteControlRegister(data.to_ulong());
-}
-DTC::DTC_ErrorCode DTC::DTC::ClearLatchedErrors()
-{
-	DTC_ErrorCode err = ReadControlRegister();
-	if (err != DTC_ErrorCode_Success) { return err; }
-	std::bitset<32> data = dataWord_;
-	data[30] = 1; // Clear Latched Errors bit
-	return WriteControlRegister(data.to_ulong());
-}
-DTC::DTC_ErrorCode DTC::DTC::ReadClearLatchedErrors()
-{
-	DTC_ErrorCode err = ReadControlRegister();
-	if (err != DTC_ErrorCode_Success) { return err; }
-	std::bitset<32> data = dataWord_;
-	booleanValue_ = data[30];
-	return err;
-}
-DTC::DTC_ErrorCode DTC::DTC::ClearClearLatchedErrors()
-{
-	DTC_ErrorCode err = ReadControlRegister();
-	if (err != DTC_ErrorCode_Success) { return err; }
-	std::bitset<32> data = dataWord_;
-	data[30] = 0;
-	return WriteControlRegister(data.to_ulong());
+	WriteControlRegister(data.to_ulong());
 }
 
-DTC::DTC_ErrorCode DTC::DTC::WriteSERDESLoopbackEnableRegister(uint32_t data)
+bool DTC::DTC::ToggleClearLatchedErrors()
 {
-	return WriteRegister(data, SERDESLoopbackEnableRegister);
+	std::bitset<32> data = ReadControlRegister();
+	data.flip(30); // Clear Latched Errors bit
+	WriteControlRegister(data.to_ulong());
+	return ReadClearLatchedErrors();
 }
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESLoopbackEnableRegister()
+bool DTC::DTC::ReadClearLatchedErrors()
 {
-	return ReadRegister(SERDESLoopbackEnableRegister);
-}
-DTC::DTC_ErrorCode DTC::DTC::EnableSERDESLoopback(const DTC_Ring_ID ring)
-{
-	DTC_ErrorCode err = ReadSERDESLoopbackEnableRegister();
-	if (err != DTC_ErrorCode_Success) { return err; }
-	std::bitset<32> data = dataWord_;
-	data[(uint8_t)ring] = 1;
-	return WriteSERDESLoopbackEnableRegister(data.to_ulong());
-}
-DTC::DTC_ErrorCode DTC::DTC::DisableSERDESLoopback(const DTC_Ring_ID ring)
-{
-	DTC_ErrorCode err = ReadSERDESLoopbackEnableRegister();
-	if (err != DTC_ErrorCode_Success) { return err; }
-	std::bitset<32> data = dataWord_;
-	data[(uint8_t)ring] = 0;
-	return WriteSERDESLoopbackEnableRegister(data.to_ulong());
-}
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESLoopback(const DTC_Ring_ID ring)
-{
-	DTC_ErrorCode err = ReadSERDESLoopbackEnableRegister();
-	std::bitset<32> dataSet = dataWord_;
-	booleanValue_ = dataSet[(uint8_t)ring];
-	return err;
+	std::bitset<32> data = ReadControlRegister();
+	return data[30];
 }
 
-DTC::DTC_ErrorCode DTC::DTC::WriteROCEmulationEnableRegister(uint32_t data)
+bool DTC::DTC::ToggleSERDESLoopback(const DTC_Ring_ID& ring)
 {
-	return WriteRegister(data, ROCEmulationEnableRegister);
+	std::bitset<32> data = ReadSERDESLoopbackEnableRegister();
+	data.flip((uint8_t)ring);
+	WriteSERDESLoopbackEnableRegister(data.to_ulong());
+	return ReadSERDESLoopback(ring);
 }
-DTC::DTC_ErrorCode DTC::DTC::ReadROCEmulationEnableRegister()
+bool DTC::DTC::ReadSERDESLoopback(const DTC_Ring_ID& ring)
 {
-	return ReadRegister(ROCEmulationEnableRegister);
+	std::bitset<32> dataSet = ReadSERDESLoopbackEnableRegister();
+	return dataSet[ring];
 }
-DTC::DTC_ErrorCode DTC::DTC::EnableROCEmulator()
+
+bool DTC::DTC::ToggleROCEmulator()
 {
-	return WriteROCEmulationEnableRegister(1UL);
+	bool enabled = ReadROCEmulator();
+	uint32_t value = enabled ? 0UL : 1UL;
+	WriteROCEmulationEnableRegister(value);
+	return ReadROCEmulator();
 }
-DTC::DTC_ErrorCode DTC::DTC::DisableROCEmulator()
+bool DTC::DTC::ReadROCEmulator()
 {
-	return WriteROCEmulationEnableRegister(0UL);
+	std::bitset<32> dataSet = ReadROCEmulationEnableRegister();
+	return dataSet[0];
 }
-DTC::DTC_ErrorCode DTC::DTC::ReadROCEmulatorEnabled()
+
+bool DTC::DTC::EnableRing(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc)
 {
-	DTC_ErrorCode err = ReadROCEmulationEnableRegister();
-	std::bitset<32> dataSet = dataWord_;
-	if (dataSet[0] == 0)
+	if (lastRoc != DTC_ROC_Unused)
 	{
-		booleanValue_ = false;
+		maxRocs_[ring] = lastRoc;
 	}
-	else
-	{
-		booleanValue_ = true;
-	}
-
-	return err;
+	std::bitset<32> data = ReadRingEnableRegister();
+	data[ring] = 1;
+	WriteRingEnableRegister(data.to_ulong());
+	return ReadRingEnabled(ring);
 }
-
-DTC::DTC_ErrorCode DTC::DTC::WriteRingEnableRegister(uint32_t data)
+bool DTC::DTC::DisableRing(const DTC_Ring_ID& ring)
 {
-	return WriteRegister(data, RingEnableRegister);
+	std::bitset<32> data = ReadRingEnableRegister();
+	data[ring] = 0;
+	WriteRingEnableRegister(data.to_ulong());
+	return ReadRingEnabled(ring);
 }
-DTC::DTC_ErrorCode DTC::DTC::ReadRingEnableRegister()
+bool DTC::DTC::ReadRingEnabled(const DTC_Ring_ID& ring)
 {
-	return ReadRegister(RingEnableRegister);
-}
-DTC::DTC_ErrorCode DTC::DTC::EnableRing(const DTC_Ring_ID ring)
-{
-	DTC_ErrorCode err = ReadRingEnableRegister();
-	if (err != DTC_ErrorCode_Success) { return err; }
-	std::bitset<32> data = dataWord_;
-	data[(uint8_t)ring] = 1;
-	return WriteRingEnableRegister(data.to_ulong());
-}
-DTC::DTC_ErrorCode DTC::DTC::DisableRing(const DTC_Ring_ID ring)
-{
-	DTC_ErrorCode err = ReadRingEnableRegister();
-	if (err != DTC_ErrorCode_Success) { return err; }
-	std::bitset<32> data = dataWord_;
-	data[(uint8_t)ring] = 0;
-	return WriteRingEnableRegister(data.to_ulong());
-}
-DTC::DTC_ErrorCode DTC::DTC::ReadRingEnabled(const DTC_Ring_ID ring)
-{
-	DTC_ErrorCode err = ReadRingEnableRegister();
-	std::bitset<32> dataSet = dataWord_;
-	booleanValue_ = dataSet[(uint8_t)ring];
-	return err;
+	std::bitset<32> dataSet = ReadRingEnableRegister();
+	return dataSet[ring];
 }
 
-DTC::DTC_ErrorCode DTC::DTC::WriteSERDESResetRegister(uint32_t data)
-{
-	return WriteRegister(data, SERDESResetRegister);
-}
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESResetRegister()
-{
-	return ReadRegister(SERDESResetRegister);
-}
-DTC::DTC_ErrorCode DTC::DTC::ResetSERDES(const DTC_Ring_ID ring, int interval)
+bool DTC::DTC::ResetSERDES(const DTC_Ring_ID& ring, int interval)
 {
 	bool resetDone = false;
-	DTC_ErrorCode err;
 	while (!resetDone)
 	{
-		err = ReadSERDESResetRegister();
-		if (err != DTC_ErrorCode_Success) { return DTC_ErrorCode_ResetFailed; }
-		std::bitset<32> data = dataWord_;
-		data[(uint8_t)ring] = 1;
-		err = WriteSERDESResetRegister(data.to_ulong());
-		if (err != DTC_ErrorCode_Success) { return DTC_ErrorCode_ResetFailed; }
+		std::bitset<32> data = ReadSERDESResetRegister();
+		data[ring] = 1;
+		WriteSERDESResetRegister(data.to_ulong());
+
 		usleep(interval);
-		data[(uint8_t)ring] = 0;
-		err = WriteSERDESResetRegister(data.to_ulong());
-		if (err != DTC_ErrorCode_Success) { return DTC_ErrorCode_ResetFailed; }
-		err = ReadSERDESResetDone(ring);
-		resetDone = booleanValue_;
+
+		data = ReadSERDESResetRegister();
+		data[ring] = 0;
+		WriteSERDESResetRegister(data.to_ulong());
+
+		resetDone = ReadSERDESResetDone(ring);
 	}
-	return err;
-}
-DTC::DTC_ErrorCode DTC::DTC::ReadResetSERDES(const DTC_Ring_ID ring)
-{
-	DTC_ErrorCode err = ReadSERDESResetRegister();
-	std::bitset<32> dataSet = dataWord_;
-	booleanValue_ = dataSet[(uint8_t)ring];
-	return err;
+	return resetDone;
 }
 
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXDisparityErrorRegister()
+DTC::DTC_SERDESRXDisparityError DTC::DTC::ReadSERDESRXDisparityError(const DTC_Ring_ID& ring)
 {
-	return ReadRegister(SERDESRXDisparityErrorRegister);
+	return DTC_SERDESRXDisparityError(ReadSERDESRXDisparityErrorRegister(), ring);
 }
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXDisparityError(const DTC_Ring_ID ring)
+DTC::DTC_CharacterNotInTableError DTC::DTC::ReadSERDESRXCharacterNotInTableError(const DTC_Ring_ID& ring)
 {
-	DTC_ErrorCode err = ReadSERDESRXDisparityErrorRegister();
-	SERDESRXDisparityError_ = std::move(DTC_SERDESRXDisparityError(dataWord_, ring));
-	return err;
+	return DTC_CharacterNotInTableError(ReadSERDESRXCharacterNotInTableErrorRegister(), ring);
 }
 
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXCharacterNotInTableErrorRegister()
+bool DTC::DTC::ReadSERDESUnlockError(const DTC_Ring_ID& ring)
 {
-	return ReadRegister(SERDESRXCharacterNotInTableErrorRegister);
+	std::bitset<32> dataSet = ReadSERDESUnlockErrorRegister();
+	return dataSet[ring];
 }
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXCharacterNotInTableError(const DTC_Ring_ID ring)
+bool DTC::DTC::ReadSERDESPLLLocked(const DTC_Ring_ID& ring)
 {
-	DTC_ErrorCode err = ReadSERDESRXCharacterNotInTableErrorRegister();
-	CharacterNotInTableError_ = std::move(DTC_CharacterNotInTableError(dataWord_, ring));
-	return err;
+	std::bitset<32> dataSet = ReadSERDESPLLLockedRegister();
+	return dataSet[ring];
 }
-
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESUnlockErrorRegister()
+bool DTC::DTC::ReadSERDESOverflowOrUnderflow(const DTC_Ring_ID& ring)
 {
-	return ReadRegister(SERDESUnlockErrorRegister);
+	std::bitset<32> dataSet = ReadSERDESTXBufferStatusRegister();
+	return dataSet[ring * 2 + 1];
 }
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESUnlockError(const DTC_Ring_ID ring)
+bool DTC::DTC::ReadSERDESBufferFIFOHalfFull(const DTC_Ring_ID& ring)
 {
-	DTC_ErrorCode err = ReadSERDESUnlockErrorRegister();
-	std::bitset<32> dataSet = dataWord_;
-	booleanValue_ = dataSet[(uint8_t)ring];
-	return err;
+	std::bitset<32> dataSet = ReadSERDESTXBufferStatusRegister();
+	return dataSet[ring * 2];
 }
 
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESPLLLockedRegister()
+DTC::DTC_SERDESRXBufferStatus DTC::DTC::ReadSERDESRXBufferStatus(const DTC_Ring_ID& ring)
 {
-	return ReadRegister(SERDESPLLLockedRegister);
-}
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESPLLLocked(const DTC_Ring_ID ring)
-{
-	DTC_ErrorCode err = ReadSERDESPLLLockedRegister();
-	std::bitset<32> dataSet = dataWord_;
-	booleanValue_ = dataSet[(uint8_t)ring];
-	return err;
+	return DTC_SERDESRXBufferStatus(ReadSERDESRXBufferStatusRegister(), ring);
 }
 
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESTXBufferStatusRegister()
-{
-	return ReadRegister(SERDESTXBufferStatusRegister);
-}
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESOverflowOrUnderflow(const DTC_Ring_ID ring)
-{
-	DTC_ErrorCode err = ReadSERDESTXBufferStatusRegister();
-	std::bitset<32> dataSet = dataWord_;
-	booleanValue_ = dataSet[(uint8_t)ring * 2 + 1];
-	return err;
-}
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESBufferFIFOHalfFull(const DTC_Ring_ID ring)
-{
-	DTC_ErrorCode err = ReadSERDESTXBufferStatusRegister();
-	std::bitset<32> dataSet = dataWord_;
-	booleanValue_ = dataSet[(uint8_t)ring * 2];
-	return err;
-}
-
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXBufferStatusRegister()
-{
-	return ReadRegister(SERDESRXBufferStatusRegister);
-}
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESRXBufferStatus(const DTC_Ring_ID ring)
-{
-	DTC_ErrorCode err = ReadSERDESRXBufferStatusRegister();
-	SERDESRXBufferStatus_ = std::move(DTC_SERDESRXBufferStatus(dataWord_, ring));
-	return err;
-}
-
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESResetDoneRegister()
-{
-	return ReadRegister(SERDESResetDoneRegister);
-}
-DTC::DTC_ErrorCode DTC::DTC::ReadSERDESResetDone(const DTC_Ring_ID ring)
-{
-	DTC_ErrorCode err = ReadSERDESResetDoneRegister();
-	std::bitset<32> dataSet = dataWord_;
-	booleanValue_ = dataSet[(uint8_t)ring];
-	return err;
-}
-
-DTC::DTC_ErrorCode DTC::DTC::WriteTimestampPreset0Register(uint32_t data)
-{
-	return WriteRegister(data, TimestampPreset0Register);
-}
-DTC::DTC_ErrorCode DTC::DTC::ReadTimestampPreset0Register()
-{
-	return ReadRegister(TimestampPreset0Register);
-}
-
-DTC::DTC_ErrorCode DTC::DTC::WriteTimestampPreset1Register(uint32_t data)
-{
-	return WriteRegister(data, TimestampPreset1Register);
-}
-DTC::DTC_ErrorCode DTC::DTC::ReadTimestampPreset1Register()
-{
-	return ReadRegister(TimestampPreset1Register);
-}
-
-DTC::DTC_ErrorCode DTC::DTC::WriteTimestampPreset(DTC_Timestamp preset)
+DTC::DTC_Timestamp DTC::DTC::WriteTimestampPreset(const DTC_Timestamp& preset)
 {
 	std::bitset<48> timestamp = preset.GetTimestamp();
 	uint32_t timestampLow = static_cast<uint32_t>(timestamp.to_ulong());
 	timestamp >>= 32;
-	uint16_t timestampHigh = static_cast<uint32_t>(timestamp.to_ulong());
+	uint16_t timestampHigh = static_cast<uint16_t>(timestamp.to_ulong());
 
-	DTC_ErrorCode err = WriteTimestampPreset0Register(timestampLow);
-	if (err != DTC_ErrorCode_Success)
-	{
-		return err;
-	}
-
-	return WriteTimestampPreset1Register(timestampHigh);
+	WriteTimestampPreset0Register(timestampLow);
+	WriteTimestampPreset1Register(timestampHigh);
+	return ReadTimestampPreset();
 }
-DTC::DTC_ErrorCode DTC::DTC::ReadTimestampPreset()
+DTC::DTC_Timestamp DTC::DTC::ReadTimestampPreset()
 {
-	DTC_ErrorCode err = ReadTimestampPreset0Register();
-	uint32_t timestampLow = dataWord_;
-	if (err != DTC_ErrorCode_Success)
-	{
-		return err;
-	}
-
-	err = ReadTimestampPreset1Register();
-	timestampPreset_.SetTimestamp(timestampLow, static_cast<uint16_t>(dataWord_));
-
-	return err;
+	uint32_t timestampLow = ReadTimestampPreset0Register();
+	DTC_Timestamp output;
+	output.SetTimestamp(timestampLow, static_cast<uint16_t>(ReadTimestampPreset1Register()));
+	return output;
 }
 
-DTC::DTC_ErrorCode DTC::DTC::WriteFPGAPROMProgramDataRegister(uint32_t data)
+bool DTC::DTC::ReadFPGAPROMProgramFIFOFull()
 {
-	return WriteRegister(data, FPGAPROMProgramDataRegister);
+	std::bitset<32> dataSet = ReadFPGAPROMProgramStatusRegister();
+	return dataSet[1];
 }
-DTC::DTC_ErrorCode DTC::DTC::ReadFPGAPROMProgramStatusRegister()
+bool DTC::DTC::ReadFPGAPROMReady()
 {
-	return ReadRegister(FPGAPROMProgramStatusRegister);
-}
-DTC::DTC_ErrorCode DTC::DTC::ReadFPGAPROMProgramFIFOFull()
-{
-	DTC_ErrorCode err = ReadFPGAPROMProgramStatusRegister();
-	std::bitset<32> dataSet = dataWord_;
-	booleanValue_ = dataSet[1];
-	return err;
-}
-DTC::DTC_ErrorCode DTC::DTC::ReadFPGAPROMReady()
-{
-	DTC_ErrorCode err = ReadFPGAPROMProgramStatusRegister();
-	std::bitset<32> dataSet = dataWord_;
-	booleanValue_ = dataSet[0];
-	return err;
+	std::bitset<32> dataSet = ReadFPGAPROMProgramStatusRegister();
+	return dataSet[0];
 }
 
-DTC::DTC_ErrorCode DTC::DTC::WriteTestCommand(DTC_TestCommand comm)
+//
+// PCIe/DMA Status and Performance
+// DMA Testing Engine
+//
+DTC::DTC_TestMode DTC::DTC::StartTest(const DTC_DMA_Engine& dma, int packetSize, bool loopback, bool txChecker, bool rxGenerator)
 {
-	int err = device_.write_test_command(comm.GetCommand());
-	if (err != 0) { return DTC_ErrorCode_IOError; }
-	return DTC_ErrorCode_Success;
+	DTC_TestCommand testCommand(dma, true, packetSize, loopback, txChecker, rxGenerator);
+	WriteTestCommand(testCommand, true);
+	return ReadTestCommand().GetMode();
 }
-DTC::DTC_ErrorCode DTC::DTC::ReadTestCommand()
+DTC::DTC_TestMode DTC::DTC::StopTest(const DTC_DMA_Engine& dma)
 {
-	m_ioc_cmd_t comm;
-	int err = device_.read_test_command(&comm);
-	testCommand_ = DTC_TestCommand(comm);
-	if (err != 0) { return DTC_ErrorCode_IOError; }
-	return DTC_ErrorCode_Success;
-}
-DTC::DTC_ErrorCode DTC::DTC::StartTest(DTC_DMA_Engine dma, int packetSize, bool loopback, bool txChecker, bool rxGenerator)
-{
-	testCommand_ = DTC_TestCommand(dma, true, packetSize, loopback, txChecker, rxGenerator);
-	DTC_ErrorCode err = WriteTestCommand(testCommand_);
-	if (err != DTC_ErrorCode_Success){ return err; }
-	return ReadTestCommand();
-}
-DTC::DTC_ErrorCode DTC::DTC::StopTest(DTC_DMA_Engine dma)
-{
-	testCommand_ = DTC_TestCommand(dma);
-	DTC_ErrorCode err = WriteTestCommand(testCommand_);
-	if (err != DTC_ErrorCode_Success){ return err; }
-	return ReadTestCommand();
+	WriteTestCommand(DTC_TestCommand(dma), false);
+	return ReadTestCommand().GetMode();
 }
 
-DTC::DTC_ErrorCode DTC::DTC::ReadDMAStateData(DTC_DMA_Engine dma, DTC_DMA_Direction dir)
+DTC::DTC_DMAState DTC::DTC::ReadDMAState(const DTC_DMA_Engine& dma, const DTC_DMA_Direction& dir)
 {
 	m_ioc_engstate_t state;
-	int err = device_.read_dma_state(dma, dir, &state);
-	dmaState_ = DTC_DMAState(state);
-	if (err != 0) { return DTC_ErrorCode_IOError; }
-	return DTC_ErrorCode_Success;
+	int errorCode = 0;
+	int retry = 3;
+	do {
+		errorCode = device_.read_dma_state(dma, dir, &state);
+		--retry;
+	} while (retry > 0 && errorCode != 0);
+	if (errorCode != 0)
+	{
+		throw DTC_IOErrorException();
+	}
+
+	return DTC_DMAState(state);
 }
-DTC::DTC_ErrorCode DTC::DTC::ReadDMAStatsData()
+std::vector<DTC::DTC_DMAStat> DTC::DTC::ReadDMAStats(const DTC_DMA_Engine& dma, const DTC_DMA_Direction& dir)
 {
-	DMAStatistics statData[350];
+	DMAStatistics statData[100];
 	m_ioc_engstats_t stats;
-	stats.Count = 350;
+	stats.Count = 100;
 	stats.engptr = statData;
-	int err = device_.read_dma_stats(&stats);
-	dmaStats_ = DTC_DMAStats(stats);
-	if (err != 0) { return DTC_ErrorCode_IOError; }
-	return DTC_ErrorCode_Success;
+
+	int errorCode = 0;
+	int retry = 3;
+	do {
+		errorCode = device_.read_dma_stats(&stats);
+		--retry;
+	} while (retry > 0 && errorCode != 0);
+	if (errorCode != 0)
+	{
+		throw DTC_IOErrorException();
+	}
+
+	return DTC_DMAStats(stats).getData(dma, dir);
 }
 
-DTC::DTC_ErrorCode DTC::DTC::ReadPCIeStateData()
+DTC::DTC_PCIeState DTC::DTC::ReadPCIeState()
 {
 	m_ioc_pcistate_t state;
-	int err = device_.read_pcie_state(&state);
-	pcieState_ = DTC_PCIeState(state);
-	if (err != 0) { return DTC_ErrorCode_IOError; }
-	return DTC_ErrorCode_Success;
+	int errorCode = 0;
+	int retry = 3;
+	do {
+		errorCode = device_.read_pcie_state(&state);
+		--retry;
+	} while (retry > 0 && errorCode != 0);
+	if (errorCode != 0) { throw DTC_IOErrorException(); }
+	return DTC_PCIeState(state);
 }
-DTC::DTC_ErrorCode DTC::DTC::ReadPCIeStatsData()
+DTC::DTC_PCIeStat DTC::DTC::ReadPCIeStats()
 {
 	TRNStatistics statData[1];
 	TRNStatsArray stats;
 	stats.Count = 1;
 	stats.trnptr = statData;
-	int err = device_.read_trn_stats(&stats);
-	pcieStats_ = DTC_PCIeStats(stats);
-	if (err != 0) { return DTC_ErrorCode_IOError; }
-	return DTC_ErrorCode_Success;
+	int errorCode = 0;
+	int retry = 3;
+	do {
+		errorCode = device_.read_trn_stats(&stats);
+		--retry;
+	} while (retry > 0 && errorCode != 0);
+	if (errorCode != 0) { throw DTC_IOErrorException(); }
+	return DTC_PCIeStat(statData[0]);
+}
+
+//
+// Private Functions.
+//
+DTC::DTC_DataPacket DTC::DTC::ReadDataPacket(const DTC_DMA_Engine& channel)
+{
+	int retry = 3;
+	int errorCode = 0;
+	do {
+		errorCode = device_.read_data(channel, (void**)buffer_, 1000);
+		retry--;
+	} while (retry > 0 && errorCode != 0);
+	if (errorCode != 0)
+	{
+		throw DTC_IOErrorException();
+	}
+
+	return DTC_DataPacket(buffer_);
+}
+void DTC::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPacket& packet)
+{
+	throw new DTC_NotImplementedException();
+}
+DTC::DTC_DMAPacket DTC::DTC::ReadDMAPacket(const DTC_DMA_Engine& channel)
+{
+	return DTC_DMAPacket(ReadDataPacket(channel));
+}
+DTC::DTC_DMAPacket DTC::DTC::ReadDMADAQPacket()
+{
+	return ReadDMAPacket(DTC_DMA_Engine_DAQ);
+}
+DTC::DTC_DMAPacket DTC::DTC::ReadDMADCSPacket()
+{
+	return ReadDMAPacket(DTC_DMA_Engine_DCS);
+}
+void DTC::DTC::WriteDMAPacket(const DTC_DMA_Engine& channel, const DTC_DMAPacket& packet)
+{
+	return WriteDataPacket(channel, packet.ConvertToDataPacket());
+}
+void DTC::DTC::WriteDMADAQPacket(const DTC_DMAPacket& packet)
+{
+	return WriteDMAPacket(DTC_DMA_Engine_DAQ, packet);
+}
+void DTC::DTC::WriteDMADCSPacket(const DTC_DMAPacket& packet)
+{
+	return WriteDMAPacket(DTC_DMA_Engine_DCS, packet);
+}
+
+void DTC::DTC::WriteRegister(uint32_t data, uint16_t address)
+{
+	int retry = 3;
+	int errorCode = 0;
+	do {
+		errorCode = device_.write_register(address, 100, data);
+		--retry;
+	} while (retry > 0 && errorCode != 0);
+	if (errorCode != 0)
+	{
+		throw new DTC_IOErrorException();
+	}
+}
+uint32_t DTC::DTC::ReadRegister(uint16_t address)
+{
+	int retry = 3;
+	int errorCode = 0;
+	uint32_t data;
+	do {
+		errorCode = device_.read_register(address, 100, &data);
+		--retry;
+	} while (retry > 0 && errorCode != 0);
+	if (errorCode != 0)
+	{
+		throw new DTC_IOErrorException();
+	}
+
+	return data;
+}
+void DTC::DTC::WriteControlRegister(uint32_t data)
+{
+	WriteRegister(data, DTCControlRegister);
+}
+uint32_t DTC::DTC::ReadControlRegister()
+{
+	return ReadRegister(DTCControlRegister);
+}
+void DTC::DTC::WriteSERDESLoopbackEnableRegister(uint32_t data)
+{
+	WriteRegister(data, SERDESLoopbackEnableRegister);
+}
+uint32_t DTC::DTC::ReadSERDESLoopbackEnableRegister()
+{
+	return ReadRegister(SERDESLoopbackEnableRegister);
+}
+void DTC::DTC::WriteROCEmulationEnableRegister(uint32_t data)
+{
+	WriteRegister(data, ROCEmulationEnableRegister);
+}
+uint32_t DTC::DTC::ReadROCEmulationEnableRegister()
+{
+	return ReadRegister(ROCEmulationEnableRegister);
+}
+void DTC::DTC::WriteRingEnableRegister(uint32_t data)
+{
+	WriteRegister(data, RingEnableRegister);
+}
+uint32_t DTC::DTC::ReadRingEnableRegister()
+{
+	return ReadRegister(RingEnableRegister);
+}
+void DTC::DTC::WriteSERDESResetRegister(uint32_t data)
+{
+	WriteRegister(data, SERDESResetRegister);
+}
+uint32_t DTC::DTC::ReadSERDESResetRegister()
+{
+	return ReadRegister(SERDESResetRegister);
+}
+uint32_t DTC::DTC::ReadSERDESRXDisparityErrorRegister()
+{
+	return ReadRegister(SERDESRXDisparityErrorRegister);
+}
+uint32_t DTC::DTC::ReadSERDESRXCharacterNotInTableErrorRegister()
+{
+	return ReadRegister(SERDESRXCharacterNotInTableErrorRegister);
+}
+uint32_t DTC::DTC::ReadSERDESUnlockErrorRegister()
+{
+	return ReadRegister(SERDESUnlockErrorRegister);
+}
+uint32_t DTC::DTC::ReadSERDESPLLLockedRegister()
+{
+	return ReadRegister(SERDESPLLLockedRegister);
+}
+uint32_t DTC::DTC::ReadSERDESTXBufferStatusRegister()
+{
+	return ReadRegister(SERDESTXBufferStatusRegister);
+}
+uint32_t DTC::DTC::ReadSERDESRXBufferStatusRegister()
+{
+	return ReadRegister(SERDESRXBufferStatusRegister);
+}
+uint32_t DTC::DTC::ReadSERDESResetDoneRegister()
+{
+	return ReadRegister(SERDESResetDoneRegister);
+}
+bool DTC::DTC::ReadSERDESResetDone(const DTC_Ring_ID& ring)
+{
+	std::bitset<32> dataSet = ReadSERDESResetDoneRegister();
+	return dataSet[ring];
+}
+void DTC::DTC::WriteTimestampPreset0Register(uint32_t data)
+{
+	WriteRegister(data, TimestampPreset0Register);
+}
+uint32_t DTC::DTC::ReadTimestampPreset0Register()
+{
+	return ReadRegister(TimestampPreset0Register);
+}
+void DTC::DTC::WriteTimestampPreset1Register(uint32_t data)
+{
+	WriteRegister(data, TimestampPreset1Register);
+}
+uint32_t DTC::DTC::ReadTimestampPreset1Register()
+{
+	return ReadRegister(TimestampPreset1Register);
+}
+void DTC::DTC::WriteFPGAPROMProgramDataRegister(uint32_t data)
+{
+	WriteRegister(data, FPGAPROMProgramDataRegister);
+}
+uint32_t DTC::DTC::ReadFPGAPROMProgramStatusRegister()
+{
+	return ReadRegister(FPGAPROMProgramStatusRegister);
+}
+
+void DTC::DTC::WriteTestCommand(const DTC_TestCommand& comm, bool start)
+{
+	int retry = 3;
+	int errorCode = 0;
+	do {
+		errorCode = device_.write_test_command(comm.GetCommand(), start);
+		--retry;
+	} while (retry > 0 && errorCode != 0);
+	if (errorCode != 0)
+	{
+		throw new DTC_IOErrorException();
+	}
+}
+DTC::DTC_TestCommand DTC::DTC::ReadTestCommand()
+{
+	m_ioc_cmd_t comm;
+	int retry = 3;
+	int errorCode = 0;
+	do {
+		errorCode = device_.read_test_command(&comm);
+		--retry;
+	} while (retry > 0 && errorCode != 0);
+	if (errorCode != 0)
+	{
+		throw new DTC_IOErrorException;
+	}
+	return DTC_TestCommand(comm);
 }

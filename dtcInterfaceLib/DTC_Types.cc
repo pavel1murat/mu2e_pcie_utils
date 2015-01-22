@@ -25,30 +25,31 @@ DTC::DTC_Timestamp::DTC_Timestamp(uint8_t *timeArr)
 DTC::DTC_Timestamp::DTC_Timestamp(std::bitset<48> timestamp)
 	: timestamp_(timestamp.to_ullong()) {}
 
-void DTC::DTC_Timestamp::GetTimestamp(uint8_t *arr)
-{
-	for (int i = 0; i < 6; i++)
-	{
-		arr[i] = static_cast<uint8_t>(timestamp_ >> i * 8);
-	}
-}
 
 void DTC::DTC_Timestamp::SetTimestamp(uint32_t timestampLow, uint16_t timestampHigh)
 {
 	timestamp_ = timestampLow + timestampHigh * 0x10000;
 }
 
+void DTC::DTC_Timestamp::GetTimestamp(uint8_t* timeArr)
+{
+	for (int i = 0; i < 6; i++)
+	{
+		timeArr[i] = static_cast<uint8_t>(timestamp_ >> i * 8);
+	}
+}
 
-DTC::DTC_DataPacket::DTC_DataPacket(mu2e_databuff_t data, bool)
+
+DTC::DTC_DataPacket::DTC_DataPacket(mu2e_databuff_t* data)
 {
 	for (int i = 0; i < 16; ++i)
 	{
-		int jmax = sizeof(uint8_t)/sizeof(data[0]);
-		uint8_t dataShort = data[i * jmax];
+		int jmax = sizeof(uint8_t) / sizeof(*data[0]);
+		uint8_t dataShort = *data[i * jmax];
 		for (int j = 1; j < jmax; ++j)
 		{
-			dataShort <<= sizeof(data[0]);
-			dataShort += data[j + (i * jmax)];
+			dataShort <<= sizeof(*data[0]);
+			dataShort += *data[j + (i * jmax)];
 		}
 		dataWords_[i] = dataShort;
 	}
@@ -67,7 +68,7 @@ void DTC::DTC_DataPacket::SetWord(int index, uint8_t data)
 	dataWords_[index] = data;
 }
 
-uint8_t DTC::DTC_DataPacket::GetWord(int index)
+uint8_t DTC::DTC_DataPacket::GetWord(int index) const
 {
 	return dataWords_[index];
 }
@@ -85,7 +86,7 @@ DTC::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC
 	}
 }
 
-DTC::DTC_DataPacket DTC::DTC_DMAPacket::ConvertToDataPacket()
+DTC::DTC_DataPacket DTC::DTC_DMAPacket::ConvertToDataPacket() const
 {
 	DTC_DataPacket output;
 	uint8_t word1A = (uint8_t)rocID_;
@@ -101,7 +102,7 @@ DTC::DTC_DataPacket DTC::DTC_DMAPacket::ConvertToDataPacket()
 	return output;
 }
 
-DTC::DTC_DMAPacket::DTC_DMAPacket(DTC_DataPacket& in)
+DTC::DTC_DMAPacket::DTC_DMAPacket(const DTC_DataPacket& in)
 {
 	uint8_t word0 = in.GetWord(0);
 	std::bitset<4> roc = word0;
@@ -268,36 +269,36 @@ DTC::DTC_RXBufferStatus DTC::DTC_SERDESRXBufferStatus::GetStatus()
 	}
 }
 
-DTC::DTC_TestMode::DTC_TestMode() : mode_() {}
-DTC::DTC_TestMode::DTC_TestMode(bool state, bool loopback, bool txChecker, bool rxGenerator) : mode_()
+DTC::DTC_TestMode::DTC_TestMode() {}
+DTC::DTC_TestMode::DTC_TestMode(bool state, bool loopback, bool txChecker, bool rxGenerator)
 {
-	mode_[0] = txChecker;
-	mode_[1] = loopback;
-	mode_[2] = rxGenerator;
+	txChecker = txChecker;
+	loopbackEnabled = loopback;
+	rxGenerator = rxGenerator;
 	state_ = state;
 }
-DTC::DTC_TestMode::DTC_TestMode(uint32_t input) : mode_()
+DTC::DTC_TestMode::DTC_TestMode(uint32_t input)
 {
-	mode_ = (input & 0x700) >> 8;
+	std::bitset<3> mode = (input & 0x700) >> 8;
+	txChecker = mode[0];
+	loopbackEnabled = mode[1];
+	rxGenerator = mode[2];
 	state_ = (input & 0xC000) != 0;
 }
-uint32_t DTC::DTC_TestMode::GetWord() 
+uint32_t DTC::DTC_TestMode::GetWord() const
 {
 	uint32_t output = 0;
-	switch (mode_.to_ulong())
-	{
-	case 1:
-		output += 0x100;
-		break;
-	case 2:
+	if (loopbackEnabled) {
 		output += 0x200;
-		break;
-	case 4:
-		output += 0x400;
-		break;
-	case 5:
-		output += 0x500;
-		break;
+	}
+	else
+	{
+		if (txChecker) {
+			output += 0x100;
+		}
+		if (rxGenerator) {
+			output += 0x400;
+		}
 	}
 	if (state_)
 	{
@@ -306,36 +307,36 @@ uint32_t DTC::DTC_TestMode::GetWord()
 	return output;
 }
 
-DTC::DTC_TestCommand::DTC_TestCommand() 
-	: TestMode_(), PacketSize_(0), Engine_(DTC_DMA_Engine_DAQ) {}
-DTC::DTC_TestCommand::DTC_TestCommand(DTC_DMA_Engine dma, bool state, 
+DTC::DTC_TestCommand::DTC_TestCommand()
+	: TestMode(), PacketSize(0), Engine(DTC_DMA_Engine_DAQ) {}
+DTC::DTC_TestCommand::DTC_TestCommand(DTC_DMA_Engine dma, bool state,
 	int PacketSize, bool loopback, bool txChecker, bool rxGenerator)
 {
-	Engine_ = dma;
-	PacketSize_ = PacketSize;
-	TestMode_ = DTC_TestMode(state, loopback, txChecker, rxGenerator);
+	Engine = dma;
+	PacketSize = PacketSize;
+	TestMode = DTC_TestMode(state, loopback, txChecker, rxGenerator);
 }
 DTC::DTC_TestCommand::DTC_TestCommand(m_ioc_cmd_t in)
 {
 	if (in.Engine == 0)
 	{
-		Engine_ = DTC_DMA_Engine_DAQ;
+		Engine = DTC_DMA_Engine_DAQ;
 	}
 	else if (in.Engine == 1)
 	{
-		Engine_ = DTC_DMA_Engine_DCS;
+		Engine = DTC_DMA_Engine_DCS;
 	}
-	
-	PacketSize_ = in.MinPktSize;
-	TestMode_ = DTC_TestMode(in.TestMode);
+
+	PacketSize = in.MinPktSize;
+	TestMode = DTC_TestMode(in.TestMode);
 }
-m_ioc_cmd_t DTC::DTC_TestCommand::GetCommand()
+m_ioc_cmd_t DTC::DTC_TestCommand::GetCommand() const
 {
 	m_ioc_cmd_t output;
 
-	output.Engine = Engine_;
-	output.MinPktSize = output.MaxPktSize = PacketSize_;
-	output.TestMode = TestMode_.GetWord();
+	output.Engine = Engine;
+	output.MinPktSize = output.MaxPktSize = PacketSize;
+	output.TestMode = TestMode.GetWord();
 
 	return output;
 }
@@ -352,11 +353,11 @@ DTC::DTC_DMAState::DTC_DMAState(m_ioc_engstate_t in)
 		Engine = DTC_DMA_Engine_DAQ;
 		break;
 	case 0x20:
-		Direction = DTC_DMA_Direction_C2S;
+		Direction = DTC_DMA_Direction_S2C;
 		Engine = DTC_DMA_Engine_DAQ;
 		break;
 	case 1:
-		Direction = DTC_DMA_Direction_S2C;
+		Direction = DTC_DMA_Direction_C2S;
 		Engine = DTC_DMA_Engine_DCS;
 		break;
 	case 0x21:
@@ -375,11 +376,11 @@ DTC::DTC_DMAStat::DTC_DMAStat(DMAStatistics in) : LBR(in.LBR), LAT(in.LAT), LWT(
 		Engine = DTC_DMA_Engine_DAQ;
 		break;
 	case 0x20:
-		Direction = DTC_DMA_Direction_C2S;
+		Direction = DTC_DMA_Direction_S2C;
 		Engine = DTC_DMA_Engine_DAQ;
 		break;
 	case 1:
-		Direction = DTC_DMA_Direction_S2C;
+		Direction = DTC_DMA_Direction_C2S;
 		Engine = DTC_DMA_Engine_DCS;
 		break;
 	case 0x21:
@@ -399,7 +400,7 @@ DTC::DTC_DMAStats::DTC_DMAStats(m_ioc_engstats_t in)
 std::vector<DTC::DTC_DMAStat> DTC::DTC_DMAStats::getData(DTC_DMA_Engine dma, DTC_DMA_Direction dir)
 {
 	std::vector<DTC_DMAStat> output;
-	for(auto i : Stats)
+	for (auto i : Stats)
 	{
 		if (i.Engine == dma && i.Direction == dir)
 		{
@@ -410,7 +411,7 @@ std::vector<DTC::DTC_DMAStat> DTC::DTC_DMAStats::getData(DTC_DMA_Engine dma, DTC
 	return output;
 }
 
-DTC::DTC_PCIeState::DTC_PCIeState(m_ioc_pcistate_t in) 
+DTC::DTC_PCIeState::DTC_PCIeState(m_ioc_pcistate_t in)
 	: Version(in.Version), LinkState(in.LinkState), LinkSpeed(in.LinkSpeed),
 	LinkWidth(in.LinkWidth), VendorId(in.VendorId), DeviceId(in.DeviceId),
 	IntMode(in.IntMode), MPS(in.MPS), MRRS(in.MRRS), InitFCCplD(in.InitFCCplD),
@@ -419,11 +420,3 @@ DTC::DTC_PCIeState::DTC_PCIeState(m_ioc_pcistate_t in)
 
 DTC::DTC_PCIeStat::DTC_PCIeStat(TRNStatistics in)
 	: LTX(in.LTX), LRX(in.LRX) {}
-
-DTC::DTC_PCIeStats::DTC_PCIeStats(TRNStatsArray in) : Stats()
-{
-	for (int i = 0; i < in.Count; ++i)
-	{
-		Stats.push_back(DTC_PCIeStat(in.trnptr[i]));
-	}
-}

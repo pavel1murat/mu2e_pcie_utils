@@ -4,156 +4,128 @@
 #include "DTC_Types.h"
 #include <vector>
 #include "../linux_driver/user_space/mu2edev.hh"
+#ifndef _WIN32
+#include "../linux_driver/include/trace.h"
+#endif
 
 namespace DTC {
 	class DTC {
 	public:
 		DTC();
 		virtual ~DTC() = default;
-		//	private:
-		//#if DTCLIB_DEBUG
-		//	public:
-		//#endif
-		DTC_ErrorCode ReadDataPacket(DTC_DMA_Engine channel);
-		DTC_ErrorCode WriteDataPacket(DTC_DMA_Engine channel, DTC_DataPacket packet);
 
-		DTC_ErrorCode ReadDAQDataPacket();
-		DTC_ErrorCode WriteDAQDataPacket(DTC_DataPacket packet);
+		const int DTC_BUFFSIZE;
 
-		DTC_ErrorCode ReadDMAPacket(DTC_DMA_Engine channel);
-		DTC_ErrorCode ReadDMADAQPacket();
-		DTC_ErrorCode ReadDMADCSPacket();
+		//
+		// DMA Functions
+		//
+		// Data read-out
+		std::vector<void*> GetData(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const DTC_Timestamp& when, int* length);
 
-		DTC_ErrorCode WriteDMAPacket(DTC_DMA_Engine channel, DTC_DMAPacket packet);
-		DTC_ErrorCode WriteDMADAQPacket(DTC_DMAPacket packet);
-		DTC_ErrorCode WriteDMADCSPacket(DTC_DMAPacket packet);
+		// DCS Read/Write Cycle
+		void DCSRequestReply(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, uint8_t *dataIn);
 
-		std::vector<DTC_DataPacket> ReadBuffer(int packetOffset);
-	public:
-		DTC_ErrorCode GetData(const DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp when);
-		DTC_ErrorCode DCSRequestReply(const DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t dataIn[12]);
-		DTC_ErrorCode SendReadoutRequestPacket(const DTC_Ring_ID ring, DTC_Timestamp when, DTC_ROC_ID roc = DTC_ROC_5);
+		// Broadcast Readout
+		void SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Timestamp& when);
 
-		//private:
-		//#if DTCLIB_DEBUG
-		//public:
-		//#endif
-		DTC_ErrorCode WriteRegister(uint32_t data, uint16_t address);
-		DTC_ErrorCode ReadRegister(uint16_t address);
+		// Set number of ROCs in a Ring
+		void SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc);
 
-		DTC_ErrorCode WriteControlRegister(uint32_t data);
-		DTC_ErrorCode ReadControlRegister();
-		DTC_ErrorCode WriteSERDESLoopbackEnableRegister(uint32_t data);
-		DTC_ErrorCode ReadSERDESLoopbackEnableRegister();
-		DTC_ErrorCode WriteROCEmulationEnableRegister(uint32_t data);
-		DTC_ErrorCode ReadROCEmulationEnableRegister();
-		DTC_ErrorCode WriteRingEnableRegister(uint32_t data);
-		DTC_ErrorCode ReadRingEnableRegister();
-		DTC_ErrorCode WriteSERDESResetRegister(uint32_t data);
-		DTC_ErrorCode ReadSERDESResetRegister();
-		DTC_ErrorCode ReadSERDESRXDisparityErrorRegister();
-		DTC_ErrorCode ReadSERDESRXCharacterNotInTableErrorRegister();
-		DTC_ErrorCode ReadSERDESUnlockErrorRegister();
-		DTC_ErrorCode ReadSERDESPLLLockedRegister();
-		DTC_ErrorCode ReadSERDESTXBufferStatusRegister();
-		DTC_ErrorCode ReadSERDESRXBufferStatusRegister();
-		DTC_ErrorCode ReadSERDESResetDoneRegister();
-		DTC_ErrorCode WriteTimestampPreset0Register(uint32_t data);
-		DTC_ErrorCode ReadTimestampPreset0Register();
-		DTC_ErrorCode WriteTimestampPreset1Register(uint32_t data);
-		DTC_ErrorCode ReadTimestampPreset1Register();
-		DTC_ErrorCode WriteFPGAPROMProgramDataRegister(uint32_t data);
-		DTC_ErrorCode ReadFPGAPROMProgramStatusRegister();
+		//
+		// Register IO Functions
+		//
+		uint32_t ReadDesignVersion();
 
-	public:
-		DTC_ErrorCode ResetDTC();
-		DTC_ErrorCode ReadResetDTC();
+		void ResetDTC();
 
-		DTC_ErrorCode ClearLatchedErrors();
-		DTC_ErrorCode ReadClearLatchedErrors();
-		DTC_ErrorCode ClearClearLatchedErrors();
+		bool ToggleClearLatchedErrors();
+		bool ReadClearLatchedErrors();
 
-		DTC_ErrorCode EnableSERDESLoopback(const DTC_Ring_ID ring);
-		DTC_ErrorCode DisableSERDESLoopback(const DTC_Ring_ID ring);
-		DTC_ErrorCode ReadSERDESLoopback(const DTC_Ring_ID ring);
+		bool ToggleSERDESLoopback(const DTC_Ring_ID& ring);
+		bool ReadSERDESLoopback(const DTC_Ring_ID& ring);
 
-		DTC_ErrorCode EnableROCEmulator();
-		DTC_ErrorCode DisableROCEmulator();
-		DTC_ErrorCode ReadROCEmulatorEnabled();
+		bool ToggleROCEmulator();
+		bool ReadROCEmulator();
 
-		DTC_ErrorCode EnableRing(const DTC_Ring_ID ring);
-		DTC_ErrorCode DisableRing(const DTC_Ring_ID ring);
-		DTC_ErrorCode ReadRingEnabled(const DTC_Ring_ID ring);
+		bool EnableRing(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc = DTC_ROC_Unused);
+		bool DisableRing(const DTC_Ring_ID& ring);
+		bool ReadRingEnabled(const DTC_Ring_ID& ring);
 
-		DTC_ErrorCode ResetSERDES(const DTC_Ring_ID ring, int interval);
-		DTC_ErrorCode ReadResetSERDES(const DTC_Ring_ID ring);
+		bool ResetSERDES(const DTC_Ring_ID& ring, int interval = 100);
+		
+		DTC_SERDESRXDisparityError ReadSERDESRXDisparityError(const DTC_Ring_ID& ring);
+		DTC_CharacterNotInTableError ReadSERDESRXCharacterNotInTableError(const DTC_Ring_ID& ring);
 
-		DTC_ErrorCode ReadSERDESRXDisparityError(const DTC_Ring_ID ring);
+		bool ReadSERDESUnlockError(const DTC_Ring_ID& ring);
+		bool ReadSERDESPLLLocked(const DTC_Ring_ID& ring);
+		bool ReadSERDESOverflowOrUnderflow(const DTC_Ring_ID& ring);
+		bool ReadSERDESBufferFIFOHalfFull(const DTC_Ring_ID& ring);
 
-		DTC_ErrorCode ReadSERDESRXCharacterNotInTableError(const DTC_Ring_ID ring);
+		DTC_SERDESRXBufferStatus ReadSERDESRXBufferStatus(const DTC_Ring_ID& ring);
 
-		DTC_ErrorCode ReadSERDESUnlockError(const DTC_Ring_ID ring);
+		DTC_Timestamp WriteTimestampPreset(const DTC_Timestamp& preset);
+		DTC_Timestamp ReadTimestampPreset();
 
-		DTC_ErrorCode ReadSERDESPLLLocked(const DTC_Ring_ID ring);
+		bool ReadFPGAPROMProgramFIFOFull();
+		bool ReadFPGAPROMReady();
 
-		DTC_ErrorCode ReadSERDESOverflowOrUnderflow(const DTC_Ring_ID ring);
-		DTC_ErrorCode ReadSERDESBufferFIFOHalfFull(const DTC_Ring_ID ring);
-
-		DTC_ErrorCode ReadSERDESRXBufferStatus(const DTC_Ring_ID ring);
-
-		DTC_ErrorCode ReadSERDESResetDone(const DTC_Ring_ID ring);
-
-
-		DTC_ErrorCode WriteTimestampPreset(DTC_Timestamp preset);
-		DTC_ErrorCode ReadTimestampPreset();
-
-		DTC_ErrorCode ReadFPGAPROMProgramFIFOFull();
-		DTC_ErrorCode ReadFPGAPROMReady();
-
-		//DMA/PCIe Monitoring Methods
-	public:
-		DTC_ErrorCode WriteTestCommand(DTC_TestCommand comm);
-		DTC_ErrorCode ReadTestCommand();
-	public:
-		DTC_ErrorCode StartTest(DTC_DMA_Engine dma, int packetSize, bool loopback, bool txChecker, bool rxGenerator);
-		DTC_ErrorCode StopTest(DTC_DMA_Engine dma);
-		DTC_ErrorCode ReadDMAStateData(DTC_DMA_Engine dma, DTC_DMA_Direction dir);
-		DTC_ErrorCode ReadDMAStatsData();
-			DTC_ErrorCode ReadPCIeStateData();
-			DTC_ErrorCode ReadPCIeStatsData();
-
-	public:
-		DTC_DataPacket ReadDataPacket() { return dataPacket_; }
-		DTC_DMAPacket ReadDMAPacket() { return dmaPacket_; }
-		DTC_Timestamp ReadTimestamp() { return timestampPreset_; }
-		DTC_SERDESRXBufferStatus ReadRXBufferStatus() { return SERDESRXBufferStatus_; }
-		DTC_CharacterNotInTableError ReadCNITError() { return CharacterNotInTableError_; }
-		DTC_SERDESRXDisparityError ReadRXDisparityError() { return SERDESRXDisparityError_; }
-		bool ReadBooleanValue() { return booleanValue_; }
-		uint32_t ReadDataWord() { return dataWord_; }
-		std::vector<uint8_t> ReadDataVector() { return dataVector_; }
-		DTC_DMAState ReadDMAState() { return dmaState_; }
-		std::vector<DTC_DMAStat> ReadDMAStats(DTC_DMA_Engine dma, DTC_DMA_Direction dir) { return dmaStats_.getData(dma, dir); }
-		DTC_PCIeState ReadPCIeState() { return pcieState_; }
-		DTC_PCIeStats ReadPCIeStats() { return pcieStats_; }
+	    //
+		// PCIe/DMA Status and Performance
+		// DMA Testing Engine
+		//
+		DTC_TestMode StartTest(const DTC_DMA_Engine& dma, int packetSize, bool loopback, bool txChecker, bool rxGenerator);
+		DTC_TestMode StopTest(const DTC_DMA_Engine& dma);
+		
+		DTC_DMAState ReadDMAState(const DTC_DMA_Engine& dma, const DTC_DMA_Direction& dir);
+		std::vector<DTC_DMAStat> ReadDMAStats(const DTC_DMA_Engine& dma, const DTC_DMA_Direction& dir);
+		
+		DTC_PCIeState ReadPCIeState();
+		DTC_PCIeStat ReadPCIeStats();
 
 	private:
-		DTC_DataPacket dataPacket_;
-		DTC_DMAPacket dmaPacket_;
-		DTC_Timestamp timestampPreset_;
-		DTC_SERDESRXBufferStatus SERDESRXBufferStatus_;
-		DTC_CharacterNotInTableError CharacterNotInTableError_;
-		DTC_SERDESRXDisparityError SERDESRXDisparityError_;
-		DTC_TestCommand testCommand_;
-		DTC_DMAState dmaState_;
-		DTC_DMAStats dmaStats_;
-		DTC_PCIeState pcieState_;
-		DTC_PCIeStats pcieStats_;
-		bool booleanValue_;
-		uint32_t dataWord_;
-		std::vector<uint8_t> dataVector_;
+		DTC_DataPacket ReadDataPacket(const DTC_DMA_Engine& channel);
+		void WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPacket& packet);
+		DTC_DMAPacket ReadDMAPacket(const DTC_DMA_Engine& channel);
+		DTC_DMAPacket ReadDMADAQPacket();
+		DTC_DMAPacket ReadDMADCSPacket();
+		void WriteDMAPacket(const DTC_DMA_Engine& channel, const DTC_DMAPacket& packet);
+		void WriteDMADAQPacket(const DTC_DMAPacket& packet);
+		void WriteDMADCSPacket(const DTC_DMAPacket& packet);
+		
+		void WriteRegister(uint32_t data, uint16_t address);
+		uint32_t ReadRegister(uint16_t address);
+		void WriteControlRegister(uint32_t data);
+		uint32_t ReadControlRegister();
+		void WriteSERDESLoopbackEnableRegister(uint32_t data);
+		uint32_t ReadSERDESLoopbackEnableRegister();
+		void WriteROCEmulationEnableRegister(uint32_t data);
+		uint32_t ReadROCEmulationEnableRegister();
+		void WriteRingEnableRegister(uint32_t data);
+		uint32_t ReadRingEnableRegister();
+		void WriteSERDESResetRegister(uint32_t data);
+		uint32_t ReadSERDESResetRegister();
+		bool ReadSERDESResetDone(const DTC_Ring_ID& ring);
+		uint32_t ReadSERDESRXDisparityErrorRegister();
+		uint32_t ReadSERDESRXCharacterNotInTableErrorRegister();
+		uint32_t ReadSERDESUnlockErrorRegister();
+		uint32_t ReadSERDESPLLLockedRegister();
+		uint32_t ReadSERDESTXBufferStatusRegister();
+		uint32_t ReadSERDESRXBufferStatusRegister();
+		uint32_t ReadSERDESResetDoneRegister();
+		void WriteTimestampPreset0Register(uint32_t data);
+		uint32_t ReadTimestampPreset0Register();
+		void WriteTimestampPreset1Register(uint32_t data);
+		uint32_t ReadTimestampPreset1Register();
+		void WriteFPGAPROMProgramDataRegister(uint32_t data);
+		uint32_t ReadFPGAPROMProgramStatusRegister();
+
+		void WriteTestCommand(const DTC_TestCommand& comm, bool start);
+		DTC_TestCommand ReadTestCommand();
+
+	private:
+		DTC_ROC_ID maxRocs_[6];
 		mu2edev device_;
-		mu2e_databuff_t buffer_;
+		mu2e_databuff_t* buffer_;
 	};
 };
 
