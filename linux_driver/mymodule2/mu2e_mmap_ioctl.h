@@ -11,9 +11,11 @@
 #ifdef __KERNEL__
 # include <asm/ioctl.h>		// _IOWR
 #else
+#ifndef _WIN32
 # include <sys/ioctl.h>		// _IOWR
-# include <sys/types.h>
 # include <unistd.h>		// sysconf
+#endif
+# include <sys/types.h>
 # include <stdint.h>		// uint16_t
 #endif
 

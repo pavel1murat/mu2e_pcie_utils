@@ -31,7 +31,7 @@ void DTC::DTC_Timestamp::SetTimestamp(uint32_t timestampLow, uint16_t timestampH
 	timestamp_ = timestampLow + timestampHigh * 0x10000;
 }
 
-void DTC::DTC_Timestamp::GetTimestamp(uint8_t* timeArr)
+void DTC::DTC_Timestamp::GetTimestamp(uint8_t* timeArr) const
 {
 	for (int i = 0; i < 6; i++)
 	{
@@ -135,7 +135,7 @@ DTC::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_RO
 DTC::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC)
 	: DTC_DMAPacket(DTC_PacketType_ReadoutRequest, ring, maxROC), timestamp_(timestamp) {}
 
-DTC::DTC_DMAPacket DTC::DTC_ReadoutRequestPacket::ConvertToDMAPacket()
+DTC::DTC_DMAPacket DTC::DTC_ReadoutRequestPacket::ConvertToDMAPacket() const
 {
 	uint8_t data[12];
 	timestamp_.GetTimestamp(data);
@@ -157,7 +157,7 @@ DTC::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DataPacket& in) : DTC_DMAP
 
 DTC::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DMAPacket& in) : DTC_DMAPacket(in), timestamp_(data_) {}
 
-DTC::DTC_DMAPacket DTC::DTC_DataRequestPacket::ConvertToDMAPacket()
+DTC::DTC_DMAPacket DTC::DTC_DataRequestPacket::ConvertToDMAPacket() const
 {
 	uint8_t data[12];
 	timestamp_.GetTimestamp(data);
@@ -201,7 +201,7 @@ DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DMAPacket in) : DTC_DMAPacke
 	}
 }
 
-DTC::DTC_DMAPacket DTC::DTC_DataHeaderPacket::ConvertToDMAPacket()
+DTC::DTC_DMAPacket DTC::DTC_DataHeaderPacket::ConvertToDMAPacket() const
 {
 	uint8_t data[12];
 	timestamp_.GetTimestamp(data);

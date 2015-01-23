@@ -30,19 +30,19 @@ cet_cmake_env()
 cet_set_compiler_flags(DIAGS VIGILANT
  WERROR
  NO_UNDEFINED
- EXTRA_FLAGS -pedantic
+ EXTRA_FLAGS -pedantic -Wno-unused-function -Wno-unused-parameter
  )
 
 cet_report_compiler_flags()
 
 # these are minimum required versions, not the actual product versions
 find_ups_product( cetbuildtools v3_03_00 )
-find_ups_product( cpp0x v1_03_00 )
-find_ups_product( cetlib v1_03_00 )
 find_ups_product( swig v3_0_0 )
+find_ups_product( TRACE v3_03_00 )
+
+find_library( TRACE trace PATHS $ENV{TRACE_LIB} )
 
 # macros for art_dictionary and simple_plugin
-include(BuildPlugins)
 include(CetTest)
 
 # source

@@ -52,7 +52,7 @@ namespace DTC {
 		bool ReadRingEnabled(const DTC_Ring_ID& ring);
 
 		bool ResetSERDES(const DTC_Ring_ID& ring, int interval = 100);
-		
+
 		DTC_SERDESRXDisparityError ReadSERDESRXDisparityError(const DTC_Ring_ID& ring);
 		DTC_CharacterNotInTableError ReadSERDESRXCharacterNotInTableError(const DTC_Ring_ID& ring);
 
@@ -69,16 +69,16 @@ namespace DTC {
 		bool ReadFPGAPROMProgramFIFOFull();
 		bool ReadFPGAPROMReady();
 
-	    //
+		//
 		// PCIe/DMA Status and Performance
 		// DMA Testing Engine
 		//
 		DTC_TestMode StartTest(const DTC_DMA_Engine& dma, int packetSize, bool loopback, bool txChecker, bool rxGenerator);
 		DTC_TestMode StopTest(const DTC_DMA_Engine& dma);
-		
+
 		DTC_DMAState ReadDMAState(const DTC_DMA_Engine& dma, const DTC_DMA_Direction& dir);
 		std::vector<DTC_DMAStat> ReadDMAStats(const DTC_DMA_Engine& dma, const DTC_DMA_Direction& dir);
-		
+
 		DTC_PCIeState ReadPCIeState();
 		DTC_PCIeStat ReadPCIeStats();
 
@@ -91,7 +91,7 @@ namespace DTC {
 		void WriteDMAPacket(const DTC_DMA_Engine& channel, const DTC_DMAPacket& packet);
 		void WriteDMADAQPacket(const DTC_DMAPacket& packet);
 		void WriteDMADCSPacket(const DTC_DMAPacket& packet);
-		
+
 		void WriteRegister(uint32_t data, uint16_t address);
 		uint32_t ReadRegister(uint16_t address);
 		void WriteControlRegister(uint32_t data);
@@ -127,6 +127,5 @@ namespace DTC {
 		mu2edev device_;
 		mu2e_databuff_t* buffer_;
 	};
-};
-
+}
 #endif

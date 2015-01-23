@@ -9,7 +9,7 @@
 #include <stdint.h>
 
 //typedef unsigned u64;
-#include "../mymodule/xdma_hw.h"
+#include "../mymodule2/xdma_hw.h"
 
 int
 main(  int	argc

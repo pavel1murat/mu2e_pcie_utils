@@ -95,7 +95,7 @@ extern  int     optind;         /* for getopt */
     FILE *stream = fopen( argv[optind], "r" );
 
     int	lines=0, data_bytes=0;
-    unsigned StartBlockSet=0, StartBlock, EndBlock, LastAddr;
+    unsigned StartBlockSet=0, StartBlock, EndBlock, LastAddr=0;
     int bytecount;
     unsigned address, RecType, data, checksum;
     int sts;

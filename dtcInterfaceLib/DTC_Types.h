@@ -4,7 +4,7 @@
 #include <bitset> // std::bitset
 #include <cstdint> // uint8_t, uint16_t
 #include <vector> // std::vector
-#include "../linux_driver/mymodule2/mu2e_mmap_ioctl.h"
+#include "mu2e_mmap_ioctl.h"
 #ifndef _WIN32
 #include "trace.h"
 #endif
@@ -119,7 +119,7 @@ namespace DTC
 
 		void SetTimestamp(uint32_t timestampLow, uint16_t timestampHigh);
 		std::bitset<48> GetTimestamp() const { return timestamp_; }
-		void GetTimestamp(uint8_t* timeArr);
+		void GetTimestamp(uint8_t* timeArr) const;
 
 	};
 
@@ -207,8 +207,8 @@ namespace DTC
 
 		virtual ~DTC_ReadoutRequestPacket() = default;
 
-		DTC_DMAPacket ConvertToDMAPacket();
-		virtual DTC_DataPacket ConvertToDataPacket() { return ConvertToDMAPacket().ConvertToDataPacket(); }
+		DTC_DMAPacket ConvertToDMAPacket() const;
+		DTC_DataPacket ConvertToDataPacket() const { return ConvertToDMAPacket().ConvertToDataPacket(); }
 	};
 
 	class DTC_DataRequestPacket : public DTC_DMAPacket {
@@ -224,8 +224,8 @@ namespace DTC
 		DTC_DataRequestPacket(DTC_DataPacket& in);
 		DTC_DataRequestPacket(DTC_DMAPacket& in);
 
-		DTC_DMAPacket ConvertToDMAPacket();
-		virtual DTC_DataPacket ConvertToDataPacket() { return ConvertToDMAPacket().ConvertToDataPacket(); }
+		DTC_DMAPacket ConvertToDMAPacket() const;
+		DTC_DataPacket ConvertToDataPacket() const { return ConvertToDMAPacket().ConvertToDataPacket(); }
 	};
 
 	class DTC_DCSReplyPacket : public DTC_DMAPacket {
@@ -256,8 +256,8 @@ namespace DTC
 		DTC_DataHeaderPacket(DTC_DataPacket& in);
 		DTC_DataHeaderPacket(DTC_DMAPacket in);
 
-		DTC_DMAPacket ConvertToDMAPacket();
-		virtual DTC_DataPacket ConvertToDataPacket() { return ConvertToDMAPacket().ConvertToDataPacket(); }
+		DTC_DMAPacket ConvertToDMAPacket() const;
+		DTC_DataPacket ConvertToDataPacket() const { return ConvertToDMAPacket().ConvertToDataPacket(); }
 		virtual uint8_t* GetData() { return dataStart_; }
 		uint8_t GetPacketCount() { return packetCount_; }
 	};

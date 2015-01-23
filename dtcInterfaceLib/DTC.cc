@@ -1,4 +1,5 @@
 #include "DTC.h"
+#include <iostream>
 #ifndef _WIN32
 #include <unistd.h>
 #else
@@ -334,6 +335,7 @@ DTC::DTC_DataPacket DTC::DTC::ReadDataPacket(const DTC_DMA_Engine& channel)
 }
 void DTC::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPacket& packet)
 {
+	std::cout << "Channel is " << channel << ", packet type is " << packet.GetWord(0) << std::endl;
 	throw new DTC_NotImplementedException();
 }
 DTC::DTC_DMAPacket DTC::DTC::ReadDMAPacket(const DTC_DMA_Engine& channel)

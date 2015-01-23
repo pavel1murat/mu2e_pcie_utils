@@ -13,7 +13,7 @@
 #ifndef _WIN32
 #include "trace.h"
 #endif
-#include "../linux_driver/mymodule2/mu2e_mmap_ioctl.h" // MU2E_DEV_FILE, M_IOC_*, etc
+#include "mu2e_mmap_ioctl.h" // MU2E_DEV_FILE, M_IOC_*, etc
 #include "mu2edev.hh"
 
 mu2edev::mu2edev() : devfd_(0)
@@ -89,7 +89,7 @@ int mu2edev::read_data( int chn, void **buffer, int tmo_ms )
 		  , chn
 		  , mu2e_channel_info_[chn][C2S].hwIdx, mu2e_channel_info_[chn][C2S].swIdx
 		  , mu2e_channel_info_[chn][C2S].num_buffs, has_recv_data
-		  , BC_p, newNxtIdx
+		  , (void*)BC_p, newNxtIdx
 		  , retsts );
 	}
 	else

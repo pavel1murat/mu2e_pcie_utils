@@ -15,7 +15,7 @@
 #include "mu2edev.hh"
 
 mu2edev::mu2edev() : devfd_(0)
-		   , mu2e_mmap_ptrs_({}) // extended initializer list; need -std=c++0x
+		   , mu2e_mmap_ptrs_() // extended initializer list; need -std=c++0x
 {   TRACE_CNTL( "lvlmskM", 0xffff );
     TRACE_CNTL( "lvlmskS", 0xf );
 }
@@ -88,7 +88,7 @@ int mu2edev::read_data( int chn, void **buffer, int tmo_ms )
 		      , chn
 		      , mu2e_channel_info_[chn][C2S].hwIdx, mu2e_channel_info_[chn][C2S].swIdx
 		      , mu2e_channel_info_[chn][C2S].num_buffs, has_recv_data
-		      , BC_p, newNxtIdx
+		       , (void*)BC_p, newNxtIdx
 		      , retsts );
 		break;
 	    }
