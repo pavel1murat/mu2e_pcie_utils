@@ -21,7 +21,7 @@ product		 version	optional
 TRACE            v3_03_03
 swig             v3_0_2          -       only_for_build
 cetbuildtools    v4_03_03        -       only_for_build
-ups              v4_9_1          -       only_for_build
+gcc              v4_9_1          -       only_for_build
 end_product_list
 
 # e6  - with gcc 4.9.1 and -std=c++1y
