@@ -1,6 +1,6 @@
 include_directories("${CMAKE_SOURCE_DIR}/linux_driver/develmodule")
 
-add_executable( mcs mcs.cc )
+cet_make_exec( mcs SOURCE mcs.cc )
 
 install_headers()
 install_source()

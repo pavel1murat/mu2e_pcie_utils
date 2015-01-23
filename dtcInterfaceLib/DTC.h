@@ -4,9 +4,6 @@
 #include "DTC_Types.h"
 #include <vector>
 #include "mu2edev.hh"
-#ifndef _WIN32
-#include "trace.h"
-#endif
 
 namespace DTC {
 	class DTC {

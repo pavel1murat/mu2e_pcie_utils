@@ -1,13 +1,12 @@
 include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/linux_driver/mymodule2")
 
-add_library(DTCInterface SHARED
+cet_make_library(LIBRARY_NAME DTCInterface SOURCE
             DTC.cc
             DTC_Types.cc
             mu2edev.cc
 )
 
-add_executable(DTCLibTest main.cc)
-target_link_libraries(DTCLibTest DTCInterface)
+cet_make_exec(DTCLibTest SOURCE main.cc LIBRARIES DTCInterface)
 
 add_custom_command(
     OUTPUT DTC.node
@@ -16,7 +15,16 @@ add_custom_command(
     DEPENDS DTC.cc DTC_Types.cc mu2edev.cc
 )
 add_custom_target(DTCJSInterface ALL echo DEPENDS DTC.node)
-file(INSTALL DTC.node DESTINATION ../bin/web/modules/DTC/server)
 add_custom_command(TARGET DTCJSInterface PRE_BUILD
                    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/web/ ../bin/web/
 )
+add_custom_command(TARGET DTCJSInterface POST_BUILD
+   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/DTC.node ../bin/web/modules/DTC/server/DTC.node
+   COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_SOURCE_DIR}/DTC.node ${CMAKE_CURRENT_SOURCE_DIR}/web/modules/DTC/server/DTC.node
+)
+install(DIRECTORY web DESTINATION ${${product}_bin_dir})
+
+cet_script(updateMu2e.sh)
+
+install_source()
+install_headers()

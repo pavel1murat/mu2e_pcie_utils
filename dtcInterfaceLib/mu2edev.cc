@@ -11,7 +11,7 @@
 
 #define TRACE_NAME "MU2EDEV"
 #ifndef _WIN32
-#include "trace.h"
+#include <trace.h>
 #endif
 #include "mu2e_mmap_ioctl.h" // MU2E_DEV_FILE, M_IOC_*, etc
 #include "mu2edev.hh"
