@@ -3,9 +3,9 @@
 
 #include "DTC_Types.h"
 #include <vector>
-#include "../linux_driver/user_space/mu2edev.hh"
+#include "mu2edev.hh"
 #ifndef _WIN32
-#include "../linux_driver/include/trace.h"
+#include "trace.h"
 #endif
 
 namespace DTC {

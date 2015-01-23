@@ -10,18 +10,25 @@
  */
 
 #define TRACE_NAME "MU2EDEV"
-#include "../include/trace.h"
-#include "../mymodule/mu2e_mmap_ioctl.h" // MU2E_DEV_FILE, M_IOC_*, etc
+#ifndef _WIN32
+#include "trace.h"
+#endif
+#include "../linux_driver/mymodule2/mu2e_mmap_ioctl.h" // MU2E_DEV_FILE, M_IOC_*, etc
 #include "mu2edev.hh"
 
 mu2edev::mu2edev() : devfd_(0)
-		   , mu2e_mmap_ptrs_({}) // extended initializer list; need -std=c++0x
-{   TRACE_CNTL( "lvlmskM", 0x3 );
+		   , mu2e_mmap_ptrs_() // extended initializer list; need -std=c++0x
+{
+#ifndef _WIN32  
+	TRACE_CNTL( "lvlmskM", 0x3 );
     TRACE_CNTL( "lvlmskS", 0x3 );
+#endif
 }
 
 int mu2edev::init()
-{   int sts;
+{
+#ifndef _WIN32
+	int sts;
     devfd_ = open( "/dev/" MU2E_DEV_FILE, O_RDWR );
     if (devfd_ == -1) { perror("open /dev/" MU2E_DEV_FILE); exit (1); }
     for (unsigned chn=0; chn<MU2E_MAX_CHANNELS; ++chn)
@@ -54,11 +61,15 @@ int mu2edev::init()
 		      , chn, dir, map, mu2e_mmap_ptrs_[chn][dir][map] );
 	    }
 	}
+#endif
     return (0);
 }
 
 int mu2edev::read_data( int chn, void **buffer, int tmo_ms )
 {
+#ifdef _WIN32
+	int retsts = -1;
+#else
     int retsts=0;
     unsigned has_recv_data;
     if ((mu2e_mmap_ptrs_[0][0][0]!=NULL) || ((retsts=init())==0))
@@ -88,11 +99,15 @@ int mu2edev::read_data( int chn, void **buffer, int tmo_ms )
 	}
 
     }
+#endif
     return (retsts);
 }
 
 int mu2edev::read_release( int chn, unsigned num )
 {
+#ifdef _WIN32
+	int retsts = -1;
+#else
     int retsts;
     unsigned long arg;
     unsigned has_recv_data;
@@ -106,33 +121,45 @@ int mu2edev::read_release( int chn, unsigned num )
 	mu2e_channel_info_[chn][C2S].swIdx
 	    = idx_add( mu2e_channel_info_[chn][C2S].swIdx, 1, chn, C2S );
     }
+#endif
     return (retsts);
 }
 
 
 int  mu2edev::read_register(uint16_t address, int tmo_ms, uint32_t *output)
 {
+#ifdef _WIN32
+	int errorCode = -1;
+#else
 	m_ioc_reg_access_t reg;
 	reg.reg_offset = address;
 	reg.access_type = 0;
 	int errorCode = ioctl(devfd_, M_IOC_REG_ACCESS, &reg);
 	*output = reg.val;
+#endif
 	return errorCode;
 }
 
 
 int  mu2edev::write_register(uint16_t address, int tmo_ms, uint32_t data)
 {
+#ifdef _WIN32
+	return -1;
+#else
 	m_ioc_reg_access_t reg;
 	reg.reg_offset = address;
 	reg.access_type = 1;
 	reg.val = data;
 	return ioctl(devfd_, M_IOC_REG_ACCESS, &reg);
+#endif
 }
 
 
 void mu2edev::meta_dump( int chn, int dir )
 {
+#ifdef _WIN32
+	return;
+#else
     int retsts=0;
     if ((mu2e_mmap_ptrs_[0][0][0]!=NULL) || ((retsts=init())==0))
     {
@@ -141,20 +168,28 @@ void mu2edev::meta_dump( int chn, int dir )
 	    printf( "buf_%02d: %u\n", buf, BC_p[buf] );
 	}
     }
+#endif
 }
 
 int mu2edev::read_pcie_state(m_ioc_pcistate_t *output)
 {
+#ifdef _WIN32
+	int error = -1;
+#else
 	int error = ioctl(devfd_, M_IOC_GET_PCI_STATE, output);
 	if (error < 0)
 	{
 		printf("Error! : %s \n", strerror(errno));
 	}
+#endif
 	return error;
 }
 
 int mu2edev::read_dma_state(int chn,int dir, m_ioc_engstate_t *output)
-{ 
+{
+#ifdef _WIN32
+	int error = -1;
+#else
 	m_ioc_engstate_t req;
   req.Engine = chn + 0x20 * dir;
   TRACE(0, "Output engine is: %u", req.Engine);
@@ -164,27 +199,71 @@ int mu2edev::read_dma_state(int chn,int dir, m_ioc_engstate_t *output)
 	  printf("Error! : %s \n", strerror(errno));
   }
   *output = req;
+#endif
   return error;
 }
 
 int mu2edev::read_dma_stats(m_ioc_engstats_t *output)
 {
+#ifdef _WIN32
+	int error = -1;
+#else
 	int error = ioctl(devfd_, M_IOC_GET_DMA_STATS, output);
 	if (error < 0)
 	{
 		printf("Error! : %s \n", strerror(errno));
 	}
+#endif
 	return error;
 }
 
 int mu2edev::read_trn_stats(TRNStatsArray *output)
 {
+#ifdef _WIN32
+	int error = -1;
+#else
 	int error = ioctl(devfd_, M_IOC_GET_TRN_STATS, output);
 	if (error < 0)
 	{
 		printf("Error! : %s \n", strerror(errno));
 	}
+#endif
 	return error;
+}
+
+int mu2edev::read_test_command(m_ioc_cmd_t *output)
+{
+#ifdef _WIN32
+	return -1;
+#else
+	int error = ioctl(devfd_, M_IOC_GET_TST_STATE, output);
+	if (error < 0)
+	{
+		printf("Error! : %s \n", strerror(errno));
+	}
+	return error;
+#endif
+}
+
+int mu2edev::write_test_command(m_ioc_cmd_t input, bool start)
+{
+#ifdef _WIN32
+	return -1;
+#else
+	int error = 0;
+	if(start) {
+		error = ioctl(devfd_, M_IOC_TEST_START, &input);
+}
+	else {
+		error = ioctl(devfd_, M_IOC_TEST_STOP, &input);
+	}
+	if(error < 0)
+	{
+		printf("Error! : %s \n", strerror(errno));
+	}
+
+	return error;
+#endif
 }
 
 unsigned mu2edev::delta_( int chn, int dir )

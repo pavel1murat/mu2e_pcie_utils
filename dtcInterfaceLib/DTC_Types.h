@@ -6,7 +6,7 @@
 #include <vector> // std::vector
 #include "../linux_driver/mymodule2/mu2e_mmap_ioctl.h"
 #ifndef _WIN32
-#include "../linux_driver/include/trace.h"
+#include "trace.h"
 #endif
 
 #define DesignVersionRegister                     0x9000

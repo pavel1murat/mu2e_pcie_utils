@@ -5,7 +5,7 @@
  // $RCSfile: .emacs.gnu,v $
  // rev="$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
 
-#include "../mymodule/mu2e_mmap_ioctl.h" // 
+#include "../linux_driver/mymodule2/mu2e_mmap_ioctl.h" // 
 #include <cstdint>
 
 
@@ -23,7 +23,7 @@ struct mu2edev
     int  read_dma_stats(m_ioc_engstats_t *output);
     int  read_trn_stats(TRNStatsArray *output);
 	int  read_test_command(m_ioc_cmd_t *output);
-	int  write_test_command(m_ioc_cmd_t input);
+	int  write_test_command(m_ioc_cmd_t input, bool start);
 
 private:
     unsigned         delta_( int chn, int dir );
