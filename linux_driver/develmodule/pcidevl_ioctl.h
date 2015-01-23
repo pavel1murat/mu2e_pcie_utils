@@ -49,7 +49,7 @@ enum ioc_ioop_ops
     };
 struct ioc_ioop
 {   uint32_t offset;  /* register offset */
-    enum ioc_ioop_ops ops_mask;
+    enum ioc_ioop_ops ops_mask;  /* can do write then read to same offset */
     uint32_t write_val;
     uint32_t read_val;
 };

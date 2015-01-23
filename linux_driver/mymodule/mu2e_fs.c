@@ -11,7 +11,7 @@
 #include <linux/cdev.h>		/* cdev_add */
 #include <linux/types.h>        /* dev_t */
 
-#include "../include/trace.h"	/* TRACE */
+#include "trace.h"	/* TRACE */
 #include "mu2e_mmap_ioctl.h"	/* MU2E_DEV_FILE */
 #include "mu2e_fs.h"
 

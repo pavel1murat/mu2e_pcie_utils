@@ -14,7 +14,15 @@
 #include "pcidevl_ioctl.h"
 
 #define USAGE "\
-    usage: %s\n\
+usage: %s <cmd>\n\
+<cmd> is one of:\n\
+  hello           - TRACE hello\n\
+  register        - pci_register_driver, if necessary\n\
+  unregister      - iounmap, pci_unregister_driver\n\
+  ioremap         - \n\
+  iounmap         - \n\
+  uint32 <offset> - \n\
+  read_loop       - \n\
 ", basename(argv[0])
 
 int

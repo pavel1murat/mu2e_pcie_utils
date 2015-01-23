@@ -41,9 +41,25 @@ m_ioc_get_info_t mu2e_channel_info_[MU2E_MAX_CHANNELS][2];
 //    ch,dir,buffers/meta
 volatile void *  mu2e_mmap_ptrs[MU2E_MAX_CHANNELS][2][2];
 
+/* for exclusion of all program flows (processes, ISRs and BHs) */
+static DEFINE_SPINLOCK(DmaStatsLock);
+
+#define MAX_STATS   100
+/* Statistics-related variables */
+DMAStatistics DStats[MAX_DMA_ENGINES][MAX_STATS];
+SWStatistics SStats[MAX_DMA_ENGINES][MAX_STATS];
+TRNStatistics TStats[MAX_STATS];
+int dstatsRead[MAX_DMA_ENGINES], dstatsWrite[MAX_DMA_ENGINES];
+int dstatsNum[MAX_DMA_ENGINES], sstatsRead[MAX_DMA_ENGINES];
+int sstatsWrite[MAX_DMA_ENGINES], sstatsNum[MAX_DMA_ENGINES];
+int tstatsRead, tstatsWrite, tstatsNum;
+u32 SWrate[MAX_DMA_ENGINES];
+
 
 //////////////////////////////////////////////////////////////////////////////
-
+/* forward decl */
+static int ReadPCIState(struct pci_dev * pdev, m_ioc_pcistate_t * pcistate);
+//////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -71,14 +87,23 @@ int mu2e_mmap( struct file *file, struct vm_area_struct *vma )
 int mu2e_ioctl(  struct inode *inode, struct file *filp
 	       , unsigned int cmd, unsigned long arg )
 {
-    unsigned long       base;
-    unsigned            jj;
-    m_ioc_reg_access_t  reg_access;
-    m_ioc_get_info_t	get_info;
-    int			chn, dir, num;
-    unsigned		myIdx, nxtIdx;
-    volatile mu2e_buffdesc_S2C_t *desc_S2C_p;
-    u32                 descDmaAdr;
+	int			retval=0;
+	unsigned long		base;
+	unsigned		jj;
+	m_ioc_reg_access_t	reg_access;
+	m_ioc_get_info_t	get_info;
+	int			chn, dir, num;
+	unsigned		myIdx, nxtIdx;
+volatile mu2e_buffdesc_S2C_t   *desc_S2C_p;
+	u32                 	descDmaAdr;
+	m_ioc_pcistate_t	pcistate;
+	m_ioc_engstate_t	eng;
+	m_ioc_engstats_t	es;
+	TRNStatsArray		tsa;
+	int			which_engine, len, ii;
+	DMAStatistics	       *ds;
+	TRNStatistics	       *ts;
+
 
     if(_IOC_TYPE(cmd) != MU2E_IOC_MAGIC) return -ENOTTY;
 
@@ -95,6 +120,9 @@ int mu2e_ioctl(  struct inode *inode, struct file *filp
 
     switch(cmd)
     {
+    case M_IOC_GET_TST_STATE:
+	TRACE( 11, "mu2e_ioctl: cmd=GET_TST_STATE" );
+	break;
     case M_IOC_TEST_START:
 	TRACE( 11, "mu2e_ioctl: cmd=TEST_START" );
 	// enable dma ch0/C2S w/GENERATOR
@@ -108,7 +136,156 @@ int mu2e_ioctl(  struct inode *inode, struct file *filp
     case M_IOC_TEST_STOP:
 	TRACE( 11, "mu2e_ioctl: cmd=TEST_STOP" );
 	break;
-    case M_IOC_REG_ACCESS:
+    /* ------------------------------------------------------------------- */
+
+    case M_IOC_GET_PCI_STATE:	/* m_ioc_pcistate_t; formerly IGET_PCI_STATE      _IOR(XPMON_MAGIC,4,PCIState) */
+	TRACE( 11, "mu2e_ioctl: cmd=GET_PCI_STATE" );
+        ReadPCIState( mu2e_pci_dev, &pcistate );
+        if(copy_to_user((m_ioc_pcistate_t *)arg, &pcistate, sizeof(m_ioc_pcistate_t)))
+        {
+            printk("copy_to_user failed\n");
+            retval = -EFAULT;
+            break;
+        }
+	break;
+    case M_IOC_GET_ENG_STATE:	/* m_ioc_engstate_t; formerly IGET_ENG_STATE      _IOR(XPMON_MAGIC,5,EngState) */
+	TRACE( 11, "mu2e_ioctl: cmd=GET_ENG_STATE" );
+        if(copy_from_user(&eng, (m_ioc_engstate_t *)arg, sizeof(m_ioc_engstate_t)))
+        {
+            printk("\ncopy_from_user failed\n");
+            retval = -EFAULT;
+            break;
+        }
+
+        which_engine = eng.Engine;  //printk("For engine %d\n", i);
+
+        /* First, check if requested engine is valid */
+        if((which_engine >= MAX_DMA_ENGINES) /*|| (!((dmaData->engineMask) & (1LL << i)))*/)
+        {   printk("Invalid engine %d\n", which_engine);
+            retval = -EFAULT;
+            break;
+        }
+
+
+        /* First, get the user state */
+        eng.Buffers    = 4;      //ustate.Buffers;
+	eng.MinPktSize = 64;     //ustate.MinPktSize;
+	eng.MaxPktSize = 0x8000; //ustate.MaxPktSize;
+	eng.TestMode   = 1;      //ustate.TestMode;
+
+        /* Now add the DMA state */
+        eng.BDs     = 399; /* FNAL devel -- linked to sguser.c:#define NUM_BUFS  and DmaSetupTransmit(handle[0],100) ??? */
+        eng.BDerrs  = 0;        //rptr->BDerrs;
+        eng.BDSerrs = 0;        //rptr->BDSerrs;
+#      ifdef TH_BH_ISR
+        eng.IntEnab = 1;
+#      else
+        eng.IntEnab = 0;
+#      endif
+        if(copy_to_user((m_ioc_engstate_t *)arg, &eng, sizeof(m_ioc_engstate_t)))
+        {   printk("copy_to_user failed\n");
+            retval = -EFAULT;
+            break;
+        }
+	break;
+    case M_IOC_GET_DMA_STATS:	/* m_ioc_engstats_t; formerly IGET_DMA_STATISTICS _IOR(XPMON_MAGIC,6,EngStatsArray) */
+	TRACE( 11, "mu2e_ioctl: cmd=GET_DMA_STATS" );
+        if(copy_from_user(&es, (m_ioc_engstats_t *)arg, sizeof(m_ioc_engstats_t)))
+        {
+            printk("copy_from_user failed\n");
+            retval = -1;
+            break;
+        }
+
+        ds = es.engptr;
+        len = 0;
+        for(ii=0; ii<es.Count; ++ii)
+        {
+            DMAStatistics from;
+            int j;
+
+            /* Must copy in a round-robin manner so that reporting is fair */
+            for(j=0; j<MAX_DMA_ENGINES; j++)
+            {
+                if(!dstatsNum[j]) continue;
+
+                spin_lock_bh(&DmaStatsLock);
+                from = DStats[j][dstatsRead[j]];
+                from.Engine = j;
+                dstatsNum[j] -= 1;
+                dstatsRead[j] += 1;
+                if(dstatsRead[j] == MAX_STATS)
+                    dstatsRead[j] = 0;
+                spin_unlock_bh(&DmaStatsLock);
+
+                if(copy_to_user(ds, &from, sizeof(DMAStatistics)))
+                {
+                    printk("copy_to_user failed\n");
+                    retval = -EFAULT;
+                    break;
+                }
+
+                len++;
+                ii++;
+                if(ii >= es.Count) break;
+                ds++;
+            }
+            if(retval < 0) break;
+        }
+        es.Count = len;
+        if(copy_to_user((m_ioc_engstats_t *)arg, &es, sizeof(m_ioc_engstats_t)))
+        {
+            printk("copy_to_user failed\n");
+            retval = -EFAULT;
+            break;
+        }
+	break;
+    case M_IOC_GET_TRN_STATS:   /* TRNStatsArray;    formerly IGET_TRN_STATISTICS _IOR(XPMON_MAGIC,7,TRNStatsArray) */
+	TRACE( 11, "mu2e_ioctl: cmd=GET_TRN_STATS" );
+        if(copy_from_user(&tsa, (TRNStatsArray *)arg, sizeof(TRNStatsArray)))
+        {
+            printk("copy_from_user failed\n");
+            retval = -1;
+            break;
+        }
+
+        ts = tsa.trnptr;
+        len = 0;
+        for(ii=0; ii<tsa.Count; ++ii)
+        {
+            TRNStatistics from;
+
+            if(!tstatsNum) break;
+
+            spin_lock_bh(&DmaStatsLock);
+            from = TStats[tstatsRead];
+            tstatsNum -= 1;
+            tstatsRead += 1;
+            if(tstatsRead == MAX_STATS)
+                tstatsRead = 0;
+            spin_unlock_bh(&DmaStatsLock);
+
+            if(copy_to_user(ts, &from, sizeof(TRNStatistics)))
+            {
+                printk("copy_to_user failed\n");
+                retval = -EFAULT;
+                break;
+            }
+
+            len++;
+            ts++;
+        }
+        tsa.Count = len;
+        if(copy_to_user((TRNStatsArray *)arg, &tsa, sizeof(TRNStatsArray)))
+        {
+            printk("copy_to_user failed\n");
+            retval = -EFAULT;
+            break;
+        }
+	break;
+
+    /* ------------------------------------------------------------------- */
+     case M_IOC_REG_ACCESS:
 	if(copy_from_user(&reg_access, (void*)arg, sizeof(reg_access)))
         {   printk("copy_from_user failed\n"); return (-EFAULT);
         }
@@ -262,9 +439,77 @@ int mu2e_ioctl(  struct inode *inode, struct file *filp
 	TRACE( 10, "mu2e_ioctl: unknown cmd" );
 	return (-1); // some error
     }
-    return (0);
+    return (retval);
 }   // mu2e_ioctl
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+static int ReadPCIState(struct pci_dev * pdev, m_ioc_pcistate_t * pcistate)
+{
+    int pos;
+    u16 valw;
+    u8  valb;
+    unsigned long base;
+
+    /* Since probe has succeeded, indicates that link is up. */
+    pcistate->LinkState = LINK_UP;
+    pcistate->VendorId = XILINX_VENDOR_ID;
+    pcistate->DeviceId = XILINX_DEVICE_ID;
+
+    /* Read Interrupt setting - Legacy or MSI/MSI-X */
+    pci_read_config_byte(pdev, PCI_INTERRUPT_PIN, &valb);
+    if(!valb)
+    {
+        if(pci_find_capability(pdev, PCI_CAP_ID_MSIX))
+            pcistate->IntMode = INT_MSIX;
+        else if(pci_find_capability(pdev, PCI_CAP_ID_MSI))
+            pcistate->IntMode = INT_MSI;
+        else
+            pcistate->IntMode = INT_NONE;
+    }
+    else if((valb >= 1) && (valb <= 4))
+        pcistate->IntMode = INT_LEGACY;
+    else
+        pcistate->IntMode = INT_NONE;
+
+    if((pos = pci_find_capability(pdev, PCI_CAP_ID_EXP)))
+    {
+        /* Read Link Status */
+        pci_read_config_word(pdev, pos+PCI_EXP_LNKSTA, &valw);
+        pcistate->LinkSpeed = (valw & 0x0003);
+        pcistate->LinkWidth = (valw & 0x03f0) >> 4;
+
+        /* Read MPS & MRRS */
+        pci_read_config_word(pdev, pos+PCI_EXP_DEVCTL, &valw);
+        pcistate->MPS = 128 << ((valw & PCI_EXP_DEVCTL_PAYLOAD) >> 5);
+        pcistate->MRRS = 128 << ((valw & PCI_EXP_DEVCTL_READRQ) >> 12);
+    }
+    else
+    {
+        printk("Cannot find PCI Express Capabilities\n");
+        pcistate->LinkSpeed = pcistate->LinkWidth = 0;
+        pcistate->MPS = pcistate->MRRS = 0;
+    }
+
+    /* Read Initial Flow Control Credits information */
+    base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
+
+    pcistate->InitFCCplD = XIo_In32(base+0x901c) & 0x00000FFF;
+    pcistate->InitFCCplH = XIo_In32(base+0x9020) & 0x000000FF;
+    pcistate->InitFCNPD  = XIo_In32(base+0x9024) & 0x00000FFF;
+    pcistate->InitFCNPH  = XIo_In32(base+0x9028) & 0x000000FF;
+    pcistate->InitFCPD   = XIo_In32(base+0x902c) & 0x00000FFF;
+    pcistate->InitFCPH   = XIo_In32(base+0x9030) & 0x000000FF;
+    pcistate->Version    = XIo_In32(base+0x9000);
+
+    return 0;
+}   // ReadPCIState
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////
 
 void free_mem( void )
 {

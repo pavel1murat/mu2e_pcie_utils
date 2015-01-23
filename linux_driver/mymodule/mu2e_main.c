@@ -15,7 +15,7 @@
 
 #include "xdma_hw.h"		/* struct BuffDesc */
 
-#include "../include/trace.h"	/* TRACE */
+#include "trace.h"	/* TRACE */
 #include "mu2e_fs.h"
 #include "mu2e_pci.h"		/* bar_info_t, extern mu2e_pci*  */
 #include "mu2e_event.h"

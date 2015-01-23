@@ -28,10 +28,10 @@
 #        LDFLAGS   = -g -Wall
 #endif
 CC       = gcc
-CXX      = g++   # a variable named "C++" is not compatible with bourne shell
+CXX      = g++ -std=c++0x # a variable named "C++" is not compatible with bourne shell
 CFLAGS   = -g -Wall
 CXXFLAGS = $(CFLAGS)
-CPPFLAGS = -I../mymodule -I${TRACE_INC}
+CPPFLAGS =  -I../mymodule2 -I${TRACE_INC}
 #LDFLAGS  =   # -g not needed
 
 # in case someone (SoftRelTools) sets -r (or `--no-builtin-rules') in MAKEFLAGS
@@ -73,10 +73,11 @@ objects     := $(patsubst %.c,%.o,$(filter-out $(cexesrc),$(wildcard *.c))) \
                $(patsubst %.cc,%.o,$(filter-out $(c++exesrc),$(wildcard *.cc)))
 headers     := $(wildcard *.h)
 
+all: $(executables)
+	@echo done with $(executables)
+
 include $(cexesrc:.c=.d)
 include $(c++exesrc:.cc=.d)
-
-all: $(executables)
 
 # "$(executables): $(objects)" says that all executables depend on all objects.
 # I probably just want the "% : %.o" rule above and the "include mk.dep" below
@@ -85,6 +86,9 @@ all: $(executables)
 #$(executables): $(objects)
 
 mu2e_main: mu2e_main.o mu2edev.o
+	$(CXX) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
+
+my_cntl: my_cntl.o mu2edev.o
 	$(CXX) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 tags:

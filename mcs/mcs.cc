@@ -3,13 +3,20 @@
  // or COPYING file. If you do not have such a file, one can be obtained by
  // contacting Ron or Fermi Lab in Batavia IL, 60510, phone: 630-840-3000.
  // $RCSfile: .emacs.gnu,v $
- // rev="$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
+const char *rev="$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
 
 #include <stdio.h>		// printf
 #include <libgen.h>		// basename
 #include <stdlib.h>		// setenv
+#include <getopt.h>		// getopt_long
 #include "trace.h"		// TRACE
 #include "pcidevl_ioctl.h"
+
+#define USAGE "\
+usage: %s [opts] <mcs_file>\n\
+    -e            just erase (then exit)\n\
+   --swap-data    swap the data\n\
+", basename(argv[0])
 
 int g_fd;
 
@@ -46,7 +53,35 @@ int
 main(  int	argc
      , char	*argv[] )
 {
-    if (argc != 2) { printf("usage: %s <mcs_file>\n", basename(argv[0]));return -1;}
+	int     opt_v=0;
+	int	opt_just_erase=0;
+	int     opt_data_swap=0;
+extern  int     optind;         /* for getopt */
+
+    while (1)
+    {   int opt, option_index=0;
+        static struct option long_options[] =
+        {   /* name,   has_arg, int* flag, val_for_flag */
+	    {"swap-data",  0,      0,          1},
+            {0,            0,      0,          0},
+        };
+        opt = getopt_long (argc, argv, "?hVve",
+                        long_options, &option_index);
+        if (opt == -1) break;
+        switch (opt)
+        {
+        case '?': case 'h':  printf( USAGE );  exit( 0 );     break;
+        case 'V': printf("%s\n",rev);return(0);               break;
+        case 'v': opt_v++;                                    break;
+	case 'e': opt_just_erase=1;                           break;
+	case 1:   opt_data_swap=1;                            break;
+        default:  printf ("?? getopt returned character code 0%o ??\n", opt);
+        }
+    }
+    if (argc - optind < 1)
+    {   printf( "Need mcs_file\n" );
+        printf( USAGE ); return (-1);
+    }
 
     setenv( "TRACE_LVLS","0xf", 0 ); //setenv( "TRACE_NAME", "mcs", 0 );
     TRACE_CNTL( "lvlset", 0xffffffffULL, strtoull(getenv("TRACE_LVLS"),NULL,0), 0ULL );
@@ -57,7 +92,7 @@ main(  int	argc
     if (fd == -1) { perror("open /dev/" PCIDEVL_DEV_FILE ); /*return (1);*/ }
     g_fd = fd;
 
-    FILE *stream = fopen( argv[1], "r" );
+    FILE *stream = fopen( argv[optind], "r" );
 
     int	lines=0, data_bytes=0;
     unsigned StartBlockSet=0, StartBlock, EndBlock, LastAddr;
@@ -128,6 +163,7 @@ main(  int	argc
 	 if (sts) TRACE( 0, "unexpected status" );
 	 checks++;
     }
+    TRACE( 1, "after unlock, checks=%u ReadData=0x%x", checks, ReadData );
 
     // Erase blocks
     sts = set_prom_program_data_reg32( 0x45726173 );
@@ -138,9 +174,9 @@ main(  int	argc
 	 if (sts) TRACE( 0, "unexpected status" );
 	 checks++;
     }
-    TRACE( 1, "after Erase, checks=%u", checks );
+    TRACE( 1, "after Erase, checks=%u ReadData=0x%x", checks, ReadData );
 
-    //    return (0);
+    if (opt_just_erase) return (0);
 
     // Program
     sts = set_prom_program_data_reg32( 0x50726f67 );
@@ -164,7 +200,7 @@ main(  int	argc
 		     return -1;
 		 }
 		 checks++;
-		 if (checks==1000000)
+		 if (checks==10000000)
 		 {   TRACE( 0, "program timeout ReadData=0x%x", ReadData );
 		     return -1;
 		 }
@@ -174,7 +210,8 @@ main(  int	argc
 	    {   sts = fscanf(stream,"%8x", &data );
 		if (sts != 1) {printf("did not get data\n");return -1;}
 
-		sts = set_prom_program_data_reg32( swab32(data) );
+		if (opt_data_swap) sts = set_prom_program_data_reg32( swab32(data) );
+		else               sts = set_prom_program_data_reg32( data );
 		if (sts) TRACE( 0, "unexpected status" );
 		bytecount-=4;
 		data_bytes+=4;

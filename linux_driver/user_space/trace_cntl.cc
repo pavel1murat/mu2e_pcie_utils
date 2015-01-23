@@ -18,7 +18,7 @@ done
 #include <pthread.h>		/* pthread_self */
 #include <sys/syscall.h>	/* syscall */
 
-#include "../include/trace.h"
+#include "trace.h"
 
 #define NUMTHREADS 4
 

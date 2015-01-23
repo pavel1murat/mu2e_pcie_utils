@@ -101,6 +101,7 @@ NOTE: for _IOR, _IOW: the size is only for the data at the address used in the
 #define MU2E_IOC_MAGIC 'C'
 
 #define M_IOC_REG_ACCESS     _IOWR( MU2E_IOC_MAGIC, 9, m_ioc_reg_access_t )
+#define M_IOC_GET_TST_STATE  _IOWR( MU2E_IOC_MAGIC, 1, m_ioc_cmd_t )
 #define M_IOC_TEST_START     _IOW ( MU2E_IOC_MAGIC, 2, m_ioc_cmd_t )
 #define M_IOC_TEST_STOP      _IOW ( MU2E_IOC_MAGIC, 3, m_ioc_cmd_t )
 
@@ -113,7 +114,6 @@ NOTE: for _IOR, _IOW: the size is only for the data at the address used in the
 #define M_IOC_BUF_GIVE       _IO  ( MU2E_IOC_MAGIC,13 )//arg=(chn<<24)|(dir<<16)|num
 #define M_IOC_DUMP           _IO  ( MU2E_IOC_MAGIC,14 )
 #define M_IOC_BUF_XMIT       _IO  ( MU2E_IOC_MAGIC,16 )
-
 
 
 typedef struct
@@ -212,6 +212,14 @@ typedef struct
     unsigned hwIdx;
     unsigned swIdx;
 } m_ioc_get_info_t;
+
+
+// stuff from obsolete include/xpmon_be.h
+#define LINK_UP             1           /**< Link State is Up */
+#define INT_NONE            0x0         /**< No Interrupt capability */
+#define INT_LEGACY          0x1         /**< Legacy Interrupts capability */
+#define INT_MSI             0x2         /**< MSI Interrupts capability */
+#define INT_MSIX            0x3         /**< MSI-X Interrupts capability */
 
 
 #endif // MU2E_MMAP_IOCTL_H
