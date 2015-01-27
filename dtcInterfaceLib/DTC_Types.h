@@ -9,34 +9,39 @@
 #include "trace.h"
 #endif
 
-#define DesignVersionRegister                     0x9000
-#define DTCControlRegister                        0x9100
-#define SERDESLoopbackEnableRegister              0x9108
-#define ROCEmulationEnableRegister                0x9110
-#define RingEnableRegister                        0x9114
-#define SERDESResetRegister                       0x9118
-#define SERDESRXDisparityErrorRegister            0x911C
-#define SERDESRXCharacterNotInTableErrorRegister  0x9120
-#define SERDESUnlockErrorRegister                 0x9124
-#define SERDESPLLLockedRegister                   0x9128
-#define SERDESTXBufferStatusRegister              0x912C
-#define SERDESRXBufferStatusRegister              0x9130
-#define SERDESResetDoneRegister                   0x9138
-#define TimestampPreset0Register                  0x9180
-#define TimestampPreset1Register                  0x9184
-#define FPGAPROMProgramDataRegister               0x91A0
-#define FPGAPROMProgramStatusRegister             0x91A4
-
 namespace DTC
 {
+	enum DTC_Register : uint16_t {
+		DTC_Register_DesignVersion                    = 0x9000,
+		DTC_Register_DTCControl                       = 0x9100,
+		DTC_Register_SERDESLoopbackEnable             = 0x9108,
+		DTC_Register_ROCEmulationEnable               = 0x9110,
+		DTC_Register_RingEnable                       = 0x9114,
+		DTC_Register_SERDESReset                      = 0x9118,
+		DTC_Register_SERDESRXDisparityError           = 0x911C,
+		DTC_Register_SERDESRXCharacterNotInTableError = 0x9120,
+		DTC_Register_SERDESUnlockError                = 0x9124,
+		DTC_Register_SERDESPLLLocked                  = 0x9128,
+		DTC_Register_SERDESTXBufferStatus             = 0x912C,
+		DTC_Register_SERDESRXBufferStatus             = 0x9130,
+		DTC_Register_SERDESResetDone                  = 0x9138,
+		DTC_Register_TimestampPreset0                 = 0x9180,
+		DTC_Register_TimestampPreset1                 = 0x9184,
+		DTC_Register_FPGAPROMProgramData              = 0x91A0,
+		DTC_Register_FPGAPROMProgramStatus            = 0x91A4,
+		DTC_Register_Invalid,
+	};
+
 	enum DTC_DMA_Engine {
 		DTC_DMA_Engine_DAQ = 0,
 		DTC_DMA_Engine_DCS = 1,
+		DTC_DMA_Engine_Invalid,
 	};
 
 	enum DTC_DMA_Direction {
 		DTC_DMA_Direction_C2S = 0,
 		DTC_DMA_Direction_S2C = 1,
+		DTC_DMA_Direction_Invalid,
 	};
 
 	enum DTC_Ring_ID : uint8_t {
@@ -78,7 +83,7 @@ namespace DTC
 	};
 
 
-	class DTC_WrongPacketTypeException : std::exception {	
+	class DTC_WrongPacketTypeException : std::exception {
 		virtual const char* what() const throw()
 		{
 			return "Unexpected packet type encountered!";
@@ -119,6 +124,7 @@ namespace DTC
 
 		void SetTimestamp(uint32_t timestampLow, uint16_t timestampHigh);
 		std::bitset<48> GetTimestamp() const { return timestamp_; }
+		uint64_t GetTimestamp(bool dummy) const { return timestamp_; }
 		void GetTimestamp(uint8_t* timeArr) const;
 
 	};
@@ -384,7 +390,7 @@ namespace DTC
 		uint32_t LBR;           /**< Last Byte Rate */
 		uint32_t LAT;           /**< Last Active Time */
 		uint32_t LWT;           /**< Last Wait Time */
-		DTC_DMAStat() {}
+		DTC_DMAStat() : Engine(DTC_DMA_Engine_Invalid), Direction(DTC_DMA_Direction_Invalid), LBR(0), LAT(0), LWT(0) {}
 		DTC_DMAStat(DMAStatistics in);
 	};
 	struct DTC_DMAStats {
@@ -392,7 +398,10 @@ namespace DTC
 		std::vector<DTC_DMAStat> Stats;
 		DTC_DMAStats() {}
 		DTC_DMAStats(m_ioc_engstats_t in);
-		std::vector<DTC_DMAStat> getData(DTC_DMA_Engine dma, DTC_DMA_Direction dir);
+		DTC_DMAStats getData(DTC_DMA_Engine dma, DTC_DMA_Direction dir);
+		void addStat(DTC_DMAStat in) { Stats.push_back(in); }
+		size_t size() { return Stats.size(); }
+		DTC_DMAStat at(int index) { return Stats.at(index); }
 	};
 
 	struct DTC_PCIeState {

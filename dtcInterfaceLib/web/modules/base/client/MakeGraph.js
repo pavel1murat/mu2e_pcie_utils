@@ -51,6 +51,7 @@ function tick(paths, line, axes, x, y, ids, tag) {
 }
 
 function makeGraph(tag, ids) {
+    n = 120;
     var now = new Date(Date.now() - duration);
     
     var margin = { top: 6, right: 20, bottom: 20, left: 60 },

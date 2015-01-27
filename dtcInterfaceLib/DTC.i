@@ -11,6 +11,7 @@ using namespace DTC;
 %}
 
 %include "std_vector.i"
+%include "std_string.i"
 
 %include "DTC_Types.h"
 %include "DTC.h"

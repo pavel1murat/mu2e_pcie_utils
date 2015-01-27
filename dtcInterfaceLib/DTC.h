@@ -31,9 +31,12 @@ namespace DTC {
 		//
 		// Register IO Functions
 		//
-		uint32_t ReadDesignVersion();
+		std::string RegisterRead(const DTC_Register& address);
+
+		std::string ReadDesignVersion();
 
 		void ResetDTC();
+		bool ReadResetDTC();
 
 		bool ToggleClearLatchedErrors();
 		bool ReadClearLatchedErrors();
@@ -46,9 +49,12 @@ namespace DTC {
 
 		bool EnableRing(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc = DTC_ROC_Unused);
 		bool DisableRing(const DTC_Ring_ID& ring);
+		bool ToggleRingEnabled(const DTC_Ring_ID& ring);
 		bool ReadRingEnabled(const DTC_Ring_ID& ring);
 
 		bool ResetSERDES(const DTC_Ring_ID& ring, int interval = 100);
+		bool ReadResetSERDES(const DTC_Ring_ID& ring);
+		bool ReadResetSERDESDone(const DTC_Ring_ID& ring);
 
 		DTC_SERDESRXDisparityError ReadSERDESRXDisparityError(const DTC_Ring_ID& ring);
 		DTC_CharacterNotInTableError ReadSERDESRXCharacterNotInTableError(const DTC_Ring_ID& ring);
@@ -74,7 +80,7 @@ namespace DTC {
 		DTC_TestMode StopTest(const DTC_DMA_Engine& dma);
 
 		DTC_DMAState ReadDMAState(const DTC_DMA_Engine& dma, const DTC_DMA_Direction& dir);
-		std::vector<DTC_DMAStat> ReadDMAStats(const DTC_DMA_Engine& dma, const DTC_DMA_Direction& dir);
+		DTC_DMAStats ReadDMAStats(const DTC_DMA_Engine& dma, const DTC_DMA_Direction& dir);
 
 		DTC_PCIeState ReadPCIeState();
 		DTC_PCIeStat ReadPCIeStats();
@@ -89,8 +95,8 @@ namespace DTC {
 		void WriteDMADAQPacket(const DTC_DMAPacket& packet);
 		void WriteDMADCSPacket(const DTC_DMAPacket& packet);
 
-		void WriteRegister(uint32_t data, uint16_t address);
-		uint32_t ReadRegister(uint16_t address);
+		void WriteRegister(uint32_t data, const DTC_Register& address);
+		uint32_t ReadRegister(const DTC_Register& address);
 		void WriteControlRegister(uint32_t data);
 		uint32_t ReadControlRegister();
 		void WriteSERDESLoopbackEnableRegister(uint32_t data);

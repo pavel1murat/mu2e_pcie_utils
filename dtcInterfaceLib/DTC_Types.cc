@@ -397,17 +397,22 @@ DTC::DTC_DMAStats::DTC_DMAStats(m_ioc_engstats_t in)
 		Stats.push_back(DTC_DMAStat(in.engptr[i]));
 	}
 }
-std::vector<DTC::DTC_DMAStat> DTC::DTC_DMAStats::getData(DTC_DMA_Engine dma, DTC_DMA_Direction dir)
+DTC::DTC_DMAStats DTC::DTC_DMAStats::getData(DTC_DMA_Engine dma, DTC_DMA_Direction dir)
 {
-	std::vector<DTC_DMAStat> output;
+	DTC_DMAStats output;
 	for (auto i : Stats)
 	{
 		if (i.Engine == dma && i.Direction == dir)
 		{
-			output.push_back(i);
+			output.addStat(i);
 		}
 	}
 
+	TRACE(0, "Output size is %i", output.size());
+	if (output.size() == 0) {
+		output.addStat(DTC_DMAStat());
+	}
+	TRACE(0, "Output size is %i", output.size());
 	return output;
 }
 

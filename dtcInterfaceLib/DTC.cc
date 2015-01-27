@@ -1,5 +1,6 @@
 #include "DTC.h"
 #include <iostream>
+#include <sstream> // Convert uint to hex string
 #ifndef _WIN32
 #include <unistd.h>
 #else
@@ -74,9 +75,17 @@ void DTC::DTC::SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRo
 //
 // Register IO Functions
 //
-uint32_t DTC::DTC::ReadDesignVersion()
+std::string DTC::DTC::RegisterRead(const DTC_Register& address)
 {
-	return ReadRegister(DesignVersionRegister);
+	uint32_t data = ReadRegister(address);
+	std::stringstream stream;
+	stream << std::hex << data;
+	return std::string(stream.str());
+}
+
+std::string DTC::DTC::ReadDesignVersion()
+{
+	return RegisterRead(DTC_Register_DesignVersion);
 }
 
 void DTC::DTC::ResetDTC()
@@ -84,6 +93,11 @@ void DTC::DTC::ResetDTC()
 	std::bitset<32> data = ReadControlRegister();
 	data[31] = 1; // DTC Reset bit
 	WriteControlRegister(data.to_ulong());
+}
+bool DTC::DTC::ReadResetDTC()
+{
+	std::bitset<32> dataSet = ReadControlRegister();
+	return dataSet[31];
 }
 
 bool DTC::DTC::ToggleClearLatchedErrors()
@@ -143,6 +157,13 @@ bool DTC::DTC::DisableRing(const DTC_Ring_ID& ring)
 	WriteRingEnableRegister(data.to_ulong());
 	return ReadRingEnabled(ring);
 }
+bool DTC::DTC::ToggleRingEnabled(const DTC_Ring_ID& ring)
+{
+	std::bitset<32> data = ReadRingEnableRegister();
+	data.flip((uint8_t)ring);
+	WriteRingEnableRegister(data.to_ulong());
+	return ReadRingEnabled(ring);
+}
 bool DTC::DTC::ReadRingEnabled(const DTC_Ring_ID& ring)
 {
 	std::bitset<32> dataSet = ReadRingEnableRegister();
@@ -167,6 +188,16 @@ bool DTC::DTC::ResetSERDES(const DTC_Ring_ID& ring, int interval)
 		resetDone = ReadSERDESResetDone(ring);
 	}
 	return resetDone;
+}
+bool DTC::DTC::ReadResetSERDES(const DTC_Ring_ID& ring)
+{
+	std::bitset<32> dataSet = ReadSERDESResetRegister();
+	return dataSet[ring];
+}
+bool DTC::DTC::ReadResetSERDESDone(const DTC_Ring_ID& ring)
+{
+	std::bitset<32> dataSet = ReadSERDESResetDoneRegister();
+	return dataSet[ring];
 }
 
 DTC::DTC_SERDESRXDisparityError DTC::DTC::ReadSERDESRXDisparityError(const DTC_Ring_ID& ring)
@@ -266,7 +297,7 @@ DTC::DTC_DMAState DTC::DTC::ReadDMAState(const DTC_DMA_Engine& dma, const DTC_DM
 
 	return DTC_DMAState(state);
 }
-std::vector<DTC::DTC_DMAStat> DTC::DTC::ReadDMAStats(const DTC_DMA_Engine& dma, const DTC_DMA_Direction& dir)
+DTC::DTC_DMAStats DTC::DTC::ReadDMAStats(const DTC_DMA_Engine& dma, const DTC_DMA_Direction& dir)
 {
 	DMAStatistics statData[100];
 	m_ioc_engstats_t stats;
@@ -284,7 +315,7 @@ std::vector<DTC::DTC_DMAStat> DTC::DTC::ReadDMAStats(const DTC_DMA_Engine& dma, 
 		throw DTC_IOErrorException();
 	}
 
-	return DTC_DMAStats(stats).getData(dma, dir);
+	return DTC_DMAStats(stats).getData(dma,dir);
 }
 
 DTC::DTC_PCIeState DTC::DTC::ReadPCIeState()
@@ -363,7 +394,7 @@ void DTC::DTC::WriteDMADCSPacket(const DTC_DMAPacket& packet)
 	return WriteDMAPacket(DTC_DMA_Engine_DCS, packet);
 }
 
-void DTC::DTC::WriteRegister(uint32_t data, uint16_t address)
+void DTC::DTC::WriteRegister(uint32_t data, const DTC_Register& address)
 {
 	int retry = 3;
 	int errorCode = 0;
@@ -376,7 +407,7 @@ void DTC::DTC::WriteRegister(uint32_t data, uint16_t address)
 		throw new DTC_IOErrorException();
 	}
 }
-uint32_t DTC::DTC::ReadRegister(uint16_t address)
+uint32_t DTC::DTC::ReadRegister(const DTC_Register& address)
 {
 	int retry = 3;
 	int errorCode = 0;
@@ -394,71 +425,71 @@ uint32_t DTC::DTC::ReadRegister(uint16_t address)
 }
 void DTC::DTC::WriteControlRegister(uint32_t data)
 {
-	WriteRegister(data, DTCControlRegister);
+	WriteRegister(data, DTC_Register_DTCControl);
 }
 uint32_t DTC::DTC::ReadControlRegister()
 {
-	return ReadRegister(DTCControlRegister);
+	return ReadRegister(DTC_Register_DTCControl);
 }
 void DTC::DTC::WriteSERDESLoopbackEnableRegister(uint32_t data)
 {
-	WriteRegister(data, SERDESLoopbackEnableRegister);
+	WriteRegister(data, DTC_Register_SERDESLoopbackEnable);
 }
 uint32_t DTC::DTC::ReadSERDESLoopbackEnableRegister()
 {
-	return ReadRegister(SERDESLoopbackEnableRegister);
+	return ReadRegister(DTC_Register_SERDESLoopbackEnable);
 }
 void DTC::DTC::WriteROCEmulationEnableRegister(uint32_t data)
 {
-	WriteRegister(data, ROCEmulationEnableRegister);
+	WriteRegister(data, DTC_Register_ROCEmulationEnable);
 }
 uint32_t DTC::DTC::ReadROCEmulationEnableRegister()
 {
-	return ReadRegister(ROCEmulationEnableRegister);
+	return ReadRegister(DTC_Register_ROCEmulationEnable);
 }
 void DTC::DTC::WriteRingEnableRegister(uint32_t data)
 {
-	WriteRegister(data, RingEnableRegister);
+	WriteRegister(data, DTC_Register_RingEnable);
 }
 uint32_t DTC::DTC::ReadRingEnableRegister()
 {
-	return ReadRegister(RingEnableRegister);
+	return ReadRegister(DTC_Register_RingEnable);
 }
 void DTC::DTC::WriteSERDESResetRegister(uint32_t data)
 {
-	WriteRegister(data, SERDESResetRegister);
+	WriteRegister(data, DTC_Register_SERDESReset);
 }
 uint32_t DTC::DTC::ReadSERDESResetRegister()
 {
-	return ReadRegister(SERDESResetRegister);
+	return ReadRegister(DTC_Register_SERDESReset);
 }
 uint32_t DTC::DTC::ReadSERDESRXDisparityErrorRegister()
 {
-	return ReadRegister(SERDESRXDisparityErrorRegister);
+	return ReadRegister(DTC_Register_SERDESRXDisparityError);
 }
 uint32_t DTC::DTC::ReadSERDESRXCharacterNotInTableErrorRegister()
 {
-	return ReadRegister(SERDESRXCharacterNotInTableErrorRegister);
+	return ReadRegister(DTC_Register_SERDESRXCharacterNotInTableError);
 }
 uint32_t DTC::DTC::ReadSERDESUnlockErrorRegister()
 {
-	return ReadRegister(SERDESUnlockErrorRegister);
+	return ReadRegister(DTC_Register_SERDESUnlockError);
 }
 uint32_t DTC::DTC::ReadSERDESPLLLockedRegister()
 {
-	return ReadRegister(SERDESPLLLockedRegister);
+	return ReadRegister(DTC_Register_SERDESPLLLocked);
 }
 uint32_t DTC::DTC::ReadSERDESTXBufferStatusRegister()
 {
-	return ReadRegister(SERDESTXBufferStatusRegister);
+	return ReadRegister(DTC_Register_SERDESTXBufferStatus);
 }
 uint32_t DTC::DTC::ReadSERDESRXBufferStatusRegister()
 {
-	return ReadRegister(SERDESRXBufferStatusRegister);
+	return ReadRegister(DTC_Register_SERDESRXBufferStatus);
 }
 uint32_t DTC::DTC::ReadSERDESResetDoneRegister()
 {
-	return ReadRegister(SERDESResetDoneRegister);
+	return ReadRegister(DTC_Register_SERDESResetDone);
 }
 bool DTC::DTC::ReadSERDESResetDone(const DTC_Ring_ID& ring)
 {
@@ -467,27 +498,27 @@ bool DTC::DTC::ReadSERDESResetDone(const DTC_Ring_ID& ring)
 }
 void DTC::DTC::WriteTimestampPreset0Register(uint32_t data)
 {
-	WriteRegister(data, TimestampPreset0Register);
+	WriteRegister(data, DTC_Register_TimestampPreset0);
 }
 uint32_t DTC::DTC::ReadTimestampPreset0Register()
 {
-	return ReadRegister(TimestampPreset0Register);
+	return ReadRegister(DTC_Register_TimestampPreset0);
 }
 void DTC::DTC::WriteTimestampPreset1Register(uint32_t data)
 {
-	WriteRegister(data, TimestampPreset1Register);
+	WriteRegister(data, DTC_Register_TimestampPreset1);
 }
 uint32_t DTC::DTC::ReadTimestampPreset1Register()
 {
-	return ReadRegister(TimestampPreset1Register);
+	return ReadRegister(DTC_Register_TimestampPreset1);
 }
 void DTC::DTC::WriteFPGAPROMProgramDataRegister(uint32_t data)
 {
-	WriteRegister(data, FPGAPROMProgramDataRegister);
+	WriteRegister(data, DTC_Register_FPGAPROMProgramData);
 }
 uint32_t DTC::DTC::ReadFPGAPROMProgramStatusRegister()
 {
-	return ReadRegister(FPGAPROMProgramStatusRegister);
+	return ReadRegister(DTC_Register_FPGAPROMProgramStatus);
 }
 
 void DTC::DTC::WriteTestCommand(const DTC_TestCommand& comm, bool start)
