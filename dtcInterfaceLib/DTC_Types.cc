@@ -408,11 +408,9 @@ DTC::DTC_DMAStats DTC::DTC_DMAStats::getData(DTC_DMA_Engine dma, DTC_DMA_Directi
 		}
 	}
 
-	TRACE(0, "Output size is %i", output.size());
 	if (output.size() == 0) {
 		output.addStat(DTC_DMAStat());
 	}
-	TRACE(0, "Output size is %i", output.size());
 	return output;
 }
 
