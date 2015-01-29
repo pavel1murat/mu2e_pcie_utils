@@ -1,5 +1,4 @@
 #include "DTC.h"
-#include <iostream>
 #include <sstream> // Convert uint to hex string
 #ifndef _WIN32
 #include <unistd.h>
@@ -9,9 +8,15 @@
 #define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
 #endif
 
-DTC::DTC::DTC() : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t))), device_()
+DTC::DTC::DTC() : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t))), device_(), buffer_(nullptr)
 {
-	device_.init();
+#ifdef _WIN32
+	simMode_ = true;
+#else
+	std::string sim = getenv("DTCLIB_SIM_ENABLE");
+	simMode_ = sim.length() > 0 && sim == "1";
+#endif
+	device_.init(simMode_);
 }
 
 //
@@ -32,10 +37,10 @@ std::vector<void*> DTC::DTC::GetData(const DTC_Ring_ID& ring, const DTC_ROC_ID& 
 	}
 	DTC_DataHeaderPacket packet(dmaPacket);
 
-	*length = packet.GetPacketCount();
+	*length = packet.GetPacketCount() + 1;
 	output.push_back(buffer_);
 
-	while (DTC_BUFFSIZE * output.size() < packet.GetPacketCount())
+	while (DTC_BUFFSIZE * output.size() < packet.GetPacketCount() + 1U)
 	{
 		dmaPacket = ReadDMADAQPacket();
 		output.push_back(buffer_);
@@ -48,7 +53,6 @@ void DTC::DTC::DCSRequestReply(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, u
 {
 	DTC_DCSRequestPacket req(ring, roc, dataIn);
 	WriteDMADCSPacket(req);
-
 	DTC_DMAPacket packet = ReadDMADCSPacket();
 	if (packet.GetPacketType() != DTC_PacketType_DCSReply)
 	{
@@ -354,20 +358,33 @@ DTC::DTC_DataPacket DTC::DTC::ReadDataPacket(const DTC_DMA_Engine& channel)
 	int retry = 3;
 	int errorCode = 0;
 	do {
-		errorCode = device_.read_data(channel, (void**)buffer_, 1000);
+		errorCode = device_.read_data(channel, (void**)&buffer_, 1000);
 		retry--;
 	} while (retry > 0 && errorCode != 0);
 	if (errorCode != 0)
 	{
 		throw DTC_IOErrorException();
 	}
-
 	return DTC_DataPacket(buffer_);
 }
 void DTC::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPacket& packet)
 {
-	std::cout << "Channel is " << channel << ", packet type is " << packet.GetWord(0) << std::endl;
-	throw new DTC_NotImplementedException();
+	uint8_t packetData[16];
+	for (int i = 0; i < 16; ++i)
+	{
+		packetData[i] = packet.GetWord(i);
+	}
+
+	int retry = 3;
+	int errorCode = 0;
+	do {
+		errorCode = device_.write_loopback_data(channel, packetData, sizeof(packetData));
+		retry--;
+	} while (retry > 0 && errorCode != 0);
+	if (errorCode != 0)
+	{
+		throw DTC_IOErrorException();
+	}
 }
 DTC::DTC_DMAPacket DTC::DTC::ReadDMAPacket(const DTC_DMA_Engine& channel)
 {

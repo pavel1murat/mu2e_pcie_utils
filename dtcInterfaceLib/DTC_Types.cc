@@ -1,5 +1,5 @@
 #include "DTC_Types.h"
-
+#include <sstream>
 
 DTC::DTC_Timestamp::DTC_Timestamp()
 	: timestamp_(0) {}
@@ -44,14 +44,7 @@ DTC::DTC_DataPacket::DTC_DataPacket(mu2e_databuff_t* data)
 {
 	for (int i = 0; i < 16; ++i)
 	{
-		int jmax = sizeof(uint8_t) / sizeof(*data[0]);
-		uint8_t dataShort = *data[i * jmax];
-		for (int j = 1; j < jmax; ++j)
-		{
-			dataShort <<= sizeof(*data[0]);
-			dataShort += *data[j + (i * jmax)];
-		}
-		dataWords_[i] = dataShort;
+		memcpy(&dataWords_[0], data, sizeof(dataWords_));
 	}
 }
 
@@ -306,6 +299,27 @@ uint32_t DTC::DTC_TestMode::GetWord() const
 	}
 	return output;
 }
+std::string DTC::DTC_TestMode::toString()
+{
+	std::string output = "";
+	if (loopbackEnabled) {
+		output += "L";
+	}
+	else
+	{
+		if (txChecker) {
+			output += "T";
+		}
+		if (rxGenerator) {
+			output += "R";
+		}
+	}
+	if (state_)
+	{
+		output += "A";
+	}
+	return output;
+}
 
 DTC::DTC_TestCommand::DTC_TestCommand()
 	: TestMode(), PacketSize(0), Engine(DTC_DMA_Engine_DAQ) {}
@@ -366,6 +380,15 @@ DTC::DTC_DMAState::DTC_DMAState(m_ioc_engstate_t in)
 		break;
 	}
 }
+std::string DTC::DTC_DMAState::toString() {
+	std::stringstream stream;
+	stream << "E: " << Engine << ", D: " << Direction;
+	stream << ", BDs: " << BDs << ", Buffers: " << Buffers;
+	stream << ", PktSize: (" << MinPktSize << "," << MaxPktSize << "), ";
+	stream << "BDerrs: " << BDerrs << ", BDSerrs: " << BDSerrs;
+	stream << ", IntEnab: " << IntEnab << ", TestMode: " << TestMode.toString() << std::endl;
+	return stream.str();
+}
 
 DTC::DTC_DMAStat::DTC_DMAStat(DMAStatistics in) : LBR(in.LBR), LAT(in.LAT), LWT(in.LWT)
 {
@@ -388,6 +411,14 @@ DTC::DTC_DMAStat::DTC_DMAStat(DMAStatistics in) : LBR(in.LBR), LAT(in.LAT), LWT(
 		Engine = DTC_DMA_Engine_DCS;
 		break;
 	}
+}
+std::string DTC::DTC_DMAStat::toString()
+{
+	std::stringstream stream;
+	stream << "E: " << Engine << ", D: " << Direction;
+	stream << ", LBR: " << LBR << ", LAT: " << LAT;
+	stream << ", LWT: " << LWT << std::endl;
+	return stream.str();
 }
 
 DTC::DTC_DMAStats::DTC_DMAStats(m_ioc_engstats_t in)
@@ -420,6 +451,29 @@ DTC::DTC_PCIeState::DTC_PCIeState(m_ioc_pcistate_t in)
 	IntMode(in.IntMode), MPS(in.MPS), MRRS(in.MRRS), InitFCCplD(in.InitFCCplD),
 	InitFCCplH(in.InitFCCplH), InitFCNPD(in.InitFCNPD), InitFCNPH(in.InitFCNPH),
 	InitFCPD(in.InitFCPD), InitFCPH(in.InitFCPH) {}
+
+std::string DTC::DTC_PCIeState::toString()
+{
+	std::stringstream stream;
+
+	stream << "Version: " << Version << std::endl;
+	stream << "LinkState: " << LinkState << std::endl;
+	stream << "LinkSpeed: " << LinkSpeed << std::endl;              /**< Link Speed */
+	stream << "LinkWidth: " << LinkWidth << std::endl;              /**< Link Width */
+	stream << "VendorId: " << VendorId << std::endl;     /**< Vendor ID */
+	stream << "DeviceId: " << DeviceId << std::endl;    /**< Device ID */
+	stream << "IntMode: " << IntMode << std::endl;                /**< Legacy or MSI interrupts */
+	stream << "MPS: " << MPS << std::endl;                    /**< Max Payload Size */
+	stream << "MRRS: " << MRRS << std::endl;                   /**< Max Read Request Size */
+	stream << "InitFCCplD: " << InitFCCplD << std::endl;             /**< Initial FC Credits for Completion Data */
+	stream << "InitFCCplH: " << InitFCCplH << std::endl;             /**< Initial FC Credits for Completion Header */
+	stream << "InitFCNPD: " << InitFCNPD << std::endl;              /**< Initial FC Credits for Non-Posted Data */
+	stream << "InitFCNPH: " << InitFCNPH << std::endl;              /**< Initial FC Credits for Non-Posted Data */
+	stream << "InitFCPD: " << InitFCPD << std::endl;               /**< Initial FC Credits for Posted Data */
+	stream << "InitFCPH: " << InitFCPH << std::endl;               /**< Initial FC Credits for Posted Data */
+
+	return stream.str();
+}
 
 DTC::DTC_PCIeStat::DTC_PCIeStat(TRNStatistics in)
 	: LTX(in.LTX), LRX(in.LRX) {}

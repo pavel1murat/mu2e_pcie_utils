@@ -83,19 +83,19 @@ namespace DTC
 	};
 
 
-	class DTC_WrongPacketTypeException : std::exception {
+	class DTC_WrongPacketTypeException : public std::exception {
 		virtual const char* what() const throw()
 		{
 			return "Unexpected packet type encountered!";
 		}
 	};
-	class DTC_IOErrorException : std::exception {
+	class DTC_IOErrorException : public std::exception {
 		virtual const char* what() const throw()
 		{
 			return "Unable to communicate with the DTC";
 		}
 	};
-	class DTC_NotImplementedException : std::exception {
+	class DTC_NotImplementedException : public std::exception {
 		virtual const char* what() const throw()
 		{
 			return "I don't think we're in Kansas anymore...";
@@ -124,7 +124,7 @@ namespace DTC
 
 		void SetTimestamp(uint32_t timestampLow, uint16_t timestampHigh);
 		std::bitset<48> GetTimestamp() const { return timestamp_; }
-		uint64_t GetTimestamp(bool dummy) const { return timestamp_; }
+		uint64_t GetTimestamp(bool dummy) const { if (dummy) { return timestamp_; } else return 0; }
 		void GetTimestamp(uint8_t* timeArr) const;
 
 	};
@@ -351,6 +351,7 @@ namespace DTC
 		bool GetRXGeneratorState() { return rxGenerator; }
 		bool GetState() { return state_; }
 		uint32_t GetWord() const;
+		std::string toString();
 	};
 
 	struct DTC_TestCommand {
@@ -380,6 +381,7 @@ namespace DTC
 		DTC_TestMode TestMode;
 		DTC_DMAState() {}
 		DTC_DMAState(m_ioc_engstate_t in);
+		std::string toString();
 	};
 
 	struct DTC_DMAStat
@@ -392,6 +394,7 @@ namespace DTC
 		uint32_t LWT;           /**< Last Wait Time */
 		DTC_DMAStat() : Engine(DTC_DMA_Engine_Invalid), Direction(DTC_DMA_Direction_Invalid), LBR(0), LAT(0), LWT(0) {}
 		DTC_DMAStat(DMAStatistics in);
+		std::string toString();
 	};
 	struct DTC_DMAStats {
 	public:
@@ -423,6 +426,7 @@ namespace DTC
 		int InitFCPH;               /**< Initial FC Credits for Posted Data */
 		DTC_PCIeState() {}
 		DTC_PCIeState(m_ioc_pcistate_t in);
+		std::string toString();
 	};
 
 	struct DTC_PCIeStat {

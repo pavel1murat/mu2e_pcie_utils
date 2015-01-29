@@ -3,6 +3,7 @@
 
 #include "DTC_Types.h"
 #include <vector>
+#include <cstdlib>
 #include "mu2edev.hh"
 
 namespace DTC {
@@ -12,6 +13,8 @@ namespace DTC {
 		virtual ~DTC() = default;
 
 		const int DTC_BUFFSIZE;
+
+		bool IsSimulatedDTC() { return simMode_; }
 
 		//
 		// DMA Functions
@@ -129,6 +132,7 @@ namespace DTC {
 		DTC_ROC_ID maxRocs_[6];
 		mu2edev device_;
 		mu2e_databuff_t* buffer_;
+		bool simMode_;
 	};
 }
 #endif

@@ -7,17 +7,19 @@
 
 #include "mu2e_mmap_ioctl.h" // 
 #include <cstdint>
+#include "mu2esim.hh"
 
 
 struct mu2edev
 {
     mu2edev();
-    int  init( void );
+    int  init( bool simMode = false );
     int  read_data( int chn, void **buffer, int tmo_ms );
     int  read_release( int chn, unsigned num );
     int  read_register(uint16_t address, int tmo_ms, uint32_t *output);
     int  write_register(uint16_t address, int tmo_ms, uint32_t data);
     void meta_dump( int chn, int dir );
+	int  write_loopback_data(int chn, void *buffer, size_t bytes);
     int  read_pcie_state(m_ioc_pcistate_t *output);
     int  read_dma_state(int chn, int dir, m_ioc_engstate_t *output);
     int  read_dma_stats(m_ioc_engstats_t *output);
@@ -31,4 +33,5 @@ private:
     int	             devfd_;
     volatile void *  mu2e_mmap_ptrs_[MU2E_MAX_CHANNELS][2][2];
     m_ioc_get_info_t mu2e_channel_info_[MU2E_MAX_CHANNELS][2];
+	mu2esim          simulator_;
 };
