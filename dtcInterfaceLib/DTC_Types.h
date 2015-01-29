@@ -194,6 +194,11 @@ namespace DTC
 #endif
 		DTC_DCSRequestPacket(DTC_DataPacket& in) : DTC_DMAPacket(in) {}
 		DTC_DCSRequestPacket(DTC_DMAPacket&& in) : DTC_DMAPacket(in) {}
+		
+		DTC_DCSRequestPacket& operator=(const DTC_DCSRequestPacket&) = default;
+#ifndef _WIN32
+		DTC_DCSRequestPacket& operator=(DTC_DCSRequestPacket&&) = default;
+#endif
 
 		virtual ~DTC_DCSRequestPacket() = default;
 	};

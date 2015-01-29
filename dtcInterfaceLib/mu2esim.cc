@@ -19,7 +19,7 @@
 #include <iostream>
 
 mu2esim::mu2esim() : isActive_(false), simIndex_(),
-dcsRequestRecieved_(false), dataRequestRecieved_(false), readoutRequestRecieved_(),
+dcsRequestRecieved_(false), readoutRequestRecieved_(), dataRequestRecieved_(false),
 activeDAQRing_(DTC::DTC_Ring_Unused),
 activeDCSRing_(DTC::DTC_Ring_Unused),
 dcsRequest_(DTC::DTC_Ring_Unused, DTC::DTC_ROC_Unused)
@@ -203,6 +203,7 @@ int mu2esim::write_loopback_data(int chn, void *buffer, size_t bytes)
 			uint8_t data[12];
 			memcpy(&data[0], (char*)buffer + (2 * sizeof(uint16_t)), sizeof(data));
 			dcsRequest_ = DTC::DTC_DCSRequestPacket(activeDCSRing_, (DTC::DTC_ROC_ID)(word & 0xF), data);
+
 		}
 		break;
 	}

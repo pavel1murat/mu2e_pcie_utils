@@ -71,7 +71,7 @@ int mu2edev::init(bool simMode)
 			}
 #endif
 	}
-	return (0);
+	return (simMode);
 }
 
 int mu2edev::read_data(int chn, void **buffer, int tmo_ms)

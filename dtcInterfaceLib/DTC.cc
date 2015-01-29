@@ -13,10 +13,10 @@ DTC::DTC::DTC() : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t)))
 #ifdef _WIN32
 	simMode_ = true;
 #else
-	std::string sim = getenv("DTCLIB_SIM_ENABLE");
-	simMode_ = sim.length() > 0 && sim == "1";
+	char* sim = getenv("DTCLIB_SIM_ENABLE");
+	simMode_ = sim != NULL && sim[0] == '1';
 #endif
-	device_.init(simMode_);
+	simMode_ = (bool)device_.init(simMode_);
 }
 
 //
