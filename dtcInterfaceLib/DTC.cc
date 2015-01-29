@@ -24,6 +24,7 @@ DTC::DTC::DTC() : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t)))
 //
 std::vector<void*> DTC::DTC::GetData(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const DTC_Timestamp& when, int* length)
 {
+	device_.release_all(0);
 	std::vector<void*> output;
 	// Send a data request
 	DTC_DataRequestPacket req(ring, roc, when);
@@ -51,6 +52,7 @@ std::vector<void*> DTC::DTC::GetData(const DTC_Ring_ID& ring, const DTC_ROC_ID& 
 
 void DTC::DTC::DCSRequestReply(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, uint8_t* dataIn)
 {
+	device_.release_all(1);
 	DTC_DCSRequestPacket req(ring, roc, dataIn);
 	WriteDMADCSPacket(req);
 	DTC_DMAPacket packet = ReadDMADCSPacket();

@@ -370,6 +370,16 @@ int mu2edev::write_test_command(m_ioc_cmd_t input, bool start)
 	}
 }
 
+int mu2edev::release_all(int chn)
+{
+	int retsts = 0;
+	for (int i = 0; i << mu2e_channel_info_[chn][C2S].num_buffs; ++i)
+	{
+		retsts = retsts || read_release(chn, i);
+	}
+	return retsts;
+}
+
 unsigned mu2edev::delta_(int chn, int dir)
 {
 	unsigned hw = mu2e_channel_info_[chn][dir].hwIdx;

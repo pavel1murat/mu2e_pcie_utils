@@ -137,7 +137,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 		packet[0] = ((activeDAQRing_ & 0x0F) << 8) + 0x50;
 		packet[1] = 0x0001;
 		time_t currentTime = time(0); // On Windows, at least, this is 64-bits. We'll drop the first 16.
-		memcpy(&packet[2], &currentTime, 3*sizeof(packet[2]));
+		memcpy(&packet[2], &currentTime, 3 * sizeof(packet[2]));
 		packet[5] = 0x0001;
 		packet[6] = 0x0;
 		packet[7] = 0x0;
@@ -233,7 +233,8 @@ int  mu2esim::read_register(uint16_t address, int tmo_ms, uint32_t *output)
 
 int  mu2esim::write_register(uint16_t address, int tmo_ms, uint32_t data)
 {
-	// Ignore all register write operations!
+	// Write the register!!!
+	registers_[address] = data;
 	return 0;
 }
 
@@ -285,8 +286,8 @@ int mu2esim::read_trn_stats(TRNStatsArray *output)
 {
 	for (int i = 0; i < output->Count; ++i){
 		TRNStatistics thisStat;
-		thisStat.LRX = (i+1) * 1000000;
-		thisStat.LTX = (i+1) * 1000000;
+		thisStat.LRX = (i + 1) * 1000000;
+		thisStat.LTX = (i + 1) * 1000000;
 		output->trnptr[i] = thisStat;
 	}
 

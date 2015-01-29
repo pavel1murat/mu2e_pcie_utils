@@ -17,7 +17,12 @@ int main(int argc, char** argv) {
 		std::cout << "If simulated, result will be 53494D44 (SIMD in ASCII)" << std::endl;
 		std::cout << "Attempting to Toggle Ring 0." << std::endl;
 		bool ring0Value = thisDTC->ReadRingEnabled(DTC::DTC_Ring_0);
-		if (thisDTC->ToggleRingEnabled(DTC::DTC_Ring_0) != ring0Value || thisDTC->IsSimulatedDTC())
+		std::cout << "Value before: " << ring0Value << std::endl;
+		bool ring0New = thisDTC->ToggleRingEnabled(DTC::DTC_Ring_0);
+		std::cout << "Value after: " << ring0New << std::endl;
+		// Make sure that the ring is enabled after the test.
+		thisDTC->EnableRing(DTC::DTC_Ring_0, DTC::DTC_ROC_0);
+		if (ring0New != ring0Value)
 		{
 			std::cout << "Test Succeeded" << std::endl;
 			++testsPassed;
