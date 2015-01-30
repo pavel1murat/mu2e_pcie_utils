@@ -5,7 +5,7 @@
  // $RCSfile: .emacs.gnu,v $
  // rev="$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
 
-#include "mu2e_mmap_ioctl.h" // 
+#include "linux_driver/mymodule2/mu2e_mmap_ioctl.h" // 
 #include <cstdint>
 #include "mu2esim.hh"
 

@@ -77,7 +77,7 @@ struct DataPacket
      +sysconf(_SC_PAGE_SIZE)*(map&1) )
 
 #define idx_add( idx, add, chn, dir )				 \
-    ({unsigned num_buffs=mu2e_channel_info_[chn][dir].num_buffs; \
+    __extension__ ({unsigned num_buffs=mu2e_channel_info_[chn][dir].num_buffs; \
 	(add<0)								\
 	    ?(((unsigned)-add>idx)					\
 	      ?(num_buffs-(-add-idx))%num_buffs		\

@@ -4,10 +4,7 @@
 #include <bitset> // std::bitset
 #include <cstdint> // uint8_t, uint16_t
 #include <vector> // std::vector
-#include "mu2e_mmap_ioctl.h"
-#ifndef _WIN32
-#include "trace.h"
-#endif
+#include "linux_driver/mymodule2/mu2e_mmap_ioctl.h"
 
 namespace DTC
 {

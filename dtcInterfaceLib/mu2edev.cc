@@ -13,7 +13,6 @@
 #ifndef _WIN32
 #include <trace.h>
 #endif
-#include "mu2e_mmap_ioctl.h" // MU2E_DEV_FILE, M_IOC_*, etc
 #include "mu2edev.hh"
 
 mu2edev::mu2edev() : devfd_(0)

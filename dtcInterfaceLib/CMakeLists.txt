@@ -1,5 +1,3 @@
-include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/linux_driver/mymodule2")
-
 cet_make_library(LIBRARY_NAME DTCInterface SOURCE
             DTC.cc
             DTC_Types.cc

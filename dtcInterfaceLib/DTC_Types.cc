@@ -1,5 +1,6 @@
 #include "DTC_Types.h"
 #include <sstream>
+#include <cstring>
 
 DTC::DTC_Timestamp::DTC_Timestamp()
 	: timestamp_(0) {}

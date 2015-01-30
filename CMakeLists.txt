@@ -46,9 +46,9 @@ find_library( TRACE trace PATHS $ENV{TRACE_LIB} )
 include(CetTest)
 
 # source
-add_subdirectory(dtcInterfaceLib)
 add_subdirectory(linux_driver)
 add_subdirectory(mcs)
+add_subdirectory(dtcInterfaceLib)
 
 # ups - table and config files
 add_subdirectory(ups)
