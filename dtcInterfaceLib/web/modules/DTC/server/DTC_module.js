@@ -559,7 +559,7 @@ dtcem.RW_RegIO = function (POST) {
 //
 dtcem.GET_Send = function () {
     if (sTime.getTime() + 800 < new Date().getTime()) {
-        send = read("0x900C") / 4;
+        send = (read("0x900C") & 0xFFFFFFFC) >>> 0;
         sTime = new Date();
     }
     
@@ -568,7 +568,7 @@ dtcem.GET_Send = function () {
 
 dtcem.GET_Receive = function () {
     if (rTime.getTime() + 800 < new Date().getTime()) {
-        receive = read("0x9010") / 4;
+        receive = (read("0x9010") & 0xFFFFFFFC) >>> 0;
         rTime = new Date();
     }
     
@@ -577,7 +577,8 @@ dtcem.GET_Receive = function () {
 
 dtcem.GET_SPayload = function () {
     if (spTime.getTime() + 800 < new Date().getTime()) {
-        sendP = read("0x9014") / 4;
+        sendP = (read("0x9014") & 0xFFFFFFFC) >>> 0;
+        
         spTime = new Date();
     }
     
@@ -586,7 +587,7 @@ dtcem.GET_SPayload = function () {
 
 dtcem.GET_RPayload = function () {
     if (rpTime.getTime() + 800 < new Date().getTime()) {
-        receiveP = read("0x9018") / 4;
+        receiveP = (read("0x9018") & 0xFFFFFFFC) >>> 0;
         rpTime = new Date();
     }
     
