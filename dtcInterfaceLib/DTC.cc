@@ -166,11 +166,22 @@ DTC::DTC_SERDESLoopbackMode DTC::DTC::SetSERDESLoopbackMode(const DTC_Ring_ID& r
 	data[3 * ring + 1] = modeSet[1];
 	data[3 * ring + 2] = modeSet[2];
 	WriteSERDESLoopbackEnableRegister(data.to_ulong());
+
+	// Now do the temp register
+	data = ReadSERDESLoopbackEnableTempRegister();
+	modeSet = mode;
+	data[3 * ring] = modeSet[0];
+	data[3 * ring + 1] = modeSet[1];
+	data[3 * ring + 2] = modeSet[2];
+	WriteSERDESLoopbackEnableTempRegister(data.to_ulong());
 	return ReadSERDESLoopback(ring);
 }
 DTC::DTC_SERDESLoopbackMode DTC::DTC::ReadSERDESLoopback(const DTC_Ring_ID& ring)
 {
 	std::bitset<3> dataSet = (ReadSERDESLoopbackEnableRegister() >> (3 * ring));
+	if (dataSet == 0) {
+		dataSet = (ReadSERDESLoopbackEnableTempRegister() >> (3 * ring));
+	}
 	return static_cast<DTC_SERDESLoopbackMode>(dataSet.to_ulong());
 }
 
