@@ -32,11 +32,11 @@ void DTC::DTC_Timestamp::SetTimestamp(uint32_t timestampLow, uint16_t timestampH
 	timestamp_ = timestampLow + timestampHigh * 0x10000;
 }
 
-void DTC::DTC_Timestamp::GetTimestamp(uint8_t* timeArr) const
+void DTC::DTC_Timestamp::GetTimestamp(uint8_t* timeArr, int offset) const
 {
 	for (int i = 0; i < 6; i++)
 	{
-		timeArr[i] = static_cast<uint8_t>(timestamp_ >> i * 8);
+		timeArr[i + offset] = static_cast<uint8_t>(timestamp_ >> i * 8);
 	}
 }
 
@@ -68,10 +68,10 @@ uint8_t DTC::DTC_DataPacket::GetWord(int index) const
 }
 
 
-DTC::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t packetCount)
+DTC::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t packetCount)
 	: ringID_(ring), rocID_(roc), packetType_(type), packetCount_(packetCount) {}
 
-DTC::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t* data, uint8_t packetCount)
+DTC::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t* data, uint16_t packetCount)
 	: ringID_(ring), rocID_(roc), packetType_(type), packetCount_(packetCount)
 {
 	for (int i = 0; i < 12; ++i)
@@ -164,16 +164,16 @@ DTC::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring)
 DTC::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t* data)
 	: DTC_DMAPacket(DTC_PacketType_DCSReply, ring, DTC_ROC_Unused, data) {}
 
-DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint8_t packetCount)
+DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount)
 	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, packetCount) {}
 
-DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint8_t packetCount, DTC_Timestamp timestamp)
+DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_Timestamp timestamp)
 	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, packetCount), timestamp_(timestamp) {}
 
-DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint8_t packetCount, DTC_Timestamp timestamp, uint8_t* data)
+DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_Timestamp timestamp, uint8_t* data)
 	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, packetCount), timestamp_(timestamp)
 {
-	for (int i = 0; i < 6; ++i)
+	for (int i = 0; i < 4; ++i)
 	{
 		data_[i] = data[i];
 	}
@@ -181,7 +181,7 @@ DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint8_t packet
 
 DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket& in) : DTC_DMAPacket(in), timestamp_(data_)
 {
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < 4; i++)
 	{
 		dataStart_[i] = data_[i + 6];
 	}
@@ -189,7 +189,7 @@ DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket& in) : DTC_DMAPac
 
 DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DMAPacket in) : DTC_DMAPacket(in), timestamp_(data_)
 {
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < 4; i++)
 	{
 		dataStart_[i] = data_[i + 6];
 	}
@@ -199,12 +199,59 @@ DTC::DTC_DMAPacket DTC::DTC_DataHeaderPacket::ConvertToDMAPacket() const
 {
 	uint8_t data[12];
 	timestamp_.GetTimestamp(data);
-	for (int ii = 0; ii < 6; ++ii)
+	for (int ii = 0; ii < 4; ++ii)
 	{
 		data[ii + 6] = dataStart_[ii];
 	}
 	return DTC_DMAPacket(DTC_PacketType_DataHeader, ringID_, rocID_, data);
 }
+
+
+DTC::DTC_ClockFanoutPacket::DTC_ClockFanoutPacket(uint8_t partition)
+	: partition_(partition) {}
+
+DTC::DTC_ClockFanoutPacket::DTC_ClockFanoutPacket(uint8_t partition, DTC_Timestamp timestamp)
+	: partition_(partition), timestamp_(timestamp) {}
+
+DTC::DTC_ClockFanoutPacket::DTC_ClockFanoutPacket(uint8_t partition, DTC_Timestamp timestamp, uint8_t* data)
+	: partition_(partition), timestamp_(timestamp)
+{
+	for (int i = 0; i < 4; ++i)
+	{
+		dataStart_[i] = data[i];
+	}
+}
+
+DTC::DTC_ClockFanoutPacket::DTC_ClockFanoutPacket(DTC_DataPacket& in)  :
+partition_(in.GetWord(3) & 0x0F)
+{
+	uint8_t timestampProto[6];
+	for (int i = 0; i < 6; i++)
+	{
+		timestampProto[i] = in.GetWord(6 + i);
+	}
+	for (int i = 0; i < 4; i++)
+	{
+		dataStart_[i] = in.GetWord(i + 12);
+	}
+}
+
+
+DTC::DTC_DataPacket DTC::DTC_ClockFanoutPacket::ConvertToDataPacket() const
+{
+	uint8_t data[16];
+	data[0] = static_cast<uint8_t>(byteCount_);
+	data[1] = static_cast<uint8_t>(byteCount_ >> 8);
+	data[2] = 0x00;
+	data[3] = 0x80 + partition_ & 0xF;
+	timestamp_.GetTimestamp(data, 6);
+	for (int ii = 0; ii < 4; ++ii)
+	{
+		data[ii + 12] = dataStart_[ii];
+	}
+	return DTC_DataPacket( data);
+}
+
 
 DTC::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError() : data_(0) {}
 
@@ -229,38 +276,6 @@ DTC::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError(uint32_t data, D
 	uint32_t ringBase = (uint8_t)ring * 2;
 	data_[0] = dataSet[ringBase];
 	data_[1] = dataSet[ringBase + 1];
-}
-
-
-DTC::DTC_SERDESRXBufferStatus::DTC_SERDESRXBufferStatus() : data_(0) {}
-
-DTC::DTC_SERDESRXBufferStatus::DTC_SERDESRXBufferStatus(std::bitset<3> data) : data_(data) {}
-
-DTC::DTC_SERDESRXBufferStatus::DTC_SERDESRXBufferStatus(uint32_t data, DTC_Ring_ID ring)
-{
-	std::bitset<32> dataSet = data;
-	data_[0] = dataSet[(uint8_t)ring * 3];
-	data_[1] = dataSet[(uint8_t)ring * 3 + 1];
-	data_[2] = dataSet[(uint8_t)ring * 3 + 2];
-}
-
-DTC::DTC_RXBufferStatus DTC::DTC_SERDESRXBufferStatus::GetStatus()
-{
-	switch (data_.to_ulong())
-	{
-	case 0:
-		return DTC_RXBufferStatus_Nominal;
-	case 1:
-		return DTC_RXBufferStatus_BufferEmpty;
-	case 2:
-		return DTC_RXBufferStatus_BufferFull;
-	case 5:
-		return DTC_RXBufferStatus_Underflow;
-	case 6:
-		return DTC_RXBufferStatus_Overflow;
-	default:
-		return DTC_RXBufferStatus_Unknown;
-	}
 }
 
 DTC::DTC_TestMode::DTC_TestMode() {}
@@ -459,19 +474,19 @@ std::string DTC::DTC_PCIeState::toString()
 
 	stream << "Version: " << Version << std::endl;
 	stream << "LinkState: " << LinkState << std::endl;
-	stream << "LinkSpeed: " << LinkSpeed << std::endl;              /**< Link Speed */
-	stream << "LinkWidth: " << LinkWidth << std::endl;              /**< Link Width */
-	stream << "VendorId: " << VendorId << std::endl;     /**< Vendor ID */
-	stream << "DeviceId: " << DeviceId << std::endl;    /**< Device ID */
-	stream << "IntMode: " << IntMode << std::endl;                /**< Legacy or MSI interrupts */
-	stream << "MPS: " << MPS << std::endl;                    /**< Max Payload Size */
-	stream << "MRRS: " << MRRS << std::endl;                   /**< Max Read Request Size */
-	stream << "InitFCCplD: " << InitFCCplD << std::endl;             /**< Initial FC Credits for Completion Data */
-	stream << "InitFCCplH: " << InitFCCplH << std::endl;             /**< Initial FC Credits for Completion Header */
-	stream << "InitFCNPD: " << InitFCNPD << std::endl;              /**< Initial FC Credits for Non-Posted Data */
-	stream << "InitFCNPH: " << InitFCNPH << std::endl;              /**< Initial FC Credits for Non-Posted Data */
-	stream << "InitFCPD: " << InitFCPD << std::endl;               /**< Initial FC Credits for Posted Data */
-	stream << "InitFCPH: " << InitFCPH << std::endl;               /**< Initial FC Credits for Posted Data */
+	stream << "LinkSpeed: " << LinkSpeed << std::endl;              //* Link Speed */
+	stream << "LinkWidth: " << LinkWidth << std::endl;              //* Link Width */
+	stream << "VendorId: " << VendorId << std::endl;     //* Vendor ID */
+	stream << "DeviceId: " << DeviceId << std::endl;    //* Device ID */
+	stream << "IntMode: " << IntMode << std::endl;                //* Legacy or MSI interrupts */
+	stream << "MPS: " << MPS << std::endl;                    //* Max Payload Size */
+	stream << "MRRS: " << MRRS << std::endl;                   //* Max Read Request Size */
+	stream << "InitFCCplD: " << InitFCCplD << std::endl;             //* Initial FC Credits for Completion Data */
+	stream << "InitFCCplH: " << InitFCCplH << std::endl;             //* Initial FC Credits for Completion Header */
+	stream << "InitFCNPD: " << InitFCNPD << std::endl;              //* Initial FC Credits for Non-Posted Data */
+	stream << "InitFCNPH: " << InitFCNPH << std::endl;              //* Initial FC Credits for Non-Posted Data */
+	stream << "InitFCPD: " << InitFCPD << std::endl;               //* Initial FC Credits for Posted Data */
+	stream << "InitFCPH: " << InitFCPH << std::endl;               //* Initial FC Credits for Posted Data */
 
 	return stream.str();
 }

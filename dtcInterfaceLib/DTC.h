@@ -44,8 +44,17 @@ namespace DTC {
 		bool ToggleClearLatchedErrors();
 		bool ReadClearLatchedErrors();
 
-		bool ToggleSERDESLoopback(const DTC_Ring_ID& ring);
-		bool ReadSERDESLoopback(const DTC_Ring_ID& ring);
+		bool ToggleCFOEmulation();
+		bool ReadCFOEmulation();
+
+		void SetTriggerDMATransferLength(uint16_t length);
+		uint16_t ReadTriggerDMATransferLength();
+
+		void SetMinDMATransferLength(uint16_t length);
+		uint16_t ReadMinDMATransferLength();
+
+		DTC_SERDESLoopbackMode SetSERDESLoopbackMode(const DTC_Ring_ID& ring, const DTC_SERDESLoopbackMode& mode);
+		DTC_SERDESLoopbackMode ReadSERDESLoopback(const DTC_Ring_ID& ring);
 
 		bool ToggleROCEmulator();
 		bool ReadROCEmulator();
@@ -67,13 +76,28 @@ namespace DTC {
 		bool ReadSERDESOverflowOrUnderflow(const DTC_Ring_ID& ring);
 		bool ReadSERDESBufferFIFOHalfFull(const DTC_Ring_ID& ring);
 
-		DTC_SERDESRXBufferStatus ReadSERDESRXBufferStatus(const DTC_Ring_ID& ring);
+		DTC_RXBufferStatus ReadSERDESRXBufferStatus(const DTC_Ring_ID& ring);
+
+		DTC_RXStatus ReadSERDESRXStatus(const DTC_Ring_ID& ring);
+
+		bool ReadSERDESEyescanError(const DTC_Ring_ID& ring);
+		bool ReadSERDESRXCDRLock(const DTC_Ring_ID& ring);
+
+		void WriteDMATimeoutPreset(uint32_t preset);
+		uint32_t ReadDMATimeoutPreset();
+		void WriteDataPendingTimer(uint32_t timer);
+		uint32_t ReadDataPendingTimer();
+		void SetPacketSize(uint16_t packetSize);
+		uint16_t ReadPacketSize();
 
 		DTC_Timestamp WriteTimestampPreset(const DTC_Timestamp& preset);
 		DTC_Timestamp ReadTimestampPreset();
 
 		bool ReadFPGAPROMProgramFIFOFull();
 		bool ReadFPGAPROMReady();
+
+		void ReloadFPGAFirmware();
+		bool ReadFPGACoreAccessFIFOFull();
 
 		//
 		// PCIe/DMA Status and Performance
@@ -100,36 +124,50 @@ namespace DTC {
 
 		void WriteRegister(uint32_t data, const DTC_Register& address);
 		uint32_t ReadRegister(const DTC_Register& address);
-		void WriteControlRegister(uint32_t data);
-		uint32_t ReadControlRegister();
-		void WriteSERDESLoopbackEnableRegister(uint32_t data);
-		uint32_t ReadSERDESLoopbackEnableRegister();
-		void WriteROCEmulationEnableRegister(uint32_t data);
-		uint32_t ReadROCEmulationEnableRegister();
-		void WriteRingEnableRegister(uint32_t data);
-		uint32_t ReadRingEnableRegister();
-		void WriteSERDESResetRegister(uint32_t data);
-		uint32_t ReadSERDESResetRegister();
+
+		//Register Helper Functions
+		void WriteControlRegister(uint32_t data){ WriteRegister(data, DTC_Register_DTCControl); }
+		uint32_t ReadControlRegister() { return ReadRegister(DTC_Register_DTCControl); }
+		void WriteDMATransferLengthRegister(uint32_t data) { WriteRegister(data, DTC_Register_DMATransferLength); }
+		uint32_t ReadDMATransferLengthRegister() { return ReadRegister(DTC_Register_DMATransferLength); }
+		void WriteSERDESLoopbackEnableRegister(uint32_t data){ WriteRegister(data, DTC_Register_SERDESLoopbackEnable); }
+		uint32_t ReadSERDESLoopbackEnableRegister() { return ReadRegister(DTC_Register_SERDESLoopbackEnable); }
+		void WriteROCEmulationEnableRegister(uint32_t data){ WriteRegister(data, DTC_Register_ROCEmulationEnable); }
+		uint32_t ReadROCEmulationEnableRegister() { return ReadRegister(DTC_Register_ROCEmulationEnable); }
+		void WriteRingEnableRegister(uint32_t data){ WriteRegister(data, DTC_Register_RingEnable); }
+		uint32_t ReadRingEnableRegister() { return ReadRegister(DTC_Register_RingEnable); }
+		void WriteSERDESResetRegister(uint32_t data){ WriteRegister(data, DTC_Register_SERDESReset); }
+		uint32_t ReadSERDESResetRegister() { return ReadRegister(DTC_Register_SERDESReset); }
 		bool ReadSERDESResetDone(const DTC_Ring_ID& ring);
-		uint32_t ReadSERDESRXDisparityErrorRegister();
-		uint32_t ReadSERDESRXCharacterNotInTableErrorRegister();
-		uint32_t ReadSERDESUnlockErrorRegister();
-		uint32_t ReadSERDESPLLLockedRegister();
-		uint32_t ReadSERDESTXBufferStatusRegister();
-		uint32_t ReadSERDESRXBufferStatusRegister();
-		uint32_t ReadSERDESResetDoneRegister();
-		void WriteTimestampPreset0Register(uint32_t data);
-		uint32_t ReadTimestampPreset0Register();
-		void WriteTimestampPreset1Register(uint32_t data);
-		uint32_t ReadTimestampPreset1Register();
-		void WriteFPGAPROMProgramDataRegister(uint32_t data);
-		uint32_t ReadFPGAPROMProgramStatusRegister();
+		uint32_t ReadSERDESRXDisparityErrorRegister() { return ReadRegister(DTC_Register_SERDESRXDisparityError); }
+		uint32_t ReadSERDESRXCharacterNotInTableErrorRegister() { return ReadRegister(DTC_Register_SERDESRXCharacterNotInTableError); }
+		uint32_t ReadSERDESUnlockErrorRegister() { return ReadRegister(DTC_Register_SERDESUnlockError); }
+		uint32_t ReadSERDESPLLLockedRegister() { return ReadRegister(DTC_Register_SERDESPLLLocked); }
+		uint32_t ReadSERDESTXBufferStatusRegister() { return ReadRegister(DTC_Register_SERDESTXBufferStatus); }
+		uint32_t ReadSERDESRXBufferStatusRegister() { return ReadRegister(DTC_Register_SERDESRXBufferStatus); }
+		uint32_t ReadSERDESRXStatusRegister() { return ReadRegister(DTC_Register_SERDESRXStatus); }
+		uint32_t ReadSERDESResetDoneRegister() { return ReadRegister(DTC_Register_SERDESResetDone); }
+		uint32_t ReadSERDESEyescanErrorRegister() { return ReadRegister(DTC_Register_SERDESEyescanData); }
+		uint32_t ReadSERDESRXCDRLockRegister() { return ReadRegister(DTC_Register_SERDESRXCDRLock); }
+		void WriteDMATimeoutPresetRegister(uint32_t data) { WriteRegister(data, DTC_Register_DMATimeoutPreset); }
+		uint32_t ReadDMATimeoutPresetRegister() { return ReadRegister(DTC_Register_DMATimeoutPreset); }
+		void WriteDataPendingTimerRegister(uint32_t data) { WriteRegister(data, DTC_Register_DataPendingTimer); }
+		uint32_t ReadDataPendingTimerRegister() { return ReadRegister(DTC_Register_DataPendingTimer); }
+		void WriteDMAPacketSizetRegister(uint32_t data) { WriteRegister(data, DTC_Register_DMATransferLength); }
+		uint32_t ReadDMAPacketSizeRegister() { return ReadRegister(DTC_Register_DMATransferLength); }
+		void WriteTimestampPreset0Register(uint32_t data){ WriteRegister(data, DTC_Register_TimestampPreset0); }
+		uint32_t ReadTimestampPreset0Register() { return ReadRegister(DTC_Register_TimestampPreset0); }
+		void WriteTimestampPreset1Register(uint32_t data){ WriteRegister(data, DTC_Register_TimestampPreset1); }
+		uint32_t ReadTimestampPreset1Register() { return ReadRegister(DTC_Register_TimestampPreset1); }
+		uint32_t ReadFPGAPROMProgramStatusRegister() { return ReadRegister(DTC_Register_FPGAPROMProgramStatus); }
+		void WriteFPGACoreAccessRegister(uint32_t data){ WriteRegister(data, DTC_Register_FPGACoreAccess); }
+		uint32_t ReadFPGACoreAccessRegister() { return ReadRegister(DTC_Register_FPGACoreAccess); }
 
 		void WriteTestCommand(const DTC_TestCommand& comm, bool start);
 		DTC_TestCommand ReadTestCommand();
 
 	private:
-		DTC_ROC_ID maxRocs_[6];
+		DTC_ROC_ID maxRocs_[7];
 		mu2edev device_;
 		mu2e_databuff_t* buffer_;
 		bool simMode_;

@@ -11,7 +11,9 @@ namespace DTC
 	enum DTC_Register : uint16_t {
 		DTC_Register_DesignVersion                    = 0x9000,
 		DTC_Register_DTCControl                       = 0x9100,
+		DTC_Register_DMATransferLength                = 0x9104,
 		DTC_Register_SERDESLoopbackEnable             = 0x9108,
+		DTC_Register_SERDESLoopbackEnable_Temp        = 0x9168,
 		DTC_Register_ROCEmulationEnable               = 0x9110,
 		DTC_Register_RingEnable                       = 0x9114,
 		DTC_Register_SERDESReset                      = 0x9118,
@@ -21,11 +23,17 @@ namespace DTC
 		DTC_Register_SERDESPLLLocked                  = 0x9128,
 		DTC_Register_SERDESTXBufferStatus             = 0x912C,
 		DTC_Register_SERDESRXBufferStatus             = 0x9130,
+		DTC_Register_SERDESRXStatus                   = 0x9134,
 		DTC_Register_SERDESResetDone                  = 0x9138,
+		DTC_Register_SERDESEyescanData                = 0x913C,
+		DTC_Register_SERDESRXCDRLock                  = 0x9140,
+		DTC_Register_DMATimeoutPreset                 = 0x9144,
 		DTC_Register_TimestampPreset0                 = 0x9180,
 		DTC_Register_TimestampPreset1                 = 0x9184,
-		DTC_Register_FPGAPROMProgramData              = 0x91A0,
-		DTC_Register_FPGAPROMProgramStatus            = 0x91A4,
+		DTC_Register_DataPendingTimer                 = 0x9188,
+		DTC_Register_PacketSize                       = 0x9204,
+		DTC_Register_FPGAPROMProgramStatus            = 0x9404,
+		DTC_Register_FPGACoreAccess                   = 0x9408,
 		DTC_Register_Invalid,
 	};
 
@@ -48,6 +56,7 @@ namespace DTC
 		DTC_Ring_3 = 3,
 		DTC_Ring_4 = 4,
 		DTC_Ring_5 = 5,
+		DTC_Ring_CFO = 6,
 		DTC_Ring_Unused = 0x10,
 	};
 
@@ -79,6 +88,25 @@ namespace DTC
 		DTC_RXBufferStatus_Unknown = 0x10,
 	};
 
+	enum DTC_RXStatus {
+		DTC_RXStatus_DataOK = 0,
+		DTC_RXStatus_SKPAdded = 1,
+		DTC_RXStatus_SKPRemoved = 2,
+		DTC_RXStatus_ReceiverDetected = 3,
+		DTC_RXStatus_DecodeError = 4,
+		DTC_RXStatus_ElasticOverflow = 5,
+		DTC_RXStatus_ElasticUnderflow = 6,
+		DTC_RXStatus_RXDisparityError = 7,
+	};
+
+	enum DTC_SERDESLoopbackMode {
+		DTC_SERDESLoopbackMode_Disabled = 0,
+		DTC_SERDESLoopbackMode_NearPCS = 1,
+		DTC_SERDESLoopbackMode_NearPMA = 2,
+		DTC_SERDESLoopbackMode_FarPMA = 4,
+		DTC_SERDESLoopbackMode_FarPCS = 6,
+	};
+
 
 	class DTC_WrongPacketTypeException : public std::exception {
 		virtual const char* what() const throw()
@@ -95,7 +123,7 @@ namespace DTC
 	class DTC_NotImplementedException : public std::exception {
 		virtual const char* what() const throw()
 		{
-			return "I don't think we're in Kansas anymore...";
+			return "I'm sorry, Dave, but I can't do that. (Because I don't know how)";
 		}
 	};
 
@@ -122,7 +150,7 @@ namespace DTC
 		void SetTimestamp(uint32_t timestampLow, uint16_t timestampHigh);
 		std::bitset<48> GetTimestamp() const { return timestamp_; }
 		uint64_t GetTimestamp(bool dummy) const { if (dummy) { return timestamp_; } else return 0; }
-		void GetTimestamp(uint8_t* timeArr) const;
+		void GetTimestamp(uint8_t* timeArr, int offset = 0) const;
 
 	};
 
@@ -152,15 +180,16 @@ namespace DTC
 
 	class DTC_DMAPacket {
 	protected:
+		uint16_t byteCount_;
 		DTC_Ring_ID ringID_;
-		DTC_ROC_ID rocID_;
 		DTC_PacketType packetType_;
-		uint8_t packetCount_;
+		DTC_ROC_ID rocID_;
+		uint16_t packetCount_;
 		uint8_t data_[12];
 	public:
 		DTC_DMAPacket() : packetType_(DTC_PacketType_Invalid) {}
-		DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t packetCount = 0);
-		DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t* data, uint8_t packetCount = 0);
+		DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t packetCount = 0);
+		DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t* data, uint16_t packetCount = 0);
 
 		DTC_DMAPacket(const DTC_DataPacket& in);
 		DTC_DMAPacket(const DTC_DMAPacket&) = default;
@@ -251,12 +280,12 @@ namespace DTC
 	class DTC_DataHeaderPacket : public DTC_DMAPacket {
 	private:
 		DTC_Timestamp timestamp_;
-		uint8_t dataStart_[6];
+		uint8_t dataStart_[4];
 
 	public:
-		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint8_t packetCount);
-		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint8_t packetCount, DTC_Timestamp timestamp);
-		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint8_t packetCount, DTC_Timestamp timestamp, uint8_t* data);
+		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount);
+		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_Timestamp timestamp);
+		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_Timestamp timestamp, uint8_t* data);
 		DTC_DataHeaderPacket(const DTC_DataHeaderPacket&) = default;
 #ifndef _WIN32
 		DTC_DataHeaderPacket(DTC_DataHeaderPacket&&) = default;
@@ -267,7 +296,30 @@ namespace DTC
 		DTC_DMAPacket ConvertToDMAPacket() const;
 		DTC_DataPacket ConvertToDataPacket() const { return ConvertToDMAPacket().ConvertToDataPacket(); }
 		virtual uint8_t* GetData() { return dataStart_; }
-		uint8_t GetPacketCount() { return packetCount_; }
+		uint16_t GetPacketCount() { return packetCount_; }
+	};
+
+	class DTC_ClockFanoutPacket : public DTC_DataPacket {
+	private:
+		uint16_t byteCount_;
+		uint8_t partition_;
+		DTC_Timestamp timestamp_;
+		uint8_t dataStart_[4];
+
+	public:
+		DTC_ClockFanoutPacket(uint8_t partition);
+		DTC_ClockFanoutPacket(uint8_t partition, DTC_Timestamp timestamp);
+		DTC_ClockFanoutPacket(uint8_t partition, DTC_Timestamp timestamp, uint8_t* data);
+		DTC_ClockFanoutPacket(const DTC_ClockFanoutPacket&) = default;
+#ifndef _WIN32
+		DTC_ClockFanoutPacket(DTC_ClockFanoutPacket&&) = default;
+#endif
+		DTC_ClockFanoutPacket(DTC_DataPacket& in);
+
+		DTC_DataPacket ConvertToDataPacket() const;
+		virtual uint8_t* GetData() { return dataStart_; }
+		DTC_Timestamp GetTimestamp() { return timestamp_; }
+		uint8_t GetPartition() { return partition_; }
 	};
 
 	class DTC_SERDESRXDisparityError {
@@ -314,28 +366,6 @@ namespace DTC
 		void SetData(std::bitset<2> data) { data_ = data; }
 		std::bitset<2> GetData() { return data_; }
 		int GetData(bool output) { if (output) return static_cast<int>(data_.to_ulong()); return 0; }
-	};
-
-	class DTC_SERDESRXBufferStatus {
-	private:
-		std::bitset<3> data_;
-
-	public:
-		DTC_SERDESRXBufferStatus();
-		DTC_SERDESRXBufferStatus(std::bitset<3> data);
-		DTC_SERDESRXBufferStatus(uint32_t data, DTC_Ring_ID ring);
-		DTC_SERDESRXBufferStatus(const DTC_SERDESRXBufferStatus&) = default;
-#ifndef _WIN32
-		DTC_SERDESRXBufferStatus(DTC_SERDESRXBufferStatus&&) = default;
-#endif
-
-		DTC_SERDESRXBufferStatus& operator=(const DTC_SERDESRXBufferStatus&) = default;
-#ifndef _WIN32
-		DTC_SERDESRXBufferStatus& operator=(DTC_SERDESRXBufferStatus&&) = default;
-#endif
-
-		void SetData(std::bitset<3> data) { data_ = data; }
-		DTC_RXBufferStatus GetStatus();
 	};
 
 	struct DTC_TestMode {
