@@ -36,7 +36,8 @@ int mu2edev::init(bool simMode)
 		devfd_ = open( "/dev/" MU2E_DEV_FILE, O_RDWR );
 		if (devfd_ == -1) {
 			perror("open /dev/" MU2E_DEV_FILE);
-			return init(true);
+			TRACE(1, "mu2e Device file not found and DTCLIB_SIM_ENABLE not set! Exiting.");
+			exit (1);
 		}
 		for (unsigned chn=0; chn<MU2E_MAX_CHANNELS; ++chn)
 			for (unsigned dir=0; dir<2; ++dir)
