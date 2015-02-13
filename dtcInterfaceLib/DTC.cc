@@ -135,7 +135,7 @@ bool DTC::DTC::ReadCFOEmulation()
 void DTC::DTC::SetTriggerDMATransferLength(uint16_t length)
 {
 	uint32_t data = ReadDMATransferLengthRegister();
-	data = data & 0x0000FFFF + (length << 16);
+	data = (data & 0x0000FFFF) + (length << 16);
 	WriteDMATransferLengthRegister(data);
 }
 uint16_t DTC::DTC::ReadTriggerDMATransferLength()
@@ -148,7 +148,7 @@ uint16_t DTC::DTC::ReadTriggerDMATransferLength()
 void DTC::DTC::SetMinDMATransferLength(uint16_t length)
 {
 	uint32_t data = ReadDMATransferLengthRegister();
-	data = data & 0xFFFF0000 + length;
+	data = (data & 0xFFFF0000) + length;
 	WriteDMATransferLengthRegister(data);
 }
 uint16_t DTC::DTC::ReadMinDMATransferLength()

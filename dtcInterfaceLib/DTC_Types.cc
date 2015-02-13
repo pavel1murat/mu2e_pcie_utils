@@ -69,10 +69,10 @@ uint8_t DTC::DTC_DataPacket::GetWord(int index) const
 
 
 DTC::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t packetCount)
-	: ringID_(ring), rocID_(roc), packetType_(type), packetCount_(packetCount) {}
+	: ringID_(ring), packetType_(type), rocID_(roc), packetCount_(packetCount) {}
 
 DTC::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t* data, uint16_t packetCount)
-	: ringID_(ring), rocID_(roc), packetType_(type), packetCount_(packetCount)
+	: ringID_(ring), packetType_(type), rocID_(roc), packetCount_(packetCount)
 {
 	for (int i = 0; i < 12; ++i)
 	{
@@ -230,6 +230,7 @@ partition_(in.GetWord(3) & 0x0F)
 	{
 		timestampProto[i] = in.GetWord(6 + i);
 	}
+	timestamp_ = DTC_Timestamp(timestampProto);
 	for (int i = 0; i < 4; i++)
 	{
 		dataStart_[i] = in.GetWord(i + 12);
@@ -243,7 +244,7 @@ DTC::DTC_DataPacket DTC::DTC_ClockFanoutPacket::ConvertToDataPacket() const
 	data[0] = static_cast<uint8_t>(byteCount_);
 	data[1] = static_cast<uint8_t>(byteCount_ >> 8);
 	data[2] = 0x00;
-	data[3] = 0x80 + partition_ & 0xF;
+	data[3] = 0x80 + (partition_ & 0xF);
 	timestamp_.GetTimestamp(data, 6);
 	for (int ii = 0; ii < 4; ++ii)
 	{

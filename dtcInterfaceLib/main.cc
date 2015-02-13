@@ -9,7 +9,8 @@ void usage() {
 	std::cout << "This program runs several functionality tests of libDTCInterface." << std::endl
 		<< "If run with no options, it will run all 5 tests." << std::endl
 		<< "Otherwise, it accepts a space-delimited list of the tests to run," << std::endl
-		<< "defined either by test number {1,2,3,4,5}, or test name {reg, pcie, stats, dcs, daq}" << std::endl;
+		<< "defined either by test number {1,2,3,4,5}, or test name {reg, pcie, stats, dcs, daq}" << std::endl
+		<< "It also accepts a -n argument indicating how many iterations of the tests it should run" << std::endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -17,49 +18,46 @@ int main(int argc, char* argv[]) {
 
 	int testsPassed = 0;
 	int nTests = 0;
-	bool registerTest = true,
-		pcieTest = true,
-		dmaStateTest = true,
-		dcsTest = true,
-		daqTest = true;
-	
+	int testCount = 1;
+	bool registerTest = false,
+		pcieTest = false,
+		dmaStateTest = false,
+		dcsTest = false,
+		daqTest = false;
+	bool testsSpecified = false;
+
 	if (argc == 1) {
 		std::cout << "Running all DTC Tests." << std::endl << std::endl;
-		nTests = 5;
 	}
 	else {
-		registerTest = false;
-		pcieTest = false;
-		dmaStateTest = false;
-		dcsTest = false;
-		daqTest = false; 
 
 		for (int i = 1; i < argc; ++i) {
-			bool exclude = false;
 			int firstChar = 0;
-			if (argv[i][0] == '+') {
+			if (argv[i][0] == '-') {
 				firstChar = 1;
-			}
-			else if (argv[i][0] == '-') {
-				exclude = true;
-				firstChar = 1;
+				if (argv[i][1] == 'n' && argc >= i + 1) {
+					++i;
+					testCount = atoi(argv[i]);
+					continue;
+				}
 			}
 			if (isdigit(argv[i][firstChar])) {
+				testsSpecified = true;
 				switch (argv[i][firstChar] - '0') {
 				case 1:
-					registerTest = !exclude;
+					registerTest = true;
 					break;
 				case 2:
-					pcieTest = !exclude;
+					pcieTest = true;
 					break;
 				case 3:
-					dmaStateTest = !exclude;
+					dmaStateTest = true;
 					break;
 				case 4:
-					dcsTest = !exclude;
+					dcsTest = true;
 					break;
 				case 5:
-					daqTest = !exclude;
+					daqTest = true;
 					break;
 				}
 			}
@@ -67,34 +65,49 @@ int main(int argc, char* argv[]) {
 				std::string arg(argv[i]);
 				arg = arg.substr(firstChar);
 				if (arg.find("reg") != std::string::npos) {
-					registerTest = !exclude;
+					testsSpecified = true;
+					registerTest = true;
 				}
 				else if (arg.find("pcie") != std::string::npos) {
-					pcieTest = !exclude;
+					testsSpecified = true;
+					pcieTest = true;
 				}
 				else if (arg.find("stats") != std::string::npos) {
-					dmaStateTest = !exclude;
+					dmaStateTest = true;
+					testsSpecified = true;
 				}
 				else if (arg.find("dcs") != std::string::npos) {
-					dcsTest = !exclude;
+					testsSpecified = true;
+					dcsTest = true;
 				}
 				else if (arg.find("daq") != std::string::npos || arg.find("dma") != std::string::npos) {
-					daqTest = !exclude;
+					daqTest = true;
+					testsSpecified = true;
 				}
 				else {
 					usage();
 				}
 			}
 		}
+		if (!testsSpecified){
+			registerTest = true;
+			pcieTest = true;
+			dmaStateTest = true;
+			dcsTest = true;
+			daqTest = true;
+		}
 
-		nTests = (int)registerTest + (int)pcieTest + (int)dmaStateTest + (int)dcsTest + (int)daqTest;
 		std::cout << "Running tests: " << (registerTest ? "Register I/O " : "") << (pcieTest ? " PCIe State/Stats " : "")
-			<< (dmaStateTest ? " DMA State/Stats " : "") << (dcsTest ? " DCS DMA I/O " : "") << (daqTest ? " DAQ DMA I/O" : "") << std::endl;
+			<< (dmaStateTest ? " DMA State/Stats " : "") << (dcsTest ? " DCS DMA I/O " : "") << (daqTest ? " DAQ DMA I/O" : "")
+			<< ", " << testCount << " times." << std::endl;
 
 	}
 
-	if (registerTest) {
+	int regTestCount = 0;
+	while (registerTest && regTestCount < testCount) {
 		std::cout << "Test 1: Register R/W" << std::endl;
+		++nTests;
+		++regTestCount;
 		try{
 			std::cout << "Reading Design Version: " << thisDTC->ReadDesignVersion() << std::endl;
 			std::cout << "If simulated, result will be 53494D44 (SIMD in ASCII)" << std::endl;
@@ -122,8 +135,11 @@ int main(int argc, char* argv[]) {
 		std::cout << std::endl << std::endl;
 	}
 
-	if (pcieTest)  {
+	int pcieTestCount = 0;
+	while (pcieTest && pcieTestCount < testCount)  {
 		std::cout << "Test 2: PCIe State and Stats" << std::endl;
+		++nTests;
+		++pcieTestCount;
 		try {
 			std::cout << "PCIe State: " << std::endl
 				<< thisDTC->ReadPCIeState().toString() << std::endl << std::endl;
@@ -138,8 +154,11 @@ int main(int argc, char* argv[]) {
 		std::cout << std::endl << std::endl;
 	}
 
-	if (dmaStateTest) {
+	int dmaStateTestCount = 0;
+	while (dmaStateTest && dmaStateTestCount < testCount) {
 		std::cout << "Test 3: DMA State and Stats" << std::endl;
+		++nTests;
+		++dmaStateTestCount;
 		try {
 			std::cout << "DMA State: " << std::endl
 				<< "DAQ Channel, S2C: " << thisDTC->ReadDMAState(DTC::DTC_DMA_Engine_DAQ, DTC::DTC_DMA_Direction_S2C).toString() << std::endl
@@ -161,8 +180,11 @@ int main(int argc, char* argv[]) {
 		std::cout << std::endl << std::endl;
 	}
 
-	if (dcsTest) {
+	int dcsTestCount = 0;
+	while (dcsTest && dcsTestCount < testCount) {
 		std::cout << "Test 4: DMA R/W on DCS Channel" << std::endl;
+		++nTests;
+		++dcsTestCount;
 		try{
 			std::cout << "Running DCS Request/Reply Cycle with 0-11 sequence" << std::endl;
 			uint8_t testData[12] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
@@ -189,8 +211,11 @@ int main(int argc, char* argv[]) {
 		std::cout << std::endl << std::endl;
 	}
 
-	if (daqTest) {
+	int daqTestCount = 0;
+	while (daqTest && daqTestCount < testCount) {
 		std::cout << "Test 5: DMA R/W on DAQ Channel" << std::endl;
+		++nTests;
+		++daqTestCount;
 		try{
 			std::cout << "Sending Readout Request Packet on Ring 0" << std::endl;
 			thisDTC->SendReadoutRequestPacket(DTC::DTC_Ring_0, DTC::DTC_Timestamp((uint64_t)time(0)));
@@ -233,5 +258,5 @@ int main(int argc, char* argv[]) {
 		}
 		std::cout << std::endl << std::endl;
 	}
-	std::cout << testsPassed << " of " << nTests << " tests passed." << std::endl;
+	std::cout <<std::dec << testsPassed << " of " << nTests << " tests passed." << std::endl;
 }

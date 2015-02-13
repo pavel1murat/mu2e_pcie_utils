@@ -132,6 +132,8 @@ namespace DTC {
 		uint32_t ReadDMATransferLengthRegister() { return ReadRegister(DTC_Register_DMATransferLength); }
 		void WriteSERDESLoopbackEnableRegister(uint32_t data){ WriteRegister(data, DTC_Register_SERDESLoopbackEnable); }
 		uint32_t ReadSERDESLoopbackEnableRegister() { return ReadRegister(DTC_Register_SERDESLoopbackEnable); }
+		void WriteSERDESLoopbackEnableTempRegister(uint32_t data){ WriteRegister(data, DTC_Register_SERDESLoopbackEnable_Temp); }
+		uint32_t ReadSERDESLoopbackEnableTempRegister() { return ReadRegister(DTC_Register_SERDESLoopbackEnable_Temp); }
 		void WriteROCEmulationEnableRegister(uint32_t data){ WriteRegister(data, DTC_Register_ROCEmulationEnable); }
 		uint32_t ReadROCEmulationEnableRegister() { return ReadRegister(DTC_Register_ROCEmulationEnable); }
 		void WriteRingEnableRegister(uint32_t data){ WriteRegister(data, DTC_Register_RingEnable); }
