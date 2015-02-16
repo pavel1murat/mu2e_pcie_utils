@@ -2,10 +2,12 @@
 #include <sstream> // Convert uint to hex string
 #ifndef _WIN32
 #include <unistd.h>
+#include "trace.h"
 #else
 #include <chrono>
 #include <thread>
 #define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
+#define TRACE(...) 
 #endif
 
 DTC::DTC::DTC() : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t))), device_(), buffer_(nullptr)
@@ -234,6 +236,7 @@ bool DTC::DTC::ResetSERDES(const DTC_Ring_ID& ring, int interval)
 	bool resetDone = false;
 	while (!resetDone)
 	{
+		TRACE(0, "Entering SERDES Reset Loop");
 		std::bitset<32> data = ReadSERDESResetRegister();
 		data[ring] = 1;
 		WriteSERDESResetRegister(data.to_ulong());
@@ -245,6 +248,7 @@ bool DTC::DTC::ResetSERDES(const DTC_Ring_ID& ring, int interval)
 		WriteSERDESResetRegister(data.to_ulong());
 
 		resetDone = ReadSERDESResetDone(ring);
+		TRACE(0, "End of SERDES Reset loop, done %d", resetDone)
 	}
 	return resetDone;
 }
