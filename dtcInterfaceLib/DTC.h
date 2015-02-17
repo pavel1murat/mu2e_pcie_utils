@@ -47,10 +47,10 @@ namespace DTC {
 		bool ToggleCFOEmulation();
 		bool ReadCFOEmulation();
 
-		void SetTriggerDMATransferLength(uint16_t length);
+		int SetTriggerDMATransferLength(uint16_t length);
 		uint16_t ReadTriggerDMATransferLength();
 
-		void SetMinDMATransferLength(uint16_t length);
+		int SetMinDMATransferLength(uint16_t length);
 		uint16_t ReadMinDMATransferLength();
 
 		DTC_SERDESLoopbackMode SetSERDESLoopbackMode(const DTC_Ring_ID& ring, const DTC_SERDESLoopbackMode& mode);
@@ -83,11 +83,11 @@ namespace DTC {
 		bool ReadSERDESEyescanError(const DTC_Ring_ID& ring);
 		bool ReadSERDESRXCDRLock(const DTC_Ring_ID& ring);
 
-		void WriteDMATimeoutPreset(uint32_t preset);
+		int WriteDMATimeoutPreset(uint32_t preset);
 		uint32_t ReadDMATimeoutPreset();
-		void WriteDataPendingTimer(uint32_t timer);
+		int WriteDataPendingTimer(uint32_t timer);
 		uint32_t ReadDataPendingTimer();
-		void SetPacketSize(uint16_t packetSize);
+		int SetPacketSize(uint16_t packetSize);
 		uint16_t ReadPacketSize();
 
 		DTC_Timestamp WriteTimestampPreset(const DTC_Timestamp& preset);

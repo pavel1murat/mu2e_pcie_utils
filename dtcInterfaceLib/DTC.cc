@@ -134,11 +134,12 @@ bool DTC::DTC::ReadCFOEmulation()
 	return data[1];
 }
 
-void DTC::DTC::SetTriggerDMATransferLength(uint16_t length)
+int DTC::DTC::SetTriggerDMATransferLength(uint16_t length)
 {
 	uint32_t data = ReadDMATransferLengthRegister();
 	data = (data & 0x0000FFFF) + (length << 16);
 	WriteDMATransferLengthRegister(data);
+	return ReadTriggerDMATransferLength();
 }
 uint16_t DTC::DTC::ReadTriggerDMATransferLength()
 {
@@ -147,11 +148,12 @@ uint16_t DTC::DTC::ReadTriggerDMATransferLength()
 	return static_cast<uint16_t>(data);
 }
 
-void DTC::DTC::SetMinDMATransferLength(uint16_t length)
+int DTC::DTC::SetMinDMATransferLength(uint16_t length)
 {
 	uint32_t data = ReadDMATransferLengthRegister();
 	data = (data & 0xFFFF0000) + length;
 	WriteDMATransferLengthRegister(data);
+	return ReadMinDMATransferLength();
 }
 uint16_t DTC::DTC::ReadMinDMATransferLength()
 {
@@ -248,7 +250,7 @@ bool DTC::DTC::ResetSERDES(const DTC_Ring_ID& ring, int interval)
 		WriteSERDESResetRegister(data.to_ulong());
 
 		resetDone = ReadSERDESResetDone(ring);
-		TRACE(0, "End of SERDES Reset loop, done %d", resetDone)
+		TRACE(0, "End of SERDES Reset loop, done %d", resetDone);
 	}
 	return resetDone;
 }
@@ -316,25 +318,28 @@ bool DTC::DTC::ReadSERDESRXCDRLock(const DTC_Ring_ID& ring)
 	return dataSet[ring];
 }
 
-void DTC::DTC::WriteDMATimeoutPreset(uint32_t preset) 
+int DTC::DTC::WriteDMATimeoutPreset(uint32_t preset) 
 {
 	WriteDMATimeoutPresetRegister(preset);
+	return ReadDMATimeoutPreset();
 }
 uint32_t DTC::DTC::ReadDMATimeoutPreset()
 {
 	return ReadDMATimeoutPresetRegister();
 }
-void DTC::DTC::WriteDataPendingTimer(uint32_t timer)
+int DTC::DTC::WriteDataPendingTimer(uint32_t timer)
 {
 	WriteDataPendingTimerRegister(timer);
+	return ReadDataPendingTimer();
 }
 uint32_t DTC::DTC::ReadDataPendingTimer()
 {
 	return ReadDataPendingTimerRegister();
 }
-void DTC::DTC::SetPacketSize(uint16_t packetSize)
+int DTC::DTC::SetPacketSize(uint16_t packetSize)
 {
 	WriteDMAPacketSizetRegister(0x00000000 + packetSize);
+	return ReadPacketSize();
 }
 uint16_t DTC::DTC::ReadPacketSize()
 {
