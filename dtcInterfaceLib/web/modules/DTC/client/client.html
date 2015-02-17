@@ -20,7 +20,7 @@
 <script src="client.js"></script>
 <html>
 <head>
-    <title>DTC Node.js Interface v1.0</title>
+    <title>DTC Node.js Interface v1.02.01</title>
 </head>
 <body>
     <form>
@@ -48,12 +48,10 @@
                             <option value="0x9028">PCIe Initial Non-Posted Header Credits for Downstream Port (RO, 0x9028)</option>
                             <option value="0x902C">PCIe Initial Posted Data Credits for Downstream Port (RO, 0x902C)</option>
                             <option value="0x9030">PCIe Initial Posted Header Credits for Downstream Port (RO, 0x9030)</option>
-                            <option value="0x9100">Enable traffic generator C2S0 (0x9100)</option>
-                            <option value="0x9104">Packet Length (0x9104)</option>
-                            <option value="0x9108">Enable Loopback/Traffic Checker (0x9108)</option>
-                            <option value="0x910C">Checker Status (RW1C, 0x910C)</option>
                             <option value="0x9100">DTC Control (0x9100)</option>
+                            <option value="0x9104">DMA Transfer Length (0x9104)</option>
                             <option value="0x9108">SERDES Loopback Enable (0x9108)</option>
+                            <option value="0x9168">SERDES Loopback Enable (0x9168)</option>
                             <option value="0x9110">ROC Emulation Enable (0x9110)</option>
                             <option value="0x9114">Ring Enable (0x9114)</option>
                             <option value="0x9118">SERDES Reset (0x9118)</option>
@@ -63,11 +61,15 @@
                             <option value="0x9128">SERDES PLL Locked (RO, 0x9128)</option>
                             <option value="0x912C">SERDES TX Buffer Status (RO, 0x912C)</option>
                             <option value="0x9130">SERDES RX Buffer Status (RO, 0x9130)</option>
+                            <option value="0x9134">SERDES RX Status (RO, 0x9134)</option>
                             <option value="0x9138">SERDES Reset Done (RO, 0x9138)</option>
+                            <option value="0x913C">SERDES Eyescan Error Data (RO, 0x913C)</option>
+                            <option value="0x9140">SERDES RX CDR Lock (RO, 0x9140)</option>
+                            <option value="0x9144">DMA Timeout Preset (0x9144)</option>
                             <option value="0x9180">Timestamp Preset 0 (0x9180)</option>
                             <option value="0x9184">Timestamp Preset 1 (0x9184)</option>
-                            <option value="0x91A0">FPGA PROM Program Data (WO, 0x91A0)</option>
-                            <option value="0x91A4">FPGA PROM Program Status (RO, 0x91A4)</option>
+                            <option value="0x9188">DMA Data Pending Timeout (0x9188)</option>
+                            <option value="0x9204">DMA Packet Size (0x9204)</option>
                         </select>
                     </td>
                 </tr>
@@ -82,18 +84,22 @@
                     <td><select id="mode"><option value="read">Read</option><option value="write">Write</option></select></td>
                     <td><input type="button" id="post" value="Run"></td>
                 </tr>
+            </table><br><br>
+            <table>
                 <tr>
                     <td><input type="button" id="refresh" value="Refresh" onclick="GetRegDump()"></td>
                     <td><input type="checkbox" id="updateReg" value="0">Automatically Update Registers</td>
-                    <td>Interval (s):<input type="number" id="regInterval" value="2" min="1" step="1"></td>
+                    <td>Interval (s):</td>
+                    <td><input type="number" id="regInterval" value="2" min="1" step="1"></td>
                 </tr>
                 <tr>
                     <td><input type="button" id="refreshLog" value="Refresh Log" onclick="ReadLog()"></td>
                     <td><input type="checkbox" id="updateLog" checked="checked">Automatically Update Log</td>
-                    <td>Interval (s):<input type="number" id="logInterval" value="2" min="1" step="1"></td>
+                    <td>Interval (s):</td>
+                    <td><input type="number" id="logInterval" value="2" min="1" step="1"></td>
                 </tr>
-            </table>
-            Script:<br />
+            </table><br><br>
+            Script:<br>
             <textarea id="script" style="width:100%;height:200px"></textarea>
 
             <pre>Note: expects &lt;address&gt; &lt;value&gt; pairs, one per line</pre><input type="button" id="execScript" value="Run Script" onclick="RunScript()">
@@ -122,15 +128,50 @@
                     <td>Firmware Version</td>
                     <td><input type="text" id="dtcVersion" size="8" value=""></td>
                 </tr>
+            </table><br><br>
+            <table>
                 <tr>
-                    <td>DTC Reset</td>
+                    <th>DTC Reset</th>
+                    <th>Clear Errors</th>
+                </tr>
+                <tr>
                     <td><canvas id="dtcResetLED" width="20" height="10" onclick="LEDAction('/DTC/resetDTC', null, 'dtcResetLED')"></canvas></td>
-                    <td>Clear Errors</td>
                     <td><canvas id="clearErrorsLED" width="20" height="10" onclick="LEDAction('/DTC/toggleClearLatchedErrors',null,'clearErrorsLED')"></canvas></td>
                 </tr>
                 <tr>
-                    <td>ROC Emulator</td>
+                    <th>ROC Emulator</th>
+                    <th>CFO Emulator</th>
+                </tr>
+                <tr>
                     <td><canvas id="ROCEmulatorEnabledLED" width="20" height="10" onclick="LEDAction('./toggleROCEmulator',null,'ROCEmulatorEnabledLED')"></canvas></td>
+                    <td><canvas id="CFOEmulatorEnabledLED" width="20" height="10" onclick="LEDAction('./toggleCFOEmulator',null,'CFOEmulatorEnabledLED')"></canvas></td>
+                </tr>
+            </table><br><br>
+            <table>
+                <tr>
+                    <td>Trigger DMA Transfer Length</td>
+                    <td><input type="number" id="triggerDMALength" min=0x80 max=0x8000 step=8 value=0x8000></td>
+                    <td><button type="button" id="setTriggerDMALength" onclick="SetNumericValue('#triggerDMALength', '/DTC/setTriggerDMATransferLength')">Set</button></td>
+                </tr>
+                <tr>
+                    <td>Min DMA Transfer Length</td>
+                    <td><input type="number" id="minDMALength" min=0x40 max=0x7FC0 step=8 value=0x40></td>
+                    <td><button type="button" id="setMinDMALength" onclick="SetNumericValue('#minDMALength', '/DTC/setMinDMATransferLength')">Set</button></td>
+                </tr>
+                <tr>
+                    <td>DMA Timeout Preset (x4 ns)</td>
+                    <td><input type="number" id="dmaTimeoutPreset" min=0 max=0xFFFFFFFF value=0x800></td>
+                    <td><button type="button" id="setDMATimeoutPreset" onclick="SetNumericValue('#dmaTimeoutPreset','/DTC/writeDMATimeoutPreset')">Set</button></td>
+                </tr>
+                <tr>
+                    <td>Data Pending Timer (x6.4 ns)</td>
+                    <td><input type="number" id="dataPendingTimer" min=0 max=0xFFFFFFFF value=0x2000></td>
+                    <td><button type="button" id="setDataPendingTimer" onclick="SetNumericValue('#dataPendingTimer', '/DTC/writeDataPendingTimer')">Set</button></td>
+                </tr>
+                <tr>
+                    <td>Packet Size (bytes)</td>
+                    <td><input type="number" id="packetSize" min=0 max=0xFFFF value=0x10></td>
+                    <td><button type="button" id="setPacketSize" onclick="SetNumericValue('#packetSize','/DTC/setPacketSize')">Set</button></td>
                 </tr>
             </table>
         </fieldset>
@@ -143,69 +184,123 @@
                 <tr><td>Ring 3</td><td><canvas id="Ring3EnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 3, 'Ring3EnabledLED')"></canvas></td></tr>
                 <tr><td>Ring 4</td><td><canvas id="Ring4EnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 4, 'Ring4EnabledLED')"></canvas></td></tr>
                 <tr><td>Ring 5</td><td><canvas id="Ring5EnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 5, 'Ring5EnabledLED')"></canvas></td></tr>
+                <tr><td>CFO</td><td><canvas id="CFOEnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 6, 'CFOEnabledLED')"></canvas></td></tr>
             </table>
         </fieldset>
         <fieldset>
-            <legend>SERDES Loopback Enable</legend>
+            <legend>SERDES Loopback Mode</legend>
             <table>
-                <tr><td>Ring 0</td><td><canvas id="SERDESLoopbackRing0LED" width="20" height="10" onclick="LEDAction('/DTC/toggleSERDESLoopback', 0,'SERDESLoopbackRing0LED')"></canvas></td></tr>
-                <tr><td>Ring 1</td><td><canvas id="SERDESLoopbackRing1LED" width="20" height="10" onclick="LEDAction('/DTC/toggleSERDESLoopback', 1, 'SERDESLoopbackRing1LED')"></canvas></td></tr>
-                <tr><td>Ring 2</td><td><canvas id="SERDESLoopbackRing2LED" width="20" height="10" onclick="LEDAction('/DTC/toggleSERDESLoopback', 2, 'SERDESLoopbackRing2LED')"></canvas></td></tr>
-                <tr><td>Ring 3</td><td><canvas id="SERDESLoopbackRing3LED" width="20" height="10" onclick="LEDAction('/DTC/toggleSERDESLoopback', 3, 'SERDESLoopbackRing3LED')"></canvas></td></tr>
-                <tr><td>Ring 4</td><td><canvas id="SERDESLoopbackRing4LED" width="20" height="10" onclick="LEDAction('/DTC/toggleSERDESLoopback', 4, 'SERDESLoopbackRing4LED')"></canvas></td></tr>
-                <tr><td>Ring 5</td><td><canvas id="SERDESLoopbackRing5LED" width="20" height="10" onclick="LEDAction('/DTC/toggleSERDESLoopback', 5, 'SERDESLoopbackRing5LED')"></canvas></td></tr>
+                <tr>
+                    <th></th>
+                    <th>Near-End PCS</th>
+                    <th>Near-End PMA</th>
+                    <th>Far-End PMA</th>
+                    <th>Far-End PCS</th>
+                </tr>
+                <tr>
+                    <td>Ring 0</td>
+                    <td><canvas id="SERDESLoopbackNEPCSRing0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 0,1,'SERDESLoopbackNEPCSRing0LED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackNEPMARing0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 0,2,'SERDESLoopbackNEPMARing0LED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackFEPMARing0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 0,4,'SERDESLoopbackFEPMARing0LED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackFEPCSRing0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 0,6,'SERDESLoopbackFEPCSRing0LED')"></canvas></td>
+                </tr>
+                <tr>
+                    <td>Ring 1</td>
+                    <td><canvas id="SERDESLoopbackNEPCSRing1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 1,1,'SERDESLoopbackNEPCSRing1LED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackNEPMARing1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 1,2,'SERDESLoopbackNEPMARing1LED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackFEPMARing1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 1,4,'SERDESLoopbackFEPMARing1LED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackFEPCSRing1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 1,6,'SERDESLoopbackFEPCSRing1LED')"></canvas></td>
+                </tr>
+                <tr>
+                    <td>Ring 2</td>
+                    <td><canvas id="SERDESLoopbackNEPCSRing2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 2,1,'SERDESLoopbackNEPCSRing2LED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackNEPMARing2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 2,2,'SERDESLoopbackNEPMARing2LED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackFEPMARing2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 2,4,'SERDESLoopbackFEPMARing2LED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackFEPCSRing2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 2,6,'SERDESLoopbackFEPCSRing2LED')"></canvas></td>
+                </tr>
+                <tr>
+                    <td>Ring 3</td>
+                    <td><canvas id="SERDESLoopbackNEPCSRing3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 3,1,'SERDESLoopbackNEPCSRing3LED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackNEPMARing3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 3,2,'SERDESLoopbackNEPMARing3LED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackFEPMARing3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 3,4,'SERDESLoopbackFEPMARing3LED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackFEPCSRing3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 3,6,'SERDESLoopbackFEPCSRing3LED')"></canvas></td>
+                </tr>
+                <tr>
+                    <td>Ring 4</td>
+                    <td><canvas id="SERDESLoopbackNEPCSRing4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 4,1,'SERDESLoopbackNEPCSRing4LED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackNEPMARing4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 4,2,'SERDESLoopbackNEPMARing4LED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackFEPMARing4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 4,4,'SERDESLoopbackFEPMARing4LED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackFEPCSRing4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 4,6,'SERDESLoopbackFEPCSRing4LED')"></canvas></td>
+                </tr>
+                <tr>
+                    <td>Ring 5</td>
+                    <td><canvas id="SERDESLoopbackNEPCSRing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5,1,'SERDESLoopbackNEPCSRing5LED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackNEPMARing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5,2,'SERDESLoopbackNEPMARing5LED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackFEPMARing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5,4,'SERDESLoopbackFEPMARing5LED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackFEPCSRing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5,6,'SERDESLoopbackFEPCSRing5LED')"></canvas></td>
+                </tr>
+                <tr>
+                    <td>CFO</td>
+                    <td><canvas id="SERDESLoopbackNEPCSCFOLED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6,1,'SERDESLoopbackNEPCSCFOLED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackNEPMACFOLED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6,2,'SERDESLoopbackNEPMACFOLED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackFEPMACFOLED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6,4,'SERDESLoopbackFEPMACFOLED')"></canvas></td>
+                    <td><canvas id="SERDESLoopbackFEPCSCFOLED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6,6,'SERDESLoopbackFEPCSCFOLED')"></canvas></td>
+                </tr>
             </table>
         </fieldset>
         <fieldset>
             <legend>SERDES Reset</legend>
             <table>
                 <tr>
+                    <th></th>
+                    <th>Reset In Progress</th>
+                    <th>Reset Done</th>
+                </tr>
+                <tr>
                     <td>Ring 0</td>
-                    <td>Reset In Progress</td>
                     <td><canvas id="SERDESResetRing0LED" width="20" height="10" onclick="LEDAction('/DTC/resetSERDES', 0, 'SERDESResetRing0LED')"></canvas></td>
-                    <td>Reset Done</td>
                     <td><canvas id="SERDESResetDoneRing0LED" width="20" height="10"></canvas></td>
                 </tr>
                 <tr>
                     <td>Ring 1</td>
-                    <td>Reset In Progress</td>
                     <td><canvas id="SERDESResetRing1LED" width="20" height="10" onclick="LEDAction('/DTC/resetSERDES', 1, 'SERDESResetRing1LED')"></canvas></td>
-                    <td>Reset Done</td>
                     <td><canvas id="SERDESResetDoneRing1LED" width="20" height="10"></canvas></td>
                 </tr>
                 <tr>
                     <td>Ring 2</td>
-                    <td>Reset In Progress</td>
                     <td><canvas id="SERDESResetRing2LED" width="20" height="10" onclick="LEDAction('/DTC/resetSERDES', 2, 'SERDESResetRing2LED')"></canvas></td>
-                    <td>Reset Done</td>
                     <td><canvas id="SERDESResetDoneRing2LED" width="20" height="10"></canvas></td>
                 </tr>
                 <tr>
                     <td>Ring 3</td>
-                    <td>Reset In Progress</td>
                     <td><canvas id="SERDESResetRing3LED" width="20" height="10" onclick="LEDAction('/DTC/resetSERDES', 3, 'SERDESResetRing3LED')"></canvas></td>
-                    <td>Reset Done</td>
                     <td><canvas id="SERDESResetDoneRing3LED" width="20" height="10"></canvas></td>
                 </tr>
                 <tr>
                     <td>Ring 4</td>
-                    <td>Reset In Progress</td>
                     <td><canvas id="SERDESResetRing4LED" width="20" height="10" onclick="LEDAction('/DTC/resetSERDES', 4, 'SERDESResetRing4LED')"></canvas></td>
-                    <td>Reset Done</td>
                     <td><canvas id="SERDESResetDoneRing4LED" width="20" height="10"></canvas></td>
                 </tr>
                 <tr>
                     <td>Ring 5</td>
-                    <td>Reset In Progress</td>
                     <td><canvas id="SERDESResetRing5LED" width="20" height="10" onclick="LEDAction('/DTC/resetSERDES', 5, 'SERDESResetRing5LED')"></canvas></td>
-                    <td>Reset Done</td>
                     <td><canvas id="SERDESResetDoneRing5LED" width="20" height="10"></canvas></td>
+                </tr>
+                <tr>
+                    <td>CFO</td>
+                    <td><canvas id="SERDESResetCFOLED" width="20" height="10" onclick="LEDAction('/DTC/resetSERDES', 6, 'SERDESResetCFOLED')"></canvas></td>
+                    <td><canvas id="SERDESResetDoneCFOLED" width="20" height="10"></canvas></td>
                 </tr>
             </table>
         </fieldset>
         <fieldset>
             <legend>SERDES RX Disparity</legend>
             <table>
+                <tr>
+                    <th></th>
+                    <th>High Bit</th>
+                    <th>Low Bit</th>
+                </tr>
                 <tr>
                     <td>Ring 0</td>
                     <td><canvas id="SERDESRXDisparityRing0HighLED" width="20" height="10"></canvas></td>
@@ -236,11 +331,21 @@
                     <td><canvas id="SERDESRXDisparityRing5HighLED" width="20" height="10"></canvas></td>
                     <td><canvas id="SERDESRXDisparityRing5LowLED" width="20" height="10"></canvas></td>
                 </tr>
+                <tr>
+                    <td>CFO</td>
+                    <td><canvas id="SERDESRXDisparityCFOHighLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXDisparityCFOLowLED" width="20" height="10"></canvas></td>
+                </tr>
             </table>
         </fieldset>
         <fieldset>
             <legend>SERDES RX Character Not In Table Error</legend>
             <table>
+                <tr>
+                    <th></th>
+                    <th>High Bit</th>
+                    <th>Low Bit</th>
+                </tr>
                 <tr>
                     <td>Ring 0</td>
                     <td><canvas id="SERDESRXCNITRing0HighLED" width="20" height="10"></canvas></td>
@@ -271,6 +376,11 @@
                     <td><canvas id="SERDESRXCNITRing5HighLED" width="20" height="10"></canvas></td>
                     <td><canvas id="SERDESRXCNITRing5LowLED" width="20" height="10"></canvas></td>
                 </tr>
+                <tr>
+                    <td>CFO</td>
+                    <td><canvas id="SERDESRXCNITCFOHighLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXCNITCFOLowLED" width="20" height="10"></canvas></td>
+                </tr>
             </table>
         </fieldset>
         <fieldset>
@@ -282,6 +392,7 @@
                 <tr><td>Ring 3</td><td><canvas id="SERDESUnlockRing3LED" width="20" height="10"></canvas></td></tr>
                 <tr><td>Ring 4</td><td><canvas id="SERDESUnlockRing4LED" width="20" height="10"></canvas></td></tr>
                 <tr><td>Ring 5</td><td><canvas id="SERDESUnlockRing5LED" width="20" height="10"></canvas></td></tr>
+                <tr><td>CFO</td><td><canvas id="SERDESUnlockCFOLED" width="20" height="10"></canvas></td></tr>
             </table>
         </fieldset>
         <fieldset>
@@ -293,52 +404,51 @@
                 <tr><td>Ring 3</td><td><canvas id="SERDESLockedRing3LED" width="20" height="10"></canvas></td></tr>
                 <tr><td>Ring 4</td><td><canvas id="SERDESLockedRing4LED" width="20" height="10"></canvas></td></tr>
                 <tr><td>Ring 5</td><td><canvas id="SERDESLockedRing5LED" width="20" height="10"></canvas></td></tr>
+                <tr><td>CFO</td><td><canvas id="SERDESLockedCFOLED" width="20" height="10"></canvas></td></tr>
             </table>
         </fieldset>
         <fieldset>
             <legend>SERDES TX Buffer Status</legend>
             <table>
                 <tr>
+                    <th></th>
+                    <th>Overflow or Underflow</th>
+                    <th>FIFO Half Full</th>
+                </tr>
+                <tr>
                     <td>Ring 0</td>
-                    <td>Overflow or Underflow</td>
                     <td><canvas id="SERDESTXUOFlowRing0LED" width="20" height="10"></canvas></td>
-                    <td>FIFO Half Full</td>
                     <td><canvas id="SERDESTXFIFOHFRing0LED" width="20" height="10"></canvas></td>
                 </tr>
                 <tr>
                     <td>Ring 1</td>
-                    <td>Overflow or Underflow</td>
                     <td><canvas id="SERDESTXUOFlowRing1LED" width="20" height="10"></canvas></td>
-                    <td>FIFO Half Full</td>
                     <td><canvas id="SERDESTXFIFOHFRing1LED" width="20" height="10"></canvas></td>
                 </tr>
                 <tr>
                     <td>Ring 2</td>
-                    <td>Overflow or Underflow</td>
                     <td><canvas id="SERDESTXUOFlowRing2LED" width="20" height="10"></canvas></td>
-                    <td>FIFO Half Full</td>
                     <td><canvas id="SERDESTXFIFOHFRing2LED" width="20" height="10"></canvas></td>
                 </tr>
                 <tr>
                     <td>Ring 3</td>
-                    <td>Overflow or Underflow</td>
                     <td><canvas id="SERDESTXUOFlowRing3LED" width="20" height="10"></canvas></td>
-                    <td>FIFO Half Full</td>
                     <td><canvas id="SERDESTXFIFOHFRing3LED" width="20" height="10"></canvas></td>
                 </tr>
                 <tr>
                     <td>Ring 4</td>
-                    <td>Overflow or Underflow</td>
                     <td><canvas id="SERDESTXUOFlowRing4LED" width="20" height="10"></canvas></td>
-                    <td>FIFO Half Full</td>
                     <td><canvas id="SERDESTXFIFOHFRing4LED" width="20" height="10"></canvas></td>
                 </tr>
                 <tr>
                     <td>Ring 5</td>
-                    <td>Overflow or Underflow</td>
                     <td><canvas id="SERDESTXUOFlowRing5LED" width="20" height="10"></canvas></td>
-                    <td>FIFO Half Full</td>
                     <td><canvas id="SERDESTXFIFOHFRing5LED" width="20" height="10"></canvas></td>
+                </tr>
+                <tr>
+                    <td>CFO</td>
+                    <td><canvas id="SERDESTXUOFlowCFOLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESTXFIFOHFCFOLED" width="20" height="10"></canvas></td>
                 </tr>
             </table>
         </fieldset>
@@ -346,100 +456,207 @@
             <legend>SERDES RX Buffer Status</legend>
             <table>
                 <tr>
+                    <th></th>
+                    <th>Nominal</th>
+                    <th>Buffer Empty</th>
+                    <th>Buffer Full</th>
+                    <th>Underflow</th>
+                    <th>Overflow</th>
+                </tr>
+                <tr>
                     <td>Ring 0</td>
-                    <td>Nominal</td>
                     <td><canvas id="SERDESRXBufferNominalRing0LED" width="20" height="10"></canvas></td>
-                    <td>Buffer Empty</td>
                     <td><canvas id="SERDESRXBufferEmptyRing0LED" width="20" height="10"></canvas></td>
-                    <td>Buffer Full</td>
                     <td><canvas id="SERDESRXBufferFullRing0LED" width="20" height="10"></canvas></td>
-                    <td>Underflow</td>
                     <td><canvas id="SERDESRXBufferUFRing0LED" width="20" height="10"></canvas></td>
-                    <td>Overflow</td>
                     <td><canvas id="SERDESRXBufferOFRing0LED" width="20" height="10"></canvas></td>
                 </tr>
                 <tr>
                     <td>Ring 1</td>
-                    <td>Nominal</td>
                     <td><canvas id="SERDESRXBufferNominalRing1LED" width="20" height="10"></canvas></td>
-                    <td>Buffer Empty</td>
                     <td><canvas id="SERDESRXBufferEmptyRing1LED" width="20" height="10"></canvas></td>
-                    <td>Buffer Full</td>
                     <td><canvas id="SERDESRXBufferFullRing1LED" width="20" height="10"></canvas></td>
-                    <td>Underflow</td>
                     <td><canvas id="SERDESRXBufferUFRing1LED" width="20" height="10"></canvas></td>
-                    <td>Overflow</td>
                     <td><canvas id="SERDESRXBufferOFRing1LED" width="20" height="10"></canvas></td>
                 </tr>
                 <tr>
                     <td>Ring 2</td>
-                    <td>Nominal</td>
                     <td><canvas id="SERDESRXBufferNominalRing2LED" width="20" height="10"></canvas></td>
-                    <td>Buffer Empty</td>
                     <td><canvas id="SERDESRXBufferEmptyRing2LED" width="20" height="10"></canvas></td>
-                    <td>Buffer Full</td>
                     <td><canvas id="SERDESRXBufferFullRing2LED" width="20" height="10"></canvas></td>
-                    <td>Underflow</td>
                     <td><canvas id="SERDESRXBufferUFRing2LED" width="20" height="10"></canvas></td>
-                    <td>Overflow</td>
                     <td><canvas id="SERDESRXBufferOFRing2LED" width="20" height="10"></canvas></td>
                 </tr>
                 <tr>
                     <td>Ring 3</td>
-                    <td>Nominal</td>
                     <td><canvas id="SERDESRXBufferNominalRing3LED" width="20" height="10"></canvas></td>
-                    <td>Buffer Empty</td>
                     <td><canvas id="SERDESRXBufferEmptyRing3LED" width="20" height="10"></canvas></td>
-                    <td>Buffer Full</td>
                     <td><canvas id="SERDESRXBufferFullRing3LED" width="20" height="10"></canvas></td>
-                    <td>Underflow</td>
                     <td><canvas id="SERDESRXBufferUFRing3LED" width="20" height="10"></canvas></td>
-                    <td>Overflow</td>
                     <td><canvas id="SERDESRXBufferOFRing3LED" width="20" height="10"></canvas></td>
                 </tr>
                 <tr>
                     <td>Ring 4</td>
-                    <td>Nominal</td>
                     <td><canvas id="SERDESRXBufferNominalRing4LED" width="20" height="10"></canvas></td>
-                    <td>Buffer Empty</td>
                     <td><canvas id="SERDESRXBufferEmptyRing4LED" width="20" height="10"></canvas></td>
-                    <td>Buffer Full</td>
                     <td><canvas id="SERDESRXBufferFullRing4LED" width="20" height="10"></canvas></td>
-                    <td>Underflow</td>
                     <td><canvas id="SERDESRXBufferUFRing4LED" width="20" height="10"></canvas></td>
-                    <td>Overflow</td>
                     <td><canvas id="SERDESRXBufferOFRing4LED" width="20" height="10"></canvas></td>
                 </tr>
                 <tr>
                     <td>Ring 5</td>
-                    <td>Nominal</td>
                     <td><canvas id="SERDESRXBufferNominalRing5LED" width="20" height="10"></canvas></td>
-                    <td>Buffer Empty</td>
                     <td><canvas id="SERDESRXBufferEmptyRing5LED" width="20" height="10"></canvas></td>
-                    <td>Buffer Full</td>
                     <td><canvas id="SERDESRXBufferFullRing5LED" width="20" height="10"></canvas></td>
-                    <td>Underflow</td>
                     <td><canvas id="SERDESRXBufferUFRing5LED" width="20" height="10"></canvas></td>
-                    <td>Overflow</td>
                     <td><canvas id="SERDESRXBufferOFRing5LED" width="20" height="10"></canvas></td>
+                </tr>
+                <tr>
+                    <td>CFO</td>
+                    <td><canvas id="SERDESRXBufferNominalCFOLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXBufferEmptyCFOLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXBufferFullCFOLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXBufferUFCFOLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXBufferOFCFOLED" width="20" height="10"></canvas></td>
                 </tr>
             </table>
         </fieldset>
         <fieldset>
+            <legend>SERDES RX Status</legend>
+            <table>
+                <tr>
+                    <th></th>
+                    <th>Data OK</th>
+                    <th>Skip Added</th>
+                    <th>Skip Removed</th>
+                    <th>Receiver Detected</th>
+                    <th>Decode Error</th>
+                    <th>Elastic Overflow</th>
+                    <th>Elastic Underflow</th>
+                    <th>RX Disparity Error</th>
+                </tr>
+                <tr>
+                    <td>Ring 0</td>
+                    <td><canvas id="SERDESRXDataOKRing0LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXSKPAddedRing0LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXSKPRemovedRing0LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXReceiverDetectedRing0LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXDecodeErrorRing0LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXEOFRing0LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXEUFRing0LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXDisparityErrorRing0LED" width="20" height="10"></canvas></td>
+                </tr>
+                <tr>
+                    <td>Ring 1</td>
+                    <td><canvas id="SERDESRXDataOKRing1LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXSKPAddedRing1LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXSKPRemovedRing1LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXReceiverDetectedRing1LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXDecodeErrorRing1LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXEOFRing1LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXEUFRing1LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXDisparityErrorRing1LED" width="20" height="10"></canvas></td>
+                </tr>
+                <tr>
+                    <td>Ring 2</td>
+                    <td><canvas id="SERDESRXDataOKRing2LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXSKPAddedRing2LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXSKPRemovedRing2LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXReceiverDetectedRing2LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXDecodeErrorRing2LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXEOFRing2LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXEUFRing2LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXDisparityErrorRing2LED" width="20" height="10"></canvas></td>
+                </tr>
+                <tr>
+                    <td>Ring 3</td>
+                    <td><canvas id="SERDESRXDataOKRing3LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXSKPAddedRing3LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXSKPRemovedRing3LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXReceiverDetectedRing3LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXDecodeErrorRing3LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXEOFRing3LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXEUFRing3LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXDisparityErrorRing3LED" width="20" height="10"></canvas></td>
+                </tr>
+                <tr>
+                    <td>Ring 4</td>
+                    <td><canvas id="SERDESRXDataOKRing4LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXSKPAddedRing4LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXSKPRemovedRing4LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXReceiverDetectedRing4LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXDecodeErrorRing4LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXEOFRing4LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXEUFRing4LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXDisparityErrorRing4LED" width="20" height="10"></canvas></td>
+                </tr>
+                <tr>
+                    <td>Ring 5</td>
+                    <td><canvas id="SERDESRXDataOKRing5LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXSKPAddedRing5LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXSKPRemovedRing5LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXReceiverDetectedRing5LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXDecodeErrorRing5LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXEOFRing5LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXEUFRing5LED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXDisparityErrorRing5LED" width="20" height="10"></canvas></td>
+                </tr>
+                <tr>
+                    <td>CFO</td>
+                    <td><canvas id="SERDESRXDataOKCFOLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXSKPAddedCFOLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXSKPRemovedCFOLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXReceiverDetectedCFOLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXDecodeErrorCFOLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXEOFCFOLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXEUFCFOLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXDisparityErrorCFOLED" width="20" height="10"></canvas></td>
+                </tr>
+            </table>
+        </fieldset>
+        <fieldset>
+            <legend>SERDES Eyescan Error</legend>
+            <table>
+                <tr><td>Ring 0</td><td><canvas id="SERDESEyescanRing0LED" width="20" height="10"></canvas></td></tr>
+                <tr><td>Ring 1</td><td><canvas id="SERDESEyescanRing1LED" width="20" height="10"></canvas></td></tr>
+                <tr><td>Ring 2</td><td><canvas id="SERDESEyescanRing2LED" width="20" height="10"></canvas></td></tr>
+                <tr><td>Ring 3</td><td><canvas id="SERDESEyescanRing3LED" width="20" height="10"></canvas></td></tr>
+                <tr><td>Ring 4</td><td><canvas id="SERDESEyescanRing4LED" width="20" height="10"></canvas></td></tr>
+                <tr><td>Ring 5</td><td><canvas id="SERDESEyescanRing5LED" width="20" height="10"></canvas></td></tr>
+                <tr><td>CFO</td><td><canvas id="SERDESEyescanCFOLED" width="20" height="10"></canvas></td></tr>
+            </table>
+        </fieldset>
+        <fieldset>
+            <legend>SERDES RX CDR Lock</legend>
+            <table>
+                <tr><td>Ring 0</td><td><canvas id="SERDESRXCDRLockRing0LED" width="20" height="10"></canvas></td></tr>
+                <tr><td>Ring 1</td><td><canvas id="SERDESRXCDRLockRing1LED" width="20" height="10"></canvas></td></tr>
+                <tr><td>Ring 2</td><td><canvas id="SERDESRXCDRLockRing2LED" width="20" height="10"></canvas></td></tr>
+                <tr><td>Ring 3</td><td><canvas id="SERDESRXCDRLockRing3LED" width="20" height="10"></canvas></td></tr>
+                <tr><td>Ring 4</td><td><canvas id="SERDESRXCDRLockRing4LED" width="20" height="10"></canvas></td></tr>
+                <tr><td>Ring 5</td><td><canvas id="SERDESRXCDRLockRing5LED" width="20" height="10"></canvas></td></tr>
+                <tr><td>CFO</td><td><canvas id="SERDESRXCDRLockCFOLED" width="20" height="10"></canvas></td></tr>
+            </table>
+        </fieldset>
+        <fieldset>
             <legend>Timestamp Preset</legend>
-            <table style="width:100%">
+            <table>
                 <tr><td>Timestamp Preset</td><td><input type="text" id="timestamp" width="12" value=""></td></tr>
-                <tr><td><input type="button" id="setTimestamp" value="Set Timestamp" onclick="SetTimestamp()"></td></tr>
+                <tr><td><input type="button" id="setTimestamp" value="Set Timestamp" onclick="SetNumericValue('#timestamp', '/DTC/setTimestampPreset')"></td></tr>
             </table>
         </fieldset>
         <fieldset>
             <legend>FPGA PROM Registers</legend>
-            <table style="width:100%">
+            <table>
                 <tr>
-                    <td>FPGA PROM Program FIFO Full</td>
+                    <th>FPGA PROM Program FIFO Full</th>
+                    <th>FPGA PROM Ready</th>
+                    <th>FPGA Core FIFO Full</th>
+                </tr>
+                <tr>
                     <td><canvas id="fpgapromfifofullLED" width="20" height="10"></canvas></td>
-                    <td>FPGA PROM Ready</td>
                     <td><canvas id="fpgapromreadyLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="fpgaCoreFIFOFullLED" width="20" height="10"></canvas></td>
                 </tr>
             </table>
         </fieldset>

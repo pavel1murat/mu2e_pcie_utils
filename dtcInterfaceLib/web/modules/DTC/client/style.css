@@ -29,3 +29,14 @@ svg {
     position: relative;
     width: 100%;
 }
+
+th {
+    padding-left: 1em;
+    padding-right: 1em;
+}
+
+td {
+    text-align:center;
+    padding-left: 1em;
+    padding-right: 1em;
+}
