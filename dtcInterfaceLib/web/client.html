@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<meta charset="utf-8">
 <html>
 <head>
     <title>mu2e DAQ Server: DTC Web Interface v0.4</title>
@@ -25,9 +26,9 @@
          }
     </style>
     <div class="menu">
-        <a href="/" onclick="document.getElementById('frame').src = '/DTC/PerfMon.html';return false">DTC Performance Monitor GUI</a><br>
-        <a href="/" onclick="document.getElementById('frame').src = '/DTC/client.html';return false">DTC Register I/O and PCIe Status</a><br>
-        <a href="/" onclick="document.getElementById('frame').src = '/base/ReadServerLog.html';return false">Read Server Log File</a>
+        <a href="/" onclick="document.getElementById('frame').src = '/DTC/PerfMon.html';return false">DTC Performance Monitor GUI</a><br><br>
+        <a href="/" onclick="document.getElementById('frame').src = '/DTC/client.html';return false">DTC Register I/O and PCIe Status</a><br><br>
+        <a href="/" onclick="document.getElementById('frame').src = '/base/ReadServerLog.html';return false">Read Server Log File</a><br><br>
     </div>
     <div class="mainContent">
         <iframe id="frame" src="/DTC/client.html"></iframe>
