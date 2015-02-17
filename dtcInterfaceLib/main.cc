@@ -103,6 +103,9 @@ int main(int argc, char* argv[]) {
 
 	}
 
+	// Make sure that the ring is enabled before the tests.
+	thisDTC->EnableRing(DTC::DTC_Ring_0, DTC::DTC_ROC_0);
+
 	int regTestCount = 0;
 	while (registerTest && regTestCount < testCount) {
 		std::cout << "Test 1: Register R/W" << std::endl;
