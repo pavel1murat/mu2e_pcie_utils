@@ -29,10 +29,20 @@ svg {
     position: relative;
     width: 100%;
 }
+fieldset {
+    margin-top: 1em;
+}
+
+fieldset legend {
+    font-weight: bold;
+    font-size: large;
+}
 
 th {
     padding-left: 1em;
     padding-right: 1em;
+    font-weight:600;
+    font-size:medium;
 }
 
 td {

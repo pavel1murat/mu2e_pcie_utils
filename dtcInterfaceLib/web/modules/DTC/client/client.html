@@ -25,10 +25,36 @@
 <body>
     <form>
         <fieldset>
-            <legend>AJAX Debug Indicators</legend>
-            RegDump:<canvas id="RegDumpAjaxLED" width="20" height="10"></canvas>
-            AjaxRequest:<canvas id="AjaxRequestLED" width="20" height="10"></canvas>
-            FormAjax:<canvas id="FormAjaxLED" width="20" height="10"></canvas>
+            <legend>AJAX Indicators and Settings</legend>
+            <table>
+                <tr>
+                    <th>RegDump</th>
+                    <th>AjaxRequest</th>
+                    <th>FormAjax</th>
+                </tr>
+            <tr>
+                <td><canvas id="RegDumpAjaxLED" width="20" height="10"></canvas></td>
+                <td><canvas id="AjaxRequestLED" width="20" height="10"></canvas></td>
+                <td><canvas id="FormAjaxLED" width="20" height="10"></canvas></td>
+            </tr>
+            </table><br><br>
+            <table>
+            <tr>
+                <th>Single Update</th>
+                <th>Automatic Updates</th>
+                <th>Interval (s)</th>
+            </tr>
+                <tr>
+                    <td><input type="button" id="refresh" value="Register Dump" onclick="GetRegDump()"></td>
+                    <td><input type="checkbox" id="updateReg" value="0"></td>
+                    <td><input type="number" id="regInterval" value="2" min="1" step="1"></td>
+                </tr>
+                <tr>
+                    <td><input type="button" id="refreshLog" value="DTC Log" onclick="ReadLog()"></td>
+                    <td><input type="checkbox" id="updateLog" checked="checked"></td>
+                    <td><input type="number" id="logInterval" value="2" min="1" step="1"></td>
+                </tr>
+            </table><br><br>
         </fieldset>
         <fieldset>
             <legend>DTC Register Read/Write</legend>
@@ -85,20 +111,6 @@
                     <td><input type="button" id="post" value="Run"></td>
                 </tr>
             </table><br><br>
-            <table>
-                <tr>
-                    <td><input type="button" id="refresh" value="Refresh" onclick="GetRegDump()"></td>
-                    <td><input type="checkbox" id="updateReg" value="0">Automatically Update Registers</td>
-                    <td>Interval (s):</td>
-                    <td><input type="number" id="regInterval" value="2" min="1" step="1"></td>
-                </tr>
-                <tr>
-                    <td><input type="button" id="refreshLog" value="Refresh Log" onclick="ReadLog()"></td>
-                    <td><input type="checkbox" id="updateLog" checked="checked">Automatically Update Log</td>
-                    <td>Interval (s):</td>
-                    <td><input type="number" id="logInterval" value="2" min="1" step="1"></td>
-                </tr>
-            </table><br><br>
             Script:<br>
             <textarea id="script" style="width:100%;height:200px"></textarea>
 
@@ -125,7 +137,7 @@
             <legend>DTC Parameters</legend>
             <table>
                 <tr>
-                    <td>Firmware Version</td>
+                    <th>Firmware Version</th>
                     <td><input type="text" id="dtcVersion" size="8" value=""></td>
                 </tr>
             </table><br><br>
@@ -149,27 +161,27 @@
             </table><br><br>
             <table>
                 <tr>
-                    <td>Trigger DMA Transfer Length</td>
+                    <th>Trigger DMA Transfer Length</th>
                     <td><input type="number" id="triggerDMALength" min=0x80 max=0x8000 step=8 value=0x8000></td>
                     <td><button type="button" id="setTriggerDMALength" onclick="SetNumericValue('#triggerDMALength', '/DTC/setTriggerDMATransferLength')">Set</button></td>
                 </tr>
                 <tr>
-                    <td>Min DMA Transfer Length</td>
+                    <th>Min DMA Transfer Length</th>
                     <td><input type="number" id="minDMALength" min=0x40 max=0x7FC0 step=8 value=0x40></td>
                     <td><button type="button" id="setMinDMALength" onclick="SetNumericValue('#minDMALength', '/DTC/setMinDMATransferLength')">Set</button></td>
                 </tr>
                 <tr>
-                    <td>DMA Timeout Preset (x4 ns)</td>
+                    <th>DMA Timeout Preset (x4 ns)</th>
                     <td><input type="number" id="dmaTimeoutPreset" min=0 max=0xFFFFFFFF value=0x800></td>
                     <td><button type="button" id="setDMATimeoutPreset" onclick="SetNumericValue('#dmaTimeoutPreset','/DTC/writeDMATimeoutPreset')">Set</button></td>
                 </tr>
                 <tr>
-                    <td>Data Pending Timer (x6.4 ns)</td>
+                    <th>Data Pending Timer (x6.4 ns)</th>
                     <td><input type="number" id="dataPendingTimer" min=0 max=0xFFFFFFFF value=0x2000></td>
                     <td><button type="button" id="setDataPendingTimer" onclick="SetNumericValue('#dataPendingTimer', '/DTC/writeDataPendingTimer')">Set</button></td>
                 </tr>
                 <tr>
-                    <td>Packet Size (bytes)</td>
+                    <th>Packet Size (bytes)</th>
                     <td><input type="number" id="packetSize" min=0 max=0xFFFF value=0x10></td>
                     <td><button type="button" id="setPacketSize" onclick="SetNumericValue('#packetSize','/DTC/setPacketSize')">Set</button></td>
                 </tr>
@@ -178,6 +190,7 @@
         <fieldset>
             <legend>Ring Enable</legend>
             <table>
+                <tr><th></th><th>Enabled</th></tr>
                 <tr><td>Ring 0</td><td><canvas id="Ring0EnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 0, 'Ring0EnabledLED')"></canvas></td></tr>
                 <tr><td>Ring 1</td><td><canvas id="Ring1EnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 1, 'Ring1EnabledLED')"></canvas></td></tr>
                 <tr><td>Ring 2</td><td><canvas id="Ring2EnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 2, 'Ring2EnabledLED')"></canvas></td></tr>
@@ -386,6 +399,7 @@
         <fieldset>
             <legend>SERDES Unlock Error</legend>
             <table>
+                <tr><th></th><th>In Error</th></tr>
                 <tr><td>Ring 0</td><td><canvas id="SERDESUnlockRing0LED" width="20" height="10"></canvas></td></tr>
                 <tr><td>Ring 1</td><td><canvas id="SERDESUnlockRing1LED" width="20" height="10"></canvas></td></tr>
                 <tr><td>Ring 2</td><td><canvas id="SERDESUnlockRing2LED" width="20" height="10"></canvas></td></tr>
@@ -398,6 +412,7 @@
         <fieldset>
             <legend>SERDES PLL Locked</legend>
             <table>
+                <tr><th></th><th>Locked</th></tr>
                 <tr><td>Ring 0</td><td><canvas id="SERDESLockedRing0LED" width="20" height="10"></canvas></td></tr>
                 <tr><td>Ring 1</td><td><canvas id="SERDESLockedRing1LED" width="20" height="10"></canvas></td></tr>
                 <tr><td>Ring 2</td><td><canvas id="SERDESLockedRing2LED" width="20" height="10"></canvas></td></tr>
@@ -617,6 +632,7 @@
         <fieldset>
             <legend>SERDES Eyescan Error</legend>
             <table>
+                <tr><th></th><th>In Error</th></tr>
                 <tr><td>Ring 0</td><td><canvas id="SERDESEyescanRing0LED" width="20" height="10"></canvas></td></tr>
                 <tr><td>Ring 1</td><td><canvas id="SERDESEyescanRing1LED" width="20" height="10"></canvas></td></tr>
                 <tr><td>Ring 2</td><td><canvas id="SERDESEyescanRing2LED" width="20" height="10"></canvas></td></tr>
@@ -629,6 +645,7 @@
         <fieldset>
             <legend>SERDES RX CDR Lock</legend>
             <table>
+                <tr><th></th><th>Locked</th></tr>
                 <tr><td>Ring 0</td><td><canvas id="SERDESRXCDRLockRing0LED" width="20" height="10"></canvas></td></tr>
                 <tr><td>Ring 1</td><td><canvas id="SERDESRXCDRLockRing1LED" width="20" height="10"></canvas></td></tr>
                 <tr><td>Ring 2</td><td><canvas id="SERDESRXCDRLockRing2LED" width="20" height="10"></canvas></td></tr>
@@ -641,7 +658,7 @@
         <fieldset>
             <legend>Timestamp Preset</legend>
             <table>
-                <tr><td>Timestamp Preset</td><td><input type="text" id="timestamp" width="12" value=""></td></tr>
+                <tr><th>Timestamp Preset</th><td><input type="text" id="timestamp" width="12" value=""></td></tr>
                 <tr><td><input type="button" id="setTimestamp" value="Set Timestamp" onclick="SetNumericValue('#timestamp', '/DTC/setTimestampPreset')"></td></tr>
             </table>
         </fieldset>
