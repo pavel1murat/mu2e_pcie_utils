@@ -383,13 +383,13 @@ DTC::DTC_DMAState::DTC_DMAState(m_ioc_engstate_t in)
 		Direction = DTC_DMA_Direction_C2S;
 		Engine = DTC_DMA_Engine_DAQ;
 		break;
-	case 0x20:
-		Direction = DTC_DMA_Direction_S2C;
-		Engine = DTC_DMA_Engine_DAQ;
-		break;
 	case 1:
 		Direction = DTC_DMA_Direction_C2S;
 		Engine = DTC_DMA_Engine_DCS;
+		break;
+	case 0x20:
+		Direction = DTC_DMA_Direction_S2C;
+		Engine = DTC_DMA_Engine_DAQ;
 		break;
 	case 0x21:
 		Direction = DTC_DMA_Direction_S2C;
@@ -415,13 +415,13 @@ DTC::DTC_DMAStat::DTC_DMAStat(DMAStatistics in) : LBR(in.LBR), LAT(in.LAT), LWT(
 		Direction = DTC_DMA_Direction_C2S;
 		Engine = DTC_DMA_Engine_DAQ;
 		break;
-	case 0x20:
-		Direction = DTC_DMA_Direction_S2C;
-		Engine = DTC_DMA_Engine_DAQ;
-		break;
 	case 1:
 		Direction = DTC_DMA_Direction_C2S;
 		Engine = DTC_DMA_Engine_DCS;
+		break;
+	case 0x20:
+		Direction = DTC_DMA_Direction_S2C;
+		Engine = DTC_DMA_Engine_DAQ;
 		break;
 	case 0x21:
 		Direction = DTC_DMA_Direction_S2C;
