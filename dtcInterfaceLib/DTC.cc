@@ -108,19 +108,6 @@ bool DTC::DTC::ReadResetDTC()
 	return dataSet[31];
 }
 
-bool DTC::DTC::ToggleClearLatchedErrors()
-{
-	std::bitset<32> data = ReadControlRegister();
-	data.flip(30); // Clear Latched Errors bit
-	WriteControlRegister(data.to_ulong());
-	return ReadClearLatchedErrors();
-}
-bool DTC::DTC::ReadClearLatchedErrors()
-{
-	std::bitset<32> data = ReadControlRegister();
-	return data[30];
-}
-
 bool DTC::DTC::ToggleCFOEmulation()
 {
 	std::bitset<32> data = ReadControlRegister();
@@ -269,15 +256,39 @@ DTC::DTC_SERDESRXDisparityError DTC::DTC::ReadSERDESRXDisparityError(const DTC_R
 {
 	return DTC_SERDESRXDisparityError(ReadSERDESRXDisparityErrorRegister(), ring);
 }
+DTC::DTC_SERDESRXDisparityError DTC::DTC::ClearSERDESRXDisparityError(const DTC_Ring_ID& ring)
+{
+	std::bitset<32> data = ReadSERDESRXDisparityErrorRegister();
+	data[ring * 2] = 1;
+	data[ring * 2 + 1] = 1;
+	WriteSERDESRXDisparityErrorRegister(data.to_ulong());
+	return ReadSERDESRXDisparityError(ring);
+}
 DTC::DTC_CharacterNotInTableError DTC::DTC::ReadSERDESRXCharacterNotInTableError(const DTC_Ring_ID& ring)
 {
 	return DTC_CharacterNotInTableError(ReadSERDESRXCharacterNotInTableErrorRegister(), ring);
+}
+DTC::DTC_CharacterNotInTableError DTC::DTC::ClearSERDESRXCharacterNotInTableError(const DTC_Ring_ID& ring)
+{
+	std::bitset<32> data = ReadSERDESRXCharacterNotInTableErrorRegister();
+	data[ring * 2] = 1;
+	data[ring * 2 + 1] = 1;
+	WriteSERDESRXCharacterNotInTableErrorRegister(data.to_ulong());
+
+	return ReadSERDESRXCharacterNotInTableError(ring);
 }
 
 bool DTC::DTC::ReadSERDESUnlockError(const DTC_Ring_ID& ring)
 {
 	std::bitset<32> dataSet = ReadSERDESUnlockErrorRegister();
 	return dataSet[ring];
+}
+bool DTC::DTC::ClearSERDESUnlockError(const DTC_Ring_ID& ring)
+{
+	std::bitset<32> data = ReadSERDESUnlockErrorRegister();
+	data[ring] = 1;
+	WriteSERDESUnlockErrorRegister(data.to_ulong());
+	return ReadSERDESUnlockError(ring);
 }
 bool DTC::DTC::ReadSERDESPLLLocked(const DTC_Ring_ID& ring)
 {
@@ -311,6 +322,13 @@ bool DTC::DTC::ReadSERDESEyescanError(const DTC_Ring_ID& ring)
 {
 	std::bitset<32> dataSet = ReadSERDESEyescanErrorRegister();
 	return dataSet[ring];
+}
+bool DTC::DTC::ClearSERDESEyescanError(const DTC_Ring_ID& ring)
+{
+	std::bitset<32> data = ReadSERDESEyescanErrorRegister();
+	data[ring] = 1;
+	WriteSERDESEyescanErrorRegister(data.to_ulong());
+	return ReadSERDESEyescanError(ring);
 }
 bool DTC::DTC::ReadSERDESRXCDRLock(const DTC_Ring_ID& ring) 
 {

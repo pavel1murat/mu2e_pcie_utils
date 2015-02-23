@@ -40,6 +40,10 @@ int main(int argc, char* argv[]) {
 					testCount = atoi(argv[i]);
 					continue;
 				}
+				else if (argv[i][1] == 'h' || argc == i + 1) {
+					usage();
+					exit(0);
+				}
 			}
 			if (isdigit(argv[i][firstChar])) {
 				testsSpecified = true;
@@ -86,6 +90,7 @@ int main(int argc, char* argv[]) {
 				}
 				else {
 					usage();
+					exit(0);
 				}
 			}
 		}
@@ -164,15 +169,15 @@ int main(int argc, char* argv[]) {
 		++dmaStateTestCount;
 		try {
 			std::cout << "DMA State: " << std::endl
-				<< "DAQ Channel, S2C: " << thisDTC->ReadDMAState(DTC::DTC_DMA_Engine_DAQ, DTC::DTC_DMA_Direction_S2C).toString() << std::endl
-				<< "DAQ Channel, C2S: " << thisDTC->ReadDMAState(DTC::DTC_DMA_Engine_DAQ, DTC::DTC_DMA_Direction_C2S).toString() << std::endl
-				<< "DCS Channel, S2C: " << thisDTC->ReadDMAState(DTC::DTC_DMA_Engine_DCS, DTC::DTC_DMA_Direction_S2C).toString() << std::endl
-				<< "DCS Channel, C2S: " << thisDTC->ReadDMAState(DTC::DTC_DMA_Engine_DCS, DTC::DTC_DMA_Direction_C2S).toString() << std::endl;
+				<< "DAQ Channel, S2C: " << thisDTC->ReadDMAState(DTC_DMA_Engine_DAQ, DTC_DMA_Direction_S2C).toString() << std::endl
+				<< "DAQ Channel, C2S: " << thisDTC->ReadDMAState(DTC_DMA_Engine_DAQ, DTC_DMA_Direction_C2S).toString() << std::endl
+				<< "DCS Channel, S2C: " << thisDTC->ReadDMAState(DTC_DMA_Engine_DCS, DTC_DMA_Direction_S2C).toString() << std::endl
+				<< "DCS Channel, C2S: " << thisDTC->ReadDMAState(DTC_DMA_Engine_DCS, DTC_DMA_Direction_C2S).toString() << std::endl;
 			std::cout << "DMA Stats: " << std::endl
-				<< "DAQ Channel, S2C: " << thisDTC->ReadDMAStats(DTC::DTC_DMA_Engine_DAQ, DTC::DTC_DMA_Direction_S2C).Stats[0].toString() << std::endl
-				<< "DAQ Channel, C2S: " << thisDTC->ReadDMAStats(DTC::DTC_DMA_Engine_DAQ, DTC::DTC_DMA_Direction_C2S).Stats[0].toString() << std::endl
-				<< "DCS Channel, S2C: " << thisDTC->ReadDMAStats(DTC::DTC_DMA_Engine_DCS, DTC::DTC_DMA_Direction_S2C).Stats[0].toString() << std::endl
-				<< "DCS Channel, C2S: " << thisDTC->ReadDMAStats(DTC::DTC_DMA_Engine_DCS, DTC::DTC_DMA_Direction_C2S).Stats[0].toString() << std::endl;
+				<< "DAQ Channel, S2C: " << thisDTC->ReadDMAStats(DTC_DMA_Engine_DAQ, DTC_DMA_Direction_S2C).Stats[0].toString() << std::endl
+				<< "DAQ Channel, C2S: " << thisDTC->ReadDMAStats(DTC_DMA_Engine_DAQ, DTC_DMA_Direction_C2S).Stats[0].toString() << std::endl
+				<< "DCS Channel, S2C: " << thisDTC->ReadDMAStats(DTC_DMA_Engine_DCS, DTC_DMA_Direction_S2C).Stats[0].toString() << std::endl
+				<< "DCS Channel, C2S: " << thisDTC->ReadDMAStats(DTC_DMA_Engine_DCS, DTC_DMA_Direction_C2S).Stats[0].toString() << std::endl;
 			std::cout << "Test Passed." << std::endl;
 			++testsPassed;
 		}

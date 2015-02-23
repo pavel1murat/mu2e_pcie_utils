@@ -61,7 +61,6 @@ function getRegDump() {
     dtcRegisters.CFO = {};
     dtcRegisters.Version = dtcem.RO_readDesignVersion( );
     dtcRegisters.ResetDTC = dtcem.RO_readResetDTC( );
-    dtcRegisters.ClearLatchedErrors = dtcem.RO_readClearLatchedErrors( );
     dtcRegisters.CFOEmulator = dtcem.RO_readCFOEmulator( );
     dtcRegisters.TriggerDMALength = dtcem.RO_readTriggerDMATransferLength( );
     dtcRegisters.MinDMALength = dtcem.RO_readMinDMATransferLength( );
@@ -349,16 +348,6 @@ dtcem.RO_readResetDTC = function () {
     return DTC.ReadResetDTC( );
 };
 
-dtcem.RW_toggleClearLatchedErrors = function ( POST ) {
-    var val = DTC.ToggleClearLatchedErrors( );
-    logMessage( "ClearLatchedErrors (" + val + ")","toggled",POST.who );
-    return val;
-};
-
-dtcem.RO_readClearLatchedErrors = function () {
-    return DTC.ReadClearLatchedErrors( );
-};
-
 dtcem.RW_toggleCFOEmulator = function () {
     var val = DTC.ToggleCFOEmulation( );
     logMessage( "CFO Emulator (" + val + ")","toggled",POST.who );
@@ -460,6 +449,11 @@ dtcem.RO_readSERDESRXDisparity = function ( POST ) {
     }
 }
 
+dtcem.RW_clearSERDESRXDisparity = function ( POST ) {
+    DTC.ClearSERDESRXDisparityError( parseInt( POST.ring ) )
+    return RO_readSERDESRXDisparity( POST );
+}
+
 dtcem.RO_readSERDESRXCharacterError = function ( POST ) {
     switch ( DTC.ReadSERDESRXCharacterNotInTableError( parseInt( POST.ring ) ).GetData( true ) ) {
         case 0:
@@ -473,8 +467,17 @@ dtcem.RO_readSERDESRXCharacterError = function ( POST ) {
     }
 }
 
+dtcem.RW_clearSERDESRXCharacterError = function ( POST ) {
+    DTC.ClearSERDESRXCharacterNotInTableError( parseInt( POST.ring ) );
+    return RO_readSREDESRXCharacterError( POST );
+}
+
 dtcem.RO_readSERDESUnlockError = function ( POST ) {
     return DTC.ReadSERDESUnlockError( parseInt( POST.ring ) );
+}
+
+dtcem.RW_clearSERDESUnlockError = function ( POST ) {
+    return DTC.ClearSERDESUnlockError( parseInt( POST.ring ) );
 }
 
 dtcem.RO_readSERDESPLLLocked = function ( POST ) {
@@ -548,6 +551,10 @@ dtcem.RO_readSERDESRXStatus = function ( POST ) {
 
 dtcem.RO_readSERDESEyescanError = function ( POST ) {
     return DTC.ReadSERDESEyescanError( parseInt( POST.ring ) );
+}
+
+dtcem.RW_clearSERDESEyescanError = function ( POST ){ 
+    return DTC.ClearSERDESEyescanError( parseInt( POST.ring ) );
 }
 
 dtcem.RO_readSERDESRXCDRLock = function ( POST ) {

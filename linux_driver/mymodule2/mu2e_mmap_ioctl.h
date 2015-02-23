@@ -202,6 +202,20 @@ typedef struct
 
 typedef unsigned char mu2e_databuff_t[0x10000];
 
+
+
+typedef enum  {
+	DTC_DMA_Engine_DAQ = 0,
+	DTC_DMA_Engine_DCS = 1,
+	DTC_DMA_Engine_Invalid,
+} DTC_DMA_Engine;
+
+typedef enum  {
+	DTC_DMA_Direction_C2S = 0,
+	DTC_DMA_Direction_S2C = 1,
+	DTC_DMA_Direction_Invalid,
+} DTC_DMA_Direction;
+
 enum { C2S, S2C };
 enum { MU2E_MAP_BUFF, MU2E_MAP_META }; 
 

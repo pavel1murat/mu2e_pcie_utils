@@ -41,9 +41,6 @@ namespace DTC {
 		void ResetDTC();
 		bool ReadResetDTC();
 
-		bool ToggleClearLatchedErrors();
-		bool ReadClearLatchedErrors();
-
 		bool ToggleCFOEmulation();
 		bool ReadCFOEmulation();
 
@@ -69,9 +66,12 @@ namespace DTC {
 		bool ReadResetSERDESDone(const DTC_Ring_ID& ring);
 
 		DTC_SERDESRXDisparityError ReadSERDESRXDisparityError(const DTC_Ring_ID& ring);
+		DTC_SERDESRXDisparityError ClearSERDESRXDisparityError(const DTC_Ring_ID& ring);
 		DTC_CharacterNotInTableError ReadSERDESRXCharacterNotInTableError(const DTC_Ring_ID& ring);
+		DTC_CharacterNotInTableError ClearSERDESRXCharacterNotInTableError(const DTC_Ring_ID& ring);
 
 		bool ReadSERDESUnlockError(const DTC_Ring_ID& ring);
+		bool ClearSERDESUnlockError(const DTC_Ring_ID& ring);
 		bool ReadSERDESPLLLocked(const DTC_Ring_ID& ring);
 		bool ReadSERDESOverflowOrUnderflow(const DTC_Ring_ID& ring);
 		bool ReadSERDESBufferFIFOHalfFull(const DTC_Ring_ID& ring);
@@ -81,6 +81,7 @@ namespace DTC {
 		DTC_RXStatus ReadSERDESRXStatus(const DTC_Ring_ID& ring);
 
 		bool ReadSERDESEyescanError(const DTC_Ring_ID& ring);
+		bool ClearSERDESEyescanError(const DTC_Ring_ID& ring);
 		bool ReadSERDESRXCDRLock(const DTC_Ring_ID& ring);
 
 		int WriteDMATimeoutPreset(uint32_t preset);
@@ -142,14 +143,18 @@ namespace DTC {
 		uint32_t ReadSERDESResetRegister() { return ReadRegister(DTC_Register_SERDESReset); }
 		bool ReadSERDESResetDone(const DTC_Ring_ID& ring);
 		uint32_t ReadSERDESRXDisparityErrorRegister() { return ReadRegister(DTC_Register_SERDESRXDisparityError); }
+		void WriteSERDESRXDisparityErrorRegister(uint32_t data){ WriteRegister(data, DTC_Register_SERDESRXDisparityError); }
 		uint32_t ReadSERDESRXCharacterNotInTableErrorRegister() { return ReadRegister(DTC_Register_SERDESRXCharacterNotInTableError); }
+		void WriteSERDESRXCharacterNotInTableErrorRegister(uint32_t data) { WriteRegister(data, DTC_Register_SERDESRXCharacterNotInTableError); }
 		uint32_t ReadSERDESUnlockErrorRegister() { return ReadRegister(DTC_Register_SERDESUnlockError); }
+		void WriteSERDESUnlockErrorRegister(uint32_t data){ WriteRegister(data, DTC_Register_SERDESUnlockError); }
 		uint32_t ReadSERDESPLLLockedRegister() { return ReadRegister(DTC_Register_SERDESPLLLocked); }
 		uint32_t ReadSERDESTXBufferStatusRegister() { return ReadRegister(DTC_Register_SERDESTXBufferStatus); }
 		uint32_t ReadSERDESRXBufferStatusRegister() { return ReadRegister(DTC_Register_SERDESRXBufferStatus); }
 		uint32_t ReadSERDESRXStatusRegister() { return ReadRegister(DTC_Register_SERDESRXStatus); }
 		uint32_t ReadSERDESResetDoneRegister() { return ReadRegister(DTC_Register_SERDESResetDone); }
 		uint32_t ReadSERDESEyescanErrorRegister() { return ReadRegister(DTC_Register_SERDESEyescanData); }
+		void WriteSERDESEyescanErrorRegister(uint32_t data) { WriteRegister(data, DTC_Register_SERDESEyescanData); }
 		uint32_t ReadSERDESRXCDRLockRegister() { return ReadRegister(DTC_Register_SERDESRXCDRLock); }
 		void WriteDMATimeoutPresetRegister(uint32_t data) { WriteRegister(data, DTC_Register_DMATimeoutPreset); }
 		uint32_t ReadDMATimeoutPresetRegister() { return ReadRegister(DTC_Register_DMATimeoutPreset); }

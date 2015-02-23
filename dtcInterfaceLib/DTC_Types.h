@@ -37,18 +37,6 @@ namespace DTC
 		DTC_Register_Invalid,
 	};
 
-	enum DTC_DMA_Engine {
-		DTC_DMA_Engine_DAQ = 0,
-		DTC_DMA_Engine_DCS = 1,
-		DTC_DMA_Engine_Invalid,
-	};
-
-	enum DTC_DMA_Direction {
-		DTC_DMA_Direction_C2S = 0,
-		DTC_DMA_Direction_S2C = 1,
-		DTC_DMA_Direction_Invalid,
-	};
-
 	enum DTC_Ring_ID : uint8_t {
 		DTC_Ring_0 = 0,
 		DTC_Ring_1 = 1,
