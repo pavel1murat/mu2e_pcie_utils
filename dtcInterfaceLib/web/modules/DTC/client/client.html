@@ -144,11 +144,9 @@
             <table>
                 <tr>
                     <th>DTC Reset</th>
-                    <th>Clear Errors</th>
                 </tr>
                 <tr>
                     <td><canvas id="dtcResetLED" width="20" height="10" onclick="LEDAction('/DTC/resetDTC', null, 'dtcResetLED')"></canvas></td>
-                    <td><canvas id="clearErrorsLED" width="20" height="10" onclick="LEDAction('/DTC/toggleClearLatchedErrors',null,'clearErrorsLED')"></canvas></td>
                 </tr>
                 <tr>
                     <th>ROC Emulator</th>
@@ -361,38 +359,38 @@
                 </tr>
                 <tr>
                     <td>Ring 0</td>
-                    <td><canvas id="SERDESRXCNITRing0HighLED" width="20" height="10"></canvas></td>
-                    <td><canvas id="SERDESRXCNITRing0LowLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXCNITRing0HighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 0, 'SERDESRXCNITRing0LowLED', 'SERDESRXCNITRing0HighLED')"></canvas></td>
+                    <td><canvas id="SERDESRXCNITRing0LowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 0, 'SERDESRXCNITRing0LowLED', 'SERDESRXCNITRing0HighLED')"></canvas></td>
                 </tr>
                 <tr>
                     <td>Ring 1</td>
-                    <td><canvas id="SERDESRXCNITRing1HighLED" width="20" height="10"></canvas></td>
-                    <td><canvas id="SERDESRXCNITRing1LowLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXCNITRing1HighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 1, 'SERDESRXCNITRing1LowLED', 'SERDESRXCNITRing1HighLED')"></canvas></td>
+                    <td><canvas id="SERDESRXCNITRing1LowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 1, 'SERDESRXCNITRing1LowLED', 'SERDESRXCNITRing1HighLED')"></canvas></td>
                 </tr>
                 <tr>
                     <td>Ring 2</td>
-                    <td><canvas id="SERDESRXCNITRing2HighLED" width="20" height="10"></canvas></td>
-                    <td><canvas id="SERDESRXCNITRing2LowLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXCNITRing2HighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 2, 'SERDESRXCNITRing2LowLED', 'SERDESRXCNITRing2HighLED')"></canvas></td>
+                    <td><canvas id="SERDESRXCNITRing2LowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 2, 'SERDESRXCNITRing2LowLED', 'SERDESRXCNITRing2HighLED')"></canvas></td>
                 </tr>
                 <tr>
                     <td>Ring 3</td>
-                    <td><canvas id="SERDESRXCNITRing3HighLED" width="20" height="10"></canvas></td>
-                    <td><canvas id="SERDESRXCNITRing3LowLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXCNITRing3HighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 3, 'SERDESRXCNITRing3LowLED', 'SERDESRXCNITRing3HighLED')"></canvas></td>
+                    <td><canvas id="SERDESRXCNITRing3LowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 3, 'SERDESRXCNITRing3LowLED', 'SERDESRXCNITRing3HighLED')"></canvas></td>
                 </tr>
                 <tr>
                     <td>Ring 4</td>
-                    <td><canvas id="SERDESRXCNITRing4HighLED" width="20" height="10"></canvas></td>
-                    <td><canvas id="SERDESRXCNITRing4LowLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXCNITRing4HighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 4, 'SERDESRXCNITRing4LowLED', 'SERDESRXCNITRing4HighLED')"></canvas></td>
+                    <td><canvas id="SERDESRXCNITRing4LowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 4, 'SERDESRXCNITRing4LowLED', 'SERDESRXCNITRing4HighLED')"></canvas></td>
                 </tr>
                 <tr>
                     <td>Ring 5</td>
-                    <td><canvas id="SERDESRXCNITRing5HighLED" width="20" height="10"></canvas></td>
-                    <td><canvas id="SERDESRXCNITRing5LowLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXCNITRing5HighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 5, 'SERDESRXCNITRing5LowLED', 'SERDESRXCNITRing5HighLED')"></canvas></td>
+                    <td><canvas id="SERDESRXCNITRing5LowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 5, 'SERDESRXCNITRing5LowLED', 'SERDESRXCNITRing5HighLED')"></canvas></td>
                 </tr>
                 <tr>
                     <td>CFO</td>
-                    <td><canvas id="SERDESRXCNITCFOHighLED" width="20" height="10"></canvas></td>
-                    <td><canvas id="SERDESRXCNITCFOLowLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESRXCNITCFOHighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 6, 'SERDESRXCNITCFOLowLED', 'SERDESRXCNITCFOHighLED')"></canvas></td>
+                    <td><canvas id="SERDESRXCNITCFOLowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 6, 'SERDESRXCNITCFOLowLED', 'SERDESRXCNITCFOHighLED')"></canvas></td>
                 </tr>
             </table>
         </fieldset>
@@ -400,13 +398,13 @@
             <legend>SERDES Unlock Error</legend>
             <table>
                 <tr><th></th><th>In Error</th></tr>
-                <tr><td>Ring 0</td><td><canvas id="SERDESUnlockRing0LED" width="20" height="10"></canvas></td></tr>
-                <tr><td>Ring 1</td><td><canvas id="SERDESUnlockRing1LED" width="20" height="10"></canvas></td></tr>
-                <tr><td>Ring 2</td><td><canvas id="SERDESUnlockRing2LED" width="20" height="10"></canvas></td></tr>
-                <tr><td>Ring 3</td><td><canvas id="SERDESUnlockRing3LED" width="20" height="10"></canvas></td></tr>
-                <tr><td>Ring 4</td><td><canvas id="SERDESUnlockRing4LED" width="20" height="10"></canvas></td></tr>
-                <tr><td>Ring 5</td><td><canvas id="SERDESUnlockRing5LED" width="20" height="10"></canvas></td></tr>
-                <tr><td>CFO</td><td><canvas id="SERDESUnlockCFOLED" width="20" height="10"></canvas></td></tr>
+                <tr><td>Ring 0</td><td><canvas id="SERDESUnlockRing0LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESUnlockError',0,'SERDESUnlockRing0LED')"></canvas></td></tr>
+                <tr><td>Ring 1</td><td><canvas id="SERDESUnlockRing1LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESUnlockError',1,'SERDESUnlockRing1LED')"></canvas></td></tr>
+                <tr><td>Ring 2</td><td><canvas id="SERDESUnlockRing2LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESUnlockError',2,'SERDESUnlockRing2LED')"></canvas></td></tr>
+                <tr><td>Ring 3</td><td><canvas id="SERDESUnlockRing3LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESUnlockError',3,'SERDESUnlockRing3LED')"></canvas></td></tr>
+                <tr><td>Ring 4</td><td><canvas id="SERDESUnlockRing4LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESUnlockError',4,'SERDESUnlockRing4LED')"></canvas></td></tr>
+                <tr><td>Ring 5</td><td><canvas id="SERDESUnlockRing5LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESUnlockError',5,'SERDESUnlockRing5LED')"></canvas></td></tr>
+                <tr><td>CFO</td><td><canvas id="SERDESUnlockCFOLED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESUnlockError',6,'SERDESUnlockCFOLED')"></canvas></td></tr>
             </table>
         </fieldset>
         <fieldset>
@@ -633,13 +631,13 @@
             <legend>SERDES Eyescan Error</legend>
             <table>
                 <tr><th></th><th>In Error</th></tr>
-                <tr><td>Ring 0</td><td><canvas id="SERDESEyescanRing0LED" width="20" height="10"></canvas></td></tr>
-                <tr><td>Ring 1</td><td><canvas id="SERDESEyescanRing1LED" width="20" height="10"></canvas></td></tr>
-                <tr><td>Ring 2</td><td><canvas id="SERDESEyescanRing2LED" width="20" height="10"></canvas></td></tr>
-                <tr><td>Ring 3</td><td><canvas id="SERDESEyescanRing3LED" width="20" height="10"></canvas></td></tr>
-                <tr><td>Ring 4</td><td><canvas id="SERDESEyescanRing4LED" width="20" height="10"></canvas></td></tr>
-                <tr><td>Ring 5</td><td><canvas id="SERDESEyescanRing5LED" width="20" height="10"></canvas></td></tr>
-                <tr><td>CFO</td><td><canvas id="SERDESEyescanCFOLED" width="20" height="10"></canvas></td></tr>
+                <tr><td>Ring 0</td><td><canvas id="SERDESEyescanRing0LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESEyescanError', 0, 'SERDESEyescanRing0LED')"></canvas></td></tr>
+                <tr><td>Ring 1</td><td><canvas id="SERDESEyescanRing1LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESEyescanError', 1, 'SERDESEyescanRing1LED')"></canvas></td></tr>
+                <tr><td>Ring 2</td><td><canvas id="SERDESEyescanRing2LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESEyescanError', 2, 'SERDESEyescanRing2LED')"></canvas></td></tr>
+                <tr><td>Ring 3</td><td><canvas id="SERDESEyescanRing3LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESEyescanError', 3, 'SERDESEyescanRing3LED')"></canvas></td></tr>
+                <tr><td>Ring 4</td><td><canvas id="SERDESEyescanRing4LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESEyescanError', 4, 'SERDESEyescanRing4LED')"></canvas></td></tr>
+                <tr><td>Ring 5</td><td><canvas id="SERDESEyescanRing5LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESEyescanError', 5, 'SERDESEyescanRing5LED')"></canvas></td></tr>
+                <tr><td>CFO</td><td><canvas id="SERDESEyescanCFOLED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESEyescanError', 6, 'SERDESEyescanCFOLED')"></canvas></td></tr>
             </table>
         </fieldset>
         <fieldset>
