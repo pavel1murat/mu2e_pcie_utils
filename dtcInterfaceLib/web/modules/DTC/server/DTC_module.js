@@ -553,7 +553,7 @@ dtcem.RO_readSERDESEyescanError = function ( POST ) {
     return DTC.ReadSERDESEyescanError( parseInt( POST.ring ) );
 }
 
-dtcem.RW_clearSERDESEyescanError = function ( POST ){ 
+dtcem.RW_clearSERDESEyescanError = function ( POST ) {
     return DTC.ClearSERDESEyescanError( parseInt( POST.ring ) );
 }
 
@@ -657,6 +657,16 @@ dtcem.RW_WriteLog = function ( POST ) {
     res.end( readLog( ) );
     console.log( "Done sending log message reply" );
 }
+
+dtcem.RW_StartDMATest = function ( POST ) {
+    console.log( "Starting DMA I/O Test" );
+    var daqEnabled = POST.data.daq;
+    var dcsEnabled = POST.data.dcs;
+    var numTests = ParseInt( POST.data.n );
+
+
+}
+
 
 /* Script handler removed as of v1.0, sorry...
 dtcem.RW_RunScript = function (POST) {
@@ -791,6 +801,12 @@ dtcem.GET_DMA1Receive = function () {
     return { name: "dma1RX", value: getDMAReadRate( 1 ), time: new Date( ) };
 };
 
+dtcem.GET_DMATestStatistics = function () {
+    return {
+        daqC2S: getDMAReadRate( 0 ), daqS2C: getDMAWriteRate( 0 ), daqPassed: 0, daqFailed: 0,
+        dcsC2S: getDMAReadRate( 1 ), dcsS2C: getDMAWriteRate( 1 ), dcsPassed: 0, dcsFailed: 0
+    };
+}
 //
 // module.exports
 // A function that puts the emitter into the given array
