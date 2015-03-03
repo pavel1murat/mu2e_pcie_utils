@@ -6,7 +6,10 @@
     <title>DTC DMA Test GUI</title>
     <style>
         @import url(style.css);
-        svg { width:100%;}
+
+        svg {
+            width: 100%;
+        }
     </style>
     <script src="/base/jquery.min.js"></script>
     <script src="/base/d3.v3.min.js"></script>
@@ -36,8 +39,65 @@
                     <th>Tests Running</th>
                     <td><canvas id="testsRunning" width="20" height="10"></canvas></td>
                 </tr>
-                </table>
+            </table>
             <table>
+                <tr>
+                    <td>
+                        <fieldset>
+                            <legend>Register I/O</legend>
+                            <table>
+                                <tr>
+                                    <th>Tests Passed</th>
+                                    <th>Tests Failed</th>
+                                    <th>Pass %</th>
+                                </tr>
+                                <tr>
+                                    <td><input type="number" id="regPassed" readonly></td>
+                                    <td><input type="number" id="regFailed" readonly></td>
+                                    <td><input type="number" id="regPassPercent" readonly>%</td>
+                                </tr>
+                            </table>
+                        </fieldset>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <fieldset>
+                            <legend>PCIe State/Stats</legend>
+                            <table>
+                                <tr>
+                                    <th>Tests Passed</th>
+                                    <th>Tests Failed</th>
+                                    <th>Pass %</th>
+                                </tr>
+                                <tr>
+                                    <td><input type="number" id="pciePassed" readonly></td>
+                                    <td><input type="number" id="pcieFailed" readonly></td>
+                                    <td><input type="number" id="pciePassPercent" readonly>%</td>
+                                </tr>
+                            </table>
+                        </fieldset>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <fieldset>
+                            <legend>DMA State/Stats</legend>
+                            <table>
+                                <tr>
+                                    <th>Tests Passed</th>
+                                    <th>Tests Failed</th>
+                                    <th>Pass %</th>
+                                </tr>
+                                <tr>
+                                    <td><input type="number" id="dmaPassed" readonly></td>
+                                    <td><input type="number" id="dmaFailed" readonly></td>
+                                    <td><input type="number" id="dmaPassPercent" readonly>%</td>
+                                </tr>
+                            </table>
+                        </fieldset>
+                    </td>
+                </tr>
                 <tr>
                     <td>
                         <fieldset>
@@ -60,7 +120,7 @@
                             </table>
                         </fieldset>
                     </td>
-                    </tr>
+                </tr>
                 <tr>
                     <td>
                         <fieldset>
@@ -90,11 +150,17 @@
             <legend>DMA Test Parameters</legend>
             <table>
                 <tr>
+                    <th>Run Reg I/O Test</th>
+                    <th>Run PCIe S/S Test</th>
+                    <th>Run DMA S/S Test</th>
                     <th>Run DAQ Test</th>
                     <th>Run DCS Test</th>
                     <th>Number of tests (-1 for continuous)</th>
                 </tr>
                 <tr>
+                    <td><input type="checkbox" id="regEnabled"></td>
+                    <td><input type="checkbox" id="pcieEnabled"></td>
+                    <td><input type="checkbox" id="dmaEnabled"></td>
                     <td><input type="checkbox" id="daqEnabled" checked="checked"></td>
                     <td><input type="checkbox" id="dcsEnabled"></td>
                     <td><input type="number" id="numTests" value="1" min="-1" max="1000" step="1"></td>

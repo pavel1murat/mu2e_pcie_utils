@@ -27,6 +27,15 @@ function setPixel( led,bit ) {
 }
 
 function ApplyTestStats( testStats ) {
+    $("#regPassed").val(testStats.regPassed);
+    $("#regFailed").val(testStats.regFailed);
+    $("#regPassPercent").val(testStats.regPassed * 100 / (testStats.regPassed + testStats.regFailed));
+    $("#pciePassed").val(testStats.pciePassed);
+    $("#pcieFailed").val(testStats.pcieFailed);
+    $("#pciePassPercent").val(testStats.pciePassed * 100 / (testStats.pciePassed + testStats.pcieFailed));
+    $("#dmaPassed").val(testStats.dmaPassed);
+    $("#dmaFailed").val(testStats.dmaFailed);
+    $("#dmaPassPercent").val(testStats.dmaPassed * 100 / (testStats.dmaPassed + testStats.dmaFailed));
     $( "#daqPassed" ).val( testStats.daqPassed );
     $( "#daqFailed" ).val( testStats.daqFailed );
     $( "#daqPassPercent" ).val( testStats.daqPassed * 100 / ( testStats.daqPassed + testStats.daqFailed ) );
@@ -83,6 +92,9 @@ function GetTestStatistics() {
 $( function () {
     $( "#runButton" ).click( function () {
         var data = {};
+        data.reg = $("#regEnabled").is(":checked");
+        data.pcie = $("#pcieEnabled").is(":checked");
+        data.dma = $("#dmaEnabled").is(":checked");
         data.daq = $( "#daqEnabled" ).is( ":checked" );
         data.dcs = $( "#dcsEnabled" ).is( ":checked" );
         data.n = $( "#numTests" ).val( );

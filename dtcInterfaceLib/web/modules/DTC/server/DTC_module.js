@@ -9,7 +9,7 @@
 
 var dtc = require('./DTC');
 var dtclt = require('./DTCLibTest');
-//var gmetric = require( './gmetric' );
+var gmetric = require( './gmetric' );
 var fs = require('fs');
 var emitter = require('events').EventEmitter;
 
@@ -48,8 +48,8 @@ function logMessage(message, method, name) {
 function SendStatistics() {
     dtcem.GET_Receive();
     dtcem.GET_Send();
-    //gmetric.send_gmetric( "/etc/ganglia/gmond.conf","PCIe Send Rate",send.toString( ),"double","B/s","both",15,0,"DTC_PCIe","mu2e DAQ","PCIe Send Rate","PCIe Send Rate" );
-    //gmetric.send_gmetric( "/etc/ganglia/gmond.conf","PCIe Receive Rate",receive.toString( ),"double","B/s","both",15,0,"DTC_PCIe","mu2e DAQ","PCIe Receive Rate","PCIe Receive Rate" );
+    gmetric.send_gmetric( "/etc/ganglia/gmond.conf","PCIe Send Rate",send.toString( ),"double","B/s","both",15,0,"DTC_PCIe","mu2e DAQ","PCIe Send Rate","PCIe Send Rate" );
+    gmetric.send_gmetric( "/etc/ganglia/gmond.conf","PCIe Receive Rate",receive.toString( ),"double","B/s","both",15,0,"DTC_PCIe","mu2e DAQ","PCIe Receive Rate","PCIe Receive Rate" );
 };
 
 function getRegDump() {
@@ -301,6 +301,12 @@ function getDMAWriteRate(channel) {
 function getDMATestStatus(testStatus) {
     if (dmatest !== null) {
         testStatus.testRunning = dmatest.isRunning();
+        testStatus.regPassed += dmatest.regPassed();
+        testStatus.regFailed += dmatest.regFailed();
+        testStatus.pciePassed += dmatest.pciePassed();
+        testStatus.pcieFailed += dmatest.pcieFailed();
+        testStatus.dmaPassed += dmatest.dmaStatePassed();
+        testStatus.dmaFailed += dmatest.dmaStateFailed();
         testStatus.daqPassed += dmatest.daqPassed();
         testStatus.daqFailed += dmatest.daqFailed();
         testStatus.dcsPassed += dmatest.dcsPassed();
@@ -344,6 +350,12 @@ dtcem.MasterInitFunction = function (workerData) {
     }
     console.log("Done setting up log");
     var testStatus = {};
+    testStatus.regPassed = 0;
+    testStatus.regFailed = 0;
+    testStatus.pciePassed = 0;
+    testStatus.pcieFailed = 0;
+    testStatus.dmaPassed = 0;
+    testStatus.dmaFailed = 0;
     testStatus.daqPassed = 0;
     testStatus.daqFailed = 0;
     testStatus.dcsPassed = 0;
@@ -687,28 +699,37 @@ dtcem.RW_WriteLog = function (POST) {
 dtcem.RW_StartDMATest = function (POST, testStatus) {
     console.log("Starting DMA I/O Test");
     console.log(POST);
+    var regEnabled = POST.reg === 'true' ? true : false;
+    var pcieEnabled = POST.pcie === 'true' ? true : false;
+    var dmaEnabled = POST.dma === 'true' ? true : false;
     var daqEnabled = POST.daq === 'true' ? true : false;
     var dcsEnabled = POST.dcs === 'true' ? true : false;
     var numTests = parseInt(POST.n);
     if (!testStatus.testRunning) {
-        dmatest.startTest(false, false, false, daqEnabled, dcsEnabled, numTests, false);
+        dmatest.startTest(regEnabled, pcieEnabled, dmaEnabled, daqEnabled, dcsEnabled, numTests, false);
     }
     return getDMATestStatus(testStatus);
 }
 
 dtcem.RW_ResetTestStatus = function (POST, testStatus) {
-    if (dmatest !== null) {
+    if (dmatest !== null && dmatest.isRunning()) {
         dmatest.stopTests();
         while (testStatus.testRunning) {
             getDMATestStatus(testStatus);
         }
     }
+    testStatus.regPassed = 0;
+    testStatus.regFailed = 0;
+    testStatus.pciePassed = 0;
+    testStatus.pcieFailed = 0;
+    testStatus.dmaPassed = 0;
+    testStatus.dmaFailed = 0;
     testStatus.daqPassed = 0;
     testStatus.daqFailed = 0;
     testStatus.dcsPassed = 0;
     testStatus.dcsFailed = 0;
     
-    return testStatus;
+    return getDMATestStatus(testStatus);
 }
 
 dtcem.RW_StopDMATest = function (POST, testStatus) {
@@ -717,7 +738,7 @@ dtcem.RW_StopDMATest = function (POST, testStatus) {
     }
     
     getDMATestStatus(testStatus);
-
+    
     return testStatus;
 }
 
@@ -856,11 +877,14 @@ dtcem.GET_DMA1Receive = function () {
 
 dtcem.GET_DMATestStatistics = function (testStatus) {
     getDMATestStatus(testStatus);
-    console.log("In GET_DMATestStatistics");
-    console.log(testStatus);
+    //console.log("In GET_DMATestStatistics");
+    //console.log(testStatus);
     return {
         daqC2S: getDMAReadRate(0), daqS2C: getDMAWriteRate(0), daqPassed: testStatus.daqPassed, daqFailed: testStatus.daqFailed,
         dcsC2S: getDMAReadRate(1), dcsS2C: getDMAWriteRate(1), dcsPassed: testStatus.dcsPassed, dcsFailed: testStatus.dcsFailed,
+        regPassed: testStatus.regPassed, regFailed: testStatus.regFailed, 
+        pciePassed: testStatus.pciePassed, pcieFailed: testStatus.pcieFailed,
+        dmaPassed: testStatus.dmaPassed, dmaFailed: testStatus.dmaFailed,
         testRunning: testStatus.testRunning
     };
 }
