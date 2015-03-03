@@ -26,22 +26,27 @@ function setPixel( led,bit ) {
     ctx.fill( );
 }
 
+function ApplyTestStats( testStats ) {
+    $( "#daqPassed" ).val( testStats.daqPassed );
+    $( "#daqFailed" ).val( testStats.daqFailed );
+    $( "#daqPassPercent" ).val( testStats.daqPassed * 100 / ( testStats.daqPassed + testStats.daqFailed ) );
+    $( "#dcsPassed" ).val( testStats.dcsPassed );
+    $( "#dcsFailed" ).val( testStats.dcsFailed );
+    $( "#dcsPassPercent" ).val( testStats.dcsPassed * 100 / ( testStats.dcsPassed + testStats.dcsFailed ) );
+    setPixel( document.getElementById( "testsRunning" ),testStats.testRunning );
+}
+
 function GetTestStatistics() {
     var objData = null;
     AjaxGet( '/DTC/DMATestStatistics',function ( returnValue ) {
-        var testStats = returnValue.Value1;
+        var testStats = returnValue;
         $( "#daqC2S" ).val( testStats.daqC2S );
         $( "#daqS2C" ).val( testStats.daqS2C );
-        $( "#daqPassed" ).val( testStats.daqPassed );
-        $( "#daqFailed" ).val( testStats.daqFailed );
-        $( "#daqPassPercent" ).val( testStats.daqPassed * 100 / ( testStats.daqPassed + testStats.daqFailed ) );
-
         
         $( "#dcsC2S" ).val( testStats.dcsC2S );
         $( "#dcsS2C" ).val( testStats.dcsS2C );
-        $( "#dcsPassed" ).val( testStats.dcsPassed );
-        $( "#dcsFailed" ).val( testStats.dcsFailed );
-        $( "#dcsPassPercent" ).val( testStats.dcsPassed * 100 / ( testStats.dcsPassed + testStats.dcsFailed ) );
+       
+        ApplyTestStats( testStats );
     } );
 }
 
@@ -58,7 +63,7 @@ function GetTestStatistics() {
                 if ( !execAsap )
                     func.apply( obj,args );
                 timeout = null;
-            }            ;
+            }
             
             if ( timeout )
                 clearTimeout( timeout );
@@ -67,7 +72,7 @@ function GetTestStatistics() {
             
             timeout = setTimeout( delayed,threshold || 100 );
         };
-    }
+    };
     // smartresize 
     jQuery.fn[sr] = function ( fn ) { return fn ? this.bind( 'resize',debounce( fn ) ) : this.trigger( sr ); };
 
@@ -82,18 +87,30 @@ $( function () {
         data.dcs = $( "#dcsEnabled" ).is( ":checked" );
         data.n = $( "#numTests" ).val( );
         AjaxPost( '/DTC/StartDMATest',data,function ( returnValue ) {
-            setPixel( document.getElementById( "testsRunning" ),returnValue.Value1 );
+            ApplyTestStats( returnValue );
         } );
     } );
     
+    $( "#resetButton" ).click( function () {
+        AjaxPost( '/DTC/ResetTestStatus',1,function ( returnValue ) {
+            ApplyTestStats( returnValue );
+        } );
+    } );
+    
+    $("#stopButton").click(function () {
+        AjaxPost('/DTC/StopDMATest', 1, function (returnValue) {
+            ApplyTestStats(returnValue);
+        });
+    });
+
     var dma0 = {
-        send: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA0Transmit" },
-        receive: { data: [{ time: 0, value: 0 }], color: 'blue', jsonPath: "/DTC/DMA0Receive" },
+        dma0TX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA0Transmit" },
+        dma0RX: { data: [{ time: 0, value: 0 }], color: 'blue', jsonPath: "/DTC/DMA0Receive" },
     };
     makeGraph( "#dma0",dma0 );
     var dma1 = {
-        send: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA1Transmit" },
-        recieve: { data: [{ time: 0, value: 0 }], color: 'blue', jsonPath: "/DTC/DMA1Recieve" },
+        dma1TX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA1Transmit" },
+        dma1RX: { data: [{ time: 0, value: 0 }], color: 'blue', jsonPath: "/DTC/DMA1Receive" },
     };
     makeGraph( "#dma1",dma1 );
     
@@ -104,5 +121,5 @@ $( function () {
         makeGraph( "#dma1",dma1 );
     } );
     
-    setInterval( function () { GetTestStatitics( ); },1000 );
+    setInterval( function () { GetTestStatistics( ); },1000 );
 } );

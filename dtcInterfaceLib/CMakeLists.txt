@@ -1,8 +1,9 @@
 cet_make_library(LIBRARY_NAME DTCInterface SOURCE
             DTC.cc
+            DTCLibTest.cc
             DTC_Types.cc
             mu2edev.cc
-			mu2esim.cc
+	    mu2esim.cc
 )
 
 cet_make_exec(DTCLibTest SOURCE main.cc LIBRARIES DTCInterface)
@@ -19,7 +20,13 @@ add_custom_command(TARGET DTCJSInterface PRE_BUILD
 )
 add_custom_command(TARGET DTCJSInterface POST_BUILD
    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/DTC.node ../bin/web/modules/DTC/server/DTC.node
+   COMMAND ${CMAKE_COMMAND} -E copy
+${CMAKE_CURRENT_SOURCE_DIR}/DTCLibTest.node
+../bin/web/modules/DTC/server/DTCLibTest.node
    COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_SOURCE_DIR}/DTC.node ${CMAKE_CURRENT_SOURCE_DIR}/web/modules/DTC/server/DTC.node
+   COMMAND ${CMAKE_COMMAND} -E rename
+${CMAKE_CURRENT_SOURCE_DIR}/DTCLibTest.node
+${CMAKE_CURRENT_SOURCE_DIR}/web/modules/DTC/server/DTCLibTest.node
 )
 install(DIRECTORY web DESTINATION ${${product}_bin_dir})
 

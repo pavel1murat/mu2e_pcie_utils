@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <meta charset="utf-8">
 <html>
 <head>
@@ -26,9 +26,10 @@
          }
     </style>
     <div class="menu">
-        <a href="/" onclick="document.getElementById('frame').src = '/DTC/PerfMon.html';return false">DTC Performance Monitor GUI</a><br><br>
-        <a href="/" onclick="document.getElementById('frame').src = '/DTC/client.html';return false">DTC Register I/O and PCIe Status</a><br><br>
-        <a href="/" onclick="document.getElementById('frame').src = '/base/ReadServerLog.html';return false">Read Server Log File</a><br><br>
+        <a href="/" title="/DTC/PerfMon.html" onclick="document.getElementById('frame').src = '/DTC/PerfMon.html';return false">DTC Performance Monitor GUI</a><br><br>
+        <a href="/" title="/DTC/client.html" onclick="document.getElementById('frame').src = '/DTC/client.html';return false">DTC Register I/O and PCIe Status</a><br><br>
+        <a href="/" title="/DTC/DMATest.html" onclick="document.getElementById('frame').src = '/DTC/DMATest.html';return false">DTC DMA I/O Tests</a><br><br>
+        <a href="/" title="/base/ReadServerLog.html" onclick="document.getElementById('frame').src = '/base/ReadServerLog.html';return false">Read Server Log File</a><br><br>
     </div>
     <div class="mainContent">
         <iframe id="frame" src="/DTC/client.html"></iframe>

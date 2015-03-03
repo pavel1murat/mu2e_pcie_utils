@@ -6,6 +6,7 @@
     <title>DTC DMA Test GUI</title>
     <style>
         @import url(style.css);
+        svg { width:100%;}
     </style>
     <script src="/base/jquery.min.js"></script>
     <script src="/base/d3.v3.min.js"></script>
@@ -35,6 +36,8 @@
                     <th>Tests Running</th>
                     <td><canvas id="testsRunning" width="20" height="10"></canvas></td>
                 </tr>
+                </table>
+            <table>
                 <tr>
                     <td>
                         <fieldset>
@@ -57,6 +60,8 @@
                             </table>
                         </fieldset>
                     </td>
+                    </tr>
+                <tr>
                     <td>
                         <fieldset>
                             <legend>DCS Channel</legend>
@@ -96,6 +101,8 @@
                 </tr>
             </table><br><br>
             <button type="button" id="runButton">Run Tests</button>
+            <button type="button" id="resetButton">Reset Test Counters</button>
+            <button type="button" id="stopButton">Stop Test</button>
         </fieldset>
     </form>
 </body>
