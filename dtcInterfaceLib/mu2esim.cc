@@ -47,8 +47,9 @@ int mu2esim::init()
 	registers_[0x9014] = 0x00000100; // SPayload
 	registers_[0x9018] = 0x00000400; // RPayload
 	registers_[0x9100] = 0x40000002; // Clear latched errors and CFO Enable on
-	registers_[0x9004] = 0x80000040; //Default value from HWUG
+	registers_[0x9104] = 0x80000040; //Default value from HWUG
 	registers_[0x9108] = 0x00049249; // SERDES Loopback PCS Near-End
+	registers_[0x9168] = 0x00049249;
 	registers_[0x9110] = 0x1;        // ROC Emulator enabled (of course!)
 	registers_[0x9114] = 0x7F;       // ALl rings enabled
 	registers_[0x9118] = 0x0;        // No SERDES Reset
@@ -68,6 +69,7 @@ int mu2esim::init()
 	registers_[0x9188] = 0x00002000; // Data pending timeout preset
 	registers_[0x9204] = 0x0010;     // Packet Size Bytes
 	registers_[0x91A4] = 0x1;        // FPGA PROM Ready
+	registers_[0x9404] = 0x1;
 	registers_[0x9408] = 0x0;        // FPGA Core Access OK
 
 	// Set DMA State

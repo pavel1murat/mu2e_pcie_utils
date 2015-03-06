@@ -1,0 +1,162 @@
+﻿<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <style> 
+               @import url(style.css);
+    </style>
+    <script src="/base/jquery.min.js"></script>
+    <script src="/base/d3.v3.min.js"></script>
+    <script src="/base/MakeGraph.js"></script>
+    <script src="/base/AjaxPostAndGet.js"></script>
+    <script src="DMATest2.js"></script>
+    <title>DTC DMA Loopback Tests</title>
+</head>
+<body>
+    <form>
+        <fieldset>
+            <legend>Register Controls for DMA Test</legend>
+            <fieldset>
+                <legend>DTC Parameters</legend>
+                <table>
+                    <tr>
+                        <th>Firmware Version</th>
+                        <td><input type="text" id="dtcVersion" size="8" value=""></td>
+                    </tr>
+                </table><br><br>
+                <table>
+                    <tr>
+                        <th>DTC Reset</th>
+                    </tr>
+                    <tr>
+                        <td><canvas id="dtcResetLED" width="20" height="10" onclick="LEDAction('/DTC/resetDTC', null, 'dtcResetLED')"></canvas></td>
+                    </tr>
+                    <tr>
+                        <th>ROC Emulator</th>
+                        <th>CFO Emulator</th>
+                    </tr>
+                    <tr>
+                        <td><canvas id="ROCEmulatorEnabledLED" width="20" height="10" onclick="LEDAction('./toggleROCEmulator',null,'ROCEmulatorEnabledLED')"></canvas></td>
+                        <td><canvas id="CFOEmulatorEnabledLED" width="20" height="10" onclick="LEDAction('./toggleCFOEmulator',null,'CFOEmulatorEnabledLED')"></canvas></td>
+                    </tr>
+                </table><br><br>
+                <table>
+                    <tr>
+                        <th>Trigger DMA Transfer Length</th>
+                        <td><input type="number" id="triggerDMALength" min=0x80 max=0x8000 step=8 value=0x8000></td>
+                        <td><button type="button" id="setTriggerDMALength" onclick="SetNumericValue('#triggerDMALength', '/DTC/setTriggerDMATransferLength')">Set</button></td>
+                    </tr>
+                    <tr>
+                        <th>Min DMA Transfer Length</th>
+                        <td><input type="number" id="minDMALength" min=0x40 max=0x7FC0 step=8 value=0x40></td>
+                        <td><button type="button" id="setMinDMALength" onclick="SetNumericValue('#minDMALength', '/DTC/setMinDMATransferLength')">Set</button></td>
+                    </tr>
+                    <tr>
+                        <th>DMA Timeout Preset (x4 ns)</th>
+                        <td><input type="number" id="dmaTimeoutPreset" min=0 max=0xFFFFFFFF value=0x800></td>
+                        <td><button type="button" id="setDMATimeoutPreset" onclick="SetNumericValue('#dmaTimeoutPreset','/DTC/writeDMATimeoutPreset')">Set</button></td>
+                    </tr>
+                    <tr>
+                        <th>Data Pending Timer (x6.4 ns)</th>
+                        <td><input type="number" id="dataPendingTimer" min=0 max=0xFFFFFFFF value=0x2000></td>
+                        <td><button type="button" id="setDataPendingTimer" onclick="SetNumericValue('#dataPendingTimer', '/DTC/writeDataPendingTimer')">Set</button></td>
+                    </tr>
+                    <tr>
+                        <th>Packet Size (bytes)</th>
+                        <td><input type="number" id="packetSize" min=0 max=0xFFFF value=0x10></td>
+                        <td><button type="button" id="setPacketSize" onclick="SetNumericValue('#packetSize','/DTC/setPacketSize')">Set</button></td>
+                    </tr>
+                </table>
+            </fieldset>
+            <fieldset>
+                <legend>Ring Enable</legend>
+                <table>
+                    <tr><th></th><th>Enabled</th></tr>
+                    <tr><td>Ring 0</td><td><canvas id="Ring0EnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 0, 'Ring0EnabledLED')"></canvas></td></tr>
+                    <tr><td>Ring 1</td><td><canvas id="Ring1EnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 1, 'Ring1EnabledLED')"></canvas></td></tr>
+                    <tr><td>Ring 2</td><td><canvas id="Ring2EnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 2, 'Ring2EnabledLED')"></canvas></td></tr>
+                    <tr><td>Ring 3</td><td><canvas id="Ring3EnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 3, 'Ring3EnabledLED')"></canvas></td></tr>
+                    <tr><td>Ring 4</td><td><canvas id="Ring4EnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 4, 'Ring4EnabledLED')"></canvas></td></tr>
+                    <tr><td>Ring 5</td><td><canvas id="Ring5EnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 5, 'Ring5EnabledLED')"></canvas></td></tr>
+                    <tr><td>CFO</td><td><canvas id="CFOEnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 6, 'CFOEnabledLED')"></canvas></td></tr>
+                </table>
+            </fieldset>
+            <fieldset>
+                <legend>SERDES Loopback Mode</legend>
+                <table>
+                    <tr>
+                        <th></th>
+                        <th>Near-End PCS</th>
+                        <th>Near-End PMA</th>
+                        <th>Far-End PMA</th>
+                        <th>Far-End PCS</th>
+                    </tr>
+                    <tr>
+                        <td>Ring 0</td>
+                        <td><canvas id="SERDESLoopbackNEPCSRing0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 0,1,'SERDESLoopbackNEPCSRing0LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackNEPMARing0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 0,2,'SERDESLoopbackNEPMARing0LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackFEPMARing0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 0,4,'SERDESLoopbackFEPMARing0LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackFEPCSRing0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 0,6,'SERDESLoopbackFEPCSRing0LED')"></canvas></td>
+                    </tr>
+                    <tr>
+                        <td>Ring 1</td>
+                        <td><canvas id="SERDESLoopbackNEPCSRing1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 1,1,'SERDESLoopbackNEPCSRing1LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackNEPMARing1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 1,2,'SERDESLoopbackNEPMARing1LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackFEPMARing1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 1,4,'SERDESLoopbackFEPMARing1LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackFEPCSRing1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 1,6,'SERDESLoopbackFEPCSRing1LED')"></canvas></td>
+                    </tr>
+                    <tr>
+                        <td>Ring 2</td>
+                        <td><canvas id="SERDESLoopbackNEPCSRing2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 2,1,'SERDESLoopbackNEPCSRing2LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackNEPMARing2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 2,2,'SERDESLoopbackNEPMARing2LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackFEPMARing2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 2,4,'SERDESLoopbackFEPMARing2LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackFEPCSRing2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 2,6,'SERDESLoopbackFEPCSRing2LED')"></canvas></td>
+                    </tr>
+                    <tr>
+                        <td>Ring 3</td>
+                        <td><canvas id="SERDESLoopbackNEPCSRing3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 3,1,'SERDESLoopbackNEPCSRing3LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackNEPMARing3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 3,2,'SERDESLoopbackNEPMARing3LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackFEPMARing3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 3,4,'SERDESLoopbackFEPMARing3LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackFEPCSRing3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 3,6,'SERDESLoopbackFEPCSRing3LED')"></canvas></td>
+                    </tr>
+                    <tr>
+                        <td>Ring 4</td>
+                        <td><canvas id="SERDESLoopbackNEPCSRing4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 4,1,'SERDESLoopbackNEPCSRing4LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackNEPMARing4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 4,2,'SERDESLoopbackNEPMARing4LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackFEPMARing4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 4,4,'SERDESLoopbackFEPMARing4LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackFEPCSRing4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 4,6,'SERDESLoopbackFEPCSRing4LED')"></canvas></td>
+                    </tr>
+                    <tr>
+                        <td>Ring 5</td>
+                        <td><canvas id="SERDESLoopbackNEPCSRing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5,1,'SERDESLoopbackNEPCSRing5LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackNEPMARing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5,2,'SERDESLoopbackNEPMARing5LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackFEPMARing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5,4,'SERDESLoopbackFEPMARing5LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackFEPCSRing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5,6,'SERDESLoopbackFEPCSRing5LED')"></canvas></td>
+                    </tr>
+                    <tr>
+                        <td>CFO</td>
+                        <td><canvas id="SERDESLoopbackNEPCSCFOLED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6,1,'SERDESLoopbackNEPCSCFOLED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackNEPMACFOLED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6,2,'SERDESLoopbackNEPMACFOLED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackFEPMACFOLED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6,4,'SERDESLoopbackFEPMACFOLED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackFEPCSCFOLED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6,6,'SERDESLoopbackFEPCSCFOLED')"></canvas></td>
+                    </tr>
+                </table>
+            </fieldset>
+        </fieldset>
+        <fieldset>
+            <legend>DMA Packet Settings</legend>
+            <div id="packets"></div>
+            <button type="button" id="addDCSPacket">Add DCS Request Packet</button>
+            <button type="button" id="addDataRequestPacket">Add Data Request Packet</button>
+            <button type="button" id="addReadoutRequestPacket">Add Readout Request Packet</button>
+        </fieldset>
+        <fieldset>
+            <legend>Test Control</legend>
+            <p class="p" id="dma0"></p>
+            <p class="p" id="dma1"></p>
+            <button type="button" id="sendPackets">Send Packet(s)</button>
+        </fieldset>
+    </form>
+</body>
+</html>
