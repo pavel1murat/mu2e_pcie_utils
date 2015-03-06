@@ -1,40 +1,44 @@
-﻿<table>
-    <tr>
-        <td><input type="text" name="transferCountHigh" id="transferCountHigh"></td>
-        <td><input type="text" name="transferCountLow" id="transferCountLow"></td>
-    </tr>
-    <tr>
-        <td><input type="text" name="validBit" id="validBit"></td>
-        <td><input type="text" name="Reserved1" id="Reserved1" value="0" readonly></td>
-        <td><input type="text" name="ringID" id="ringID"></td>
-        <td><input type="text" name="packetType" id="packetType" value="1" readonly></td>
-        <td><input type="text" name="hopCount" id="hopCount"></td>
-    </tr>
-    <tr>
-        <td><input type="text" name="Reserved2" id="Reserved2" value="0" readonly></td>
-        <td><input type="text" name="Reserved3" id="Reserved3" value="0" readonly></td>
-    </tr>
-    <tr>
-        <td><input type="text" name="timestamp1" id="timestamp1"></td>
-        <td><input type="text" name="timestamp0" id="timestamp0"></td>
-    </tr>
-    <tr>
-        <td><input type="text" name="timestamp3" id="timestamp3"></td>
-        <td><input type="text" name="timestamp2" id="timestamp2"></td>
-    </tr>
-    <tr>
-        <td><input type="text" name="timestamp5" id="timestamp5"></td>
-        <td><input type="text" name="timestamp4" id="timestamp4"></td>
-    </tr>
-    <tr>
-        <td><input type="text" name="Reserved4" id="Reserved4" value="0" readonly></td>
-        <td><input type="text" name="Reserved5" id="Reserved5" value="0" readonly></td>
-    </tr>
-    <tr>
-        <td><input type="text" name="Reserved6" id="Reserved6" value="0" readonly></td>
-        <td><input type="text" name="Reserved7" id="Reserved7" value="0" readonly></td>
-    </tr>
+﻿<fieldset id="packet%id%">
+    <legend>Readout Request Packet</legend>
+    <table>
+        <tr>
+            <td><input type="text" name="transferCountHigh" id="transferCountHigh"></td>
+            <td><input type="text" name="transferCountLow" id="transferCountLow"></td>
+        </tr>
+        <tr>
+            <td><input type="text" name="validBit" id="validBit"></td>
+            <td><input type="text" name="Reserved1" id="Reserved1" value="0" readonly></td>
+            <td><input type="text" name="ringID" id="ringID"></td>
+            <td><input type="text" name="packetType" id="packetType" value="1" readonly></td>
+            <td><input type="text" name="hopCount" id="hopCount"></td>
+        </tr>
+        <tr>
+            <td><input type="text" name="Reserved2" id="Reserved2" value="0" readonly></td>
+            <td><input type="text" name="Reserved3" id="Reserved3" value="0" readonly></td>
+        </tr>
+        <tr>
+            <td><input type="text" name="timestamp1" id="timestamp1"></td>
+            <td><input type="text" name="timestamp0" id="timestamp0"></td>
+        </tr>
+        <tr>
+            <td><input type="text" name="timestamp3" id="timestamp3"></td>
+            <td><input type="text" name="timestamp2" id="timestamp2"></td>
+        </tr>
+        <tr>
+            <td><input type="text" name="timestamp5" id="timestamp5"></td>
+            <td><input type="text" name="timestamp4" id="timestamp4"></td>
+        </tr>
+        <tr>
+            <td><input type="text" name="Reserved4" id="Reserved4" value="0" readonly></td>
+            <td><input type="text" name="Reserved5" id="Reserved5" value="0" readonly></td>
+        </tr>
+        <tr>
+            <td><input type="text" name="Reserved6" id="Reserved6" value="0" readonly></td>
+            <td><input type="text" name="Reserved7" id="Reserved7" value="0" readonly></td>
+        </tr>
 
-    <button type="button" id="deletePacket">Delete Packet</button>
-
-</table>
+        <tr>
+            <button type="button" id="delete">Delete Packet</button>
+        </tr>
+    </table>
+</fieldset>

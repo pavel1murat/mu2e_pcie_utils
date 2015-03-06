@@ -1,4 +1,17 @@
-﻿
+﻿var packets = {};
+var numPackets = 0;
+function addPacket(type, id, packet) {
+    packets[id] = packet;
+    $.get("/DTC/" + type, function (data) {
+        var datatemp = data.replace(/%id%/g, id);
+        $("#packets").append(datatemp);
+        $("#packet" +id+ " #delete").click(function () {
+            $("#packet" + id).remove();
+        });
+    });
+    ++numPackets;
+}
+
 function setPixel(led, bit, modestring) {
     var ctx = led.getContext("2d");
     
@@ -261,4 +274,38 @@ function PopulateLEDS(dtcregdump) {
 
 $(function () {
     setInterval(function () { GetRegDump(); }, 1500);
+
+    $("#addDCSPacket").click(function () {
+        addPacket("DCSRequestPacket.html", numPackets);
+    });
+
+    $("#addDataRequestPacket").click(function () {
+        addPacket("DataRequestPacket.html", numPackets);
+    });
+
+    $("#addReadoutRequestPacket").click(function () {
+        addPacket("ReadoutRequestPacket.html", numPackets);
+    });
+
+    $("#sendPackets").click(function () {
+
+    });
+    
+    var dma0 = {
+        dma0TX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA0Transmit" },
+        dma0RX: { data: [{ time: 0, value: 0 }], color: 'blue', jsonPath: "/DTC/DMA0Receive" },
+    };
+    makeGraph("#dma0", dma0);
+    var dma1 = {
+        dma1TX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA1Transmit" },
+        dma1RX: { data: [{ time: 0, value: 0 }], color: 'blue', jsonPath: "/DTC/DMA1Receive" },
+    };
+    makeGraph("#dma1", dma1);
+    
+    $(window).smartresize(function () {
+        $("#dma0").empty();
+        $("#dma1").empty();
+        makeGraph("#dma0", dma0);
+        makeGraph("#dma1", dma1);
+    });
 });
