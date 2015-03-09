@@ -105,6 +105,7 @@ volatile mu2e_buffdesc_S2C_t   *desc_S2C_p;
 	TRNStatistics	       *ts;
 
 
+	TRACE( 11, "mu2e_ioctl: start - cmd=0x%x", cmd );
     if(_IOC_TYPE(cmd) != MU2E_IOC_MAGIC) return -ENOTTY;
 
     /* Check read/write and corresponding argument */
@@ -118,6 +119,7 @@ volatile mu2e_buffdesc_S2C_t   *desc_S2C_p;
     /* DMA registers are offset from BAR0 */
     base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
 
+    TRACE( 11, "mu2e_ioctl: start2" );
     switch(cmd)
     {
     case M_IOC_GET_TST_STATE:
@@ -286,6 +288,7 @@ volatile mu2e_buffdesc_S2C_t   *desc_S2C_p;
 
     /* ------------------------------------------------------------------- */
      case M_IOC_REG_ACCESS:
+	TRACE( 11, "mu2e_ioctl: cmd=REG_ACCESS" );
 	if(copy_from_user(&reg_access, (void*)arg, sizeof(reg_access)))
         {   printk("copy_from_user failed\n"); return (-EFAULT);
         }
@@ -312,6 +315,7 @@ volatile mu2e_buffdesc_S2C_t   *desc_S2C_p;
 	}
 	break;
     case M_IOC_BUF_GIVE:
+	TRACE( 11, "mu2e_ioctl: cmd=BUF_GIVE" );
 	chn= arg>>24;
 	dir=(arg>>16)&1;
 	num= arg&0xffff;
@@ -321,7 +325,6 @@ volatile mu2e_buffdesc_S2C_t   *desc_S2C_p;
 	mu2e_channel_info_[chn][dir].swIdx = myIdx; 
 	break;
     case M_IOC_DUMP:
-
 	TRACE( 10, "SERDES LOOPBACK Enable 0x%x"
 	      , Dma_mReadReg(mu2e_pcie_bar_info.baseVAddr,0x9108) );
 	TRACE( 10, "Ring Enable 0x%x"
@@ -402,6 +405,7 @@ volatile mu2e_buffdesc_S2C_t   *desc_S2C_p;
 	}
 	break;
     case M_IOC_BUF_XMIT:
+	TRACE( 11, "mu2e_ioctl: cmd=BUF_XMIT" );
 
 	chn=arg>>24;
 	dir=S2C;
@@ -410,7 +414,10 @@ volatile mu2e_buffdesc_S2C_t   *desc_S2C_p;
 	// FIX ME --- race condition
 	myIdx = mu2e_channel_info_[chn][dir].swIdx;
 	desc_S2C_p = idx2descVirtAdr( myIdx, chn, dir );
-	if (desc_S2C_p->Complete != 1) return -EAGAIN;
+	if (desc_S2C_p->Complete != 1)
+	{   TRACE( 11, "ioctl BUF_XMIT -EAGAIN" );
+	    return -EAGAIN;
+	}
 
 	desc_S2C_p->Complete    = 0; // FIX ME --- race condition
 	desc_S2C_p->ByteCount   = arg&0xfffff; // 20 bits max
@@ -421,7 +428,7 @@ volatile mu2e_buffdesc_S2C_t   *desc_S2C_p;
 	desc_S2C_p->EndOfPkt    = 1;
 
 	{void * data=((mu2e_databuff_t*)(mu2e_mmap_ptrs[chn][dir][MU2E_MAP_BUFF]))[myIdx];
-	 TRACE( 0, "ioctl BUF_XMIT byte cnt=%d data=0x%08x", desc_S2C_p->ByteCnt, *(u32*)data );
+	 TRACE( 11, "ioctl BUF_XMIT byte cnt=%d data=0x%08x", desc_S2C_p->ByteCnt, *(u32*)data );
 	}
 	
 	nxtIdx = idx_add( myIdx, 1, chn, dir );

@@ -16,7 +16,7 @@
 
 mu2edev::mu2edev() : devfd_(0)
 		   , mu2e_mmap_ptrs_() // extended initializer list; need -std=c++0x
-{   TRACE_CNTL( "lvlmskM", 0xffff );
+{   TRACE_CNTL( "lvlsetM", 0xffff );
     TRACE_CNTL( "lvlmskS", 0xf );
 }
 
@@ -55,6 +55,7 @@ int mu2edev::init()
 		      , chn, dir, map, mu2e_mmap_ptrs_[chn][dir][map] );
 	    }
 	}
+    TRACE( 1, "mu2edev::init return (devfd_=%d)", devfd_ );
     return (0);
 }  // init
 
@@ -138,14 +139,18 @@ int mu2edev::write_loopback_data( int chn, void *buffer, size_t bytes )
     int dir=S2C;
     int retsts=0;
     unsigned delta = delta_( chn, dir );
-    TRACE( 3, "write_loopback_data delta=%u", delta );
+    TRACE( 3, "write_loopback_data delta=%u devfd_=%d", delta, devfd_ );
     if (delta > 0)
     {   unsigned idx = mu2e_channel_info_[chn][dir].swIdx;
 	void * data=((mu2e_databuff_t*)(mu2e_mmap_ptrs_[chn][dir][MU2E_MAP_BUFF]))[idx];
 	memcpy( data, buffer, bytes );
 	unsigned long arg=(chn<<24)|(bytes&0xffffff);// THIS OBIVOUSLY SHOULD BE A MACRO
 	retsts=ioctl( devfd_, M_IOC_BUF_XMIT, arg );
-	if (retsts != 0) { perror( "M_IOC_BUF_GIVE" ); exit (1); }
+	if (retsts != 0)
+	{   perror( "M_IOC_BUF_XMIT" );
+	    TRACE(0,"mu2edev::write_loopback_data M_IOC_BUF_XMIT error");
+	    exit (1);
+	}
     }
     return retsts;
 }  // write_loopback_data

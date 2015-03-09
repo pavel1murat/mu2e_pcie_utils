@@ -16,7 +16,7 @@ struct mu2edev
     int  read_release( int chn, unsigned num );
     void meta_dump( int chn, int dir );
     int  write_loopback_data( int chn, void *buffer, size_t bytes );
-
+    int  get_devfd_() { return devfd_; }
 private:
     unsigned         delta_( int chn, int dir ); // delta "buffer descriptor
 

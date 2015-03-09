@@ -26,14 +26,19 @@ DTC::DTC::DTC() : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t)))
 //
 std::vector<void*> DTC::DTC::GetData(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const DTC_Timestamp& when, int* length)
 {
+	TRACE( 19, "DTC::GetData before release_all" );
 	device_.release_all(0);
 	std::vector<void*> output;
 	// Send a data request
+	TRACE( 19, "DTC::GetData before DTC_DataRequestPacket req" );
 	DTC_DataRequestPacket req(ring, roc, when);
+	TRACE( 19, "DTC::GetData before WriteDMADAQPacket" );
 	WriteDMADAQPacket(req);
+	TRACE( 19, "DTC::GetData after  WriteDMADAQPacket" );
 
 	// Read the header packet
 	DTC_DMAPacket dmaPacket = ReadDMADAQPacket();
+	TRACE( 19, "DTC::GetData after  ReadDMADAQPacket" );
 	if (dmaPacket.GetPacketType() != DTC_PacketType_DataHeader)
 	{
 		throw DTC_WrongPacketTypeException();
@@ -506,7 +511,7 @@ DTC::DTC_DataPacket DTC::DTC::ReadDataPacket(const DTC_DMA_Engine& channel)
 {
 	int retry = 3;
 	int errorCode = 0;
-	do {
+	do {	TRACE( 19, "DTC::ReadDataPacket before device_.read_data" );
 		errorCode = device_.read_data(channel, (void**)&buffer_, 1000);
 		retry--;
 	} while (retry > 0 && errorCode != 0);
@@ -514,6 +519,7 @@ DTC::DTC_DataPacket DTC::DTC::ReadDataPacket(const DTC_DMA_Engine& channel)
 	{
 		throw DTC_IOErrorException();
 	}
+	TRACE( 16, "DTC::ReadDataPacket buffer_=%p errorCode=%d", (void*)buffer_, errorCode );
 	return DTC_DataPacket(buffer_);
 }
 void DTC::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPacket& packet)
@@ -536,7 +542,7 @@ void DTC::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPack
 	}
 }
 DTC::DTC_DMAPacket DTC::DTC::ReadDMAPacket(const DTC_DMA_Engine& channel)
-{
+{	TRACE( 19, "DTC::ReadDMAPacket before DTC_DMAPacket(ReadDataPacket(channel))" );
 	return DTC_DMAPacket(ReadDataPacket(channel));
 }
 DTC::DTC_DMAPacket DTC::DTC::ReadDMADAQPacket()
