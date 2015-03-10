@@ -48,8 +48,8 @@ function logMessage(message, method, name) {
 function SendStatistics() {
     dtcem.GET_Receive();
     dtcem.GET_Send();
-    gmetric.send_gmetric( "/etc/ganglia/gmond.conf","PCIe Send Rate",send.toString( ),"double","B/s","both",15,0,"DTC_PCIe","mu2e DAQ","PCIe Send Rate","PCIe Send Rate" );
-    gmetric.send_gmetric( "/etc/ganglia/gmond.conf","PCIe Receive Rate",receive.toString( ),"double","B/s","both",15,0,"DTC_PCIe","mu2e DAQ","PCIe Receive Rate","PCIe Receive Rate" );
+    //gmetric.send_gmetric("/etc/ganglia/gmond.conf", "PCIe Send Rate", send.toString(), "double", "B/s", "both", 15, 0, "DTC_PCIe", "mu2e DAQ", "PCIe Send Rate", "PCIe Send Rate");
+    //gmetric.send_gmetric("/etc/ganglia/gmond.conf", "PCIe Receive Rate", receive.toString(), "double", "B/s", "both", 15, 0, "DTC_PCIe", "mu2e DAQ", "PCIe Receive Rate", "PCIe Receive Rate");
 };
 
 function getRegDump() {
@@ -417,7 +417,7 @@ dtcem.RO_readMinDMATransferLength = function () {
 }
 
 dtcem.RW_setSERDESLoopback = function (POST) {
-    var val = DTC.SetSERDESLoopbackMode(POST.ring.ring, POST.ring.val);
+    var val = DTC.SetSERDESLoopbackMode(parseInt(POST.ring), parseInt(POST.val));
     logMessage("SERDES Loopback on ring " + POST.ring + " to " + val, "set", POST.who);
     return val;
 };
@@ -441,13 +441,13 @@ dtcem.RO_readSERDESLoopback = function (POST) {
     return output;
 };
 
-dtcem.RW_toggleROCEmulator = function () {
+dtcem.RW_toggleROCEmulator = function (POST) {
     var val = DTC.ToggleROCEmulator();
     logMessage("ROC Emulator (" + val + ")", "toggled", POST.who);
     return val;
 }
 
-dtcem.RO_readROCEmulator = function () {
+dtcem.RO_readROCEmulator = function (POST) {
     return DTC.ReadROCEmulator();
 }
 
@@ -740,6 +740,12 @@ dtcem.RW_StopDMATest = function (POST, testStatus) {
     getDMATestStatus(testStatus);
     
     return testStatus;
+}
+
+dtcem.RW_DMAIO = function (POST, testStatus) {
+    console.log(POST);
+    var packets = POST.packets;
+
 }
 
 /* Script handler removed as of v1.0, sorry...

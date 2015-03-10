@@ -288,7 +288,48 @@ $(function () {
     });
 
     $("#sendPackets").click(function () {
+        var packets = [];
 
+        $("#packets").children().each(function (index, element) {
+            var packet = {};
+            packet.transferCountHigh = parseInt($("#transferCountHigh", this).val());
+            packet.transferCountLow = parseInt($("#transferCountLow", this).val());
+            packet.isValid = parseInt($("#validBit", this).val());
+            packet.ringID = parseInt($("#ringID", this).val());
+            packet.type = parseInt($("#packetType", this).val());
+            packet.hopCount = parseInt($("#hopCount", this).val());
+            switch (packet.type) {
+                case 0:
+                    packet.data0 = parseInt($("#data0", this).val());
+                    packet.data1 = parseInt($("#data1", this).val());
+                    packet.data2 = parseInt($("#data2", this).val());
+                    packet.data3 = parseInt($("#data3", this).val());
+                    packet.data4 = parseInt($("#data4", this).val());
+                    packet.data5 = parseInt($("#data5", this).val());
+                    packet.data6 = parseInt($("#data6", this).val());
+                    packet.data7 = parseInt($("#data7", this).val());
+                    packet.data8 = parseInt($("#data8", this).val());
+                    packet.data9 = parseInt($("#data9", this).val());
+                    packet.data10 = parseInt($("#data10", this).val());
+                    packet.data11 = parseInt($("#data11", this).val());
+                    break;
+                case 1:
+                case 2:
+                    packet.timestamp0 = parseInt($("#timestamp0", this).val());
+                    packet.timestamp1 = parseInt($("#timestamp1", this).val());
+                    packet.timestamp2 = parseInt($("#timestamp2", this).val());
+                    packet.timestamp3 = parseInt($("#timestamp3", this).val());
+                    packet.timestamp4 = parseInt($("#timestamp4", this).val());
+                    packet.timestamp5 = parseInt($("#timestamp5", this).val());
+                    break;
+            }
+
+            packets.push(packet);
+        });
+
+        AjaxPost("/DTC/DMAIO", packets, function (data) {
+            $("#response").val(data);
+        });
     });
     
     var dma0 = {

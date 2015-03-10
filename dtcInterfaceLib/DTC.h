@@ -31,6 +31,12 @@ namespace DTC {
 		// Set number of ROCs in a Ring
 		void SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc);
 
+		// For loopback testing...
+		void WriteDMADAQPacket(const DTC_DMAPacket& packet);
+		void WriteDMADCSPacket(const DTC_DMAPacket& packet);
+		DTC_DMAPacket ReadDMADAQPacket();
+		DTC_DMAPacket ReadDMADCSPacket();
+
 		//
 		// Register IO Functions
 		//
@@ -117,11 +123,7 @@ namespace DTC {
 		DTC_DataPacket ReadDataPacket(const DTC_DMA_Engine& channel);
 		void WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPacket& packet);
 		DTC_DMAPacket ReadDMAPacket(const DTC_DMA_Engine& channel);
-		DTC_DMAPacket ReadDMADAQPacket();
-		DTC_DMAPacket ReadDMADCSPacket();
 		void WriteDMAPacket(const DTC_DMA_Engine& channel, const DTC_DMAPacket& packet);
-		void WriteDMADAQPacket(const DTC_DMAPacket& packet);
-		void WriteDMADCSPacket(const DTC_DMAPacket& packet);
 
 		void WriteRegister(uint32_t data, const DTC_Register& address);
 		uint32_t ReadRegister(const DTC_Register& address);
