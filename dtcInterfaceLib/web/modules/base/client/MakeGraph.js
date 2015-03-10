@@ -1,34 +1,6 @@
 ﻿var n = 120, //Displayed time range is n * duration, so default is 60 seconds.
     duration = 500; //ms between updates
 
-(function ($, sr) {
-    
-    // debouncing function from John Hann
-    // http://unscriptable.com/index.php/2009/03/20/debouncing-javascript-methods/
-    var debounce = function (func, threshold, execAsap) {
-        var timeout;
-        
-        return function debounced() {
-            var obj = this, args = arguments;
-            function delayed() {
-                if (!execAsap)
-                    func.apply(obj, args);
-                timeout = null;
-            }            ;
-            
-            if (timeout)
-                clearTimeout(timeout);
-            else if (execAsap)
-                func.apply(obj, args);
-            
-            timeout = setTimeout(delayed, threshold || 100);
-        };
-    }
-    // smartresize 
-    jQuery.fn[sr] = function (fn) { return fn ? this.bind('resize', debounce(fn)) : this.trigger(sr); };
-
-})(jQuery, 'smartresize');
-
 function tick(paths, line, axes, x, y, ids, tag) {
     var transition = d3.select(tag).transition()
                 .duration(duration)

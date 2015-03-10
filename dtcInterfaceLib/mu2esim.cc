@@ -25,8 +25,8 @@ activeDCSRing_(DTC::DTC_Ring_Unused),
 dcsRequest_(DTC::DTC_Ring_Unused, DTC::DTC_ROC_Unused)
 {
 #ifndef _WIN32  
-	TRACE_CNTL( "lvlmskM", 0x3 );
-	TRACE_CNTL( "lvlmskS", 0x3 );
+    //	TRACE_CNTL( "lvlmskM", 0x3 );
+    //	TRACE_CNTL( "lvlmskS", 0x3 );
 #endif
 	for (int i = 0; i < 6; ++i)
 	{
@@ -42,35 +42,21 @@ int mu2esim::init()
 	isActive_ = true;
 	// Set initial register values...
 	registers_[0x9000] = 0x53494D44; // SIMD in ASCII
-	registers_[0x900C] = 0x00000010; // Send
-	registers_[0x9010] = 0x00000040; // Recieve
-	registers_[0x9014] = 0x00000100; // SPayload
-	registers_[0x9018] = 0x00000400; // RPayload
-	registers_[0x9100] = 0x40000002; // Clear latched errors and CFO Enable on
-	registers_[0x9104] = 0x80000040; //Default value from HWUG
-	registers_[0x9108] = 0x00049249; // SERDES Loopback PCS Near-End
-	registers_[0x9168] = 0x00049249;
+	registers_[0x9100] = 0x40000000; // Clear latched errors on
+	registers_[0x9108] = 0x3F;       // SERDES Loopback enabled
 	registers_[0x9110] = 0x1;        // ROC Emulator enabled (of course!)
-	registers_[0x9114] = 0x7F;       // ALl rings enabled
+	registers_[0x9114] = 0x3F;       // ALl rings enabled
 	registers_[0x9118] = 0x0;        // No SERDES Reset
 	registers_[0x911C] = 0x0;        // No SERDES Disparity Error
 	registers_[0x9120] = 0x0;        // No SERDES CNIT Error
 	registers_[0x9124] = 0x0;        // No SERDES Unlock Error
-	registers_[0x9128] = 0x7F;       // SERDES PLL Locked
+	registers_[0x9128] = 0x3F;       // SERDES PLL Locked
 	registers_[0x912C] = 0x0;        // SERDES TX Buffer Status Normal
 	registers_[0x9130] = 0x0;        // SERDES RX Buffer Staus Nominal
-	registers_[0x9134] = 0x0;        // SERDES RX Status Nominal
-	registers_[0x9138] = 0x7F;       // SERDES Resets Done
-	registers_[0x913C] = 0x0;        // No Eyescan Error
-	registers_[0x9140] = 0x7F;       // RX CDR Locked
-	registers_[0x9144] = 0x800;      // DMA Timeout Preset
+	registers_[0x9138] = 0x3F;       // SERDES Resets Done
 	registers_[0x9180] = 0x0;        // Timestamp preset to 0
 	registers_[0x9184] = 0x0;
-	registers_[0x9188] = 0x00002000; // Data pending timeout preset
-	registers_[0x9204] = 0x0010;     // Packet Size Bytes
 	registers_[0x91A4] = 0x1;        // FPGA PROM Ready
-	registers_[0x9404] = 0x1;
-	registers_[0x9408] = 0x0;        // FPGA Core Access OK
 
 	// Set DMA State
 	dmaState_[0][0].BDerrs = 0;

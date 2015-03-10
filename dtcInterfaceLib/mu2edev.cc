@@ -11,7 +11,7 @@
 
 #define TRACE_NAME "MU2EDEV"
 #ifndef _WIN32
-#include <trace.h>
+#include "trace.h"
 #endif
 #include "mu2edev.hh"
 
@@ -20,8 +20,8 @@ mu2edev::mu2edev() : devfd_(0)
 , simulator_()
 {
 #ifndef _WIN32  
-	TRACE_CNTL( "lvlmskM", 0x3 );
-	TRACE_CNTL( "lvlmskS", 0x3 );
+    //TRACE_CNTL( "lvlmskM", 0x3 );
+    //TRACE_CNTL( "lvlmskS", 0x3 );
 #endif
 }
 
@@ -42,32 +42,38 @@ int mu2edev::init(bool simMode)
 		for (unsigned chn=0; chn<MU2E_MAX_CHANNELS; ++chn)
 			for (unsigned dir=0; dir<2; ++dir)
 			{   m_ioc_get_info_t get_info;
-		get_info.chn = chn; get_info.dir = dir;
-		sts = ioctl( devfd_, M_IOC_GET_INFO, &get_info );
-		if (sts != 0) { perror( "M_IOC_GET_INFO" ); exit (1); }
-		mu2e_channel_info_[chn][dir] = get_info;
-		TRACE( 1, "mu2edev::init %u:%u - num=%u size=%u hwIdx=%u, swIdx=%u"
-			, chn,dir
-			, get_info.num_buffs, get_info.buff_size
-			, get_info.hwIdx, get_info.swIdx );
-		for (unsigned map=0; map<2; ++map)
-		{   mu2e_mmap_ptrs_[chn][dir][map]
-		= mmap( 0 /* hint address */
-		, get_info.num_buffs * ((map==MU2E_MAP_BUFF)
-		? get_info.buff_size
-		: sizeof(int) )
-		, (((dir==S2C)&&(map==MU2E_MAP_BUFF))
-		? PROT_WRITE : PROT_READ )
-		, MAP_SHARED
-		, devfd_
-		, chnDirMap2offset( chn, dir, map ) );
-		if (mu2e_mmap_ptrs_[chn][dir][map] == MAP_FAILED)
-		{   perror( "mmap" ); exit (1);
-		}
-		TRACE( 1, "mu2edev::init chnDirMap2offset=%lu mu2e_mmap_ptrs_[%d][%d][%d]=%p"
-			, chnDirMap2offset( chn, dir, map )
-			, chn, dir, map, mu2e_mmap_ptrs_[chn][dir][map] );
-		}
+			    get_info.chn = chn; get_info.dir = dir;
+			    TRACE( 17, "mu2edev::init before ioctl( devfd_, M_IOC_GET_INFO, &get_info ) chn=%u dir=%u", chn, dir );
+			    sts = ioctl( devfd_, M_IOC_GET_INFO, &get_info );
+			    if (sts != 0) { perror( "M_IOC_GET_INFO" ); exit (1); }
+			    mu2e_channel_info_[chn][dir] = get_info;
+			    TRACE( 1, "mu2edev::init %u:%u - num=%u size=%u hwIdx=%u, swIdx=%u"
+				  , chn,dir
+				  , get_info.num_buffs, get_info.buff_size
+				  , get_info.hwIdx, get_info.swIdx );
+			    for (unsigned map=0; map<2; ++map)
+			    {   mu2e_mmap_ptrs_[chn][dir][map]
+				    = mmap( 0 /* hint address */
+					   , get_info.num_buffs * ((map==MU2E_MAP_BUFF)
+								   ? get_info.buff_size
+								   : sizeof(int) )
+					   , (((dir==S2C)&&(map==MU2E_MAP_BUFF))
+					      ? PROT_WRITE : PROT_READ )
+					   , MAP_SHARED
+					   , devfd_
+					   , chnDirMap2offset( chn, dir, map ) );
+				if (mu2e_mmap_ptrs_[chn][dir][map] == MAP_FAILED)
+				{   perror( "mmap" ); exit (1);
+				}
+				TRACE( 1, "mu2edev::init chnDirMap2offset=%lu mu2e_mmap_ptrs_[%d][%d][%d]=%p"
+				      , chnDirMap2offset( chn, dir, map )
+				      , chn, dir, map, mu2e_mmap_ptrs_[chn][dir][map] );
+			    }
+			    //if (dir == DTC_DMA_Direction_C2S)
+			    {   uint16_t addr=DTC_Register_Engine_Control(chn,dir);
+				TRACE( 17, "mu2edev::init write Engine_Control reg 0x%x", addr );
+				write_register( DTC_Register_Engine_Control(chn,dir), 0, 0x100 );
+			    }
 			}
 #endif
 	}
@@ -85,9 +91,11 @@ int mu2edev::read_data(int chn, void **buffer, int tmo_ms)
 #else
 		int retsts=0;
 		unsigned has_recv_data;
+		TRACE( 18, "mu2edev::read_data before (mu2e_mmap_ptrs_[0][0][0]!=NULL) || ((retsts=init())==0)" );
 		if ((mu2e_mmap_ptrs_[0][0][0]!=NULL) || ((retsts=init())==0))
-		{   
+		{
 			has_recv_data = delta_( chn, C2S );
+			TRACE( 18, "mu2edev::read_data after %u=has_recv_data = delta_( chn, C2S )", has_recv_data  );
 			if (  (has_recv_data > 0)
 				||(  (retsts=ioctl(devfd_,M_IOC_GET_INFO,&mu2e_channel_info_[chn][C2S]))==0
 				&&(has_recv_data=delta_(chn,C2S))>0 ) )
@@ -108,7 +116,7 @@ int mu2edev::read_data(int chn, void **buffer, int tmo_ms)
 			else
 			{   // was it a tmo or error
 				if (retsts != 0) { perror( "M_IOC_GET_INFO" ); exit (1); }
-				// not error... return 0 status
+				TRACE( 18, "mu2edev::read_data not error... return 0 status" );
 			}
 
 		}
@@ -223,7 +231,7 @@ int mu2edev::write_loopback_data(int chn, void *buffer, size_t bytes)
 		int dir = S2C;
 		int retsts = 0;
 		unsigned delta = delta_(chn, dir);
-		TRACE(3, "write_loopback_data delta=%u", delta);
+		TRACE(3, "write_loopback_data delta=%u chn=%d dir=S2C", delta, chn );
 		if (delta > 0)
 		{
 			unsigned idx = mu2e_channel_info_[chn][dir].swIdx;
@@ -374,7 +382,7 @@ int mu2edev::release_all(int chn)
 {
 	int retsts = 0;
 	for (int i = 0; i << mu2e_channel_info_[chn][C2S].num_buffs; ++i)
-	{
+	{       TRACE( 21, "mu2edev::release_all calling read_release(chn=%d, i=%d)", chn, i );
 		retsts = retsts || read_release(chn, i);
 	}
 	return retsts;
@@ -384,7 +392,14 @@ unsigned mu2edev::delta_(int chn, int dir)
 {
 	unsigned hw = mu2e_channel_info_[chn][dir].hwIdx;
 	unsigned sw = mu2e_channel_info_[chn][dir].swIdx;
-	return ((hw >= sw)
-		? hw - sw
-		: mu2e_channel_info_[chn][C2S].num_buffs + hw - sw);
+    TRACE( 21, "mu2edev::delta_ chn=%d dir=%d hw=%u sw=%u num_buffs=%u"
+	      , chn, dir, hw, sw, mu2e_channel_info_[chn][C2S].num_buffs );
+    if (dir == C2S)
+	return ( (hw>=sw)
+		? hw-sw
+		: mu2e_channel_info_[chn][dir].num_buffs+hw-sw );
+    else
+	return ( (sw>=hw)
+		? mu2e_channel_info_[chn][dir].num_buffs-(sw-hw)
+		: hw-sw );
 }

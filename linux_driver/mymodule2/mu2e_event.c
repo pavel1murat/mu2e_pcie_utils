@@ -32,7 +32,7 @@ static void poll_packets(unsigned long __opaque)
     base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
 
     // check channel 0 reciever
-    TRACE( 2, "poll_packets: "
+    TRACE( 22, "poll_packets: "
 	  "CNTL=0x%08x "
 	  "H_NEXT=%u "
 	  "S_NEXT=%u "
@@ -44,7 +44,7 @@ static void poll_packets(unsigned long __opaque)
 	  , descDmaAdr2idx( Dma_mReadChnReg(0,C2S,REG_HW_CMPLT_BD),0,C2S )
 	  , Dma_mReadChnReg( 0, C2S, REG_DMA_ENG_COMP_BYTES )
 	  );
-    TRACE( 3, "poll_packets: App0: gen=0x%x pktlen=0x%04x chk/loop=0x%x"
+    TRACE( 23, "poll_packets: App0: gen=0x%x pktlen=0x%04x chk/loop=0x%x"
 	  , Dma_mReadReg(base,0x9100), Dma_mReadReg(base,0x9104)
 	  , Dma_mReadReg(base,0x9108)
 	  );

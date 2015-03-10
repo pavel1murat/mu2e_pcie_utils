@@ -3,13 +3,14 @@
  // or COPYING file. If you do not have such a file, one can be obtained by
  // contacting Ron or Fermi Lab in Batavia IL, 60510, phone: 630-840-3000.
  // $RCSfile: .emacs.gnu,v $
- // rev="$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
+static char* rev=(char*)"$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
 
 #include <stdio.h>		// printf
 #include <fcntl.h>		// open, O_RDONLY
 #include <libgen.h>		// basename
 #include <string.h>		// strcmp
 #include <stdlib.h>		// strtoul
+#include <getopt.h>             // getopt_long
 
 #include "mu2edev.hh"		// mu2edev
 #include "mu2e_mmap_ioctl.h"	// m_ioc_cmd_t
@@ -18,8 +19,9 @@
    usage: %s <start|stop>\n\
           %s read <offset>\n\
           %s write <offset> <val>\n\
+          %s write_loopback_data [-p<packet_cnt>] [data]...\n\
 examples: %s start\n\
-", basename(argv[0]), basename(argv[0]), basename(argv[0]), basename(argv[0])
+", basename(argv[0]), basename(argv[0]), basename(argv[0]), basename(argv[0]), basename(argv[0])
 
 
 
@@ -35,8 +37,34 @@ main(  int	argc
     m_ioc_reg_access_t reg_access; 
     mu2edev            dev;
 
-    if (argc < 2) { printf(USAGE); return (1); }
-    cmd = argv[1];
+    int         opt_v=0;
+    int		opt_packets=8;
+    int         opt;
+    while (1)
+    {   int option_index = 0;
+        static struct option long_options[] =
+        {   /* name,   has_arg, int* flag, val_for_flag */
+            {"mem-to-malloc",1,    0,         'm'},
+            {0,            0,      0,          0},
+        };
+        opt = getopt_long (argc, argv, "?hm:Vv",
+                        long_options, &option_index);
+        if (opt == -1) break;
+        switch (opt)
+        {
+        case '?': case 'h':  printf( USAGE );  exit( 0 ); break;
+        case 'V': printf("%s\n",rev);return(0);           break;
+        case 'v': opt_v++;                                break;
+	case 'p': opt_packets=strtoul(optarg,NULL,0);     break;
+        default:  printf ("?? getopt returned character code 0%o ??\n", opt);
+        }
+    }
+    if (argc - optind < 1)
+    {   printf( "Need cmd\n" );
+        printf( USAGE ); exit( 0 );
+    }    
+    cmd = argv[optind++];
+    printf( "cmd=%s\n", cmd );
 
     fd = open( "/dev/" MU2E_DEV_FILE, O_RDONLY );
     if (fd == -1) { perror("open /dev/" MU2E_DEV_FILE); return (1); }
@@ -75,6 +103,7 @@ main(  int	argc
     else if (strcmp(cmd,"write_loopback_data") == 0)
     {
 	sts = dev.init();
+	printf("1dev.devfd_=%d\n", dev.get_devfd_() );
 	if (sts) { perror("dev.init"); return (1); }
 	reg_access.reg_offset  = 0x9108;
 	reg_access.access_type = 1;
@@ -84,8 +113,10 @@ main(  int	argc
 	int chn=0;
 	struct
 	{   DataHeaderPacket hdr;
-	    DataPacket       data[7];
+	    DataPacket       data[8];
 	} data={{{0}}};
+	printf("sizeof(hdr)=%lu\n", sizeof(data.hdr) );
+	printf("sizeof(data)=%lu\n", sizeof(data.hdr) );
 	data.hdr.s.TransferByteCount = 64;
 	if (argc > 2) data.hdr.s.TransferByteCount = strtoul( argv[2],NULL,0 );
 	data.hdr.s.Valid = 1;
@@ -96,24 +127,32 @@ main(  int	argc
 	data.hdr.s.ts32 = 0x7654;
 	data.hdr.s.ts54 = 0xba98;
 	data.hdr.s.data32 = 0xdead;
-	data.hdr.s.data54 = 0xbeaf;
-	unsigned bytes=16;
-	for (unsigned ii=0; ii<7; ++ii)
+	data.hdr.s.data54 = 0xbeef;
+	unsigned pcnt=opt_packets;
+	if (pcnt > (sizeof(data.data)/sizeof(data.data[0])))
+	{   pcnt = (sizeof(data.data)/sizeof(data.data[0]));
+	}
+	for (unsigned jj=0; jj<pcnt; ++jj)
 	{
-	    for (unsigned jj=0; jj<8; ++jj)
-	    {
-		if (bytes >= data.hdr.s.TransferByteCount) goto out;
-		data.data[jj].data10 = (jj<<8)|1;
-		data.data[jj].data32 = (jj<<8)|2;
-		data.data[jj].data54 = (jj<<8)|3;
-		data.data[jj].data76 = (jj<<8)|4;
-		data.data[jj].data98 = (jj<<8)|5;
-		data.data[jj].dataBA = (jj<<8)|6;
-		data.data[jj].dataDC = (jj<<8)|7;
-		data.data[jj].dataFE = (jj<<8)|8;
-	    }
+	    data.data[jj].data10 = (jj<<8)|1;
+	    data.data[jj].data32 = (jj<<8)|2;
+	    data.data[jj].data54 = (jj<<8)|3;
+	    data.data[jj].data76 = (jj<<8)|4;
+	    data.data[jj].data98 = (jj<<8)|5;
+	    data.data[jj].dataBA = (jj<<8)|6;
+	    data.data[jj].dataDC = (jj<<8)|7;
+	    data.data[jj].dataFE = (jj<<8)|8;
+	}
+	uint16_t *data_pointer = (uint16_t*)&data;
+	unsigned wrds=0;
+	for (int kk=optind; kk<argc; ++kk, ++wrds)
+	{   printf("argv[kk]=%s\n",argv[kk] );
+	    if (wrds > (sizeof(data.data)/sizeof(uint16_t))) goto out;
+	    *data_pointer++ = (uint16_t)strtoul(argv[kk],NULL,0);
 	}
  out:
+
+	printf("2dev.devfd_=%d\n", dev.get_devfd_() );
 	sts = dev.write_loopback_data( chn, &data,data.hdr.s.TransferByteCount );
     }
     else

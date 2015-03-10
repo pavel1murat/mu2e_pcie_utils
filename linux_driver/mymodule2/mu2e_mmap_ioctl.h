@@ -53,6 +53,36 @@ union DataHeaderPacket
 	uint16_t data54;
     } s;
 };
+union DataRequestPacket
+{
+    struct
+    {   uint16_t w0;
+	uint16_t w1;
+	uint16_t w2;
+	uint16_t w3;
+	uint16_t w4;
+	uint16_t w5;
+	uint16_t w6;
+	uint16_t w7;
+    } w;
+    struct
+    {   uint16_t TransferByteCount;
+
+	uint16_t Resv1:4;
+	uint16_t PacketType:4;
+	uint16_t RingID:4;
+	uint16_t Resv0:3;
+	uint16_t Valid:1;
+
+	uint16_t PacketCount:8;
+	uint16_t Resv2:8;
+	uint16_t ts10;
+	uint16_t ts32;
+	uint16_t ts54;
+	uint16_t data32;
+	uint16_t data54;
+    } s;
+};
 struct DataPacket
 {   uint16_t data10;
     uint16_t data32;
@@ -217,7 +247,9 @@ typedef enum  {
 } DTC_DMA_Direction;
 
 enum { C2S, S2C };
-enum { MU2E_MAP_BUFF, MU2E_MAP_META }; 
+enum { MU2E_MAP_BUFF, MU2E_MAP_META };
+
+#define DTC_Register_Engine_Control( eng, dir ) (((eng*0x100)+(dir*0x2000))+0x4)
 
 typedef struct
 {   int chn;
