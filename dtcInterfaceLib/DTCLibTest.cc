@@ -5,12 +5,15 @@
 #include <ctime>
 #include <sstream>
 
+#include "trace.h"
+
 DTC::DTCLibTest::DTCLibTest() : running_(false), regPassed_(0),
 regFailed_(0), pciePassed_(0), pcieFailed_(0), dmaStatePassed_(0), dmaStateFailed_(0),
-daqPassed_(0), daqFailed_(0), dcsPassed_(0), dcsFailed_(0), regPassedTemp_(0),
-regFailedTemp_(0), pciePassedTemp_(0), pcieFailedTemp_(0), dmaStatePassedTemp_(0),
-dmaStateFailedTemp_(0), daqPassedTemp_(0), daqFailedTemp_(0), dcsPassedTemp_(0),
-dcsFailedTemp_(0), nTests_(0), runRegTest_(false), runPCIeTest_(false),
+daqPassed_(0), daqFailed_(0), dcsPassed_(0), dcsFailed_(0), loopbackPassed_(0),
+loopbackFailed_(0),regPassedTemp_(0), regFailedTemp_(0), pciePassedTemp_(0), 
+pcieFailedTemp_(0), dmaStatePassedTemp_(0), dmaStateFailedTemp_(0), daqPassedTemp_(0), 
+daqFailedTemp_(0), dcsPassedTemp_(0), dcsFailedTemp_(0),loopbackPassedTemp_(0),  
+loopbackFailedTemp_(0), nTests_(0), runRegTest_(false), runPCIeTest_(false),
 runDMAStateTest_(false), runDAQTest_(false), runDCSTest_(false)
 {
 	thisDTC_ = new DTC();
@@ -28,13 +31,14 @@ DTC::DTCLibTest::~DTCLibTest()
 
 // Test Control
 void DTC::DTCLibTest::startTest(bool regIOEnabled, bool pcieEnabled, bool dmaStateEnabled,
-	bool daqEnabled, bool dcsEnabled, int nTests, bool printMessages)
+	bool daqEnabled, bool dcsEnabled, bool loopbackEnabled, int nTests, bool printMessages)
 {
 	runRegTest_ = regIOEnabled;
 	runPCIeTest_ = pcieEnabled;
 	runDMAStateTest_ = dmaStateEnabled;
 	runDCSTest_ = dcsEnabled;
 	runDAQTest_ = daqEnabled;
+        runLoopbackTest_ = loopbackEnabled;
 	nTests_ = nTests;
 	printMessages_ = printMessages;
 
