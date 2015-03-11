@@ -34,8 +34,8 @@ namespace DTC {
         // For loopback testing...
         void WriteDMADAQPacket(const DTC_DMAPacket& packet);
         void WriteDMADCSPacket(const DTC_DMAPacket& packet);
-        DTC_DMAPacket ReadDMADAQPacket();
-        DTC_DMAPacket ReadDMADCSPacket();
+        template<typename PacketType>
+        PacketType ReadDMAPacket(const DTC_DMA_Engine& channel);
 
         //
         // Register IO Functions
@@ -122,7 +122,6 @@ namespace DTC {
     private:
         DTC_DataPacket ReadDataPacket(const DTC_DMA_Engine& channel);
         void WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPacket& packet);
-        DTC_DMAPacket ReadDMAPacket(const DTC_DMA_Engine& channel);
         void WriteDMAPacket(const DTC_DMA_Engine& channel, const DTC_DMAPacket& packet);
 
         void WriteRegister(uint32_t data, const DTC_Register& address);

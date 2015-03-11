@@ -18,7 +18,7 @@ DTC::DTC::DTC() : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t)))
     char* sim = getenv("DTCLIB_SIM_ENABLE");
     simMode_ = sim != NULL && sim[0] == '1';
 #endif
-    simMode_ = (bool)device_.init(simMode_);
+    simMode_ = device_.init(simMode_) == 1;
 }
 
 //
@@ -37,20 +37,15 @@ std::vector<void*> DTC::DTC::GetData(const DTC_Ring_ID& ring, const DTC_ROC_ID& 
     TRACE(19, "DTC::GetData after  WriteDMADAQPacket");
 
     // Read the header packet
-    DTC_DMAPacket dmaPacket = ReadDMADAQPacket();
+    DTC_DataHeaderPacket packet = ReadDMAPacket<DTC_DataHeaderPacket>(DTC_DMA_Engine_DAQ);
     TRACE(19, "DTC::GetData after  ReadDMADAQPacket");
-    if (dmaPacket.GetPacketType() != DTC_PacketType_DataHeader)
-    {
-        throw DTC_WrongPacketTypeException();
-    }
-    DTC_DataHeaderPacket packet(dmaPacket);
 
     *length = packet.GetPacketCount() + 1;
     output.push_back(buffer_);
 
     while (DTC_BUFFSIZE * output.size() < packet.GetPacketCount() + 1U)
     {
-        dmaPacket = ReadDMADAQPacket();
+        device_.read_data(0, (void**)&buffer_, 1000);
         output.push_back(buffer_);
     }
 
@@ -62,15 +57,10 @@ void DTC::DTC::DCSRequestReply(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, u
     device_.release_all(1);
     DTC_DCSRequestPacket req(ring, roc, dataIn);
     WriteDMADCSPacket(req);
-    DTC_DMAPacket packet = ReadDMADCSPacket();
-    if (packet.GetPacketType() != DTC_PacketType_DCSReply)
-    {
-        throw DTC_WrongPacketTypeException();
-    }
+    DTC_DCSReplyPacket packet = ReadDMAPacket<DTC_DCSReplyPacket>(DTC_DMA_Engine_DCS);
 
-    DTC_DCSReplyPacket dcsPacket(packet);
     for (int ii = 0; ii < 12; ++ii) {
-        dataIn[ii] = dcsPacket.GetData()[ii];
+        dataIn[ii] = packet.GetData()[ii];
     }
 }
 
@@ -542,18 +532,11 @@ void DTC::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPack
         throw DTC_IOErrorException();
     }
 }
-DTC::DTC_DMAPacket DTC::DTC::ReadDMAPacket(const DTC_DMA_Engine& channel)
+template<typename PacketType>
+PacketType DTC::DTC::ReadDMAPacket(const DTC_DMA_Engine& channel)
 {
     TRACE(19, "DTC::ReadDMAPacket before DTC_DMAPacket(ReadDataPacket(channel))");
-    return DTC_DMAPacket(ReadDataPacket(channel));
-}
-DTC::DTC_DMAPacket DTC::DTC::ReadDMADAQPacket()
-{
-    return ReadDMAPacket(DTC_DMA_Engine_DAQ);
-}
-DTC::DTC_DMAPacket DTC::DTC::ReadDMADCSPacket()
-{
-    return ReadDMAPacket(DTC_DMA_Engine_DCS);
+    return PacketType(ReadDataPacket(channel));
 }
 void DTC::DTC::WriteDMAPacket(const DTC_DMA_Engine& channel, const DTC_DMAPacket& packet)
 {

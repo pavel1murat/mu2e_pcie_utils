@@ -5,7 +5,11 @@
 #include <ctime>
 #include <sstream>
 
+#ifndef _WIN32
 #include "trace.h"
+#else
+#define TRACE //TRACE
+#endif
 
 DTC::DTCLibTest::DTCLibTest() : running_(false), regPassed_(0),
 regFailed_(0), pciePassed_(0), pcieFailed_(0), dmaStatePassed_(0), dmaStateFailed_(0),

@@ -777,15 +777,19 @@ dtcem.RW_DMAIO = function (POST, testStatus) {
     
     var res;
     if (readDaq) {
+        console.log("Reading DAQ Response");
         var daqResponse = DTC.ReadDMADAQPacket().toJSON();
         res += daqResponse + "\n";
         for (var i = 0; i < JSON.parse(daqResponse).DMAPacket.packetCount; i++) {
+            console.log("Reading data packets...");
             res += DTC.ReadDMADAQPacket().toJSON() + "\n"
         }
     }
     if (readDcs) {
+        console.log("Reading DCS Response");
         res += DTC.ReadDMADCSPacket().toJSON();
     }
+    console.log("Result is " + res);
     return res;
 
 }

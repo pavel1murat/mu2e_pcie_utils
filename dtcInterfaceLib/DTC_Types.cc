@@ -68,30 +68,25 @@ uint8_t DTC::DTC_DataPacket::GetWord(int index) const
 }
 
 
-DTC::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t packetCount)
-    : ringID_(ring), packetType_(type), rocID_(roc), packetCount_(packetCount) {}
+DTC::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t byteCount, bool valid)
+    : valid_(valid), byteCount_(byteCount), ringID_(ring), packetType_(type), rocID_(roc) {}
 
-DTC::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t* data, uint16_t packetCount)
-    : ringID_(ring), packetType_(type), rocID_(roc), packetCount_(packetCount)
-{
-    for (int i = 0; i < 12; ++i)
-    {
-        data_[i] = data[i];
-    }
-}
 
 DTC::DTC_DataPacket DTC::DTC_DMAPacket::ConvertToDataPacket() const
 {
     DTC_DataPacket output;
+    uint8_t word0A = static_cast<uint8_t>(byteCount_);
+    uint8_t word0B = static_cast<uint8_t>(byteCount_ >> 8);
+    output.SetWord(0, word0A);
+    output.SetWord(1, word0B);
     uint8_t word1A = (uint8_t)rocID_;
     word1A += (uint8_t)packetType_ << 4;
-    uint8_t word1B = static_cast<uint8_t>(ringID_);
-    output.SetWord(0, word1A);
-    output.SetWord(1, word1B);
-    output.SetWord(2, packetCount_);
+    uint8_t word1B = static_cast<uint8_t>(ringID_)+(valid_ ? 0x80 : 0x0);
+    output.SetWord(2, word1A);
+    output.SetWord(3, word1B);
     for (int i = 0; i < 12; ++i)
     {
-        output.SetWord(i + 4, data_[i]);
+        output.SetWord(i + 4, 0);
     }
     return output;
 }
@@ -99,32 +94,59 @@ DTC::DTC_DataPacket DTC::DTC_DMAPacket::ConvertToDataPacket() const
 DTC::DTC_DMAPacket::DTC_DMAPacket(const DTC_DataPacket& in)
 {
     uint8_t word0 = in.GetWord(0);
-    std::bitset<4> roc = word0;
-    word0 >>= 4;
-    std::bitset<4> packetType = word0;
     uint8_t word1 = in.GetWord(1);
-    std::bitset<4> ringID = word1;
-    packetCount_ = in.GetWord(2);
-    for (int i = 0; i < 12; ++i)
-    {
-        data_[i] = in.GetWord(i + 4);
-    }
+    std::bitset<16> byteCount = word0 + (word1 << 8);
+    uint8_t word2 = in.GetWord(2);
+    std::bitset<4> roc = word2;
+    word2 >>= 4;
+    std::bitset<4> packetType = word2;
+    uint8_t word3 = in.GetWord(3);
+    std::bitset<4> ringID = word3;
+    valid_ = (word3 & 0x80) == 0x80;
 
+    byteCount_ = static_cast<uint16_t>(byteCount.to_ulong());
     ringID_ = static_cast<DTC_Ring_ID>(ringID.to_ulong());
     rocID_ = static_cast<DTC_ROC_ID>(roc.to_ulong());
     packetType_ = static_cast<DTC_PacketType>(packetType.to_ulong());
 }
 
+std::string DTC::DTC_DMAPacket::headerJSON()
+{
+    std::stringstream ss;
+    ss << "isValid: " << valid_ << ",";
+    ss << "byteCount: " << byteCount_ << ",";
+    ss << "ringID: " << ringID_ << ",";
+    ss << "packetType: " << packetType_ << ",";
+    ss << "rocID: " << rocID_ << ",";
+    return ss.str();
+}
 
 std::string DTC::DTC_DMAPacket::toJSON()
 {
     std::stringstream ss;
     ss << "DMAPacket: {";
-    ss << "byteCount: " << byteCount_ << ",";
-    ss << "ringID: " << ringID_ << ",";
-    ss << "packetType: " << packetType_ << ",";
-    ss << "rocID: " << rocID_ << ",";
-    ss << "packetCount: " << packetCount_ << ",";
+    ss << headerJSON();
+    ss << "}";
+    return ss.str();
+}
+
+DTC::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc)
+    : DTC_DMAPacket(DTC_PacketType_DCSRequest, ring, roc) {}
+
+DTC::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t* data)
+    : DTC_DMAPacket(DTC_PacketType_DCSRequest, ring, roc)
+{
+    for (int i = 0; i < 12; ++i)
+    {
+        data_[i] = data[i];
+    }
+}
+
+std::string DTC::DTC_DCSRequestPacket::toJSON()
+{
+    std::stringstream ss;
+    ss << "DCSRequestPacket: {";
+    ss << headerJSON();
     ss << "data: [" << (int)data_[0] << ",";
     ss << (int)data_[1] << ",";
     ss << (int)data_[2] << ",";
@@ -141,12 +163,15 @@ std::string DTC::DTC_DMAPacket::toJSON()
     return ss.str();
 }
 
-DTC::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc)
-    : DTC_DMAPacket(DTC_PacketType_DCSRequest, ring, roc) {}
-
-DTC::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t* data)
-    : DTC_DMAPacket(DTC_PacketType_DCSRequest, ring, roc, data) {}
-
+DTC::DTC_DataPacket DTC::DTC_DCSRequestPacket::ConvertToDataPacket() const
+{
+    DTC_DataPacket output = DTC_DMAPacket::ConvertToDataPacket();
+    for (int i = 0; i < 12; ++i)
+    {
+        output.SetWord(i + 4, data_[i]);
+    }
+    return output;
+}
 
 DTC::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC)
     : DTC_DMAPacket(DTC_PacketType_ReadoutRequest, ring, maxROC), timestamp_() {}
@@ -154,16 +179,39 @@ DTC::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_RO
 DTC::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC)
     : DTC_DMAPacket(DTC_PacketType_ReadoutRequest, ring, maxROC), timestamp_(timestamp) {}
 
-DTC::DTC_DMAPacket DTC::DTC_ReadoutRequestPacket::ConvertToDMAPacket() const
+DTC::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_DataPacket& in) : DTC_DMAPacket(in)
 {
-    uint8_t data[12];
-    timestamp_.GetTimestamp(data);
-    return DTC_DMAPacket(DTC_PacketType_ReadoutRequest, ringID_, rocID_, data);
+    uint8_t arr[6];
+    for (int i = 0; i < 6; ++i)
+    {
+        arr[i] = in.GetWord(i + 6);
+    }
+    timestamp_ = DTC_Timestamp(arr);
 }
 
-DTC::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_DMAPacket& in) : DTC_DMAPacket(in), timestamp_(data_) {}
+std::string DTC::DTC_ReadoutRequestPacket::toJSON()
+{ 
+    uint8_t ts[6];
+    timestamp_.GetTimestamp(ts, 0);
+    std::stringstream ss;
+    ss << "ReadoutRequestPacket: {";
+    ss << headerJSON();
+    ss << "timestamp: [" << (int)ts[0] << ",";
+    ss << (int)ts[1] << ",";
+    ss << (int)ts[2] << ",";
+    ss << (int)ts[3] << ",";
+    ss << (int)ts[4] << ",";
+    ss << (int)ts[5] << "],";
+    ss << "}";
+    return ss.str();
+}
 
-DTC::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_DataPacket& in) : DTC_DMAPacket(in), timestamp_(data_){}
+DTC::DTC_DataPacket DTC::DTC_ReadoutRequestPacket::ConvertToDataPacket() const
+{
+    DTC_DataPacket output = DTC_DMAPacket::ConvertToDataPacket();
+    timestamp_.GetTimestamp(output.GetData(), 6);
+    return output;
+}
 
 
 DTC::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc)
@@ -172,22 +220,83 @@ DTC::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID r
 DTC::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp timestamp)
     : DTC_DMAPacket(DTC_PacketType_DataRequest, ring, roc), timestamp_(timestamp) {}
 
-DTC::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DataPacket& in) : DTC_DMAPacket(in), timestamp_(data_) {}
-
-DTC::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DMAPacket& in) : DTC_DMAPacket(in), timestamp_(data_) {}
-
-DTC::DTC_DMAPacket DTC::DTC_DataRequestPacket::ConvertToDMAPacket() const
+DTC::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DataPacket& in) : DTC_DMAPacket(in)
 {
-    uint8_t data[12];
-    timestamp_.GetTimestamp(data);
-    return DTC_DMAPacket(DTC_PacketType_DataRequest, ringID_, rocID_, data);
+    uint8_t arr[6];
+    for (int i = 0; i < 6; ++i)
+    {
+        arr[i] = in.GetWord(i + 6);
+    }
+    timestamp_ = DTC_Timestamp(arr);
 }
+
+std::string DTC::DTC_DataRequestPacket::toJSON()
+{
+    uint8_t ts[6];
+    timestamp_.GetTimestamp(ts, 0);
+    std::stringstream ss;
+    ss << "DataRequestPacket: {";
+    ss << headerJSON();
+    ss << "timestamp: [" << (int)ts[0] << ",";
+    ss << (int)ts[1] << ",";
+    ss << (int)ts[2] << ",";
+    ss << (int)ts[3] << ",";
+    ss << (int)ts[4] << ",";
+    ss << (int)ts[5] << "],";
+    ss << "}";
+    return ss.str();
+}
+
+DTC::DTC_DataPacket DTC::DTC_DataRequestPacket::ConvertToDataPacket() const
+{
+    DTC_DataPacket output = DTC_DMAPacket::ConvertToDataPacket();
+    timestamp_.GetTimestamp(output.GetData(), 6);
+    return output;
+}
+
 
 DTC::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring)
     : DTC_DMAPacket(DTC_PacketType_DCSReply, ring, DTC_ROC_Unused) {}
 
 DTC::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t* data)
-    : DTC_DMAPacket(DTC_PacketType_DCSReply, ring, DTC_ROC_Unused, data) {}
+    : DTC_DMAPacket(DTC_PacketType_DCSReply, ring, DTC_ROC_Unused)
+{
+    for (int i = 0; i < 12; ++i)
+    {
+        data_[i] = data[i];
+    }
+}
+
+std::string DTC::DTC_DCSReplyPacket::toJSON()
+{
+    std::stringstream ss;
+    ss << "DCSReplyPacket: {";
+    ss << headerJSON();
+    ss << "data: [" << (int)data_[0] << ",";
+    ss << (int)data_[1] << ",";
+    ss << (int)data_[2] << ",";
+    ss << (int)data_[3] << ",";
+    ss << (int)data_[4] << ",";
+    ss << (int)data_[5] << ",";
+    ss << (int)data_[6] << ",";
+    ss << (int)data_[7] << ",";
+    ss << (int)data_[8] << ",";
+    ss << (int)data_[9] << ",";
+    ss << (int)data_[10] << ",";
+    ss << (int)data_[11] << "],";
+    ss << "}";
+    return ss.str();
+}
+
+DTC::DTC_DataPacket DTC::DTC_DCSReplyPacket::ConvertToDataPacket() const
+{
+    DTC_DataPacket output = DTC_DMAPacket::ConvertToDataPacket();
+    for (int i = 0; i < 12; ++i)
+    {
+        output.SetWord(i + 4, data_[i]);
+    }
+    return output;
+}
 
 DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount)
     : DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, packetCount) {}
@@ -200,37 +309,56 @@ DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packe
 {
     for (int i = 0; i < 4; ++i)
     {
-        data_[i] = data[i];
+        dataStart_[i] = data[i];
     }
 }
 
-DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket& in) : DTC_DMAPacket(in), timestamp_(data_)
+DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket& in) : DTC_DMAPacket(in)
 {
+    uint8_t arr[6];
+    for (int i = 0; i < 6; ++i)
+    {
+        arr[i] = in.GetWord(i + 6);
+    }
+    timestamp_ = DTC_Timestamp(arr);
     for (int i = 0; i < 4; i++)
     {
-        dataStart_[i] = data_[i + 6];
+        dataStart_[i] = in.GetWord(i + 12);
     }
 }
 
-DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DMAPacket in) : DTC_DMAPacket(in), timestamp_(data_)
+std::string DTC::DTC_DataHeaderPacket::toJSON()
 {
-    for (int i = 0; i < 4; i++)
-    {
-        dataStart_[i] = data_[i + 6];
-    }
+    uint8_t ts[6];
+    timestamp_.GetTimestamp(ts, 0);
+    std::stringstream ss;
+    ss << "DataRequestPacket: {";
+    ss << headerJSON();
+    ss << "packetCount: " << packetCount_ << ",";
+    ss << "timestamp: [" << (int)ts[0];
+    ss << (int)ts[1] << ",";
+    ss << (int)ts[2] << ",";
+    ss << (int)ts[3] << ",";
+    ss << (int)ts[4] << ",";
+    ss << (int)ts[5] << "],";
+    ss << "data: [" << (int)dataStart_[0] << ",";
+    ss << (int)dataStart_[1] << ",";
+    ss << (int)dataStart_[2] << ",";
+    ss << (int)dataStart_[3] << "],";
+    ss << "}";
+    return ss.str();
 }
 
-DTC::DTC_DMAPacket DTC::DTC_DataHeaderPacket::ConvertToDMAPacket() const
+DTC::DTC_DataPacket DTC::DTC_DataHeaderPacket::ConvertToDataPacket() const
 {
-    uint8_t data[12];
-    timestamp_.GetTimestamp(data);
-    for (int ii = 0; ii < 4; ++ii)
+    DTC_DataPacket output = DTC_DMAPacket::ConvertToDataPacket();
+    timestamp_.GetTimestamp(output.GetData(), 6);
+    for (int i = 0; i < 4; ++i)
     {
-        data[ii + 6] = dataStart_[ii];
+        output.SetWord(i + 12, dataStart_[i]);
     }
-    return DTC_DMAPacket(DTC_PacketType_DataHeader, ringID_, rocID_, data);
+    return output;
 }
-
 
 DTC::DTC_ClockFanoutPacket::DTC_ClockFanoutPacket(uint8_t partition)
     : partition_(partition) {}
@@ -269,7 +397,7 @@ DTC::DTC_DataPacket DTC::DTC_ClockFanoutPacket::ConvertToDataPacket() const
     data[0] = static_cast<uint8_t>(byteCount_);
     data[1] = static_cast<uint8_t>(byteCount_ >> 8);
     data[2] = 0x00;
-    data[3] = 0x80 + (partition_ & 0xF);
+    data[3] = (valid_ ? 0x80 : 0x00) + (partition_ & 0xF);
     timestamp_.GetTimestamp(data, 6);
     for (int ii = 0; ii < 4; ++ii)
     {
@@ -488,7 +616,7 @@ DTC::DTC_DMAStats DTC::DTC_DMAStats::getData(DTC_DMA_Engine dma, DTC_DMA_Directi
 }
 
 DTC::DTC_PCIeState::DTC_PCIeState(m_ioc_pcistate_t in)
-    : Version(in.Version), LinkState(in.LinkState), LinkSpeed(in.LinkSpeed),
+    : Version(in.Version), LinkState(in.LinkState == 1), LinkSpeed(in.LinkSpeed),
     LinkWidth(in.LinkWidth), VendorId(in.VendorId), DeviceId(in.DeviceId),
     IntMode(in.IntMode), MPS(in.MPS), MRRS(in.MRRS), InitFCCplD(in.InitFCCplD),
     InitFCCplH(in.InitFCCplH), InitFCNPD(in.InitFCNPD), InitFCNPH(in.InitFCNPH),

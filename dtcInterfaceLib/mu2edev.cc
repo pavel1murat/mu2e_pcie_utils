@@ -12,11 +12,12 @@
 #define TRACE_NAME "MU2EDEV"
 #ifndef _WIN32
 #include "trace.h"
+#else
+#define TRACE //TRACE
 #endif
 #include "mu2edev.hh"
 
 mu2edev::mu2edev() : devfd_(0)
-, mu2e_mmap_ptrs_() // extended initializer list; need -std=c++0x
 , simulator_()
 {
 #ifndef _WIN32  

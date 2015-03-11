@@ -164,20 +164,20 @@ namespace DTC
 
         void SetWord(int index, uint8_t data);
         uint8_t GetWord(int index) const;
+        uint8_t* GetData() { return dataWords_; }
     };
 
     class DTC_DMAPacket {
     protected:
+        bool valid_;
         uint16_t byteCount_;
         DTC_Ring_ID ringID_;
         DTC_PacketType packetType_;
         DTC_ROC_ID rocID_;
-        uint16_t packetCount_;
-        uint8_t data_[12];
+
     public:
         DTC_DMAPacket() : packetType_(DTC_PacketType_Invalid) {}
-        DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t packetCount = 0);
-        DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t* data, uint16_t packetCount = 0);
+        DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t byteCount = 16, bool valid = true);
 
         DTC_DMAPacket(const DTC_DataPacket& in);
         DTC_DMAPacket(const DTC_DMAPacket&) = default;
@@ -195,12 +195,14 @@ namespace DTC
         virtual DTC_DataPacket ConvertToDataPacket() const;
 
         DTC_PacketType GetPacketType() { return packetType_; }
-        virtual uint8_t* GetData() { return data_; }
 
-        std::string toJSON();
+        std::string headerJSON();
+        virtual std::string toJSON();
     };
 
     class DTC_DCSRequestPacket : public DTC_DMAPacket {
+    private:
+        uint8_t data_[12];
     public:
         DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc);
         DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t* data);
@@ -209,7 +211,6 @@ namespace DTC
         DTC_DCSRequestPacket(DTC_DCSRequestPacket&&) = default;
 #endif
         DTC_DCSRequestPacket(DTC_DataPacket& in) : DTC_DMAPacket(in) {}
-        DTC_DCSRequestPacket(DTC_DMAPacket&& in) : DTC_DMAPacket(in) {}
 
         DTC_DCSRequestPacket& operator=(const DTC_DCSRequestPacket&) = default;
 #ifndef _WIN32
@@ -217,6 +218,10 @@ namespace DTC
 #endif
 
         virtual ~DTC_DCSRequestPacket() = default;
+
+        uint8_t* GetData() { return data_; }
+        DTC_DataPacket ConvertToDataPacket() const;
+        std::string toJSON();
     };
 
     class DTC_ReadoutRequestPacket : public DTC_DMAPacket {
@@ -230,12 +235,12 @@ namespace DTC
         DTC_ReadoutRequestPacket(DTC_ReadoutRequestPacket&& right) = default;
 #endif
         DTC_ReadoutRequestPacket(DTC_DataPacket& in);
-        DTC_ReadoutRequestPacket(DTC_DMAPacket& in);
 
         virtual ~DTC_ReadoutRequestPacket() = default;
 
-        DTC_DMAPacket ConvertToDMAPacket() const;
-        DTC_DataPacket ConvertToDataPacket() const { return ConvertToDMAPacket().ConvertToDataPacket(); }
+        DTC_Timestamp GetTimestamp() { return timestamp_; }
+        DTC_DataPacket ConvertToDataPacket() const;
+        std::string toJSON();
     };
 
     class DTC_DataRequestPacket : public DTC_DMAPacket {
@@ -249,13 +254,15 @@ namespace DTC
         DTC_DataRequestPacket(DTC_DataRequestPacket&&) = default;
 #endif
         DTC_DataRequestPacket(DTC_DataPacket& in);
-        DTC_DataRequestPacket(DTC_DMAPacket& in);
 
-        DTC_DMAPacket ConvertToDMAPacket() const;
-        DTC_DataPacket ConvertToDataPacket() const { return ConvertToDMAPacket().ConvertToDataPacket(); }
+        DTC_Timestamp GetTimestamp() { return timestamp_; }
+        DTC_DataPacket ConvertToDataPacket() const;
+        std::string toJSON();
     };
 
     class DTC_DCSReplyPacket : public DTC_DMAPacket {
+    private:
+        uint8_t data_[12];
     public:
         DTC_DCSReplyPacket(DTC_Ring_ID ring);
         DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t* data);
@@ -264,11 +271,15 @@ namespace DTC
         DTC_DCSReplyPacket(DTC_DCSReplyPacket&&) = default;
 #endif
         DTC_DCSReplyPacket(DTC_DataPacket& in) : DTC_DMAPacket(in){}
-        DTC_DCSReplyPacket(DTC_DMAPacket& in) : DTC_DMAPacket(in) {}
+
+        uint8_t* GetData() { return data_; }
+        DTC_DataPacket ConvertToDataPacket() const;
+        std::string toJSON();
     };
 
     class DTC_DataHeaderPacket : public DTC_DMAPacket {
     private:
+        uint16_t packetCount_;
         DTC_Timestamp timestamp_;
         uint8_t dataStart_[4];
 
@@ -281,18 +292,19 @@ namespace DTC
         DTC_DataHeaderPacket(DTC_DataHeaderPacket&&) = default;
 #endif
         DTC_DataHeaderPacket(DTC_DataPacket& in);
-        DTC_DataHeaderPacket(DTC_DMAPacket in);
 
-        DTC_DMAPacket ConvertToDMAPacket() const;
-        DTC_DataPacket ConvertToDataPacket() const { return ConvertToDMAPacket().ConvertToDataPacket(); }
+        DTC_DataPacket ConvertToDataPacket() const;
         virtual uint8_t* GetData() { return dataStart_; }
         uint16_t GetPacketCount() { return packetCount_; }
+        DTC_Timestamp GetTimestamp() { return timestamp_; }
+        std::string toJSON();
     };
 
     class DTC_ClockFanoutPacket : public DTC_DataPacket {
     private:
         uint16_t byteCount_;
         uint8_t partition_;
+        bool valid_;
         DTC_Timestamp timestamp_;
         uint8_t dataStart_[4];
 

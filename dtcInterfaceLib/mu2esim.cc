@@ -18,8 +18,8 @@
 #include <vector>
 #include <iostream>
 
-mu2esim::mu2esim() : isActive_(false), simIndex_(),
-dcsRequestRecieved_(false), readoutRequestRecieved_(), dataRequestRecieved_(false),
+mu2esim::mu2esim() : isActive_(false),
+dcsRequestRecieved_(false), dataRequestRecieved_(false),
 activeDAQRing_(DTC::DTC_Ring_Unused),
 activeDCSRing_(DTC::DTC_Ring_Unused),
 dcsRequest_(DTC::DTC_Ring_Unused, DTC::DTC_ROC_Unused)
@@ -30,6 +30,7 @@ dcsRequest_(DTC::DTC_Ring_Unused, DTC::DTC_ROC_Unused)
 #endif
     for (int i = 0; i < 6; ++i)
     {
+        simIndex_[i] = 0;
         readoutRequestRecieved_[i] = false;
     }
 }

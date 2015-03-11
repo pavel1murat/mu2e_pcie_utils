@@ -115,8 +115,10 @@ int main(int argc, char* argv[]) {
 
     }
 
-    DTC::DTCLibTest* tester = new DTC::DTCLibTest();
-    tester->startTest(registerTest, pcieTest, dmaStateTest, dcsTest, daqTest, testCount, true);
+    DTC::DTCLibTest* tester = new DTC::DTCLibTest();
+
+    tester->startTest(registerTest, pcieTest, dmaStateTest, dcsTest, daqTest,loopbackTest, testCount, true);
+
     while (tester->isRunning()) {
         usleep(500000);
     }
