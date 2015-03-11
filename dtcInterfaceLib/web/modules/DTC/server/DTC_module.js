@@ -747,6 +747,7 @@ dtcem.RW_StopDMATest = function (POST, testStatus) {
 }
 
 dtcem.RW_DMAIO = function (POST, testStatus) {
+    console.log(POST);
     var packets = JSON.parse(POST.packets);
     var readDaq = false;
     var readDcs = false;

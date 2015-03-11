@@ -273,7 +273,8 @@ function PopulateLEDS(dtcregdump) {
 
 
 $(function () {
-    setInterval(function () { GetRegDump(); }, 1500);
+    GetRegDump();
+    //setInterval(function () { GetRegDump(); }, 1500);
     
     $("#addDCSPacket").click(function () {
         addPacket("DCSRequestPacket.html", numPackets);
@@ -338,17 +339,17 @@ $(function () {
         dma0TX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA0Transmit" },
         dma0RX: { data: [{ time: 0, value: 0 }], color: 'blue', jsonPath: "/DTC/DMA0Receive" },
     };
-    makeGraph("#dma0", dma0);
+    //makeGraph("#dma0", dma0);
     var dma1 = {
         dma1TX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA1Transmit" },
         dma1RX: { data: [{ time: 0, value: 0 }], color: 'blue', jsonPath: "/DTC/DMA1Receive" },
     };
-    makeGraph("#dma1", dma1);
+    //makeGraph("#dma1", dma1);
     
     $(window).smartresize(function () {
         $("#dma0").empty();
         $("#dma1").empty();
-        makeGraph("#dma0", dma0);
-        makeGraph("#dma1", dma1);
+        //makeGraph("#dma0", dma0);
+        //makeGraph("#dma1", dma1);
     });
 });
