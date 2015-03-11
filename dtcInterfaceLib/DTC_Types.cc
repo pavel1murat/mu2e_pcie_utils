@@ -116,6 +116,31 @@ DTC::DTC_DMAPacket::DTC_DMAPacket(const DTC_DataPacket& in)
 }
 
 
+std::string DTC::DTC_DMAPacket::toJSON()
+{
+    std::stringstream ss;
+    ss << "DMAPacket: {";
+    ss << "byteCount: " << byteCount_ << ",";
+    ss << "ringID: " << ringID_ << ",";
+    ss << "packetType: " << packetType_ << ",";
+    ss << "rocID: " << rocID_ << ",";
+    ss << "packetCount: " << packetCount_ << ",";
+    ss << "data: [" << (int)data_[0] << ",";
+    ss << (int)data_[1] << ",";
+    ss << (int)data_[2] << ",";
+    ss << (int)data_[3] << ",";
+    ss << (int)data_[4] << ",";
+    ss << (int)data_[5] << ",";
+    ss << (int)data_[6] << ",";
+    ss << (int)data_[7] << ",";
+    ss << (int)data_[8] << ",";
+    ss << (int)data_[9] << ",";
+    ss << (int)data_[10] << ",";
+    ss << (int)data_[11] << "],";
+    ss << "}";
+    return ss.str();
+}
+
 DTC::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc)
     : DTC_DMAPacket(DTC_PacketType_DCSRequest, ring, roc) {}
 

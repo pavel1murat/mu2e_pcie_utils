@@ -196,6 +196,8 @@ namespace DTC
 
         DTC_PacketType GetPacketType() { return packetType_; }
         virtual uint8_t* GetData() { return data_; }
+
+        std::string toJSON();
     };
 
     class DTC_DCSRequestPacket : public DTC_DMAPacket {
