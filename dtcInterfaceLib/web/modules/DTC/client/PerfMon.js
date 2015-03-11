@@ -165,7 +165,7 @@ $(document).ready(function () {
     makeGraph("#dma1TX", { dma1TX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA1Transmit" } });
     makeGraph("#dma1RX", { dma1RX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA1Receive" } });
     $('.tabs #tab3').show().siblings().hide();
-    makeGraph("#pcieTX", { pcieTX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/PCIeTransmit"} });
-    makeGraph("#pcieRX", { pcieRX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/PCIeReceive" }});
+    makeGraph("#pcieTX", { pcieTX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/PCIeTransmit" } });
+    makeGraph("#pcieRX", { pcieRX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/PCIeReceive" } });
     $('.tabs #tab1').show().siblings().hide();
 });

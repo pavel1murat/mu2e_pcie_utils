@@ -5,7 +5,7 @@ function addPacket(type, id, packet) {
     $.get("/DTC/" + type, function (data) {
         var datatemp = data.replace(/%id%/g, id);
         $("#packets").append(datatemp);
-        $("#packet" +id+ " #delete").click(function () {
+        $("#packet" + id + " #delete").click(function () {
             $("#packet" + id).remove();
         });
     });
@@ -268,28 +268,29 @@ function PopulateLEDS(dtcregdump) {
     setPixel(document.getElementById("SERDESLoopbackNEPCSCFOLED"), dtcregdump.CFO.SERDESLoopback.NEPCS, "RW");
     setPixel(document.getElementById("SERDESLoopbackNEPMACFOLED"), dtcregdump.CFO.SERDESLoopback.NEPMA, "RW");
     setPixel(document.getElementById("SERDESLoopbackFEPMACFOLED"), dtcregdump.CFO.SERDESLoopback.FEPMA, "RW");
-    setPixel(document.getElementById("SERDESLoopbackFEPCSCFOLED"), dtcregdump.CFO.SERDESLoopback.FEPCS, "RW"); 
+    setPixel(document.getElementById("SERDESLoopbackFEPCSCFOLED"), dtcregdump.CFO.SERDESLoopback.FEPCS, "RW");
 }
 
 
 $(function () {
     setInterval(function () { GetRegDump(); }, 1500);
-
+    
     $("#addDCSPacket").click(function () {
         addPacket("DCSRequestPacket.html", numPackets);
     });
-
+    
     $("#addDataRequestPacket").click(function () {
         addPacket("DataRequestPacket.html", numPackets);
     });
-
+    
     $("#addReadoutRequestPacket").click(function () {
         addPacket("ReadoutRequestPacket.html", numPackets);
     });
-
+    
     $("#sendPackets").click(function () {
-        var packets = [];
-
+        var packetData = {};
+        packetData.packets = [];
+        
         $("#packets").children().each(function (index, element) {
             var packet = {};
             packet.transferCountHigh = parseInt($("#transferCountHigh", this).val());
@@ -323,11 +324,11 @@ $(function () {
                     packet.timestamp5 = parseInt($("#timestamp5", this).val());
                     break;
             }
-
-            packets.push(packet);
+            
+            packetData.packets.push(packet);
         });
-
-        AjaxPost("/DTC/DMAIO", packets, function (data) {
+        
+        AjaxPost("/DTC/DMAIO", packetData, function (data) {
             $("#response").val(data);
         });
     });

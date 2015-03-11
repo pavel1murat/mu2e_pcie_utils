@@ -1,15 +1,12 @@
-// DTCDriver.js, v1.0
+// DTCDriver.js
 // Author: Eric Flumerfelt, FNAL/RSI
-// Last Modified: January 27, 2015
+// Last Modified: March 11, 2015
 // 
 // This module for serverbase.js performs register I/O on the mu2e DTC board
-// Version History
-// v1.0: Updated to use new libDTCInterface interface
-// v0.4: Working version
 
 var dtc = require('./DTC');
 var dtclt = require('./DTCLibTest');
-var gmetric = require( './gmetric' );
+var gmetric = require('./gmetric');
 var fs = require('fs');
 var emitter = require('events').EventEmitter;
 
@@ -311,6 +308,8 @@ function getDMATestStatus(testStatus) {
         testStatus.daqFailed += dmatest.daqFailed();
         testStatus.dcsPassed += dmatest.dcsPassed();
         testStatus.dcsFailed += dmatest.dcsFailed();
+        testStatus.loopbackPassed += dmatest.loopbackPassed();
+        testStatus.loopbackFailed += dmatest.loopbackFailed();
     } else {
         testStatus.testRunning = false;
         dmatest = new dtclt.DTCLibTest();
@@ -360,6 +359,8 @@ dtcem.MasterInitFunction = function (workerData) {
     testStatus.daqFailed = 0;
     testStatus.dcsPassed = 0;
     testStatus.dcsFailed = 0;
+    testStatus.loopbackPassed = 0;
+    testStatus.loopbackFailed = 0;
     testStatus.testRunning = false;
     
     workerData['DTC'] = testStatus;
@@ -704,9 +705,10 @@ dtcem.RW_StartDMATest = function (POST, testStatus) {
     var dmaEnabled = POST.dma === 'true' ? true : false;
     var daqEnabled = POST.daq === 'true' ? true : false;
     var dcsEnabled = POST.dcs === 'true' ? true : false;
+    var loopbackEnabled = POST.loopback === 'true' ? true : false;
     var numTests = parseInt(POST.n);
     if (!testStatus.testRunning) {
-        dmatest.startTest(regEnabled, pcieEnabled, dmaEnabled, daqEnabled, dcsEnabled, numTests, false);
+        dmatest.startTest(regEnabled, pcieEnabled, dmaEnabled, daqEnabled, dcsEnabled, loopbackEnabled, numTests, false);
     }
     return getDMATestStatus(testStatus);
 }
@@ -728,6 +730,8 @@ dtcem.RW_ResetTestStatus = function (POST, testStatus) {
     testStatus.daqFailed = 0;
     testStatus.dcsPassed = 0;
     testStatus.dcsFailed = 0;
+    testStatus.loopbackPassed = 0;
+    testStatus.loopbackFailed = 0;
     
     return getDMATestStatus(testStatus);
 }
@@ -743,8 +747,9 @@ dtcem.RW_StopDMATest = function (POST, testStatus) {
 }
 
 dtcem.RW_DMAIO = function (POST, testStatus) {
-    console.log(POST);
     var packets = POST.packets;
+    console.log("Packets are");
+    console.log(packets);
 
 }
 
@@ -891,6 +896,7 @@ dtcem.GET_DMATestStatistics = function (testStatus) {
         regPassed: testStatus.regPassed, regFailed: testStatus.regFailed, 
         pciePassed: testStatus.pciePassed, pcieFailed: testStatus.pcieFailed,
         dmaPassed: testStatus.dmaPassed, dmaFailed: testStatus.dmaFailed,
+        loopbackPassed: testStatus.loopbackPassed, loopbackFailed: testStatus.loopbackFailed,
         testRunning: testStatus.testRunning
     };
 }
