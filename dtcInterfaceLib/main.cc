@@ -16,8 +16,6 @@ void usage() {
 }
 
 int main(int argc, char* argv[]) {
-    DTC::DTC* thisDTC = new DTC::DTC();
-
     int testCount = 1;
     bool registerTest = false,
         pcieTest = false,
