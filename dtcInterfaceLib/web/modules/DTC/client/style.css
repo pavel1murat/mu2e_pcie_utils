@@ -50,3 +50,8 @@ td {
     padding-left: 1em;
     padding-right: 1em;
 }
+
+table {
+    width: 100%;
+    table-layout: fixed;
+}

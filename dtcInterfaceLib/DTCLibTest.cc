@@ -120,6 +120,20 @@ int DTC::DTCLibTest::dcsFailed()
 	return result;
 }
 
+int DTC::DTCLibTest::loopbackPassed()
+{
+	int result = loopbackPassed_ - loopbackPassedTemp_;
+	loopbackPassedTemp_ = loopbackPassed_;
+	return result;
+}
+
+int DTC::DTCLibTest::loopbackFailed()
+{
+	int result = loopbackFailed_ - loopbackFailedTemp_;
+	loopbackFailedTemp_ = loopbackFailed_;
+	return result;
+}
+
 
 // Private Functions
 void DTC::DTCLibTest::doTests()
@@ -147,6 +161,9 @@ void DTC::DTCLibTest::doTests()
 		if (runDAQTest_){
 			doDAQTest();
 		}
+                if (runLoopbackTest_){
+   		  doLoopbackTest();
+                }
 	}
 	running_ = false;
 
@@ -178,6 +195,11 @@ void DTC::DTCLibTest::doTests()
 		totalTests += daqPassed_ + daqFailed_;
 		std::cout << std::dec << daqPassed_ << " of " << (daqPassed_ + daqFailed_) << " DAQ DMA I/O tests passed." << std::endl;
 	}
+        if(runLoopbackTest_){
+	  totalPassed += loopbackPassed_;
+          totalTests += loopbackPassed_ + loopbackFailed_;
+	  std::cout << std::dec << loopbackPassed_ << " of " << (loopbackPassed_ + loopbackFailed_) << " DAQ Loopback Tests passed." << std::endl;
+        }
 	std::cout << std::dec << totalPassed << " of " << totalTests << " tests passed." << std::endl;
 }
 
@@ -358,6 +380,75 @@ void DTC::DTCLibTest::doDAQTest()
 		bool err = false;
 		do {
 			std::vector<void*> data = thisDTC_->GetData(DTC_Ring_0, DTC_ROC_0, DTC_Timestamp((uint64_t)time(0)), &length);
+			if (data.size() > 0) {
+				if (data.size() > 1) {
+					if (printMessages_) {
+						std::cout << "Data array is larger than expected! Cowardly refusing to continue the test." << std::endl;
+					}
+					err = true;
+					++daqFailed_;
+					break;
+				}
+				else {
+					if (printMessages_) {
+						std::cout << "Dumping data..." << std::endl;
+					}
+					for (int i = 0; i < length; ++i)
+					{
+						for (int j = 0; j < 8; ++j)
+						{
+							if (printMessages_) {
+								std::cout << "0x" << std::setfill('0') << std::setw(4) << std::hex
+									<< ((uint16_t*)data[0])[i * 8 + j] << std::endl;
+							}
+						}
+					}
+				}
+			}
+			retry--;
+		} while (retry > 0);
+		if (err) {
+			if (printMessages_) {
+				std::cout << "Test Aborted (fail!)" << std::endl;
+			}
+			++daqFailed_;
+		}
+		else {
+			if (printMessages_) {
+				std::cout << "Test Passed" << std::endl;
+			}
+			++daqPassed_;
+		}
+	}
+	catch (std::exception ex)
+	{
+		if (printMessages_) {
+			std::cout << "Test failed with exception: " << ex.what() << std::endl;
+		}
+		++daqFailed_;
+	}
+	if (printMessages_) {
+		std::cout << std::endl << std::endl;
+	}
+}
+
+
+void DTC::DTCLibTest::doLoopbackTest()
+{
+	if (printMessages_) {
+		std::cout << "Test 6: Loopback on DAQ Channel" << std::endl;
+	}
+	try{
+		if (printMessages_) {
+			std::cout << "Sending Readout Request Packet on Ring 0" << std::endl;
+		}
+		thisDTC_->SendReadoutRequestPacket(DTC_Ring_0, DTC_Timestamp((uint64_t)time(0)));
+		int length;
+		int retry = 3;
+		bool err = false;
+		do {  TRACE( 15, "DTCLibTest before thisDTC->GetData" );
+			std::vector<void*> data = thisDTC_->GetData(DTC_Ring_0, DTC_ROC_0, DTC_Timestamp((uint64_t)time(0)), &length);
+                      TRACE( 15, "DTCLibTest after  thisDTC->GetData" );
 			if (data.size() > 0) {
 				if (data.size() > 1) {
 					if (printMessages_) {

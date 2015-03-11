@@ -160,7 +160,7 @@ $(document).ready(function () {
         }
     });
     setInterval(function () { readSystemState() }, 1000);
-    smakeGraph("#dma0TX", { dma0TX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA0Transmit" } });
+    makeGraph("#dma0TX", { dma0TX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA0Transmit" } });
     makeGraph("#dma0RX", { dma0RX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA0Receive" } });
     makeGraph("#dma1TX", { dma1TX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA1Transmit" } });
     makeGraph("#dma1RX", { dma1RX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA1Receive" } });

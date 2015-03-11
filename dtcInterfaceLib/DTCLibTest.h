@@ -14,7 +14,7 @@ namespace DTC {
 
 		//Test Control
 		void startTest(bool regIOEnabled, bool pcieEnabled, bool dmaStateEnabled,
-			bool daqEnabled, bool dcsEnabled, int nTests, bool printMessages = false);
+			       bool daqEnabled, bool dcsEnabled, bool loopbackEnabled, int nTests, bool printMessages = false);
 		void stopTests();
 		
 		// Accessors
@@ -29,6 +29,8 @@ namespace DTC {
 		int daqFailed();
 		int dcsPassed();
 		int dcsFailed();
+                int loopbackPassed();
+                int loopbackFailed();
 	private:
 		//Test Worker
 		void doTests();
@@ -37,6 +39,7 @@ namespace DTC {
 		void doDMAStateTest();
 		void doDCSTest();
 		void doDAQTest();
+                void doLoopbackTest();
 
 		//Test Status
 		std::atomic<bool> running_;
@@ -50,6 +53,8 @@ namespace DTC {
 		std::atomic<int> daqFailed_;
 		std::atomic<int> dcsPassed_;
 		std::atomic<int> dcsFailed_;
+		std::atomic<int> loopbackPassed_;
+		std::atomic<int> loopbackFailed_;
 		int regPassedTemp_;
 		int regFailedTemp_;
 		int pciePassedTemp_;
@@ -60,6 +65,8 @@ namespace DTC {
 		int daqFailedTemp_;
 		int dcsPassedTemp_;
 		int dcsFailedTemp_;
+                int loopbackPassedTemp_;
+                int loopbackFailedTemp_;
 
 		// Test Internals
 		DTC* thisDTC_;
@@ -69,6 +76,7 @@ namespace DTC {
 		bool runDMAStateTest_;
 		bool runDAQTest_;
 		bool runDCSTest_;
+                bool runLoopbackTest_;
 		bool printMessages_;
 		std::thread* workerThread_;
 	};
