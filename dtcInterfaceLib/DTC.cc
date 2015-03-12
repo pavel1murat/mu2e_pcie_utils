@@ -10,7 +10,9 @@
 #define TRACE(...) 
 #endif
 
-DTCLib::DTC::DTC() : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t))), device_(), buffer_(nullptr)
+DTCLib::DTC::DTC() : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t))), device_(), 
+daqbuffer_(nullptr), dcsbuffer_(nullptr),
+lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 {
 #ifdef _WIN32
     simMode_ = true;
@@ -24,7 +26,73 @@ DTCLib::DTC::DTC() : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t
 //
 // DMA Functions
 //
-std::vector<void*> DTCLib::DTC::GetData(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const DTC_Timestamp& when, int* length)
+std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool sendDReq, bool sendRReq)
+{
+    TRACE(19, "DTC::GetData before release_all");
+    device_.release_all(0);
+    std::vector<void*> output;
+    if (sendRReq) {
+        // Send a data request
+        for (uint8_t ring = 0; ring < 6; ++ring){
+            if (ReadRingEnabled((DTC_Ring_ID)ring)) {
+                TRACE(19, "DTC::GetData before DTC_ReadoutRequestPacket req");
+                DTC_ReadoutRequestPacket req((DTC_Ring_ID)ring, when, maxRocs_[ring]);
+                TRACE(19, "DTC::GetData before WriteDMADAQPacket");
+                WriteDMADAQPacket(req);
+                TRACE(19, "DTC::GetData after  WriteDMADAQPacket");
+            }
+        }
+    }
+    if (sendDReq) {
+        // Send a data request
+        for (uint8_t ring = 0; ring < 6; ++ring){
+            if (ReadRingEnabled((DTC_Ring_ID)ring)) {
+                for (uint8_t roc = 0; roc < maxRocs_[ring]; ++roc) {
+                    TRACE(19, "DTC::GetData before DTC_DataRequestPacket req");
+                    DTC_DataRequestPacket req((DTC_Ring_ID)ring, (DTC_ROC_ID)roc, when);
+                    TRACE(19, "DTC::GetData before WriteDMADAQPacket");
+                    WriteDMADAQPacket(req);
+                    TRACE(19, "DTC::GetData after  WriteDMADAQPacket");
+                }
+            }
+        }
+    }
+    try{
+        // Read the header packet
+        DTC_DataHeaderPacket packet = ReadNextDAQPacket();
+        TRACE(19, "DTC::GetData after  ReadDMADAQPacket");
+
+        if (packet.GetTimestamp() != when && when.GetTimestamp(true) != 0)
+        {
+            TRACE(19, "DTC::GetData: Error: Lead packet has wrong timestamp!");
+            return output;
+        }
+        else {
+            when = packet.GetTimestamp();
+        }
+
+        output.push_back(lastReadPtr_);
+
+        bool done = false;
+        while (!done) {
+            DTC_DataHeaderPacket thispacket = ReadNextDAQPacket();
+            if (thispacket.GetTimestamp() != when) {
+                done = true;
+                break;
+            }
+
+            output.push_back(lastReadPtr_);
+        }
+    }
+    catch (DTC_WrongPacketTypeException ex)
+    {
+        TRACE(19, "DTC::GetData: Bad omen: Wrong packet type at the current read position");
+        perror("Bad omen: Wrong packet type at the current read position");
+    }
+
+    return output;
+}
+std::vector<void*> DTCLib::DTC::GetData_OLD(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const DTC_Timestamp& when, int* length)
 {
     TRACE(19, "DTC::GetData before release_all");
     device_.release_all(0);
@@ -37,16 +105,16 @@ std::vector<void*> DTCLib::DTC::GetData(const DTC_Ring_ID& ring, const DTC_ROC_I
     TRACE(19, "DTC::GetData after  WriteDMADAQPacket");
 
     // Read the header packet
-    DTC_DataHeaderPacket packet = ReadDMAPacket<DTC_DataHeaderPacket>(DTC_DMA_Engine_DAQ);
+    DTC_DataHeaderPacket packet = ReadDMAPacket_OLD<DTC_DataHeaderPacket>(DTC_DMA_Engine_DAQ);
     TRACE(19, "DTC::GetData after  ReadDMADAQPacket");
 
     *length = packet.GetPacketCount() + 1;
-    output.push_back(buffer_);
+    output.push_back(daqbuffer_);
 
     while (DTC_BUFFSIZE * output.size() < packet.GetPacketCount() + 1U)
     {
-        device_.read_data(0, (void**)&buffer_, 1000);
-        output.push_back(buffer_);
+        device_.read_data(0, (void**)&daqbuffer_, 1000);
+        output.push_back(daqbuffer_);
     }
 
     return output;
@@ -57,7 +125,19 @@ void DTCLib::DTC::DCSRequestReply(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc
     device_.release_all(1);
     DTC_DCSRequestPacket req(ring, roc, dataIn);
     WriteDMADCSPacket(req);
-    DTC_DCSReplyPacket packet = ReadDMAPacket<DTC_DCSReplyPacket>(DTC_DMA_Engine_DCS);
+    DTC_DCSReplyPacket packet = ReadNextDCSPacket();
+
+    for (int ii = 0; ii < 12; ++ii) {
+        dataIn[ii] = packet.GetData()[ii];
+    }
+}
+
+void DTCLib::DTC::DCSRequestReply_OLD(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, uint8_t* dataIn)
+{
+    device_.release_all(1);
+    DTC_DCSRequestPacket req(ring, roc, dataIn);
+    WriteDMADCSPacket(req);
+    DTC_DCSReplyPacket packet = ReadDMAPacket_OLD<DTC_DCSReplyPacket>(DTC_DMA_Engine_DCS);
 
     for (int ii = 0; ii < 12; ++ii) {
         dataIn[ii] = packet.GetData()[ii];
@@ -73,6 +153,70 @@ void DTCLib::DTC::SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Ti
 void DTCLib::DTC::SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc)
 {
     maxRocs_[ring] = lastRoc;
+}
+
+
+void DTCLib::DTC::WriteDMADAQPacket(const DTC_DMAPacket& packet)
+{
+    return WriteDMAPacket(DTC_DMA_Engine_DAQ, packet);
+}
+void DTCLib::DTC::WriteDMADCSPacket(const DTC_DMAPacket& packet)
+{
+    return WriteDMAPacket(DTC_DMA_Engine_DCS, packet);
+}
+template<typename PacketType>
+PacketType DTCLib::DTC::ReadDMAPacket_OLD(const DTC_DMA_Engine& channel)
+{
+    TRACE(19, "DTC::ReadDMAPacket before DTC_DMAPacket(ReadDataPacket(channel))");
+    return PacketType(ReadBuffer(channel));
+}
+
+DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket()
+{
+    if (nextReadPtr_ == nullptr) {
+        ReadBuffer(DTC_DMA_Engine_DAQ);
+        nextReadPtr_ = daqbuffer_[0];
+    }
+    //Read the next packet
+    DTC_DataHeaderPacket output = DTC_DataHeaderPacket(DTC_DataPacket(nextReadPtr_));
+
+    // Update the packet pointers
+
+    // lastReadPtr_ is easy...
+    lastReadPtr_ = nextReadPtr_;
+
+    // Increment by the size of the data block
+    nextReadPtr_ = (char*)nextReadPtr_ + 16 * (1 + output.GetPacketCount());
+
+    // Check if we are at the end of the buffer
+    if (nextReadPtr_ >= daqbuffer_ + sizeof(*daqbuffer_) || *((uint16_t*)nextReadPtr_) == 0) {
+        ReadBuffer(DTC_DMA_Engine_DAQ);
+        nextReadPtr_ = daqbuffer_[0];
+    }
+
+    return output;
+}
+DTCLib::DTC_DCSReplyPacket DTCLib::DTC::ReadNextDCSPacket()
+{
+    if (dcsReadPtr_ == nullptr) {
+        ReadBuffer(DTC_DMA_Engine_DCS);
+        dcsReadPtr_ = dcsbuffer_[0];
+    }
+    //Read the next packet
+    DTC_DCSReplyPacket output = DTC_DCSReplyPacket(DTC_DataPacket(dcsReadPtr_));
+
+    // Update the packet pointer
+
+    // Increment by the size of the data block
+    dcsReadPtr_ = (char*)dcsReadPtr_ + 16;
+
+    // Check if we are at the end of the buffer
+    if (dcsReadPtr_ >= dcsbuffer_ + sizeof(*dcsbuffer_) || *((uint16_t*)dcsReadPtr_) == 0) {
+        ReadBuffer(DTC_DMA_Engine_DCS);
+        dcsReadPtr_ = dcsbuffer_[0];
+    }
+
+    return output;
 }
 
 //
@@ -497,8 +641,9 @@ DTCLib::DTC_PCIeStat DTCLib::DTC::ReadPCIeStats()
 //
 // Private Functions.
 //
-DTCLib::DTC_DataPacket DTCLib::DTC::ReadDataPacket(const DTC_DMA_Engine& channel)
+DTCLib::DTC_DataPacket DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel)
 {
+    mu2e_databuff_t* buffer_ = channel == DTC_DMA_Engine_DAQ ? daqbuffer_ : dcsbuffer_;
     int retry = 3;
     int errorCode = 0;
     do {
@@ -532,23 +677,9 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataP
         throw DTC_IOErrorException();
     }
 }
-template<typename PacketType>
-PacketType DTCLib::DTC::ReadDMAPacket(const DTC_DMA_Engine& channel)
-{
-    TRACE(19, "DTC::ReadDMAPacket before DTC_DMAPacket(ReadDataPacket(channel))");
-    return PacketType(ReadDataPacket(channel));
-}
 void DTCLib::DTC::WriteDMAPacket(const DTC_DMA_Engine& channel, const DTC_DMAPacket& packet)
 {
     return WriteDataPacket(channel, packet.ConvertToDataPacket());
-}
-void DTCLib::DTC::WriteDMADAQPacket(const DTC_DMAPacket& packet)
-{
-    return WriteDMAPacket(DTC_DMA_Engine_DAQ, packet);
-}
-void DTCLib::DTC::WriteDMADCSPacket(const DTC_DMAPacket& packet)
-{
-    return WriteDMAPacket(DTC_DMA_Engine_DCS, packet);
 }
 
 void DTCLib::DTC::WriteRegister(uint32_t data, const DTC_Register& address)

@@ -43,10 +43,12 @@ void DTCLib::DTC_Timestamp::GetTimestamp(uint8_t* timeArr, int offset) const
 
 DTCLib::DTC_DataPacket::DTC_DataPacket(mu2e_databuff_t* data)
 {
-    for (int i = 0; i < 16; ++i)
-    {
-        memcpy(&dataWords_[0], data, sizeof(dataWords_));
-    }
+    memcpy(&dataWords_[0], data, sizeof(dataWords_));
+}
+
+DTCLib::DTC_DataPacket::DTC_DataPacket(void* data)
+{
+    memcpy(&dataWords_[0], data, sizeof(dataWords_));
 }
 
 DTCLib::DTC_DataPacket::DTC_DataPacket(uint8_t* data)
@@ -200,7 +202,7 @@ DTCLib::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_DataPacket in) : 
 }
 
 std::string DTCLib::DTC_ReadoutRequestPacket::toJSON()
-{ 
+{
     uint8_t ts[6];
     timestamp_.GetTimestamp(ts, 0);
     std::stringstream ss;

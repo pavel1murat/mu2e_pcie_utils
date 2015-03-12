@@ -20,10 +20,12 @@ namespace DTCLib {
         // DMA Functions
         //
         // Data read-out
-        std::vector<void*> GetData(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const DTC_Timestamp& when, int* length);
+        std::vector<void*> GetData(DTC_Timestamp when = DTC_Timestamp(), bool sendDReq = false, bool sendRReq = false);
+        std::vector<void*> GetData_OLD(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const DTC_Timestamp& when, int* length);
 
         // DCS Read/Write Cycle
         void DCSRequestReply(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, uint8_t *dataIn);
+        void DCSRequestReply_OLD(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, uint8_t *dataIn);
 
         // Broadcast Readout
         void SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Timestamp& when);
@@ -35,7 +37,9 @@ namespace DTCLib {
         void WriteDMADAQPacket(const DTC_DMAPacket& packet);
         void WriteDMADCSPacket(const DTC_DMAPacket& packet);
         template<typename PacketType>
-        PacketType ReadDMAPacket(const DTC_DMA_Engine& channel);
+        PacketType ReadDMAPacket_OLD(const DTC_DMA_Engine& channel);
+        DTC_DataHeaderPacket ReadNextDAQPacket();
+        DTC_DCSReplyPacket ReadNextDCSPacket();
 
         //
         // Register IO Functions
@@ -120,7 +124,7 @@ namespace DTCLib {
         DTC_PCIeStat ReadPCIeStats();
 
     private:
-        DTC_DataPacket ReadDataPacket(const DTC_DMA_Engine& channel);
+        DTC_DataPacket ReadBuffer(const DTC_DMA_Engine& channel);
         void WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPacket& packet);
         void WriteDMAPacket(const DTC_DMA_Engine& channel, const DTC_DMAPacket& packet);
 
@@ -177,8 +181,12 @@ namespace DTCLib {
     private:
         DTC_ROC_ID maxRocs_[7];
         mu2edev device_;
-        mu2e_databuff_t* buffer_;
+        mu2e_databuff_t* daqbuffer_;
+        mu2e_databuff_t* dcsbuffer_;
         bool simMode_;
+        void* lastReadPtr_;
+        void* nextReadPtr_;
+        void* dcsReadPtr_;
     };
 }
 #endif

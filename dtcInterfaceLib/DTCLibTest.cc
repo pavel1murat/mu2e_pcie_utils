@@ -382,12 +382,12 @@ void DTCLib::DTCLibTest::doDAQTest()
         if (printMessages_) {
             std::cout << "Sending Readout Request Packet on Ring 0" << std::endl;
         }
+        thisDTC_->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
         thisDTC_->SendReadoutRequestPacket(DTC_Ring_0, DTC_Timestamp((uint64_t)time(0)));
-        int length;
         int retry = 3;
         bool err = false;
         do {
-            std::vector<void*> data = thisDTC_->GetData(DTC_Ring_0, DTC_ROC_0, DTC_Timestamp((uint64_t)time(0)), &length);
+            std::vector<void*> data = thisDTC_->GetData();
             if (data.size() > 0) {
                 if (data.size() > 1) {
                     if (printMessages_) {
@@ -401,6 +401,7 @@ void DTCLib::DTCLibTest::doDAQTest()
                     if (printMessages_) {
                         std::cout << "Dumping data..." << std::endl;
                     }
+                    int length = DTC_DataHeaderPacket(DTC_DataPacket(data[0])).GetPacketCount();
                     for (int i = 0; i < length; ++i)
                     {
                         for (int j = 0; j < 8; ++j)
@@ -450,13 +451,13 @@ void DTCLib::DTCLibTest::doLoopbackTest()
         if (printMessages_) {
             std::cout << "Sending Readout Request Packet on Ring 0" << std::endl;
         }
+        thisDTC_->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
         thisDTC_->SendReadoutRequestPacket(DTC_Ring_0, DTC_Timestamp((uint64_t)time(0)));
-        int length;
         int retry = 3;
         bool err = false;
         do {
             TRACE(15, "DTCLibTest before thisDTC->GetData");
-            std::vector<void*> data = thisDTC_->GetData(DTC_Ring_0, DTC_ROC_0, DTC_Timestamp((uint64_t)time(0)), &length);
+            std::vector<void*> data = thisDTC_->GetData();
             TRACE(15, "DTCLibTest after  thisDTC->GetData");
             if (data.size() > 0) {
                 if (data.size() > 1) {
@@ -471,6 +472,7 @@ void DTCLib::DTCLibTest::doLoopbackTest()
                     if (printMessages_) {
                         std::cout << "Dumping data..." << std::endl;
                     }
+                    int length = DTC_DataHeaderPacket(DTC_DataPacket(data[0])).GetPacketCount();
                     for (int i = 0; i < length; ++i)
                     {
                         for (int j = 0; j < 8; ++j)

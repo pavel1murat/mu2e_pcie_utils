@@ -24,11 +24,11 @@ using namespace DTCLib;
 
 namespace DTCLib {
 %extend DTC {
-%template(ReadDMAPacketHeader) ReadDMAPacket<DTCLib::DTC_DMAPacket>;
-%template(ReadDCSRequestPacket) ReadDMAPacket<DTCLib::DTC_DCSRequestPacket>;
-%template(ReadReadoutRequestPacket) ReadDMAPacket<DTCLib::DTC_ReadoutRequestPacket>;
-%template(ReadDataRequestPacket) ReadDMAPacket<DTCLib::DTC_DataRequestPacket>;
-%template(ReadDCSReplyPacket) ReadDMAPacket<DTCLib::DTC_DCSReplyPacket>;
-%template(ReadDataHeaderPacket) ReadDMAPacket<DTCLib::DTC_DataHeaderPacket>;
+%template(ReadDMAPacketHeader) ReadDMAPacket_OLD<DTCLib::DTC_DMAPacket>;
+%template(ReadDCSRequestPacket) ReadDMAPacket_OLD<DTCLib::DTC_DCSRequestPacket>;
+%template(ReadReadoutRequestPacket) ReadDMAPacket_OLD<DTCLib::DTC_ReadoutRequestPacket>;
+%template(ReadDataRequestPacket) ReadDMAPacket_OLD<DTCLib::DTC_DataRequestPacket>;
+%template(ReadDCSReplyPacket) ReadDMAPacket_OLD<DTCLib::DTC_DCSReplyPacket>;
+%template(ReadDataHeaderPacket) ReadDMAPacket_OLD<DTCLib::DTC_DataHeaderPacket>;
 };
 }

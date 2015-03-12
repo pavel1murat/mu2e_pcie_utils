@@ -135,6 +135,9 @@ namespace DTCLib
 #endif
         DTC_Timestamp& operator=(const DTC_Timestamp&) = default;
 
+        bool operator==(const DTC_Timestamp r) { return r.GetTimestamp(true) == timestamp_; }
+        bool operator!=(const DTC_Timestamp r) { return r.GetTimestamp(true) != timestamp_; }
+
         void SetTimestamp(uint32_t timestampLow, uint16_t timestampHigh);
         std::bitset<48> GetTimestamp() const { return timestamp_; }
         uint64_t GetTimestamp(bool dummy) const { if (dummy) { return timestamp_; } else return 0; }
@@ -149,6 +152,7 @@ namespace DTCLib
     public:
         DTC_DataPacket() {}
         DTC_DataPacket(mu2e_databuff_t* data);
+        DTC_DataPacket(void* data);
         DTC_DataPacket(uint8_t* data);
         DTC_DataPacket(const DTC_DataPacket&) = default;
 #ifndef _WIN32
