@@ -382,12 +382,12 @@ void DTCLib::DTCLibTest::doDAQTest()
         if (printMessages_) {
             std::cout << "Sending Readout Request Packet on Ring 0" << std::endl;
         }
+        DTC_Timestamp now = DTC_Timestamp((uint64_t)time(0));
         thisDTC_->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
-        thisDTC_->SendReadoutRequestPacket(DTC_Ring_0, DTC_Timestamp((uint64_t)time(0)));
         int retry = 3;
         bool err = false;
         do {
-            std::vector<void*> data = thisDTC_->GetData();
+            std::vector<void*> data = thisDTC_->GetData(now, true,true);
             if (data.size() > 0) {
                 if (data.size() > 1) {
                     if (printMessages_) {
@@ -451,13 +451,13 @@ void DTCLib::DTCLibTest::doLoopbackTest()
         if (printMessages_) {
             std::cout << "Sending Readout Request Packet on Ring 0" << std::endl;
         }
+        DTC_Timestamp now = DTC_Timestamp((uint64_t)time(0));
         thisDTC_->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
-        thisDTC_->SendReadoutRequestPacket(DTC_Ring_0, DTC_Timestamp((uint64_t)time(0)));
         int retry = 3;
         bool err = false;
         do {
             TRACE(15, "DTCLibTest before thisDTC->GetData");
-            std::vector<void*> data = thisDTC_->GetData();
+            std::vector<void*> data = thisDTC_->GetData(now, true, true);
             TRACE(15, "DTCLibTest after  thisDTC->GetData");
             if (data.size() > 0) {
                 if (data.size() > 1) {

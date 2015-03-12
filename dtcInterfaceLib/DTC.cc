@@ -78,6 +78,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool sendDReq, bool 
             DTC_DataHeaderPacket thispacket = ReadNextDAQPacket();
             if (thispacket.GetTimestamp() != when) {
                 done = true;
+                nextReadPtr_ = lastReadPtr_;
                 break;
             }
 
@@ -88,6 +89,11 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool sendDReq, bool 
     {
         TRACE(19, "DTC::GetData: Bad omen: Wrong packet type at the current read position");
         perror("Bad omen: Wrong packet type at the current read position");
+    }
+    catch (DTC_IOErrorException ex)
+    {
+        nextReadPtr_ = nullptr;
+        TRACE(19, "DTC::GetData: Timed out while trying to get next DMA");
     }
 
     return output;
