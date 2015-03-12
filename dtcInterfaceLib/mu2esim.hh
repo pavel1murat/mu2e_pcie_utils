@@ -44,7 +44,7 @@ private:
     bool dcsRequestRecieved_;
     bool readoutRequestRecieved_[6];
     bool dataRequestRecieved_;
-    DTC::DTC_Ring_ID activeDAQRing_;
-    DTC::DTC_Ring_ID activeDCSRing_;
-    DTC::DTC_DCSRequestPacket dcsRequest_;
+    DTCLib::DTC_Ring_ID activeDAQRing_;
+    DTCLib::DTC_Ring_ID activeDCSRing_;
+    DTCLib::DTC_DCSRequestPacket dcsRequest_;
 };

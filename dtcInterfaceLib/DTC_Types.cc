@@ -2,18 +2,18 @@
 #include <sstream>
 #include <cstring>
 
-DTC::DTC_Timestamp::DTC_Timestamp()
+DTCLib::DTC_Timestamp::DTC_Timestamp()
     : timestamp_(0) {}
 
-DTC::DTC_Timestamp::DTC_Timestamp(uint64_t timestamp)
+DTCLib::DTC_Timestamp::DTC_Timestamp(uint64_t timestamp)
     : timestamp_(timestamp) {}
 
-DTC::DTC_Timestamp::DTC_Timestamp(uint32_t timestampLow, uint16_t timestampHigh)
+DTCLib::DTC_Timestamp::DTC_Timestamp(uint32_t timestampLow, uint16_t timestampHigh)
 {
     SetTimestamp(timestampLow, timestampHigh);
 }
 
-DTC::DTC_Timestamp::DTC_Timestamp(uint8_t *timeArr)
+DTCLib::DTC_Timestamp::DTC_Timestamp(uint8_t *timeArr)
 {
     timestamp_ = 0;
     for (int i = 0; i < 6; ++i)
@@ -23,16 +23,16 @@ DTC::DTC_Timestamp::DTC_Timestamp(uint8_t *timeArr)
     }
 }
 
-DTC::DTC_Timestamp::DTC_Timestamp(std::bitset<48> timestamp)
+DTCLib::DTC_Timestamp::DTC_Timestamp(std::bitset<48> timestamp)
     : timestamp_(timestamp.to_ullong()) {}
 
 
-void DTC::DTC_Timestamp::SetTimestamp(uint32_t timestampLow, uint16_t timestampHigh)
+void DTCLib::DTC_Timestamp::SetTimestamp(uint32_t timestampLow, uint16_t timestampHigh)
 {
     timestamp_ = timestampLow + timestampHigh * 0x10000;
 }
 
-void DTC::DTC_Timestamp::GetTimestamp(uint8_t* timeArr, int offset) const
+void DTCLib::DTC_Timestamp::GetTimestamp(uint8_t* timeArr, int offset) const
 {
     for (int i = 0; i < 6; i++)
     {
@@ -41,7 +41,7 @@ void DTC::DTC_Timestamp::GetTimestamp(uint8_t* timeArr, int offset) const
 }
 
 
-DTC::DTC_DataPacket::DTC_DataPacket(mu2e_databuff_t* data)
+DTCLib::DTC_DataPacket::DTC_DataPacket(mu2e_databuff_t* data)
 {
     for (int i = 0; i < 16; ++i)
     {
@@ -49,7 +49,7 @@ DTC::DTC_DataPacket::DTC_DataPacket(mu2e_databuff_t* data)
     }
 }
 
-DTC::DTC_DataPacket::DTC_DataPacket(uint8_t* data)
+DTCLib::DTC_DataPacket::DTC_DataPacket(uint8_t* data)
 {
     for (int i = 0; i < 16; ++i)
     {
@@ -57,22 +57,22 @@ DTC::DTC_DataPacket::DTC_DataPacket(uint8_t* data)
     }
 }
 
-void DTC::DTC_DataPacket::SetWord(int index, uint8_t data)
+void DTCLib::DTC_DataPacket::SetWord(int index, uint8_t data)
 {
     dataWords_[index] = data;
 }
 
-uint8_t DTC::DTC_DataPacket::GetWord(int index) const
+uint8_t DTCLib::DTC_DataPacket::GetWord(int index) const
 {
     return dataWords_[index];
 }
 
 
-DTC::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t byteCount, bool valid)
+DTCLib::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t byteCount, bool valid)
     : valid_(valid), byteCount_(byteCount), ringID_(ring), packetType_(type), rocID_(roc) {}
 
 
-DTC::DTC_DataPacket DTC::DTC_DMAPacket::ConvertToDataPacket() const
+DTCLib::DTC_DataPacket DTCLib::DTC_DMAPacket::ConvertToDataPacket() const
 {
     DTC_DataPacket output;
     uint8_t word0A = static_cast<uint8_t>(byteCount_);
@@ -91,7 +91,7 @@ DTC::DTC_DataPacket DTC::DTC_DMAPacket::ConvertToDataPacket() const
     return output;
 }
 
-DTC::DTC_DMAPacket::DTC_DMAPacket(const DTC_DataPacket& in)
+DTCLib::DTC_DMAPacket::DTC_DMAPacket(const DTC_DataPacket in)
 {
     uint8_t word0 = in.GetWord(0);
     uint8_t word1 = in.GetWord(1);
@@ -110,7 +110,7 @@ DTC::DTC_DMAPacket::DTC_DMAPacket(const DTC_DataPacket& in)
     packetType_ = static_cast<DTC_PacketType>(packetType.to_ulong());
 }
 
-std::string DTC::DTC_DMAPacket::headerJSON()
+std::string DTCLib::DTC_DMAPacket::headerJSON()
 {
     std::stringstream ss;
     ss << "isValid: " << valid_ << ",";
@@ -121,7 +121,7 @@ std::string DTC::DTC_DMAPacket::headerJSON()
     return ss.str();
 }
 
-std::string DTC::DTC_DMAPacket::toJSON()
+std::string DTCLib::DTC_DMAPacket::toJSON()
 {
     std::stringstream ss;
     ss << "DMAPacket: {";
@@ -130,10 +130,10 @@ std::string DTC::DTC_DMAPacket::toJSON()
     return ss.str();
 }
 
-DTC::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc)
+DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc)
     : DTC_DMAPacket(DTC_PacketType_DCSRequest, ring, roc) {}
 
-DTC::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t* data)
+DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t* data)
     : DTC_DMAPacket(DTC_PacketType_DCSRequest, ring, roc)
 {
     for (int i = 0; i < 12; ++i)
@@ -142,7 +142,16 @@ DTC::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc
     }
 }
 
-std::string DTC::DTC_DCSRequestPacket::toJSON()
+DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
+{
+    if (packetType_ != DTC_PacketType_DCSRequest) { throw DTC_WrongPacketTypeException(); }
+    for (int i = 0; i < 12; ++i)
+    {
+        data_[i] = in.GetWord(i + 4);
+    }
+}
+
+std::string DTCLib::DTC_DCSRequestPacket::toJSON()
 {
     std::stringstream ss;
     ss << "DCSRequestPacket: {";
@@ -163,7 +172,7 @@ std::string DTC::DTC_DCSRequestPacket::toJSON()
     return ss.str();
 }
 
-DTC::DTC_DataPacket DTC::DTC_DCSRequestPacket::ConvertToDataPacket() const
+DTCLib::DTC_DataPacket DTCLib::DTC_DCSRequestPacket::ConvertToDataPacket() const
 {
     DTC_DataPacket output = DTC_DMAPacket::ConvertToDataPacket();
     for (int i = 0; i < 12; ++i)
@@ -173,14 +182,15 @@ DTC::DTC_DataPacket DTC::DTC_DCSRequestPacket::ConvertToDataPacket() const
     return output;
 }
 
-DTC::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC)
+DTCLib::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC)
     : DTC_DMAPacket(DTC_PacketType_ReadoutRequest, ring, maxROC), timestamp_() {}
 
-DTC::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC)
+DTCLib::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC)
     : DTC_DMAPacket(DTC_PacketType_ReadoutRequest, ring, maxROC), timestamp_(timestamp) {}
 
-DTC::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_DataPacket& in) : DTC_DMAPacket(in)
+DTCLib::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
 {
+    if (packetType_ != DTC_PacketType_ReadoutRequest) { throw DTC_WrongPacketTypeException(); }
     uint8_t arr[6];
     for (int i = 0; i < 6; ++i)
     {
@@ -189,7 +199,7 @@ DTC::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_DataPacket& in) : DT
     timestamp_ = DTC_Timestamp(arr);
 }
 
-std::string DTC::DTC_ReadoutRequestPacket::toJSON()
+std::string DTCLib::DTC_ReadoutRequestPacket::toJSON()
 { 
     uint8_t ts[6];
     timestamp_.GetTimestamp(ts, 0);
@@ -206,7 +216,7 @@ std::string DTC::DTC_ReadoutRequestPacket::toJSON()
     return ss.str();
 }
 
-DTC::DTC_DataPacket DTC::DTC_ReadoutRequestPacket::ConvertToDataPacket() const
+DTCLib::DTC_DataPacket DTCLib::DTC_ReadoutRequestPacket::ConvertToDataPacket() const
 {
     DTC_DataPacket output = DTC_DMAPacket::ConvertToDataPacket();
     timestamp_.GetTimestamp(output.GetData(), 6);
@@ -214,14 +224,15 @@ DTC::DTC_DataPacket DTC::DTC_ReadoutRequestPacket::ConvertToDataPacket() const
 }
 
 
-DTC::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc)
+DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc)
     : DTC_DMAPacket(DTC_PacketType_DataRequest, ring, roc), timestamp_() {}
 
-DTC::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp timestamp)
+DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp timestamp)
     : DTC_DMAPacket(DTC_PacketType_DataRequest, ring, roc), timestamp_(timestamp) {}
 
-DTC::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DataPacket& in) : DTC_DMAPacket(in)
+DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
 {
+    if (packetType_ != DTC_PacketType_DataRequest) { throw DTC_WrongPacketTypeException(); }
     uint8_t arr[6];
     for (int i = 0; i < 6; ++i)
     {
@@ -230,7 +241,7 @@ DTC::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DataPacket& in) : DTC_DMAP
     timestamp_ = DTC_Timestamp(arr);
 }
 
-std::string DTC::DTC_DataRequestPacket::toJSON()
+std::string DTCLib::DTC_DataRequestPacket::toJSON()
 {
     uint8_t ts[6];
     timestamp_.GetTimestamp(ts, 0);
@@ -247,7 +258,7 @@ std::string DTC::DTC_DataRequestPacket::toJSON()
     return ss.str();
 }
 
-DTC::DTC_DataPacket DTC::DTC_DataRequestPacket::ConvertToDataPacket() const
+DTCLib::DTC_DataPacket DTCLib::DTC_DataRequestPacket::ConvertToDataPacket() const
 {
     DTC_DataPacket output = DTC_DMAPacket::ConvertToDataPacket();
     timestamp_.GetTimestamp(output.GetData(), 6);
@@ -255,10 +266,10 @@ DTC::DTC_DataPacket DTC::DTC_DataRequestPacket::ConvertToDataPacket() const
 }
 
 
-DTC::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring)
+DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring)
     : DTC_DMAPacket(DTC_PacketType_DCSReply, ring, DTC_ROC_Unused) {}
 
-DTC::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t* data)
+DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t* data)
     : DTC_DMAPacket(DTC_PacketType_DCSReply, ring, DTC_ROC_Unused)
 {
     for (int i = 0; i < 12; ++i)
@@ -267,7 +278,16 @@ DTC::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t* data)
     }
 }
 
-std::string DTC::DTC_DCSReplyPacket::toJSON()
+DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
+{
+    if (packetType_ != DTC_PacketType_DCSReply) { throw DTC_WrongPacketTypeException(); }
+    for (int i = 0; i < 12; ++i)
+    {
+        data_[i] = in.GetWord(i + 4);
+    }
+}
+
+std::string DTCLib::DTC_DCSReplyPacket::toJSON()
 {
     std::stringstream ss;
     ss << "DCSReplyPacket: {";
@@ -288,7 +308,7 @@ std::string DTC::DTC_DCSReplyPacket::toJSON()
     return ss.str();
 }
 
-DTC::DTC_DataPacket DTC::DTC_DCSReplyPacket::ConvertToDataPacket() const
+DTCLib::DTC_DataPacket DTCLib::DTC_DCSReplyPacket::ConvertToDataPacket() const
 {
     DTC_DataPacket output = DTC_DMAPacket::ConvertToDataPacket();
     for (int i = 0; i < 12; ++i)
@@ -298,13 +318,13 @@ DTC::DTC_DataPacket DTC::DTC_DCSReplyPacket::ConvertToDataPacket() const
     return output;
 }
 
-DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount)
+DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount)
     : DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, packetCount) {}
 
-DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_Timestamp timestamp)
+DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_Timestamp timestamp)
     : DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, packetCount), timestamp_(timestamp) {}
 
-DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_Timestamp timestamp, uint8_t* data)
+DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_Timestamp timestamp, uint8_t* data)
     : DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, packetCount), timestamp_(timestamp)
 {
     for (int i = 0; i < 4; ++i)
@@ -313,8 +333,9 @@ DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packe
     }
 }
 
-DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket& in) : DTC_DMAPacket(in)
+DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
 {
+    if (packetType_ != DTC_PacketType_DataHeader) { throw DTC_WrongPacketTypeException(); }
     uint8_t arr[6];
     for (int i = 0; i < 6; ++i)
     {
@@ -327,7 +348,7 @@ DTC::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket& in) : DTC_DMAPac
     }
 }
 
-std::string DTC::DTC_DataHeaderPacket::toJSON()
+std::string DTCLib::DTC_DataHeaderPacket::toJSON()
 {
     uint8_t ts[6];
     timestamp_.GetTimestamp(ts, 0);
@@ -349,7 +370,7 @@ std::string DTC::DTC_DataHeaderPacket::toJSON()
     return ss.str();
 }
 
-DTC::DTC_DataPacket DTC::DTC_DataHeaderPacket::ConvertToDataPacket() const
+DTCLib::DTC_DataPacket DTCLib::DTC_DataHeaderPacket::ConvertToDataPacket() const
 {
     DTC_DataPacket output = DTC_DMAPacket::ConvertToDataPacket();
     timestamp_.GetTimestamp(output.GetData(), 6);
@@ -360,13 +381,13 @@ DTC::DTC_DataPacket DTC::DTC_DataHeaderPacket::ConvertToDataPacket() const
     return output;
 }
 
-DTC::DTC_ClockFanoutPacket::DTC_ClockFanoutPacket(uint8_t partition)
+DTCLib::DTC_ClockFanoutPacket::DTC_ClockFanoutPacket(uint8_t partition)
     : partition_(partition) {}
 
-DTC::DTC_ClockFanoutPacket::DTC_ClockFanoutPacket(uint8_t partition, DTC_Timestamp timestamp)
+DTCLib::DTC_ClockFanoutPacket::DTC_ClockFanoutPacket(uint8_t partition, DTC_Timestamp timestamp)
     : partition_(partition), timestamp_(timestamp) {}
 
-DTC::DTC_ClockFanoutPacket::DTC_ClockFanoutPacket(uint8_t partition, DTC_Timestamp timestamp, uint8_t* data)
+DTCLib::DTC_ClockFanoutPacket::DTC_ClockFanoutPacket(uint8_t partition, DTC_Timestamp timestamp, uint8_t* data)
     : partition_(partition), timestamp_(timestamp)
 {
     for (int i = 0; i < 4; ++i)
@@ -375,7 +396,7 @@ DTC::DTC_ClockFanoutPacket::DTC_ClockFanoutPacket(uint8_t partition, DTC_Timesta
     }
 }
 
-DTC::DTC_ClockFanoutPacket::DTC_ClockFanoutPacket(DTC_DataPacket& in) :
+DTCLib::DTC_ClockFanoutPacket::DTC_ClockFanoutPacket(DTC_DataPacket in) :
 partition_(in.GetWord(3) & 0x0F)
 {
     uint8_t timestampProto[6];
@@ -391,7 +412,7 @@ partition_(in.GetWord(3) & 0x0F)
 }
 
 
-DTC::DTC_DataPacket DTC::DTC_ClockFanoutPacket::ConvertToDataPacket() const
+DTCLib::DTC_DataPacket DTCLib::DTC_ClockFanoutPacket::ConvertToDataPacket() const
 {
     uint8_t data[16];
     data[0] = static_cast<uint8_t>(byteCount_);
@@ -407,11 +428,11 @@ DTC::DTC_DataPacket DTC::DTC_ClockFanoutPacket::ConvertToDataPacket() const
 }
 
 
-DTC::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError() : data_(0) {}
+DTCLib::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError() : data_(0) {}
 
-DTC::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError(std::bitset<2> data) : data_(data) {}
+DTCLib::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError(std::bitset<2> data) : data_(data) {}
 
-DTC::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError(uint32_t data, DTC_Ring_ID ring)
+DTCLib::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError(uint32_t data, DTC_Ring_ID ring)
 {
     std::bitset<32> dataSet = data;
     uint32_t ringBase = (uint8_t)ring * 2;
@@ -420,11 +441,11 @@ DTC::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError(uint32_t data, DTC_R
 }
 
 
-DTC::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError() : data_(0) {}
+DTCLib::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError() : data_(0) {}
 
-DTC::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError(std::bitset<2> data) : data_(data) {}
+DTCLib::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError(std::bitset<2> data) : data_(data) {}
 
-DTC::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError(uint32_t data, DTC_Ring_ID ring)
+DTCLib::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError(uint32_t data, DTC_Ring_ID ring)
 {
     std::bitset<32> dataSet = data;
     uint32_t ringBase = (uint8_t)ring * 2;
@@ -432,15 +453,15 @@ DTC::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError(uint32_t data, D
     data_[1] = dataSet[ringBase + 1];
 }
 
-DTC::DTC_TestMode::DTC_TestMode() {}
-DTC::DTC_TestMode::DTC_TestMode(bool state, bool loopback, bool txChecker, bool rxGenerator)
+DTCLib::DTC_TestMode::DTC_TestMode() {}
+DTCLib::DTC_TestMode::DTC_TestMode(bool state, bool loopback, bool txChecker, bool rxGenerator)
 {
     txChecker = txChecker;
     loopbackEnabled = loopback;
     rxGenerator = rxGenerator;
     state_ = state;
 }
-DTC::DTC_TestMode::DTC_TestMode(uint32_t input)
+DTCLib::DTC_TestMode::DTC_TestMode(uint32_t input)
 {
     std::bitset<3> mode = (input & 0x700) >> 8;
     txChecker = mode[0];
@@ -448,7 +469,7 @@ DTC::DTC_TestMode::DTC_TestMode(uint32_t input)
     rxGenerator = mode[2];
     state_ = (input & 0xC000) != 0;
 }
-uint32_t DTC::DTC_TestMode::GetWord() const
+uint32_t DTCLib::DTC_TestMode::GetWord() const
 {
     uint32_t output = 0;
     if (loopbackEnabled) {
@@ -469,7 +490,7 @@ uint32_t DTC::DTC_TestMode::GetWord() const
     }
     return output;
 }
-std::string DTC::DTC_TestMode::toString()
+std::string DTCLib::DTC_TestMode::toString()
 {
     std::string output = "";
     if (loopbackEnabled) {
@@ -491,16 +512,16 @@ std::string DTC::DTC_TestMode::toString()
     return output;
 }
 
-DTC::DTC_TestCommand::DTC_TestCommand()
+DTCLib::DTC_TestCommand::DTC_TestCommand()
     : TestMode(), PacketSize(0), Engine(DTC_DMA_Engine_DAQ) {}
-DTC::DTC_TestCommand::DTC_TestCommand(DTC_DMA_Engine dma, bool state,
+DTCLib::DTC_TestCommand::DTC_TestCommand(DTC_DMA_Engine dma, bool state,
     int PacketSize, bool loopback, bool txChecker, bool rxGenerator)
 {
     Engine = dma;
     PacketSize = PacketSize;
     TestMode = DTC_TestMode(state, loopback, txChecker, rxGenerator);
 }
-DTC::DTC_TestCommand::DTC_TestCommand(m_ioc_cmd_t in)
+DTCLib::DTC_TestCommand::DTC_TestCommand(m_ioc_cmd_t in)
 {
     if (in.Engine == 0)
     {
@@ -514,7 +535,7 @@ DTC::DTC_TestCommand::DTC_TestCommand(m_ioc_cmd_t in)
     PacketSize = in.MinPktSize;
     TestMode = DTC_TestMode(in.TestMode);
 }
-m_ioc_cmd_t DTC::DTC_TestCommand::GetCommand() const
+m_ioc_cmd_t DTCLib::DTC_TestCommand::GetCommand() const
 {
     m_ioc_cmd_t output;
 
@@ -525,7 +546,7 @@ m_ioc_cmd_t DTC::DTC_TestCommand::GetCommand() const
     return output;
 }
 
-DTC::DTC_DMAState::DTC_DMAState(m_ioc_engstate_t in)
+DTCLib::DTC_DMAState::DTC_DMAState(m_ioc_engstate_t in)
     : BDs(in.BDs), Buffers(in.Buffers), MinPktSize(in.MinPktSize),
     MaxPktSize(in.MaxPktSize), BDerrs(in.BDerrs), BDSerrs(in.BDSerrs),
     IntEnab(in.IntEnab), TestMode(in.TestMode)
@@ -550,7 +571,7 @@ DTC::DTC_DMAState::DTC_DMAState(m_ioc_engstate_t in)
         break;
     }
 }
-std::string DTC::DTC_DMAState::toString() {
+std::string DTCLib::DTC_DMAState::toString() {
     std::stringstream stream;
     stream << "E: " << Engine << ", D: " << Direction;
     stream << ", BDs: " << BDs << ", Buffers: " << Buffers;
@@ -560,7 +581,7 @@ std::string DTC::DTC_DMAState::toString() {
     return stream.str();
 }
 
-DTC::DTC_DMAStat::DTC_DMAStat(DMAStatistics in) : LBR(in.LBR), LAT(in.LAT), LWT(in.LWT)
+DTCLib::DTC_DMAStat::DTC_DMAStat(DMAStatistics in) : LBR(in.LBR), LAT(in.LAT), LWT(in.LWT)
 {
     switch (in.Engine)
     {
@@ -582,7 +603,7 @@ DTC::DTC_DMAStat::DTC_DMAStat(DMAStatistics in) : LBR(in.LBR), LAT(in.LAT), LWT(
         break;
     }
 }
-std::string DTC::DTC_DMAStat::toString()
+std::string DTCLib::DTC_DMAStat::toString()
 {
     std::stringstream stream;
     stream << "E: " << Engine << ", D: " << Direction;
@@ -591,14 +612,14 @@ std::string DTC::DTC_DMAStat::toString()
     return stream.str();
 }
 
-DTC::DTC_DMAStats::DTC_DMAStats(m_ioc_engstats_t in)
+DTCLib::DTC_DMAStats::DTC_DMAStats(m_ioc_engstats_t in)
 {
     for (int i = 0; i < in.Count; ++i)
     {
         Stats.push_back(DTC_DMAStat(in.engptr[i]));
     }
 }
-DTC::DTC_DMAStats DTC::DTC_DMAStats::getData(DTC_DMA_Engine dma, DTC_DMA_Direction dir)
+DTCLib::DTC_DMAStats DTCLib::DTC_DMAStats::getData(DTC_DMA_Engine dma, DTC_DMA_Direction dir)
 {
     DTC_DMAStats output;
     for (auto i : Stats)
@@ -615,14 +636,14 @@ DTC::DTC_DMAStats DTC::DTC_DMAStats::getData(DTC_DMA_Engine dma, DTC_DMA_Directi
     return output;
 }
 
-DTC::DTC_PCIeState::DTC_PCIeState(m_ioc_pcistate_t in)
+DTCLib::DTC_PCIeState::DTC_PCIeState(m_ioc_pcistate_t in)
     : Version(in.Version), LinkState(in.LinkState == 1), LinkSpeed(in.LinkSpeed),
     LinkWidth(in.LinkWidth), VendorId(in.VendorId), DeviceId(in.DeviceId),
     IntMode(in.IntMode), MPS(in.MPS), MRRS(in.MRRS), InitFCCplD(in.InitFCCplD),
     InitFCCplH(in.InitFCCplH), InitFCNPD(in.InitFCNPD), InitFCNPH(in.InitFCNPH),
     InitFCPD(in.InitFCPD), InitFCPH(in.InitFCPH) {}
 
-std::string DTC::DTC_PCIeState::toString()
+std::string DTCLib::DTC_PCIeState::toString()
 {
     std::stringstream stream;
 
@@ -645,5 +666,5 @@ std::string DTC::DTC_PCIeState::toString()
     return stream.str();
 }
 
-DTC::DTC_PCIeStat::DTC_PCIeStat(TRNStatistics in)
+DTCLib::DTC_PCIeStat::DTC_PCIeStat(TRNStatistics in)
     : LTX(in.LTX), LRX(in.LRX) {}

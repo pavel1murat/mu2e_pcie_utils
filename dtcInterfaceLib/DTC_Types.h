@@ -6,7 +6,7 @@
 #include <vector> // std::vector
 #include "linux_driver/mymodule2/mu2e_mmap_ioctl.h"
 
-namespace DTC
+namespace DTCLib
 {
     enum DTC_Register : uint16_t {
         DTC_Register_DesignVersion = 0x9000,
@@ -179,7 +179,7 @@ namespace DTC
         DTC_DMAPacket() : packetType_(DTC_PacketType_Invalid) {}
         DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t byteCount = 16, bool valid = true);
 
-        DTC_DMAPacket(const DTC_DataPacket& in);
+        DTC_DMAPacket(const DTC_DataPacket in);
         DTC_DMAPacket(const DTC_DMAPacket&) = default;
 #ifndef _WIN32
         DTC_DMAPacket(DTC_DMAPacket&&) = default;
@@ -210,7 +210,7 @@ namespace DTC
 #ifndef _WIN32
         DTC_DCSRequestPacket(DTC_DCSRequestPacket&&) = default;
 #endif
-        DTC_DCSRequestPacket(DTC_DataPacket& in) : DTC_DMAPacket(in) {}
+        DTC_DCSRequestPacket(DTC_DataPacket in);
 
         DTC_DCSRequestPacket& operator=(const DTC_DCSRequestPacket&) = default;
 #ifndef _WIN32
@@ -234,7 +234,7 @@ namespace DTC
 #ifndef _WIN32
         DTC_ReadoutRequestPacket(DTC_ReadoutRequestPacket&& right) = default;
 #endif
-        DTC_ReadoutRequestPacket(DTC_DataPacket& in);
+        DTC_ReadoutRequestPacket(DTC_DataPacket in);
 
         virtual ~DTC_ReadoutRequestPacket() = default;
 
@@ -253,7 +253,7 @@ namespace DTC
 #ifndef _WIN32
         DTC_DataRequestPacket(DTC_DataRequestPacket&&) = default;
 #endif
-        DTC_DataRequestPacket(DTC_DataPacket& in);
+        DTC_DataRequestPacket(DTC_DataPacket in);
 
         DTC_Timestamp GetTimestamp() { return timestamp_; }
         DTC_DataPacket ConvertToDataPacket() const;
@@ -270,7 +270,7 @@ namespace DTC
 #ifndef _WIN32
         DTC_DCSReplyPacket(DTC_DCSReplyPacket&&) = default;
 #endif
-        DTC_DCSReplyPacket(DTC_DataPacket& in) : DTC_DMAPacket(in){}
+        DTC_DCSReplyPacket(DTC_DataPacket in);
 
         uint8_t* GetData() { return data_; }
         DTC_DataPacket ConvertToDataPacket() const;
@@ -291,7 +291,7 @@ namespace DTC
 #ifndef _WIN32
         DTC_DataHeaderPacket(DTC_DataHeaderPacket&&) = default;
 #endif
-        DTC_DataHeaderPacket(DTC_DataPacket& in);
+        DTC_DataHeaderPacket(DTC_DataPacket in);
 
         DTC_DataPacket ConvertToDataPacket() const;
         virtual uint8_t* GetData() { return dataStart_; }
@@ -316,7 +316,7 @@ namespace DTC
 #ifndef _WIN32
         DTC_ClockFanoutPacket(DTC_ClockFanoutPacket&&) = default;
 #endif
-        DTC_ClockFanoutPacket(DTC_DataPacket& in);
+        DTC_ClockFanoutPacket(DTC_DataPacket in);
 
         DTC_DataPacket ConvertToDataPacket() const;
         virtual uint8_t* GetData() { return dataStart_; }

@@ -11,14 +11,8 @@
 
 #include "DTC_Types.h"
 #include "DTC.h"
-using namespace DTC;
+using namespace DTCLib;
 %}
-
-%template(readDCSRequestPacket) DTC::ReadDMAPacket<DTC::DTC_DCSRequestPacket>;
-%template(readReadoutRequestPacket) DTC::ReadDMAPacket<DTC::DTC_ReadoutRequestPacket>;
-%template(readDataRequestPacket) DTC::ReadDMAPacket<DTC::DTC_DataRequestPacket>;
-%template(readDCSReplyPacket) DTC::ReadDMAPacket<DTC::DTC_DCSReplyPacket>;
-%template(readDataHeaderPacket) DTC::ReadDMAPacket<DTC::DTC_DataHeaderPacket>;
 
 %include "std_vector.i"
 %include "std_string.i"
@@ -27,3 +21,14 @@ using namespace DTC;
 
 %include "DTC_Types.h"
 %include "DTC.h"
+
+namespace DTCLib {
+%extend DTC {
+%template(ReadDMAPacketHeader) ReadDMAPacket<DTCLib::DTC_DMAPacket>;
+%template(ReadDCSRequestPacket) ReadDMAPacket<DTCLib::DTC_DCSRequestPacket>;
+%template(ReadReadoutRequestPacket) ReadDMAPacket<DTCLib::DTC_ReadoutRequestPacket>;
+%template(ReadDataRequestPacket) ReadDMAPacket<DTCLib::DTC_DataRequestPacket>;
+%template(ReadDCSReplyPacket) ReadDMAPacket<DTCLib::DTC_DCSReplyPacket>;
+%template(ReadDataHeaderPacket) ReadDMAPacket<DTCLib::DTC_DataHeaderPacket>;
+};
+}

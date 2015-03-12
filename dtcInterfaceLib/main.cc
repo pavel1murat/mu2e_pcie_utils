@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
 
     }
 
-    DTC::DTCLibTest* tester = new DTC::DTCLibTest();
+    DTCLib::DTCLibTest* tester = new DTCLib::DTCLibTest();
 
     tester->startTest(registerTest, pcieTest, dmaStateTest, dcsTest, daqTest,loopbackTest, testCount, true);
 

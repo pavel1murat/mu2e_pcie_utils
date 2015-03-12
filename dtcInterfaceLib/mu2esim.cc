@@ -20,9 +20,9 @@
 
 mu2esim::mu2esim() : isActive_(false),
 dcsRequestRecieved_(false), dataRequestRecieved_(false),
-activeDAQRing_(DTC::DTC_Ring_Unused),
-activeDCSRing_(DTC::DTC_Ring_Unused),
-dcsRequest_(DTC::DTC_Ring_Unused, DTC::DTC_ROC_Unused)
+activeDAQRing_(DTCLib::DTC_Ring_Unused),
+activeDCSRing_(DTCLib::DTC_Ring_Unused),
+dcsRequest_(DTCLib::DTC_Ring_Unused, DTCLib::DTC_ROC_Unused)
 {
 #ifndef _WIN32  
     //TRACE_CNTL( "lvlmskM", 0x3 );
@@ -201,11 +201,11 @@ int mu2esim::write_loopback_data(int chn, void *buffer, size_t bytes)
     switch (chn) {
     case 0: // DAQ Channel
         if ((word & 0xF01F) == 0x10) {
-            activeDAQRing_ = (DTC::DTC_Ring_ID)((word & 0x0F00) >> 8);
+            activeDAQRing_ = (DTCLib::DTC_Ring_ID)((word & 0x0F00) >> 8);
             readoutRequestRecieved_[activeDAQRing_] = true;
         }
         else if ((word & 0xF02F) == 0x20) {
-            activeDAQRing_ = (DTC::DTC_Ring_ID)((word & 0x0F00) >> 8);
+            activeDAQRing_ = (DTCLib::DTC_Ring_ID)((word & 0x0F00) >> 8);
             if (readoutRequestRecieved_[activeDAQRing_]) {
                 dataRequestRecieved_ = true;
             }
@@ -213,11 +213,11 @@ int mu2esim::write_loopback_data(int chn, void *buffer, size_t bytes)
         break;
     case 1:
         if ((word & 0xF00F) == 0) {
-            activeDCSRing_ = (DTC::DTC_Ring_ID)((word & 0x0F00) >> 8);
+            activeDCSRing_ = (DTCLib::DTC_Ring_ID)((word & 0x0F00) >> 8);
             dcsRequestRecieved_ = true;
             uint8_t data[12];
             memcpy(&data[0], (char*)buffer + (2 * sizeof(uint16_t)), sizeof(data));
-            dcsRequest_ = DTC::DTC_DCSRequestPacket(activeDCSRing_, (DTC::DTC_ROC_ID)(word & 0xF), data);
+            dcsRequest_ = DTCLib::DTC_DCSRequestPacket(activeDCSRing_, (DTCLib::DTC_ROC_ID)(word & 0xF), data);
 
         }
         break;

@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include "mu2edev.hh"
 
-namespace DTC {
+namespace DTCLib {
     class DTC {
     public:
         DTC();

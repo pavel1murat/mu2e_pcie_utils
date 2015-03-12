@@ -6,7 +6,7 @@
 #include <atomic>
 #include <thread>
 
-namespace DTC {
+namespace DTCLib {
     class DTCLibTest {
     public:
         DTCLibTest();

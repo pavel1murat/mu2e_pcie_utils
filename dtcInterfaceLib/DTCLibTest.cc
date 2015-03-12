@@ -11,7 +11,7 @@
 #define TRACE //TRACE
 #endif
 
-DTC::DTCLibTest::DTCLibTest() : running_(false), regPassed_(0),
+DTCLib::DTCLibTest::DTCLibTest() : running_(false), regPassed_(0),
 regFailed_(0), pciePassed_(0), pcieFailed_(0), dmaStatePassed_(0), dmaStateFailed_(0),
 daqPassed_(0), daqFailed_(0), dcsPassed_(0), dcsFailed_(0), loopbackPassed_(0),
 loopbackFailed_(0), regPassedTemp_(0), regFailedTemp_(0), pciePassedTemp_(0),
@@ -23,7 +23,7 @@ runDMAStateTest_(false), runDAQTest_(false), runDCSTest_(false)
     thisDTC_ = new DTC();
 }
 
-DTC::DTCLibTest::~DTCLibTest()
+DTCLib::DTCLibTest::~DTCLibTest()
 {
     nTests_ = 0;
     if (workerThread_->joinable()) {
@@ -34,7 +34,7 @@ DTC::DTCLibTest::~DTCLibTest()
 }
 
 // Test Control
-void DTC::DTCLibTest::startTest(bool regIOEnabled, bool pcieEnabled, bool dmaStateEnabled,
+void DTCLib::DTCLibTest::startTest(bool regIOEnabled, bool pcieEnabled, bool dmaStateEnabled,
     bool daqEnabled, bool dcsEnabled, bool loopbackEnabled, int nTests, bool printMessages)
 {
     runRegTest_ = regIOEnabled;
@@ -49,7 +49,7 @@ void DTC::DTCLibTest::startTest(bool regIOEnabled, bool pcieEnabled, bool dmaSta
     workerThread_ = new std::thread(&DTCLibTest::doTests, this);
 }
 
-void DTC::DTCLibTest::stopTests()
+void DTCLib::DTCLibTest::stopTests()
 {
     nTests_ = 0;
     if (workerThread_->joinable()) {
@@ -58,84 +58,84 @@ void DTC::DTCLibTest::stopTests()
 }
 
 // Accessors
-int DTC::DTCLibTest::regPassed()
+int DTCLib::DTCLibTest::regPassed()
 {
     int result = regPassed_ - regPassedTemp_;
     regPassedTemp_ = regPassed_;
     return result;
 }
 
-int DTC::DTCLibTest::regFailed()
+int DTCLib::DTCLibTest::regFailed()
 {
     int result = regFailed_ - regFailedTemp_;
     regFailedTemp_ = regFailed_;
     return result;
 }
 
-int DTC::DTCLibTest::pciePassed()
+int DTCLib::DTCLibTest::pciePassed()
 {
     int result = pciePassed_ - pciePassedTemp_;
     pciePassedTemp_ = pciePassed_;
     return result;
 }
 
-int DTC::DTCLibTest::pcieFailed()
+int DTCLib::DTCLibTest::pcieFailed()
 {
     int result = pcieFailed_ - pcieFailedTemp_;
     pcieFailedTemp_ = pcieFailed_;
     return result;
 }
 
-int DTC::DTCLibTest::dmaStatePassed()
+int DTCLib::DTCLibTest::dmaStatePassed()
 {
     int result = dmaStatePassed_ - dmaStatePassedTemp_;
     dmaStatePassedTemp_ = dmaStatePassed_;
     return result;
 }
 
-int DTC::DTCLibTest::dmaStateFailed()
+int DTCLib::DTCLibTest::dmaStateFailed()
 {
     int result = dmaStateFailed_ - dmaStateFailedTemp_;
     dmaStateFailedTemp_ = dmaStateFailed_;
     return result;
 }
 
-int DTC::DTCLibTest::daqPassed()
+int DTCLib::DTCLibTest::daqPassed()
 {
     int result = daqPassed_ - daqPassedTemp_;
     daqPassedTemp_ = daqPassed_;
     return result;
 }
 
-int DTC::DTCLibTest::daqFailed()
+int DTCLib::DTCLibTest::daqFailed()
 {
     int result = daqFailed_ - daqFailedTemp_;
     daqFailedTemp_ = daqFailed_;
     return result;
 }
 
-int DTC::DTCLibTest::dcsPassed()
+int DTCLib::DTCLibTest::dcsPassed()
 {
     int result = dcsPassed_ - dcsPassedTemp_;
     dcsPassedTemp_ = dcsPassed_;
     return result;
 }
 
-int DTC::DTCLibTest::dcsFailed()
+int DTCLib::DTCLibTest::dcsFailed()
 {
     int result = dcsFailed_ - dcsFailedTemp_;
     dcsFailedTemp_ = dcsFailed_;
     return result;
 }
 
-int DTC::DTCLibTest::loopbackPassed()
+int DTCLib::DTCLibTest::loopbackPassed()
 {
     int result = loopbackPassed_ - loopbackPassedTemp_;
     loopbackPassedTemp_ = loopbackPassed_;
     return result;
 }
 
-int DTC::DTCLibTest::loopbackFailed()
+int DTCLib::DTCLibTest::loopbackFailed()
 {
     int result = loopbackFailed_ - loopbackFailedTemp_;
     loopbackFailedTemp_ = loopbackFailed_;
@@ -144,7 +144,7 @@ int DTC::DTCLibTest::loopbackFailed()
 
 
 // Private Functions
-void DTC::DTCLibTest::doTests()
+void DTCLib::DTCLibTest::doTests()
 {
     running_ = true;
     // Make sure that the ring is enabled before the tests.
@@ -211,7 +211,7 @@ void DTC::DTCLibTest::doTests()
     std::cout << std::dec << totalPassed << " of " << totalTests << " tests passed." << std::endl;
 }
 
-void DTC::DTCLibTest::doRegTest()
+void DTCLib::DTCLibTest::doRegTest()
 {
     if (printMessages_) {
         std::cout << "Test 1: Register R/W" << std::endl;
@@ -260,7 +260,7 @@ void DTC::DTCLibTest::doRegTest()
     }
 }
 
-void DTC::DTCLibTest::doPCIeTest()
+void DTCLib::DTCLibTest::doPCIeTest()
 {
     if (printMessages_) {
         std::cout << "Test 2: PCIe State and Stats" << std::endl;
@@ -288,7 +288,7 @@ void DTC::DTCLibTest::doPCIeTest()
     }
 }
 
-void DTC::DTCLibTest::doDMAStateTest()
+void DTCLib::DTCLibTest::doDMAStateTest()
 {
     if (printMessages_) {
         std::cout << "Test 3: DMA State and Stats" << std::endl;
@@ -331,7 +331,7 @@ void DTC::DTCLibTest::doDMAStateTest()
     }
 }
 
-void DTC::DTCLibTest::doDCSTest()
+void DTCLib::DTCLibTest::doDCSTest()
 {
     if (printMessages_) {
         std::cout << "Test 4: DMA R/W on DCS Channel" << std::endl;
@@ -373,7 +373,7 @@ void DTC::DTCLibTest::doDCSTest()
     }
 }
 
-void DTC::DTCLibTest::doDAQTest()
+void DTCLib::DTCLibTest::doDAQTest()
 {
     if (printMessages_) {
         std::cout << "Test 5: DMA R/W on DAQ Channel" << std::endl;
@@ -441,7 +441,7 @@ void DTC::DTCLibTest::doDAQTest()
 }
 
 
-void DTC::DTCLibTest::doLoopbackTest()
+void DTCLib::DTCLibTest::doLoopbackTest()
 {
     if (printMessages_) {
         std::cout << "Test 6: Loopback on DAQ Channel" << std::endl;

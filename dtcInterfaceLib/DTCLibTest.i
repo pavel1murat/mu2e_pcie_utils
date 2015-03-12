@@ -5,7 +5,7 @@
 
 %{
 #include "DTCLibTest.h"
-using namespace DTC;
+using namespace DTCLib;
 %}
 
 %include "std_vector.i"
