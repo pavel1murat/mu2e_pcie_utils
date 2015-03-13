@@ -40,55 +40,51 @@ void DTCLib::DTC_Timestamp::GetTimestamp(uint8_t* timeArr, int offset) const
     }
 }
 
-
-DTCLib::DTC_DataPacket::DTC_DataPacket(mu2e_databuff_t* data)
+DTCLib::DTC_DataPacket::DTC_DataPacket() 
 {
-    memcpy(&dataWords_[0], data, sizeof(dataWords_));
+    memPacket_ = false;
+    dataPtr_ = new uint8_t[16];
 }
 
-DTCLib::DTC_DataPacket::DTC_DataPacket(void* data)
+DTCLib::DTC_DataPacket::~DTC_DataPacket()
 {
-    memcpy(&dataWords_[0], data, sizeof(dataWords_));
-}
-
-DTCLib::DTC_DataPacket::DTC_DataPacket(uint8_t* data)
-{
-    for (int i = 0; i < 16; ++i)
-    {
-        dataWords_[i] = data[i];
+    if (!memPacket_) {
+        delete[] dataPtr_;
     }
 }
 
 void DTCLib::DTC_DataPacket::SetWord(int index, uint8_t data)
 {
-    dataWords_[index] = data;
+    if (!memPacket_) {
+        dataPtr_[index] = data;
+    }
 }
 
 uint8_t DTCLib::DTC_DataPacket::GetWord(int index) const
 {
-    return dataWords_[index];
+    return dataPtr_[index];
 }
 
 std::string DTCLib::DTC_DataPacket::toJSON()
 {
     std::stringstream ss;
     ss << "DataPacket: {";
-    ss << "data: [" << (int)dataWords_[0] << ",";
-    ss << (int)dataWords_[1] << ",";
-    ss << (int)dataWords_[2] << ",";
-    ss << (int)dataWords_[3] << ",";
-    ss << (int)dataWords_[4] << ",";
-    ss << (int)dataWords_[5] << ",";
-    ss << (int)dataWords_[6] << ",";
-    ss << (int)dataWords_[7] << ",";
-    ss << (int)dataWords_[8] << ",";
-    ss << (int)dataWords_[9] << ",";
-    ss << (int)dataWords_[10] << ",";
-    ss << (int)dataWords_[11] << ",";
-    ss << (int)dataWords_[12] << ",";
-    ss << (int)dataWords_[13] << ",";
-    ss << (int)dataWords_[14] << ",";
-    ss << (int)dataWords_[15] << "],";
+    ss << "data: [" << (int)dataPtr_[0] << ",";
+    ss << (int)dataPtr_[1] << ",";
+    ss << (int)dataPtr_[2] << ",";
+    ss << (int)dataPtr_[3] << ",";
+    ss << (int)dataPtr_[4] << ",";
+    ss << (int)dataPtr_[5] << ",";
+    ss << (int)dataPtr_[6] << ",";
+    ss << (int)dataPtr_[7] << ",";
+    ss << (int)dataPtr_[8] << ",";
+    ss << (int)dataPtr_[9] << ",";
+    ss << (int)dataPtr_[10] << ",";
+    ss << (int)dataPtr_[11] << ",";
+    ss << (int)dataPtr_[12] << ",";
+    ss << (int)dataPtr_[13] << ",";
+    ss << (int)dataPtr_[14] << ",";
+    ss << (int)dataPtr_[15] << "],";
     ss << "}";
     return ss.str();
 }

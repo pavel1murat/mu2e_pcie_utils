@@ -147,19 +147,20 @@ namespace DTCLib
 
     class DTC_DataPacket {
     private:
-        uint8_t dataWords_[16];
+        uint8_t* dataPtr_;
+        bool memPacket_;
 
     public:
-        DTC_DataPacket() {}
-        DTC_DataPacket(mu2e_databuff_t* data);
-        DTC_DataPacket(void* data);
-        DTC_DataPacket(uint8_t* data);
+        DTC_DataPacket();
+        DTC_DataPacket(mu2e_databuff_t* data) : dataPtr_(*data), memPacket_(true){}
+        DTC_DataPacket(void* data) : dataPtr_((uint8_t*)data), memPacket_(true){}
+        DTC_DataPacket(uint8_t* data) : dataPtr_(data), memPacket_(true){}
         DTC_DataPacket(const DTC_DataPacket&) = default;
 #ifndef _WIN32
         DTC_DataPacket(DTC_DataPacket&&) = default;
 #endif
 
-        virtual ~DTC_DataPacket() = default;
+        virtual ~DTC_DataPacket();
 
         DTC_DataPacket& operator=(const DTC_DataPacket&) = default;
 #ifndef _WIN32
@@ -168,7 +169,7 @@ namespace DTCLib
 
         void SetWord(int index, uint8_t data);
         uint8_t GetWord(int index) const;
-        uint8_t* GetData() { return dataWords_; }
+        uint8_t* GetData() const { return dataPtr_; }
         std::string toJSON();
     };
 

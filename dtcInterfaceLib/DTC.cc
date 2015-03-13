@@ -689,16 +689,10 @@ DTCLib::DTC_DataPacket DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel)
 }
 void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPacket& packet)
 {
-    uint8_t packetData[16];
-    for (int i = 0; i < 16; ++i)
-    {
-        packetData[i] = packet.GetWord(i);
-    }
-
     int retry = 3;
     int errorCode = 0;
     do {
-        errorCode = device_.write_loopback_data(channel, packetData, sizeof(packetData));
+        errorCode = device_.write_loopback_data(channel, packet.GetData(), 16 * sizeof(uint8_t));
         retry--;
     } while (retry > 0 && errorCode != 0);
     if (errorCode != 0)
