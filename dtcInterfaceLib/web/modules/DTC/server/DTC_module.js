@@ -49,6 +49,26 @@ function SendStatistics() {
     //gmetric.send_gmetric("/etc/ganglia/gmond.conf", "PCIe Receive Rate", receive.toString(), "double", "B/s", "both", 15, 0, "DTC_PCIe", "mu2e DAQ", "PCIe Receive Rate", "PCIe Receive Rate");
 };
 
+function readMaxRocs(input, ring)
+{
+    var rocs = DTC.ReadRingROCCount(ring);
+    switch (rocs) {
+        case 5:
+            input.ROC5Enabled = true;
+        case 4:
+            input.ROC4Enabled = true;
+        case 3:
+            input.ROC3Enabled = true;
+        case 2:
+            input.ROC2Enabled = true;
+        case 1:
+            input.ROC1Enabled = true;
+        case 0:
+            input.ROC0Enabled = true;
+    }
+    return input;
+}
+
 function getRegDump() {
     rdTime = new Date();
     var dtcRegisters = {};
@@ -78,6 +98,12 @@ function getRegDump() {
     dtcRegisters.Ring3.Enabled = dtcem.RO_readRingEnabled({ ring: 3 });
     dtcRegisters.Ring4.Enabled = dtcem.RO_readRingEnabled({ ring: 4 });
     dtcRegisters.Ring5.Enabled = dtcem.RO_readRingEnabled({ ring: 5 });
+    dtcRegisters.Ring0 = readMaxRocs(dtcRegisters.Ring0, 0);
+    dtcRegisters.Ring1 = readMaxRocs(dtcRegisters.Ring1, 1);
+    dtcRegisters.Ring2 = readMaxRocs(dtcRegisters.Ring2, 2);
+    dtcRegisters.Ring3 = readMaxRocs(dtcRegisters.Ring3, 3);
+    dtcRegisters.Ring4 = readMaxRocs(dtcRegisters.Ring4, 4);
+    dtcRegisters.Ring5 = readMaxRocs(dtcRegisters.Ring5, 5);
     dtcRegisters.CFO.Enabled = dtcem.RO_readRingEnabled({ ring: 6 });
     dtcRegisters.Ring0.ResetSERDES = dtcem.RO_readResetSERDES({ ring: 0 });
     dtcRegisters.Ring1.ResetSERDES = dtcem.RO_readResetSERDES({ ring: 1 });
@@ -665,6 +691,7 @@ dtcem.RO_regDump = function () {
     
     return regDump;
 };
+dtcem.RW_regDump = function () { return dtcem.RO_regDump(); }
 
 dtcem.RO_SystemStatus = function () {
     if (ssTime.getTime() + 1000 < new Date().getTime()) {
@@ -774,7 +801,7 @@ dtcem.RW_DMAIO = function (POST, testStatus) {
         }
     }
     
-    var res;
+    var res = "";
     if (readDaq) {
         console.log("Reading DAQ Response");
         var daqResponse = DTC.GetJSONData(timestamp);
@@ -787,6 +814,15 @@ dtcem.RW_DMAIO = function (POST, testStatus) {
     console.log("Result is " + res);
     return res;
 
+}
+
+dtcem.RW_setMaxROC = function (POST)
+{
+    var enabled = DTC.ReadRingEnabled(parseInt(POST.ring));
+    DTC.EnableRing(parseInt(POST.ring), parseInt(POST.val));
+    if(!enabled) { DTC.DisableRing(parseInt(POST.ring)); }
+    logMessage("Max ROC on ring " + POST.ring + " to " + POST.val, "set", POST.who);
+    return 1;
 }
 
 /* Script handler removed as of v1.0, sorry...

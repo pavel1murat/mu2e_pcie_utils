@@ -71,6 +71,7 @@ namespace DTCLib {
         bool DisableRing(const DTC_Ring_ID& ring);
         bool ToggleRingEnabled(const DTC_Ring_ID& ring);
         bool ReadRingEnabled(const DTC_Ring_ID& ring);
+        DTC_ROC_ID ReadRingROCCount(const DTC_Ring_ID& ring) { return maxRocs_[ring]; }
 
         bool ResetSERDES(const DTC_Ring_ID& ring, int interval = 100);
         bool ReadResetSERDES(const DTC_Ring_ID& ring);
