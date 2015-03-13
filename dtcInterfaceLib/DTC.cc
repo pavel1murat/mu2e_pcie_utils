@@ -98,6 +98,29 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool sendDReq, bool 
 
     return output;
 }
+
+std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when, bool sendDReq, bool sendRReq)
+{
+    std::stringstream ss;
+    std::vector<void*> data = GetData(when, sendDReq, sendRReq);
+    for (size_t i = 0; i < data.size(); ++i)
+    {
+        DTC_DataHeaderPacket theHeader = DTC_DataHeaderPacket(DTC_DataPacket(data[i]));
+        ss << "DataBlock: {";
+        ss << theHeader.toJSON() << ",";
+        ss << "DataPackets: [";
+        for (int packet = 0; packet < theHeader.GetPacketCount(); ++packet)
+        {
+            void* packetPtr = (void*)(((char*)data[i]) + 16 * (1 + packet));
+            ss << DTC_DataPacket(packetPtr).toJSON() << ",";
+        }
+        ss << "],";
+        ss << "},";
+    }
+
+    return ss.str();
+}
+
 std::vector<void*> DTCLib::DTC::GetData_OLD(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const DTC_Timestamp& when, int* length)
 {
     TRACE(19, "DTC::GetData before release_all");

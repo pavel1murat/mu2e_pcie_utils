@@ -69,6 +69,30 @@ uint8_t DTCLib::DTC_DataPacket::GetWord(int index) const
     return dataWords_[index];
 }
 
+std::string DTCLib::DTC_DataPacket::toJSON()
+{
+    std::stringstream ss;
+    ss << "DataPacket: {";
+    ss << "data: [" << (int)dataWords_[0] << ",";
+    ss << (int)dataWords_[1] << ",";
+    ss << (int)dataWords_[2] << ",";
+    ss << (int)dataWords_[3] << ",";
+    ss << (int)dataWords_[4] << ",";
+    ss << (int)dataWords_[5] << ",";
+    ss << (int)dataWords_[6] << ",";
+    ss << (int)dataWords_[7] << ",";
+    ss << (int)dataWords_[8] << ",";
+    ss << (int)dataWords_[9] << ",";
+    ss << (int)dataWords_[10] << ",";
+    ss << (int)dataWords_[11] << ",";
+    ss << (int)dataWords_[12] << ",";
+    ss << (int)dataWords_[13] << ",";
+    ss << (int)dataWords_[14] << ",";
+    ss << (int)dataWords_[15] << "],";
+    ss << "}";
+    return ss.str();
+}
+
 
 DTCLib::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t byteCount, bool valid)
     : valid_(valid), byteCount_(byteCount), ringID_(ring), packetType_(type), rocID_(roc) {}

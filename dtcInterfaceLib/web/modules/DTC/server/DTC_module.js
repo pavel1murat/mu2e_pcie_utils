@@ -751,23 +751,22 @@ dtcem.RW_DMAIO = function (POST, testStatus) {
     var packets = JSON.parse(POST.packets);
     var readDaq = false;
     var readDcs = false;
+    var timestamp = dtc.new_u8array(6);
 
     for (var i = 0; i < packets.length; i++) {
         switch (packets[i].type) {
             case 0://DCS Request
                 var data = dtc.new_u8array(12);
                 for (var j = 0; j < 12; j++) { dtc.u8array_setitem(data, j, packets[i].data[j]); }
-                var packet = new dtc.DTC_DCSRequestPacket(packets[i].ringID, packets[i].hopCount, packets[i].data);
+                var packet = new dtc.DTC_DCSRequestPacket(packets[i].ringID, packets[i].hopCount, data);
                 DTC.WriteDMADCSPacket(packet);
                 break;
             case 1: // Readout Request
-                var timestamp = dtc.new_u8array(6);
                 for (var j = 0; j < 6; j++) { dtc.u8array_setitem(timestamp, j, packets[i].timestamp[j]); }
                 var packet = new dtc.DTC_ReadoutRequestPacket(packets[i].ringID, new dtc.DTC_Timestamp(timestamp), packets[i].hopCount);
                 DTC.WriteDMADAQPacket(packet);
                 break;
             case 2: // Data Request
-                var timestamp = dtc.new_u8array(6);
                 for (var j = 0; j < 6; j++) { dtc.u8array_setitem(timestamp, j, packets[i].timestamp[j]); }
                 var packet = new dtc.DTC_DataRequestPacket(packets[i].ringID, packets[i].hopCount, new dtc.DTC_Timestamp(timestamp));
                 DTC.WriteDMADAQPacket(packet);
@@ -778,16 +777,12 @@ dtcem.RW_DMAIO = function (POST, testStatus) {
     var res;
     if (readDaq) {
         console.log("Reading DAQ Response");
-        var daqResponse = DTC.ReadDMADAQPacket().toJSON();
+        var daqResponse = DTC.GetJSONData(timestamp);
         res += daqResponse + "\n";
-        for (var i = 0; i < JSON.parse(daqResponse).DMAPacket.packetCount; i++) {
-            console.log("Reading data packets...");
-            res += DTC.ReadDMADAQPacket().toJSON() + "\n"
-        }
     }
     if (readDcs) {
         console.log("Reading DCS Response");
-        res += DTC.ReadDMADCSPacket().toJSON();
+        res += DTC.ReadNextDCSPacket().toJSON();
     }
     console.log("Result is " + res);
     return res;

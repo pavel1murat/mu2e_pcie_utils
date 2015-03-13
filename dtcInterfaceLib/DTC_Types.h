@@ -169,6 +169,7 @@ namespace DTCLib
         void SetWord(int index, uint8_t data);
         uint8_t GetWord(int index) const;
         uint8_t* GetData() { return dataWords_; }
+        std::string toJSON();
     };
 
     class DTC_DMAPacket {

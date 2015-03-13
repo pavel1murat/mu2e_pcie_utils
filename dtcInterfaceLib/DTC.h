@@ -21,6 +21,7 @@ namespace DTCLib {
         //
         // Data read-out
         std::vector<void*> GetData(DTC_Timestamp when = DTC_Timestamp(), bool sendDReq = false, bool sendRReq = false);
+        std::string GetJSONData(DTC_Timestamp when = DTC_Timestamp(), bool sendDReq = false, bool sendRReq = false);
         std::vector<void*> GetData_OLD(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const DTC_Timestamp& when, int* length);
 
         // DCS Read/Write Cycle
