@@ -81,7 +81,10 @@ function getRegDump() {
     dtcRegisters.CFO = {};
     dtcRegisters.Version = dtcem.RO_readDesignVersion();
     dtcRegisters.ResetDTC = dtcem.RO_readResetDTC();
-    dtcRegisters.CFOEmulator = dtcem.RO_readCFOEmulator();
+    dtcRegisters.ResetSERDESOscillator = dtcem.RO_readResetSERDESOscillator();
+    dtcRegisters.SERDESOscillatorClock = dtcem.RO_readSERDESOscillatorClock();
+    dtcRegisters.SystemClock = dtcem.RO_readSystemClock();
+    dtcRegisters.TimingEnable = dtcem.RO_readTimingEnable();
     dtcRegisters.TriggerDMALength = dtcem.RO_readTriggerDMATransferLength();
     dtcRegisters.MinDMALength = dtcem.RO_readMinDMATransferLength();
     dtcRegisters.Ring0.SERDESLoopback = dtcem.RO_readSERDESLoopback({ ring: 0 });
@@ -413,16 +416,45 @@ dtcem.RO_readResetDTC = function () {
     return DTC.ReadResetDTC();
 };
 
-dtcem.RW_toggleCFOEmulator = function () {
-    var val = DTC.ToggleCFOEmulation();
-    logMessage("CFO Emulator (" + val + ")", "toggled", POST.who);
-    return val;
+dtcem.RW_resetSERDESOscillator = function () {
+    DTC.ResetSERDESOscillator();
+    logMessage("the SERDES Oscillator", "reset", POST.who);
+    return dtcem.RO_readResetSERDESOscillator();
 }
 
-dtcem.RO_readCFOEmulator = function () {
-    return DTC.ReadCFOEmulation();
+dtcem.RO_readResetSERDESOscillator = function () {
+    return DTC.ReadResetSERDESOscillator();
 }
 
+dtcem.RW_toggleSERDESOscillatorClock = function () {
+    DTC.ToggleSERDESOscillatorClock();
+    logMessage("the SERDES Oscillator Clock Speed", "toggled", POST.who);
+    return dtcem.RO_readSERDESOscillatorClock();
+}
+
+dtcem.RO_readSERDESOscillatorClock = function () {
+    return DTC.ReadSERDESOscillatorClock();
+}
+
+dtcem.RW_toggleSystemClock = function () {
+    DTC.ToggleSystemClockEnable();
+    logMessage("the System Clock", "toggled", POST.who);
+    return dtcem.RO_readSystemClock();
+}
+
+dtcem.RO_readSystemClock = function () {
+    return DTC.ReadSystemClock();
+}
+
+dtcem.RW_toggleTimingEnable = function () {
+    DTC.ToggleTimingEnable();
+    logMessage("internal timing", "toggled", POST.who);
+    return dtcem.RO_readTimingEnable();
+}
+
+dtcem.RO_readTimingEnable = function () {
+    return DTC.ReadTimingEnable();
+}
 dtcem.RW_setTriggerDMATransferLength = function (POST) {
     var val = DTC.SetTriggerDMATransferLength(POST.ring);
     logMessage("Trigger DMA Transfer Length to " + POST.ring, "set", POST.who);

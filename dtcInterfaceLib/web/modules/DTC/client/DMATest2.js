@@ -227,8 +227,11 @@ function RunScript() {
 function PopulateLEDS(dtcregdump) {
     $("#dtcVersion").val(dtcregdump.Version.toString(16));
     setPixel(document.getElementById("dtcResetLED"), dtcregdump.ResetDTC, "RW");
+    setPixel(document.getElementById("serdesResetLED"), dtcregdump.ResetSERDESOscillator, "RW");
+    setPixel(document.getElementById("SERDESOscillatorClockLED"), dtcregdump.SERDESOscillatorClock, "RW");
+    setPixel(document.getElementById("SystemClockLED"), dtcregdump.SystemClock, "RW");
+    setPixel(document.getElementById("TimingEnabledLED"), dtcregdump.TimingEnable, "RW");
     setPixel(document.getElementById("ROCEmulatorEnabledLED"), dtcregdump.ROCEmulator, "RW");
-    setPixel(document.getElementById("CFOEmulatorEnabledLED"), dtcregdump.CFOEmulator, "RW");
     $("#triggerDMALength").val(dtcregdump.TriggerDMALength);
     $("#minDMALength").val(dtcregdump.MinDMALength);
     $("#dmaTimeoutPreset").val(dtcregdump.DMATimeout);

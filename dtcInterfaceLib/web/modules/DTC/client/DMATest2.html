@@ -32,18 +32,24 @@
                 <table>
                     <tr>
                         <th>DTC Reset</th>
+                        <th>SERDES Oscillator Reset</th>
                     </tr>
                     <tr>
                         <td><canvas id="dtcResetLED" width="20" height="10" onclick="LEDAction('/DTC/resetDTC', null, 'dtcResetLED')"></canvas></td>
+                        <td><canvas id="serdesResetLED" width="20" height="10" onclick="LEDAction('/DTC/resetSERDESOscillator', null, 'serdesResetLED')"></canvas></td>
                     </tr>
                     <tr>
+                        <th>SERDES Oscillator Clock Mode (0: 3.125Gbs, 1: 2.5Gbs)</th>
+                        <th>System Clock Enable</th>
+                        <th>Timing System Enable</th>
                         <th>ROC Emulator</th>
-                        <th>CFO Emulator</th>
-                    </tr>
+                        </tr>
                     <tr>
-                        <td><canvas id="ROCEmulatorEnabledLED" width="20" height="10" onclick="LEDAction('./toggleROCEmulator',null,'ROCEmulatorEnabledLED')"></canvas></td>
-                        <td><canvas id="CFOEmulatorEnabledLED" width="20" height="10" onclick="LEDAction('./toggleCFOEmulator',null,'CFOEmulatorEnabledLED')"></canvas></td>
-                    </tr>
+                        <td><canvas id="SERDESOscillatorClockLED" width="20" height="10" onclick="LEDAction('/DTC/toggleSERDESOscillatorClock',null,'SERDESOscillatorClockLED')"></canvas></td>
+                        <td><canvas id="SystemClockLED" width="20" height="10" onclick="LEDAction('/DTC/toggleSystemClock', null, 'SystemClockLED')"></canvas></td>
+                        <td><canvas id="TimingEnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleTimingEnable',null,'TimingEnabledLED')"></canvas></td>
+                        <td><canvas id="ROCEmulatorEnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleROCEmulator',null,'ROCEmulatorEnabledLED')"></canvas></td>
+                        </tr>
                 </table><br><br>
                 <table>
                     <tr>
