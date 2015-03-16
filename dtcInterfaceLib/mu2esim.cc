@@ -12,6 +12,8 @@
 #define TRACE_NAME "MU2EDEV"
 #ifndef _WIN32
 #include <trace.h>
+#else
+#define TRACE(...)
 #endif
 #include "mu2esim.hh"
 #include <ctime>
@@ -37,9 +39,11 @@ dcsRequest_(DTCLib::DTC_Ring_Unused, DTCLib::DTC_ROC_Unused)
 
 int mu2esim::init()
 {
+    TRACE(17, "mu2e Simulator::init");
     // For now, this is the only mode implemented...
     mode_ = mu2e_sim_mode_tracker;
 
+    TRACE(17, "mu2esim::init Initializing registers");
     isActive_ = true;
     // Set initial register values...
     registers_[0x9000] = 0x53494D44; // SIMD in ASCII
@@ -47,7 +51,7 @@ int mu2esim::init()
     registers_[0x9010] = 0x00000040; // Recieve
     registers_[0x9014] = 0x00000100; // SPayload
     registers_[0x9018] = 0x00000400; // RPayload
-    registers_[0x9100] = 0x40000002; // Clear latched errors and CFO Enable on
+    registers_[0x9100] = 0x40000003; // Clear latched errors, System Clock, Timing Enable
     registers_[0x9104] = 0x80000040; //Default value from HWUG
     registers_[0x9108] = 0x00049249; // SERDES Loopback PCS Near-End
     registers_[0x9168] = 0x00049249;
@@ -73,6 +77,7 @@ int mu2esim::init()
     registers_[0x9404] = 0x1;
     registers_[0x9408] = 0x0;        // FPGA Core Access OK
 
+    TRACE(17, "mu2esim::init Initializing DMA State Objects");
     // Set DMA State
     dmaState_[0][0].BDerrs = 0;
     dmaState_[0][0].BDSerrs = 0;
@@ -114,6 +119,7 @@ int mu2esim::init()
     dmaState_[1][1].MinPktSize = 0x40;
     dmaState_[1][1].TestMode = 0;
 
+    TRACE(17, "mu2esim::init Initializing PCIe State Object");
     // Set PCIe State
     pcieState_.VendorId = 4334;
     pcieState_.DeviceId = 28738;
@@ -136,40 +142,71 @@ int mu2esim::init()
     testState_.Engine = 0;
     testState_.TestMode = 0;
 
+    TRACE(17, "mu2esim::init finished");
     return (0);
 }
 
 int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 {
     // Clear the buffer:
+    TRACE(17, "mu2esim::read_data Clearing output buffer");
     memset(&dmaData_, 0, sizeof(dmaData_));
 
     if (readoutRequestRecieved_ && dataRequestRecieved_ && chn == 0)
     {
-        uint16_t packet[8];
+        TRACE(17, "mu2esim::read_data, DAQ Channel w/Requests recieved");
+        uint8_t packet[16];
 
         // Add a Data Header packet to the reply
-        packet[0] = ((activeDAQRing_ & 0x0F) << 8) + 0x50;
-        packet[1] = 0x0001;
+        packet[0] = 32;
+        packet[1] = 0;
+        packet[2] = 0x50;
+        packet[3] = 0x80 + (activeDAQRing_ & 0x0F);
+        packet[4] = 1;
+        packet[5] = 0;
         time_t currentTime = time(0); // On Windows, at least, this is 64-bits. We'll drop the first 16.
-        memcpy(&packet[2], &currentTime, 3 * sizeof(packet[2]));
-        packet[5] = 0x0001;
-        packet[6] = 0x0;
-        packet[7] = 0x0;
+        memcpy(&packet[6], &currentTime, 6 * sizeof(packet[2]));
+        packet[12] = 0;
+        packet[13] = 0;
+        packet[14] = 0;
+        packet[15] = 0;
+
+        TRACE(17, "mu2esim::read_data Copying Data Header packet into buffer");
         memcpy(&dmaData_, &packet[0], sizeof(packet));
 
         switch (mode_)
         {
         case mu2e_sim_mode_tracker:
         default:
-            packet[0] = simIndex_[activeDAQRing_];
-            packet[1] = 0x0; // No TDC value!
-            packet[2] = 0x0;
-            packet[3] = ((simIndex_[activeDAQRing_] & 0x3F) << 10) + 0x0;
-            packet[4] = (((simIndex_[activeDAQRing_] * 3) & 0x3) << 14) + (0x2 << 4) + ((simIndex_[activeDAQRing_] << 6) & 0xF);
-            packet[5] = (0x4 << 8) + ((simIndex_[activeDAQRing_] * 3) & 0xFF);
-            packet[6] = (0x6 << 12) + (((simIndex_[activeDAQRing_] * 5) & 0x3FF) << 2);
-            packet[7] = ((simIndex_[activeDAQRing_] * 7) & 0x3FF) << 6;
+            packet[0] = static_cast<uint8_t>(simIndex_[activeDAQRing_]);
+            packet[1] = static_cast<uint8_t>(simIndex_[activeDAQRing_] >> 8);
+
+            packet[2] = 0x0; // No TDC value!
+            packet[3] = 0x0;
+            packet[4] = 0x0;
+            packet[5] = 0x0;
+
+            uint16_t pattern0 = 0;
+            uint16_t pattern1 = simIndex_[activeDAQRing_];
+            uint16_t pattern2 = 2;
+            uint16_t pattern3 = (simIndex_[activeDAQRing_] * 3) % 0x3FF;
+            uint16_t pattern4 = 4;
+            uint16_t pattern5 = (simIndex_[activeDAQRing_] * 5) % 0x3FF;
+            uint16_t pattern6 = 6;
+            uint16_t pattern7 = (simIndex_[activeDAQRing_] * 7) % 0x3FF;
+
+            packet[6]  = static_cast<uint8_t>(pattern0);
+            packet[7]  = static_cast<uint8_t>((pattern0 >> 8) + (pattern1 << 2));
+            packet[8]  = static_cast<uint8_t>((pattern1 >> 6) + (pattern2 << 4));
+            packet[9]  = static_cast<uint8_t>((pattern2 >> 4) + (pattern3 << 6));
+            packet[10] = static_cast<uint8_t>((pattern3 >> 2));
+            packet[11] = static_cast<uint8_t>(pattern4);
+            packet[12] = static_cast<uint8_t>((pattern4 >> 8) + (pattern5 << 2));
+            packet[13] = static_cast<uint8_t>((pattern5 >> 6) + (pattern6 << 4));
+            packet[14] = static_cast<uint8_t>((pattern6 >> 4) + (pattern7 << 6));
+            packet[15] = static_cast<uint8_t>((pattern7 >> 2));
+
+            TRACE(17, "mu2esim::read_data Copying DataPacket into buffer");
             memcpy(((char*)&dmaData_ + sizeof(packet)), &packet, sizeof(packet));
             break;
         }
@@ -178,14 +215,17 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
     }
     else if (dcsRequestRecieved_ && chn == 1)
     {
-        uint16_t replyPacket[8];
-        replyPacket[0] = ((activeDCSRing_ & 0x0F) << 8) + 0x40;
-        replyPacket[1] = 0x0;
-        for (int i = 2; i < 8; ++i)
+        TRACE(17, "mu2esim::read_data DCS Request Recieved, Sending Response");
+        uint8_t replyPacket[16];
+        replyPacket[0] = 16;
+        replyPacket[1] = 0;
+        replyPacket[2] = 0x40;
+        replyPacket[3] = (activeDCSRing_ & 0x0F) + 0x80;
+        for (int i = 4; i < 16; ++i)
         {
-            int j = (i - 2) * 2;
-            replyPacket[i] = (dcsRequest_.GetData()[j + 1] << 8) + dcsRequest_.GetData()[j];
+            replyPacket[i] = dcsRequest_.GetData()[i-4];
         }
+        TRACE(17, "mu2esim::read_data Copying reply into buffer");
         memcpy(&dmaData_, &replyPacket[0], sizeof(replyPacket));
         dcsRequestRecieved_ = false;
     }
@@ -195,30 +235,37 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 
 int mu2esim::write_loopback_data(int chn, void *buffer, size_t bytes)
 {
-    uint16_t word;
-    memcpy(&word, buffer, sizeof(word));
+    TRACE(17, "mu2esim::write_loopback_data start");
+    uint32_t worda;
+    memcpy(&worda, buffer, sizeof(worda));
+    uint16_t word = static_cast<uint16_t>(worda);
+    TRACE(17, "mu2esim::write_loopback_data worda is 0x%x and word is 0x%x", worda, word);
 
     switch (chn) {
     case 0: // DAQ Channel
-        if ((word & 0xF01F) == 0x10) {
-            activeDAQRing_ = (DTCLib::DTC_Ring_ID)((word & 0x0F00) >> 8);
+        if ((word & 0x8010) == 0x8010) {
+            activeDAQRing_ = (DTCLib::DTC_Ring_ID)(word & 0x000F);
+            TRACE(17, "mu2esim::write_loopback_data activeDAQRing is %i", activeDAQRing_);
             readoutRequestRecieved_[activeDAQRing_] = true;
         }
-        else if ((word & 0xF02F) == 0x20) {
-            activeDAQRing_ = (DTCLib::DTC_Ring_ID)((word & 0x0F00) >> 8);
+        else if ((word & 0x8020) == 0x8020) {
+            activeDAQRing_ = (DTCLib::DTC_Ring_ID)(word & 0x000F);
+            TRACE(17, "mu2esim::write_loopback_data activeDAQRing is %i", activeDAQRing_);
             if (readoutRequestRecieved_[activeDAQRing_]) {
                 dataRequestRecieved_ = true;
             }
         }
         break;
     case 1:
-        if ((word & 0xF00F) == 0) {
-            activeDCSRing_ = (DTCLib::DTC_Ring_ID)((word & 0x0F00) >> 8);
+        if ((word & 0x0080) == 0) {
+            activeDCSRing_ = (DTCLib::DTC_Ring_ID)(word & 0x000F);
+            TRACE(17, "mu2esim::write_loopback_data activeDCSRing is %i", activeDCSRing_);
             dcsRequestRecieved_ = true;
             uint8_t data[12];
             memcpy(&data[0], (char*)buffer + (2 * sizeof(uint16_t)), sizeof(data));
-            dcsRequest_ = DTCLib::DTC_DCSRequestPacket(activeDCSRing_, (DTCLib::DTC_ROC_ID)(word & 0xF), data);
-
+            dcsRequest_ = DTCLib::DTC_DCSRequestPacket(activeDCSRing_, (DTCLib::DTC_ROC_ID)((word & 0xF00) >> 8), data);
+            TRACE(17, "mu2esim::write_loopback_data: Recieved DCS Request:");
+            TRACE(17, dcsRequest_.toJSON().c_str());
         }
         break;
     }
@@ -229,9 +276,7 @@ int mu2esim::write_loopback_data(int chn, void *buffer, size_t bytes)
 int mu2esim::read_release(int chn, unsigned num)
 {
     //Always succeeds
-#ifndef _WIN32
     TRACE(0, "Simulating a release of buffer %u of channel %i", num, chn);
-#endif
     return 0;
 }
 
@@ -299,6 +344,7 @@ int mu2esim::read_dma_stats(m_ioc_engstats_t *output)
 
 int mu2esim::read_trn_stats(TRNStatsArray *output)
 {
+
     for (int i = 0; i < output->Count; ++i){
         TRNStatistics thisStat;
         thisStat.LRX = (i + 1) * 1000000;

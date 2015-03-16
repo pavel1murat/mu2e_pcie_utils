@@ -52,8 +52,15 @@ namespace DTCLib {
         void ResetDTC();
         bool ReadResetDTC();
 
-        bool ToggleCFOEmulation();
-        bool ReadCFOEmulation();
+        void ResetSERDESOscillator();
+        bool ReadResetSERDESOscillator();
+        void ToggleSERDESOscillatorClock();
+        bool ReadSERDESOscillatorClock();
+
+        void ToggleSystemClockEnable();
+        bool ReadSystemClock();
+        void ToggleTimingEnable();
+        bool ReadTimingEnable();
 
         int SetTriggerDMATransferLength(uint16_t length);
         uint16_t ReadTriggerDMATransferLength();

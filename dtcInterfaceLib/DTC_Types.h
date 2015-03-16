@@ -95,6 +95,12 @@ namespace DTCLib
         DTC_SERDESLoopbackMode_FarPCS = 6,
     };
 
+    enum DTC_Data_Status {
+        DTC_Data_Status_Valid = 0,
+        DTC_Data_Status_NoValid = 1,
+        DTC_Data_Status_Invalid = 2,
+    };
+
 
     class DTC_WrongPacketTypeException : public std::exception {
         virtual const char* what() const throw()
@@ -233,9 +239,10 @@ namespace DTCLib
     class DTC_ReadoutRequestPacket : public DTC_DMAPacket {
     private:
         DTC_Timestamp timestamp_;
+        bool debug_;
     public:
-        DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC = DTC_ROC_5);
-        DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC = DTC_ROC_5);
+        DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC = DTC_ROC_5, bool debug = false);
+        DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC = DTC_ROC_5, bool debug = false);
         DTC_ReadoutRequestPacket(const DTC_ReadoutRequestPacket& right) = default;
 #ifndef _WIN32
         DTC_ReadoutRequestPacket(DTC_ReadoutRequestPacket&& right) = default;
@@ -244,6 +251,7 @@ namespace DTCLib
 
         virtual ~DTC_ReadoutRequestPacket() = default;
 
+        bool GetDebug() { return debug_; }
         DTC_Timestamp GetTimestamp() { return timestamp_; }
         DTC_DataPacket ConvertToDataPacket() const;
         std::string toJSON();
@@ -252,15 +260,20 @@ namespace DTCLib
     class DTC_DataRequestPacket : public DTC_DMAPacket {
     private:
         DTC_Timestamp timestamp_;
+        bool debug_;
+        uint16_t debugPacketCount_;
     public:
-        DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc);
-        DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp timestamp);
+        DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, bool debug = false, uint16_t debugPacketCount = 0);
+        DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp timestamp, bool debug = false, uint16_t debugPacketCount = 0);
         DTC_DataRequestPacket(const DTC_DataRequestPacket&) = default;
 #ifndef _WIN32
         DTC_DataRequestPacket(DTC_DataRequestPacket&&) = default;
 #endif
         DTC_DataRequestPacket(DTC_DataPacket in);
 
+        bool GetDebug() { return debug_; }
+        uint16_t GetDebugPacketCount() { return debugPacketCount_; }
+        void SetDebugPacketCount(uint16_t count);
         DTC_Timestamp GetTimestamp() { return timestamp_; }
         DTC_DataPacket ConvertToDataPacket() const;
         std::string toJSON();
@@ -287,12 +300,13 @@ namespace DTCLib
     private:
         uint16_t packetCount_;
         DTC_Timestamp timestamp_;
-        uint8_t dataStart_[4];
+        uint8_t dataStart_[3];
+        DTC_Data_Status status_;
 
     public:
-        DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount);
-        DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_Timestamp timestamp);
-        DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_Timestamp timestamp, uint8_t* data);
+        DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_Data_Status status);
+        DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_Data_Status status, DTC_Timestamp timestamp);
+        DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_Data_Status status, DTC_Timestamp timestamp, uint8_t* data);
         DTC_DataHeaderPacket(const DTC_DataHeaderPacket&) = default;
 #ifndef _WIN32
         DTC_DataHeaderPacket(DTC_DataHeaderPacket&&) = default;
@@ -303,8 +317,9 @@ namespace DTCLib
         virtual uint8_t* GetData() { return dataStart_; }
         uint16_t GetPacketCount() { return packetCount_; }
         DTC_Timestamp GetTimestamp() { return timestamp_; }
+        DTC_Data_Status GetStatus() { return status_; }
         std::string toJSON();
-    };
+        };
 
     class DTC_ClockFanoutPacket : public DTC_DataPacket {
     private:
@@ -477,6 +492,6 @@ namespace DTCLib
         DTC_PCIeStat(TRNStatistics in);
     };
 
-}
+    }
 
 #endif //DTC_TYPES_H

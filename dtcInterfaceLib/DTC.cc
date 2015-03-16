@@ -10,7 +10,7 @@
 #define TRACE(...) 
 #endif
 
-DTCLib::DTC::DTC() : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t))), device_(), 
+DTCLib::DTC::DTC() : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t))), device_(),
 daqbuffer_(nullptr), dcsbuffer_(nullptr),
 lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 {
@@ -202,12 +202,17 @@ PacketType DTCLib::DTC::ReadDMAPacket_OLD(const DTC_DMA_Engine& channel)
 
 DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket()
 {
+    TRACE(19, "DTC::ReadNextDAQPacket BEGIN");
     if (nextReadPtr_ == nullptr) {
+        TRACE(19, "DTC::ReadNextDAQPacket Obtaining new DAQ Buffer");
         ReadBuffer(DTC_DMA_Engine_DAQ);
-        nextReadPtr_ = daqbuffer_[0];
+        nextReadPtr_ = &(daqbuffer_[0]);
+        TRACE(19, "DTC::ReadNextDAQPacket daqReadPtr_=%p daqBuffer_=%p", (void*)daqReadPtr_, (void*)daqbuffer_);
     }
     //Read the next packet
+    TRACE(19, "DTC::ReadNextDAQPacket reading next packet from buffer:");
     DTC_DataHeaderPacket output = DTC_DataHeaderPacket(DTC_DataPacket(nextReadPtr_));
+    TRACE(19, output.toJSON().c_str());
 
     // Update the packet pointers
 
@@ -219,20 +224,29 @@ DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket()
 
     // Check if we are at the end of the buffer
     if (nextReadPtr_ >= daqbuffer_ + sizeof(*daqbuffer_) || *((uint16_t*)nextReadPtr_) == 0) {
+        TRACE(19, "DTC::ReadNextDAQPacket Obtaining new DAQ Buffer");
         ReadBuffer(DTC_DMA_Engine_DAQ);
-        nextReadPtr_ = daqbuffer_[0];
+        nextReadPtr_ = &(daqbuffer_[0]);
+        TRACE(19, "DTC::ReadNextDAQPacket daqReadPtr_=%p daqBuffer_=%p", (void*)daqReadPtr_, (void*)daqbuffer_);
     }
 
+    TRACE(19, "DTC::ReadNextDAQPacket RETURN");
     return output;
 }
 DTCLib::DTC_DCSReplyPacket DTCLib::DTC::ReadNextDCSPacket()
 {
+    TRACE(19, "DTC::ReadNextDCSPacket BEGIN");
     if (dcsReadPtr_ == nullptr) {
+        TRACE(19, "DTC::ReadNextDCSPacket Obtaining new DCS Buffer");
         ReadBuffer(DTC_DMA_Engine_DCS);
-        dcsReadPtr_ = dcsbuffer_[0];
+        dcsReadPtr_ = &(dcsbuffer_[0]);
+        TRACE(19, "DTC::ReadNextDCSPacket dcsReadPtr_=%p dcsBuffer_=%p", (void*)dcsReadPtr_, (void*)dcsbuffer_);
     }
+
     //Read the next packet
+    TRACE(19, "DTC::ReadNextDCSPacket Reading packet from buffer:");
     DTC_DCSReplyPacket output = DTC_DCSReplyPacket(DTC_DataPacket(dcsReadPtr_));
+    TRACE(19, output.toJSON().c_str());
 
     // Update the packet pointer
 
@@ -241,10 +255,13 @@ DTCLib::DTC_DCSReplyPacket DTCLib::DTC::ReadNextDCSPacket()
 
     // Check if we are at the end of the buffer
     if (dcsReadPtr_ >= dcsbuffer_ + sizeof(*dcsbuffer_) || *((uint16_t*)dcsReadPtr_) == 0) {
+        TRACE(19, "DTC::ReadNextDCSPacket Obtaining new DCS Buffer");
         ReadBuffer(DTC_DMA_Engine_DCS);
-        dcsReadPtr_ = dcsbuffer_[0];
+        dcsReadPtr_ = &dcsbuffer_[0];
+        TRACE(19, "DTC::ReadNextDCSPacket dcsReadPtr_=%p", dcsReadPtr_);
     }
 
+    TRACE(19, "DTC::ReadNextDCSPacket RETURN");
     return output;
 }
 
@@ -276,17 +293,58 @@ bool DTCLib::DTC::ReadResetDTC()
     return dataSet[31];
 }
 
-bool DTCLib::DTC::ToggleCFOEmulation()
+void DTCLib::DTC::ResetSERDESOscillator(){
+    std::bitset<32> data = ReadControlRegister();
+    data[29] = 1; //SERDES Oscillator Reset bit
+    WriteControlRegister(data.to_ulong());
+    usleep(2);
+    data[29] = 0;
+    WriteControlRegister(data.to_ulong());
+    for (uint8_t i = 0; i < 6; ++i)
+    {
+        ResetSERDES((DTC_Ring_ID)i);
+    }
+}
+bool DTCLib::DTC::ReadResetSERDESOscillator()
 {
     std::bitset<32> data = ReadControlRegister();
-    data.flip(1); // Clear Latched Errors bit
-    WriteControlRegister(data.to_ulong());
-    return ReadCFOEmulation();
+    return data[29];
 }
-bool DTCLib::DTC::ReadCFOEmulation()
+void DTCLib::DTC::ToggleSERDESOscillatorClock()
+{
+    std::bitset<32> data = ReadControlRegister();
+    data.flip(28);
+    WriteControlRegister(data.to_ulong());
+
+    ResetSERDESOscillator();
+}
+bool DTCLib::DTC::ReadSERDESOscillatorClock()
+{
+    std::bitset<32> data = ReadControlRegister();
+    return data[28];
+}
+
+void DTCLib::DTC::ToggleSystemClockEnable()
+{
+    std::bitset<32> data = ReadControlRegister();
+    data.flip(1);
+    WriteControlRegister(data.to_ulong());
+}
+bool DTCLib::DTC::ReadSystemClock()
 {
     std::bitset<32> data = ReadControlRegister();
     return data[1];
+}
+void DTCLib::DTC::ToggleTimingEnable()
+{
+    std::bitset<32> data = ReadControlRegister();
+    data.flip(0);
+    WriteControlRegister(data.to_ulong());
+}
+bool DTCLib::DTC::ReadTimingEnable()
+{
+    std::bitset<32> data = ReadControlRegister();
+    return data[0];
 }
 
 int DTCLib::DTC::SetTriggerDMATransferLength(uint16_t length)
@@ -676,7 +734,7 @@ DTCLib::DTC_DataPacket DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel)
     int retry = 3;
     int errorCode = 0;
     do {
-        TRACE(19, "DTC::ReadDataPacket before device_.read_data");
+        TRACE(19, "DTC::ReadBuffer before device_.read_data");
         errorCode = device_.read_data(channel, (void**)&buffer_, 1000);
         retry--;
     } while (retry > 0 && errorCode != 0);
@@ -685,6 +743,8 @@ DTCLib::DTC_DataPacket DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel)
         throw DTC_IOErrorException();
     }
     TRACE(16, "DTC::ReadDataPacket buffer_=%p errorCode=%d", (void*)buffer_, errorCode);
+    if (channel == DTC_DMA_Engine_DAQ) { daqbuffer_ = buffer_; }
+    else if (channel == DTC_DMA_Engine_DCS) { dcsbuffer_ = buffer_; }
     return DTC_DataPacket(buffer_);
 }
 void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPacket& packet)
