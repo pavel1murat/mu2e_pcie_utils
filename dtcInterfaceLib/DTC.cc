@@ -71,24 +71,32 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool sendDReq, bool 
             when = packet.GetTimestamp();
         }
 
+        TRACE(19, "DTC::GetData: Adding pointer %p to the list", (void*)lastReadPtr_);
         output.push_back(lastReadPtr_);
 
         bool done = false;
         while (!done) {
-            DTC_DataHeaderPacket thispacket = ReadNextDAQPacket();
-            if (thispacket.GetTimestamp() != when) {
-                done = true;
-                nextReadPtr_ = lastReadPtr_;
-                break;
-            }
+            try{
+                DTC_DataHeaderPacket thispacket = ReadNextDAQPacket();
+                if (thispacket.GetTimestamp() != when) {
+                    done = true;
+                    nextReadPtr_ = lastReadPtr_;
+                    break;
+                }
 
-            output.push_back(lastReadPtr_);
+                TRACE(19, "DTC::GetData: Adding pointer %p to the list", (void*)lastReadPtr_);
+                output.push_back(lastReadPtr_);
+            }
+            catch (DTC_WrongPacketTypeException ex)
+            {
+                TRACE(19, "DTC::GetData: End of data stream reached!");
+                done = true;
+            }
         }
     }
     catch (DTC_WrongPacketTypeException ex)
     {
         TRACE(19, "DTC::GetData: Bad omen: Wrong packet type at the current read position");
-        perror("Bad omen: Wrong packet type at the current read position");
     }
     catch (DTC_IOErrorException ex)
     {
@@ -96,16 +104,25 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool sendDReq, bool 
         TRACE(19, "DTC::GetData: Timed out while trying to get next DMA");
     }
 
+    TRACE(19, "DTC::GetData RETURN");
     return output;
 }
 
 std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when, bool sendDReq, bool sendRReq)
 {
+    TRACE(19, "DTC::GetJSONData BEGIN");
     std::stringstream ss;
+    TRACE(19, "DTC::GetJSONData before call to GetData");
     std::vector<void*> data = GetData(when, sendDReq, sendRReq);
+    TRACE(19, "DTC::GetJSONData after call to GetData, data size %lu", data.size());
+
     for (size_t i = 0; i < data.size(); ++i)
     {
-        DTC_DataHeaderPacket theHeader = DTC_DataHeaderPacket(DTC_DataPacket(data[i]));
+        TRACE(19, "DTC::GetJSONData constructing DataPacket:");
+        DTC_DataPacket test = DTC_DataPacket(data[i]);
+        TRACE(19, test.toJSON().c_str());
+        TRACE(19, "DTC::GetJSONData constructing DataHeaderPacket");
+        DTC_DataHeaderPacket theHeader = DTC_DataHeaderPacket(test);
         ss << "DataBlock: {";
         ss << theHeader.toJSON() << ",";
         ss << "DataPackets: [";
@@ -118,6 +135,7 @@ std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when, bool sendDReq, bool sen
         ss << "},";
     }
 
+    TRACE(19, "DTC::GetJSONData RETURN");
     return ss.str();
 }
 
@@ -203,15 +221,18 @@ PacketType DTCLib::DTC::ReadDMAPacket_OLD(const DTC_DMA_Engine& channel)
 DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket()
 {
     TRACE(19, "DTC::ReadNextDAQPacket BEGIN");
-    if (nextReadPtr_ == nullptr) {
+    // Check if the nextReadPtr has been initialized, and if its pointing to a valid location
+    if (nextReadPtr_ == nullptr || nextReadPtr_ >= daqbuffer_ + sizeof(*daqbuffer_) || *((uint16_t*)nextReadPtr_) == 0) {
         TRACE(19, "DTC::ReadNextDAQPacket Obtaining new DAQ Buffer");
         ReadBuffer(DTC_DMA_Engine_DAQ);
         nextReadPtr_ = &(daqbuffer_[0]);
         TRACE(19, "DTC::ReadNextDAQPacket nextReadPtr_=%p daqBuffer_=%p", (void*)nextReadPtr_, (void*)daqbuffer_);
     }
     //Read the next packet
-    TRACE(19, "DTC::ReadNextDAQPacket reading next packet from buffer:");
-    DTC_DataHeaderPacket output = DTC_DataHeaderPacket(DTC_DataPacket(nextReadPtr_));
+    TRACE(19, "DTC::ReadNextDAQPacket reading next packet from buffer: nextReadPtr_=%p:",(void*)nextReadPtr_);
+    DTC_DataPacket test = DTC_DataPacket(nextReadPtr_);
+    TRACE(19, test.toJSON().c_str());
+    DTC_DataHeaderPacket output = DTC_DataHeaderPacket(test);
     TRACE(19, output.toJSON().c_str());
 
     // Update the packet pointers
@@ -221,15 +242,7 @@ DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket()
 
     // Increment by the size of the data block
     nextReadPtr_ = (char*)nextReadPtr_ + 16 * (1 + output.GetPacketCount());
-
-    // Check if we are at the end of the buffer
-    if (nextReadPtr_ >= daqbuffer_ + sizeof(*daqbuffer_) || *((uint16_t*)nextReadPtr_) == 0) {
-        TRACE(19, "DTC::ReadNextDAQPacket Obtaining new DAQ Buffer");
-        ReadBuffer(DTC_DMA_Engine_DAQ);
-        nextReadPtr_ = &(daqbuffer_[0]);
-        TRACE(19, "DTC::ReadNextDAQPacket nextReadPtr_=%p daqBuffer_=%p", (void*)nextReadPtr_, (void*)daqbuffer_);
-    }
-
+    
     TRACE(19, "DTC::ReadNextDAQPacket RETURN");
     return output;
 }

@@ -17,6 +17,7 @@ enum mu2e_sim_mode {
 struct mu2esim
 {
     mu2esim();
+    ~mu2esim();
     int  init();
     int  read_data(int chn, void **buffer, int tmo_ms);
     int  write_loopback_data(int chn, void *buffer, size_t bytes);
@@ -34,7 +35,9 @@ private:
 
     bool isActive_;
     std::unordered_map<uint16_t, uint32_t> registers_;
-    mu2e_databuff_t dmaData_;
+    mu2e_databuff_t* dmaDAQData_;
+    mu2e_databuff_t* olddmaDAQData_;
+    mu2e_databuff_t dmaDCSData_;
     m_ioc_engstate_t dmaState_[MU2E_MAX_CHANNELS][2];
     m_ioc_pcistate_t pcieState_;
     m_ioc_cmd_t testState_;
@@ -42,7 +45,7 @@ private:
     mu2e_sim_mode mode_;
     uint16_t simIndex_[6];
     bool dcsRequestRecieved_;
-    bool readoutRequestRecieved_[6];
+    DTCLib::DTC_Timestamp readoutRequestRecieved_[6];
     bool dataRequestRecieved_;
     DTCLib::DTC_Ring_ID activeDAQRing_;
     DTCLib::DTC_Ring_ID activeDCSRing_;

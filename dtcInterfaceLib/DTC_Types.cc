@@ -372,6 +372,7 @@ DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t pa
 DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
 {
     if (packetType_ != DTC_PacketType_DataHeader) { throw DTC_WrongPacketTypeException(); }
+    packetCount_ = in.GetWord(4) + (in.GetWord(5) << 8);
     uint8_t arr[6];
     for (int i = 0; i < 6; ++i)
     {
@@ -390,10 +391,10 @@ std::string DTCLib::DTC_DataHeaderPacket::toJSON()
     uint8_t ts[6];
     timestamp_.GetTimestamp(ts, 0);
     std::stringstream ss;
-    ss << "DataRequestPacket: {";
+    ss << "DataHeaderPacket: {";
     ss << headerJSON();
-    ss << "packetCount: " << packetCount_ << ",";
-    ss << "timestamp: [" << (int)ts[0];
+    ss << "packetCount: " << (int)packetCount_ << ",";
+    ss << "timestamp: [" << (int)ts[0] << ",";
     ss << (int)ts[1] << ",";
     ss << (int)ts[2] << ",";
     ss << (int)ts[3] << ",";

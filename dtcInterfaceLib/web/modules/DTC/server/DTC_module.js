@@ -846,7 +846,7 @@ dtcem.RW_DMAIO = function (POST, testStatus) {
     var res = "";
     if (readDaq) {
         console.log("Reading DAQ Response");
-        var daqResponse = DTC.GetJSONData(timestamp);
+        var daqResponse = DTC.GetJSONData(new dtc.DTC_Timestamp(timestamp));
         res += daqResponse + "\n";
     }
     if (readDcs) {
