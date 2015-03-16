@@ -219,7 +219,7 @@ DTCLib::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_DataPacket in) : 
         arr[i] = in.GetWord(i + 6);
     }
     timestamp_ = DTC_Timestamp(arr);
-    debug_ = in.GetWord(12) & 0x1 == 0x1;
+    debug_ = (in.GetWord(12) & 0x1) == 0x1;
 }
 
 std::string DTCLib::DTC_ReadoutRequestPacket::toJSON()
@@ -264,7 +264,7 @@ DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DataPacket in) : DTC_DM
         arr[i] = in.GetWord(i + 6);
     }
     timestamp_ = DTC_Timestamp(arr);
-    debug_ = in.GetWord(12) & 0x1 == 1;
+    debug_ = (in.GetWord(12) & 0x1) == 1;
     debugPacketCount_ = in.GetWord(14) + (in.GetWord(15) << 8);
 }
 
