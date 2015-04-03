@@ -1,6 +1,11 @@
 #include "DTC_Types.h"
 #include <sstream>
 #include <cstring>
+#ifndef _WIN32
+#include "trace.h"
+#else
+#define TRACE(...) 
+#endif
 
 DTCLib::DTC_Timestamp::DTC_Timestamp()
     : timestamp_(0) {}
@@ -130,6 +135,7 @@ DTCLib::DTC_DMAPacket::DTC_DMAPacket(const DTC_DataPacket in)
     ringID_ = static_cast<DTC_Ring_ID>(ringID.to_ulong());
     rocID_ = static_cast<DTC_ROC_ID>(roc.to_ulong());
     packetType_ = static_cast<DTC_PacketType>(packetType.to_ulong());
+    TRACE(20, headerJSON().c_str());
 }
 
 std::string DTCLib::DTC_DMAPacket::headerJSON()
@@ -316,6 +322,7 @@ DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t* data)
 
 DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
 {
+    TRACE(20, "DTC_DCSReplyPacket::DTC_DCSReplyPacket Before packetType test");
     if (packetType_ != DTC_PacketType_DCSReply) { throw DTC_WrongPacketTypeException(); }
     for (int i = 0; i < 12; ++i)
     {
@@ -403,8 +410,7 @@ std::string DTCLib::DTC_DataHeaderPacket::toJSON()
     ss << "status: " << (int)status_ << ",";
     ss << "data: [" << (int)dataStart_[0] << ",";
     ss << (int)dataStart_[1] << ",";
-    ss << (int)dataStart_[2] << ",";
-    ss << (int)dataStart_[3] << "],";
+    ss << (int)dataStart_[2] << "],";
     ss << "}";
     return ss.str();
 }

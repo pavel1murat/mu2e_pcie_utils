@@ -7,6 +7,7 @@ cet_make_library(LIBRARY_NAME DTCInterface SOURCE
 )
 
 cet_make_exec(DTCLibTest SOURCE main.cc LIBRARIES DTCInterface)
+target_link_libraries(DTCLibTest pthread)
 
 add_custom_command(
     OUTPUT DTC.node

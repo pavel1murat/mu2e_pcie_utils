@@ -26,10 +26,9 @@ runDMAStateTest_(false), runDAQTest_(false), runDCSTest_(false)
 DTCLib::DTCLibTest::~DTCLibTest()
 {
     nTests_ = 0;
-    if (workerThread_->joinable()) {
-        workerThread_->join();
+    if (workerThread_.joinable()) {
+        workerThread_.join();
     }
-    delete workerThread_;
     delete thisDTC_;
 }
 
@@ -46,14 +45,22 @@ void DTCLib::DTCLibTest::startTest(bool regIOEnabled, bool pcieEnabled, bool dma
     nTests_ = nTests;
     printMessages_ = printMessages;
 
-    workerThread_ = new std::thread(&DTCLibTest::doTests, this);
+    if (printMessages_)
+    {
+        std::cout << "Starting workerThread" << std::endl;
+    }
+    
+    workerThread_ = std::thread(&DTCLib::DTCLibTest::doTests, this);
+    if (nTests_ >= 0) {
+        workerThread_.join();
+    }
 }
 
 void DTCLib::DTCLibTest::stopTests()
 {
     nTests_ = 0;
-    if (workerThread_->joinable()) {
-        workerThread_->join();
+    if (workerThread_.joinable()) {
+        workerThread_.join();
     }
 }
 
@@ -146,6 +153,11 @@ int DTCLib::DTCLibTest::loopbackFailed()
 // Private Functions
 void DTCLib::DTCLibTest::doTests()
 {
+    if (printMessages_)
+    {
+        std::cout << "Worker thread started" << std::endl;
+    }
+    std::cout << "DEBUG 1" << std::endl;
     running_ = true;
     // Make sure that the ring is enabled before the tests.
     thisDTC_->EnableRing(DTC_Ring_0, DTC_ROC_0);
@@ -491,13 +503,13 @@ void DTCLib::DTCLibTest::doLoopbackTest()
             if (printMessages_) {
                 std::cout << "Test Aborted (fail!)" << std::endl;
             }
-            ++daqFailed_;
+            ++loopbackFailed_;
         }
         else {
             if (printMessages_) {
                 std::cout << "Test Passed" << std::endl;
             }
-            ++daqPassed_;
+            ++loopbackPassed_;
         }
     }
     catch (std::exception ex)
@@ -505,7 +517,7 @@ void DTCLib::DTCLibTest::doLoopbackTest()
         if (printMessages_) {
             std::cout << "Test failed with exception: " << ex.what() << std::endl;
         }
-        ++daqFailed_;
+        ++loopbackFailed_;
     }
     if (printMessages_) {
         std::cout << std::endl << std::endl;

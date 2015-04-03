@@ -47,12 +47,14 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool sendDReq, bool 
         // Send a data request
         for (uint8_t ring = 0; ring < 6; ++ring){
             if (ReadRingEnabled((DTC_Ring_ID)ring)) {
-                for (uint8_t roc = 0; roc < maxRocs_[ring]; ++roc) {
-                    TRACE(19, "DTC::GetData before DTC_DataRequestPacket req");
-                    DTC_DataRequestPacket req((DTC_Ring_ID)ring, (DTC_ROC_ID)roc, when);
-                    TRACE(19, "DTC::GetData before WriteDMADAQPacket");
-                    WriteDMADAQPacket(req);
-                    TRACE(19, "DTC::GetData after  WriteDMADAQPacket");
+                if (maxRocs_[ring] != DTC_ROC_Unused) {
+                    for (uint8_t roc = 0; roc <= maxRocs_[ring]; ++roc) {
+                        TRACE(19, "DTC::GetData before DTC_DataRequestPacket req");
+                        DTC_DataRequestPacket req((DTC_Ring_ID)ring, (DTC_ROC_ID)roc, when);
+                        TRACE(19, "DTC::GetData before WriteDMADAQPacket");
+                        WriteDMADAQPacket(req);
+                        TRACE(19, "DTC::GetData after  WriteDMADAQPacket");
+                    }
                 }
             }
         }
@@ -174,6 +176,7 @@ void DTCLib::DTC::DCSRequestReply(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc
     WriteDMADCSPacket(req);
     DTC_DCSReplyPacket packet = ReadNextDCSPacket();
 
+    TRACE(19, "DTC::DCSReqeuestReply after ReadNextDCSPacket");
     for (int ii = 0; ii < 12; ++ii) {
         dataIn[ii] = packet.GetData()[ii];
     }
@@ -249,7 +252,7 @@ DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket()
 DTCLib::DTC_DCSReplyPacket DTCLib::DTC::ReadNextDCSPacket()
 {
     TRACE(19, "DTC::ReadNextDCSPacket BEGIN");
-    if (dcsReadPtr_ == nullptr) {
+    if (dcsReadPtr_ == nullptr || dcsReadPtr_ >= dcsbuffer_ + sizeof(*dcsbuffer_) || *((uint16_t*)dcsReadPtr_) == 0) {
         TRACE(19, "DTC::ReadNextDCSPacket Obtaining new DCS Buffer");
         ReadBuffer(DTC_DMA_Engine_DCS);
         dcsReadPtr_ = &(dcsbuffer_[0]);
@@ -257,7 +260,7 @@ DTCLib::DTC_DCSReplyPacket DTCLib::DTC::ReadNextDCSPacket()
     }
 
     //Read the next packet
-    TRACE(19, "DTC::ReadNextDCSPacket Reading packet from buffer:");
+    TRACE(19, "DTC::ReadNextDCSPacket Reading packet from buffer: dcsReadPtr_=%p:", (void*)dcsReadPtr_);
     DTC_DCSReplyPacket output = DTC_DCSReplyPacket(DTC_DataPacket(dcsReadPtr_));
     TRACE(19, output.toJSON().c_str());
 
@@ -265,14 +268,6 @@ DTCLib::DTC_DCSReplyPacket DTCLib::DTC::ReadNextDCSPacket()
 
     // Increment by the size of the data block
     dcsReadPtr_ = (char*)dcsReadPtr_ + 16;
-
-    // Check if we are at the end of the buffer
-    if (dcsReadPtr_ >= dcsbuffer_ + sizeof(*dcsbuffer_) || *((uint16_t*)dcsReadPtr_) == 0) {
-        TRACE(19, "DTC::ReadNextDCSPacket Obtaining new DCS Buffer");
-        ReadBuffer(DTC_DMA_Engine_DCS);
-        dcsReadPtr_ = &dcsbuffer_[0];
-        TRACE(19, "DTC::ReadNextDCSPacket dcsReadPtr_=%p", dcsReadPtr_);
-    }
 
     TRACE(19, "DTC::ReadNextDCSPacket RETURN");
     return output;

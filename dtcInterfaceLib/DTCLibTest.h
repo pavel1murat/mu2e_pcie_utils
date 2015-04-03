@@ -78,7 +78,7 @@ namespace DTCLib {
         bool runDCSTest_;
         bool runLoopbackTest_;
         bool printMessages_;
-        std::thread* workerThread_;
+        std::thread workerThread_;
     };
 }
 #endif  //ifndef DTCLibTest_H

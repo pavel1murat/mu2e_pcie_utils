@@ -273,12 +273,12 @@ int mu2esim::write_loopback_data(int chn, void *buffer, size_t bytes)
     {
         DTCLib::DTC_Timestamp ts((uint8_t*)buffer + 6);
         if ((word & 0x8010) == 0x8010) {
-            activeDAQRing_ = (DTCLib::DTC_Ring_ID)(word & 0x000F);
+            activeDAQRing_ = (DTCLib::DTC_Ring_ID)((word & 0x0F00) >> 8);
             TRACE(17, "mu2esim::write_loopback_data activeDAQRing is %i", activeDAQRing_);
             readoutRequestRecieved_[activeDAQRing_] = ts;
         }
         else if ((word & 0x8020) == 0x8020) {
-            activeDAQRing_ = (DTCLib::DTC_Ring_ID)(word & 0x000F);
+            activeDAQRing_ = (DTCLib::DTC_Ring_ID)((word & 0x0F00) >> 8);
             TRACE(17, "mu2esim::write_loopback_data activeDAQRing is %i", activeDAQRing_);
             if (readoutRequestRecieved_[activeDAQRing_] == ts) {
                 dataRequestRecieved_ = true;
@@ -289,7 +289,7 @@ int mu2esim::write_loopback_data(int chn, void *buffer, size_t bytes)
     case 1:
     {
         if ((word & 0x0080) == 0) {
-            activeDCSRing_ = (DTCLib::DTC_Ring_ID)(word & 0x000F);
+            activeDCSRing_ = (DTCLib::DTC_Ring_ID)((word & 0x0F00) >> 8);
             TRACE(17, "mu2esim::write_loopback_data activeDCSRing is %i", activeDCSRing_);
             dcsRequestRecieved_ = true;
             uint8_t data[12];

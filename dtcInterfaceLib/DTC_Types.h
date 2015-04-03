@@ -103,18 +103,21 @@ namespace DTCLib
 
 
     class DTC_WrongPacketTypeException : public std::exception {
+    public:
         virtual const char* what() const throw()
         {
             return "Unexpected packet type encountered!";
         }
     };
     class DTC_IOErrorException : public std::exception {
+    public:
         virtual const char* what() const throw()
         {
             return "Unable to communicate with the DTC";
         }
     };
     class DTC_NotImplementedException : public std::exception {
+    public:
         virtual const char* what() const throw()
         {
             return "I'm sorry, Dave, but I can't do that. (Because I don't know how)";
