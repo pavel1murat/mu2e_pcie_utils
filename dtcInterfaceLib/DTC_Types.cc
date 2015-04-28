@@ -158,6 +158,9 @@ std::string DTCLib::DTC_DMAPacket::toJSON()
     return ss.str();
 }
 
+DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket()
+    : DTC_DMAPacket(DTC_PacketType_DCSRequest, DTC_Ring_Unused, DTC_ROC_Unused) {}
+
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc)
     : DTC_DMAPacket(DTC_PacketType_DCSRequest, ring, roc) {}
 

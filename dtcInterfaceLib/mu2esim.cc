@@ -19,22 +19,23 @@
 #include <ctime>
 #include <vector>
 #include <iostream>
+#include <algorithm>
 
 mu2esim::mu2esim() : isActive_(false),
-dmaDCSData_(),
-dcsRequestRecieved_(false), dataRequestRecieved_(false),
-activeDAQRing_(DTCLib::DTC_Ring_Unused),
-activeDCSRing_(DTCLib::DTC_Ring_Unused),
-dcsRequest_(DTCLib::DTC_Ring_Unused, DTCLib::DTC_ROC_Unused)
+dmaDCSData_()
 {
 #ifndef _WIN32  
     //TRACE_CNTL( "lvlmskM", 0x3 );
     //TRACE_CNTL( "lvlmskS", 0x3 );
 #endif
-    for (int i = 0; i < 6; ++i)
+    for (int ring = 0; ring < 6; ++ring)
     {
-        simIndex_[i] = 0;
-        readoutRequestRecieved_[i] = DTCLib::DTC_Timestamp();
+        for (int roc = 0; roc < 6; ++roc)
+        {
+            dcsRequestRecieved_[ring][roc] = false;
+            simIndex_[ring][roc] = 0;
+            dcsRequest_[ring][roc] = DTCLib::DTC_DCSRequestPacket((DTCLib::DTC_Ring_ID)ring, (DTCLib::DTC_ROC_ID)roc);
+        }
     }
     dmaDAQData_ = (mu2e_databuff_t*)new mu2e_databuff_t();
     olddmaDAQData_ = (mu2e_databuff_t*)new mu2e_databuff_t();
@@ -169,82 +170,129 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
         memset(&dmaDCSData_, 0, sizeof(dmaDCSData_));
     }
 
-    if (readoutRequestRecieved_ && dataRequestRecieved_ && chn == 0)
+    if (chn == 0)
     {
-        TRACE(17, "mu2esim::read_data, DAQ Channel w/Requests recieved");
-        uint8_t packet[16];
-
-        // Add a Data Header packet to the reply
-        packet[0] = 32;
-        packet[1] = 0;
-        packet[2] = 0x50;
-        packet[3] = 0x80 + (activeDAQRing_ & 0x0F);
-        packet[4] = 1; //1 data packet
-        packet[5] = 0;
-        readoutRequestRecieved_[activeDAQRing_].GetTimestamp(packet, 6);
-        packet[12] = 0;
-        packet[13] = 0;
-        packet[14] = 0;
-        packet[15] = 0;
-
-        TRACE(17, "mu2esim::read_data Copying Data Header packet into buffer");
-        memcpy(dmaDAQData_, &packet[0], sizeof(packet));
-
-        switch (mode_)
+        std::vector<DTCLib::DTC_Timestamp> activeTimestamps;
+        for (int ring = 0; ring <= DTCLib::DTC_Ring_5; ++ring)
         {
-        case mu2e_sim_mode_tracker:
-        default:
-            packet[0] = static_cast<uint8_t>(simIndex_[activeDAQRing_]);
-            packet[1] = static_cast<uint8_t>(simIndex_[activeDAQRing_] >> 8);
-
-            packet[2] = 0x0; // No TDC value!
-            packet[3] = 0x0;
-            packet[4] = 0x0;
-            packet[5] = 0x0;
-
-            uint16_t pattern0 = 0;
-            uint16_t pattern1 = simIndex_[activeDAQRing_];
-            uint16_t pattern2 = 2;
-            uint16_t pattern3 = (simIndex_[activeDAQRing_] * 3) % 0x3FF;
-            uint16_t pattern4 = 4;
-            uint16_t pattern5 = (simIndex_[activeDAQRing_] * 5) % 0x3FF;
-            uint16_t pattern6 = 6;
-            uint16_t pattern7 = (simIndex_[activeDAQRing_] * 7) % 0x3FF;
-
-            packet[6] = static_cast<uint8_t>(pattern0);
-            packet[7] = static_cast<uint8_t>((pattern0 >> 8) + (pattern1 << 2));
-            packet[8] = static_cast<uint8_t>((pattern1 >> 6) + (pattern2 << 4));
-            packet[9] = static_cast<uint8_t>((pattern2 >> 4) + (pattern3 << 6));
-            packet[10] = static_cast<uint8_t>((pattern3 >> 2));
-            packet[11] = static_cast<uint8_t>(pattern4);
-            packet[12] = static_cast<uint8_t>((pattern4 >> 8) + (pattern5 << 2));
-            packet[13] = static_cast<uint8_t>((pattern5 >> 6) + (pattern6 << 4));
-            packet[14] = static_cast<uint8_t>((pattern6 >> 4) + (pattern7 << 6));
-            packet[15] = static_cast<uint8_t>((pattern7 >> 2));
-
-            TRACE(17, "mu2esim::read_data Copying DataPacket into buffer");
-            memcpy(((char*)dmaDAQData_ + sizeof(packet)), &packet, sizeof(packet));
-            break;
+            for (auto i : readoutRequestRecieved_[ring])
+            {
+                bool found = false;
+                for (auto ts : activeTimestamps) { found = found || ts == i; }
+                if (!found) { activeTimestamps.push_back(i); }
+            }
         }
-        simIndex_[activeDAQRing_] = (simIndex_[activeDAQRing_] + 1) % 0x3FF;
-        dataRequestRecieved_ = false;
+        std::sort(activeTimestamps.begin(), activeTimestamps.end());
+        size_t bufferIndex = 0;
+        size_t bufferIndexMax = sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t));
+
+        for (auto ts : activeTimestamps)
+        {
+            for (int ring = 0; ring <= DTCLib::DTC_Ring_5; ++ring)
+            {
+                auto rrIter = std::find(readoutRequestRecieved_[ring].begin(), readoutRequestRecieved_[ring].end(), ts);
+                if (rrIter != readoutRequestRecieved_[ring].end() && bufferIndex < bufferIndexMax)
+                {
+                    for (int roc = 0; roc <= DTCLib::DTC_ROC_5; ++roc)
+                    {
+                        auto drIter = std::find(dataRequestRecieved_[ring][roc].begin(), dataRequestRecieved_[ring][roc].end(), ts);
+                        if (drIter != dataRequestRecieved_[ring][roc].end() && bufferIndex < bufferIndexMax)
+                        {
+                            TRACE(17, "mu2esim::read_data, DAQ Channel w/Requests recieved");
+                            uint8_t packet[16];
+
+                            // Add a Data Header packet to the reply
+                            packet[0] = 32;
+                            packet[1] = 0;
+                            packet[2] = 0x50 + (roc & 0x0F);
+                            packet[3] = 0x80 + (ring & 0x0F);
+                            packet[4] = 1; //1 data packet
+                            packet[5] = 0;
+                            (*rrIter).GetTimestamp(packet, 6);
+                            packet[12] = 0;
+                            packet[13] = 0;
+                            packet[14] = 0;
+                            packet[15] = 0;
+
+                            TRACE(17, "mu2esim::read_data Copying Data Header packet into buffer, idx=%li, buf=%p, packet=%p, off=%li", bufferIndex, (void*)dmaDAQData_, (void*)packet, bufferIndex * sizeof(packet));
+                            memcpy((char*)dmaDAQData_ + bufferIndex * sizeof(packet), &packet[0], sizeof(packet));
+                            bufferIndex++;
+                            if (bufferIndex >= bufferIndexMax) { break; }
+
+                            switch (mode_)
+                            {
+                            case mu2e_sim_mode_tracker:
+                            default:
+                                packet[0] = static_cast<uint8_t>(simIndex_[ring][roc]);
+                                packet[1] = static_cast<uint8_t>(simIndex_[ring][roc] >> 8);
+
+                                packet[2] = 0x0; // No TDC value!
+                                packet[3] = 0x0;
+                                packet[4] = 0x0;
+                                packet[5] = 0x0;
+
+                                uint16_t pattern0 = 0;
+                                uint16_t pattern1 = simIndex_[ring][roc];
+                                uint16_t pattern2 = 2;
+                                uint16_t pattern3 = (simIndex_[ring][roc] * 3) % 0x3FF;
+                                uint16_t pattern4 = 4;
+                                uint16_t pattern5 = (simIndex_[ring][roc] * 5) % 0x3FF;
+                                uint16_t pattern6 = 6;
+                                uint16_t pattern7 = (simIndex_[ring][roc] * 7) % 0x3FF;
+
+                                packet[6] = static_cast<uint8_t>(pattern0);
+                                packet[7] = static_cast<uint8_t>((pattern0 >> 8) + (pattern1 << 2));
+                                packet[8] = static_cast<uint8_t>((pattern1 >> 6) + (pattern2 << 4));
+                                packet[9] = static_cast<uint8_t>((pattern2 >> 4) + (pattern3 << 6));
+                                packet[10] = static_cast<uint8_t>((pattern3 >> 2));
+                                packet[11] = static_cast<uint8_t>(pattern4);
+                                packet[12] = static_cast<uint8_t>((pattern4 >> 8) + (pattern5 << 2));
+                                packet[13] = static_cast<uint8_t>((pattern5 >> 6) + (pattern6 << 4));
+                                packet[14] = static_cast<uint8_t>((pattern6 >> 4) + (pattern7 << 6));
+                                packet[15] = static_cast<uint8_t>((pattern7 >> 2));
+
+                                TRACE(17, "mu2esim::read_data Copying Data packet into buffer, idx=%li, buf=%p, packet=%p, off=%li", bufferIndex, (void*)dmaDAQData_, (void*)packet, bufferIndex * sizeof(packet));
+                                memcpy(((char*)dmaDAQData_ + bufferIndex * sizeof(packet)), &packet, sizeof(packet));
+                                bufferIndex++;
+                                break;
+                            }
+                            simIndex_[ring][roc] = (simIndex_[ring][roc] + 1) % 0x3FF;
+                            TRACE(17, "mu2esim::read_data: Erasing DTC_Timestamp from DataRequestReceived list");
+                            dataRequestRecieved_[ring][roc].erase(drIter);
+                        }
+                    }
+                    TRACE(17, "mu2esim::read_data: Erasing DTC_Timestamp from ReadoutRequestReceived list");
+                    readoutRequestRecieved_[ring].erase(rrIter);
+                }
+            }
+        }
     }
-    else if (dcsRequestRecieved_ && chn == 1)
+    else if (chn == 1)
     {
-        TRACE(17, "mu2esim::read_data DCS Request Recieved, Sending Response");
-        uint8_t replyPacket[16];
-        replyPacket[0] = 16;
-        replyPacket[1] = 0;
-        replyPacket[2] = 0x40;
-        replyPacket[3] = (activeDCSRing_ & 0x0F) + 0x80;
-        for (int i = 4; i < 16; ++i)
+        for (int ring = 0; ring <= DTCLib::DTC_Ring_5; ++ring)
         {
-            replyPacket[i] = dcsRequest_.GetData()[i - 4];
+            for (int roc = 0; roc <= DTCLib::DTC_ROC_5; ++roc)
+            {
+                if (dcsRequestRecieved_[ring][roc])
+                {
+                    TRACE(17, "mu2esim::read_data DCS Request Recieved, Sending Response");
+                    uint8_t replyPacket[16];
+                    replyPacket[0] = 16;
+                    replyPacket[1] = 0;
+                    replyPacket[2] = 0x40;
+                    replyPacket[3] = (ring & 0x0F) + 0x80;
+                    for (int i = 4; i < 16; ++i)
+                    {
+                        replyPacket[i] = dcsRequest_[ring][roc].GetData()[i - 4];
+                    }
+                    TRACE(17, "mu2esim::read_data Copying reply into buffer");
+                    memcpy(&dmaDCSData_, &replyPacket[0], sizeof(replyPacket));
+                    dcsRequestRecieved_[ring][roc] = false;
+                }
+            }
         }
-        TRACE(17, "mu2esim::read_data Copying reply into buffer");
-        memcpy(&dmaDCSData_, &replyPacket[0], sizeof(replyPacket));
-        dcsRequestRecieved_ = false;
     }
+
     if (chn == 0)
     {
         TRACE(17, "mu2esim::read_data Setting output buffer to dmaDAQData_=%p", (void*)dmaDAQData_);
@@ -273,15 +321,22 @@ int mu2esim::write_loopback_data(int chn, void *buffer, size_t bytes)
     {
         DTCLib::DTC_Timestamp ts((uint8_t*)buffer + 6);
         if ((word & 0x8010) == 0x8010) {
-            activeDAQRing_ = (DTCLib::DTC_Ring_ID)((word & 0x0F00) >> 8);
-            TRACE(17, "mu2esim::write_loopback_data activeDAQRing is %i", activeDAQRing_);
-            readoutRequestRecieved_[activeDAQRing_] = ts;
+            int activeDAQRing = (word & 0x0F00) >> 8;
+            TRACE(17, "mu2esim::write_loopback_data activeDAQRing is %i", activeDAQRing);
+            if (std::find(readoutRequestRecieved_[activeDAQRing].begin(), readoutRequestRecieved_[activeDAQRing].end(), ts) == readoutRequestRecieved_[activeDAQRing].end())
+            {
+                readoutRequestRecieved_[activeDAQRing].push_back(ts);
+            }
         }
         else if ((word & 0x8020) == 0x8020) {
-            activeDAQRing_ = (DTCLib::DTC_Ring_ID)((word & 0x0F00) >> 8);
-            TRACE(17, "mu2esim::write_loopback_data activeDAQRing is %i", activeDAQRing_);
-            if (readoutRequestRecieved_[activeDAQRing_] == ts) {
-                dataRequestRecieved_ = true;
+            int activeDAQRing = (word & 0x0F00) >> 8;
+            TRACE(17, "mu2esim::write_loopback_data activeDAQRing is %i", activeDAQRing);
+            if (std::find(readoutRequestRecieved_[activeDAQRing].begin(), readoutRequestRecieved_[activeDAQRing].end(), ts) != readoutRequestRecieved_[activeDAQRing].end()) {
+                int activeROC = word & 0xF;
+                if (std::find(dataRequestRecieved_[activeDAQRing][activeROC].begin(), dataRequestRecieved_[activeDAQRing][activeROC].end(), ts) == dataRequestRecieved_[activeDAQRing][activeROC].end())
+                {
+                    dataRequestRecieved_[activeDAQRing][activeROC].push_back(ts);
+                }
             }
         }
         break;
@@ -289,14 +344,15 @@ int mu2esim::write_loopback_data(int chn, void *buffer, size_t bytes)
     case 1:
     {
         if ((word & 0x0080) == 0) {
-            activeDCSRing_ = (DTCLib::DTC_Ring_ID)((word & 0x0F00) >> 8);
-            TRACE(17, "mu2esim::write_loopback_data activeDCSRing is %i", activeDCSRing_);
-            dcsRequestRecieved_ = true;
+            int activeDCSRing = (word & 0x0F00) >> 8;
+            int activeDCSROC = word & 0xF;
+            TRACE(17, "mu2esim::write_loopback_data activeDCSRing is %i, roc is %i", activeDCSRing, activeDCSROC);
+            dcsRequestRecieved_[activeDCSRing][activeDCSROC] = true;
             uint8_t data[12];
             memcpy(&data[0], (char*)buffer + (2 * sizeof(uint16_t)), sizeof(data));
-            dcsRequest_ = DTCLib::DTC_DCSRequestPacket(activeDCSRing_, (DTCLib::DTC_ROC_ID)((word & 0xF00) >> 8), data);
+            dcsRequest_[activeDCSRing][activeDCSROC] = DTCLib::DTC_DCSRequestPacket((DTCLib::DTC_Ring_ID)activeDCSRing, (DTCLib::DTC_ROC_ID)activeDCSROC, data);
             TRACE(17, "mu2esim::write_loopback_data: Recieved DCS Request:");
-            TRACE(17, dcsRequest_.toJSON().c_str());
+            TRACE(17, dcsRequest_[activeDCSRing][activeDCSROC].toJSON().c_str());
         }
         break;
     }

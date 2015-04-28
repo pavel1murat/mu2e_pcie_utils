@@ -45,7 +45,7 @@ namespace DTCLib
         DTC_Ring_4 = 4,
         DTC_Ring_5 = 5,
         DTC_Ring_CFO = 6,
-        DTC_Ring_Unused = 0x10,
+        DTC_Ring_Unused,
     };
 
     enum DTC_PacketType : uint8_t {
@@ -64,7 +64,7 @@ namespace DTCLib
         DTC_ROC_3 = 3,
         DTC_ROC_4 = 4,
         DTC_ROC_5 = 5,
-        DTC_ROC_Unused = 0x10,
+        DTC_ROC_Unused,
     };
 
     enum DTC_RXBufferStatus {
@@ -146,6 +146,7 @@ namespace DTCLib
 
         bool operator==(const DTC_Timestamp r) { return r.GetTimestamp(true) == timestamp_; }
         bool operator!=(const DTC_Timestamp r) { return r.GetTimestamp(true) != timestamp_; }
+        bool operator< (const DTC_Timestamp r) { return r.GetTimestamp(true) < timestamp_; }
 
         void SetTimestamp(uint32_t timestampLow, uint16_t timestampHigh);
         std::bitset<48> GetTimestamp() const { return timestamp_; }
@@ -219,6 +220,7 @@ namespace DTCLib
     private:
         uint8_t data_[12];
     public:
+        DTC_DCSRequestPacket();
         DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc);
         DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t* data);
         DTC_DCSRequestPacket(const DTC_DCSRequestPacket&) = default;

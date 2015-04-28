@@ -32,7 +32,7 @@ struct mu2esim
     int  write_test_command(m_ioc_cmd_t input, bool start);
     bool active() { return isActive_; }
 private:
-
+    //const DTCLib::DTC_Timestamp NULL_TIMESTAMP = DTCLib::DTC_Timestamp(0xffffffffffffffff);
     bool isActive_;
     std::unordered_map<uint16_t, uint32_t> registers_;
     mu2e_databuff_t* dmaDAQData_;
@@ -43,11 +43,9 @@ private:
     m_ioc_cmd_t testState_;
     bool testStarted_;
     mu2e_sim_mode mode_;
-    uint16_t simIndex_[6];
-    bool dcsRequestRecieved_;
-    DTCLib::DTC_Timestamp readoutRequestRecieved_[6];
-    bool dataRequestRecieved_;
-    DTCLib::DTC_Ring_ID activeDAQRing_;
-    DTCLib::DTC_Ring_ID activeDCSRing_;
-    DTCLib::DTC_DCSRequestPacket dcsRequest_;
+    uint16_t simIndex_[6][6];
+    bool dcsRequestRecieved_[6][6];
+    std::vector<DTCLib::DTC_Timestamp> readoutRequestRecieved_[6];
+    std::vector<DTCLib::DTC_Timestamp> dataRequestRecieved_[6][6];
+    DTCLib::DTC_DCSRequestPacket dcsRequest_[6][6];
 };
