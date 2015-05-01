@@ -101,6 +101,14 @@ namespace DTCLib
         DTC_Data_Status_Invalid = 2,
     };
 
+    enum DTC_Sim_Mode {
+        DTC_Sim_Mode_Disabled,
+        DTC_Sim_Mode_Tracker,
+        DTC_Sim_Mode_Calorimeter,
+        DTC_Sim_Mode_CosmicVeto,
+    };
+
+
 
     class DTC_WrongPacketTypeException : public std::exception {
     public:

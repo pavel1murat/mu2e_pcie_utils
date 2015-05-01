@@ -10,17 +10,41 @@
 #define TRACE(...) 
 #endif
 
-DTCLib::DTC::DTC() : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t))), device_(),
-daqbuffer_(nullptr), dcsbuffer_(nullptr),
+DTCLib::DTC::DTC(DTCLib::DTC_Sim_Mode mode) : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t))), device_(),
+daqbuffer_(nullptr), dcsbuffer_(nullptr), simMode_(mode),
 lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 {
 #ifdef _WIN32
-    simMode_ = true;
+    simMode_ = DTCLib::DTC_Sim_Mode_Tracker;
 #else
     char* sim = getenv("DTCLIB_SIM_ENABLE");
-    simMode_ = sim != NULL && sim[0] == '1';
+    if(sim != NULL) 
+    {
+        switch (sim[0])
+        {
+        case '1':
+        case 't':
+        case 'T':
+            simMode_ = DTCLib::DTC_Sim_Mode_Tracker;
+            break;
+        case '2':
+        case 'c':
+        case 'C':
+            simMode_ = DTCLib::DTC_Sim_Mode_Calorimeter;
+            break;
+        case '3':
+        case 'v':
+        case 'V':
+            simMode_ = DTCLib::DTC_Sim_Mode_CosmicVeto;
+            break;
+        case '0':
+        default:
+            simMode_ = DTCLib::DTC_Sim_Mode_Disabled;
+            break;
+        }
+    }
 #endif
-    simMode_ = device_.init(simMode_) == 1;
+    device_.init(simMode_);
 }
 
 //
@@ -232,7 +256,7 @@ DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket()
         TRACE(19, "DTC::ReadNextDAQPacket nextReadPtr_=%p daqBuffer_=%p", (void*)nextReadPtr_, (void*)daqbuffer_);
     }
     //Read the next packet
-    TRACE(19, "DTC::ReadNextDAQPacket reading next packet from buffer: nextReadPtr_=%p:",(void*)nextReadPtr_);
+    TRACE(19, "DTC::ReadNextDAQPacket reading next packet from buffer: nextReadPtr_=%p:", (void*)nextReadPtr_);
     DTC_DataPacket test = DTC_DataPacket(nextReadPtr_);
     TRACE(19, test.toJSON().c_str());
     DTC_DataHeaderPacket output = DTC_DataHeaderPacket(test);
@@ -245,7 +269,7 @@ DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket()
 
     // Increment by the size of the data block
     nextReadPtr_ = (char*)nextReadPtr_ + 16 * (1 + output.GetPacketCount());
-    
+
     TRACE(19, "DTC::ReadNextDAQPacket RETURN");
     return output;
 }

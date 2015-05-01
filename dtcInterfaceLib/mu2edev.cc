@@ -26,10 +26,10 @@ mu2edev::mu2edev() : devfd_(0)
 #endif
 }
 
-int mu2edev::init(bool simMode)
+int mu2edev::init(DTCLib::DTC_Sim_Mode simMode)
 {
-    if (simMode) {
-        simulator_.init();
+    if (simMode != DTCLib::DTC_Sim_Mode_Disabled) {
+        simulator_.init(simMode);
     }
     else {
 #ifndef _WIN32

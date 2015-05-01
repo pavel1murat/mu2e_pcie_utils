@@ -22,7 +22,7 @@
 #include <algorithm>
 
 mu2esim::mu2esim() : isActive_(false),
-dmaDCSData_()
+dmaDCSData_(), mode_(DTCLib::DTC_Sim_Mode_Disabled)
 {
 #ifndef _WIN32  
     //TRACE_CNTL( "lvlmskM", 0x3 );
@@ -47,11 +47,10 @@ mu2esim::~mu2esim()
     delete[] olddmaDAQData_;
 }
 
-int mu2esim::init()
+int mu2esim::init(DTCLib::DTC_Sim_Mode mode)
 {
     TRACE(17, "mu2e Simulator::init");
-    // For now, this is the only mode implemented...
-    mode_ = mu2e_sim_mode_tracker;
+    mode_ = mode;
 
     TRACE(17, "mu2esim::init Initializing registers");
     isActive_ = true;
@@ -221,8 +220,91 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 
                             switch (mode_)
                             {
-                            case mu2e_sim_mode_tracker:
-                            default:
+                            case DTCLib::DTC_Sim_Mode_CosmicVeto:
+                            {
+                                int nSamples = 4;
+                                packet[0] = static_cast<uint8_t>(simIndex_[ring][roc]);
+                                packet[1] = static_cast<uint8_t>(simIndex_[ring][roc] >> 8);
+                                packet[2] = 0x0; // No TDC value!
+                                packet[3] = 0x0;
+                                packet[4] = static_cast<uint8_t>(nSamples);
+                                packet[5] = static_cast<uint8_t>(nSamples >> 8);
+
+                                packet[6] = 0;
+                                packet[7] = 0;
+                                packet[8] = static_cast<uint8_t>(simIndex_[ring][roc]);
+                                packet[9] = static_cast<uint8_t>(simIndex_[ring][roc] >> 8);
+                                packet[10] = 2;
+                                packet[11] = 2;
+                                packet[12] = static_cast<uint8_t>(3 * simIndex_[ring][roc]);
+                                packet[13] = static_cast<uint8_t>((3 * simIndex_[ring][roc]) >> 8);
+                                packet[14] = 0;
+                                packet[15] = 0;
+
+                                TRACE(17, "mu2esim::read_data Copying Data packet into buffer, idx=%li, buf=%p, packet=%p, off=%li", bufferIndex, (void*)dmaDAQData_, (void*)packet, bufferIndex * sizeof(packet));
+                                memcpy(((char*)dmaDAQData_ + bufferIndex * sizeof(packet)), &packet, sizeof(packet));
+                                bufferIndex++;
+
+                            }
+                            break;
+                            case DTCLib::DTC_Sim_Mode_Calorimeter:
+                            {
+                                int nSamples = rand() % 10 + 10;
+                                packet[0] = static_cast<uint8_t>(simIndex_[ring][roc]);
+                                packet[1] = ((simIndex_[ring][roc] >> 8) & 0xF) + ((simIndex_[ring][roc] & 0xF) << 4);
+                                packet[2] = 0x0; // No TDC value!
+                                packet[3] = 0x0;
+                                packet[4] = static_cast<uint8_t>(nSamples);
+                                packet[5] = static_cast<uint8_t>(nSamples >> 8);
+
+                                packet[6] = 0;
+                                packet[7] = 0;
+                                packet[8] = static_cast<uint8_t>(simIndex_[ring][roc]);
+                                packet[9] = static_cast<uint8_t>(simIndex_[ring][roc] >> 8);
+                                packet[10] = 2;
+                                packet[11] = 2;
+                                packet[12] = static_cast<uint8_t>(3 * simIndex_[ring][roc]);
+                                packet[13] = static_cast<uint8_t>((3 * simIndex_[ring][roc]) >> 8);
+                                packet[14] = 4;
+                                packet[15] = 4;
+
+                                TRACE(17, "mu2esim::read_data Copying Data packet into buffer, idx=%li, buf=%p, packet=%p, off=%li", bufferIndex, (void*)dmaDAQData_, (void*)packet, bufferIndex * sizeof(packet));
+                                memcpy(((char*)dmaDAQData_ + bufferIndex * sizeof(packet)), &packet, sizeof(packet));
+                                bufferIndex++;
+
+                                int samplesProcessed = 5;
+                                while (samplesProcessed < nSamples)
+                                {
+                                    if (bufferIndex >= bufferIndexMax) { break; }
+
+                                    packet[0] = static_cast<uint8_t>(samplesProcessed * simIndex_[ring][roc]);
+                                    packet[1] = static_cast<uint8_t>((samplesProcessed * simIndex_[ring][roc]) >> 8);
+                                    packet[2] = static_cast<uint8_t>(samplesProcessed + 1);
+                                    packet[3] = static_cast<uint8_t>(samplesProcessed + 1);
+                                    packet[4] = static_cast<uint8_t>((2 + samplesProcessed) * simIndex_[ring][roc]);
+                                    packet[5] = static_cast<uint8_t>(((2 + samplesProcessed) * simIndex_[ring][roc]) >> 8);
+                                    packet[6] = static_cast<uint8_t>(samplesProcessed + 3);
+                                    packet[7] = static_cast<uint8_t>(samplesProcessed + 3);
+                                    packet[8] = static_cast<uint8_t>((4 + samplesProcessed) * simIndex_[ring][roc]);
+                                    packet[9] = static_cast<uint8_t>(((4 + samplesProcessed) * simIndex_[ring][roc]) >> 8);
+                                    packet[10] = static_cast<uint8_t>(samplesProcessed + 5);
+                                    packet[11] = static_cast<uint8_t>(samplesProcessed + 5);
+                                    packet[12] = static_cast<uint8_t>((6 + samplesProcessed) * simIndex_[ring][roc]);
+                                    packet[13] = static_cast<uint8_t>(((6 + samplesProcessed) * simIndex_[ring][roc]) >> 8);
+                                    packet[14] = static_cast<uint8_t>(samplesProcessed + 7);
+                                    packet[15] = static_cast<uint8_t>(samplesProcessed + 7);
+
+
+                                    samplesProcessed += 8;
+                                    TRACE(17, "mu2esim::read_data Copying Data packet into buffer, idx=%li, buf=%p, packet=%p, off=%li", bufferIndex, (void*)dmaDAQData_, (void*)packet, bufferIndex * sizeof(packet));
+                                    memcpy(((char*)dmaDAQData_ + bufferIndex * sizeof(packet)), &packet, sizeof(packet));
+                                    bufferIndex++;
+                                }
+
+                            }
+                            break;
+                            case DTCLib::DTC_Sim_Mode_Tracker:
+                            {
                                 packet[0] = static_cast<uint8_t>(simIndex_[ring][roc]);
                                 packet[1] = static_cast<uint8_t>(simIndex_[ring][roc] >> 8);
 
@@ -254,6 +336,10 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                 TRACE(17, "mu2esim::read_data Copying Data packet into buffer, idx=%li, buf=%p, packet=%p, off=%li", bufferIndex, (void*)dmaDAQData_, (void*)packet, bufferIndex * sizeof(packet));
                                 memcpy(((char*)dmaDAQData_ + bufferIndex * sizeof(packet)), &packet, sizeof(packet));
                                 bufferIndex++;
+                            }
+                            break;
+                            case DTCLib::DTC_Sim_Mode_Disabled:
+                            default:
                                 break;
                             }
                             simIndex_[ring][roc] = (simIndex_[ring][roc] + 1) % 0x3FF;

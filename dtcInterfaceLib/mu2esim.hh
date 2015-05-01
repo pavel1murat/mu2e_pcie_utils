@@ -8,17 +8,11 @@
 #include <unordered_map>
 #include "DTC_Types.h"
 
-enum mu2e_sim_mode {
-    mu2e_sim_mode_tracker,
-    mu2e_sim_mode_cal,
-    mu2e_sim_mode_veto,
-};
-
 struct mu2esim
 {
     mu2esim();
     ~mu2esim();
-    int  init();
+    int  init(DTCLib::DTC_Sim_Mode mode = DTCLib::DTC_Sim_Mode_Tracker);
     int  read_data(int chn, void **buffer, int tmo_ms);
     int  write_loopback_data(int chn, void *buffer, size_t bytes);
     int  read_release(int chn, unsigned num);
@@ -42,7 +36,7 @@ private:
     m_ioc_pcistate_t pcieState_;
     m_ioc_cmd_t testState_;
     bool testStarted_;
-    mu2e_sim_mode mode_;
+    DTCLib::DTC_Sim_Mode mode_;
     uint16_t simIndex_[6][6];
     bool dcsRequestRecieved_[6][6];
     std::vector<DTCLib::DTC_Timestamp> readoutRequestRecieved_[6];

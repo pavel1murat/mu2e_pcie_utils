@@ -13,7 +13,7 @@
 struct mu2edev
 {
     mu2edev();
-    int  init(bool simMode = false);
+    int  init(DTCLib::DTC_Sim_Mode simMode = DTCLib::DTC_Sim_Mode_Disabled);
     int  read_data(int chn, void **buffer, int tmo_ms);
     int  read_release(int chn, unsigned num);
     int  release_all(int chn);

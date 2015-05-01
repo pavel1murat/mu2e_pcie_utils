@@ -9,7 +9,7 @@
 namespace DTCLib {
     class DTC {
     public:
-        DTC();
+        DTC(DTC_Sim_Mode mode = DTC_Sim_Mode_Disabled);
         virtual ~DTC() = default;
 
         const int DTC_BUFFSIZE;
@@ -192,7 +192,7 @@ namespace DTCLib {
         mu2edev device_;
         mu2e_databuff_t* daqbuffer_;
         mu2e_databuff_t* dcsbuffer_;
-        bool simMode_;
+        DTC_Sim_Mode simMode_;
         void* lastReadPtr_;
         void* nextReadPtr_;
         void* dcsReadPtr_;
