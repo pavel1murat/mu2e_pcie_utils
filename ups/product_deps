@@ -1,6 +1,6 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent pcie_linux_kernel_driver	v1_03_03
+parent pcie_linux_kernel_driver	v1_03_04
 defaultqual	e6
 
 # These optional lines define the installed directories where
@@ -18,10 +18,9 @@ fcldir      -
 
 #
 product		 version	optional
-TRACE            v3_04_00
+TRACE            v3_05_00
 swig             v3_0_2          -       only_for_build
-cetbuildtools    v4_03_03        -       only_for_build
-gcc              v4_9_1          -       only_for_build
+cetbuildtools    v4_09_02        -       only_for_build
 end_product_list
 
 # e6  - with gcc 4.9.1 and -std=c++1y
@@ -30,6 +29,8 @@ end_product_list
 qualifier   TRACE  notes
 e6:prof     e6     -std=c++1y
 e6:debug    e6     -std=c++1y
+e7:prof     e7     -std=c++1y
+e7:debug    e7     -std=c++1y
 end_qualifier_list
 
 # Preserve tabs and formatting in emacs and vi / vim:

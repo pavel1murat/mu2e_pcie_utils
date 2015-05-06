@@ -14,7 +14,7 @@ namespace DTCLib {
 
         const int DTC_BUFFSIZE;
 
-        bool IsSimulatedDTC() { return simMode_; }
+        DTC_Sim_Mode IsSimulatedDTC() { return simMode_; }
 
         //
         // DMA Functions
