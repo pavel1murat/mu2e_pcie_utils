@@ -1,3 +1,5 @@
+#! /bin/sh
+. `ups unsetup python`
 swig -c++ -javascript -outcurrentdir -node $1/DTC.i
 swig -c++ -javascript -outcurrentdir -node $1/DTCLibTest.i
 cp $1/* .

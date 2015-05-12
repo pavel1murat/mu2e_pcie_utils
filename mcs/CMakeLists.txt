@@ -1,4 +1,4 @@
-include_directories("${CMAKE_SOURCE_DIR}/linux_driver/develmodule")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../linux_driver/develmodule")
 
 cet_make_exec( mcs SOURCE mcs.cc )
 
