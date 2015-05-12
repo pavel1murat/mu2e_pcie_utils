@@ -30,7 +30,10 @@ namespace DTCLib {
 
         // Broadcast Readout
         void SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Timestamp& when);
-        
+
+        // Set number of ROCs in a Ring
+        void SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc);
+
         // For loopback testing...
         void WriteDMADAQPacket(const DTC_DMAPacket& packet);
         void WriteDMADCSPacket(const DTC_DMAPacket& packet);
@@ -68,13 +71,14 @@ namespace DTCLib {
         DTC_SERDESLoopbackMode SetSERDESLoopbackMode(const DTC_Ring_ID& ring, const DTC_SERDESLoopbackMode& mode);
         DTC_SERDESLoopbackMode ReadSERDESLoopback(const DTC_Ring_ID& ring);
 
-        bool ToggleROCEmulator(const DTC_ROC_ID& roc);
-        bool ReadROCEmulator(const DTC_ROC_ID& roc);
+        bool ToggleROCEmulator();
+        bool ReadROCEmulator();
 
-        DTC_RingEnableMode EnableRing(const DTC_Ring_ID& ring, const DTC_RingEnableMode& mode = DTC_RingEnableMode(), const DTC_ROC_ID& lastRoc = DTC_ROC_Unused);
-        DTC_RingEnableMode DisableRing(const DTC_Ring_ID& ring, const DTC_RingEnableMode& mode = DTC_RingEnableMode());
-        DTC_RingEnableMode ToggleRingEnabled(const DTC_Ring_ID& ring, const DTC_RingEnableMode& mode = DTC_RingEnableMode());
-        DTC_RingEnableMode ReadRingEnabled(const DTC_Ring_ID& ring);
+        bool EnableRing(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc = DTC_ROC_Unused);
+        bool DisableRing(const DTC_Ring_ID& ring);
+        bool ToggleRingEnabled(const DTC_Ring_ID& ring);
+        bool ReadRingEnabled(const DTC_Ring_ID& ring);
+        DTC_ROC_ID ReadRingROCCount(const DTC_Ring_ID& ring) { return maxRocs_[ring]; }
 
         bool ResetSERDES(const DTC_Ring_ID& ring, int interval = 100);
         bool ReadResetSERDES(const DTC_Ring_ID& ring);
@@ -105,14 +109,6 @@ namespace DTCLib {
         uint32_t ReadDataPendingTimer();
         int SetPacketSize(uint16_t packetSize);
         uint16_t ReadPacketSize();
-
-
-        // Set number of ROCs in a Ring
-        DTC_ROC_ID SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc);
-        DTC_ROC_ID ReadRingROCCount(const DTC_Ring_ID& ring);
-
-        DTC_FIFOFullErrorFlags WriteFIFOFullErrorFlags(const DTC_Ring_ID& ring, const DTC_FIFOFullErrorFlags& flags);
-        DTC_FIFOFullErrorFlags ReadFIFOFullErrorFlags(const DTC_Ring_ID& ring);
 
         DTC_Timestamp WriteTimestampPreset(const DTC_Timestamp& preset);
         DTC_Timestamp ReadTimestampPreset();
@@ -180,14 +176,6 @@ namespace DTCLib {
         uint32_t ReadDataPendingTimerRegister() { return ReadRegister(DTC_Register_DataPendingTimer); }
         void WriteDMAPacketSizetRegister(uint32_t data) { WriteRegister(data, DTC_Register_DMATransferLength); }
         uint32_t ReadDMAPacketSizeRegister() { return ReadRegister(DTC_Register_DMATransferLength); }
-        void WriteNUMROCsRegister(uint32_t data){ WriteRegister(data, DTC_Register_NUMROCs); }
-        uint32_t ReadNUMROCsRegister() { return ReadRegister(DTC_Register_NUMROCs); }
-        void WriteFIFOFullErrorFlag0Register(uint32_t data){ WriteRegister(data, DTC_Register_FIFOFullErrorFlag0); }
-        uint32_t ReadFIFOFullErrorFlag0Register() { return ReadRegister(DTC_Register_FIFOFullErrorFlag0); }
-        void WriteFIFOFullErrorFlag1Register(uint32_t data){ WriteRegister(data, DTC_Register_FIFOFullErrorFlag1); }
-        uint32_t ReadFIFOFullErrorFlag1Register() { return ReadRegister(DTC_Register_FIFOFullErrorFlag1); }
-        void WriteFIFOFullErrorFlag2Register(uint32_t data){ WriteRegister(data, DTC_Register_FIFOFullErrorFlag2); }
-        uint32_t ReadFIFOFullErrorFlag2Register() { return ReadRegister(DTC_Register_FIFOFullErrorFlag2); }
         void WriteTimestampPreset0Register(uint32_t data){ WriteRegister(data, DTC_Register_TimestampPreset0); }
         uint32_t ReadTimestampPreset0Register() { return ReadRegister(DTC_Register_TimestampPreset0); }
         void WriteTimestampPreset1Register(uint32_t data){ WriteRegister(data, DTC_Register_TimestampPreset1); }
@@ -200,6 +188,7 @@ namespace DTCLib {
         DTC_TestCommand ReadTestCommand();
 
     private:
+        DTC_ROC_ID maxRocs_[7];
         mu2edev device_;
         mu2e_databuff_t* daqbuffer_;
         mu2e_databuff_t* dcsbuffer_;

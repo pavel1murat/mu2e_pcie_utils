@@ -8,8 +8,6 @@
 
 namespace DTCLib
 {
-    const uint32_t ExpectedDesignVersion = 0x20150422;
-
     enum DTC_Register : uint16_t {
         DTC_Register_DesignVersion = 0x9000,
         DTC_Register_DTCControl = 0x9100,
@@ -33,10 +31,6 @@ namespace DTCLib
         DTC_Register_TimestampPreset0 = 0x9180,
         DTC_Register_TimestampPreset1 = 0x9184,
         DTC_Register_DataPendingTimer = 0x9188,
-        DTC_Register_NUMROCs = 0x918C,
-        DTC_Register_FIFOFullErrorFlag0 = 0x9190,
-        DTC_Register_FIFOFullErrorFlag1 = 0x9194,
-        DTC_Register_FIFOFullErrorFlag2 = 0x9198,
         DTC_Register_PacketSize = 0x9204,
         DTC_Register_FPGAPROMProgramStatus = 0x9404,
         DTC_Register_FPGACoreAccess = 0x9408,
@@ -113,7 +107,9 @@ namespace DTCLib
         DTC_Sim_Mode_Calorimeter,
         DTC_Sim_Mode_CosmicVeto,
     };
-    
+
+
+
     class DTC_WrongPacketTypeException : public std::exception {
     public:
         virtual const char* what() const throw()
@@ -507,27 +503,6 @@ namespace DTCLib
         uint32_t LRX;           /**< Last RX Byte Rate */
         DTC_PCIeStat() {}
         DTC_PCIeStat(TRNStatistics in);
-    };
-
-    struct DTC_RingEnableMode {
-    public:
-        bool TimingEnable;
-        bool ReceiveEnable;
-        bool TransmitEnable;
-        DTC_RingEnableMode() : TimingEnable(true), ReceiveEnable(true), TransmitEnable(true) {}
-    };
-
-    struct DTC_FIFOFullErrorFlags {
-    public:
-        bool OutputData;
-        bool CFOLinkInput;
-        bool ReadoutRequestOutput;
-        bool DataRequestOutput;
-        bool OtherOutput;
-        bool OutputDCS;
-        bool OutputDCSStage2;
-        bool DataInput;
-        bool DCSStatusInput;
     };
 
     }
