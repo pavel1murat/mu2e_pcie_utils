@@ -60,7 +60,8 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool sendDReq, bool 
         for (uint8_t ring = 0; ring < 6; ++ring){
             if (ReadRingEnabled((DTC_Ring_ID)ring).TransmitEnable) {
                 TRACE(19, "DTC::GetData before DTC_ReadoutRequestPacket req");
-                DTC_ReadoutRequestPacket req((DTC_Ring_ID)ring, when, ReadRingROCCount((DTC_Ring_ID)ring));
+                uint8_t* request = new uint8_t[4];
+                DTC_ReadoutRequestPacket req((DTC_Ring_ID)ring, when, request, ReadRingROCCount((DTC_Ring_ID)ring));
                 TRACE(19, "DTC::GetData before WriteDMADAQPacket");
                 WriteDMADAQPacket(req);
                 TRACE(19, "DTC::GetData after  WriteDMADAQPacket");
@@ -157,8 +158,9 @@ std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when, bool sendDReq, bool sen
             void* packetPtr = (void*)(((char*)data[i]) + 16 * (1 + packet));
             ss << DTC_DataPacket(packetPtr).toJSON() << ",";
         }
-        ss << "],";
-        ss << "},";
+        ss << "]";
+        ss << "}";
+        if (i + 1 < data.size()) { ss << ","; }
     }
 
     TRACE(19, "DTC::GetJSONData RETURN");
@@ -220,7 +222,8 @@ void DTCLib::DTC::DCSRequestReply_OLD(const DTC_Ring_ID& ring, const DTC_ROC_ID&
 
 void DTCLib::DTC::SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Timestamp& when)
 {
-    DTC_ReadoutRequestPacket req(ring, when, ReadRingROCCount((DTC_Ring_ID)ring));
+    uint8_t* request = new uint8_t[4];
+    DTC_ReadoutRequestPacket req(ring, when, request, ReadRingROCCount((DTC_Ring_ID)ring));
     WriteDMADAQPacket(req);
 }
 
@@ -304,7 +307,26 @@ std::string DTCLib::DTC::RegisterRead(const DTC_Register& address)
 
 std::string DTCLib::DTC::ReadDesignVersion()
 {
-    return RegisterRead(DTC_Register_DesignVersion);
+    return ReadDesignVersionNumber() + "_" + ReadDesignDate();
+}
+std::string DTCLib::DTC::ReadDesignDate()
+{
+    uint32_t data = ReadDesignDateRegister();
+    int yearHex = data & 0xFF000000 >> 24;
+    int year = (yearHex & 0xF0) * 10 + (yearHex & 0xF);
+    int monthHex = data & 0xFF0000 >> 16;
+    int month = (monthHex & 0xF0) * 10 + (monthHex & 0xF);
+    int dayHex = data & 0xFF00 >> 8;
+    int day = (dayHex & 0xF0) * 10 + (dayHex & 0xF);
+    int hour = (data & 0xF0) * 10 + (data & 0xF);
+    return "20" + std::to_string(year) + "-" + std::to_string(month) + "-" + std::to_string(day) + "-" + std::to_string(hour);
+}
+std::string DTCLib::DTC::ReadDesignVersionNumber()
+{
+    uint32_t data = ReadDesignVersionNumberRegister();
+    int minor = data & 0xFF;
+    int major = data & 0xFF00 >> 8;
+    return "v" + std::to_string(major) + "." + std::to_string(minor);
 }
 
 void DTCLib::DTC::ResetDTC()
@@ -428,6 +450,18 @@ DTCLib::DTC_SERDESLoopbackMode DTCLib::DTC::ReadSERDESLoopback(const DTC_Ring_ID
     return static_cast<DTC_SERDESLoopbackMode>(dataSet.to_ulong());
 }
 
+bool DTCLib::DTC::ReadSERDESOscillatorIICError()
+{
+    std::bitset<32> dataSet = ReadSERDESOscillatorStatusRegister();
+    return dataSet[2];
+}
+
+bool DTCLib::DTC::ReadSERDESOscillatorInitializationComplete()
+{
+    std::bitset<32> dataSet = ReadSERDESOscillatorStatusRegister();
+    return dataSet[1];
+}
+
 bool DTCLib::DTC::ToggleROCEmulator(const DTC_Ring_ID& ring)
 {
     std::bitset<32> dataSet = ReadROCEmulationEnableRegister();
@@ -466,7 +500,7 @@ DTCLib::DTC_RingEnableMode DTCLib::DTC::ToggleRingEnabled(const DTC_Ring_ID& rin
     if (mode.TransmitEnable) { data.flip((uint8_t)ring); }
     if (mode.ReceiveEnable) { data.flip((uint8_t)ring + 8); }
     if (mode.TimingEnable) { data.flip((uint8_t)ring + 16); }
-    
+
     WriteRingEnableRegister(data.to_ulong());
     return ReadRingEnabled(ring);
 }
@@ -636,6 +670,51 @@ DTCLib::DTC_ROC_ID DTCLib::DTC::ReadRingROCCount(const DTC_Ring_ID& ring)
     int number = ringRocs[ring * 3] + (ringRocs[ring * 3 + 1] << 1) + (ringRocs[ring * 3 + 2] << 2);
     if (number == 0) { return DTC_ROC_Unused; }
     else return static_cast<DTC_ROC_ID>(number - 1);
+}
+
+
+DTCLib::DTC_FIFOFullErrorFlags DTCLib::DTC::WriteFIFOFullErrorFlags(const DTC_Ring_ID& ring, const DTC_FIFOFullErrorFlags& flags)
+{
+    std::bitset<32> data0 = ReadFIFOFullErrorFlag0Register();
+    std::bitset<32> data1 = ReadFIFOFullErrorFlag1Register();
+    std::bitset<32> data2 = ReadFIFOFullErrorFlag2Register();
+
+    data0[ring] = flags.OutputData;
+    data0[ring + 8] = flags.CFOLinkInput;
+    data0[ring + 16] = flags.ReadoutRequestOutput;
+    data0[ring + 24] = flags.DataRequestOutput;
+    data1[ring] = flags.OtherOutput;
+    data1[ring + 8] = flags.OutputDCS;
+    data1[ring + 16] = flags.OutputDCSStage2;
+    data1[ring + 24] = flags.DataInput;
+    data2[ring] = flags.DCSStatusInput;
+
+    WriteFIFOFullErrorFlag0Register(data0.to_ulong());
+    WriteFIFOFullErrorFlag1Register(data1.to_ulong());
+    WriteFIFOFullErrorFlag2Register(data2.to_ulong());
+
+    return ReadFIFOFullErrorFlags(ring);
+}
+
+DTCLib::DTC_FIFOFullErrorFlags DTCLib::DTC::ReadFIFOFullErrorFlags(const DTC_Ring_ID& ring)
+{
+    std::bitset<32> data0 = ReadFIFOFullErrorFlag0Register();
+    std::bitset<32> data1 = ReadFIFOFullErrorFlag1Register();
+    std::bitset<32> data2 = ReadFIFOFullErrorFlag2Register();
+    DTC_FIFOFullErrorFlags flags;
+
+    flags.OutputData = data0[ring];
+    flags.CFOLinkInput = data0[ring + 8];
+    flags.ReadoutRequestOutput = data0[ring + 16];
+    flags.DataRequestOutput = data0[ring + 24];
+    flags.OtherOutput = data1[ring];
+    flags.OutputDCS = data1[ring + 8];
+    flags.OutputDCSStage2 = data1[ring + 16];
+    flags.DataInput = data1[ring + 24];
+    flags.DCSStatusInput = data2[ring];
+
+    return flags;
+
 }
 
 DTCLib::DTC_Timestamp DTCLib::DTC::WriteTimestampPreset(const DTC_Timestamp& preset)

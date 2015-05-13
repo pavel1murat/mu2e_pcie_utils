@@ -89,7 +89,7 @@ std::string DTCLib::DTC_DataPacket::toJSON()
     ss << (int)dataPtr_[12] << ",";
     ss << (int)dataPtr_[13] << ",";
     ss << (int)dataPtr_[14] << ",";
-    ss << (int)dataPtr_[15] << "],";
+    ss << (int)dataPtr_[15] << "]";
     ss << "}";
     return ss.str();
 }
@@ -145,7 +145,7 @@ std::string DTCLib::DTC_DMAPacket::headerJSON()
     ss << "byteCount: " << byteCount_ << ",";
     ss << "ringID: " << ringID_ << ",";
     ss << "packetType: " << packetType_ << ",";
-    ss << "rocID: " << rocID_ << ",";
+    ss << "rocID: " << rocID_;
     return ss.str();
 }
 
@@ -186,7 +186,7 @@ std::string DTCLib::DTC_DCSRequestPacket::toJSON()
 {
     std::stringstream ss;
     ss << "DCSRequestPacket: {";
-    ss << headerJSON();
+    ss << headerJSON() << ",";
     ss << "data: [" << (int)data_[0] << ",";
     ss << (int)data_[1] << ",";
     ss << (int)data_[2] << ",";
@@ -198,7 +198,7 @@ std::string DTCLib::DTC_DCSRequestPacket::toJSON()
     ss << (int)data_[8] << ",";
     ss << (int)data_[9] << ",";
     ss << (int)data_[10] << ",";
-    ss << (int)data_[11] << "],";
+    ss << (int)data_[11] << "]";
     ss << "}";
     return ss.str();
 }
@@ -216,12 +216,22 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSRequestPacket::ConvertToDataPacket() const
 DTCLib::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC, bool debug)
     : DTC_DMAPacket(DTC_PacketType_ReadoutRequest, ring, maxROC), timestamp_(), debug_(debug) {}
 
-DTCLib::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC, bool debug)
-    : DTC_DMAPacket(DTC_PacketType_ReadoutRequest, ring, maxROC), timestamp_(timestamp), debug_(debug) {}
+DTCLib::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp,uint8_t* request, DTC_ROC_ID maxROC, bool debug)
+    : DTC_DMAPacket(DTC_PacketType_ReadoutRequest, ring, maxROC), timestamp_(timestamp), debug_(debug)
+{
+    for (int i = 0; i < 4; ++i)
+    {
+        request_[i] = request[i];
+    }
+}
 
 DTCLib::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
 {
     if (packetType_ != DTC_PacketType_ReadoutRequest) { throw DTC_WrongPacketTypeException(); }
+    request_[0] = in.GetWord(4);
+    request_[1] = in.GetWord(5);
+    request_[2] = in.GetWord(14);
+    request_[3] = in.GetWord(15);
     uint8_t arr[6];
     for (int i = 0; i < 6; ++i)
     {
@@ -237,14 +247,18 @@ std::string DTCLib::DTC_ReadoutRequestPacket::toJSON()
     timestamp_.GetTimestamp(ts, 0);
     std::stringstream ss;
     ss << "ReadoutRequestPacket: {";
-    ss << headerJSON();
+    ss << headerJSON() << ",";
     ss << "timestamp: [" << (int)ts[0] << ",";
     ss << (int)ts[1] << ",";
     ss << (int)ts[2] << ",";
     ss << (int)ts[3] << ",";
     ss << (int)ts[4] << ",";
     ss << (int)ts[5] << "],";
-    ss << "debug: " << (debug_?"true":"false") << ",";
+    ss << "request: [" << (int)request_[0] << ",";
+    ss << (int)request_[1] << ",";
+    ss << (int)request_[2] << ",";
+    ss << (int)request_[3] << "],";
+    ss << "debug: " << (debug_?"true":"false");
     ss << "}";
     return ss.str();
 }
@@ -283,7 +297,7 @@ std::string DTCLib::DTC_DataRequestPacket::toJSON()
     timestamp_.GetTimestamp(ts, 0);
     std::stringstream ss;
     ss << "DataRequestPacket: {";
-    ss << headerJSON();
+    ss << headerJSON() << ",";
     ss << "timestamp: [" << (int)ts[0] << ",";
     ss << (int)ts[1] << ",";
     ss << (int)ts[2] << ",";
@@ -291,7 +305,7 @@ std::string DTCLib::DTC_DataRequestPacket::toJSON()
     ss << (int)ts[4] << ",";
     ss << (int)ts[5] << "],";
     ss << "debug:" << (debug_?"true":"false") << ",";
-    ss << "debugPacketCount: " << (int)debugPacketCount_ << ",";
+    ss << "debugPacketCount: " << (int)debugPacketCount_;
     ss << "}";
     return ss.str();
 }
@@ -337,7 +351,7 @@ std::string DTCLib::DTC_DCSReplyPacket::toJSON()
 {
     std::stringstream ss;
     ss << "DCSReplyPacket: {";
-    ss << headerJSON();
+    ss << headerJSON() << ",";
     ss << "data: [" << (int)data_[0] << ",";
     ss << (int)data_[1] << ",";
     ss << (int)data_[2] << ",";
@@ -349,7 +363,7 @@ std::string DTCLib::DTC_DCSReplyPacket::toJSON()
     ss << (int)data_[8] << ",";
     ss << (int)data_[9] << ",";
     ss << (int)data_[10] << ",";
-    ss << (int)data_[11] << "],";
+    ss << (int)data_[11] << "]";
     ss << "}";
     return ss.str();
 }
@@ -402,7 +416,7 @@ std::string DTCLib::DTC_DataHeaderPacket::toJSON()
     timestamp_.GetTimestamp(ts, 0);
     std::stringstream ss;
     ss << "DataHeaderPacket: {";
-    ss << headerJSON();
+    ss << headerJSON() << ",";
     ss << "packetCount: " << (int)packetCount_ << ",";
     ss << "timestamp: [" << (int)ts[0] << ",";
     ss << (int)ts[1] << ",";
@@ -413,7 +427,7 @@ std::string DTCLib::DTC_DataHeaderPacket::toJSON()
     ss << "status: " << (int)status_ << ",";
     ss << "data: [" << (int)dataStart_[0] << ",";
     ss << (int)dataStart_[1] << ",";
-    ss << (int)dataStart_[2] << "],";
+    ss << (int)dataStart_[2] << "]";
     ss << "}";
     return ss.str();
 }
@@ -624,7 +638,7 @@ std::string DTCLib::DTC_DMAState::toString() {
     std::stringstream stream;
     stream << "E: " << Engine << ", D: " << Direction;
     stream << ", BDs: " << BDs << ", Buffers: " << Buffers;
-    stream << ", PktSize: (" << MinPktSize << "," << MaxPktSize << "), ";
+    stream << ", PktSize: [" << MinPktSize << "," << MaxPktSize << "], ";
     stream << "BDerrs: " << BDerrs << ", BDSerrs: " << BDSerrs;
     stream << ", IntEnab: " << IntEnab << ", TestMode: " << TestMode.toString() << std::endl;
     return stream.str();

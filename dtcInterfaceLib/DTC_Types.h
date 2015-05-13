@@ -9,12 +9,16 @@
 
 namespace DTCLib
 {
+    const std::string ExpectedDesignVersion = "v1.0_2015-05-12-00";
+
     enum DTC_Register : uint16_t {
         DTC_Register_DesignVersion = 0x9000,
+        DTC_Register_DesignDate = 0x9004,
         DTC_Register_DTCControl = 0x9100,
         DTC_Register_DMATransferLength = 0x9104,
         DTC_Register_SERDESLoopbackEnable = 0x9108,
         DTC_Register_SERDESLoopbackEnable_Temp = 0x9168,
+        DTC_Register_SERDESOscillatorStatus = 0x910C,
         DTC_Register_ROCEmulationEnable = 0x9110,
         DTC_Register_RingEnable = 0x9114,
         DTC_Register_SERDESReset = 0x9118,
@@ -32,6 +36,10 @@ namespace DTCLib
         DTC_Register_TimestampPreset0 = 0x9180,
         DTC_Register_TimestampPreset1 = 0x9184,
         DTC_Register_DataPendingTimer = 0x9188,
+        DTC_Register_NUMROCs = 0x918C,
+        DTC_Register_FIFOFullErrorFlag0 = 0x9190,
+        DTC_Register_FIFOFullErrorFlag1 = 0x9194,
+        DTC_Register_FIFOFullErrorFlag2 = 0x9198,
         DTC_Register_PacketSize = 0x9204,
         DTC_Register_FPGAPROMProgramStatus = 0x9404,
         DTC_Register_FPGACoreAccess = 0x9408,
@@ -254,9 +262,10 @@ namespace DTCLib
     private:
         DTC_Timestamp timestamp_;
         bool debug_;
+        uint8_t request_[4];
     public:
         DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC = DTC_ROC_5, bool debug = false);
-        DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC = DTC_ROC_5, bool debug = false);
+        DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, uint8_t* request, DTC_ROC_ID maxROC = DTC_ROC_5, bool debug = false);
         DTC_ReadoutRequestPacket(const DTC_ReadoutRequestPacket& right) = default;
 #ifndef _WIN32
         DTC_ReadoutRequestPacket(DTC_ReadoutRequestPacket&& right) = default;
@@ -267,6 +276,7 @@ namespace DTCLib
 
         bool GetDebug() { return debug_; }
         DTC_Timestamp GetTimestamp() { return timestamp_; }
+        virtual uint8_t* GetData() { return request_; }
         DTC_DataPacket ConvertToDataPacket() const;
         std::string toJSON();
     };
@@ -333,7 +343,7 @@ namespace DTCLib
         DTC_Timestamp GetTimestamp() { return timestamp_; }
         DTC_Data_Status GetStatus() { return status_; }
         std::string toJSON();
-        };
+    };
 
     class DTC_ClockFanoutPacket : public DTC_DataPacket {
     private:
@@ -517,7 +527,7 @@ namespace DTCLib
             stream << "T:" << mode.TransmitEnable << ",R:" << mode.ReceiveEnable << ",Ti:" << mode.TimingEnable;
             return stream;
         }
-        friend bool operator!=(const DTC_RingEnableMode& left, const DTC_RingEnableMode& right){ return (left.TransmitEnable==right.TransmitEnable)&&(left.ReceiveEnable==right.ReceiveEnable)&&(left.TimingEnable==right.TimingEnable); }
+        friend bool operator!=(const DTC_RingEnableMode& left, const DTC_RingEnableMode& right){ return (left.TransmitEnable == right.TransmitEnable) && (left.ReceiveEnable == right.ReceiveEnable) && (left.TimingEnable == right.TimingEnable); }
     };
 
     struct DTC_FIFOFullErrorFlags {
@@ -533,6 +543,6 @@ namespace DTCLib
         bool DCSStatusInput;
     };
 
-    }
+}
 
 #endif //DTC_TYPES_H
