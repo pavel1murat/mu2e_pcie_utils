@@ -116,9 +116,7 @@ namespace DTCLib
         DTC_Sim_Mode_Calorimeter,
         DTC_Sim_Mode_CosmicVeto,
     };
-
-
-
+    
     class DTC_WrongPacketTypeException : public std::exception {
     public:
         virtual const char* what() const throw()

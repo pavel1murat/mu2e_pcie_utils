@@ -31,7 +31,6 @@ namespace DTCLib {
         // Broadcast Readout
         void SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Timestamp& when);
 
-
         // For loopback testing...
         void WriteDMADAQPacket(const DTC_DMAPacket& packet);
         void WriteDMADCSPacket(const DTC_DMAPacket& packet);
@@ -81,7 +80,6 @@ namespace DTCLib {
         DTC_RingEnableMode DisableRing(const DTC_Ring_ID& ring, const DTC_RingEnableMode& mode = DTC_RingEnableMode());
         DTC_RingEnableMode ToggleRingEnabled(const DTC_Ring_ID& ring, const DTC_RingEnableMode& mode = DTC_RingEnableMode());
         DTC_RingEnableMode ReadRingEnabled(const DTC_Ring_ID& ring);
-
 
         bool ResetSERDES(const DTC_Ring_ID& ring, int interval = 100);
         bool ReadResetSERDES(const DTC_Ring_ID& ring);
