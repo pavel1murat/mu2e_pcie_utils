@@ -68,8 +68,8 @@ namespace DTCLib {
         DTC_SERDESLoopbackMode SetSERDESLoopbackMode(const DTC_Ring_ID& ring, const DTC_SERDESLoopbackMode& mode);
         DTC_SERDESLoopbackMode ReadSERDESLoopback(const DTC_Ring_ID& ring);
 
-        bool ToggleROCEmulator(const DTC_ROC_ID& roc);
-        bool ReadROCEmulator(const DTC_ROC_ID& roc);
+        bool ToggleROCEmulator(const DTC_Ring_ID& ring);
+        bool ReadROCEmulator(const DTC_Ring_ID& ring);
 
         DTC_RingEnableMode EnableRing(const DTC_Ring_ID& ring, const DTC_RingEnableMode& mode = DTC_RingEnableMode(), const DTC_ROC_ID& lastRoc = DTC_ROC_Unused);
         DTC_RingEnableMode DisableRing(const DTC_Ring_ID& ring, const DTC_RingEnableMode& mode = DTC_RingEnableMode());

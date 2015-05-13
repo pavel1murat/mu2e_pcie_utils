@@ -4,6 +4,7 @@
 #include <bitset> // std::bitset
 #include <cstdint> // uint8_t, uint16_t
 #include <vector> // std::vector
+#include <iostream> //std::ostream
 #include "linux_driver/mymodule2/mu2e_mmap_ioctl.h"
 
 namespace DTCLib
@@ -511,10 +512,16 @@ namespace DTCLib
 
     struct DTC_RingEnableMode {
     public:
-        bool TimingEnable;
-        bool ReceiveEnable;
         bool TransmitEnable;
-        DTC_RingEnableMode() : TimingEnable(true), ReceiveEnable(true), TransmitEnable(true) {}
+        bool ReceiveEnable;
+        bool TimingEnable;
+        DTC_RingEnableMode() : TransmitEnable(true), ReceiveEnable(true), TimingEnable(true) {}
+        DTC_RingEnableMode(bool transmit, bool receive, bool timing) : TransmitEnable(transmit), ReceiveEnable(receive), TimingEnable(timing) {}
+        friend std::ostream& operator<<(std::ostream& stream, const DTC_RingEnableMode& mode) {
+            stream << "T:" << mode.TransmitEnable << ",R:" << mode.ReceiveEnable << ",Ti:" << mode.TimingEnable;
+            return stream;
+        }
+        friend bool operator!=(const DTC_RingEnableMode& left, const DTC_RingEnableMode& right){ return (left.TransmitEnable==right.TransmitEnable)&&(left.ReceiveEnable==right.ReceiveEnable)&&(left.TimingEnable==right.TimingEnable); }
     };
 
     struct DTC_FIFOFullErrorFlags {
