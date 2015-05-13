@@ -586,7 +586,7 @@ static int __init init_mu2e(void)
     unsigned long   buffdesc_sz;
     u32             descDmaAdr;
 
-    TRACE( 2, "init_mu2e" );
+    TRACE( 0, "init_mu2e" );
 
     // fs interface, pci, memory, events(i.e polling)
 
@@ -600,7 +600,7 @@ static int __init init_mu2e(void)
     Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
 		  , 0x9118, 0x00000006 ); // Reset all links
     msleep( 20 );
-    TRACE( 1, "reset done bits: 0x%08x"
+    TRACE( 1, "init_mu2e reset done bits: 0x%08x"
 	  , Dma_mReadReg((unsigned long)mu2e_pcie_bar_info.baseVAddr,0x9138) );
     Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
     	  , 0x9114, 0x00000006 ); // make sure all links are enabled
@@ -611,8 +611,8 @@ static int __init init_mu2e(void)
     {
 	databuff_sz = sizeof(mu2e_databuff_t)*MU2E_NUM_RECV_BUFFS;
 	buffdesc_sz = sizeof(mu2e_buffdesc_C2S_t)*MU2E_NUM_RECV_BUFFS;
-	TRACE( 1,"init_mu2e dma_alloc databuff_sz=%lu buffdesc_sz=%lu"
-	      , databuff_sz, buffdesc_sz  );
+	TRACE( 1,"init_mu2e dma_alloc (#=%d) databuff_sz=%lu buffdesc_sz=%lu"
+	      , MU2E_NUM_RECV_BUFFS, databuff_sz, buffdesc_sz  );
 	va = dma_alloc_coherent(  &mu2e_pci_dev->dev, databuff_sz
 				, &mu2e_pci_recver[chn].databuffs_dma
 				, GFP_KERNEL );
@@ -626,9 +626,10 @@ static int __init init_mu2e(void)
 	mu2e_pci_recver[chn].buffdesc_ring = va;
 	mu2e_mmap_ptrs[chn][dir][MU2E_MAP_META]
 	    = (void*)__get_free_pages(GFP_KERNEL,0);
-	TRACE( 1, "mu2e_pci_recver[%u].databuffs=%p databuffs_dma=0x%llx "
+	TRACE( 1, "init_mu2e mu2e_pci_recver[%u].databuffs=%p databuffs_dma=0x%llx "
 	      "buffdesc_ring_dma=0x%llx meta@%p"
-	      , chn, mu2e_pci_recver[chn].databuffs
+	      , chn
+	      , mu2e_pci_recver[chn].databuffs
 	      , mu2e_pci_recver[chn].databuffs_dma
 	      , mu2e_pci_recver[chn].buffdesc_ring_dma
 	      , mu2e_mmap_ptrs[chn][dir][MU2E_MAP_META] );
@@ -653,7 +654,7 @@ static int __init init_mu2e(void)
 	}
 
 	// now write to the HW...
-	TRACE( 1,"write 0x%llx to 32bit reg",mu2e_pci_recver[chn].buffdesc_ring_dma );
+	TRACE( 1,"init_mu2e write 0x%llx to 32bit reg",mu2e_pci_recver[chn].buffdesc_ring_dma );
 	Dma_mWriteChnReg( chn, dir, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_RESET );
 	msleep( 20 );
 	Dma_mWriteChnReg( chn, dir, REG_HW_NEXT_BD
@@ -674,27 +675,30 @@ static int __init init_mu2e(void)
     dir=S2C;
     for (chn=0; chn<MU2E_NUM_SEND_CHANNELS; ++chn)
     {
-	TRACE( 1,"init_mu2e alloc %ld",sizeof(mu2e_databuff_t)*MU2E_NUM_SEND_BUFFS );
-	va = dma_alloc_coherent(  &mu2e_pci_dev->dev
-				, sizeof(mu2e_databuff_t)*MU2E_NUM_SEND_BUFFS
+	databuff_sz = sizeof(mu2e_databuff_t)*MU2E_NUM_SEND_BUFFS;
+	buffdesc_sz = sizeof(mu2e_buffdesc_C2S_t)*MU2E_NUM_SEND_BUFFS;
+	TRACE( 1,"init_mu2e dma_alloc (#=%d) databuff_sz=%lu buffdesc_sz=%lu"
+	      , MU2E_NUM_SEND_BUFFS, databuff_sz, buffdesc_sz  );
+	va = dma_alloc_coherent(  &mu2e_pci_dev->dev, databuff_sz
 				, &mu2e_pci_sender[chn].databuffs_dma
 				, GFP_KERNEL );
 	if (va == NULL) goto out;
 	mu2e_pci_sender[chn].databuffs = va;
 	mu2e_mmap_ptrs[chn][dir][MU2E_MAP_BUFF] = va;
-	va = dma_alloc_coherent(  &mu2e_pci_dev->dev
-				, sizeof(mu2e_buffdesc_S2C_t)*MU2E_NUM_SEND_BUFFS
+	va = dma_alloc_coherent(  &mu2e_pci_dev->dev, buffdesc_sz
 				, &mu2e_pci_sender[chn].buffdesc_ring_dma
 				, GFP_KERNEL );
 	if (va == NULL) goto out;
 	mu2e_pci_sender[chn].buffdesc_ring = va;
 	mu2e_mmap_ptrs[chn][dir][MU2E_MAP_META]
 	    = (void*)__get_free_pages(GFP_KERNEL,0);
-	TRACE( 1, "mu2e_pci_sender[%u].databuffs=%p databuffs_dma=0x%llx "
-	      "buffdesc_ring_dma=0x%llx"
-	      , chn, mu2e_pci_sender[chn].databuffs
+	TRACE( 1, "init_mu2e mu2e_pci_sender[%u].databuffs=%p databuffs_dma=0x%llx "
+	      "buffdesc_ring_dma=0x%llx meta@%p"
+	      , chn
+	      , mu2e_pci_sender[chn].databuffs
 	      , mu2e_pci_sender[chn].databuffs_dma
-	      , mu2e_pci_sender[chn].buffdesc_ring_dma );
+	      , mu2e_pci_sender[chn].buffdesc_ring_dma
+	      , mu2e_mmap_ptrs[chn][dir][MU2E_MAP_META] );
 	mu2e_channel_info_[chn][dir].buff_size = sizeof(mu2e_databuff_t);
 	mu2e_channel_info_[chn][dir].num_buffs = MU2E_NUM_SEND_BUFFS;
 	for (jj=0; jj<MU2E_NUM_SEND_BUFFS; ++jj)

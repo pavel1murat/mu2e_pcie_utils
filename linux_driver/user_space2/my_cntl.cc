@@ -107,7 +107,11 @@ main(  int	argc
 	if (sts) { perror("dev.init"); return (1); }
 	reg_access.reg_offset  = 0x9108;
 	reg_access.access_type = 1;
+# if 0
 	reg_access.val         = 0x3f;
+# else
+	reg_access.val         = 0x1;
+# endif
 	sts = ioctl( fd, M_IOC_REG_ACCESS, &reg_access );
 	if (sts) { perror("ioctl M_IOC_REG_ACCESS write"); return (1); }
 	int chn=0;
