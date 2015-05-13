@@ -160,7 +160,7 @@ void DTCLib::DTCLibTest::doTests()
     std::cout << "DEBUG 1" << std::endl;
     running_ = true;
     // Make sure that the ring is enabled before the tests.
-    thisDTC_->EnableRing(DTC_Ring_0, DTC_RingEnableMode(), DTC_ROC_0);
+    thisDTC_->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true,true,false), DTC_ROC_0);
 
     int testCount = 0;
     while (testCount < nTests_ || nTests_ < 0)
@@ -244,7 +244,7 @@ void DTCLib::DTCLibTest::doRegTest()
             std::cout << "Value after: " << ring0New << std::endl;
         }
         // Make sure that the ring is enabled after the test.
-        thisDTC_->EnableRing(DTC_Ring_0,DTC_RingEnableMode(), DTC_ROC_0);
+        thisDTC_->EnableRing(DTC_Ring_0,DTC_RingEnableMode(true,true,false), DTC_ROC_0);
         if (ring0New != ring0Value)
         {
             if (printMessages_) {
