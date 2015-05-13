@@ -51,8 +51,8 @@ static int ReadDMAEngineConfiguration(  struct pci_dev * pdev
     {
         val = Dma_mReadReg((base+reg_offset), REG_DMA_ENG_CTRL_STATUS);
         val = Dma_mReadReg((base+reg_offset), REG_DMA_ENG_CAP);
-        printk( "REG_DMA_ENG_CAP (capability, reg_offset=0x%04lx) returned 0x%x\n"
-	       , reg_offset+REG_DMA_ENG_CAP, val);
+        TRACE( 21,"REG_DMA_ENG_CAP (capability, reg_offset=0x%04lx) returned 0x%x\n"
+	      , reg_offset+REG_DMA_ENG_CAP, val);
 
         if(val & DMA_ENG_PRESENT_MASK)
         {

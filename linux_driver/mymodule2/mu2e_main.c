@@ -70,7 +70,7 @@ int mu2e_mmap( struct file *file, struct vm_area_struct *vma )
     int           sts;
 
     page2chDirMap( vma->vm_pgoff, ch, dir, map );
-    TRACE( 1, "mu2e_mmap: vm_pgoff:%lu ch:%d dir:%d map:%d: %p"
+    TRACE( 4, "mu2e_mmap: vm_pgoff:%lu ch:%d dir:%d map:%d: %p"
 	  , vma->vm_pgoff, ch, dir, map, mu2e_mmap_ptrs[ch][dir][map] );
     if (map == MU2E_MAP_META)
 	vma->vm_flags&=~VM_WRITE;
