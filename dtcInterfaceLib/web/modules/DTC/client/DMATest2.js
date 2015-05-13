@@ -231,19 +231,35 @@ function PopulateLEDS(dtcregdump) {
     setPixel(document.getElementById("SERDESOscillatorClockLED"), dtcregdump.SERDESOscillatorClock, "RW");
     setPixel(document.getElementById("SystemClockLED"), dtcregdump.SystemClock, "RW");
     setPixel(document.getElementById("TimingEnabledLED"), dtcregdump.TimingEnable, "RW");
-    setPixel(document.getElementById("ROCEmulatorEnabledLED"), dtcregdump.ROCEmulator, "RW");
+    setPixel(document.getElementById("ROCEmulatorEnabledRing0LED"), dtcregdump.Ring0.ROCEmulator, "RW");
+    setPixel(document.getElementById("ROCEmulatorEnabledRing1LED"), dtcregdump.Ring1.ROCEmulator, "RW");
+    setPixel(document.getElementById("ROCEmulatorEnabledRing2LED"), dtcregdump.Ring2.ROCEmulator, "RW");
+    setPixel(document.getElementById("ROCEmulatorEnabledRing3LED"), dtcregdump.Ring3.ROCEmulator, "RW");
+    setPixel(document.getElementById("ROCEmulatorEnabledRing4LED"), dtcregdump.Ring4.ROCEmulator, "RW");
+    setPixel(document.getElementById("ROCEmulatorEnabledRing5LED"), dtcregdump.Ring5.ROCEmulator, "RW");
     $("#triggerDMALength").val(dtcregdump.TriggerDMALength);
     $("#minDMALength").val(dtcregdump.MinDMALength);
     $("#dmaTimeoutPreset").val(dtcregdump.DMATimeout);
     $("#dataPendingTimer").val(dtcregdump.DataPendingTimer);
     $("#packetSize").val(dtcregdump.PacketSize);
-    setPixel(document.getElementById("Ring0EnabledLED"), dtcregdump.Ring0.Enabled, "RW");
-    setPixel(document.getElementById("Ring1EnabledLED"), dtcregdump.Ring1.Enabled, "RW");
-    setPixel(document.getElementById("Ring2EnabledLED"), dtcregdump.Ring2.Enabled, "RW");
-    setPixel(document.getElementById("Ring3EnabledLED"), dtcregdump.Ring3.Enabled, "RW");
-    setPixel(document.getElementById("Ring4EnabledLED"), dtcregdump.Ring4.Enabled, "RW");
-    setPixel(document.getElementById("Ring5EnabledLED"), dtcregdump.Ring5.Enabled, "RW");
-    setPixel(document.getElementById("CFOEnabledLED"), dtcregdump.CFO.Enabled, "RW");
+    setPixel(document.getElementById("Ring0TxEnabledLED"), dtcregdump.Ring0.TxEnabled, "RW");
+    setPixel(document.getElementById("Ring1TxEnabledLED"), dtcregdump.Ring1.TxEnabled, "RW");
+    setPixel(document.getElementById("Ring2TxEnabledLED"), dtcregdump.Ring2.TxEnabled, "RW");
+    setPixel(document.getElementById("Ring3TxEnabledLED"), dtcregdump.Ring3.TxEnabled, "RW");
+    setPixel(document.getElementById("Ring4TxEnabledLED"), dtcregdump.Ring4.TxEnabled, "RW");
+    setPixel(document.getElementById("Ring5TxEnabledLED"), dtcregdump.Ring5.TxEnabled, "RW");
+    setPixel(document.getElementById("Ring0RxEnabledLED"), dtcregdump.Ring0.RxEnabled, "RW");
+    setPixel(document.getElementById("Ring1RxEnabledLED"), dtcregdump.Ring1.RxEnabled, "RW");
+    setPixel(document.getElementById("Ring2RxEnabledLED"), dtcregdump.Ring2.RxEnabled, "RW");
+    setPixel(document.getElementById("Ring3RxEnabledLED"), dtcregdump.Ring3.RxEnabled, "RW");
+    setPixel(document.getElementById("Ring4RxEnabledLED"), dtcregdump.Ring4.RxEnabled, "RW");
+    setPixel(document.getElementById("Ring5RxEnabledLED"), dtcregdump.Ring5.RxEnabled, "RW");
+    setPixel(document.getElementById("Ring0TimingEnabledLED"), dtcregdump.Ring0.TimingEnabled, "RW");
+    setPixel(document.getElementById("Ring1TimingEnabledLED"), dtcregdump.Ring1.TimingEnabled, "RW");
+    setPixel(document.getElementById("Ring2TimingEnabledLED"), dtcregdump.Ring2.TimingEnabled, "RW");
+    setPixel(document.getElementById("Ring3TimingEnabledLED"), dtcregdump.Ring3.TimingEnabled, "RW");
+    setPixel(document.getElementById("Ring4TimingEnabledLED"), dtcregdump.Ring4.TimingEnabled, "RW");
+    setPixel(document.getElementById("Ring5TimingEnabledLED"), dtcregdump.Ring5.TimingEnabled, "RW");
     setPixel(document.getElementById("R0ROC0LED"), dtcregdump.Ring0.ROC0Enabled, "RW");
     setPixel(document.getElementById("R0ROC1LED"), dtcregdump.Ring0.ROC1Enabled, "RW");
     setPixel(document.getElementById("R0ROC2LED"), dtcregdump.Ring0.ROC2Enabled, "RW");
@@ -304,10 +320,6 @@ function PopulateLEDS(dtcregdump) {
     setPixel(document.getElementById("SERDESLoopbackNEPMARing5LED"), dtcregdump.Ring5.SERDESLoopback.NEPMA, "RW");
     setPixel(document.getElementById("SERDESLoopbackFEPMARing5LED"), dtcregdump.Ring5.SERDESLoopback.FEPMA, "RW");
     setPixel(document.getElementById("SERDESLoopbackFEPCSRing5LED"), dtcregdump.Ring5.SERDESLoopback.FEPCS, "RW");
-    setPixel(document.getElementById("SERDESLoopbackNEPCSCFOLED"), dtcregdump.CFO.SERDESLoopback.NEPCS, "RW");
-    setPixel(document.getElementById("SERDESLoopbackNEPMACFOLED"), dtcregdump.CFO.SERDESLoopback.NEPMA, "RW");
-    setPixel(document.getElementById("SERDESLoopbackFEPMACFOLED"), dtcregdump.CFO.SERDESLoopback.FEPMA, "RW");
-    setPixel(document.getElementById("SERDESLoopbackFEPCSCFOLED"), dtcregdump.CFO.SERDESLoopback.FEPCS, "RW");
 }
 
 
@@ -355,7 +367,13 @@ $(function () {
                     packet.data.push(parseInt($("#data11", this).val()));
                     break;
                 case 1:
+                    packet.request = [];
+                    packet.request.push(parseInt($("#request0", this).val()));
+                    packet.request.push(parseInt($("#request1", this).val()));
+                    packet.request.push(parseInt($("#request2", this).val()));
+                    packet.request.push(parseInt($("#request3", this).val()));
                 case 2:
+                    packet.debug = $("#debug", this).is(":checked");
                     packet.timestamp = [];
                     packet.timestamp.push(parseInt($("#timestamp0", this).val()));
                     packet.timestamp.push(parseInt($("#timestamp1", this).val()));
