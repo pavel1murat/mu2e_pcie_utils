@@ -58,9 +58,9 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool sendDReq, bool 
     if (sendRReq) {
         // Send a data request
         for (uint8_t ring = 0; ring < 6; ++ring){
-            if (ReadRingEnabled((DTC_Ring_ID)ring)) {
+            if (ReadRingEnabled((DTC_Ring_ID)ring).TransmitEnable) {
                 TRACE(19, "DTC::GetData before DTC_ReadoutRequestPacket req");
-                DTC_ReadoutRequestPacket req((DTC_Ring_ID)ring, when, maxRocs_[ring]);
+                DTC_ReadoutRequestPacket req((DTC_Ring_ID)ring, when, ReadRingROCCount((DTC_Ring_ID)ring));
                 TRACE(19, "DTC::GetData before WriteDMADAQPacket");
                 WriteDMADAQPacket(req);
                 TRACE(19, "DTC::GetData after  WriteDMADAQPacket");
@@ -70,9 +70,9 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool sendDReq, bool 
     if (sendDReq) {
         // Send a data request
         for (uint8_t ring = 0; ring < 6; ++ring){
-            if (ReadRingEnabled((DTC_Ring_ID)ring)) {
-                if (maxRocs_[ring] != DTC_ROC_Unused) {
-                    for (uint8_t roc = 0; roc <= maxRocs_[ring]; ++roc) {
+            if (ReadRingEnabled((DTC_Ring_ID)ring).TransmitEnable) {
+                if (ReadRingROCCount((DTC_Ring_ID)ring) != DTC_ROC_Unused) {
+                    for (uint8_t roc = 0; roc <= ReadRingROCCount((DTC_Ring_ID)ring); ++roc) {
                         TRACE(19, "DTC::GetData before DTC_DataRequestPacket req");
                         DTC_DataRequestPacket req((DTC_Ring_ID)ring, (DTC_ROC_ID)roc, when);
                         TRACE(19, "DTC::GetData before WriteDMADAQPacket");
@@ -220,15 +220,9 @@ void DTCLib::DTC::DCSRequestReply_OLD(const DTC_Ring_ID& ring, const DTC_ROC_ID&
 
 void DTCLib::DTC::SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Timestamp& when)
 {
-    DTC_ReadoutRequestPacket req(ring, when, maxRocs_[ring]);
+    DTC_ReadoutRequestPacket req(ring, when, ReadRingROCCount((DTC_Ring_ID)ring));
     WriteDMADAQPacket(req);
 }
-
-void DTCLib::DTC::SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc)
-{
-    maxRocs_[ring] = lastRoc;
-}
-
 
 void DTCLib::DTC::WriteDMADAQPacket(const DTC_DMAPacket& packet)
 {
@@ -434,48 +428,52 @@ DTCLib::DTC_SERDESLoopbackMode DTCLib::DTC::ReadSERDESLoopback(const DTC_Ring_ID
     return static_cast<DTC_SERDESLoopbackMode>(dataSet.to_ulong());
 }
 
-bool DTCLib::DTC::ToggleROCEmulator()
-{
-    bool enabled = ReadROCEmulator();
-    uint32_t value = enabled ? 0UL : 1UL;
-    WriteROCEmulationEnableRegister(value);
-    return ReadROCEmulator();
-}
-bool DTCLib::DTC::ReadROCEmulator()
+bool DTCLib::DTC::ToggleROCEmulator(const DTC_Ring_ID& ring)
 {
     std::bitset<32> dataSet = ReadROCEmulationEnableRegister();
-    return dataSet[0];
+    dataSet[ring] = !dataSet[ring];
+    WriteROCEmulationEnableRegister(dataSet.to_ulong());
+    return ReadROCEmulator(ring);
+}
+bool DTCLib::DTC::ReadROCEmulator(const DTC_Ring_ID& ring)
+{
+    std::bitset<32> dataSet = ReadROCEmulationEnableRegister();
+    return dataSet[ring];
 }
 
-bool DTCLib::DTC::EnableRing(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc)
+DTCLib::DTC_RingEnableMode DTCLib::DTC::EnableRing(const DTC_Ring_ID& ring, const DTC_RingEnableMode& mode, const DTC_ROC_ID& lastRoc)
 {
-    if (lastRoc != DTC_ROC_Unused)
-    {
-        maxRocs_[ring] = lastRoc;
-    }
     std::bitset<32> data = ReadRingEnableRegister();
-    data[ring] = 1;
+    data[ring] = mode.TransmitEnable;
+    data[ring + 8] = mode.ReceiveEnable;
+    data[ring + 16] = mode.TimingEnable;
+    WriteRingEnableRegister(data.to_ulong());
+    SetMaxROCNumber(ring, lastRoc);
+    return ReadRingEnabled(ring);
+}
+DTCLib::DTC_RingEnableMode DTCLib::DTC::DisableRing(const DTC_Ring_ID& ring, const DTC_RingEnableMode& mode)
+{
+    std::bitset<32> data = ReadRingEnableRegister();
+    data[ring] = data[ring] && !mode.TransmitEnable;
+    data[ring + 8] = data[ring + 8] && !mode.ReceiveEnable;
+    data[ring + 16] = data[ring + 16] && !mode.TimingEnable;
     WriteRingEnableRegister(data.to_ulong());
     return ReadRingEnabled(ring);
 }
-bool DTCLib::DTC::DisableRing(const DTC_Ring_ID& ring)
+DTCLib::DTC_RingEnableMode DTCLib::DTC::ToggleRingEnabled(const DTC_Ring_ID& ring, const DTC_RingEnableMode& mode)
 {
     std::bitset<32> data = ReadRingEnableRegister();
-    data[ring] = 0;
+    if (mode.TransmitEnable) { data.flip((uint8_t)ring); }
+    if (mode.ReceiveEnable) { data.flip((uint8_t)ring + 8); }
+    if (mode.TimingEnable) { data.flip((uint8_t)ring + 16); }
+    
     WriteRingEnableRegister(data.to_ulong());
     return ReadRingEnabled(ring);
 }
-bool DTCLib::DTC::ToggleRingEnabled(const DTC_Ring_ID& ring)
-{
-    std::bitset<32> data = ReadRingEnableRegister();
-    data.flip((uint8_t)ring);
-    WriteRingEnableRegister(data.to_ulong());
-    return ReadRingEnabled(ring);
-}
-bool DTCLib::DTC::ReadRingEnabled(const DTC_Ring_ID& ring)
+DTCLib::DTC_RingEnableMode DTCLib::DTC::ReadRingEnabled(const DTC_Ring_ID& ring)
 {
     std::bitset<32> dataSet = ReadRingEnableRegister();
-    return dataSet[ring];
+    return DTC_RingEnableMode(dataSet[ring], dataSet[ring + 8], dataSet[ring + 16]);
 }
 
 bool DTCLib::DTC::ResetSERDES(const DTC_Ring_ID& ring, int interval)
@@ -620,6 +618,24 @@ int DTCLib::DTC::SetPacketSize(uint16_t packetSize)
 uint16_t DTCLib::DTC::ReadPacketSize()
 {
     return static_cast<uint16_t>(ReadDMAPacketSizeRegister());
+}
+
+DTCLib::DTC_ROC_ID DTCLib::DTC::SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc)
+{
+    std::bitset<32> ringRocs = ReadNUMROCsRegister();
+    ringRocs[ring * 3] = lastRoc & 1;
+    ringRocs[ring * 3 + 1] = lastRoc & 3 >> 1;
+    ringRocs[ring * 3 + 2] = lastRoc & 7 >> 2;
+    WriteNUMROCsRegister(ringRocs.to_ulong());
+    return ReadRingROCCount(ring);
+}
+
+DTCLib::DTC_ROC_ID DTCLib::DTC::ReadRingROCCount(const DTC_Ring_ID& ring)
+{
+    std::bitset<32> ringRocs = ReadNUMROCsRegister();
+    int number = ringRocs[ring * 3] + (ringRocs[ring * 3 + 1] << 1) + (ringRocs[ring * 3 + 2] << 2);
+    if (number == 0) { return DTC_ROC_Unused; }
+    else return static_cast<DTC_ROC_ID>(number - 1);
 }
 
 DTCLib::DTC_Timestamp DTCLib::DTC::WriteTimestampPreset(const DTC_Timestamp& preset)
