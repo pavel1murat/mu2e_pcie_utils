@@ -124,25 +124,45 @@ function UpdateFormFields() {
 }
 
 function PopulateLEDS(dtcregdump) {
-    $("#dtcVersion").val(dtcregdump.Version.toString(16));
+    $("#dtcVersion").val(dtcregdump.Version);
     setPixel(document.getElementById("dtcResetLED"), dtcregdump.ResetDTC, "RW");
     setPixel(document.getElementById("serdesResetLED"), dtcregdump.ResetSERDESOscillator, "RW");
     setPixel(document.getElementById("SERDESOscillatorClockLED"), dtcregdump.SERDESOscillatorClock, "RW");
     setPixel(document.getElementById("SystemClockLED"), dtcregdump.SystemClock, "RW");
     setPixel(document.getElementById("TimingEnabledLED"), dtcregdump.TimingEnable, "RW");
-    setPixel(document.getElementById("ROCEmulatorEnabledLED"), dtcregdump.ROCEmulator, "RW");
     $("#triggerDMALength").val(dtcregdump.TriggerDMALength);
     $("#minDMALength").val(dtcregdump.MinDMALength);
     $("#dmaTimeoutPreset").val(dtcregdump.DMATimeout);
     $("#dataPendingTimer").val(dtcregdump.DataPendingTimer);
     $("#packetSize").val(dtcregdump.PacketSize);
-    setPixel(document.getElementById("Ring0EnabledLED"), dtcregdump.Ring0.Enabled, "RW");
-    setPixel(document.getElementById("Ring1EnabledLED"), dtcregdump.Ring1.Enabled, "RW");
-    setPixel(document.getElementById("Ring2EnabledLED"), dtcregdump.Ring2.Enabled, "RW");
-    setPixel(document.getElementById("Ring3EnabledLED"), dtcregdump.Ring3.Enabled, "RW");
-    setPixel(document.getElementById("Ring4EnabledLED"), dtcregdump.Ring4.Enabled, "RW");
-    setPixel(document.getElementById("Ring5EnabledLED"), dtcregdump.Ring5.Enabled, "RW");
-    setPixel(document.getElementById("CFOEnabledLED"), dtcregdump.CFO.Enabled, "RW");
+    setPixel(document.getElementById("SERDESOscillatorIICErrorLED"), dtcregdump.SERDESOscillatorIICError, "RO");
+    setPixel(document.getElementById("SERDESOscillatorInitCompleteLED"), dtcregdump.SERDESOscillatorInitComplete, "RO");
+    setPixel(document.getElementById("ROCEmulatorEnabledRing0LED"), dtcregdump.Ring0.ROCEmulator, "RW");
+    setPixel(document.getElementById("ROCEmulatorEnabledRing1LED"), dtcregdump.Ring1.ROCEmulator, "RW");
+    setPixel(document.getElementById("ROCEmulatorEnabledRing2LED"), dtcregdump.Ring2.ROCEmulator, "RW");
+    setPixel(document.getElementById("ROCEmulatorEnabledRing3LED"), dtcregdump.Ring3.ROCEmulator, "RW");
+    setPixel(document.getElementById("ROCEmulatorEnabledRing4LED"), dtcregdump.Ring4.ROCEmulator, "RW");
+    setPixel(document.getElementById("ROCEmulatorEnabledRing5LED"), dtcregdump.Ring5.ROCEmulator, "RW");
+    setPixel(document.getElementById("Ring0TxEnabledLED"), dtcregdump.Ring0.Enabled.TransmitEnable, "RW");
+    setPixel(document.getElementById("Ring1TxEnabledLED"), dtcregdump.Ring1.Enabled.TransmitEnable, "RW");
+    setPixel(document.getElementById("Ring2TxEnabledLED"), dtcregdump.Ring2.Enabled.TransmitEnable, "RW");
+    setPixel(document.getElementById("Ring3TxEnabledLED"), dtcregdump.Ring3.Enabled.TransmitEnable, "RW");
+    setPixel(document.getElementById("Ring4TxEnabledLED"), dtcregdump.Ring4.Enabled.TransmitEnable, "RW");
+    setPixel(document.getElementById("Ring5TxEnabledLED"), dtcregdump.Ring5.Enabled.TransmitEnable, "RW");
+    setPixel(document.getElementById("CFOTxEnabledLED"), dtcregdump.CFO.Enabled.TransmitEnable, "RW");
+    setPixel(document.getElementById("Ring0RxEnabledLED"), dtcregdump.Ring0.Enabled.ReceiveEnable, "RW");
+    setPixel(document.getElementById("Ring1RxEnabledLED"), dtcregdump.Ring1.Enabled.ReceiveEnable, "RW");
+    setPixel(document.getElementById("Ring2RxEnabledLED"), dtcregdump.Ring2.Enabled.ReceiveEnable, "RW");
+    setPixel(document.getElementById("Ring3RxEnabledLED"), dtcregdump.Ring3.Enabled.ReceiveEnable, "RW");
+    setPixel(document.getElementById("Ring4RxEnabledLED"), dtcregdump.Ring4.Enabled.ReceiveEnable, "RW");
+    setPixel(document.getElementById("Ring5RxEnabledLED"), dtcregdump.Ring5.Enabled.ReceiveEnable, "RW");
+    setPixel(document.getElementById("CFORxEnabledLED"), dtcregdump.CFO.Enabled.ReceiveEnable, "RW");
+    setPixel(document.getElementById("Ring0TimingEnabledLED"), dtcregdump.Ring0.Enabled.TimingEnable, "RW");
+    setPixel(document.getElementById("Ring1TimingEnabledLED"), dtcregdump.Ring1.Enabled.TimingEnable, "RW");
+    setPixel(document.getElementById("Ring2TimingEnabledLED"), dtcregdump.Ring2.Enabled.TimingEnable, "RW");
+    setPixel(document.getElementById("Ring3TimingEnabledLED"), dtcregdump.Ring3.Enabled.TimingEnable, "RW");
+    setPixel(document.getElementById("Ring4TimingEnabledLED"), dtcregdump.Ring4.Enabled.TimingEnable, "RW");
+    setPixel(document.getElementById("Ring5TimingEnabledLED"), dtcregdump.Ring5.Enabled.TimingEnable, "RW");
     setPixel(document.getElementById("R0ROC0LED"), dtcregdump.Ring0.ROC0Enabled, "RW");
     setPixel(document.getElementById("R0ROC1LED"), dtcregdump.Ring0.ROC1Enabled, "RW");
     setPixel(document.getElementById("R0ROC2LED"), dtcregdump.Ring0.ROC2Enabled, "RW");
@@ -383,6 +403,65 @@ function PopulateLEDS(dtcregdump) {
     setPixel(document.getElementById("SERDESRXCDRLockRing5LED"), dtcregdump.Ring5.RXCDRLock, "RO");
     setPixel(document.getElementById("SERDESRXCDRLockCFOLED"), dtcregdump.CFO.RXCDRLock, "RO");
     $("#timestamp").val(dtcregdump.Timestamp.toString(16));
+    setPixel(document.getElementById("OutputDataFIFOFullRing0LED"), dtcregdump.Ring0.FIFOFullFlags.OutputData, "RW");
+    setPixel(document.getElementById("CFOLinkFIFOFullRing0LED"), dtcregdump.Ring0.FIFOFullFlags.CFOLink, "RW");
+    setPixel(document.getElementById("ReadoutRequestFIFOFullRing0LED"), dtcregdump.Ring0.FIFOFullFlags.ReadoutRequest, "RW");
+    setPixel(document.getElementById("DataRequestFIFOFullRing0LED"), dtcregdump.Ring0.FIFOFullFlags.DataRequest, "RW");
+    setPixel(document.getElementById("OtherOutputFIFOFullRing0LED"), dtcregdump.Ring0.FIFOFullFlags.OtherOutput, "RW");
+    setPixel(document.getElementById("OutputDCSFIFOFullRing0LED"), dtcregdump.Ring0.FIFOFullFlags.OutputDCS, "RW");
+    setPixel(document.getElementById("OutputDCS2FIFOFullRing0LED"), dtcregdump.Ring0.FIFOFullFlags.OutputDCS2, "RW");
+    setPixel(document.getElementById("DataInputFIFOFullRing0LED"), dtcregdump.Ring0.FIFOFullFlags.DataInput, "RW");
+    setPixel(document.getElementById("DCSInputFIFOFullRing0LED"), dtcregdump.Ring0.FIFOFullFlags.DCSInput, "RW");
+    setPixel(document.getElementById("OutputDataFIFOFullRing1LED"), dtcregdump.Ring1.FIFOFullFlags.OutputData, "RW");
+    setPixel(document.getElementById("CFOLinkFIFOFullRing1LED"), dtcregdump.Ring1.FIFOFullFlags.CFOLink, "RW");
+    setPixel(document.getElementById("ReadoutRequestFIFOFullRing1LED"), dtcregdump.Ring1.FIFOFullFlags.ReadoutRequest, "RW");
+    setPixel(document.getElementById("DataRequestFIFOFullRing1LED"), dtcregdump.Ring1.FIFOFullFlags.DataRequest, "RW");
+    setPixel(document.getElementById("OtherOutputFIFOFullRing1LED"), dtcregdump.Ring1.FIFOFullFlags.OtherOutput, "RW");
+    setPixel(document.getElementById("OutputDCSFIFOFullRing1LED"), dtcregdump.Ring1.FIFOFullFlags.OutputDCS, "RW");
+    setPixel(document.getElementById("OutputDCS2FIFOFullRing1LED"), dtcregdump.Ring1.FIFOFullFlags.OutputDCS2, "RW");
+    setPixel(document.getElementById("DataInputFIFOFullRing1LED"), dtcregdump.Ring1.FIFOFullFlags.DataInput, "RW");
+    setPixel(document.getElementById("DCSInputFIFOFullRing1LED"), dtcregdump.Ring1.FIFOFullFlags.DCSInput, "RW");
+    setPixel(document.getElementById("OutputDataFIFOFullRing2LED"), dtcregdump.Ring2.FIFOFullFlags.OutputData, "RW");
+    setPixel(document.getElementById("CFOLinkFIFOFullRing2LED"), dtcregdump.Ring2.FIFOFullFlags.CFOLink, "RW");
+    setPixel(document.getElementById("ReadoutRequestFIFOFullRing2LED"), dtcregdump.Ring2.FIFOFullFlags.ReadoutRequest, "RW");
+    setPixel(document.getElementById("DataRequestFIFOFullRing2LED"), dtcregdump.Ring2.FIFOFullFlags.DataRequest, "RW");
+    setPixel(document.getElementById("OtherOutputFIFOFullRing2LED"), dtcregdump.Ring2.FIFOFullFlags.OtherOutput, "RW");
+    setPixel(document.getElementById("OutputDCSFIFOFullRing2LED"), dtcregdump.Ring2.FIFOFullFlags.OutputDCS, "RW");
+    setPixel(document.getElementById("OutputDCS2FIFOFullRing2LED"), dtcregdump.Ring2.FIFOFullFlags.OutputDCS2, "RW");
+    setPixel(document.getElementById("DataInputFIFOFullRing2LED"), dtcregdump.Ring2.FIFOFullFlags.DataInput, "RW");
+    setPixel(document.getElementById("DCSInputFIFOFullRing2LED"), dtcregdump.Ring2.FIFOFullFlags.DCSInput, "RW");
+    setPixel(document.getElementById("OutputDataFIFOFullRing3LED"), dtcregdump.Ring3.FIFOFullFlags.OutputData, "RW");
+    setPixel(document.getElementById("CFOLinkFIFOFullRing3LED"), dtcregdump.Ring3.FIFOFullFlags.CFOLink, "RW");
+    setPixel(document.getElementById("ReadoutRequestFIFOFullRing3LED"), dtcregdump.Ring3.FIFOFullFlags.ReadoutRequest, "RW");
+    setPixel(document.getElementById("DataRequestFIFOFullRing3LED"), dtcregdump.Ring3.FIFOFullFlags.DataRequest, "RW");
+    setPixel(document.getElementById("OtherOutputFIFOFullRing3LED"), dtcregdump.Ring3.FIFOFullFlags.OtherOutput, "RW");
+    setPixel(document.getElementById("OutputDCSFIFOFullRing3LED"), dtcregdump.Ring3.FIFOFullFlags.OutputDCS, "RW");
+    setPixel(document.getElementById("OutputDCS2FIFOFullRing3LED"), dtcregdump.Ring3.FIFOFullFlags.OutputDCS2, "RW");
+    setPixel(document.getElementById("DataInputFIFOFullRing3LED"), dtcregdump.Ring3.FIFOFullFlags.DataInput, "RW");
+    setPixel(document.getElementById("DCSInputFIFOFullRing3LED"), dtcregdump.Ring3.FIFOFullFlags.DCSInput, "RW");
+    setPixel(document.getElementById("OutputDataFIFOFullRing4LED"), dtcregdump.Ring4.FIFOFullFlags.OutputData, "RW");
+    setPixel(document.getElementById("CFOLinkFIFOFullRing4LED"), dtcregdump.Ring4.FIFOFullFlags.CFOLink, "RW");
+    setPixel(document.getElementById("ReadoutRequestFIFOFullRing4LED"), dtcregdump.Ring4.FIFOFullFlags.ReadoutRequest, "RW");
+    setPixel(document.getElementById("DataRequestFIFOFullRing4LED"), dtcregdump.Ring4.FIFOFullFlags.DataRequest, "RW");
+    setPixel(document.getElementById("OtherOutputFIFOFullRing4LED"), dtcregdump.Ring4.FIFOFullFlags.OtherOutput, "RW");
+    setPixel(document.getElementById("OutputDCSFIFOFullRing4LED"), dtcregdump.Ring4.FIFOFullFlags.OutputDCS, "RW");
+    setPixel(document.getElementById("OutputDCS2FIFOFullRing4LED"), dtcregdump.Ring4.FIFOFullFlags.OutputDCS2, "RW");
+    setPixel(document.getElementById("DataInputFIFOFullRing4LED"), dtcregdump.Ring4.FIFOFullFlags.DataInput, "RW");
+    setPixel(document.getElementById("DCSInputFIFOFullRing4LED"), dtcregdump.Ring4.FIFOFullFlags.DCSInput, "RW");
+    setPixel(document.getElementById("OutputDataFIFOFullRing5LED"), dtcregdump.Ring5.FIFOFullFlags.OutputData, "RW");
+    setPixel(document.getElementById("CFOLinkFIFOFullRing5LED"), dtcregdump.Ring5.FIFOFullFlags.CFOLink, "RW");
+    setPixel(document.getElementById("ReadoutRequestFIFOFullRing5LED"), dtcregdump.Ring5.FIFOFullFlags.ReadoutRequest, "RW");
+    setPixel(document.getElementById("DataRequestFIFOFullRing5LED"), dtcregdump.Ring5.FIFOFullFlags.DataRequest, "RW");
+    setPixel(document.getElementById("OtherOutputFIFOFullRing5LED"), dtcregdump.Ring5.FIFOFullFlags.OtherOutput, "RW");
+    setPixel(document.getElementById("OutputDCSFIFOFullRing5LED"), dtcregdump.Ring5.FIFOFullFlags.OutputDCS, "RW");
+    setPixel(document.getElementById("OutputDCS2FIFOFullRing5LED"), dtcregdump.Ring5.FIFOFullFlags.OutputDCS2, "RW");
+    setPixel(document.getElementById("DataInputFIFOFullRing5LED"), dtcregdump.Ring5.FIFOFullFlags.DataInput, "RW");
+    setPixel(document.getElementById("DCSInputFIFOFullRing5LED"), dtcregdump.Ring5.FIFOFullFlags.DCSInput, "RW");
+    setPixel(document.getElementById("OtherOutputFIFOFullCFOLED"), dtcregdump.CFO.FIFOFullFlags.OtherOutput, "RW");
+    setPixel(document.getElementById("OutputDCSFIFOFullCFOLED"), dtcregdump.CFO.FIFOFullFlags.OutputDCS, "RW");
+    setPixel(document.getElementById("OutputDCS2FIFOFullCFOLED"), dtcregdump.CFO.FIFOFullFlags.OutputDCS2, "RW");
+    setPixel(document.getElementById("DataInputFIFOFullCFOLED"), dtcregdump.CFO.FIFOFullFlags.DataInput, "RW");
+    setPixel(document.getElementById("DCSInputFIFOFullCFOLED"), dtcregdump.CFO.FIFOFullFlags.DCSInput, "RW");
     setPixel(document.getElementById("fpgapromfifofullLED"), dtcregdump.PROMFIFOFull, "RO");
     setPixel(document.getElementById("fpgapromreadyLED"), dtcregdump.PROMReady, "RO");
     setPixel(document.getElementById("fpgaCoreFIFOFullLED"), dtcregdump.FPGACoreFIFOFull, "RO");
@@ -445,7 +524,7 @@ function LEDExtAction(url, ring, val, id) {
     var post = {};
     post.ring = ring;
     post.val = val;
-    AjaxPost(url,post, function (output) {
+    AjaxPost(url, post, function (output) {
         setPixel(document.getElementById(id), output.Value1, "RW");
     });
 }
@@ -454,6 +533,23 @@ function LEDObjAction(url, ring, idlo, idhi) {
     AjaxPost(url, ring, function (output) {
         setPixel(document.getElementById(idlo), output.Value1.Low, "RW");
         setPixel(document.getElementById(idhi), output.Value1.High, "RW");
+    });
+}
+function SetFIFOFlags(ring, id) {
+    var objData = null;
+    var post = {};
+    post.ring = ring;
+    post.id = id;
+    AjaxPost("/DTC/SetFIFOFlags", post, function (output) {
+        setPixel(document.getElementById("OutputDataFIFOFullRing" + ring + "LED"), output.Value1.OutputData, "RW");
+        setPixel(document.getElementById("CFOLinkFIFOFullRing" + ring + "LED"), output.Value1.CFOLink, "RW");
+        setPixel(document.getElementById("ReadoutRequestFIFOFullRing" + ring + "LED"), output.Value1.ReadoutRequest, "RW");
+        setPixel(document.getElementById("DataRequestFIFOFullRing" + ring + "LED"), output.Value1.DataRequest, "RW");
+        setPixel(document.getElementById("OtherOutputFIFOFullRing" + ring + "LED"), output.Value1.OtherOutput, "RW");
+        setPixel(document.getElementById("OutputDCSFIFOFullRing" + ring + "LED"), output.Value1.OutputDCS, "RW");
+        setPixel(document.getElementById("OutputDCS2FIFOFullRing" + ring + "LED"), output.Value1.OutputDCS2, "RW");
+        setPixel(document.getElementById("DataInputFIFOFullRing" + ring + "LED"), output.Value1.DataInput, "RW");
+        setPixel(document.getElementById("DCSInputFIFOFullRing" + ring + "LED"), output.Value1.DCSInput, "RW");
     });
 }
 
@@ -490,64 +586,64 @@ function RunScript() {
 
 
 // When the DOM is ready to be interacted with, init.
-$( function () {
-    setPixel( document.getElementById( "RegDumpAjaxLED" ),0,"RO" );
-    setPixel( document.getElementById( "AjaxRequestLED" ),0,"RO" );
-    setPixel( document.getElementById( "FormAjaxLED" ),0,"RO" );
-    GetRegDump( );
-    ReadLog( );
-    $( "#post" ).click( function () {
-        UpdateFormFields( );
-    } );
-    $( 'input[name=base]' ).change( function () {
-        var jVal = $( "#value" );
-        var jBase = $( 'input[name=base]:checked' ).val( );
-        var oldval = parseInt( jVal.val( ),oldbase );
-        jVal.val( oldval.toString( jBase ) );
+$(function () {
+    setPixel(document.getElementById("RegDumpAjaxLED"), 0, "RO");
+    setPixel(document.getElementById("AjaxRequestLED"), 0, "RO");
+    setPixel(document.getElementById("FormAjaxLED"), 0, "RO");
+    GetRegDump();
+    ReadLog();
+    $("#post").click(function () {
+        UpdateFormFields();
+    });
+    $('input[name=base]').change(function () {
+        var jVal = $("#value");
+        var jBase = $('input[name=base]:checked').val();
+        var oldval = parseInt(jVal.val(), oldbase);
+        jVal.val(oldval.toString(jBase));
         oldbase = jBase;
-    } );
-    $( "#logInterval" ).change( function () {
-        if ( $( "#updateLog" ).is( ':checked' ) ) {
-            var newVal = parseInt( $( "#logInterval" ).val( ) * 1000,10 );
-            clearInterval( logIntervalHandle );
-            logIntervalHandle = setInterval( function () { ReadLog( ); },newVal );
+    });
+    $("#logInterval").change(function () {
+        if ($("#updateLog").is(':checked')) {
+            var newVal = parseInt($("#logInterval").val() * 1000, 10);
+            clearInterval(logIntervalHandle);
+            logIntervalHandle = setInterval(function () { ReadLog(); }, newVal);
         }
-    } );
-    $( "#regInterval" ).change( function () {
-        if ( $( "#updateReg" ).is( ':checked' ) ) {
-            var newVal = parseInt( $( "#regInterval" ).val( ) * 1000,10 );
-            clearInterval( regIntervalHandle );
-            regIntervalHandle = setInterval( function () { GetRegDump( ); },newVal );
+    });
+    $("#regInterval").change(function () {
+        if ($("#updateReg").is(':checked')) {
+            var newVal = parseInt($("#regInterval").val() * 1000, 10);
+            clearInterval(regIntervalHandle);
+            regIntervalHandle = setInterval(function () { GetRegDump(); }, newVal);
         }
-    } );
-    $( "#updateLog" ).change( function () {
-        if ( $( "#updateLog" ).is( ':checked' ) ) {
-            logIntervalHandle = setInterval( function () { ReadLog( ); },parseInt( $( "#logInterval" ).val( ) * 1000,10 ) );
-        }
-        else {
-            clearInterval( logIntervalHandle );
-        }
-    } );
-    logIntervalHandle = setInterval( function () { ReadLog( ); },parseInt( $( "#logInterval" ).val( ) * 1000,10 ) );
-    $( "#updateReg" ).change( function () {
-        if ( $( "#updateReg" ).is( ':checked' ) ) {
-            regIntervalHandle = setInterval( function () { GetRegDump( ); },parseInt( $( "#regInterval" ).val( ) * 1000,10 ) );
+    });
+    $("#updateLog").change(function () {
+        if ($("#updateLog").is(':checked')) {
+            logIntervalHandle = setInterval(function () { ReadLog(); }, parseInt($("#logInterval").val() * 1000, 10));
         }
         else {
-            clearInterval( regIntervalHandle );
+            clearInterval(logIntervalHandle);
         }
-    } );
+    });
+    logIntervalHandle = setInterval(function () { ReadLog(); }, parseInt($("#logInterval").val() * 1000, 10));
+    $("#updateReg").change(function () {
+        if ($("#updateReg").is(':checked')) {
+            regIntervalHandle = setInterval(function () { GetRegDump(); }, parseInt($("#regInterval").val() * 1000, 10));
+        }
+        else {
+            clearInterval(regIntervalHandle);
+        }
+    });
     
     var sendIds = {
         send: { data: [{ time: 0, value: 0 }], color: 'black', jsonPath: "/DTC/Send" },
         spayload: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/SPayload" },
     };
-    makeGraph( "#send",sendIds );
+    makeGraph("#send", sendIds);
     var recIds = {
         receive: { data: [{ time: 0, value: 0 }], color: 'black', jsonPath: "/DTC/Receive" },
         rpayload: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/RPayload" },
     };
-    makeGraph( "#receive",recIds );
+    makeGraph("#receive", recIds);
     
     $(window).smartresize(function () {
         $("#send").empty();
@@ -555,4 +651,4 @@ $( function () {
         makeGraph("#send", sendIds);
         makeGraph("#receive", recIds);
     });
-} );
+});

@@ -49,8 +49,14 @@ function SendStatistics() {
     //gmetric.send_gmetric("/etc/ganglia/gmond.conf", "PCIe Receive Rate", receive.toString(), "double", "B/s", "both", 15, 0, "DTC_PCIe", "mu2e DAQ", "PCIe Receive Rate", "PCIe Receive Rate");
 };
 
-function readMaxRocs(input, ring)
-{
+function readMaxRocs(input, ring) {
+    intput.ROC0Enabled = false;
+    intput.ROC1Enabled = false;
+    intput.ROC2Enabled = false;
+    intput.ROC3Enabled = false;
+    intput.ROC4Enabled = false;
+    intput.ROC5Enabled = false;
+    
     var rocs = DTC.ReadRingROCCount(ring);
     switch (rocs) {
         case 5:
@@ -87,6 +93,14 @@ function getRegDump() {
     dtcRegisters.TimingEnable = dtcem.RO_readTimingEnable();
     dtcRegisters.TriggerDMALength = dtcem.RO_readTriggerDMATransferLength();
     dtcRegisters.MinDMALength = dtcem.RO_readMinDMATransferLength();
+    dtcRegisters.SERDESOscillatorIICError = dtcem.RO_readSERDESOscillatorICCError();
+    dtcRegisters.SERDESOscillatorInitComplete = dtcrm.RO_readSERDESOScillatorInitializationComplete();
+    dtcRegisters.Ring0.ROCEmulator = dtcem.RO_readROCEmulator({ ring: 0 });
+    dtcRegisters.Ring1.ROCEmulator = dtcem.RO_readROCEmulator({ ring: 1 });
+    dtcRegisters.Ring2.ROCEmulator = dtcem.RO_readROCEmulator({ ring: 2 });
+    dtcRegisters.Ring3.ROCEmulator = dtcem.RO_readROCEmulator({ ring: 3 });
+    dtcRegisters.Ring4.ROCEmulator = dtcem.RO_readROCEmulator({ ring: 4 });
+    dtcRegisters.Ring5.ROCEmulator = dtcem.RO_readROCEmulator({ ring: 5 });
     dtcRegisters.Ring0.SERDESLoopback = dtcem.RO_readSERDESLoopback({ ring: 0 });
     dtcRegisters.Ring1.SERDESLoopback = dtcem.RO_readSERDESLoopback({ ring: 1 });
     dtcRegisters.Ring2.SERDESLoopback = dtcem.RO_readSERDESLoopback({ ring: 2 });
@@ -94,7 +108,6 @@ function getRegDump() {
     dtcRegisters.Ring4.SERDESLoopback = dtcem.RO_readSERDESLoopback({ ring: 4 });
     dtcRegisters.Ring5.SERDESLoopback = dtcem.RO_readSERDESLoopback({ ring: 5 });
     dtcRegisters.CFO.SERDESLoopback = dtcem.RO_readSERDESLoopback({ ring: 6 });
-    dtcRegisters.ROCEmulator = dtcem.RO_readROCEmulator();
     dtcRegisters.Ring0.Enabled = dtcem.RO_readRingEnabled({ ring: 0 });
     dtcRegisters.Ring1.Enabled = dtcem.RO_readRingEnabled({ ring: 1 });
     dtcRegisters.Ring2.Enabled = dtcem.RO_readRingEnabled({ ring: 2 });
@@ -196,6 +209,13 @@ function getRegDump() {
     dtcRegisters.Timestamp = dtcem.RO_readTimestampPreset();
     dtcRegisters.DataPendingTimer = dtcem.RO_readDataPendingTimer();
     dtcRegisters.PacketSize = dtcem.RO_readPacketSize();
+    dtcRegisters.Ring0.FIFOFullFlags = dtcem.RO_readFIFOFlags({ ring: 0 });
+    dtcRegisters.Ring1.FIFOFullFlags = dtcem.RO_readFIFOFlags({ ring: 1 });
+    dtcRegisters.Ring2.FIFOFullFlags = dtcem.RO_readFIFOFlags({ ring: 2 });
+    dtcRegisters.Ring3.FIFOFullFlags = dtcem.RO_readFIFOFlags({ ring: 3 });
+    dtcRegisters.Ring4.FIFOFullFlags = dtcem.RO_readFIFOFlags({ ring: 4 });
+    dtcRegisters.Ring5.FIFOFullFlags = dtcem.RO_readFIFOFlags({ ring: 5 });
+    dtcRegisters.CFO.FIFOFullFlags = dtcem.RO_readFIFOFlags({ ring: 6 });
     dtcRegisters.PROMFIFOFull = dtcem.RO_readFPGAPROMProgramFIFOFull();
     dtcRegisters.PROMReady = dtcem.RO_readFPGAPROMReady();
     dtcRegisters.FPGACoreFIFOFull = dtcem.RO_readFPGACoreAccessFIFOFull();
@@ -500,24 +520,50 @@ dtcem.RO_readSERDESLoopback = function (POST) {
     return output;
 };
 
+dtcem.RO_readSERDESOscillatorICCError = function () {
+    return DTC.ReadSERDESOscillatorIICError();
+}
+
+dtcem.RO_readSERDESOScillatorInitializationComplete = function () {
+    return DTC.ReadSERDESOscillatorInitializationComplete();
+}
+
 dtcem.RW_toggleROCEmulator = function (POST) {
-    var val = DTC.ToggleROCEmulator();
-    logMessage("ROC Emulator (" + val + ")", "toggled", POST.who);
+    var val = DTC.ToggleROCEmulator(POST.ring);
+    logMessage("ROC Emulator on ring " + POST.ring + "(" + val + ")", "toggled", POST.who);
     return val;
 }
 
 dtcem.RO_readROCEmulator = function (POST) {
-    return DTC.ReadROCEmulator();
+    return DTC.ReadROCEmulator(POST.ring);
 }
 
 dtcem.RW_toggleRingEnabled = function (POST) {
-    var val = DTC.ToggleRingEnabled(POST.ring);
-    logMessage("Ring Enabled on ring " + POST.ring + " (" + val + ")", "toggled", POST.who);
+    var id = POST.val;
+    var current = new dtc.DTC_RingEnableMode(false, false, false);
+    switch (id) {
+        case 0:
+            current.TransmitEnable = true;
+            break;
+        case 1:
+            current.ReceiveEnable = true;
+            break;
+        case 2:
+            current.TimingEnable = true;
+            break;
+    }
+    var val = DTC.ToggleRingEnabled(POST.ring, current);
+    logMessage("Ring Enable bit " + POST.val + " on ring " + POST.ring + " (" + val + ")", "toggled", POST.who);
     return val;
 }
 
 dtcem.RO_readRingEnabled = function (POST) {
-    return DTC.ReadRingEnabled(parseInt(POST.ring));
+    var output = { TransmitEnable: false, ReceiveEnable: false, TimingEnable: false };
+    var enable = DTC.ReadRingEnabled(parseInt(POST.ring));
+    output.TransmitEnable = enable.TransmitEnable;
+    output.ReceiveEnable = enable.ReceiveEnable;
+    output.TimingEnable = enable.TimingEnable;
+    return output;
 }
 
 dtcem.RW_resetSERDES = function (POST) {
@@ -686,6 +732,17 @@ dtcem.RW_setPacketSize = function (POST) {
 
 dtcem.RO_readPacketSize = function () {
     return DTC.ReadPacketSize();
+}
+
+dtcem.RO_readFIFOFlags = function (POST) {
+    return DTC.ReadFIFOFullErrorFlags(parseInt(POST.ring));
+}
+
+dtcem.RW_SetFIFOFlags = function (POST) {
+    var activeFlag = POST.id;
+    var flags = new dtc.DTC_FIFOFullErrorFlags();
+    flags[activeFlag] = true;
+    return DTC.ToggleFIFOFullErrorFlags(parseInt(POST.ring), flags);
 }
 
 dtcem.RW_setTimestampPreset = function (POST) {
@@ -858,11 +915,8 @@ dtcem.RW_DMAIO = function (POST, testStatus) {
 
 }
 
-dtcem.RW_setMaxROC = function (POST)
-{
-    var enabled = DTC.ReadRingEnabled(parseInt(POST.ring));
-    DTC.EnableRing(parseInt(POST.ring), parseInt(POST.val));
-    if(!enabled) { DTC.DisableRing(parseInt(POST.ring)); }
+dtcem.RW_setMaxROC = function (POST) {
+    DTC.SetMaxROCNumber(parseInt(POST.ring), parseInt(POST.val));
     logMessage("Max ROC on ring " + POST.ring + " to " + POST.val, "set", POST.who);
     return 1;
 }

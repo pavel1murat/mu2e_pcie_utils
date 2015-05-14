@@ -116,7 +116,7 @@ namespace DTCLib
         DTC_Sim_Mode_Calorimeter,
         DTC_Sim_Mode_CosmicVeto,
     };
-    
+
     class DTC_WrongPacketTypeException : public std::exception {
     public:
         virtual const char* what() const throw()
@@ -543,6 +543,29 @@ namespace DTCLib
         bool OutputDCSStage2;
         bool DataInput;
         bool DCSStatusInput;
+        DTC_FIFOFullErrorFlags()
+            : OutputData(false)
+            , CFOLinkInput(false)
+            , ReadoutRequestOutput(false)
+            , DataRequestOutput(false)
+            , OtherOutput(false)
+            , OutputDCS(false)
+            , OutputDCSStage2(false)
+            , DataInput(false)
+            , DCSStatusInput(false)
+        {}
+        DTC_FIFOFullErrorFlags(bool outputData, bool cfoLinkInput, bool readoutRequest, bool dataRequest,
+            bool otherOutput, bool outputDCS, bool outputDCS2, bool dataInput, bool dcsInput)
+            : OutputData(outputData)
+            , CFOLinkInput(cfoLinkInput)
+            , ReadoutRequestOutput(readoutRequest)
+            , DataRequestOutput(dataRequest)
+            , OtherOutput(otherOutput)
+            , OutputDCS(outputDCS)
+            , OutputDCSStage2(outputDCS2)
+            , DataInput(dataInput)
+            , DCSStatusInput(dcsInput)
+        {}
     };
 
 }

@@ -81,6 +81,7 @@ int mu2esim::init(DTCLib::DTC_Sim_Mode mode)
     registers_[0x9180] = 0x0;        // Timestamp preset to 0
     registers_[0x9184] = 0x0;
     registers_[0x9188] = 0x00002000; // Data pending timeout preset
+    registers_[0x918C] = 0x0;          // NUMROCs 0 for all rings
     registers_[0x9204] = 0x0010;     // Packet Size Bytes
     registers_[0x91A4] = 0x1;        // FPGA PROM Ready
     registers_[0x9404] = 0x1;

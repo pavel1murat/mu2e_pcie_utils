@@ -225,7 +225,7 @@ function RunScript() {
 
 
 function PopulateLEDS(dtcregdump) {
-    $("#dtcVersion").val(dtcregdump.Version.toString(16));
+    $("#dtcVersion").val(dtcregdump.Version);
     setPixel(document.getElementById("dtcResetLED"), dtcregdump.ResetDTC, "RW");
     setPixel(document.getElementById("serdesResetLED"), dtcregdump.ResetSERDESOscillator, "RW");
     setPixel(document.getElementById("SERDESOscillatorClockLED"), dtcregdump.SERDESOscillatorClock, "RW");
@@ -248,12 +248,14 @@ function PopulateLEDS(dtcregdump) {
     setPixel(document.getElementById("Ring3TxEnabledLED"), dtcregdump.Ring3.TxEnabled, "RW");
     setPixel(document.getElementById("Ring4TxEnabledLED"), dtcregdump.Ring4.TxEnabled, "RW");
     setPixel(document.getElementById("Ring5TxEnabledLED"), dtcregdump.Ring5.TxEnabled, "RW");
+    setPixel(document.getElementById("CFOTxEnabledLED"), dtcregdump.CFO.TxEnabled, "RW");
     setPixel(document.getElementById("Ring0RxEnabledLED"), dtcregdump.Ring0.RxEnabled, "RW");
     setPixel(document.getElementById("Ring1RxEnabledLED"), dtcregdump.Ring1.RxEnabled, "RW");
     setPixel(document.getElementById("Ring2RxEnabledLED"), dtcregdump.Ring2.RxEnabled, "RW");
     setPixel(document.getElementById("Ring3RxEnabledLED"), dtcregdump.Ring3.RxEnabled, "RW");
     setPixel(document.getElementById("Ring4RxEnabledLED"), dtcregdump.Ring4.RxEnabled, "RW");
     setPixel(document.getElementById("Ring5RxEnabledLED"), dtcregdump.Ring5.RxEnabled, "RW");
+    setPixel(document.getElementById("CFORxEnabledLED"), dtcregdump.CFO.RxEnabled, "RW");
     setPixel(document.getElementById("Ring0TimingEnabledLED"), dtcregdump.Ring0.TimingEnabled, "RW");
     setPixel(document.getElementById("Ring1TimingEnabledLED"), dtcregdump.Ring1.TimingEnabled, "RW");
     setPixel(document.getElementById("Ring2TimingEnabledLED"), dtcregdump.Ring2.TimingEnabled, "RW");
@@ -320,6 +322,10 @@ function PopulateLEDS(dtcregdump) {
     setPixel(document.getElementById("SERDESLoopbackNEPMARing5LED"), dtcregdump.Ring5.SERDESLoopback.NEPMA, "RW");
     setPixel(document.getElementById("SERDESLoopbackFEPMARing5LED"), dtcregdump.Ring5.SERDESLoopback.FEPMA, "RW");
     setPixel(document.getElementById("SERDESLoopbackFEPCSRing5LED"), dtcregdump.Ring5.SERDESLoopback.FEPCS, "RW");
+    setPixel(document.getElementById("SERDESLoopbackNEPCSCFOLED"), dtcregdump.CFO.SERDESLoopback.NEPCS, "RW");
+    setPixel(document.getElementById("SERDESLoopbackNEPMACFOLED"), dtcregdump.CFO.SERDESLoopback.NEPMA, "RW");
+    setPixel(document.getElementById("SERDESLoopbackFEPMACFOLED"), dtcregdump.CFO.SERDESLoopback.FEPMA, "RW");
+    setPixel(document.getElementById("SERDESLoopbackFEPCSCFOLED"), dtcregdump.CFO.SERDESLoopback.FEPCS, "RW");
 }
 
 
