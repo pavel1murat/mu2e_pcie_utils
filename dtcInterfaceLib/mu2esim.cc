@@ -55,7 +55,8 @@ int mu2esim::init(DTCLib::DTC_Sim_Mode mode)
     TRACE(17, "mu2esim::init Initializing registers");
     isActive_ = true;
     // Set initial register values...
-    registers_[0x9000] = 0x53494D44; // SIMD in ASCII
+    registers_[0x9000] = 0x00006363; // v99.99
+    registers_[0x9004] = 0x53494D44; // SIMD in ASCII
     registers_[0x900C] = 0x00000010; // Send
     registers_[0x9010] = 0x00000040; // Recieve
     registers_[0x9014] = 0x00000100; // SPayload
@@ -63,9 +64,10 @@ int mu2esim::init(DTCLib::DTC_Sim_Mode mode)
     registers_[0x9100] = 0x40000003; // Clear latched errors, System Clock, Timing Enable
     registers_[0x9104] = 0x80000040; //Default value from HWUG
     registers_[0x9108] = 0x00049249; // SERDES Loopback PCS Near-End
+    registers_[0x910C] = 0x2; // Initialization Complete, no IIC Error
     registers_[0x9168] = 0x00049249;
-    registers_[0x9110] = 0x1;        // ROC Emulator enabled (of course!)
-    registers_[0x9114] = 0x7F;       // ALl rings enabled
+    registers_[0x9110] = 0x3F;        // ROC Emulators enabled (of course!)
+    registers_[0x9114] = 0x3F3F;       // ALl rings Tx/Rx enabled, CFO and timing disabled
     registers_[0x9118] = 0x0;        // No SERDES Reset
     registers_[0x911C] = 0x0;        // No SERDES Disparity Error
     registers_[0x9120] = 0x0;        // No SERDES CNIT Error
@@ -82,6 +84,9 @@ int mu2esim::init(DTCLib::DTC_Sim_Mode mode)
     registers_[0x9184] = 0x0;
     registers_[0x9188] = 0x00002000; // Data pending timeout preset
     registers_[0x918C] = 0x0;          // NUMROCs 0 for all rings
+    registers_[0x9190] = 0x0;  // NO FIFO Full flags
+    registers_[0x9194] = 0x0;
+    registers_[0x9198] = 0x0;
     registers_[0x9204] = 0x0010;     // Packet Size Bytes
     registers_[0x91A4] = 0x1;        // FPGA PROM Ready
     registers_[0x9404] = 0x1;

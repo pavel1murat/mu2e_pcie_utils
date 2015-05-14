@@ -6,7 +6,7 @@
 
 var dtc = require('./DTC');
 var dtclt = require('./DTCLibTest');
-var gmetric = require('./gmetric');
+//var gmetric = require('./gmetric');
 var fs = require('fs');
 var emitter = require('events').EventEmitter;
 
@@ -50,12 +50,12 @@ function SendStatistics() {
 };
 
 function readMaxRocs(input, ring) {
-    intput.ROC0Enabled = false;
-    intput.ROC1Enabled = false;
-    intput.ROC2Enabled = false;
-    intput.ROC3Enabled = false;
-    intput.ROC4Enabled = false;
-    intput.ROC5Enabled = false;
+    input.ROC0Enabled = false;
+    input.ROC1Enabled = false;
+    input.ROC2Enabled = false;
+    input.ROC3Enabled = false;
+    input.ROC4Enabled = false;
+    input.ROC5Enabled = false;
     
     var rocs = DTC.ReadRingROCCount(ring);
     switch (rocs) {
@@ -94,7 +94,7 @@ function getRegDump() {
     dtcRegisters.TriggerDMALength = dtcem.RO_readTriggerDMATransferLength();
     dtcRegisters.MinDMALength = dtcem.RO_readMinDMATransferLength();
     dtcRegisters.SERDESOscillatorIICError = dtcem.RO_readSERDESOscillatorICCError();
-    dtcRegisters.SERDESOscillatorInitComplete = dtcrm.RO_readSERDESOScillatorInitializationComplete();
+    dtcRegisters.SERDESOscillatorInitComplete = dtcem.RO_readSERDESOScillatorInitializationComplete();
     dtcRegisters.Ring0.ROCEmulator = dtcem.RO_readROCEmulator({ ring: 0 });
     dtcRegisters.Ring1.ROCEmulator = dtcem.RO_readROCEmulator({ ring: 1 });
     dtcRegisters.Ring2.ROCEmulator = dtcem.RO_readROCEmulator({ ring: 2 });
@@ -114,13 +114,13 @@ function getRegDump() {
     dtcRegisters.Ring3.Enabled = dtcem.RO_readRingEnabled({ ring: 3 });
     dtcRegisters.Ring4.Enabled = dtcem.RO_readRingEnabled({ ring: 4 });
     dtcRegisters.Ring5.Enabled = dtcem.RO_readRingEnabled({ ring: 5 });
+    dtcRegisters.CFO.Enabled = dtcem.RO_readRingEnabled({ ring: 6 });
     dtcRegisters.Ring0 = readMaxRocs(dtcRegisters.Ring0, 0);
     dtcRegisters.Ring1 = readMaxRocs(dtcRegisters.Ring1, 1);
     dtcRegisters.Ring2 = readMaxRocs(dtcRegisters.Ring2, 2);
     dtcRegisters.Ring3 = readMaxRocs(dtcRegisters.Ring3, 3);
     dtcRegisters.Ring4 = readMaxRocs(dtcRegisters.Ring4, 4);
     dtcRegisters.Ring5 = readMaxRocs(dtcRegisters.Ring5, 5);
-    dtcRegisters.CFO.Enabled = dtcem.RO_readRingEnabled({ ring: 6 });
     dtcRegisters.Ring0.ResetSERDES = dtcem.RO_readResetSERDES({ ring: 0 });
     dtcRegisters.Ring1.ResetSERDES = dtcem.RO_readResetSERDES({ ring: 1 });
     dtcRegisters.Ring2.ResetSERDES = dtcem.RO_readResetSERDES({ ring: 2 });
@@ -220,6 +220,7 @@ function getRegDump() {
     dtcRegisters.PROMReady = dtcem.RO_readFPGAPROMReady();
     dtcRegisters.FPGACoreFIFOFull = dtcem.RO_readFPGACoreAccessFIFOFull();
     regDump = dtcRegisters;
+    console.log("Done with RegDump");
 }
 
 function startTest(dma, packetSize, loopback, txChecker, rxGenerator) {

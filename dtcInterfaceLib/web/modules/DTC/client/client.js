@@ -638,17 +638,17 @@ $(function () {
         send: { data: [{ time: 0, value: 0 }], color: 'black', jsonPath: "/DTC/Send" },
         spayload: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/SPayload" },
     };
-    makeGraph("#send", sendIds);
+    //makeGraph("#send", sendIds);
     var recIds = {
         receive: { data: [{ time: 0, value: 0 }], color: 'black', jsonPath: "/DTC/Receive" },
         rpayload: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/RPayload" },
     };
-    makeGraph("#receive", recIds);
+    //makeGraph("#receive", recIds);
     
     $(window).smartresize(function () {
         $("#send").empty();
         $("#receive").empty();
-        makeGraph("#send", sendIds);
-        makeGraph("#receive", recIds);
+        //makeGraph("#send", sendIds);
+        //makeGraph("#receive", recIds);
     });
 });
