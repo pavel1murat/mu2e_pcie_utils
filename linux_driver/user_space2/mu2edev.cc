@@ -17,7 +17,7 @@
 mu2edev::mu2edev() : devfd_(0)
 		   , mu2e_mmap_ptrs_() // extended initializer list; need -std=c++0x
 {   TRACE_CNTL( "lvlsetM", 0xffff );
-    TRACE_CNTL( "lvlmskS", 0xf );
+    TRACE_CNTL( "lvlsetS", 0x1 );
 }
 
 int mu2edev::init()

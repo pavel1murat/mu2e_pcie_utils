@@ -23,6 +23,6 @@ main(  int	argc
 {
     DTCLib::DTC *thisDTC = new DTCLib::DTC();
     DTCLib::DTC_DataHeaderPacket packet = thisDTC->ReadNextDAQPacket();
-    std::cout << packet.toJSON();
+    std::cout << packet.toJSON() << '\n';
     return (0);
 }   // main

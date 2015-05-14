@@ -595,17 +595,31 @@ static int __init init_mu2e(void)
 
     mu2e_pci_dev = pci_get_device( XILINX_VENDOR_ID, XILINX_DEVICE_ID, NULL );
 
+    /* Use "Dma_" routines to init FPGA "user" application ("DTC") registers.
+       NOTE: a few more after dma engine setup (below).
+     */
     Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
-		  , 0x9100, 0xc0000000 ); // DTC reset, Clear Latched Errors
-    Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
-		  , 0x9118, 0x00000006 ); // Reset all links
+		  , 0x9100, 0x30000000 ); // Oscillator resets
     msleep( 20 );
+    Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
+		  , 0x9100, 0x80000000 ); // DTC reset, Clear Oscillator resets
+    msleep( 20 );
+    Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
+		  , 0x9100, 0x00000000 ); // Clear DTC reset
+    msleep( 20 );
+    Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
+		  , 0x9118, 0x0000003f ); // Reset all links
+    msleep( 20 );
+    Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
+		  , 0x9118, 0x00000000 ); // Clear Link Resets
+    Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
+		  , 0x9114, 0x00003f3f ); // make sure all links are enabled
+
     TRACE( 1, "init_mu2e reset done bits: 0x%08x"
 	  , Dma_mReadReg((unsigned long)mu2e_pcie_bar_info.baseVAddr,0x9138) );
-    Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
-    	  , 0x9114, 0x00000006 ); // make sure all links are enabled
 
 
+    /* DMA Engine (channels) setup... (buffers and descriptors (and metadata)) */
     dir=C2S;
     for (chn=0; chn<MU2E_NUM_RECV_CHANNELS; ++chn)
     {
@@ -731,6 +745,12 @@ static int __init init_mu2e(void)
 
 	Dma_mWriteChnReg( chn, dir, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_ENABLE );	
     }
+
+    /* Now, finish up with some more mu2e fpga user application stuff... */
+    Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
+		  , 0x9104, 0x80000040 ); // write max and min DMA xfer sizes
+    Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
+		  , 0x9204, 0x00000010 ); // set ring packet size
 
     ret = mu2e_event_up();
     return (ret);

@@ -105,15 +105,17 @@ main(  int	argc
 	sts = dev.init();
 	printf("1dev.devfd_=%d\n", dev.get_devfd_() );
 	if (sts) { perror("dev.init"); return (1); }
-	reg_access.reg_offset  = 0x9108;
-	reg_access.access_type = 1;
-# if 0
-	reg_access.val         = 0x3f;
-# else
-	reg_access.val         = 0x1;
-# endif
-	sts = ioctl( fd, M_IOC_REG_ACCESS, &reg_access );
-	if (sts) { perror("ioctl M_IOC_REG_ACCESS write"); return (1); }
+
+	int regs[]={0x9108,0x9168};
+	for (unsigned ii=0; ii<(sizeof(regs)/sizeof(regs[0])); ++ii)
+	{
+	    reg_access.reg_offset  = regs[ii];
+	    reg_access.access_type = 1;
+	    reg_access.val         = 0x1;
+	    sts = ioctl( fd, M_IOC_REG_ACCESS, &reg_access );
+	    if (sts) { perror("ioctl M_IOC_REG_ACCESS write"); return (1); }
+	}
+
 	int chn=0;
 	struct
 	{   DataHeaderPacket hdr;
