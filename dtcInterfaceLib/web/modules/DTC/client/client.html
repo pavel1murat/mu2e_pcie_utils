@@ -260,6 +260,12 @@
                     <td><canvas id="Ring5RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 5, 1,'Ring5RxEnabledLED')"></canvas></td>
                     <td><canvas id="Ring5TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 5, 2,'Ring5TimingEnabledLED')"></canvas></td>
                 </tr>
+                <tr>
+                    <td>CFO</td>
+                    <td><canvas id="CFOTxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 6, 0, 'CFOTxEnabledLED')"></canvas></td>
+                    <td><canvas id="CFORxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 6, 1,'CFORxEnabledLED')"></canvas></td>
+                    <td></td>
+                </tr>
             </table>
         </fieldset>
         <fieldset>
@@ -795,7 +801,102 @@
         <fieldset>
             <legend>FIFO Full Error Flags</legend>
             <table>
-                
+                <tr>
+                    <th></th>
+                    <th>Output Data</th>
+                    <th>CFO Link Input</th>
+                    <th>Readout Request Output</th>
+                    <th>Data Request Output</th>
+                    <th>Other Output</th>
+                    <th>Output DCS</th>
+                    <th>Output DCS Stage 2</th>
+                    <th>Data Input</th>
+                    <th>DCS Status Input</th>
+                </tr>
+                <tr>
+                    <td>Ring 0</td>
+                    <td><canvas id="OutputDataFIFOFullRing0LED" width="20" height="10" onclick="SetFIFOFlags(0, 'OutputData')"></canvas></td>
+                    <td><canvas id="CFOLinkFIFOFullRing0LED" width="20" height="10" onclick="SetFIFOFlags(0, 'CFOLink')"></canvas></td>
+                    <td><canvas id="ReadoutRequestFIFOFullRing0LED" width="20" height="10" onclick="SetFIFOFlags(0, 'ReadoutRequest')"></canvas></td>
+                    <td><canvas id="DataRequestFIFOFullRing0LED" width="20" height="10" onclick="SetFIFOFlags(0, 'DataRequest')"></canvas></td>
+                    <td><canvas id="OtherOutputFIFOFullRing0LED" width="20" height="10" onclick="SetFIFOFlags(0, 'OtherOutput')"></canvas></td>
+                    <td><canvas id="OutputDCSFIFOFullRing0LED" width="20" height="10" onclick="SetFIFOFlags(0, 'OutputDCS')"></canvas></td>
+                    <td><canvas id="OutputDCS2FIFOFullRing0LED" width="20" height="10" onclick="SetFIFOFlags(0, 'OutputDCS2')"></canvas></td>
+                    <td><canvas id="DataInputFIFOFullRing0LED" width="20" height="10" onclick="SetFIFOFlags(0, 'DataInput')"></canvas></td>
+                    <td><canvas id="DCSInputFIFOFullRing0LED" width="20" height="10" onclick="SetFIFOFlags(0, 'DCSInput')"></canvas></td>
+                </tr>
+                <tr>
+                    <td>Ring 1</td>
+                    <td><canvas id="OutputDataFIFOFullRing1LED" width="20" height="10" onclick="SetFIFOFlags(1, 'OutputData')"></canvas></td>
+                    <td><canvas id="CFOLinkFIFOFullRing1LED" width="20" height="10" onclick="SetFIFOFlags(1, 'CFOLink')"></canvas></td>
+                    <td><canvas id="ReadoutRequestFIFOFullRing1LED" width="20" height="10" onclick="SetFIFOFlags(1, 'ReadoutRequest')"></canvas></td>
+                    <td><canvas id="DataRequestFIFOFullRing1LED" width="20" height="10" onclick="SetFIFOFlags(1, 'DataRequest')"></canvas></td>
+                    <td><canvas id="OtherOutputFIFOFullRing1LED" width="20" height="10" onclick="SetFIFOFlags(1, 'OtherOutput')"></canvas></td>
+                    <td><canvas id="OutputDCSFIFOFullRing1LED" width="20" height="10" onclick="SetFIFOFlags(1, 'OutputDCS')"></canvas></td>
+                    <td><canvas id="OutputDCS2FIFOFullRing1LED" width="20" height="10" onclick="SetFIFOFlags(1, 'OutputDCS2')"></canvas></td>
+                    <td><canvas id="DataInputFIFOFullRing1LED" width="20" height="10" onclick="SetFIFOFlags(1, 'DataInput')"></canvas></td>
+                    <td><canvas id="DCSInputFIFOFullRing1LED" width="20" height="10" onclick="SetFIFOFlags(1, 'DCSInput')"></canvas></td>
+                </tr>
+                <tr>
+                    <td>Ring 2</td>
+                    <td><canvas id="OutputDataFIFOFullRing2LED" width="20" height="10" onclick="SetFIFOFlags(2, 'OutputData')"></canvas></td>
+                    <td><canvas id="CFOLinkFIFOFullRing2LED" width="20" height="10" onclick="SetFIFOFlags(2, 'CFOLinkInput')"></canvas></td>
+                    <td><canvas id="ReadoutRequestFIFOFullRing2LED" width="20" height="10" onclick="SetFIFOFlags(2, 'ReadoutRequestOutput')"></canvas></td>
+                    <td><canvas id="DataRequestFIFOFullRing2LED" width="20" height="10" onclick="SetFIFOFlags(2, 'DataRequestOutput')"></canvas></td>
+                    <td><canvas id="OtherOutputFIFOFullRing2LED" width="20" height="10" onclick="SetFIFOFlags(2, 'OtherOutput')"></canvas></td>
+                    <td><canvas id="OutputDCSFIFOFullRing2LED" width="20" height="10" onclick="SetFIFOFlags(2, 'OutputDCS')"></canvas></td>
+                    <td><canvas id="OutputDCS2FIFOFullRing2LED" width="20" height="10" onclick="SetFIFOFlags(2, 'OutputDCSStage2')"></canvas></td>
+                    <td><canvas id="DataInputFIFOFullRing2LED" width="20" height="10" onclick="SetFIFOFlags(2, 'DataInput')"></canvas></td>
+                    <td><canvas id="DCSInputFIFOFullRing2LED" width="20" height="10" onclick="SetFIFOFlags(2, 'DCSStatusInput')"></canvas></td>
+                </tr>
+                <tr>
+                    <td>Ring 3</td>
+                    <td><canvas id="OutputDataFIFOFullRing3LED" width="20" height="10" onclick="SetFIFOFlags(3, 'OutputData')"></canvas></td>
+                    <td><canvas id="CFOLinkFIFOFullRing3LED" width="20" height="10" onclick="SetFIFOFlags(3, 'CFOLink')"></canvas></td>
+                    <td><canvas id="ReadoutRequestFIFOFullRing3LED" width="20" height="10" onclick="SetFIFOFlags(3, 'ReadoutRequest')"></canvas></td>
+                    <td><canvas id="DataRequestFIFOFullRing3LED" width="20" height="10" onclick="SetFIFOFlags(3, 'DataRequest')"></canvas></td>
+                    <td><canvas id="OtherOutputFIFOFullRing3LED" width="20" height="10" onclick="SetFIFOFlags(3, 'OtherOutput')"></canvas></td>
+                    <td><canvas id="OutputDCSFIFOFullRing3LED" width="20" height="10" onclick="SetFIFOFlags(3, 'OutputDCS')"></canvas></td>
+                    <td><canvas id="OutputDCS2FIFOFullRing3LED" width="20" height="10" onclick="SetFIFOFlags(3, 'OutputDCS2')"></canvas></td>
+                    <td><canvas id="DataInputFIFOFullRing3LED" width="20" height="10" onclick="SetFIFOFlags(3, 'DataInput')"></canvas></td>
+                    <td><canvas id="DCSInputFIFOFullRing3LED" width="20" height="10" onclick="SetFIFOFlags(3, 'DCSInput')"></canvas></td>
+                </tr>
+                <tr>
+                    <td>Ring 4</td>
+                    <td><canvas id="OutputDataFIFOFullRing4LED" width="20" height="10" onclick="SetFIFOFlags(4, 'OutputData')"></canvas></td>
+                    <td><canvas id="CFOLinkFIFOFullRing4LED" width="20" height="10" onclick="SetFIFOFlags(4, 'CFOLink')"></canvas></td>
+                    <td><canvas id="ReadoutRequestFIFOFullRing4LED" width="20" height="10" onclick="SetFIFOFlags(4, 'ReadoutRequest')"></canvas></td>
+                    <td><canvas id="DataRequestFIFOFullRing4LED" width="20" height="10" onclick="SetFIFOFlags(4, 'DataRequest')"></canvas></td>
+                    <td><canvas id="OtherOutputFIFOFullRing4LED" width="20" height="10" onclick="SetFIFOFlags(4, 'OtherOutput')"></canvas></td>
+                    <td><canvas id="OutputDCSFIFOFullRing4LED" width="20" height="10" onclick="SetFIFOFlags(4, 'OutputDCS')"></canvas></td>
+                    <td><canvas id="OutputDCS2FIFOFullRing4LED" width="20" height="10" onclick="SetFIFOFlags(4,'OutputDCS2')"></canvas></td>
+                    <td><canvas id="DataInputFIFOFullRing4LED" width="20" height="10" onclick="SetFIFOFlags(4, 'DataInput')"></canvas></td>
+                    <td><canvas id="DCSInputFIFOFullRing4LED" width="20" height="10" onclick="SetFIFOFlags(4, 'DCSInput')"></canvas></td>
+                </tr>
+                <tr>
+                    <td>Ring 5</td>
+                    <td><canvas id="OutputDataFIFOFullRing5LED" width="20" height="10" onclick="SetFIFOFlags(5, 'OutputData')"></canvas></td>
+                    <td><canvas id="CFOLinkFIFOFullRing5LED" width="20" height="10" onclick="SetFIFOFlags(5, 'CFOLink')"></canvas></td>
+                    <td><canvas id="ReadoutRequestFIFOFullRing5LED" width="20" height="10" onclick="SetFIFOFlags(5, 'ReadoutRequest')"></canvas></td>
+                    <td><canvas id="DataRequestFIFOFullRing5LED" width="20" height="10" onclick="SetFIFOFlags(5, 'DataRequest')"></canvas></td>
+                    <td><canvas id="OtherOutputFIFOFullRing5LED" width="20" height="10" onclick="SetFIFOFlags(5, 'OtherOutput')"></canvas></td>
+                    <td><canvas id="OutputDCSFIFOFullRing5LED" width="20" height="10" onclick="SetFIFOFlags(5, 'OutputDCS')"></canvas></td>
+                    <td><canvas id="OutputDCS2FIFOFullRing5LED" width="20" height="10" onclick="SetFIFOFlags(5,'OutputDCS2')"></canvas></td>
+                    <td><canvas id="DataInputFIFOFullRing5LED" width="20" height="10" onclick="SetFIFOFlags(5, 'DataInput')"></canvas></td>
+                    <td><canvas id="DCSInputFIFOFullRing5LED" width="20" height="10" onclick="SetFIFOFlags(5, 'DCSInput')"></canvas></td>
+                </tr>
+                <tr>
+                    <td>CFO</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td><canvas id="OtherOutputFIFOFullCFOLED" width="20" height="10" onclick="SetFIFOFlags(6, 'OtherOutput')"></canvas></td>
+                    <td><canvas id="OutputDCSFIFOFullCFOLED" width="20" height="10" onclick="SetFIFOFlags(6, 'OutputDCS')"></canvas></td>
+                    <td><canvas id="OutputDCS2FIFOFullCFOLED" width="20" height="10" onclick="SetFIFOFlags(6,'OutputDCS2')"></canvas></td>
+                    <td><canvas id="DataInputFIFOFullCFOLED" width="20" height="10" onclick="SetFIFOFlags(6, 'DataInput')"></canvas></td>
+                    <td><canvas id="DCSInputFIFOFullCFOLED" width="20" height="10" onclick="SetFIFOFlags(6, 'DCSInput')"></canvas></td>
+                </tr>
             </table>
         </fieldset>
         <fieldset>

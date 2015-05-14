@@ -136,6 +136,12 @@
                         <td><canvas id="Ring5RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 5, 1,'Ring5RxEnabledLED')"></canvas></td>
                         <td><canvas id="Ring5TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 5, 2,'Ring5TimingEnabledLED')"></canvas></td>
                     </tr>
+                    <tr>
+                        <td>CFO</td>
+                        <td><canvas id="CFOTxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 6, 0, 'CFOTxEnabledLED')"></canvas></td>
+                        <td><canvas id="CFORxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 6, 1,'CFORxEnabledLED')"></canvas></td>
+                        <td></td>
+                    </tr>
                 </table>
             </fieldset>
             <fieldset>
@@ -257,6 +263,13 @@
                         <td><canvas id="SERDESLoopbackNEPMARing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5,2,'SERDESLoopbackNEPMARing5LED')"></canvas></td>
                         <td><canvas id="SERDESLoopbackFEPMARing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5,4,'SERDESLoopbackFEPMARing5LED')"></canvas></td>
                         <td><canvas id="SERDESLoopbackFEPCSRing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5,6,'SERDESLoopbackFEPCSRing5LED')"></canvas></td>
+                    </tr>
+                    <tr>
+                        <td>CFO</td>
+                        <td><canvas id="SERDESLoopbackNEPCSCFOLED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6,1,'SERDESLoopbackNEPCSRing5LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackNEPMARing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6,2,'SERDESLoopbackNEPMARing5LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackFEPMARing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6,4,'SERDESLoopbackFEPMARing5LED')"></canvas></td>
+                        <td><canvas id="SERDESLoopbackFEPCSRing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6,6,'SERDESLoopbackFEPCSRing5LED')"></canvas></td>
                     </tr>
                 </table>
             </fieldset>
