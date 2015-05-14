@@ -391,7 +391,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                 }
             }
         }
- out:
+ out:;
     }
 
     if (chn == 0)
