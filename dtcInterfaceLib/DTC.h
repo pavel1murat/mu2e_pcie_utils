@@ -116,6 +116,7 @@ namespace DTCLib {
         DTC_ROC_ID ReadRingROCCount(const DTC_Ring_ID& ring);
 
         DTC_FIFOFullErrorFlags WriteFIFOFullErrorFlags(const DTC_Ring_ID& ring, const DTC_FIFOFullErrorFlags& flags);
+        DTC_FIFOFullErrorFlags ToggleFIFOFullErrorFlags(const DTC_Ring_ID& ring, const DTC_FIFOFullErrorFlags& flags);
         DTC_FIFOFullErrorFlags ReadFIFOFullErrorFlags(const DTC_Ring_ID& ring);
 
         DTC_Timestamp WriteTimestampPreset(const DTC_Timestamp& preset);

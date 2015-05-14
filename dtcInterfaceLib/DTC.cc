@@ -696,6 +696,29 @@ DTCLib::DTC_FIFOFullErrorFlags DTCLib::DTC::WriteFIFOFullErrorFlags(const DTC_Ri
     return ReadFIFOFullErrorFlags(ring);
 }
 
+DTCLib::DTC_FIFOFullErrorFlags DTCLib::DTC::ToggleFIFOFullErrorFlags(const DTC_Ring_ID& ring, const DTC_FIFOFullErrorFlags& flags)
+{
+    std::bitset<32> data0 = ReadFIFOFullErrorFlag0Register();
+    std::bitset<32> data1 = ReadFIFOFullErrorFlag1Register();
+    std::bitset<32> data2 = ReadFIFOFullErrorFlag2Register();
+
+    data0[ring] = flags.OutputData ? !data0[ring] : data0[ring];
+    data0[ring + 8] = flags.CFOLinkInput ? !data0[ring + 8] : data0[ring + 8];
+    data0[ring + 16] = flags.ReadoutRequestOutput ? !data0[ring + 16] : data0[ring + 16];
+    data0[ring + 24] = flags.DataRequestOutput ? !data0[ring + 24] : data0[ring + 24];
+    data1[ring] = flags.OtherOutput ? !data1[ring] : data1[ring];
+    data1[ring + 8] = flags.OutputDCS ? !data1[ring + 8] : data1[ring + 8];
+    data1[ring + 16] = flags.OutputDCSStage2 ? !data1[ring + 16] : data1[ring + 16];
+    data1[ring + 24] = flags.DataInput ? !data1[ring + 24] : data1[ring + 24];
+    data2[ring] = flags.DCSStatusInput ? !data2[ring] : data2[ring];
+
+    WriteFIFOFullErrorFlag0Register(data0.to_ulong());
+    WriteFIFOFullErrorFlag1Register(data1.to_ulong());
+    WriteFIFOFullErrorFlag2Register(data2.to_ulong());
+
+    return ReadFIFOFullErrorFlags(ring);
+}
+
 DTCLib::DTC_FIFOFullErrorFlags DTCLib::DTC::ReadFIFOFullErrorFlags(const DTC_Ring_ID& ring)
 {
     std::bitset<32> data0 = ReadFIFOFullErrorFlag0Register();

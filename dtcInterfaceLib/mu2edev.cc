@@ -13,17 +13,16 @@
 #ifndef _WIN32
 #include "trace.h"
 #else
-#define TRACE //TRACE
+#define TRACE(...)
+#define TRACE_CNTL(...)
 #endif
 #include "mu2edev.hh"
 
 mu2edev::mu2edev() : devfd_(0)
 , simulator_()
 {
-#ifndef _WIN32  
     //TRACE_CNTL( "lvlmskM", 0x3 );
     //TRACE_CNTL( "lvlmskS", 0x3 );
-#endif
 }
 
 int mu2edev::init(DTCLib::DTC_Sim_Mode simMode)
