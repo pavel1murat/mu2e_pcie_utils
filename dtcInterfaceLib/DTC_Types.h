@@ -229,6 +229,10 @@ namespace DTCLib
 
         std::string headerJSON();
         virtual std::string toJSON();
+        friend std::ostream& operator<<(std::ostream& stream, DTC_DMAPacket& packet) {
+            stream << packet.toJSON();
+            return stream;
+        }
     };
 
     class DTC_DCSRequestPacket : public DTC_DMAPacket {

@@ -64,6 +64,7 @@
                     <td>
                         <select id="address">
                             <option value="0x9000">DTC F/W Version (RO, 0x9000)</option>
+                            <option value="0x9004">DTC F/W Date (RO, 0x9004)</option>
                             <option value="0x900C">PCIe Tx Byte Count (RO, 0x900C)</option>
                             <option value="0x9010">PCIe Rx Byte Count (RO, 0x9010)</option>
                             <option value="0x9014">PCIe Upstream Memory Write Count (RO, 0x9014)</option>
@@ -95,6 +96,10 @@
                             <option value="0x9180">Timestamp Preset 0 (0x9180)</option>
                             <option value="0x9184">Timestamp Preset 1 (0x9184)</option>
                             <option value="0x9188">DMA Data Pending Timeout (0x9188)</option>
+                            <option value="0x918C">NUMROCs Register (0x918C)</option>
+                            <option value="0x9190">DTC_Register_FIFOFullErrorFlag0 (0x9190)</option>
+                            <option value="0x9194">DTC_Register_FIFOFullErrorFlag1 (0x9194)</option>
+                            <option value="0x9198">DTC_Register_FIFOFullErrorFlag2 (0x9198)</option>
                             <option value="0x9204">DMA Packet Size (0x9204)</option>
                         </select>
                     </td>
@@ -154,13 +159,11 @@
                     <th>SERDES Oscillator Clock Mode (0: 3.125Gbs, 1: 2.5Gbs)</th>
                     <th>System Clock Enable</th>
                     <th>Timing System Enable</th>
-                    <th>ROC Emulator</th>
                 </tr>
                 <tr>
                     <td><canvas id="SERDESOscillatorClockLED" width="20" height="10" onclick="LEDAction('/DTC/toggleSERDESOscillatorClock',null,'SERDESOscillatorClockLED')"></canvas></td>
                     <td><canvas id="SystemClockLED" width="20" height="10" onclick="LEDAction('/DTC/toggleSystemClock', null, 'SystemClockLED')"></canvas></td>
                     <td><canvas id="TimingEnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleTimingEnable',null,'TimingEnabledLED')"></canvas></td>
-                    <td><canvas id="ROCEmulatorEnabledLED" width="20" height="10" onclick="LEDAction('./toggleROCEmulator',null,'ROCEmulatorEnabledLED')"></canvas></td>
                 </tr>
             </table><br><br>
             <table>
@@ -190,18 +193,73 @@
                     <td><button type="button" id="setPacketSize" onclick="SetNumericValue('#packetSize','/DTC/setPacketSize')">Set</button></td>
                 </tr>
             </table>
+            <table>
+                <tr><th>SERDES Oscillator IIC Error</th><th>SERDES Oscillator Initialization Complete</th></tr>
+                <tr>
+                    <td><canvas id="SERDESOscillatorIICErrorLED" width="20" height="10"></canvas></td>
+                    <td><canvas id="SERDESOscillatorInitCompleteLED" width="20" height="10"></canvas></td>
+                </tr>
+            </table>
+        </fieldset>
+        <fieldset>
+            <legend>ROC Emulation Enable</legend>
+            <table>
+                <tr><th>Ring 0</th><th>Ring 1</th><th>Ring 2</th><th>Ring 3</th><th>Ring 4</th><th>Ring 5</th></tr>
+                <tr>
+                    <td><canvas id="ROCEmulatorEnabledRing0LED" width="20" height="10" onclick="LEDAction('./toggleROCEmulator', 0, 'ROCEmulatorEnabledRing0LED')"></canvas></td>
+                    <td><canvas id="ROCEmulatorEnabledRing1LED" width="20" height="10" onclick="LEDAction('./toggleROCEmulator', 1, 'ROCEmulatorEnabledRing1LED')"></canvas></td>
+                    <td><canvas id="ROCEmulatorEnabledRing2LED" width="20" height="10" onclick="LEDAction('./toggleROCEmulator', 2, 'ROCEmulatorEnabledRing2LED')"></canvas></td>
+                    <td><canvas id="ROCEmulatorEnabledRing3LED" width="20" height="10" onclick="LEDAction('./toggleROCEmulator', 3, 'ROCEmulatorEnabledRing3LED')"></canvas></td>
+                    <td><canvas id="ROCEmulatorEnabledRing4LED" width="20" height="10" onclick="LEDAction('./toggleROCEmulator', 4, 'ROCEmulatorEnabledRing4LED')"></canvas></td>
+                    <td><canvas id="ROCEmulatorEnabledRing5LED" width="20" height="10" onclick="LEDAction('./toggleROCEmulator', 5, 'ROCEmulatorEnabledRing5LED')"></canvas></td>
+                </tr>
+            </table>
         </fieldset>
         <fieldset>
             <legend>Ring Enable</legend>
             <table>
-                <tr><th></th><th>Enabled</th></tr>
-                <tr><td>Ring 0</td><td><canvas id="Ring0EnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 0, 'Ring0EnabledLED')"></canvas></td></tr>
-                <tr><td>Ring 1</td><td><canvas id="Ring1EnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 1, 'Ring1EnabledLED')"></canvas></td></tr>
-                <tr><td>Ring 2</td><td><canvas id="Ring2EnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 2, 'Ring2EnabledLED')"></canvas></td></tr>
-                <tr><td>Ring 3</td><td><canvas id="Ring3EnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 3, 'Ring3EnabledLED')"></canvas></td></tr>
-                <tr><td>Ring 4</td><td><canvas id="Ring4EnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 4, 'Ring4EnabledLED')"></canvas></td></tr>
-                <tr><td>Ring 5</td><td><canvas id="Ring5EnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 5, 'Ring5EnabledLED')"></canvas></td></tr>
-                <tr><td>CFO</td><td><canvas id="CFOEnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleRingEnabled', 6, 'CFOEnabledLED')"></canvas></td></tr>
+                <tr>
+                    <th></th>
+                    <th>Transmit Enabled</th>
+                    <th>Receive Enabled</th>
+                    <th>Timing Link Enabled</th>
+                </tr>
+                <tr>
+                    <td>Ring 0</td>
+                    <td><canvas id="Ring0TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 0,0, 'Ring0TxEnabledLED')"></canvas></td>
+                    <td><canvas id="Ring0RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 0, 1,'Ring0RxEnabledLED')"></canvas></td>
+                    <td><canvas id="Ring0TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 0, 2,'Ring0TimingEnabledLED')"></canvas></td>
+                </tr>
+                <tr>
+                    <td>Ring 1</td>
+                    <td><canvas id="Ring1TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 1, 0, 'Ring1TxEnabledLED')"></canvas></td>
+                    <td><canvas id="Ring1RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 1, 1,'Ring1RxEnabledLED')"></canvas></td>
+                    <td><canvas id="Ring1TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 1, 2,'Ring1TimingEnabledLED')"></canvas></td>
+                </tr>
+                <tr>
+                    <td>Ring 2</td>
+                    <td><canvas id="Ring2TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 2, 0, 'Ring2TxEnabledLED')"></canvas></td>
+                    <td><canvas id="Ring2RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 2, 1,'Ring2RxEnabledLED')"></canvas></td>
+                    <td><canvas id="Ring2TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 2, 2,'Ring2TimingEnabledLED')"></canvas></td>
+                </tr>
+                <tr>
+                    <td>Ring 3</td>
+                    <td><canvas id="Ring3TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 3, 0, 'Ring3TxEnabledLED')"></canvas></td>
+                    <td><canvas id="Ring3RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 3, 1,'Ring3RxEnabledLED')"></canvas></td>
+                    <td><canvas id="Ring3TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 3, 2,'Ring3TimingEnabledLED')"></canvas></td>
+                </tr>
+                <tr>
+                    <td>Ring 4</td>
+                    <td><canvas id="Ring4TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 4, 0, 'Ring4TxEnabledLED')"></canvas></td>
+                    <td><canvas id="Ring4RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 4, 1,'Ring4RxEnabledLED')"></canvas></td>
+                    <td><canvas id="Ring4TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 4, 2,'Ring4TimingEnabledLED')"></canvas></td>
+                </tr>
+                <tr>
+                    <td>Ring 5</td>
+                    <td><canvas id="Ring5TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 5, 0, 'Ring5TxEnabledLED')"></canvas></td>
+                    <td><canvas id="Ring5RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 5, 1,'Ring5RxEnabledLED')"></canvas></td>
+                    <td><canvas id="Ring5TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 5, 2,'Ring5TimingEnabledLED')"></canvas></td>
+                </tr>
             </table>
         </fieldset>
         <fieldset>
@@ -732,6 +790,12 @@
             <table>
                 <tr><th>Timestamp Preset</th><td><input type="text" id="timestamp" width="12" value=""></td></tr>
                 <tr><td><input type="button" id="setTimestamp" value="Set Timestamp" onclick="SetNumericValue('#timestamp', '/DTC/setTimestampPreset')"></td></tr>
+            </table>
+        </fieldset>
+        <fieldset>
+            <legend>FIFO Full Error Flags</legend>
+            <table>
+                
             </table>
         </fieldset>
         <fieldset>
