@@ -22,7 +22,17 @@ main(  int	argc
      , char	*argv[] )
 {
     DTCLib::DTC *thisDTC = new DTCLib::DTC();
+# if 0
     DTCLib::DTC_DataHeaderPacket packet = thisDTC->ReadNextDAQPacket();
     std::cout << packet.toJSON() << '\n';
+    // need to release
+# else
+    std::vector<void*> data=thisDTC->GetData( DTCLib::DTC_Timestamp((uint64_t)0), false, false );
+    if (data.size() > 0)
+    {   std::cout << data.size() << " packets returned\n";
+    }
+    else
+	std::cout << "no data returned\n";
+# endif
     return (0);
 }   // main
