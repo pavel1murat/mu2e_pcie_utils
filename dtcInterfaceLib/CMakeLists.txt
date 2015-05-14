@@ -11,6 +11,9 @@ target_link_libraries(DTCLibTest pthread)
 
 cet_make_exec(mu2eUtil SOURCE util_main.cc LIBRARIES DTCInterface)
 
+#install_source()
+install_headers()
+
 add_custom_command(
     OUTPUT DTC.node
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -31,5 +34,3 @@ install(DIRECTORY web DESTINATION ${${product}_bin_dir})
 
 cet_script(updateMu2e.sh)
 
-install_source()
-install_headers()
