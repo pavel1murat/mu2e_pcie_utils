@@ -5,17 +5,20 @@
  # contacting Ron or Fermi Lab in Batavia IL, 60510, phone: 630-840-3000.
  # $RCSfile: .emacs.gnu,v $
  # rev='$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $'
-
+set -u
 test $# -eq 1 || { echo "usage: `basename $0` <file>"; exit; }
 
 file=$1; shift
 
 # look for pci_devel_main.ko
-if   [ -f "${CETPKG_BUILD-}"/linux_driver/bin/pci_devel_main.ko ];then
-   DEVMOD="${CETPKG_BUILD-}"/linux_driver/bin/pci_devel_main.ko
-elif [ -f "${PCIE_LINUX_KERNEL_DRIVER_FQ_DIR-}"/bin/pci_devel_main.ko ];then
-   DEVMOD="${PCIE_LINUX_KERNEL_DRIVER_FQ_DIR-}"/bin/pci_devel_main.ko
-else
+fdir= DEVMOD=
+if   [ -d "${CETPKG_BUILD-}" ];then
+    fdir="${CETPKG_BUILD-}"
+elif [ -d "${PCIE_LINUX_KERNEL_DRIVER_FQ_DIR-}" ];then
+    fdir="${PCIE_LINUX_KERNEL_DRIVER_FQ_DIR-}"
+fi
+test -n "$fdir" && DEVMOD=`find $fdir -name pci_devel_main.ko | head -1`
+if [ -z "$DEVMOD" ];then
    echo "ERROR - can't find pci_devel_main.ko"
    exit
 fi
