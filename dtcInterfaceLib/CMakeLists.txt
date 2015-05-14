@@ -9,6 +9,8 @@ cet_make_library(LIBRARY_NAME DTCInterface SOURCE
 cet_make_exec(DTCLibTest SOURCE main.cc LIBRARIES DTCInterface)
 target_link_libraries(DTCLibTest pthread)
 
+cet_make_exec(mu2eUtil SOURCE util_main.cc LIBRARIES DTCInterface)
+
 #install_source()
 install_headers()
 

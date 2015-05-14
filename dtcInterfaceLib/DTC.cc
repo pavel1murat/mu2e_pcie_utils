@@ -864,8 +864,8 @@ DTCLib::DTC_DataPacket DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel)
         TRACE(19, "DTC::ReadBuffer before device_.read_data");
         errorCode = device_.read_data(channel, (void**)&buffer_, 1000);
         retry--;
-    } while (retry > 0 && errorCode != 0);
-    if (errorCode != 0)
+    } while (retry > 0 && errorCode == 0);
+    if (errorCode < 0)
     {
         throw DTC_IOErrorException();
     }

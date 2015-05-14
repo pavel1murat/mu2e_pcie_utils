@@ -670,6 +670,7 @@ static int __init init_mu2e(void)
 	mu2e_channel_info_[chn][dir].hwIdx = MU2E_NUM_RECV_BUFFS-1;
 	mu2e_channel_info_[chn][dir].swIdx = MU2E_NUM_RECV_BUFFS-1;
 
+	Dma_mWriteChnReg( chn, dir, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_ENABLE );
     }
 
     dir=S2C;

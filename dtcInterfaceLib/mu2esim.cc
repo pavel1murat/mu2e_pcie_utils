@@ -155,6 +155,10 @@ int mu2esim::init(DTCLib::DTC_Sim_Mode mode)
     return (0);
 }
 
+/*****************************
+   read_data
+   returns number of bytes read; negative value indicates an error
+ */
 int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 {
     // Clear the buffer:
@@ -168,6 +172,8 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
     else {
         memset(&dmaDCSData_, 0, sizeof(dmaDCSData_));
     }
+
+    int bytesReturned = 0;
 
     if (chn == 0)
     {
@@ -213,7 +219,8 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                             packet[14] = 0;
                             packet[15] = 0;
 
-                            TRACE(17, "mu2esim::read_data Copying Data Header packet into buffer, idx=%li, buf=%p, packet=%p, off=%li", bufferIndex, (void*)dmaDAQData_, (void*)packet, bufferIndex * sizeof(packet));
+                            TRACE(17, "mu2esim::read_data Copying Data Header packet into buffer, idx=%li, buf=%p, packet=%p, off=%li"
+				  , bufferIndex, (void*)dmaDAQData_, (void*)packet, bufferIndex * sizeof(packet));
                             memcpy((char*)dmaDAQData_ + bufferIndex * sizeof(packet), &packet[0], sizeof(packet));
                             bufferIndex++;
                             if (bufferIndex >= bufferIndexMax) { break; }
@@ -241,7 +248,8 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                 packet[14] = 0;
                                 packet[15] = 0;
 
-                                TRACE(17, "mu2esim::read_data Copying Data packet into buffer, idx=%li, buf=%p, packet=%p, off=%li", bufferIndex, (void*)dmaDAQData_, (void*)packet, bufferIndex * sizeof(packet));
+                                TRACE(17, "mu2esim::read_data Copying Data packet into buffer, idx=%li, buf=%p, packet=%p, off=%li"
+				      , bufferIndex, (void*)dmaDAQData_, (void*)packet, bufferIndex * sizeof(packet));
                                 memcpy(((char*)dmaDAQData_ + bufferIndex * sizeof(packet)), &packet, sizeof(packet));
                                 bufferIndex++;
 
@@ -268,7 +276,8 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                 packet[14] = 4;
                                 packet[15] = 4;
 
-                                TRACE(17, "mu2esim::read_data Copying Data packet into buffer, idx=%li, buf=%p, packet=%p, off=%li", bufferIndex, (void*)dmaDAQData_, (void*)packet, bufferIndex * sizeof(packet));
+                                TRACE(17, "mu2esim::read_data Copying Data packet into buffer, idx=%li, buf=%p, packet=%p, off=%li"
+				      , bufferIndex, (void*)dmaDAQData_, (void*)packet, bufferIndex * sizeof(packet));
                                 memcpy(((char*)dmaDAQData_ + bufferIndex * sizeof(packet)), &packet, sizeof(packet));
                                 bufferIndex++;
 
@@ -296,7 +305,8 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 
 
                                     samplesProcessed += 8;
-                                    TRACE(17, "mu2esim::read_data Copying Data packet into buffer, idx=%li, buf=%p, packet=%p, off=%li", bufferIndex, (void*)dmaDAQData_, (void*)packet, bufferIndex * sizeof(packet));
+                                    TRACE(17, "mu2esim::read_data Copying Data packet into buffer, idx=%li, buf=%p, packet=%p, off=%li"
+					  , bufferIndex, (void*)dmaDAQData_, (void*)packet, bufferIndex * sizeof(packet));
                                     memcpy(((char*)dmaDAQData_ + bufferIndex * sizeof(packet)), &packet, sizeof(packet));
                                     bufferIndex++;
                                 }
@@ -333,7 +343,8 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                 packet[14] = static_cast<uint8_t>((pattern6 >> 4) + (pattern7 << 6));
                                 packet[15] = static_cast<uint8_t>((pattern7 >> 2));
 
-                                TRACE(17, "mu2esim::read_data Copying Data packet into buffer, idx=%li, buf=%p, packet=%p, off=%li", bufferIndex, (void*)dmaDAQData_, (void*)packet, bufferIndex * sizeof(packet));
+                                TRACE(17, "mu2esim::read_data Copying Data packet into buffer, idx=%li, buf=%p, packet=%p, off=%li"
+				      , bufferIndex, (void*)dmaDAQData_, (void*)packet, bufferIndex * sizeof(packet));
                                 memcpy(((char*)dmaDAQData_ + bufferIndex * sizeof(packet)), &packet, sizeof(packet));
                                 bufferIndex++;
                             }
@@ -352,6 +363,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                 }
             }
         }
+	bytesReturned = 16 * bufferIndex;
     }
     else if (chn == 1)
     {
@@ -374,9 +386,12 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                     TRACE(17, "mu2esim::read_data Copying reply into buffer");
                     memcpy(&dmaDCSData_, &replyPacket[0], sizeof(replyPacket));
                     dcsRequestRecieved_[ring][roc] = false;
+		    bytesReturned=16;
+		    goto out;
                 }
             }
         }
+ out:
     }
 
     if (chn == 0)
@@ -390,8 +405,9 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
         *buffer = &dmaDCSData_;
     }
 
-    TRACE(17, "mu2esim::read_data RETURN: dmaDCSData_=%p, olddmaDAQData_=%p, dmaDAQData_=%p", (void*)&dmaDCSData_, (void*)olddmaDAQData_, (void*)dmaDAQData_);
-    return 0;
+    TRACE(17, "mu2esim::read_data RETURN: dmaDCSData_=%p, olddmaDAQData_=%p, dmaDAQData_=%p"
+	  , (void*)&dmaDCSData_, (void*)olddmaDAQData_, (void*)dmaDAQData_);
+    return bytesReturned;
 }
 
 int mu2esim::write_loopback_data(int chn, void *buffer, size_t bytes)

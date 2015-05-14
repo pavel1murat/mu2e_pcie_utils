@@ -84,6 +84,10 @@ int mu2edev::init(DTCLib::DTC_Sim_Mode simMode)
     return (simMode);
 }
 
+/*****************************
+   read_data
+   returns number of bytes read; negative value indicates an error
+ */
 int mu2edev::read_data(int chn, void **buffer, int tmo_ms)
 {
     if (simulator_.active()) {
@@ -127,7 +131,7 @@ int mu2edev::read_data(int chn, void **buffer, int tmo_ms)
 #endif
         return (retsts);
     }
-}
+}   // read_data
 
 int mu2edev::read_release(int chn, unsigned num)
 {
