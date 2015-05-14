@@ -52,8 +52,7 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 //
 std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool sendDReq, bool sendRReq)
 {
-    TRACE(19, "DTC::GetData before release_all");
-    device_.release_all(0);
+    TRACE(19, "DTC::GetData begin");
     std::vector<void*> output;
     if (sendRReq) {
         // Send a data request
@@ -248,7 +247,8 @@ DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket()
     // Check if the nextReadPtr has been initialized, and if its pointing to a valid location
     if (nextReadPtr_ == nullptr || nextReadPtr_ >= daqbuffer_ + sizeof(*daqbuffer_) || *((uint16_t*)nextReadPtr_) == 0) {
         TRACE(19, "DTC::ReadNextDAQPacket Obtaining new DAQ Buffer");
-        ReadBuffer(DTC_DMA_Engine_DAQ);
+        ReadBuffer(DTC_DMA_Engine_DAQ); // does return val of type DTCLib::DTC_DataPacket
+	// MUST BE ABLE TO HANDLE daqbuffer_==nullptr OR retry forever?
         nextReadPtr_ = &(daqbuffer_[0]);
         TRACE(19, "DTC::ReadNextDAQPacket nextReadPtr_=%p daqBuffer_=%p", (void*)nextReadPtr_, (void*)daqbuffer_);
     }
@@ -883,6 +883,10 @@ DTCLib::DTC_DataPacket DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel)
     mu2e_databuff_t* buffer_ = channel == DTC_DMA_Engine_DAQ ? daqbuffer_ : dcsbuffer_;
     int retry = 3;
     int errorCode = 0;
+    if (buffer_ != nullptr)
+    {   memset( buffer_, 0, 4 ); // invalidate this buffer to catch DTC_WrongPacketTypeException
+	device_.read_release(channel,1);
+    }
     do {
         TRACE(19, "DTC::ReadBuffer before device_.read_data");
         errorCode = device_.read_data(channel, (void**)&buffer_, 1000);

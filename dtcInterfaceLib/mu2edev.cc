@@ -132,6 +132,9 @@ int mu2edev::read_data(int chn, void **buffer, int tmo_ms)
     }
 }   // read_data
 
+/* read_release
+   release a number of buffers (usually 1)
+ */
 int mu2edev::read_release(int chn, unsigned num)
 {
     if (simulator_.active())
@@ -390,11 +393,8 @@ int mu2edev::write_test_command(m_ioc_cmd_t input, bool start)
 int mu2edev::release_all(int chn)
 {
     int retsts = 0;
-    for (int i = 0; i << mu2e_channel_info_[chn][C2S].num_buffs; ++i)
-    {
-        TRACE(21, "mu2edev::release_all calling read_release(chn=%d, i=%d)", chn, i);
-        retsts = retsts || read_release(chn, i);
-    }
+    unsigned has_recv_data = delta_(chn, C2S);
+    if (has_recv_data) read_release( chn, has_recv_data );
     return retsts;
 }
 
