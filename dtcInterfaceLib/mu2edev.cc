@@ -53,24 +53,25 @@ int mu2edev::init(DTCLib::DTC_Sim_Mode simMode)
                     , get_info.num_buffs, get_info.buff_size
                     , get_info.hwIdx, get_info.swIdx);
                 for (unsigned map = 0; map < 2; ++map)
-                {
+                {   size_t length = get_info.num_buffs * ((map == MU2E_MAP_BUFF)
+							  ? get_info.buff_size
+							  : sizeof(int));
+		    //int prot = (((dir == S2C) && (map == MU2E_MAP_BUFF))? PROT_WRITE : PROT_READ);
+		    int prot = (( (map == MU2E_MAP_BUFF))? PROT_WRITE : PROT_READ);
+		    off64_t offset = chnDirMap2offset(chn, dir, map);
                     mu2e_mmap_ptrs_[chn][dir][map]
-                        = mmap(0 /* hint address */
-                        , get_info.num_buffs * ((map == MU2E_MAP_BUFF)
-                        ? get_info.buff_size
-                        : sizeof(int))
-                        , (((dir == S2C) && (map == MU2E_MAP_BUFF))
-                        ? PROT_WRITE : PROT_READ)
-                        , MAP_SHARED
-                        , devfd_
-                        , chnDirMap2offset(chn, dir, map));
+                        = mmap(  0 /* hint address */
+			       , length, prot, MAP_SHARED, devfd_, offset );
                     if (mu2e_mmap_ptrs_[chn][dir][map] == MAP_FAILED)
                     {
                         perror("mmap"); exit(1);
                     }
-                    TRACE(1, "mu2edev::init chnDirMap2offset=%lu mu2e_mmap_ptrs_[%d][%d][%d]=%p"
-                        , chnDirMap2offset(chn, dir, map)
-                        , chn, dir, map, mu2e_mmap_ptrs_[chn][dir][map]);
+                    TRACE(1, "mu2edev::init chnDirMap2offset=%lu mu2e_mmap_ptrs_[%d][%d][%d]=%p p=%c l=%lu"
+			  , offset
+			  , chn, dir, map
+			  , mu2e_mmap_ptrs_[chn][dir][map]
+			  , prot==PROT_READ? 'R': 'W'
+			  , length );
                 }
                 //if (dir == DTC_DMA_Direction_C2S)
                 {   uint16_t addr = DTC_Register_Engine_Control(chn, dir);
