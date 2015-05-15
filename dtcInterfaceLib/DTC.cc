@@ -86,7 +86,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
                 DTC_ReadoutRequestPacket req((DTC_Ring_ID)ring, when, request, ReadRingROCCount((DTC_Ring_ID)ring));
                 TRACE(19, "DTC::GetData before WriteDMADAQPacket");
                 WriteDMADAQPacket(req);
-                TRACE(19, "DTC::GetData after  WriteDMADAQPacket");                
+                TRACE(19, "DTC::GetData after  WriteDMADAQPacket");
                 if (int maxRoc = ReadRingROCCount((DTC_Ring_ID)ring) != DTC_ROC_Unused)
                 {
                     for (uint8_t roc = 0; roc <= maxRoc; ++roc)
@@ -336,10 +336,13 @@ std::string DTCLib::DTC::ReadDesignDate()
     int monthHex = (data & 0xFF0000) >> 16;
     int month = ((monthHex & 0xF0) >> 4) * 10 + (monthHex & 0xF);
     int dayHex = (data & 0xFF00) >> 8;
-    int day = ((dayHex & 0xF0) >>4) * 10 + (dayHex & 0xF);
+    int day = ((dayHex & 0xF0) >> 4) * 10 + (dayHex & 0xF);
     int hour = ((data & 0xF0) >> 4) * 10 + (data & 0xF);
-    o << std::setw(2) << std::setfill('0') << "20" << year << "-"
-    << month << "-" << day << "-" << hour;
+    o << "20" << std::setfill('0') << std::setw(2) << year << "-";
+    o << std::setfill('0') << std::setw(2) << month << "-";
+    o << std::setfill('0') << std::setw(2) << day << "-";
+    o << std::setfill('0') << std::setw(2) << hour;
+    //std::cout << o.str() << std::endl;
     return o.str();
 }
 std::string DTCLib::DTC::ReadDesignVersionNumber()
