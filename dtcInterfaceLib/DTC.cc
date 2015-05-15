@@ -1,5 +1,6 @@
 #include "DTC.h"
 #include <sstream> // Convert uint to hex string
+#include <iomanip> // std::setw, std::setfill
 #ifndef _WIN32
 #include <unistd.h>
 #include "trace.h"
@@ -329,6 +330,7 @@ std::string DTCLib::DTC::ReadDesignVersion()
 std::string DTCLib::DTC::ReadDesignDate()
 {
     uint32_t data = ReadDesignDateRegister();
+    std::ostringstream o;
     int yearHex = (data & 0xFF000000) >> 24;
     int year = ((yearHex & 0xF0) >> 4) * 10 + (yearHex & 0xF);
     int monthHex = (data & 0xFF0000) >> 16;
@@ -336,7 +338,9 @@ std::string DTCLib::DTC::ReadDesignDate()
     int dayHex = (data & 0xFF00) >> 8;
     int day = ((dayHex & 0xF0) >>4) * 10 + (dayHex & 0xF);
     int hour = ((data & 0xF0) >> 4) * 10 + (data & 0xF);
-    return "20" + std::to_string(year) + "-" + std::to_string(month) + "-" + std::to_string(day) + "-" + std::to_string(hour);
+    o << std::setw(2) << std::setfill('0') << "20" << year << "-"
+    << month << "-" << day << "-" << hour;
+    return o.str();
 }
 std::string DTCLib::DTC::ReadDesignVersionNumber()
 {
