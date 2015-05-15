@@ -315,6 +315,155 @@ DTCLib::DTC_DCSReplyPacket DTCLib::DTC::ReadNextDCSPacket()
 //
 // Register IO Functions
 //
+std::string DTCLib::DTC::RegDump()
+{
+    std::ostringstream o;
+    o.setf(std::ios_base::boolalpha);
+    o << "{";
+    o << "Version:\"" << ReadDesignVersion() << "\",\n";
+    o << "ResetDTC:" << ReadResetDTC() << ",\n";
+    o << "ResetSERDESOscillator:" << ReadResetSERDESOscillator() << ",\n";
+    o << "SERDESOscillatorClock:" << ReadSERDESOscillatorClock() << ",\n";
+    o << "SystemClock:" << ReadSystemClock() << ",\n";
+    o << "TimingEnable:" << ReadTimingEnable() << ",\n";
+    o << "TriggerDMALength:" << ReadTriggerDMATransferLength() << ",\n";
+    o << "MinDMALength:" << ReadMinDMATransferLength() << ",\n";
+    o << "SERDESOscillatorIICError:" << ReadSERDESOscillatorIICError() << ",\n";
+    o << "SERDESOscillatorInitComplete:" << ReadSERDESOscillatorInitializationComplete() << ",\n";
+    o << "DMATimeout:" << ReadDMATimeoutPreset() << ",\n";
+    o << "Timestamp:" << ReadTimestampPreset().GetTimestamp(true) << ",\n";
+    o << "DataPendingTimer:" << ReadDataPendingTimer() << ",\n";
+    o << "PacketSize:" << ReadPacketSize() << ",\n";
+    o << "PROMFIFOFull:" << ReadFPGAPROMProgramFIFOFull() << ",\n";
+    o << "PROMReady:" << ReadFPGAPROMReady() << ",\n";
+    o << "FPGACoreFIFOFull:" << ReadFPGACoreAccessFIFOFull() << ",\n";
+    o << RingRegDump(DTC_Ring_0, "Ring0") << ",\n";
+    o << RingRegDump(DTC_Ring_1, "Ring1") << ",\n";
+    o << RingRegDump(DTC_Ring_2, "Ring2") << ",\n";
+    o << RingRegDump(DTC_Ring_3, "Ring3") << ",\n";
+    o << RingRegDump(DTC_Ring_4, "Ring4") << ",\n";
+    o << RingRegDump(DTC_Ring_5, "Ring5") << ",\n";
+    o << CFORegDump() << "\n";
+    o << "}";
+
+    return o.str();
+}
+std::string DTCLib::DTC::RingRegDump(const DTC_Ring_ID& ring, std::string id)
+{
+    std::ostringstream o;
+    o.setf(std::ios_base::boolalpha);
+
+    o << id << ":{\n";
+
+    DTC_ROC_ID ringROCs = ReadRingROCCount(ring);
+    switch (ringROCs) {
+    case DTC_ROC_Unused:
+    default:
+        o << "\tROC0Enabled:false,\n";
+        o << "\tROC1Enabled:false,\n";
+        o << "\tROC2Enabled:false,\n";
+        o << "\tROC3Enabled:false,\n";
+        o << "\tROC4Enabled:false,\n";
+        o << "\tROC5Enabled:false,\n";
+        break;
+    case DTC_ROC_0:
+        o << "\tROC0Enabled:true,\n";
+        o << "\tROC1Enabled:false,\n";
+        o << "\tROC2Enabled:false,\n";
+        o << "\tROC3Enabled:false,\n";
+        o << "\tROC4Enabled:false,\n";
+        o << "\tROC5Enabled:false,\n";
+        break;
+    case DTC_ROC_1:
+        o << "\tROC0Enabled:true,\n";
+        o << "\tROC1Enabled:true,\n";
+        o << "\tROC2Enabled:false,\n";
+        o << "\tROC3Enabled:false,\n";
+        o << "\tROC4Enabled:false,\n";
+        o << "\tROC5Enabled:false,\n";
+        break;
+    case DTC_ROC_2:
+        o << "\tROC0Enabled:true,\n";
+        o << "\tROC1Enabled:true,\n";
+        o << "\tROC2Enabled:true,\n";
+        o << "\tROC3Enabled:false,\n";
+        o << "\tROC4Enabled:false,\n";
+        o << "\tROC5Enabled:false,\n";
+        break;
+    case DTC_ROC_3:
+        o << "\tROC0Enabled:true,\n";
+        o << "\tROC1Enabled:true,\n";
+        o << "\tROC2Enabled:true,\n";
+        o << "\tROC3Enabled:true,\n";
+        o << "\tROC4Enabled:false,\n";
+        o << "\tROC5Enabled:false,\n";
+        break;
+    case DTC_ROC_4:
+        o << "\tROC0Enabled:true,\n";
+        o << "\tROC1Enabled:true,\n";
+        o << "\tROC2Enabled:true,\n";
+        o << "\tROC3Enabled:true,\n";
+        o << "\tROC4Enabled:true,\n";
+        o << "\tROC5Enabled:false,\n";
+        break;
+    case DTC_ROC_5:
+        o << "\tROC0Enabled:true,\n";
+        o << "\tROC1Enabled:true,\n";
+        o << "\tROC2Enabled:true,\n";
+        o << "\tROC3Enabled:true,\n";
+        o << "\tROC4Enabled:true,\n";
+        o << "\tROC5Enabled:true,\n";
+        break;
+    }
+
+    o << "\tEnabled:" << ReadRingEnabled(ring) << ",\n";
+    o << "\tROCEmulator:" << ReadROCEmulator(ring) << ",\n";
+    o << "\tResetSERDES:" << ReadResetSERDES(ring) << ",\n";
+    o << "\tSERDESLoopback:" << DTC_SERDESLoopbackModeConverter(ReadSERDESLoopback(ring)) << ",\n";
+    o << "\tEyescanError:" << ReadSERDESEyescanError(ring) << ",\n";
+    o << "\tFIFOFullFlags:" << ReadFIFOFullErrorFlags(ring) << ",\n";
+    o << "\tFIFOHalfFull:" << ReadSERDESBufferFIFOHalfFull(ring) << ",\n";
+    o << "\tOverflowOrUnderflow:" << ReadSERDESOverflowOrUnderflow(ring) << ",\n";
+    o << "\tPLLLocked:" << ReadSERDESPLLLocked(ring) << ",\n";
+    o << "\tRXCDRLock:" << ReadSERDESRXCDRLock(ring) << ",\n";
+    o << "\tResetDone:" << ReadSERDESResetDone(ring) << ",\n";
+    o << "\tUnlockError:" << ReadSERDESUnlockError(ring) << ",\n";
+    o << "\tRXBufferStatus:" << DTC_RXBufferStatusConverter(ReadSERDESRXBufferStatus(ring)) << ",\n";
+    o << "\tRXStatus:" << DTC_RXStatusConverter(ReadSERDESRXStatus(ring)) << ",\n";
+    o << "\tSERDESRXDisparity:" << ReadSERDESRXDisparityError(ring) << ",\n";
+    o << "\tCharacterError:" << ReadSERDESRXCharacterNotInTableError(ring) << "\n";
+    o << "}";
+
+    return o.str();
+}
+std::string DTCLib::DTC::CFORegDump()
+{
+    std::ostringstream o;
+    o.setf(std::ios_base::boolalpha);
+
+    o << "CFO:{";
+
+    o << "\tEnabled:" << ReadRingEnabled(DTC_Ring_CFO) << ",\n";
+    o << "\tSERDESLoopback:" << DTC_SERDESLoopbackModeConverter(ReadSERDESLoopback(DTC_Ring_CFO)) << ",\n";
+    o << "\tCharacterError:" << ReadSERDESRXCharacterNotInTableError(DTC_Ring_CFO) << ",\n";
+    o << "\tEyescanError:" << ReadSERDESEyescanError(DTC_Ring_CFO) << ",\n";
+    o << "\tFIFOFullFlags:" << ReadFIFOFullErrorFlags(DTC_Ring_CFO) << ",\n";
+    o << "\tFIFOHalfFull:" << ReadSERDESBufferFIFOHalfFull(DTC_Ring_CFO) << ",\n";
+    o << "\tOverflowOrUnderflow:" << ReadSERDESOverflowOrUnderflow(DTC_Ring_CFO) << ",\n";
+    o << "\tPLLLocked:" << ReadSERDESPLLLocked(DTC_Ring_CFO) << ",\n";
+    o << "\tRXBufferStatus:" << DTC_RXBufferStatusConverter(ReadSERDESRXBufferStatus(DTC_Ring_CFO)) << ",\n";
+    o << "\tRXCDRLock:" << ReadSERDESRXCDRLock(DTC_Ring_CFO) << ",\n";
+    o << "\tRXStatus:" << DTC_RXStatusConverter(ReadSERDESRXStatus(DTC_Ring_CFO)) << ",\n";
+    o << "\tResetDone:" << ReadSERDESResetDone(DTC_Ring_CFO) << ",\n";
+    o << "\tResetSERDES:" << ReadResetSERDES(DTC_Ring_CFO) << ",\n";
+    o << "\tSERDESRXDisparity:" << ReadSERDESRXDisparityError(DTC_Ring_CFO) << ",\n";
+    o << "\tUnlockError:" << ReadSERDESUnlockError(DTC_Ring_CFO) << "\n";
+
+    o << "}";
+
+    return o.str();
+}
+
 std::string DTCLib::DTC::RegisterRead(const DTC_Register& address)
 {
     uint32_t data = ReadRegister(address);
@@ -957,10 +1106,10 @@ DTCLib::DTC_DataPacket DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel)
         errorCode = device_.read_data(channel, (void**)&buffer, 1000);
         retry--;
     } while (retry > 0 && errorCode == 0);
-    if      (errorCode == 0)
-	throw DTC_WrongPacketTypeException();
+    if (errorCode == 0)
+        throw DTC_WrongPacketTypeException();
     else if (errorCode < 0)
-	throw DTC_IOErrorException();
+        throw DTC_IOErrorException();
     TRACE(16, "DTC::ReadDataPacket buffer_=%p errorCode=%d", (void*)buffer, errorCode);
     if (channel == DTC_DMA_Engine_DAQ) { daqbuffer_ = buffer; }
     else if (channel == DTC_DMA_Engine_DCS) { dcsbuffer_ = buffer; }

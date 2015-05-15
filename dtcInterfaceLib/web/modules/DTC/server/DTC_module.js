@@ -77,6 +77,7 @@ function readMaxRocs(input, ring) {
 
 function getRegDump() {
     rdTime = new Date();
+    /*
     var dtcRegisters = {};
     dtcRegisters.Ring0 = {};
     dtcRegisters.Ring1 = {};
@@ -220,6 +221,8 @@ function getRegDump() {
     dtcRegisters.PROMReady = dtcem.RO_readFPGAPROMReady();
     dtcRegisters.FPGACoreFIFOFull = dtcem.RO_readFPGACoreAccessFIFOFull();
     regDump = dtcRegisters;
+     */
+    regDump = JSON.parse(DTC.RegDump());
     console.log("Done with RegDump");
 }
 

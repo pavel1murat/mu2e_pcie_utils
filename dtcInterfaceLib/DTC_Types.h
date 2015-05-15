@@ -5,7 +5,11 @@
 #include <cstdint> // uint8_t, uint16_t
 #include <vector> // std::vector
 #include <iostream> //std::ostream
+#ifndef _WIN32
 #include "linux_driver/mymodule2/mu2e_mmap_ioctl.h"
+#else
+#include "../linux_driver/mymodule2/mu2e_mmap_ioctl.h"
+#endif
 
 namespace DTCLib
 {
@@ -84,6 +88,60 @@ namespace DTCLib
         DTC_RXBufferStatus_Overflow = 6,
         DTC_RXBufferStatus_Unknown = 0x10,
     };
+    struct DTC_RXBufferStatusConverter {
+    public:
+        DTC_RXBufferStatus status_;
+        DTC_RXBufferStatusConverter(DTC_RXBufferStatus status) : status_(status) {}
+        friend std::ostream& operator<<(std::ostream& stream, const DTC_RXBufferStatusConverter& status) {
+            switch (status.status_)
+            {
+            case DTC_RXBufferStatus_Unknown:
+            default:
+                stream << "{Nominal:0,";
+                stream << "Empty:0,";
+                stream << "Full:0,";
+                stream << "Underflow:0,";
+                stream << "Overflow:0}";
+                break;
+            case DTC_RXBufferStatus_Nominal:
+                stream << "{Nominal:1,";
+                stream << "Empty:0,";
+                stream << "Full:0,";
+                stream << "Underflow:0,";
+                stream << "Overflow:0}";
+                break;
+            case DTC_RXBufferStatus_BufferEmpty:
+                stream << "{Nominal:0,";
+                stream << "Empty:1,";
+                stream << "Full:0,";
+                stream << "Underflow:0,";
+                stream << "Overflow:0}";
+                break;
+            case DTC_RXBufferStatus_BufferFull:
+                stream << "{Nominal:0,";
+                stream << "Empty:0,";
+                stream << "Full:1,";
+                stream << "Underflow:0,";
+                stream << "Overflow:0}";
+                break;
+            case DTC_RXBufferStatus_Overflow:
+                stream << "{Nominal:0,";
+                stream << "Empty:0,";
+                stream << "Full:0,";
+                stream << "Underflow:1,";
+                stream << "Overflow:0}";
+                break;
+            case DTC_RXBufferStatus_Underflow:
+                stream << "{Nominal:0,";
+                stream << "Empty:0,";
+                stream << "Full:0,";
+                stream << "Underflow:0,";
+                stream << "Overflow:1}";
+                break;
+            }
+            return stream;
+        }
+    };
 
     enum DTC_RXStatus {
         DTC_RXStatus_DataOK = 0,
@@ -95,6 +153,107 @@ namespace DTCLib
         DTC_RXStatus_ElasticUnderflow = 6,
         DTC_RXStatus_RXDisparityError = 7,
     };
+    struct DTC_RXStatusConverter {
+    public:
+        DTC_RXStatus status_;
+        DTC_RXStatusConverter(DTC_RXStatus status) : status_(status) {}
+        friend std::ostream& operator<<(std::ostream& stream, const DTC_RXStatusConverter& status) {
+            switch (status.status_)
+            {
+            default:
+                stream << "{DataOK:0,";
+                stream << "SKPAdded:0,";
+                stream << "SKPRemoved:0,";
+                stream << "ReceiverDetected:0,";
+                stream << "DecodeError:0,";
+                stream << "EOverflow:0,";
+                stream << "EUnderflow:0,";
+                stream << "DisparityError:0}";
+                break;
+            case DTC_RXStatus_DataOK:
+                stream << "{DataOK:1,";
+                stream << "SKPAdded:0,";
+                stream << "SKPRemoved:0,";
+                stream << "ReceiverDetected:0,";
+                stream << "DecodeError:0,";
+                stream << "EOverflow:0,";
+                stream << "EUnderflow:0,";
+                stream << "DisparityError:0}";
+                break;
+            case DTC_RXStatus_SKPAdded:
+                stream << "{DataOK:0,";
+                stream << "SKPAdded:1,";
+                stream << "SKPRemoved:0,";
+                stream << "ReceiverDetected:0,";
+                stream << "DecodeError:0,";
+                stream << "EOverflow:0,";
+                stream << "EUnderflow:0,";
+                stream << "DisparityError:0}";
+                break;
+            case DTC_RXStatus_SKPRemoved:
+                stream << "{DataOK:0,";
+                stream << "SKPAdded:0,";
+                stream << "SKPRemoved:1,";
+                stream << "ReceiverDetected:0,";
+                stream << "DecodeError:0,";
+                stream << "EOverflow:0,";
+                stream << "EUnderflow:0,";
+                stream << "DisparityError:0}";
+                break;
+            case DTC_RXStatus_ReceiverDetected:
+                stream << "{DataOK:0,";
+                stream << "SKPAdded:0,";
+                stream << "SKPRemoved:0,";
+                stream << "ReceiverDetected:1,";
+                stream << "DecodeError:0,";
+                stream << "EOverflow:0,";
+                stream << "EUnderflow:0,";
+                stream << "DisparityError:0}";
+                break;
+            case DTC_RXStatus_DecodeError:
+                stream << "{DataOK:0,";
+                stream << "SKPAdded:0,";
+                stream << "SKPRemoved:0,";
+                stream << "ReceiverDetected:0,";
+                stream << "DecodeError:1,";
+                stream << "EOverflow:0,";
+                stream << "EUnderflow:0,";
+                stream << "DisparityError:0}";
+                break;
+            case DTC_RXStatus_ElasticOverflow:
+                stream << "{DataOK:0,";
+                stream << "SKPAdded:0,";
+                stream << "SKPRemoved:0,";
+                stream << "ReceiverDetected:0,";
+                stream << "DecodeError:0,";
+                stream << "EOverflow:1,";
+                stream << "EUnderflow:0,";
+                stream << "DisparityError:0}";
+                break;
+            case DTC_RXStatus_ElasticUnderflow:
+                stream << "{DataOK:0,";
+                stream << "SKPAdded:0,";
+                stream << "SKPRemoved:0,";
+                stream << "ReceiverDetected:0,";
+                stream << "DecodeError:0,";
+                stream << "EOverflow:0,";
+                stream << "EUnderflow:1,";
+                stream << "DisparityError:0}";
+                break;
+            case DTC_RXStatus_RXDisparityError:
+                stream << "{DataOK:0,";
+                stream << "SKPAdded:0,";
+                stream << "SKPRemoved:0,";
+                stream << "ReceiverDetected:0,";
+                stream << "DecodeError:0,";
+                stream << "EOverflow:0,";
+                stream << "EUnderflow:0,";
+                stream << "DisparityError:1}";
+                break;
+            }
+        return stream;
+        }
+    };
 
     enum DTC_SERDESLoopbackMode {
         DTC_SERDESLoopbackMode_Disabled = 0,
@@ -102,6 +261,48 @@ namespace DTCLib
         DTC_SERDESLoopbackMode_NearPMA = 2,
         DTC_SERDESLoopbackMode_FarPMA = 4,
         DTC_SERDESLoopbackMode_FarPCS = 6,
+    };
+    struct DTC_SERDESLoopbackModeConverter {
+    public:
+        DTC_SERDESLoopbackMode mode_;
+        DTC_SERDESLoopbackModeConverter(DTC_SERDESLoopbackMode mode) : mode_(mode) {}
+        friend std::ostream& operator<<(std::ostream& stream, const DTC_SERDESLoopbackModeConverter& mode) {
+            switch (mode.mode_)
+            {
+            case DTC_SERDESLoopbackMode_Disabled:
+            default:
+                stream << "{NEPCS:0,";
+                stream << "NEMPA:0,";
+                stream << "FEPMA:0,";
+                stream << "FEPCS:0}";
+                break;
+            case DTC_SERDESLoopbackMode_NearPCS:
+                stream << "{NEPCS:1,";
+                stream << "NEMPA:0,";
+                stream << "FEPMA:0,";
+                stream << "FEPCS:0}";
+                break;
+            case DTC_SERDESLoopbackMode_NearPMA:
+                stream << "{NEPCS:0,";
+                stream << "NEMPA:1,";
+                stream << "FEPMA:0,";
+                stream << "FEPCS:0}";
+                break;
+            case DTC_SERDESLoopbackMode_FarPMA:
+                stream << "{NEPCS:0,";
+                stream << "NEMPA:0,";
+                stream << "FEPMA:1,";
+                stream << "FEPCS:0}";
+                break;
+            case DTC_SERDESLoopbackMode_FarPCS:
+                stream << "{NEPCS:0,";
+                stream << "NEMPA:0,";
+                stream << "FEPMA:0,";
+                stream << "FEPCS:1}";
+                break;
+            }
+            return stream;
+        }
     };
 
     enum DTC_Data_Status {
@@ -393,6 +594,10 @@ namespace DTCLib
         void SetData(std::bitset<2> data) { data_ = data; }
         std::bitset<2> GetData() { return data_; }
         int GetData(bool output) { if (output) return static_cast<int>(data_.to_ulong()); return 0; }
+        friend std::ostream& operator<<(std::ostream& stream, DTC_SERDESRXDisparityError error) {
+            stream << "{low:" << error.GetData()[0] << ",high:" << error.GetData()[1] << "}";
+            return stream;
+        }
     };
 
     class DTC_CharacterNotInTableError {
@@ -416,6 +621,10 @@ namespace DTCLib
         void SetData(std::bitset<2> data) { data_ = data; }
         std::bitset<2> GetData() { return data_; }
         int GetData(bool output) { if (output) return static_cast<int>(data_.to_ulong()); return 0; }
+        friend std::ostream& operator<<(std::ostream& stream, DTC_CharacterNotInTableError error) {
+            stream << "{low:" << error.GetData()[0] << ",high:" << error.GetData()[1] << "}";
+            return stream;
+        }
     };
 
     struct DTC_TestMode {
@@ -527,7 +736,10 @@ namespace DTCLib
         DTC_RingEnableMode() : TransmitEnable(true), ReceiveEnable(true), TimingEnable(true) {}
         DTC_RingEnableMode(bool transmit, bool receive, bool timing) : TransmitEnable(transmit), ReceiveEnable(receive), TimingEnable(timing) {}
         friend std::ostream& operator<<(std::ostream& stream, const DTC_RingEnableMode& mode) {
-            stream << "T:" << mode.TransmitEnable << ",R:" << mode.ReceiveEnable << ",Ti:" << mode.TimingEnable;
+            bool formatSet = (stream.flags() & std::ios_base::boolalpha) != 0;
+            stream.setf(std::ios_base::boolalpha);
+            stream << "{TransmitEnable:" << mode.TransmitEnable << ",ReceiveEnable:" << mode.ReceiveEnable << ",TimingEnable:" << mode.TimingEnable << "}";
+            if (!formatSet) stream.unsetf(std::ios_base::boolalpha);
             return stream;
         }
         friend bool operator!=(const DTC_RingEnableMode& left, const DTC_RingEnableMode& right){ return (left.TransmitEnable == right.TransmitEnable) && (left.ReceiveEnable == right.ReceiveEnable) && (left.TimingEnable == right.TimingEnable); }
@@ -567,6 +779,21 @@ namespace DTCLib
             , DataInput(dataInput)
             , DCSStatusInput(dcsInput)
         {}
+        friend std::ostream& operator<<(std::ostream& stream, const DTC_FIFOFullErrorFlags& flags) {
+            bool formatSet = (stream.flags() & std::ios_base::boolalpha) != 0;
+            stream.setf(std::ios_base::boolalpha);
+            stream << "{OutputData:" << flags.OutputData
+                << ",CFOLinkInput:" << flags.CFOLinkInput
+                << ",ReadoutRequestOutput:" << flags.ReadoutRequestOutput
+                << "DataRequestOutput:" << flags.DataRequestOutput
+                << ",OtherOutput:" << flags.OtherOutput
+                << ",OutputDCS:" << flags.OutputDCS
+                << "OutputDCSStage2:" << flags.OutputDCSStage2
+                << ",DataInput:" << flags.DataInput
+                << ",DCSStatusInput:" << flags.DCSStatusInput << "}";
+            if (!formatSet) stream.unsetf(std::ios_base::boolalpha);
+            return stream;
+        }
     };
 
 }
