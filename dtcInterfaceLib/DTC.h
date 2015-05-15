@@ -20,8 +20,8 @@ namespace DTCLib {
         // DMA Functions
         //
         // Data read-out
-        std::vector<void*> GetData(DTC_Timestamp when = DTC_Timestamp(), bool sendDReq = false, bool sendRReq = false);
-        std::string GetJSONData(DTC_Timestamp when = DTC_Timestamp(), bool sendDReq = false, bool sendRReq = false);
+        std::vector<void*> GetData(DTC_Timestamp when = DTC_Timestamp());
+        std::string GetJSONData(DTC_Timestamp when = DTC_Timestamp());
         std::vector<void*> GetData_OLD(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const DTC_Timestamp& when, int* length);
 
         // DCS Read/Write Cycle
@@ -53,12 +53,18 @@ namespace DTCLib {
 
         void ResetSERDESOscillator();
         bool ReadResetSERDESOscillator();
+
         void ToggleSERDESOscillatorClock();
         bool ReadSERDESOscillatorClock();
 
-        void ToggleSystemClockEnable();
+        bool SetExternalSystemClock();
+        bool SetInternalSystemClock();
+        bool ToggleSystemClockEnable();
         bool ReadSystemClock();
-        void ToggleTimingEnable();
+
+        bool EnableTiming();
+        bool DisableTiming();
+        bool ToggleTimingEnable();
         bool ReadTimingEnable();
 
         int SetTriggerDMATransferLength(uint16_t length);
@@ -73,6 +79,8 @@ namespace DTCLib {
         bool ReadSERDESOscillatorIICError();
         bool ReadSERDESOscillatorInitializationComplete();
 
+        bool EnableROCEmulator(const DTC_Ring_ID& ring);
+        bool DisableROCEmulator(const DTC_Ring_ID& ring);
         bool ToggleROCEmulator(const DTC_Ring_ID& ring);
         bool ReadROCEmulator(const DTC_Ring_ID& ring);
 

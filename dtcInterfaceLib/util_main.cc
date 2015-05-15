@@ -20,17 +20,19 @@
 using namespace DTCLib;
 using namespace std;
 
+#ifndef _WIN32 // Win32 builds everything into a single executable, we already have a main
 int
 main(  int	argc
      , char	*argv[] )
 {
-    DTC *thisDTC = new DTC();
+    DTC *thisDTC = new DTC(DTC_Sim_Mode_Hardware);
+
 # if 0
     DTC_DataHeaderPacket packet = thisDTC->ReadNextDAQPacket();
     cout << packet.toJSON() << '\n';
     // need to release
 # else
-    vector<void*> data=thisDTC->GetData( DTC_Timestamp((uint64_t)0), false, false );
+    vector<void*> data=thisDTC->GetData( DTC_Timestamp((uint64_t)0) );
     if (data.size() > 0)
     {   cout << data.size() << " packets returned\n";
 	for (size_t i = 0; i < data.size(); ++i)
@@ -49,3 +51,4 @@ main(  int	argc
 # endif
     return (0);
 }   // main
+#endif
