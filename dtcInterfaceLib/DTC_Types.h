@@ -200,11 +200,11 @@ namespace DTCLib
 
     class DTC_DMAPacket {
     protected:
-        bool valid_;
-        uint16_t byteCount_;
-        DTC_Ring_ID ringID_;
+        bool           valid_;
+        uint16_t       byteCount_;
+        DTC_Ring_ID    ringID_;
         DTC_PacketType packetType_;
-        DTC_ROC_ID rocID_;
+        DTC_ROC_ID     rocID_;
 
     public:
         DTC_DMAPacket() : packetType_(DTC_PacketType_Invalid) {}
