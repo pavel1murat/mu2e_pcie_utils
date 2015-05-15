@@ -330,12 +330,12 @@ std::string DTCLib::DTC::ReadDesignDate()
 {
     uint32_t data = ReadDesignDateRegister();
     int yearHex = (data & 0xFF000000) >> 24;
-    int year = (yearHex & 0xF0) * 10 + (yearHex & 0xF);
+    int year = ((yearHex & 0xF0) >> 4) * 10 + (yearHex & 0xF);
     int monthHex = (data & 0xFF0000) >> 16;
-    int month = (monthHex & 0xF0) * 10 + (monthHex & 0xF);
+    int month = ((monthHex & 0xF0) >> 4) * 10 + (monthHex & 0xF);
     int dayHex = (data & 0xFF00) >> 8;
-    int day = (dayHex & 0xF0) * 10 + (dayHex & 0xF);
-    int hour = (data & 0xF0) * 10 + (data & 0xF);
+    int day = ((dayHex & 0xF0) >>4) * 10 + (dayHex & 0xF);
+    int hour = ((data & 0xF0) >> 4) * 10 + (data & 0xF);
     return "20" + std::to_string(year) + "-" + std::to_string(month) + "-" + std::to_string(day) + "-" + std::to_string(hour);
 }
 std::string DTCLib::DTC::ReadDesignVersionNumber()
