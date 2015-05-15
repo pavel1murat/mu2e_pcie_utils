@@ -63,6 +63,7 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
         DisableRing(DTC_Ring_5);
         SetSERDESLoopbackMode(DTC_Ring_0, DTC_SERDESLoopbackMode_NearPCS);
         EnableROCEmulator(DTC_Ring_0);
+        //EnableROCEmulator(DTC_Ring_1);
         SetInternalSystemClock();
         DisableTiming();
     }
