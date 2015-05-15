@@ -1,5 +1,6 @@
 #include "DTC.h"
 #include <sstream> // Convert uint to hex string
+#include <iomanip> // std::setw, std::setfill
 #ifndef _WIN32
 # include <unistd.h>
 # include "trace.h"
@@ -85,7 +86,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
                 DTC_ReadoutRequestPacket req((DTC_Ring_ID)ring, when, request, ReadRingROCCount((DTC_Ring_ID)ring));
                 TRACE(19, "DTC::GetData before WriteDMADAQPacket");
                 WriteDMADAQPacket(req);
-                TRACE(19, "DTC::GetData after  WriteDMADAQPacket");                
+                TRACE(19, "DTC::GetData after  WriteDMADAQPacket");
                 if (int maxRoc = ReadRingROCCount((DTC_Ring_ID)ring) != DTC_ROC_Unused)
                 {
                     for (uint8_t roc = 0; roc <= maxRoc; ++roc)
@@ -329,20 +330,26 @@ std::string DTCLib::DTC::ReadDesignVersion()
 std::string DTCLib::DTC::ReadDesignDate()
 {
     uint32_t data = ReadDesignDateRegister();
-    int yearHex = data & 0xFF000000 >> 24;
-    int year = (yearHex & 0xF0) * 10 + (yearHex & 0xF);
-    int monthHex = data & 0xFF0000 >> 16;
-    int month = (monthHex & 0xF0) * 10 + (monthHex & 0xF);
-    int dayHex = data & 0xFF00 >> 8;
-    int day = (dayHex & 0xF0) * 10 + (dayHex & 0xF);
-    int hour = (data & 0xF0) * 10 + (data & 0xF);
-    return "20" + std::to_string(year) + "-" + std::to_string(month) + "-" + std::to_string(day) + "-" + std::to_string(hour);
+    std::ostringstream o;
+    int yearHex = (data & 0xFF000000) >> 24;
+    int year = ((yearHex & 0xF0) >> 4) * 10 + (yearHex & 0xF);
+    int monthHex = (data & 0xFF0000) >> 16;
+    int month = ((monthHex & 0xF0) >> 4) * 10 + (monthHex & 0xF);
+    int dayHex = (data & 0xFF00) >> 8;
+    int day = ((dayHex & 0xF0) >> 4) * 10 + (dayHex & 0xF);
+    int hour = ((data & 0xF0) >> 4) * 10 + (data & 0xF);
+    o << "20" << std::setfill('0') << std::setw(2) << year << "-";
+    o << std::setfill('0') << std::setw(2) << month << "-";
+    o << std::setfill('0') << std::setw(2) << day << "-";
+    o << std::setfill('0') << std::setw(2) << hour;
+    //std::cout << o.str() << std::endl;
+    return o.str();
 }
 std::string DTCLib::DTC::ReadDesignVersionNumber()
 {
     uint32_t data = ReadDesignVersionNumberRegister();
     int minor = data & 0xFF;
-    int major = data & 0xFF00 >> 8;
+    int major = (data & 0xFF00) >> 8;
     return "v" + std::to_string(major) + "." + std::to_string(minor);
 }
 
