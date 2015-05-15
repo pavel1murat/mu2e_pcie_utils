@@ -4,7 +4,11 @@
 // January 27, 2015
 //
 #include <cstdint>
-#include "linux_driver/mymodule2/mu2e_mmap_ioctl.h"
+#ifndef _WIN32
+#include "linux_driver/mymodule2/mu2e_mmap_ioctl.h" // 
+#else
+#include "../linux_driver/mymodule2/mu2e_mmap_ioctl.h"
+#endif
 #include <unordered_map>
 #include "DTC_Types.h"
 
