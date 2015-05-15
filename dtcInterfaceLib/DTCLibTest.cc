@@ -399,7 +399,7 @@ void DTCLib::DTCLibTest::doDAQTest()
         int retry = 3;
         bool err = false;
         do {
-            std::vector<void*> data = thisDTC_->GetData(now, true,true);
+            std::vector<void*> data = thisDTC_->GetData(now);
             if (data.size() > 0) {
                 if (data.size() > 1) {
                     if (printMessages_) {
@@ -469,7 +469,7 @@ void DTCLib::DTCLibTest::doLoopbackTest()
         bool err = false;
         do {
             TRACE(15, "DTCLibTest before thisDTC->GetData");
-            std::vector<void*> data = thisDTC_->GetData(now, true, true);
+            std::vector<void*> data = thisDTC_->GetData(now);
             TRACE(15, "DTCLibTest after  thisDTC->GetData");
             if (data.size() > 0) {
                 if (data.size() > 1) {

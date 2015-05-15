@@ -17,17 +17,18 @@
 # include "trace.h"
 #endif
 
+#ifndef _WIN32 // Win32 builds everything into a single executable, we already have a main
 int
 main(  int	argc
      , char	*argv[] )
 {
-    DTCLib::DTC *thisDTC = new DTCLib::DTC();
+    DTCLib::DTC *thisDTC = new DTCLib::DTC(DTCLib::DTC_Sim_Mode_Hardware);
 # if 0
     DTCLib::DTC_DataHeaderPacket packet = thisDTC->ReadNextDAQPacket();
     std::cout << packet.toJSON() << '\n';
     // need to release
 # else
-    std::vector<void*> data=thisDTC->GetData( DTCLib::DTC_Timestamp((uint64_t)0), false, false );
+    std::vector<void*> data=thisDTC->GetData( DTCLib::DTC_Timestamp((uint64_t)0) );
     if (data.size() > 0)
     {   std::cout << data.size() << " packets returned\n";
     }
@@ -36,3 +37,4 @@ main(  int	argc
 # endif
     return (0);
 }   // main
+#endif

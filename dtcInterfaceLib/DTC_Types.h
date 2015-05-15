@@ -115,6 +115,7 @@ namespace DTCLib
         DTC_Sim_Mode_Tracker,
         DTC_Sim_Mode_Calorimeter,
         DTC_Sim_Mode_CosmicVeto,
+        DTC_Sim_Mode_Hardware
     };
 
     class DTC_WrongPacketTypeException : public std::exception {
