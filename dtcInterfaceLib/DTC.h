@@ -38,6 +38,7 @@ namespace DTCLib {
         PacketType ReadDMAPacket_OLD(const DTC_DMA_Engine& channel);
         DTC_DataHeaderPacket ReadNextDAQPacket();
         DTC_DCSReplyPacket ReadNextDCSPacket();
+	void ReleaseAllBuffers(const DTC_DMA_Engine& channel) { device_.release_all(channel); }
 
         //
         // Register IO Functions
