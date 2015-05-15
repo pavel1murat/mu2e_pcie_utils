@@ -132,7 +132,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool sendDReq, bool 
 
     TRACE(19, "DTC::GetData RETURN");
     return output;
-}
+}   // GetData
 
 std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when, bool sendDReq, bool sendRReq)
 {

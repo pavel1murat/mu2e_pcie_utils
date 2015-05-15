@@ -11,15 +11,15 @@
 
 #define TRACE_NAME "MU2EDEV"
 #ifndef _WIN32
-#include "trace.h"
+# include "trace.h"
 #else
-#define TRACE(...)
-#define TRACE_CNTL(...)
+# define TRACE(...)
+# define TRACE_CNTL(...)
 #endif
 #include "mu2edev.hh"
 
-mu2edev::mu2edev() : devfd_(0)
-, simulator_()
+mu2edev::mu2edev() : devfd_(0), buffers_held_(0)
+		   , simulator_()
 {
     //TRACE_CNTL( "lvlmskM", 0x3 );
     //TRACE_CNTL( "lvlmskS", 0x3 );
@@ -102,7 +102,7 @@ int mu2edev::read_data(int chn, void **buffer, int tmo_ms)
         TRACE(18, "mu2edev::read_data before (mu2e_mmap_ptrs_[0][0][0]!=NULL) || ((retsts=init())==0)");
         if ((mu2e_mmap_ptrs_[0][0][0] != NULL) || ((retsts = init()) == 0))
         {
-            has_recv_data = delta_(chn, C2S);
+            has_recv_data = delta_(chn, C2S); // delta_ looks at mu2e_channel_info_
             TRACE(18, "mu2edev::read_data after %u=has_recv_data = delta_( chn, C2S )", has_recv_data);
             if ((has_recv_data > 0)
                 || ((retsts = ioctl(devfd_, M_IOC_GET_INFO, &mu2e_channel_info_[chn][C2S])) == 0
@@ -114,12 +114,12 @@ int mu2edev::read_data(int chn, void **buffer, int tmo_ms)
                 retsts = BC_p[newNxtIdx];
                 *buffer = ((mu2e_databuff_t*)(mu2e_mmap_ptrs_[chn][C2S][MU2E_MAP_BUFF]))[newNxtIdx];
                 TRACE(1, "mu2edev::read_data chn%d hIdx=%u, sIdx=%u "
-                    "%u hasRcvDat=%u %p[newNxtIdx=%d]=retsts=%d"
-                    , chn
-                    , mu2e_channel_info_[chn][C2S].hwIdx, mu2e_channel_info_[chn][C2S].swIdx
-                    , mu2e_channel_info_[chn][C2S].num_buffs, has_recv_data
-                    , (void*)BC_p, newNxtIdx
-                    , retsts);
+		      "%u hasRcvDat=%u %p[newNxtIdx=%d]=retsts=%d buf(%p)[0]=0x%08x"
+		      , chn
+		      , mu2e_channel_info_[chn][C2S].hwIdx
+		      , mu2e_channel_info_[chn][C2S].swIdx
+		      , mu2e_channel_info_[chn][C2S].num_buffs, has_recv_data
+		      , (void*)BC_p, newNxtIdx, retsts, *buffer, *(uint32_t*)*buffer );
             }
             else
             {   // was it a tmo or error
