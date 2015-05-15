@@ -27,7 +27,7 @@ mu2edev::mu2edev() : devfd_(0)
 
 int mu2edev::init(DTCLib::DTC_Sim_Mode simMode)
 {
-    if (simMode != DTCLib::DTC_Sim_Mode_Disabled || simMode != DTCLib::DTC_Sim_Mode_Hardware) {
+    if (simMode != DTCLib::DTC_Sim_Mode_Disabled && simMode != DTCLib::DTC_Sim_Mode_Hardware) {
         simulator_.init(simMode);
     }
     else {
