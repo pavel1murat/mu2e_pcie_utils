@@ -32,7 +32,9 @@ add_custom_command(TARGET DTCJSInterface POST_BUILD
    COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_BINARY_DIR}/DTC.node  ${CMAKE_BINARY_DIR}/bin/web/modules/DTC/server/DTC.node
    COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_BINARY_DIR}/DTCLibTest.node  ${CMAKE_BINARY_DIR}/bin/web/modules/DTC/server/DTCLibTest.node
 )
-install(DIRECTORY web DESTINATION ${${product}_bin_dir})
+
+install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/web DESTINATION ${${product}_bin_dir})
+
 
 cet_script(updateMu2e.sh)
 
