@@ -9,12 +9,13 @@
 namespace DTCLib {
     class DTC {
     public:
-        DTC(DTC_Sim_Mode mode = DTC_Sim_Mode_Disabled);
+        DTC(DTC_SimMode mode = DTC_SimMode_Disabled);
         virtual ~DTC() = default;
 
         const int DTC_BUFFSIZE;
 
-        DTC_Sim_Mode IsSimulatedDTC() { return simMode_; }
+        DTC_SimMode ReadSimMode() { return simMode_; }
+        void SetSimMode(DTC_SimMode mode);
 
         //
         // DMA Functions
@@ -223,7 +224,7 @@ namespace DTCLib {
         mu2edev device_;
         mu2e_databuff_t* daqbuffer_;
         mu2e_databuff_t* dcsbuffer_;
-        DTC_Sim_Mode simMode_;
+        DTC_SimMode simMode_;
         void* lastReadPtr_;
         void* nextReadPtr_;
         void* dcsReadPtr_;

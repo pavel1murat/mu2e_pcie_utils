@@ -20,12 +20,11 @@
 using namespace DTCLib;
 using namespace std;
 
-#ifndef _WIN32 // Win32 builds everything into a single executable, we already have a main
 int
 main(  int	argc
      , char	*argv[] )
 {
-    DTC *thisDTC = new DTC(DTC_Sim_Mode_Hardware);
+    DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
 
     if      (argc > 1 && strcmp(argv[1],"read")==0)
     {
@@ -56,4 +55,3 @@ main(  int	argc
     }
     return (0);
 }   // main
-#endif

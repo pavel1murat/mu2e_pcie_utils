@@ -11,12 +11,12 @@
 # define TRACE(...) 
 #endif
 
-DTCLib::DTC::DTC(DTCLib::DTC_Sim_Mode mode) : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t))), device_(),
+DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode) : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t))), device_(),
 daqbuffer_(nullptr), dcsbuffer_(nullptr), simMode_(mode),
 lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 {
 #ifdef _WIN32
-    simMode_ = DTCLib::DTC_Sim_Mode_Tracker;
+    simMode_ = DTCLib::DTC_SimMode_Tracker;
 #else
     char* sim = getenv("DTCLIB_SIM_ENABLE");
     if(sim != NULL) 
@@ -26,33 +26,39 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
         case '1':
         case 't':
         case 'T':
-            simMode_ = DTCLib::DTC_Sim_Mode_Tracker;
+            simMode_ = DTCLib::DTC_SimMode_Tracker;
             break;
         case '2':
         case 'c':
         case 'C':
-            simMode_ = DTCLib::DTC_Sim_Mode_Calorimeter;
+            simMode_ = DTCLib::DTC_SimMode_Calorimeter;
             break;
         case '3':
         case 'v':
         case 'V':
-            simMode_ = DTCLib::DTC_Sim_Mode_CosmicVeto;
+            simMode_ = DTCLib::DTC_SimMode_CosmicVeto;
             break;
         case '4':
         case 'h':
         case 'H':
-            simMode_ = DTCLib::DTC_Sim_Mode_Hardware;
+            simMode_ = DTCLib::DTC_SimMode_Hardware;
             break;
         case '0':
         default:
-            simMode_ = DTCLib::DTC_Sim_Mode_Disabled;
+            simMode_ = DTCLib::DTC_SimMode_Disabled;
             break;
         }
     }
 #endif
-    device_.init(simMode_);
+    SetSimMode(simMode_);
 
-    if (simMode_ == DTCLib::DTC_Sim_Mode_Hardware)
+}
+
+void DTCLib::DTC::SetSimMode(DTC_SimMode mode)
+{
+    simMode_ = mode;
+    device_.init(simMode_);
+    if (simMode_ == DTCLib::DTC_SimMode_Hardware)
     {
         // Set up hardware simulation mode: Ring 0 Tx/Rx Enabled, Loopback Enabled, ROC Emulator Enabled. All other rings disabled.
         EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
@@ -320,6 +326,7 @@ std::string DTCLib::DTC::RegDump()
     std::ostringstream o;
     o.setf(std::ios_base::boolalpha);
     o << "{";
+    o << "SimMode:" << DTC_SimModeConverter(simMode_) << ",\n";
     o << "Version:\"" << ReadDesignVersion() << "\",\n";
     o << "ResetDTC:" << ReadResetDTC() << ",\n";
     o << "ResetSERDESOscillator:" << ReadResetSERDESOscillator() << ",\n";

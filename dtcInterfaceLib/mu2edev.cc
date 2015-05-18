@@ -25,9 +25,9 @@ mu2edev::mu2edev() : devfd_(0), buffers_held_(0)
     //TRACE_CNTL( "lvlmskS", 0x3 );
 }
 
-int mu2edev::init(DTCLib::DTC_Sim_Mode simMode)
+int mu2edev::init(DTCLib::DTC_SimMode simMode)
 {
-    if (simMode != DTCLib::DTC_Sim_Mode_Disabled && simMode != DTCLib::DTC_Sim_Mode_Hardware) {
+    if (simMode != DTCLib::DTC_SimMode_Disabled && simMode != DTCLib::DTC_SimMode_Hardware) {
         simulator_.init(simMode);
     }
     else {

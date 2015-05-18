@@ -16,7 +16,7 @@ struct mu2esim
 {
     mu2esim();
     ~mu2esim();
-    int  init(DTCLib::DTC_Sim_Mode mode = DTCLib::DTC_Sim_Mode_Tracker);
+    int  init(DTCLib::DTC_SimMode mode = DTCLib::DTC_SimMode_Tracker);
     int  read_data(int chn, void **buffer, int tmo_ms); // return bytes read; error if negative
     int  write_loopback_data(int chn, void *buffer, size_t bytes);
     int  read_release(int chn, unsigned num);
@@ -40,7 +40,7 @@ private:
     m_ioc_pcistate_t pcieState_;
     m_ioc_cmd_t testState_;
     bool testStarted_;
-    DTCLib::DTC_Sim_Mode mode_;
+    DTCLib::DTC_SimMode mode_;
     uint16_t simIndex_[6][6];
     bool dcsRequestRecieved_[6][6];
     std::vector<DTCLib::DTC_Timestamp> readoutRequestRecieved_[6];

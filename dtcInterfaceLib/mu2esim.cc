@@ -22,7 +22,7 @@
 #include <algorithm>
 
 mu2esim::mu2esim() : isActive_(false),
-dmaDCSData_(), mode_(DTCLib::DTC_Sim_Mode_Disabled)
+dmaDCSData_(), mode_(DTCLib::DTC_SimMode_Disabled)
 {
 #ifndef _WIN32  
     //TRACE_CNTL( "lvlmskM", 0x3 );
@@ -47,7 +47,7 @@ mu2esim::~mu2esim()
     delete[] olddmaDAQData_;
 }
 
-int mu2esim::init(DTCLib::DTC_Sim_Mode mode)
+int mu2esim::init(DTCLib::DTC_SimMode mode)
 {
     TRACE(17, "mu2e Simulator::init");
     mode_ = mode;
@@ -233,7 +233,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 
                             switch (mode_)
                             {
-                            case DTCLib::DTC_Sim_Mode_CosmicVeto:
+                            case DTCLib::DTC_SimMode_CosmicVeto:
                             {
                                 int nSamples = 4;
                                 packet[0] = static_cast<uint8_t>(simIndex_[ring][roc]);
@@ -261,7 +261,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 
                             }
                             break;
-                            case DTCLib::DTC_Sim_Mode_Calorimeter:
+                            case DTCLib::DTC_SimMode_Calorimeter:
                             {
                                 int nSamples = rand() % 10 + 10;
                                 packet[0] = static_cast<uint8_t>(simIndex_[ring][roc]);
@@ -319,7 +319,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 
                             }
                             break;
-                            case DTCLib::DTC_Sim_Mode_Tracker:
+                            case DTCLib::DTC_SimMode_Tracker:
                             {
                                 packet[0] = static_cast<uint8_t>(simIndex_[ring][roc]);
                                 packet[1] = static_cast<uint8_t>(simIndex_[ring][roc] >> 8);
@@ -355,7 +355,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                 bufferIndex++;
                             }
                             break;
-                            case DTCLib::DTC_Sim_Mode_Disabled:
+                            case DTCLib::DTC_SimMode_Disabled:
                             default:
                                 break;
                             }

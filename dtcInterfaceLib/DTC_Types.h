@@ -305,18 +305,61 @@ namespace DTCLib
         }
     };
 
-    enum DTC_Data_Status {
-        DTC_Data_Status_Valid = 0,
-        DTC_Data_Status_NoValid = 1,
-        DTC_Data_Status_Invalid = 2,
+    enum DTC_DataStatus {
+        DTC_DataStatus_Valid = 0,
+        DTC_DataStatus_NoValid = 1,
+        DTC_DataStatus_Invalid = 2,
     };
 
-    enum DTC_Sim_Mode {
-        DTC_Sim_Mode_Disabled,
-        DTC_Sim_Mode_Tracker,
-        DTC_Sim_Mode_Calorimeter,
-        DTC_Sim_Mode_CosmicVeto,
-        DTC_Sim_Mode_Hardware
+    enum DTC_SimMode {
+        DTC_SimMode_Disabled,
+        DTC_SimMode_Tracker,
+        DTC_SimMode_Calorimeter,
+        DTC_SimMode_CosmicVeto,
+        DTC_SimMode_Hardware
+    };
+    struct DTC_SimModeConverter {
+    public:
+        DTC_SimMode mode_;   
+        DTC_SimModeConverter(DTC_SimMode mode) : mode_(mode) {}
+        friend std::ostream& operator<<(std::ostream& stream, const DTC_SimModeConverter& mode) {
+            switch (mode.mode_)
+            {
+            case DTC_SimMode_Disabled:
+            default:
+                stream << "{Tracker:0,";
+                stream << "Calorimeter:0,";
+                stream << "CosmicVeto:0,";
+                stream << "Hardware:0}";
+                break;
+            case DTC_SimMode_Tracker:
+                stream << "{Tracker:1,";
+                stream << "Calorimeter:0,";
+                stream << "CosmicVeto:0,";
+                stream << "Hardware:0}";
+                break;
+            case DTC_SimMode_Calorimeter:
+                stream << "{Tracker:0,";
+                stream << "Calorimeter:1,";
+                stream << "CosmicVeto:0,";
+                stream << "Hardware:0}";
+                break;
+            case DTC_SimMode_CosmicVeto:
+                stream << "{Tracker:0,";
+                stream << "Calorimeter:0,";
+                stream << "CosmicVeto:1,";
+                stream << "Hardware:0}";
+                break;
+            case DTC_SimMode_Hardware:
+                stream << "{Tracker:0,";
+                stream << "Calorimeter:0,";
+                stream << "CosmicVeto:0,";
+                stream << "Hardware:1}";
+                break;
+            }
+            return stream;
+        }
+
     };
 
     class DTC_WrongPacketTypeException : public std::exception {
@@ -529,12 +572,12 @@ namespace DTCLib
         uint16_t packetCount_;
         DTC_Timestamp timestamp_;
         uint8_t dataStart_[3];
-        DTC_Data_Status status_;
+        DTC_DataStatus status_;
 
     public:
-        DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_Data_Status status);
-        DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_Data_Status status, DTC_Timestamp timestamp);
-        DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_Data_Status status, DTC_Timestamp timestamp, uint8_t* data);
+        DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status);
+        DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp);
+        DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp, uint8_t* data);
         DTC_DataHeaderPacket(const DTC_DataHeaderPacket&) = default;
 #ifndef _WIN32
         DTC_DataHeaderPacket(DTC_DataHeaderPacket&&) = default;
@@ -545,7 +588,7 @@ namespace DTCLib
         virtual uint8_t* GetData() { return dataStart_; }
         uint16_t GetPacketCount() { return packetCount_; }
         DTC_Timestamp GetTimestamp() { return timestamp_; }
-        DTC_Data_Status GetStatus() { return status_; }
+        DTC_DataStatus GetStatus() { return status_; }
         std::string toJSON();
     };
 
