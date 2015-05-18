@@ -139,6 +139,11 @@ function PopulateLEDS(dtcregdump) {
     $("#dmaTimeoutPreset").val(dtcregdump.DMATimeout);
     $("#dataPendingTimer").val(dtcregdump.DataPendingTimer);
     $("#packetSize").val(dtcregdump.PacketSize);
+    setPixel(document.getElementById("simModeDisabledLED"), dtcregdump.SimMode.Disabled, "RW");
+    setPixel(document.getElementById("simModeTrackerLED"), dtcregdump.SimMode.Tracker, "RW");
+    setPixel(document.getElementById("simModeCalorimeterLED"), dtcregdump.SimMode.Calorimeter, "RW");
+    setPixel(document.getElementById("simModeCRVLED"), dtcregdump.SimMode.CosmicVeto, "RW");
+    setPixel(document.getElementById("simModeHardwareLED"), dtcregdump.SimMode.Hardware, "RW");
     setPixel(document.getElementById("SERDESOscillatorIICErrorLED"), dtcregdump.SERDESOscillatorIICError, "ERR");
     setPixel(document.getElementById("SERDESOscillatorInitCompleteLED"), dtcregdump.SERDESOscillatorInitComplete, "RO");
     setPixel(document.getElementById("ROCEmulatorEnabledRing0LED"), dtcregdump.Ring0.ROCEmulator, "RW");
@@ -555,6 +560,18 @@ function SetFIFOFlags(ring, id) {
         setPixel(document.getElementById("DataInputFIFOFullRing" + ring + "LED"), output.Value1.DataInput, "RW");
         setPixel(document.getElementById("DCSInputFIFOFullRing" + ring + "LED"), output.Value1.DCSInput, "RW");
     });
+}
+function SetSimMode(id) {
+    var objData = null;
+    var post = {};
+    post.id = id;
+    AjaxPost("/DTC/SetSimMode", post, function (output) {
+        setPixel(document.getElementById("simModeDisabledLED"), output.Value1.Disabled, "RW");
+        setPixel(document.getElementById("simModeTrackerLED"), output.Value1.Tracker, "RW");
+        setPixel(document.getElementById("simModeCalorimeterLED"), output.Value1.Calorimeter, "RW");
+        setPixel(document.getElementById("simModeCRVLED"), output.Value1.CosmicVeto, "RW");
+        setPixel(document.getElementById("simModeHardwareLED"), output.Value1.Hardware, "RW");
+    })
 }
 
 function SetNumericValue(id, url) {

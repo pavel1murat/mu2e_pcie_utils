@@ -15,7 +15,7 @@ namespace DTCLib {
         const int DTC_BUFFSIZE;
 
         DTC_SimMode ReadSimMode() { return simMode_; }
-        void SetSimMode(DTC_SimMode mode);
+        DTC_SimMode SetSimMode(DTC_SimMode mode);
 
         //
         // DMA Functions

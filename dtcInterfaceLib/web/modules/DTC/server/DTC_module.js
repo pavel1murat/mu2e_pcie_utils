@@ -771,6 +771,17 @@ dtcem.RO_readFPGACoreAccessFIFOFull = function () {
     return DTC.ReadFPGACoreAccessFIFOFull();
 }
 
+dtcem.RW_setSimMode = function (POST) {
+    var mode = POST.id;
+    var output = {Disabled:0,Tracker:0,Calorimeter:0,CosmicVeto:0,Hardware:0};
+    var modeOut = DTC.SetSimMode(mode);
+    if(modeOut == 0) { output.Disabled = 1;}
+    if(modeOut == 1) { output.Tracker = 1; }
+    if (modeOut == 2) { output.Calorimeter = 1; }
+    if (modeOut == 3) { output.CosmicVeto = 1; }
+    if (modeOut == 4) { output.Hardware = 1; }
+    return output;
+}
 
 
 //

@@ -54,7 +54,7 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 
 }
 
-void DTCLib::DTC::SetSimMode(DTC_SimMode mode)
+DTCLib::DTC_SimMode DTCLib::DTC::SetSimMode(DTC_SimMode mode)
 {
     simMode_ = mode;
     device_.init(simMode_);
@@ -72,6 +72,7 @@ void DTCLib::DTC::SetSimMode(DTC_SimMode mode)
         SetInternalSystemClock();
         DisableTiming();
     }
+    return simMode_;
 }
 
 //

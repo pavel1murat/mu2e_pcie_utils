@@ -30,6 +30,17 @@
                     </tr>
                 </table><br><br>
                 <table>
+                    <tr><th></th><th>Disabled</th><th>Tracker</th><th>Calorimeter</th><th>Cosmic-Ray Veto</th><th>Hardware Loopback</th></tr>
+                    <tr>
+                        <th>Sim Mode:</th>
+                        <td><canvas id="simModeDisabledLED" width="20" height="10" onclick="SetSimMode(0)"></canvas></td>
+                        <td><canvas id="simModeTrackerLED" width="20" height="10" onclick="SetSimMode(1)"></canvas></td>
+                        <td><canvas id="simModeCalorimeterLED" width="20" height="10" onclick="SetSimMode(2)"></canvas></td>
+                        <td><canvas id="simModeCRVLED" width="20" height="10" onclick="SetSimMode(3)"></canvas></td>
+                        <td><canvas id="simModeHardwareLED" width="20" height="10" onclick="SetSimMode(4)"></canvas></td>
+                    </tr>
+                </table><br><br>
+                <table>
                     <tr>
                         <th>DTC Reset</th>
                         <th>SERDES Oscillator Reset</th>
