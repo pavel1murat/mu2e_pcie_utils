@@ -5,7 +5,9 @@
  // $RCSfile: .emacs.gnu,v $
  // rev="$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
 
-#include <stdio.h>		// printf
+#include <cstdio>		// printf
+#include <cstdlib>		// strtoul
+#include <unistd.h>		// usleep
 #include <iostream>
 #include "DTC.h"
 #ifdef _WIN32
@@ -24,18 +26,29 @@ int
 main(  int	argc
      , char	*argv[] )
 {
-    DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
-
     if      (argc > 1 && strcmp(argv[1],"read")==0)
-    {
+    {   DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
 	DTC_DataHeaderPacket packet = thisDTC->ReadNextDAQPacket();
 	cout << packet.toJSON() << '\n';
     }
-    else if (argc > 1 && strcmp(argv[1],"release")==0)
-    {   thisDTC->ReleaseAllBuffers( DTC_DMA_Engine_DAQ );
+    else if (argc > 1 && strcmp(argv[1],"read_data")==0)
+    {   mu2edev device;
+	device.init();
+	unsigned releases=1;
+	if (argc > 2) releases=strtoul(argv[2],NULL,0);
+	for (unsigned ii=0; ii<releases; ++ii)
+	{   //device.release_all( DTC_DMA_Engine_DCS );
+	    //device.release_all( DTC_DMA_Engine_DAQ );
+	    void *buffer;
+	    int tmo_ms=0;
+	    int sts0=0;//device.read_data(DTC_DMA_Engine_DCS, &buffer, tmo_ms);
+	    int sts1=device.read_data(DTC_DMA_Engine_DAQ, &buffer, tmo_ms);
+	    TRACE( 12, "util - release/read for DAQ and DCS ii=%u sts0=%d sts1=%d %p", ii,sts0,sts1,buffer );
+	    usleep(0);
+	}
     }
     else// if (argc > 1 && strcmp(argv[1],"get")==0)
-    {
+    {   DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
 	vector<void*> data=thisDTC->GetData( DTC_Timestamp((uint64_t)0) );
 	if (data.size() > 0)
 	{   cout << data.size() << " packets returned\n";

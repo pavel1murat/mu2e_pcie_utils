@@ -38,6 +38,6 @@ private:
     int	             devfd_;
     volatile void *  mu2e_mmap_ptrs_[MU2E_MAX_CHANNELS][2][2];
     m_ioc_get_info_t mu2e_channel_info_[MU2E_MAX_CHANNELS][2];
-    int              buffers_held_;
+    unsigned         buffers_held_;
     mu2esim          simulator_;
 };

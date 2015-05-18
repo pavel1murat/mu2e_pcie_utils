@@ -162,6 +162,10 @@ int mu2edev::read_release(int chn, unsigned num)
             // increment our cached info
             mu2e_channel_info_[chn][C2S].swIdx
                 = idx_add(mu2e_channel_info_[chn][C2S].swIdx, 1, chn, C2S);
+	    if (num <= buffers_held_)
+		buffers_held_-=num;
+	    else
+		buffers_held_=0;
         }
 #endif
         return (retsts);

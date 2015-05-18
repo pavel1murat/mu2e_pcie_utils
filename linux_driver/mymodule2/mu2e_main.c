@@ -288,16 +288,16 @@ volatile mu2e_buffdesc_S2C_t   *desc_S2C_p;
 
     /* ------------------------------------------------------------------- */
      case M_IOC_REG_ACCESS:
-	TRACE( 11, "mu2e_ioctl: cmd=REG_ACCESS" );
+	
 	if(copy_from_user(&reg_access, (void*)arg, sizeof(reg_access)))
         {   printk("copy_from_user failed\n"); return (-EFAULT);
         }
 	if (reg_access.access_type)
-	{   // write
+	{   TRACE( 11, "mu2e_ioctl: cmd=REG_ACCESS - write offset=0x%x", reg_access.reg_offset );
 	    Dma_mWriteReg( base, reg_access.reg_offset, reg_access.val );
 	}
 	else
-	{   // read
+	{   TRACE( 11, "mu2e_ioctl: cmd=REG_ACCESS - read offset=0x%x", reg_access.reg_offset );
 	    reg_access.val = Dma_mReadReg( base, reg_access.reg_offset );
 	    if(copy_to_user((void*)arg, &reg_access, sizeof(reg_access)))
 	    {   printk("copy_to_user failed\n"); return (-EFAULT);
@@ -355,6 +355,20 @@ volatile mu2e_buffdesc_S2C_t   *desc_S2C_p;
 		      , descDmaAdr2idx(hw_next,chn,dir)
 		      , descDmaAdr2idx(sw_next,chn,dir)
 		      , descDmaAdr2idx(hw_cmplt,chn,dir) );
+		if (dir==0) // C25
+		{   u32 sw_has_recv_data;
+		    u32 hw = descDmaAdr2idx(hw_next,chn,dir);
+		    u32 sw = descDmaAdr2idx(sw_next,chn,dir);
+		    u32 hw_has_recv_data = ( (hw >= sw)
+					    ? hw - sw
+					    : MU2E_NUM_RECV_BUFFS + hw - sw );
+		    hw = mu2e_channel_info_[chn][dir].hwIdx;
+		    sw = mu2e_channel_info_[chn][dir].swIdx;
+		    sw_has_recv_data = ( (hw >= sw)
+					? hw - sw
+					: MU2E_NUM_RECV_BUFFS + hw - sw );
+		    TRACE( 10, "hw_has_recv_data=%u sw=%u", hw_has_recv_data, sw_has_recv_data );
+		}
 	    }
 	TRACE( 10, "RECV[0] BUFFS:" );
 	for (jj=0; jj<MU2E_NUM_RECV_BUFFS; ++jj)
@@ -612,8 +626,8 @@ static int __init init_mu2e(void)
     msleep( 20 );
     Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
 		  , 0x9118, 0x00000000 ); // Clear Link Resets
-    Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
-		  , 0x9114, 0x00003f3f ); // make sure all links are enabled
+    //Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
+    //	              , 0x9114, 0x00003f3f ); // make sure all links are enabled
 
     TRACE( 1, "init_mu2e reset done bits: 0x%08x"
 	  , Dma_mReadReg((unsigned long)mu2e_pcie_bar_info.baseVAddr,0x9138) );
