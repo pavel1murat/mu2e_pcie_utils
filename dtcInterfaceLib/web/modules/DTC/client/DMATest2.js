@@ -242,6 +242,11 @@ function PopulateLEDS(dtcregdump) {
     $("#dmaTimeoutPreset").val(dtcregdump.DMATimeout);
     $("#dataPendingTimer").val(dtcregdump.DataPendingTimer);
     $("#packetSize").val(dtcregdump.PacketSize);
+    setPixel(document.getElementById("simModeDisabledLED"), dtcregdump.SimMode.Disabled, "RW");
+    setPixel(document.getElementById("simModeTrackerLED"), dtcregdump.SimMode.Tracker, "RW");
+    setPixel(document.getElementById("simModeCalorimeterLED"), dtcregdump.SimMode.Calorimeter, "RW");
+    setPixel(document.getElementById("simModeCRVLED"), dtcregdump.SimMode.CosmicVeto, "RW");
+    setPixel(document.getElementById("simModeHardwareLED"), dtcregdump.SimMode.Hardware, "RW");
     setPixel(document.getElementById("Ring0TxEnabledLED"), dtcregdump.Ring0.TxEnabled, "RW");
     setPixel(document.getElementById("Ring1TxEnabledLED"), dtcregdump.Ring1.TxEnabled, "RW");
     setPixel(document.getElementById("Ring2TxEnabledLED"), dtcregdump.Ring2.TxEnabled, "RW");
@@ -328,6 +333,18 @@ function PopulateLEDS(dtcregdump) {
     setPixel(document.getElementById("SERDESLoopbackFEPCSCFOLED"), dtcregdump.CFO.SERDESLoopback.FEPCS, "RW");
 }
 
+function SetSimMode(id) {
+    var objData = null;
+    var post = {};
+    post.id = id;
+    AjaxPost("/DTC/SetSimMode", post, function (output) {
+        setPixel(document.getElementById("simModeDisabledLED"), output.Value1.Disabled, "RW");
+        setPixel(document.getElementById("simModeTrackerLED"), output.Value1.Tracker, "RW");
+        setPixel(document.getElementById("simModeCalorimeterLED"), output.Value1.Calorimeter, "RW");
+        setPixel(document.getElementById("simModeCRVLED"), output.Value1.CosmicVeto, "RW");
+        setPixel(document.getElementById("simModeHardwareLED"), output.Value1.Hardware, "RW");
+    })
+}
 
 $(function () {
     GetRegDump();

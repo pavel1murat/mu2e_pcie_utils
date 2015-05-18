@@ -147,6 +147,17 @@
                 </tr>
             </table><br><br>
             <table>
+            <tr><th></th><th>Disabled</th><th>Tracker</th><th>Calorimeter</th><th>Cosmic-Ray Veto</th><th>Hardware Loopback</th></tr>
+            <tr>
+                <th>Sim Mode:</th>
+                <td><canvas id="simModeDisabledLED" width="20" height="10" onclick="SetSimMode(0)"></canvas></td>
+                <td><canvas id="simModeTrackerLED" width="20" height="10" onclick="SetSimMode(1)"></canvas></td>
+                <td><canvas id="simModeCalorimeterLED" width="20" height="10" onclick="SetSimMode(2)"></canvas></td>
+                <td><canvas id="simModeCRVLED" width="20" height="10" onclick="SetSimMode(3)"></canvas></td>
+                <td><canvas id="simModeHardwareLED" width="20" height="10" onclick="SetSimMode(4)"></canvas></td>
+            </tr>
+            </table><br><br>
+            <table>
                 <tr>
                     <th>DTC Reset</th>
                     <th>SERDES Oscillator Reset</th>
@@ -192,7 +203,7 @@
                     <td><input type="number" id="packetSize" min=0 max=0xFFFF value=0x10></td>
                     <td><button type="button" id="setPacketSize" onclick="SetNumericValue('#packetSize','/DTC/setPacketSize')">Set</button></td>
                 </tr>
-            </table>
+            </table><br><br>
             <table>
                 <tr><th>SERDES Oscillator IIC Error</th><th>SERDES Oscillator Initialization Complete</th></tr>
                 <tr>

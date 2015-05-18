@@ -17,7 +17,7 @@ var module_holder = {};
 var workerData = {};
 
 var util = require('util');
-var log_file = fs.createWriteStream(__dirname + '/server.log', { flags : 'a' });
+var log_file = fs.createWriteStream('/tmp/serverbase.log', { flags : 'a' });
 var log_stdout = process.stdout;
 
 console.log = function (d) { //
@@ -63,7 +63,7 @@ if (cluster.isMaster) {
     for (var moduleName in module_holder) {
         module_holder[moduleName].MasterInitFunction(workerData);
     }
-    fs.createWriteStream(__dirname + '/server.log', { flags : 'w' });
+    fs.createWriteStream('/tmp/serverbase.log', { flags : 'w' });
     
     cluster.on('online', function (worker) {
         worker.send(workerData);

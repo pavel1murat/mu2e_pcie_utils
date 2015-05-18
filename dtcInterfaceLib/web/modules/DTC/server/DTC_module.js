@@ -38,7 +38,7 @@ var dmatest = new dtclt.DTCLibTest();
 function logMessage(message, method, name) {
     message = "\n" + new Date().toLocaleString() + " " + name + " " + method + " " + message;
     console.log(message);
-    fs.appendFileSync("./DTC.log", message);
+    fs.appendFileSync("/tmp/DTC.log", message);
     console.log("Done logging message");
 }
 
@@ -77,151 +77,6 @@ function readMaxRocs(input, ring) {
 
 function getRegDump() {
     rdTime = new Date();
-    /*
-    var dtcRegisters = {};
-    dtcRegisters.Ring0 = {};
-    dtcRegisters.Ring1 = {};
-    dtcRegisters.Ring2 = {};
-    dtcRegisters.Ring3 = {};
-    dtcRegisters.Ring4 = {};
-    dtcRegisters.Ring5 = {};
-    dtcRegisters.CFO = {};
-    dtcRegisters.Version = dtcem.RO_readDesignVersion();
-    dtcRegisters.ResetDTC = dtcem.RO_readResetDTC();
-    dtcRegisters.ResetSERDESOscillator = dtcem.RO_readResetSERDESOscillator();
-    dtcRegisters.SERDESOscillatorClock = dtcem.RO_readSERDESOscillatorClock();
-    dtcRegisters.SystemClock = dtcem.RO_readSystemClock();
-    dtcRegisters.TimingEnable = dtcem.RO_readTimingEnable();
-    dtcRegisters.TriggerDMALength = dtcem.RO_readTriggerDMATransferLength();
-    dtcRegisters.MinDMALength = dtcem.RO_readMinDMATransferLength();
-    dtcRegisters.SERDESOscillatorIICError = dtcem.RO_readSERDESOscillatorICCError();
-    dtcRegisters.SERDESOscillatorInitComplete = dtcem.RO_readSERDESOScillatorInitializationComplete();
-    dtcRegisters.Ring0.ROCEmulator = dtcem.RO_readROCEmulator({ ring: 0 });
-    dtcRegisters.Ring1.ROCEmulator = dtcem.RO_readROCEmulator({ ring: 1 });
-    dtcRegisters.Ring2.ROCEmulator = dtcem.RO_readROCEmulator({ ring: 2 });
-    dtcRegisters.Ring3.ROCEmulator = dtcem.RO_readROCEmulator({ ring: 3 });
-    dtcRegisters.Ring4.ROCEmulator = dtcem.RO_readROCEmulator({ ring: 4 });
-    dtcRegisters.Ring5.ROCEmulator = dtcem.RO_readROCEmulator({ ring: 5 });
-    dtcRegisters.Ring0.SERDESLoopback = dtcem.RO_readSERDESLoopback({ ring: 0 });
-    dtcRegisters.Ring1.SERDESLoopback = dtcem.RO_readSERDESLoopback({ ring: 1 });
-    dtcRegisters.Ring2.SERDESLoopback = dtcem.RO_readSERDESLoopback({ ring: 2 });
-    dtcRegisters.Ring3.SERDESLoopback = dtcem.RO_readSERDESLoopback({ ring: 3 });
-    dtcRegisters.Ring4.SERDESLoopback = dtcem.RO_readSERDESLoopback({ ring: 4 });
-    dtcRegisters.Ring5.SERDESLoopback = dtcem.RO_readSERDESLoopback({ ring: 5 });
-    dtcRegisters.CFO.SERDESLoopback = dtcem.RO_readSERDESLoopback({ ring: 6 });
-    dtcRegisters.Ring0.Enabled = dtcem.RO_readRingEnabled({ ring: 0 });
-    dtcRegisters.Ring1.Enabled = dtcem.RO_readRingEnabled({ ring: 1 });
-    dtcRegisters.Ring2.Enabled = dtcem.RO_readRingEnabled({ ring: 2 });
-    dtcRegisters.Ring3.Enabled = dtcem.RO_readRingEnabled({ ring: 3 });
-    dtcRegisters.Ring4.Enabled = dtcem.RO_readRingEnabled({ ring: 4 });
-    dtcRegisters.Ring5.Enabled = dtcem.RO_readRingEnabled({ ring: 5 });
-    dtcRegisters.CFO.Enabled = dtcem.RO_readRingEnabled({ ring: 6 });
-    dtcRegisters.Ring0 = readMaxRocs(dtcRegisters.Ring0, 0);
-    dtcRegisters.Ring1 = readMaxRocs(dtcRegisters.Ring1, 1);
-    dtcRegisters.Ring2 = readMaxRocs(dtcRegisters.Ring2, 2);
-    dtcRegisters.Ring3 = readMaxRocs(dtcRegisters.Ring3, 3);
-    dtcRegisters.Ring4 = readMaxRocs(dtcRegisters.Ring4, 4);
-    dtcRegisters.Ring5 = readMaxRocs(dtcRegisters.Ring5, 5);
-    dtcRegisters.Ring0.ResetSERDES = dtcem.RO_readResetSERDES({ ring: 0 });
-    dtcRegisters.Ring1.ResetSERDES = dtcem.RO_readResetSERDES({ ring: 1 });
-    dtcRegisters.Ring2.ResetSERDES = dtcem.RO_readResetSERDES({ ring: 2 });
-    dtcRegisters.Ring3.ResetSERDES = dtcem.RO_readResetSERDES({ ring: 3 });
-    dtcRegisters.Ring4.ResetSERDES = dtcem.RO_readResetSERDES({ ring: 4 });
-    dtcRegisters.Ring5.ResetSERDES = dtcem.RO_readResetSERDES({ ring: 5 });
-    dtcRegisters.CFO.ResetSERDES = dtcem.RO_readResetSERDES({ ring: 6 });
-    dtcRegisters.Ring0.ResetDone = dtcem.RO_readSERDESResetDone({ ring: 0 });
-    dtcRegisters.Ring1.ResetDone = dtcem.RO_readSERDESResetDone({ ring: 1 });
-    dtcRegisters.Ring2.ResetDone = dtcem.RO_readSERDESResetDone({ ring: 2 });
-    dtcRegisters.Ring3.ResetDone = dtcem.RO_readSERDESResetDone({ ring: 3 });
-    dtcRegisters.Ring4.ResetDone = dtcem.RO_readSERDESResetDone({ ring: 4 });
-    dtcRegisters.Ring5.ResetDone = dtcem.RO_readSERDESResetDone({ ring: 5 });
-    dtcRegisters.CFO.ResetDone = dtcem.RO_readSERDESResetDone({ ring: 6 });
-    dtcRegisters.Ring0.SERDESRXDisparity = dtcem.RO_readSERDESRXDisparity({ ring: 0 });
-    dtcRegisters.Ring1.SERDESRXDisparity = dtcem.RO_readSERDESRXDisparity({ ring: 1 });
-    dtcRegisters.Ring2.SERDESRXDisparity = dtcem.RO_readSERDESRXDisparity({ ring: 2 });
-    dtcRegisters.Ring3.SERDESRXDisparity = dtcem.RO_readSERDESRXDisparity({ ring: 3 });
-    dtcRegisters.Ring4.SERDESRXDisparity = dtcem.RO_readSERDESRXDisparity({ ring: 4 });
-    dtcRegisters.Ring5.SERDESRXDisparity = dtcem.RO_readSERDESRXDisparity({ ring: 5 });
-    dtcRegisters.CFO.SERDESRXDisparity = dtcem.RO_readSERDESRXDisparity({ ring: 6 });
-    dtcRegisters.Ring0.CharacterError = dtcem.RO_readSERDESRXCharacterError({ ring: 0 });
-    dtcRegisters.Ring1.CharacterError = dtcem.RO_readSERDESRXCharacterError({ ring: 1 });
-    dtcRegisters.Ring2.CharacterError = dtcem.RO_readSERDESRXCharacterError({ ring: 2 });
-    dtcRegisters.Ring3.CharacterError = dtcem.RO_readSERDESRXCharacterError({ ring: 3 });
-    dtcRegisters.Ring4.CharacterError = dtcem.RO_readSERDESRXCharacterError({ ring: 4 });
-    dtcRegisters.Ring5.CharacterError = dtcem.RO_readSERDESRXCharacterError({ ring: 5 });
-    dtcRegisters.CFO.CharacterError = dtcem.RO_readSERDESRXCharacterError({ ring: 6 });
-    dtcRegisters.Ring0.UnlockError = dtcem.RO_readSERDESUnlockError({ ring: 0 });
-    dtcRegisters.Ring1.UnlockError = dtcem.RO_readSERDESUnlockError({ ring: 1 });
-    dtcRegisters.Ring2.UnlockError = dtcem.RO_readSERDESUnlockError({ ring: 2 });
-    dtcRegisters.Ring3.UnlockError = dtcem.RO_readSERDESUnlockError({ ring: 3 });
-    dtcRegisters.Ring4.UnlockError = dtcem.RO_readSERDESUnlockError({ ring: 4 });
-    dtcRegisters.Ring5.UnlockError = dtcem.RO_readSERDESUnlockError({ ring: 5 });
-    dtcRegisters.CFO.UnlockError = dtcem.RO_readSERDESUnlockError({ ring: 6 });
-    dtcRegisters.Ring0.PLLLocked = dtcem.RO_readSERDESPLLLocked({ ring: 0 });
-    dtcRegisters.Ring1.PLLLocked = dtcem.RO_readSERDESPLLLocked({ ring: 1 });
-    dtcRegisters.Ring2.PLLLocked = dtcem.RO_readSERDESPLLLocked({ ring: 2 });
-    dtcRegisters.Ring3.PLLLocked = dtcem.RO_readSERDESPLLLocked({ ring: 3 });
-    dtcRegisters.Ring4.PLLLocked = dtcem.RO_readSERDESPLLLocked({ ring: 4 });
-    dtcRegisters.Ring5.PLLLocked = dtcem.RO_readSERDESPLLLocked({ ring: 5 });
-    dtcRegisters.CFO.PLLLocked = dtcem.RO_readSERDESPLLLocked({ ring: 6 });
-    dtcRegisters.Ring0.OverflowOrUnderflow = dtcem.RO_readSERDESOverflowOrUnderflow({ ring: 0 });
-    dtcRegisters.Ring1.OverflowOrUnderflow = dtcem.RO_readSERDESOverflowOrUnderflow({ ring: 1 });
-    dtcRegisters.Ring2.OverflowOrUnderflow = dtcem.RO_readSERDESOverflowOrUnderflow({ ring: 2 });
-    dtcRegisters.Ring3.OverflowOrUnderflow = dtcem.RO_readSERDESOverflowOrUnderflow({ ring: 3 });
-    dtcRegisters.Ring4.OverflowOrUnderflow = dtcem.RO_readSERDESOverflowOrUnderflow({ ring: 4 });
-    dtcRegisters.Ring5.OverflowOrUnderflow = dtcem.RO_readSERDESOverflowOrUnderflow({ ring: 5 });
-    dtcRegisters.CFO.OverflowOrUnderflow = dtcem.RO_readSERDESOverflowOrUnderflow({ ring: 6 });
-    dtcRegisters.Ring0.FIFOHalfFull = dtcem.RO_readSERDESBufferFIFOHalfFull({ ring: 0 });
-    dtcRegisters.Ring1.FIFOHalfFull = dtcem.RO_readSERDESBufferFIFOHalfFull({ ring: 1 });
-    dtcRegisters.Ring2.FIFOHalfFull = dtcem.RO_readSERDESBufferFIFOHalfFull({ ring: 2 });
-    dtcRegisters.Ring3.FIFOHalfFull = dtcem.RO_readSERDESBufferFIFOHalfFull({ ring: 3 });
-    dtcRegisters.Ring4.FIFOHalfFull = dtcem.RO_readSERDESBufferFIFOHalfFull({ ring: 4 });
-    dtcRegisters.Ring5.FIFOHalfFull = dtcem.RO_readSERDESBufferFIFOHalfFull({ ring: 5 });
-    dtcRegisters.CFO.FIFOHalfFull = dtcem.RO_readSERDESBufferFIFOHalfFull({ ring: 6 });
-    dtcRegisters.Ring0.RXBufferStatus = dtcem.RO_readSERDESRXBufferStatus({ ring: 0 });
-    dtcRegisters.Ring1.RXBufferStatus = dtcem.RO_readSERDESRXBufferStatus({ ring: 1 });
-    dtcRegisters.Ring2.RXBufferStatus = dtcem.RO_readSERDESRXBufferStatus({ ring: 2 });
-    dtcRegisters.Ring3.RXBufferStatus = dtcem.RO_readSERDESRXBufferStatus({ ring: 3 });
-    dtcRegisters.Ring4.RXBufferStatus = dtcem.RO_readSERDESRXBufferStatus({ ring: 4 });
-    dtcRegisters.Ring5.RXBufferStatus = dtcem.RO_readSERDESRXBufferStatus({ ring: 5 });
-    dtcRegisters.CFO.RXBufferStatus = dtcem.RO_readSERDESRXBufferStatus({ ring: 6 });
-    dtcRegisters.Ring0.RXStatus = dtcem.RO_readSERDESRXStatus({ ring: 0 });
-    dtcRegisters.Ring1.RXStatus = dtcem.RO_readSERDESRXStatus({ ring: 1 });
-    dtcRegisters.Ring2.RXStatus = dtcem.RO_readSERDESRXStatus({ ring: 2 });
-    dtcRegisters.Ring3.RXStatus = dtcem.RO_readSERDESRXStatus({ ring: 3 });
-    dtcRegisters.Ring4.RXStatus = dtcem.RO_readSERDESRXStatus({ ring: 4 });
-    dtcRegisters.Ring5.RXStatus = dtcem.RO_readSERDESRXStatus({ ring: 5 });
-    dtcRegisters.CFO.RXStatus = dtcem.RO_readSERDESRXStatus({ ring: 6 });
-    dtcRegisters.Ring0.EyescanError = dtcem.RO_readSERDESEyescanError({ ring: 0 });
-    dtcRegisters.Ring1.EyescanError = dtcem.RO_readSERDESEyescanError({ ring: 1 });
-    dtcRegisters.Ring2.EyescanError = dtcem.RO_readSERDESEyescanError({ ring: 2 });
-    dtcRegisters.Ring3.EyescanError = dtcem.RO_readSERDESEyescanError({ ring: 3 });
-    dtcRegisters.Ring4.EyescanError = dtcem.RO_readSERDESEyescanError({ ring: 4 });
-    dtcRegisters.Ring5.EyescanError = dtcem.RO_readSERDESEyescanError({ ring: 5 });
-    dtcRegisters.CFO.EyescanError = dtcem.RO_readSERDESEyescanError({ ring: 6 });
-    dtcRegisters.Ring0.RXCDRLock = dtcem.RO_readSERDESRXCDRLock({ ring: 0 });
-    dtcRegisters.Ring1.RXCDRLock = dtcem.RO_readSERDESRXCDRLock({ ring: 1 });
-    dtcRegisters.Ring2.RXCDRLock = dtcem.RO_readSERDESRXCDRLock({ ring: 2 });
-    dtcRegisters.Ring3.RXCDRLock = dtcem.RO_readSERDESRXCDRLock({ ring: 3 });
-    dtcRegisters.Ring4.RXCDRLock = dtcem.RO_readSERDESRXCDRLock({ ring: 4 });
-    dtcRegisters.Ring5.RXCDRLock = dtcem.RO_readSERDESRXCDRLock({ ring: 5 });
-    dtcRegisters.CFO.RXCDRLock = dtcem.RO_readSERDESRXCDRLock({ ring: 6 });
-    dtcRegisters.DMATimeout = dtcem.RO_readDMATimeoutPreset();
-    dtcRegisters.Timestamp = dtcem.RO_readTimestampPreset();
-    dtcRegisters.DataPendingTimer = dtcem.RO_readDataPendingTimer();
-    dtcRegisters.PacketSize = dtcem.RO_readPacketSize();
-    dtcRegisters.Ring0.FIFOFullFlags = dtcem.RO_readFIFOFlags({ ring: 0 });
-    dtcRegisters.Ring1.FIFOFullFlags = dtcem.RO_readFIFOFlags({ ring: 1 });
-    dtcRegisters.Ring2.FIFOFullFlags = dtcem.RO_readFIFOFlags({ ring: 2 });
-    dtcRegisters.Ring3.FIFOFullFlags = dtcem.RO_readFIFOFlags({ ring: 3 });
-    dtcRegisters.Ring4.FIFOFullFlags = dtcem.RO_readFIFOFlags({ ring: 4 });
-    dtcRegisters.Ring5.FIFOFullFlags = dtcem.RO_readFIFOFlags({ ring: 5 });
-    dtcRegisters.CFO.FIFOFullFlags = dtcem.RO_readFIFOFlags({ ring: 6 });
-    dtcRegisters.PROMFIFOFull = dtcem.RO_readFPGAPROMProgramFIFOFull();
-    dtcRegisters.PROMReady = dtcem.RO_readFPGAPROMReady();
-    dtcRegisters.FPGACoreFIFOFull = dtcem.RO_readFPGACoreAccessFIFOFull();
-    regDump = dtcRegisters;
-     */
     regDump = JSON.parse(DTC.RegDump());
     console.log("Done with RegDump");
 }
@@ -396,9 +251,9 @@ dtcem.MasterInitFunction = function (workerData) {
     setInterval(SendStatistics, 15000);
     
     console.log("Setting up log file");
-    if (!fs.existsSync("./DTC.log")) {
+    if (!fs.existsSync("/tmp/DTC.log")) {
         console.log("Creating new log file");
-        fs.writeFileSync("./DTC.log", "Log file created at " + new Date().toLocaleString());
+        fs.writeFileSync("/tmp/DTC.log", "Log file created at " + new Date().toLocaleString());
     }
     console.log("Done setting up log");
     var testStatus = {};
@@ -771,6 +626,17 @@ dtcem.RO_readFPGACoreAccessFIFOFull = function () {
     return DTC.ReadFPGACoreAccessFIFOFull();
 }
 
+dtcem.RW_setSimMode = function (POST) {
+    var mode = POST.id;
+    var output = {Disabled:0,Tracker:0,Calorimeter:0,CosmicVeto:0,Hardware:0};
+    var modeOut = DTC.SetSimMode(mode);
+    if(modeOut == 0) { output.Disabled = 1;}
+    if(modeOut == 1) { output.Tracker = 1; }
+    if (modeOut == 2) { output.Calorimeter = 1; }
+    if (modeOut == 3) { output.CosmicVeto = 1; }
+    if (modeOut == 4) { output.Hardware = 1; }
+    return output;
+}
 
 
 //
@@ -798,7 +664,7 @@ dtcem.RO_SystemStatus = function () {
 
 dtcem.RO_ReadLog = function () {
     console.log("Reading DTC log file");
-    var logContent = "" + fs.readFileSync("./DTC.log");
+    var logContent = "" + fs.readFileSync("/tmp/DTC.log");
     return logContent;
 };
 
