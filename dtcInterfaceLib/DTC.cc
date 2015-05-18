@@ -884,9 +884,10 @@ uint16_t DTCLib::DTC::ReadPacketSize()
 DTCLib::DTC_ROC_ID DTCLib::DTC::SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc)
 {
     std::bitset<32> ringRocs = ReadNUMROCsRegister();
-    ringRocs[ring * 3] = lastRoc & 1;
-    ringRocs[ring * 3 + 1] = lastRoc & 3 >> 1;
-    ringRocs[ring * 3 + 2] = lastRoc & 7 >> 2;
+    int numRocs = (lastRoc==DTC_ROC_Unused) ? 0 : lastRoc + 1;
+    ringRocs[ring * 3]     =  numRocs & 1;
+    ringRocs[ring * 3 + 1] = (numRocs & 2) >> 1;
+    ringRocs[ring * 3 + 2] = (numRocs & 4) >> 2;
     WriteNUMROCsRegister(ringRocs.to_ulong());
     return ReadRingROCCount(ring);
 }

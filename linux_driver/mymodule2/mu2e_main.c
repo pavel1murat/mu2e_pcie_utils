@@ -613,6 +613,8 @@ static int __init init_mu2e(void)
        NOTE: a few more after dma engine setup (below).
      */
     Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
+		  , 0x9008, 0x00000002 ); // reset axi interface IP
+    Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
 		  , 0x9100, 0x30000000 ); // Oscillator resets
     msleep( 20 );
     Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
