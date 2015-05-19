@@ -60,22 +60,27 @@ main(  int	argc
     }
     else// if (argc > 1 && strcmp(argv[1],"get")==0)
     {   DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
-	vector<void*> data=thisDTC->GetData( DTC_Timestamp((uint64_t)0) );
-	if (data.size() > 0)
-	{   cout << data.size() << " packets returned\n";
-	    for (size_t i = 0; i < data.size(); ++i)
-	    {   TRACE(19, "DTC::GetJSONData constructing DataPacket:");
-		DTC_DataPacket     test = DTC_DataPacket(data[i]);
-		cout << test.toJSON() << '\n';
-		printf("data@%p=0x%08x\n", data[i], *(uint32_t*)(data[i]) );
-		//DTC_DataHeaderPacket h1 = DTC_DataHeaderPacket(data[i]);
-		//cout << h1.toJSON() << '\n';
-		DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
-		cout << h2.toJSON() << '\n';
+	unsigned gets=1;
+	if (argc > 1) gets=strtoul(argv[1],NULL,0);
+	for (unsigned ii=0; ii<gets; ++ii)
+	{
+	    vector<void*> data=thisDTC->GetData( DTC_Timestamp((uint64_t)ii) );
+	    if (data.size() > 0)
+	    {   cout << data.size() << " packets returned\n";
+		for (size_t i = 0; i < data.size(); ++i)
+		{   TRACE(19, "DTC::GetJSONData constructing DataPacket:");
+		    DTC_DataPacket     test = DTC_DataPacket(data[i]);
+		    //cout << test.toJSON() << '\n'; // dumps whole databuff_t
+		    printf("data@%p=0x%08x\n", data[i], *(uint32_t*)(data[i]) );
+		    //DTC_DataHeaderPacket h1 = DTC_DataHeaderPacket(data[i]);
+		    //cout << h1.toJSON() << '\n';
+		    DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
+		    cout << h2.toJSON() << '\n';
+		}
 	    }
+	    else
+		cout << "no data returned\n";
 	}
-	else
-	    cout << "no data returned\n";
     }
     return (0);
 }   // main
