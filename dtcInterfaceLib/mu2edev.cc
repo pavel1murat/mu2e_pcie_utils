@@ -237,11 +237,11 @@ void mu2edev::meta_dump(int chn, int dir)
     }
 }
 
-int mu2edev::write_loopback_data(int chn, void *buffer, size_t bytes)
+int mu2edev::write_data(int chn, void *buffer, size_t bytes)
 {
     if (simulator_.active())
     {
-        return simulator_.write_loopback_data(chn, buffer, bytes);
+        return simulator_.write_data(chn, buffer, bytes);
     }
     else
     {
@@ -275,7 +275,7 @@ int mu2edev::write_loopback_data(int chn, void *buffer, size_t bytes)
 #endif
         return retsts;
     }
-}  // write_loopback_data
+}   // write_data
 
 
 int mu2edev::read_pcie_state(m_ioc_pcistate_t *output)

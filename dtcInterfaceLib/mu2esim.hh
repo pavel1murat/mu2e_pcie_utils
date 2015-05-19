@@ -18,7 +18,7 @@ struct mu2esim
     ~mu2esim();
     int  init(DTCLib::DTC_SimMode mode = DTCLib::DTC_SimMode_Tracker);
     int  read_data(int chn, void **buffer, int tmo_ms); // return bytes read; error if negative
-    int  write_loopback_data(int chn, void *buffer, size_t bytes);
+    int  write_data(int chn, void *buffer, size_t bytes);
     int  read_release(int chn, unsigned num);
     int  read_register(uint16_t address, int tmo_ms, uint32_t *output);
     int  write_register(uint16_t address, int tmo_ms, uint32_t data);

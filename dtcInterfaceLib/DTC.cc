@@ -62,19 +62,17 @@ DTCLib::DTC_SimMode DTCLib::DTC::SetSimMode(DTC_SimMode mode)
     simMode_ = mode;
     device_.init(simMode_);
 
-    for (int ii = 0; ii < 6; ++ii) {
-        SetMaxROCNumber((DTC_Ring_ID)ii, DTC_ROC_Unused);
+    for (auto ring : DTC_Rings) {
+        SetMaxROCNumber(ring, DTC_ROC_Unused);
     }
 
     if (simMode_ == DTCLib::DTC_SimMode_Hardware)
     {
         // Set up hardware simulation mode: Ring 0 Tx/Rx Enabled, Loopback Enabled, ROC Emulator Enabled. All other rings disabled.
+        for (auto ring : DTC_Rings) {
+            DisableRing(ring);
+        }
         EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
-        DisableRing(DTC_Ring_1);
-        DisableRing(DTC_Ring_2);
-        DisableRing(DTC_Ring_3);
-        DisableRing(DTC_Ring_4);
-        DisableRing(DTC_Ring_5);
         SetSERDESLoopbackMode(DTC_Ring_0, DTC_SERDESLoopbackMode_NearPCS);
         EnableROCEmulator(DTC_Ring_0);
         //EnableROCEmulator(DTC_Ring_1);
@@ -91,24 +89,24 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
 {
     TRACE(19, "DTC::GetData begin");
     std::vector<void*> output;
-    for (uint8_t ring = 0; ring < 6; ++ring){
-        DTC_RingEnableMode mode = ReadRingEnabled((DTC_Ring_ID)ring);
+    for (auto ring : DTC_Rings){
+        DTC_RingEnableMode mode = ReadRingEnabled(ring);
         if (!mode.TimingEnable)
         {
-            if (ReadRingEnabled((DTC_Ring_ID)ring).TransmitEnable)
+            if (ReadRingEnabled(ring).TransmitEnable)
             {
                 TRACE(19, "DTC::GetData before DTC_ReadoutRequestPacket req");
                 uint8_t* request = new uint8_t[4];
-                DTC_ReadoutRequestPacket req((DTC_Ring_ID)ring, when, request, ReadRingROCCount((DTC_Ring_ID)ring));
+                DTC_ReadoutRequestPacket req(ring, when, request, ReadRingROCCount(ring));
                 TRACE(19, "DTC::GetData before WriteDMADAQPacket - DTC_ReadoutRequestPacket");
                 WriteDMADAQPacket(req);
                 TRACE(19, "DTC::GetData after  WriteDMADAQPacket - DTC_ReadoutRequestPacket");
-                if (int maxRoc = ReadRingROCCount((DTC_Ring_ID)ring) != DTC_ROC_Unused)
+                if (int maxRoc = ReadRingROCCount(ring) != DTC_ROC_Unused)
                 {
                     for (uint8_t roc = 0; roc <= maxRoc; ++roc)
                     {
                         TRACE(19, "DTC::GetData before DTC_DataRequestPacket req");
-                        DTC_DataRequestPacket req((DTC_Ring_ID)ring, (DTC_ROC_ID)roc, when);
+                        DTC_DataRequestPacket req(ring, (DTC_ROC_ID)roc, when);
                         TRACE(19, "DTC::GetData before WriteDMADAQPacket - DTC_DataRequestPacket");
                         WriteDMADAQPacket(req);
                         TRACE(19, "DTC::GetData after  WriteDMADAQPacket - DTC_DataRequestPacket");
@@ -538,9 +536,9 @@ void DTCLib::DTC::ResetSERDESOscillator(){
     usleep(2);
     data[29] = 0;
     WriteControlRegister(data.to_ulong());
-    for (uint8_t i = 0; i < 6; ++i)
+    for (auto ring : DTC_Rings)
     {
-        ResetSERDES((DTC_Ring_ID)i);
+        ResetSERDES(ring);
     }
 }
 bool DTCLib::DTC::ReadResetSERDESOscillator()
@@ -894,7 +892,7 @@ DTCLib::DTC_ROC_ID DTCLib::DTC::SetMaxROCNumber(const DTC_Ring_ID& ring, const D
     std::bitset<32> ringRocs = ReadNUMROCsRegister();
 #if LOCAL_NUMROCS
         maxROCs_[ring] = lastRoc;
-    for (int ringNum = 0; ringNum < 6; ringNum++) {
+    for (auto ringNum : DTC_Rings) {
         int numRocs = (maxROCs_[ringNum] == DTC_ROC_Unused) ? 0 : maxROCs_[ringNum] + 1;
         ringRocs[ringNum * 3] = numRocs & 1;
         ringRocs[ringNum * 3 + 1] = (numRocs & 2) >> 1;
@@ -917,8 +915,7 @@ DTCLib::DTC_ROC_ID DTCLib::DTC::ReadRingROCCount(const DTC_Ring_ID& ring)
 #endif
     std::bitset<32> ringRocs = ReadNUMROCsRegister();
     int number = ringRocs[ring * 3] + (ringRocs[ring * 3 + 1] << 1) + (ringRocs[ring * 3 + 2] << 2);
-    if (number == 0) { return DTC_ROC_Unused; }
-    else return static_cast<DTC_ROC_ID>(number - 1);
+    return DTC_ROCS[number];
 }
 
 
@@ -1157,7 +1154,7 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataP
     int retry = 3;
     int errorCode = 0;
     do {
-        errorCode = device_.write_loopback_data(channel, thisPacket.GetData(), dmaSize * sizeof(uint8_t));
+        errorCode = device_.write_data(channel, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
         retry--;
     } while (retry > 0 && errorCode != 0);
     if (errorCode != 0)

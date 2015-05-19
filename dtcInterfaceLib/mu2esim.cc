@@ -419,13 +419,13 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
     return bytesReturned;
 }
 
-int mu2esim::write_loopback_data(int chn, void *buffer, size_t bytes)
+int mu2esim::write_data(int chn, void *buffer, size_t bytes)
 {
-    TRACE(17, "mu2esim::write_loopback_data start");
+    TRACE(17, "mu2esim::write_data start");
     uint32_t worda;
     memcpy(&worda, buffer, sizeof(worda));
     uint16_t word = static_cast<uint16_t>(worda >> 16);
-    TRACE(17, "mu2esim::write_loopback_data worda is 0x%x and word is 0x%x", worda, word);
+    TRACE(17, "mu2esim::write_data worda is 0x%x and word is 0x%x", worda, word);
 
     switch (chn) {
     case 0: // DAQ Channel
@@ -433,7 +433,7 @@ int mu2esim::write_loopback_data(int chn, void *buffer, size_t bytes)
         DTCLib::DTC_Timestamp ts((uint8_t*)buffer + 6);
         if ((word & 0x8010) == 0x8010) {
             int activeDAQRing = (word & 0x0F00) >> 8;
-            TRACE(17, "mu2esim::write_loopback_data activeDAQRing is %i", activeDAQRing);
+            TRACE(17, "mu2esim::write_data activeDAQRing is %i", activeDAQRing);
             if (std::find(readoutRequestRecieved_[activeDAQRing].begin(), readoutRequestRecieved_[activeDAQRing].end(), ts) == readoutRequestRecieved_[activeDAQRing].end())
             {
                 readoutRequestRecieved_[activeDAQRing].push_back(ts);
@@ -441,7 +441,7 @@ int mu2esim::write_loopback_data(int chn, void *buffer, size_t bytes)
         }
         else if ((word & 0x8020) == 0x8020) {
             int activeDAQRing = (word & 0x0F00) >> 8;
-            TRACE(17, "mu2esim::write_loopback_data activeDAQRing is %i", activeDAQRing);
+            TRACE(17, "mu2esim::write_data activeDAQRing is %i", activeDAQRing);
             if (std::find(readoutRequestRecieved_[activeDAQRing].begin(), readoutRequestRecieved_[activeDAQRing].end(), ts) != readoutRequestRecieved_[activeDAQRing].end()) {
                 int activeROC = word & 0xF;
                 if (std::find(dataRequestRecieved_[activeDAQRing][activeROC].begin(), dataRequestRecieved_[activeDAQRing][activeROC].end(), ts) == dataRequestRecieved_[activeDAQRing][activeROC].end())
@@ -457,12 +457,12 @@ int mu2esim::write_loopback_data(int chn, void *buffer, size_t bytes)
         if ((word & 0x0080) == 0) {
             int activeDCSRing = (word & 0x0F00) >> 8;
             int activeDCSROC = word & 0xF;
-            TRACE(17, "mu2esim::write_loopback_data activeDCSRing is %i, roc is %i", activeDCSRing, activeDCSROC);
+            TRACE(17, "mu2esim::write_data activeDCSRing is %i, roc is %i", activeDCSRing, activeDCSROC);
             dcsRequestRecieved_[activeDCSRing][activeDCSROC] = true;
             uint8_t data[12];
             memcpy(&data[0], (char*)buffer + (2 * sizeof(uint16_t)), sizeof(data));
             dcsRequest_[activeDCSRing][activeDCSROC] = DTCLib::DTC_DCSRequestPacket((DTCLib::DTC_Ring_ID)activeDCSRing, (DTCLib::DTC_ROC_ID)activeDCSROC, data);
-            TRACE(17, "mu2esim::write_loopback_data: Recieved DCS Request:");
+            TRACE(17, "mu2esim::write_data: Recieved DCS Request:");
             TRACE(17, dcsRequest_[activeDCSRing][activeDCSROC].toJSON().c_str());
         }
         break;
