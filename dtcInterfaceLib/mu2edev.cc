@@ -252,13 +252,12 @@ int mu2edev::write_data(int chn, void *buffer, size_t bytes)
         int retsts = 0;
         unsigned delta = delta_(chn, dir); // check cached info
         TRACE(3, "write_loopback_data delta=%u chn=%d dir=S2C", delta, chn);
-	int checked=0;
 	if (delta == 0)  // recheck with module
 	{   m_ioc_get_info_t get_info;
 	    get_info.chn = chn; get_info.dir = dir;
-	    sts = ioctl(devfd_, M_IOC_GET_INFO, &get_info);
+	    int sts = ioctl(devfd_, M_IOC_GET_INFO, &get_info);
 	    if (sts != 0) { perror("M_IOC_GET_INFO"); exit(1); }
-	    mu2e_channel_info_[chn][dir] = get_info;
+	    mu2e_channel_info_[chn][dir] = get_info; // copy info struct
 	    delta = delta_(chn, dir);
 	}
         if (delta > 0)
