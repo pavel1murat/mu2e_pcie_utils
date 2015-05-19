@@ -237,11 +237,11 @@ void mu2edev::meta_dump(int chn, int dir)
     }
 }
 
-int mu2edev::write_loopback_data(int chn, void *buffer, size_t bytes)
+int mu2edev::write_data(int chn, void *buffer, size_t bytes)
 {
     if (simulator_.active())
     {
-        return simulator_.write_loopback_data(chn, buffer, bytes);
+        return simulator_.write_data(chn, buffer, bytes);
     }
     else
     {
@@ -251,7 +251,7 @@ int mu2edev::write_loopback_data(int chn, void *buffer, size_t bytes)
         int dir = S2C;
         int retsts = 0;
         unsigned delta = delta_(chn, dir);
-        TRACE(3, "write_loopback_data delta=%u chn=%d dir=S2C", delta, chn);
+        TRACE(3, "write_data delta=%u chn=%d dir=S2C", delta, chn);
         if (delta > 0)
         {
             unsigned idx = mu2e_channel_info_[chn][dir].swIdx;
