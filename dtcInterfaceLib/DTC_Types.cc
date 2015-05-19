@@ -71,7 +71,7 @@ uint8_t DTCLib::DTC_DataPacket::GetWord(int index) const
     return dataPtr_[index];
 }
 
-bool DTCLib::DTC_DataPacket::Resize(const int dmaSize) 
+bool DTCLib::DTC_DataPacket::Resize(const uint16_t dmaSize) 
 {
     if (!memPacket_ && dmaSize > dataSize_) {
         uint8_t *data = new uint8_t[dmaSize];
@@ -90,7 +90,7 @@ std::string DTCLib::DTC_DataPacket::toJSON()
     std::stringstream ss;
     ss << "DataPacket: {";
     ss << "data: [";
-        for (int ii = 0; ii < dataSize_ - 1; ++ii) {
+        for (uint16_t ii = 0; ii < dataSize_ - 1; ++ii) {
             ss << (int)dataPtr_[ii] << ",";
         }
     ss << (int)dataPtr_[dataSize_ - 1] << "]";

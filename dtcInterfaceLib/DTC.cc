@@ -12,9 +12,12 @@
 #endif
 
 DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode) : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t))), device_(),
-daqbuffer_(nullptr), dcsbuffer_(nullptr), simMode_(mode),
+daqbuffer_(nullptr), dcsbuffer_(nullptr), simMode_(mode), maxROCs_(),
 lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 {
+    for (int ii = 0; ii < 6; ++ii) {
+        SetMaxROCNumber((DTC_Ring_ID)ii, DTC_ROC_Unused);
+    }
 #ifdef _WIN32
     simMode_ = DTCLib::DTC_SimMode_Tracker;
 #else
@@ -884,6 +887,7 @@ uint16_t DTCLib::DTC::ReadPacketSize()
 DTCLib::DTC_ROC_ID DTCLib::DTC::SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc)
 {
     std::bitset<32> ringRocs = ReadNUMROCsRegister();
+    maxROCs_[ring] = lastRoc;
     int numRocs = (lastRoc == DTC_ROC_Unused) ? 0 : lastRoc + 1;
     ringRocs[ring * 3] = numRocs & 1;
     ringRocs[ring * 3 + 1] = (numRocs & 2) >> 1;
@@ -894,6 +898,7 @@ DTCLib::DTC_ROC_ID DTCLib::DTC::SetMaxROCNumber(const DTC_Ring_ID& ring, const D
 
 DTCLib::DTC_ROC_ID DTCLib::DTC::ReadRingROCCount(const DTC_Ring_ID& ring)
 {
+    return maxROCs_[ring];
     std::bitset<32> ringRocs = ReadNUMROCsRegister();
     int number = ringRocs[ring * 3] + (ringRocs[ring * 3 + 1] << 1) + (ringRocs[ring * 3 + 2] << 2);
     if (number == 0) { return DTC_ROC_Unused; }

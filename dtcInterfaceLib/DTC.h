@@ -225,6 +225,7 @@ namespace DTCLib {
         mu2e_databuff_t* daqbuffer_;
         mu2e_databuff_t* dcsbuffer_;
         DTC_SimMode simMode_;
+        DTC_ROC_ID maxROCs_[6];
         void* lastReadPtr_;
         void* nextReadPtr_;
         void* dcsReadPtr_;
