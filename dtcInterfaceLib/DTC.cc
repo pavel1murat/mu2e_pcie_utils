@@ -92,18 +92,18 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
                 TRACE(19, "DTC::GetData before DTC_ReadoutRequestPacket req");
                 uint8_t* request = new uint8_t[4];
                 DTC_ReadoutRequestPacket req((DTC_Ring_ID)ring, when, request, ReadRingROCCount((DTC_Ring_ID)ring));
-                TRACE(19, "DTC::GetData before WriteDMADAQPacket");
+                TRACE(19, "DTC::GetData before WriteDMADAQPacket - DTC_ReadoutRequestPacket");
                 WriteDMADAQPacket(req);
-                TRACE(19, "DTC::GetData after  WriteDMADAQPacket");
+                TRACE(19, "DTC::GetData after  WriteDMADAQPacket - DTC_ReadoutRequestPacket");
                 if (int maxRoc = ReadRingROCCount((DTC_Ring_ID)ring) != DTC_ROC_Unused)
                 {
                     for (uint8_t roc = 0; roc <= maxRoc; ++roc)
                     {
                         TRACE(19, "DTC::GetData before DTC_DataRequestPacket req");
                         DTC_DataRequestPacket req((DTC_Ring_ID)ring, (DTC_ROC_ID)roc, when);
-                        TRACE(19, "DTC::GetData before WriteDMADAQPacket");
+                        TRACE(19, "DTC::GetData before WriteDMADAQPacket - DTC_DataRequestPacket");
                         WriteDMADAQPacket(req);
-                        TRACE(19, "DTC::GetData after  WriteDMADAQPacket");
+                        TRACE(19, "DTC::GetData after  WriteDMADAQPacket - DTC_DataRequestPacket");
                     }
                 }
             }
