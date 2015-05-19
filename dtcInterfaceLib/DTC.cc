@@ -55,15 +55,17 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 #endif
     SetSimMode(simMode_);
 
-    for (int ii = 0; ii < 6; ++ii) {
-        SetMaxROCNumber((DTC_Ring_ID)ii, DTC_ROC_Unused);
-    }
 }
 
 DTCLib::DTC_SimMode DTCLib::DTC::SetSimMode(DTC_SimMode mode)
 {
     simMode_ = mode;
     device_.init(simMode_);
+
+    for (int ii = 0; ii < 6; ++ii) {
+        SetMaxROCNumber((DTC_Ring_ID)ii, DTC_ROC_Unused);
+    }
+
     if (simMode_ == DTCLib::DTC_SimMode_Hardware)
     {
         // Set up hardware simulation mode: Ring 0 Tx/Rx Enabled, Loopback Enabled, ROC Emulator Enabled. All other rings disabled.
