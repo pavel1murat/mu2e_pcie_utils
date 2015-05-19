@@ -15,9 +15,6 @@ DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode) : DTC_BUFFSIZE(sizeof(mu2e_databuff_t
 daqbuffer_(nullptr), dcsbuffer_(nullptr), simMode_(mode), maxROCs_(),
 lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 {
-    for (int ii = 0; ii < 6; ++ii) {
-        SetMaxROCNumber((DTC_Ring_ID)ii, DTC_ROC_Unused);
-    }
 #ifdef _WIN32
     simMode_ = DTCLib::DTC_SimMode_Tracker;
 #else
@@ -55,6 +52,9 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 #endif
     SetSimMode(simMode_);
 
+    for (int ii = 0; ii < 6; ++ii) {
+        SetMaxROCNumber((DTC_Ring_ID)ii, DTC_ROC_Unused);
+    }
 }
 
 DTCLib::DTC_SimMode DTCLib::DTC::SetSimMode(DTC_SimMode mode)

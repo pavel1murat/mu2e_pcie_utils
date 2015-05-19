@@ -34,7 +34,7 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode)
 #ifndef _WIN32
         int sts;
         devfd_ = open("/dev/" MU2E_DEV_FILE, O_RDWR);
-        if (devfd_ == -1) {
+        if (devfd_ == -1 || devfd_ == 0) {
             perror("open /dev/" MU2E_DEV_FILE);
             TRACE(1, "mu2e Device file not found and DTCLIB_SIM_ENABLE not set! Exiting.");
             exit(1);
