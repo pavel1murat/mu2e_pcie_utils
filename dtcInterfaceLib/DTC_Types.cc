@@ -76,8 +76,9 @@ bool DTCLib::DTC_DataPacket::Resize(const uint16_t dmaSize)
     if (!memPacket_ && dmaSize > dataSize_) {
         uint8_t *data = new uint8_t[dmaSize];
         memset(data, 0, dmaSize * sizeof(uint8_t));
-        memcpy(data, dataPtr_, sizeof(*dataPtr_));
+        memcpy(data, dataPtr_, dataSize_ * sizeof(uint8_t));
         dataPtr_ = data;
+        dataSize_ = dmaSize;
         return true;
     }
 
