@@ -101,7 +101,8 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
                 TRACE(19, "DTC::GetData before WriteDMADAQPacket - DTC_ReadoutRequestPacket");
                 WriteDMADAQPacket(req);
                 TRACE(19, "DTC::GetData after  WriteDMADAQPacket - DTC_ReadoutRequestPacket");
-                if (int maxRoc = ReadRingROCCount(ring) != DTC_ROC_Unused)
+		int maxRoc;
+                if ((maxRoc = ReadRingROCCount(ring)) != DTC_ROC_Unused)
                 {
                     for (uint8_t roc = 0; roc <= maxRoc; ++roc)
                     {
