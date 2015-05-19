@@ -113,6 +113,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
                         TRACE(19, "DTC::GetData after  WriteDMADAQPacket - DTC_DataRequestPacket");
                     }
                 }
+		usleep(1000);
             }
         }
     }
@@ -283,7 +284,8 @@ DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket()
         ReadBuffer(DTC_DMA_Engine_DAQ); // does return val of type DTCLib::DTC_DataPacket
         // MUST BE ABLE TO HANDLE daqbuffer_==nullptr OR retry forever?
         nextReadPtr_ = &(daqbuffer_[0]);
-        TRACE(19, "DTC::ReadNextDAQPacket nextReadPtr_=%p daqBuffer_=%p", (void*)nextReadPtr_, (void*)daqbuffer_);
+        TRACE(19, "DTC::ReadNextDAQPacket nextReadPtr_=%p *nextReadPtr_=0x%08x"
+	      , (void*)nextReadPtr_, *(unsigned*)nextReadPtr_);
     }
     //Read the next packet
     TRACE(19, "DTC::ReadNextDAQPacket reading next packet from buffer: nextReadPtr_=%p:", (void*)nextReadPtr_);
@@ -1135,11 +1137,12 @@ DTCLib::DTC_DataPacket DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel)
         errorCode = device_.read_data(channel, (void**)&buffer, 1000);
         retry--;
     } while (retry > 0 && errorCode == 0);
-    if (errorCode == 0)
-        throw DTC_WrongPacketTypeException();
+    if (errorCode == 0) // timeout
+        throw DTC_WrongPacketTypeException(); // Eric - change this
     else if (errorCode < 0)
         throw DTC_IOErrorException();
-    TRACE(16, "DTC::ReadDataPacket buffer_=%p errorCode=%d", (void*)buffer, errorCode);
+    TRACE(16, "DTC::ReadDataPacket buffer_=%p errorCode=%d *buffer_=0x%08x"
+	  , (void*)buffer, errorCode, *(unsigned*)buffer );
     if (channel == DTC_DMA_Engine_DAQ) { daqbuffer_ = buffer; }
     else if (channel == DTC_DMA_Engine_DCS) { dcsbuffer_ = buffer; }
     return DTC_DataPacket(buffer);
