@@ -48,7 +48,8 @@ void DTCLib::DTC_Timestamp::GetTimestamp(uint8_t* timeArr, int offset) const
 DTCLib::DTC_DataPacket::DTC_DataPacket() 
 {
     memPacket_ = false;
-    dataPtr_ = new uint8_t[64]; // current min. dma length is 64 bytes
+    dataPtr_ = new uint8_t[16]; // current min. dma length is 64 bytes
+    dataSize_ = 16;
 }
 
 DTCLib::DTC_DataPacket::~DTC_DataPacket()
@@ -70,26 +71,29 @@ uint8_t DTCLib::DTC_DataPacket::GetWord(int index) const
     return dataPtr_[index];
 }
 
+bool DTCLib::DTC_DataPacket::Resize(const int dmaSize) 
+{
+    if (!memPacket_ && dmaSize > dataSize_) {
+        uint8_t *data = new uint8_t[dmaSize];
+        memset(data, 0, dmaSize * sizeof(uint8_t));
+        memcpy(data, dataPtr_, sizeof(*dataPtr_));
+        dataPtr_ = data;
+        return true;
+    }
+
+    //We can only grow, and only non-memory-mapped packets
+    return false;
+}
+
 std::string DTCLib::DTC_DataPacket::toJSON()
 {
     std::stringstream ss;
     ss << "DataPacket: {";
-    ss << "data: [" << (int)dataPtr_[0] << ",";
-    ss << (int)dataPtr_[1] << ",";
-    ss << (int)dataPtr_[2] << ",";
-    ss << (int)dataPtr_[3] << ",";
-    ss << (int)dataPtr_[4] << ",";
-    ss << (int)dataPtr_[5] << ",";
-    ss << (int)dataPtr_[6] << ",";
-    ss << (int)dataPtr_[7] << ",";
-    ss << (int)dataPtr_[8] << ",";
-    ss << (int)dataPtr_[9] << ",";
-    ss << (int)dataPtr_[10] << ",";
-    ss << (int)dataPtr_[11] << ",";
-    ss << (int)dataPtr_[12] << ",";
-    ss << (int)dataPtr_[13] << ",";
-    ss << (int)dataPtr_[14] << ",";
-    ss << (int)dataPtr_[15] << "]";
+    ss << "data: [";
+        for (int ii = 0; ii < dataSize_ - 1; ++ii) {
+            ss << (int)dataPtr_[ii] << ",";
+        }
+    ss << (int)dataPtr_[dataSize_ - 1] << "]";
     ss << "}";
     return ss.str();
 }

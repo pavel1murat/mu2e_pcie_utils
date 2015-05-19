@@ -423,6 +423,7 @@ namespace DTCLib
     class DTC_DataPacket {
     private:
         uint8_t* dataPtr_;
+        size_t dataSize_;
         bool memPacket_;
 
     public:
@@ -446,6 +447,8 @@ namespace DTCLib
         uint8_t GetWord(int index) const;
         uint8_t* GetData() const { return dataPtr_; }
         std::string toJSON();
+        bool Resize(const int dmaSize);
+        size_t GetSize() const { return dataSize_; }
     };
 
     class DTC_DMAPacket {
