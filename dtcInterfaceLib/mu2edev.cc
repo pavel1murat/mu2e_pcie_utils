@@ -250,16 +250,27 @@ int mu2edev::write_loopback_data(int chn, void *buffer, size_t bytes)
 #else
         int dir = S2C;
         int retsts = 0;
-        unsigned delta = delta_(chn, dir);
+        unsigned delta = delta_(chn, dir); // check cached info
         TRACE(3, "write_loopback_data delta=%u chn=%d dir=S2C", delta, chn);
+	int checked=0;
+	if (delta == 0)  // recheck with module
+	{   m_ioc_get_info_t get_info;
+	    get_info.chn = chn; get_info.dir = dir;
+	    sts = ioctl(devfd_, M_IOC_GET_INFO, &get_info);
+	    if (sts != 0) { perror("M_IOC_GET_INFO"); exit(1); }
+	    mu2e_channel_info_[chn][dir] = get_info;
+	    delta = delta_(chn, dir);
+	}
         if (delta > 0)
-        {
-            unsigned idx = mu2e_channel_info_[chn][dir].swIdx;
+        {   unsigned idx = mu2e_channel_info_[chn][dir].swIdx;
             void * data = ((mu2e_databuff_t*)(mu2e_mmap_ptrs_[chn][dir][MU2E_MAP_BUFF]))[idx];
             memcpy(data, buffer, bytes);
             unsigned long arg = (chn << 24) | (bytes & 0xffffff);// THIS OBIVOUSLY SHOULD BE A MACRO
             retsts = ioctl(devfd_, M_IOC_BUF_XMIT, arg);
             if (retsts != 0) { perror("M_IOC_BUF_GIVE"); exit(1); }
+            // increment our cached info
+            mu2e_channel_info_[chn][dir].swIdx
+                = idx_add(mu2e_channel_info_[chn][dir].swIdx, 1, chn, dir);
         }
 #endif
         return retsts;
