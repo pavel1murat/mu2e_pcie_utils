@@ -37,13 +37,24 @@ main(  int	argc
 	unsigned releases=1;
 	if (argc > 2) releases=strtoul(argv[2],NULL,0);
 	for (unsigned ii=0; ii<releases; ++ii)
-	{   //device.release_all( DTC_DMA_Engine_DCS );
-	    //device.release_all( DTC_DMA_Engine_DAQ );
-	    void *buffer;
+	{   void *buffer;
 	    int tmo_ms=0;
-	    int sts0=0;//device.read_data(DTC_DMA_Engine_DCS, &buffer, tmo_ms);
-	    int sts1=device.read_data(DTC_DMA_Engine_DAQ, &buffer, tmo_ms);
-	    TRACE( 12, "util - release/read for DAQ and DCS ii=%u sts0=%d sts1=%d %p", ii,sts0,sts1,buffer );
+	    int sts=device.read_data( DTC_DMA_Engine_DAQ, &buffer, tmo_ms );
+	    TRACE( 12, "util - release/read for DAQ and DCS ii=%u sts=%d %p", ii,sts,buffer );
+	    usleep(0);
+	}
+    }
+    else if (argc > 1 && strcmp(argv[1],"read_release")==0)
+    {   mu2edev device;
+	device.init();
+	unsigned releases=1;
+	if (argc > 2) releases=strtoul(argv[2],NULL,0);
+	for (unsigned ii=0; ii<releases; ++ii)
+	{   void *buffer;
+	    int tmo_ms=0;
+	    int stsRD=device.read_data(    DTC_DMA_Engine_DAQ, &buffer, tmo_ms );
+	    int stsRL=device.read_release( DTC_DMA_Engine_DAQ, 1 );
+	    TRACE( 12, "util - release/read for DAQ and DCS ii=%u stsRD=%d stsRL=%d %p", ii,stsRD,stsRL,buffer );
 	    usleep(0);
 	}
     }
