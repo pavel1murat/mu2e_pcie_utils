@@ -458,7 +458,7 @@ namespace DTCLib
 
     public:
         DTC_DMAPacket() : packetType_(DTC_PacketType_Invalid) {}
-        DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t byteCount = 16, bool valid = true);
+        DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t byteCount = 64, bool valid = true);
 
         DTC_DMAPacket(const DTC_DataPacket in);
         DTC_DMAPacket(const DTC_DMAPacket&) = default;

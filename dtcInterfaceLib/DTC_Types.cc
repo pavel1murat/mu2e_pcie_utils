@@ -48,7 +48,7 @@ void DTCLib::DTC_Timestamp::GetTimestamp(uint8_t* timeArr, int offset) const
 DTCLib::DTC_DataPacket::DTC_DataPacket() 
 {
     memPacket_ = false;
-    dataPtr_ = new uint8_t[16];
+    dataPtr_ = new uint8_t[64]; // current min. dma length is 64 bytes
 }
 
 DTCLib::DTC_DataPacket::~DTC_DataPacket()
@@ -96,7 +96,7 @@ std::string DTCLib::DTC_DataPacket::toJSON()
 
 
 DTCLib::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t byteCount, bool valid)
-    : valid_(valid), byteCount_(byteCount), ringID_(ring), packetType_(type), rocID_(roc) {}
+    : valid_(valid), byteCount_(byteCount<64?64:byteCount), ringID_(ring), packetType_(type), rocID_(roc) {}
 
 
 DTCLib::DTC_DataPacket DTCLib::DTC_DMAPacket::ConvertToDataPacket() const

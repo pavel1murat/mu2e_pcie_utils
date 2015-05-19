@@ -1130,7 +1130,7 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataP
     int retry = 3;
     int errorCode = 0;
     do {
-        errorCode = device_.write_loopback_data(channel, packet.GetData(), 16 * sizeof(uint8_t));
+        errorCode = device_.write_loopback_data(channel, packet.GetData(), 64 * sizeof(uint8_t));
         retry--;
     } while (retry > 0 && errorCode != 0);
     if (errorCode != 0)
