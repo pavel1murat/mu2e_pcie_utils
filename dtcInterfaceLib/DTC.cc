@@ -884,8 +884,8 @@ uint16_t DTCLib::DTC::ReadPacketSize()
 DTCLib::DTC_ROC_ID DTCLib::DTC::SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc)
 {
     std::bitset<32> ringRocs = ReadNUMROCsRegister();
-    int numRocs = (lastRoc==DTC_ROC_Unused) ? 0 : lastRoc + 1;
-    ringRocs[ring * 3]     =  numRocs & 1;
+    int numRocs = (lastRoc == DTC_ROC_Unused) ? 0 : lastRoc + 1;
+    ringRocs[ring * 3] = numRocs & 1;
     ringRocs[ring * 3 + 1] = (numRocs & 2) >> 1;
     ringRocs[ring * 3 + 2] = (numRocs & 4) >> 2;
     WriteNUMROCsRegister(ringRocs.to_ulong());
@@ -1127,10 +1127,16 @@ DTCLib::DTC_DataPacket DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel)
 }
 void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPacket& packet)
 {
+    const uint16_t dmaSize = ReadMinDMATransferLength();
+    DTC_DataPacket thisPacket(packet);
+    if (packet.GetSize() < dmaSize) 
+    {
+        thisPacket.Resize(dmaSize);
+    }
     int retry = 3;
     int errorCode = 0;
     do {
-        errorCode = device_.write_loopback_data(channel, packet.GetData(), 64 * sizeof(uint8_t));
+        errorCode = device_.write_loopback_data(channel, thisPacket.GetData(), dmaSize * sizeof(uint8_t));
         retry--;
     } while (retry > 0 && errorCode != 0);
     if (errorCode != 0)

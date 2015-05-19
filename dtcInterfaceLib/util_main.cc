@@ -7,7 +7,6 @@
 
 #include <cstdio>		// printf
 #include <cstdlib>		// strtoul
-#include <unistd.h>		// usleep
 #include <iostream>
 #include "DTC.h"
 #ifdef _WIN32
@@ -17,6 +16,7 @@
 # define TRACE(...)
 #else
 # include "trace.h"
+# include <unistd.h>		// usleep
 #endif
 
 using namespace DTCLib;
