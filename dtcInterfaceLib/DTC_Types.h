@@ -60,6 +60,7 @@ namespace DTCLib
         DTC_Ring_CFO = 6,
         DTC_Ring_Unused,
     };
+    static const std::vector<DTC_Ring_ID> DTC_Rings = { DTC_Ring_0, DTC_Ring_1, DTC_Ring_2, DTC_Ring_3, DTC_Ring_4, DTC_Ring_5};
 
     enum DTC_PacketType : uint8_t {
         DTC_PacketType_DCSRequest = 0,
@@ -79,6 +80,7 @@ namespace DTCLib
         DTC_ROC_5 = 5,
         DTC_ROC_Unused,
     };
+    static const std::vector<DTC_ROC_ID> DTC_ROCS = { DTC_ROC_Unused, DTC_ROC_0, DTC_ROC_1, DTC_ROC_2, DTC_ROC_3, DTC_ROC_4, DTC_ROC_5 };
 
     enum DTC_RXBufferStatus {
         DTC_RXBufferStatus_Nominal = 0,
