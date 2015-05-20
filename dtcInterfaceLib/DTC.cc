@@ -289,15 +289,17 @@ DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket()
     // Check if the nextReadPtr has been initialized, and if its pointing to a valid location
     if (nextReadPtr_ == nullptr || nextReadPtr_ >= daqbuffer_ + sizeof(*daqbuffer_) || *((uint16_t*)nextReadPtr_) == 0) {
         if (first_read_) {
+            TRACE(19, "DTC::ReadNextDAQPacket: calling device_.release_all");
             device_.release_all(DTC_DMA_Engine_DAQ);
         }
         TRACE(19, "DTC::ReadNextDAQPacket Obtaining new DAQ Buffer");
         ReadBuffer(DTC_DMA_Engine_DAQ); // does return val of type DTCLib::DTC_DataPacket
         // MUST BE ABLE TO HANDLE daqbuffer_==nullptr OR retry forever?
         nextReadPtr_ = &(daqbuffer_[0]);
-        TRACE(19, "DTC::ReadNextDAQPacket nextReadPtr_=%p *nextReadPtr_=0x%08x"
-            , (void*)nextReadPtr_, *(unsigned*)nextReadPtr_);
+        TRACE(19, "DTC::ReadNextDAQPacket nextReadPtr_=%p *nextReadPtr_=0x%08x lastReadPtr_=%p"
+            , (void*)nextReadPtr_, *(unsigned*)nextReadPtr_, (void*) lastReadPtr_);
         if (nextReadPtr_ == lastReadPtr_) {
+            nextReadPtr_ = nullptr;
             //We didn't actually get a new buffer...this probably means there's no more data
             throw DTC_WrongPacketTypeException();
         }
