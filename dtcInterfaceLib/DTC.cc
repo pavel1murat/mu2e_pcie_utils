@@ -279,8 +279,13 @@ PacketType DTCLib::DTC::ReadDMAPacket_OLD(const DTC_DMA_Engine& channel)
 DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket()
 {
     TRACE(19, "DTC::ReadNextDAQPacket BEGIN");
-    TRACE(19, "DTC::ReadNextDAQPacket BEFORE BUFFER CHECK nextReadPtr_=%p *nextReadPtr_=0x%08x"
-        , (void*)nextReadPtr_, *(unsigned*)nextReadPtr_);
+    if (nextReadPtr_ != nullptr) {
+        TRACE(19, "DTC::ReadNextDAQPacket BEFORE BUFFER CHECK nextReadPtr_=%p *nextReadPtr_=0x%08x"
+            , (void*)nextReadPtr_, *(unsigned*)nextReadPtr_);
+    }
+    else {
+        TRACE(19, "DTC::ReadNextDAQPacket BEFORE BUFFER CHECK nextReadPtr_=nullptr");
+    }
     // Check if the nextReadPtr has been initialized, and if its pointing to a valid location
     if (nextReadPtr_ == nullptr || nextReadPtr_ >= daqbuffer_ + sizeof(*daqbuffer_) || *((uint16_t*)nextReadPtr_) == 0) {
         if (first_read_) {
