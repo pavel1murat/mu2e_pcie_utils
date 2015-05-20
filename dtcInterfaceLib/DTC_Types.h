@@ -390,6 +390,13 @@ namespace DTCLib
             return "I'm sorry, Dave, but I can't do that. (Because I don't know how)";
         }
     };
+    class DTC_TimeoutOccurredException : public std::exception {
+    public:
+        virtual const char* what() const throw()
+        {
+            return "A Timeout occurred while communicating with the DTC";
+        }
+    };
 
     class DTC_Timestamp {
     private:
@@ -430,9 +437,9 @@ namespace DTCLib
 
     public:
         DTC_DataPacket();
-        DTC_DataPacket(mu2e_databuff_t* data) : dataPtr_(*data), memPacket_(true){}
-        DTC_DataPacket(void* data) : dataPtr_((uint8_t*)data), memPacket_(true){}
-        DTC_DataPacket(uint8_t* data) : dataPtr_(data), memPacket_(true){}
+        DTC_DataPacket(mu2e_databuff_t* data) : dataPtr_(*data), dataSize_(16), memPacket_(true){}
+        DTC_DataPacket(void* data) : dataPtr_((uint8_t*)data), dataSize_(16), memPacket_(true){}
+        DTC_DataPacket(uint8_t* data) : dataPtr_(data), dataSize_(16), memPacket_(true){}
         DTC_DataPacket(const DTC_DataPacket&) = default;
 #ifndef _WIN32
         DTC_DataPacket(DTC_DataPacket&&) = default;

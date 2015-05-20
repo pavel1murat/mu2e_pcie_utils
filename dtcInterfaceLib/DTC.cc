@@ -153,16 +153,26 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
                 TRACE(19, "DTC::GetData: End of data stream reached!");
                 done = true;
             }
+            catch (DTC_TimeoutOccurredException ex)
+            {
+                TRACE(19, "DTC::GetData: Timeout occurred!");
+                done = true;
+            }
         }
     }
     catch (DTC_WrongPacketTypeException ex)
     {
         TRACE(19, "DTC::GetData: Bad omen: Wrong packet type at the current read position");
     }
+    catch (DTC_TimeoutOccurredException ex)
+    {
+        TRACE(19, "DTC::GetData: Timeout occurred!");
+        nextReadPtr_ = nullptr;
+    }
     catch (DTC_IOErrorException ex)
     {
         nextReadPtr_ = nullptr;
-        TRACE(19, "DTC::GetData: Timed out while trying to get next DMA");
+        TRACE(19, "DTC::GetData: IO Exception Occurred!");
     }
 
     TRACE(19, "DTC::GetData RETURN");
@@ -1156,7 +1166,7 @@ DTCLib::DTC_DataPacket DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel)
         retry--;
     } while (retry > 0 && errorCode == 0);
     if (errorCode == 0) // timeout
-        throw DTC_WrongPacketTypeException(); // Eric - change this
+        throw DTC_TimeoutOccurredException();
     else if (errorCode < 0)
         throw DTC_IOErrorException();
     TRACE(16, "DTC::ReadDataPacket buffer_=%p errorCode=%d *buffer_=0x%08x"
