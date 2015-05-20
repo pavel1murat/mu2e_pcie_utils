@@ -16,7 +16,7 @@ daqbuffer_(nullptr), dcsbuffer_(nullptr), simMode_(mode),
 #if LOCAL_NUMROCS
 maxROCs_(),
 #endif
-lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
+first_read_(true), lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 {
 #ifdef _WIN32
     simMode_ = DTCLib::DTC_SimMode_Tracker;
@@ -116,6 +116,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
             }
         }
     }
+    first_read_ = true;
     try{
         // Read the header packet
         DTC_DataHeaderPacket packet = ReadNextDAQPacket();
@@ -279,12 +280,16 @@ DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket()
     TRACE(19, "DTC::ReadNextDAQPacket BEGIN");
     // Check if the nextReadPtr has been initialized, and if its pointing to a valid location
     if (nextReadPtr_ == nullptr || nextReadPtr_ >= daqbuffer_ + sizeof(*daqbuffer_) || *((uint16_t*)nextReadPtr_) == 0) {
+        if (first_read_) {
+            device_.release_all(DTC_DMA_Engine_DAQ);
+        }
         TRACE(19, "DTC::ReadNextDAQPacket Obtaining new DAQ Buffer");
         ReadBuffer(DTC_DMA_Engine_DAQ); // does return val of type DTCLib::DTC_DataPacket
         // MUST BE ABLE TO HANDLE daqbuffer_==nullptr OR retry forever?
         nextReadPtr_ = &(daqbuffer_[0]);
         TRACE(19, "DTC::ReadNextDAQPacket nextReadPtr_=%p daqBuffer_=%p", (void*)nextReadPtr_, (void*)daqbuffer_);
     }
+    first_read_ = false;
     //Read the next packet
     TRACE(19, "DTC::ReadNextDAQPacket reading next packet from buffer: nextReadPtr_=%p:", (void*)nextReadPtr_);
     DTC_DataPacket test = DTC_DataPacket(nextReadPtr_);
