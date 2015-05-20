@@ -292,7 +292,7 @@ DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket()
         nextReadPtr_ = &(daqbuffer_[0]);
         TRACE(19, "DTC::ReadNextDAQPacket nextReadPtr_=%p *nextReadPtr_=0x%08x"
             , (void*)nextReadPtr_, *(unsigned*)nextReadPtr_);
-        if (nextReadPtr_ = lastReadPtr_) {
+        if (nextReadPtr_ == lastReadPtr_) {
             //We didn't actually get a new buffer...this probably means there's no more data
             throw DTC_WrongPacketTypeException();
         }
