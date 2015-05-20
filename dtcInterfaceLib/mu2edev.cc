@@ -73,10 +73,14 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode)
 			  , prot==PROT_READ? 'R': 'W'
 			  , length );
                 }
-                //if (dir == DTC_DMA_Direction_C2S)
+                if (dir == DTC_DMA_Direction_C2S)
+		{   release_all( chn );
+		}
+
+		// Enable DMA Engines
                 {   uint16_t addr = DTC_Register_Engine_Control(chn, dir);
                 TRACE(17, "mu2edev::init write Engine_Control reg 0x%x", addr);
-                write_register(DTC_Register_Engine_Control(chn, dir), 0, 0x100);
+                write_register(DTC_Register_Engine_Control(chn, dir), 0, 0x100);//bit 8 enable=1
                 }
             }
 #endif
@@ -161,7 +165,7 @@ int mu2edev::read_release(int chn, unsigned num)
 
             // increment our cached info
             mu2e_channel_info_[chn][C2S].swIdx
-                = idx_add(mu2e_channel_info_[chn][C2S].swIdx, 1, chn, C2S);
+                = idx_add(mu2e_channel_info_[chn][C2S].swIdx, (int)num, chn, C2S);
 	    if (num <= buffers_held_)
 		buffers_held_-=num;
 	    else
@@ -408,6 +412,8 @@ int mu2edev::write_test_command(m_ioc_cmd_t input, bool start)
     }
 }
 
+
+// applicable for recv.
 int mu2edev::release_all(int chn)
 {
     int retsts = 0;
