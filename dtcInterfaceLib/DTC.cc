@@ -66,7 +66,7 @@ DTCLib::DTC_SimMode DTCLib::DTC::SetSimMode(DTC_SimMode mode)
         SetMaxROCNumber(ring, DTC_ROC_Unused);
     }
 
-    if (simMode_ == DTCLib::DTC_SimMode_Hardware)
+    if (simMode_ != DTCLib::DTC_SimMode_Disabled)
     {
         // Set up hardware simulation mode: Ring 0 Tx/Rx Enabled, Loopback Enabled, ROC Emulator Enabled. All other rings disabled.
         for (auto ring : DTC_Rings) {
@@ -301,6 +301,7 @@ DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket()
         if (first_read_) {
             TRACE(19, "DTC::ReadNextDAQPacket: calling device_.release_all");
             device_.release_all(DTC_DMA_Engine_DAQ);
+            lastReadPtr_ = nullptr;
         }
         TRACE(19, "DTC::ReadNextDAQPacket Obtaining new DAQ Buffer");
         ReadBuffer(DTC_DMA_Engine_DAQ); // does return val of type DTCLib::DTC_DataPacket
