@@ -324,6 +324,7 @@ namespace DTCLib
     public:
         DTC_SimMode mode_;
         DTC_SimModeConverter(DTC_SimMode mode) : mode_(mode) {}
+        static DTC_SimMode ConvertToSimMode(std::string);
         friend std::ostream& operator<<(std::ostream& stream, const DTC_SimModeConverter& mode) {
             switch (mode.mode_)
             {

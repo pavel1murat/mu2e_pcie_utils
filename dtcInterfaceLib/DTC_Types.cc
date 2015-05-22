@@ -7,6 +7,16 @@
 #define TRACE(...) 
 #endif
 
+
+DTCLib::DTC_SimMode DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::string modeName) {
+    if (modeName.find("racker") != std::string::npos) { return DTC_SimMode_Tracker; }
+    if (modeName.find("alorimeter") != std::string::npos) { return DTC_SimMode_Calorimeter; }
+    if (modeName.find("osmic") != std::string::npos) { return DTC_SimMode_CosmicVeto; }
+    if (modeName.find("ardware") != std::string::npos) { return DTC_SimMode_Hardware; }
+
+    return DTC_SimMode_Disabled;
+}
+
 DTCLib::DTC_Timestamp::DTC_Timestamp()
     : timestamp_(0) {}
 
