@@ -12,14 +12,17 @@
 #include <unordered_map>
 #include "DTC_Types.h"
 
+#define SIM_BUFFCOUNT 4
+
 struct mu2esim
 {
     mu2esim();
     ~mu2esim();
     int  init(DTCLib::DTC_SimMode mode = DTCLib::DTC_SimMode_Tracker);
     int  read_data(int chn, void **buffer, int tmo_ms); // return bytes read; error if negative
-    int  write_loopback_data(int chn, void *buffer, size_t bytes);
+    int  write_data(int chn, void *buffer, size_t bytes);
     int  read_release(int chn, unsigned num);
+    int  release_all(int chn);
     int  read_register(uint16_t address, int tmo_ms, uint32_t *output);
     int  write_register(uint16_t address, int tmo_ms, uint32_t data);
     int  read_pcie_state(m_ioc_pcistate_t *output);
@@ -28,14 +31,18 @@ struct mu2esim
     int  read_trn_stats(TRNStatsArray *output);
     int  read_test_command(m_ioc_cmd_t *output);
     int  write_test_command(m_ioc_cmd_t input, bool start);
-    bool active() { return isActive_; }
 private:
+    unsigned delta_(int chn, int dir);
+    void clearBuffer_(int chn, bool increment = true);
+
     //const DTCLib::DTC_Timestamp NULL_TIMESTAMP = DTCLib::DTC_Timestamp(0xffffffffffffffff);
-    bool isActive_;
     std::unordered_map<uint16_t, uint32_t> registers_;
-    mu2e_databuff_t* dmaDAQData_;
-    mu2e_databuff_t* olddmaDAQData_;
-    mu2e_databuff_t dmaDCSData_;
+    size_t hwIdx_[MU2E_MAX_CHANNELS];
+    size_t swIdx_[MU2E_MAX_CHANNELS];
+    size_t buffSize_[MU2E_MAX_CHANNELS][SIM_BUFFCOUNT];
+    mu2e_databuff_t* dmaData_[MU2E_MAX_CHANNELS][SIM_BUFFCOUNT];
+    //mu2e_databuff_t* dmaDAQData_[SIM_BUFFCOUNT];
+    //mu2e_databuff_t* dmaDCSData_[SIM_BUFFCOUNT];
     m_ioc_engstate_t dmaState_[MU2E_MAX_CHANNELS][2];
     m_ioc_pcistate_t pcieState_;
     m_ioc_cmd_t testState_;

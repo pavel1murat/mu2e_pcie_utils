@@ -60,6 +60,7 @@ namespace DTCLib
         DTC_Ring_CFO = 6,
         DTC_Ring_Unused,
     };
+    static const std::vector<DTC_Ring_ID> DTC_Rings = { DTC_Ring_0, DTC_Ring_1, DTC_Ring_2, DTC_Ring_3, DTC_Ring_4, DTC_Ring_5};
 
     enum DTC_PacketType : uint8_t {
         DTC_PacketType_DCSRequest = 0,
@@ -79,6 +80,7 @@ namespace DTCLib
         DTC_ROC_5 = 5,
         DTC_ROC_Unused,
     };
+    static const std::vector<DTC_ROC_ID> DTC_ROCS = { DTC_ROC_Unused, DTC_ROC_0, DTC_ROC_1, DTC_ROC_2, DTC_ROC_3, DTC_ROC_4, DTC_ROC_5 };
 
     enum DTC_RXBufferStatus {
         DTC_RXBufferStatus_Nominal = 0,
@@ -322,6 +324,7 @@ namespace DTCLib
     public:
         DTC_SimMode mode_;
         DTC_SimModeConverter(DTC_SimMode mode) : mode_(mode) {}
+        static DTC_SimMode ConvertToSimMode(std::string);
         friend std::ostream& operator<<(std::ostream& stream, const DTC_SimModeConverter& mode) {
             switch (mode.mode_)
             {
@@ -388,6 +391,13 @@ namespace DTCLib
             return "I'm sorry, Dave, but I can't do that. (Because I don't know how)";
         }
     };
+    class DTC_TimeoutOccurredException : public std::exception {
+    public:
+        virtual const char* what() const throw()
+        {
+            return "A Timeout occurred while communicating with the DTC";
+        }
+    };
 
     class DTC_Timestamp {
     private:
@@ -423,13 +433,14 @@ namespace DTCLib
     class DTC_DataPacket {
     private:
         uint8_t* dataPtr_;
+        uint16_t dataSize_;
         bool memPacket_;
 
     public:
         DTC_DataPacket();
-        DTC_DataPacket(mu2e_databuff_t* data) : dataPtr_(*data), memPacket_(true){}
-        DTC_DataPacket(void* data) : dataPtr_((uint8_t*)data), memPacket_(true){}
-        DTC_DataPacket(uint8_t* data) : dataPtr_(data), memPacket_(true){}
+        DTC_DataPacket(mu2e_databuff_t* data) : dataPtr_(*data), dataSize_(16), memPacket_(true){}
+        DTC_DataPacket(void* data) : dataPtr_((uint8_t*)data), dataSize_(16), memPacket_(true){}
+        DTC_DataPacket(uint8_t* data) : dataPtr_(data), dataSize_(16), memPacket_(true){}
         DTC_DataPacket(const DTC_DataPacket&) = default;
 #ifndef _WIN32
         DTC_DataPacket(DTC_DataPacket&&) = default;
@@ -446,6 +457,8 @@ namespace DTCLib
         uint8_t GetWord(int index) const;
         uint8_t* GetData() const { return dataPtr_; }
         std::string toJSON();
+        bool Resize(const uint16_t dmaSize);
+        uint16_t GetSize() const { return dataSize_; }
     };
 
     class DTC_DMAPacket {
@@ -458,7 +471,7 @@ namespace DTCLib
 
     public:
         DTC_DMAPacket() : packetType_(DTC_PacketType_Invalid) {}
-        DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t byteCount = 16, bool valid = true);
+        DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t byteCount = 64, bool valid = true);
 
         DTC_DMAPacket(const DTC_DataPacket in);
         DTC_DMAPacket(const DTC_DMAPacket&) = default;

@@ -7,6 +7,16 @@
 #define TRACE(...) 
 #endif
 
+
+DTCLib::DTC_SimMode DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::string modeName) {
+    if (modeName.find("racker") != std::string::npos) { return DTC_SimMode_Tracker; }
+    if (modeName.find("alorimeter") != std::string::npos) { return DTC_SimMode_Calorimeter; }
+    if (modeName.find("osmic") != std::string::npos) { return DTC_SimMode_CosmicVeto; }
+    if (modeName.find("ardware") != std::string::npos) { return DTC_SimMode_Hardware; }
+
+    return DTC_SimMode_Disabled;
+}
+
 DTCLib::DTC_Timestamp::DTC_Timestamp()
     : timestamp_(0) {}
 
@@ -48,7 +58,8 @@ void DTCLib::DTC_Timestamp::GetTimestamp(uint8_t* timeArr, int offset) const
 DTCLib::DTC_DataPacket::DTC_DataPacket() 
 {
     memPacket_ = false;
-    dataPtr_ = new uint8_t[16];
+    dataPtr_ = new uint8_t[16]; // current min. dma length is 64 bytes
+    dataSize_ = 16;
 }
 
 DTCLib::DTC_DataPacket::~DTC_DataPacket()
@@ -70,33 +81,37 @@ uint8_t DTCLib::DTC_DataPacket::GetWord(int index) const
     return dataPtr_[index];
 }
 
+bool DTCLib::DTC_DataPacket::Resize(const uint16_t dmaSize) 
+{
+    if (!memPacket_ && dmaSize > dataSize_) {
+        uint8_t *data = new uint8_t[dmaSize];
+        memset(data, 0, dmaSize * sizeof(uint8_t));
+        memcpy(data, dataPtr_, dataSize_ * sizeof(uint8_t));
+        dataPtr_ = data;
+        dataSize_ = dmaSize;
+        return true;
+    }
+
+    //We can only grow, and only non-memory-mapped packets
+    return false;
+}
+
 std::string DTCLib::DTC_DataPacket::toJSON()
 {
     std::stringstream ss;
     ss << "DataPacket: {";
-    ss << "data: [" << (int)dataPtr_[0] << ",";
-    ss << (int)dataPtr_[1] << ",";
-    ss << (int)dataPtr_[2] << ",";
-    ss << (int)dataPtr_[3] << ",";
-    ss << (int)dataPtr_[4] << ",";
-    ss << (int)dataPtr_[5] << ",";
-    ss << (int)dataPtr_[6] << ",";
-    ss << (int)dataPtr_[7] << ",";
-    ss << (int)dataPtr_[8] << ",";
-    ss << (int)dataPtr_[9] << ",";
-    ss << (int)dataPtr_[10] << ",";
-    ss << (int)dataPtr_[11] << ",";
-    ss << (int)dataPtr_[12] << ",";
-    ss << (int)dataPtr_[13] << ",";
-    ss << (int)dataPtr_[14] << ",";
-    ss << (int)dataPtr_[15] << "]";
+    ss << "data: [";
+        for (uint16_t ii = 0; ii < dataSize_ - 1; ++ii) {
+            ss << (int)dataPtr_[ii] << ",";
+        }
+    ss << (int)dataPtr_[dataSize_ - 1] << "]";
     ss << "}";
     return ss.str();
 }
 
 
 DTCLib::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t byteCount, bool valid)
-    : valid_(valid), byteCount_(byteCount), ringID_(ring), packetType_(type), rocID_(roc) {}
+    : valid_(valid), byteCount_(byteCount<64?64:byteCount), ringID_(ring), packetType_(type), rocID_(roc) {}
 
 
 DTCLib::DTC_DataPacket DTCLib::DTC_DMAPacket::ConvertToDataPacket() const

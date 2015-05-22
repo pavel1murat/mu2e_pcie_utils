@@ -1,6 +1,8 @@
 #ifndef DTC_H
 #define DTC_H
 
+#define LOCAL_NUMROCS 0
+
 #include "DTC_Types.h"
 #include <vector>
 #include <cstdlib>
@@ -225,6 +227,10 @@ namespace DTCLib {
         mu2e_databuff_t* daqbuffer_;
         mu2e_databuff_t* dcsbuffer_;
         DTC_SimMode simMode_;
+#if LOCAL_NUMROCS
+        DTC_ROC_ID maxROCs_[6];
+#endif
+        bool first_read_;
         void* lastReadPtr_;
         void* nextReadPtr_;
         void* dcsReadPtr_;

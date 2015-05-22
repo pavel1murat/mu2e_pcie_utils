@@ -51,7 +51,10 @@ tonSg 0-7; tonMg 0-15
 
 insmod $DEVMOD
 
+echo 'reg 0x9000 value...'
 devl uint32 0x9000
+echo 'reg 0x9004 value...'
+devl uint32 0x9004
 
 export TRACE_NAME=mcs
 mcs $file | tee /tmp/mcs.out\

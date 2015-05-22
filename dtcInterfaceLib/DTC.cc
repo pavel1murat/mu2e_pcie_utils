@@ -13,7 +13,10 @@
 
 DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode) : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t))), device_(),
 daqbuffer_(nullptr), dcsbuffer_(nullptr), simMode_(mode),
-lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
+#if LOCAL_NUMROCS
+maxROCs_(),
+#endif
+first_read_(true), lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 {
 #ifdef _WIN32
     simMode_ = DTCLib::DTC_SimMode_Tracker;
@@ -58,17 +61,21 @@ DTCLib::DTC_SimMode DTCLib::DTC::SetSimMode(DTC_SimMode mode)
 {
     simMode_ = mode;
     device_.init(simMode_);
-    if (simMode_ == DTCLib::DTC_SimMode_Hardware)
+
+    for (auto ring : DTC_Rings) {
+        SetMaxROCNumber(ring, DTC_ROC_Unused);
+    }
+
+    if (simMode_ != DTCLib::DTC_SimMode_Disabled)
     {
         // Set up hardware simulation mode: Ring 0 Tx/Rx Enabled, Loopback Enabled, ROC Emulator Enabled. All other rings disabled.
+        for (auto ring : DTC_Rings) {
+            DisableRing(ring);
+        }
         EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
-        DisableRing(DTC_Ring_1);
-        DisableRing(DTC_Ring_2);
-        DisableRing(DTC_Ring_3);
-        DisableRing(DTC_Ring_4);
-        DisableRing(DTC_Ring_5);
         SetSERDESLoopbackMode(DTC_Ring_0, DTC_SERDESLoopbackMode_NearPCS);
         EnableROCEmulator(DTC_Ring_0);
+        //EnableROCEmulator(DTC_Ring_1);
         SetInternalSystemClock();
         DisableTiming();
     }
@@ -82,32 +89,35 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
 {
     TRACE(19, "DTC::GetData begin");
     std::vector<void*> output;
-    for (uint8_t ring = 0; ring < 6; ++ring){
-        DTC_RingEnableMode mode = ReadRingEnabled((DTC_Ring_ID)ring);
+    for (auto ring : DTC_Rings){
+        DTC_RingEnableMode mode = ReadRingEnabled(ring);
         if (!mode.TimingEnable)
         {
-            if (ReadRingEnabled((DTC_Ring_ID)ring).TransmitEnable)
+            if (ReadRingEnabled(ring).TransmitEnable)
             {
                 TRACE(19, "DTC::GetData before DTC_ReadoutRequestPacket req");
                 uint8_t* request = new uint8_t[4];
-                DTC_ReadoutRequestPacket req((DTC_Ring_ID)ring, when, request, ReadRingROCCount((DTC_Ring_ID)ring));
-                TRACE(19, "DTC::GetData before WriteDMADAQPacket");
+                DTC_ReadoutRequestPacket req(ring, when, request, ReadRingROCCount(ring));
+                TRACE(19, "DTC::GetData before WriteDMADAQPacket - DTC_ReadoutRequestPacket");
                 WriteDMADAQPacket(req);
-                TRACE(19, "DTC::GetData after  WriteDMADAQPacket");
-                if (int maxRoc = ReadRingROCCount((DTC_Ring_ID)ring) != DTC_ROC_Unused)
+                TRACE(19, "DTC::GetData after  WriteDMADAQPacket - DTC_ReadoutRequestPacket");
+                int maxRoc;
+                if ((maxRoc = ReadRingROCCount(ring)) != DTC_ROC_Unused)
                 {
                     for (uint8_t roc = 0; roc <= maxRoc; ++roc)
                     {
                         TRACE(19, "DTC::GetData before DTC_DataRequestPacket req");
-                        DTC_DataRequestPacket req((DTC_Ring_ID)ring, (DTC_ROC_ID)roc, when);
-                        TRACE(19, "DTC::GetData before WriteDMADAQPacket");
+                        DTC_DataRequestPacket req(ring, (DTC_ROC_ID)roc, when);
+                        TRACE(19, "DTC::GetData before WriteDMADAQPacket - DTC_DataRequestPacket");
                         WriteDMADAQPacket(req);
-                        TRACE(19, "DTC::GetData after  WriteDMADAQPacket");
+                        TRACE(19, "DTC::GetData after  WriteDMADAQPacket - DTC_DataRequestPacket");
                     }
                 }
+                usleep(1000);
             }
         }
     }
+    first_read_ = true;
     try{
         // Read the header packet
         DTC_DataHeaderPacket packet = ReadNextDAQPacket();
@@ -143,16 +153,26 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
                 TRACE(19, "DTC::GetData: End of data stream reached!");
                 done = true;
             }
+            catch (DTC_TimeoutOccurredException ex)
+            {
+                TRACE(19, "DTC::GetData: Timeout occurred!");
+                done = true;
+            }
         }
     }
     catch (DTC_WrongPacketTypeException ex)
     {
         TRACE(19, "DTC::GetData: Bad omen: Wrong packet type at the current read position");
     }
+    catch (DTC_TimeoutOccurredException ex)
+    {
+        TRACE(19, "DTC::GetData: Timeout occurred!");
+        nextReadPtr_ = nullptr;
+    }
     catch (DTC_IOErrorException ex)
     {
         nextReadPtr_ = nullptr;
-        TRACE(19, "DTC::GetData: Timed out while trying to get next DMA");
+        TRACE(19, "DTC::GetData: IO Exception Occurred!");
     }
 
     TRACE(19, "DTC::GetData RETURN");
@@ -269,14 +289,33 @@ PacketType DTCLib::DTC::ReadDMAPacket_OLD(const DTC_DMA_Engine& channel)
 DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket()
 {
     TRACE(19, "DTC::ReadNextDAQPacket BEGIN");
+    if (nextReadPtr_ != nullptr) {
+        TRACE(19, "DTC::ReadNextDAQPacket BEFORE BUFFER CHECK nextReadPtr_=%p *nextReadPtr_=0x%08x"
+            , (void*)nextReadPtr_, *(unsigned*)nextReadPtr_);
+    }
+    else {
+        TRACE(19, "DTC::ReadNextDAQPacket BEFORE BUFFER CHECK nextReadPtr_=nullptr");
+    }
     // Check if the nextReadPtr has been initialized, and if its pointing to a valid location
     if (nextReadPtr_ == nullptr || nextReadPtr_ >= daqbuffer_ + sizeof(*daqbuffer_) || *((uint16_t*)nextReadPtr_) == 0) {
+        if (first_read_) {
+            TRACE(19, "DTC::ReadNextDAQPacket: calling device_.release_all");
+            device_.release_all(DTC_DMA_Engine_DAQ);
+            lastReadPtr_ = nullptr;
+        }
         TRACE(19, "DTC::ReadNextDAQPacket Obtaining new DAQ Buffer");
         ReadBuffer(DTC_DMA_Engine_DAQ); // does return val of type DTCLib::DTC_DataPacket
         // MUST BE ABLE TO HANDLE daqbuffer_==nullptr OR retry forever?
         nextReadPtr_ = &(daqbuffer_[0]);
-        TRACE(19, "DTC::ReadNextDAQPacket nextReadPtr_=%p daqBuffer_=%p", (void*)nextReadPtr_, (void*)daqbuffer_);
+        TRACE(19, "DTC::ReadNextDAQPacket nextReadPtr_=%p *nextReadPtr_=0x%08x lastReadPtr_=%p"
+            , (void*)nextReadPtr_, *(unsigned*)nextReadPtr_, (void*) lastReadPtr_);
+        if (nextReadPtr_ == lastReadPtr_) {
+            nextReadPtr_ = nullptr;
+            //We didn't actually get a new buffer...this probably means there's no more data
+            throw DTC_WrongPacketTypeException();
+        }
     }
+    first_read_ = false;
     //Read the next packet
     TRACE(19, "DTC::ReadNextDAQPacket reading next packet from buffer: nextReadPtr_=%p:", (void*)nextReadPtr_);
     DTC_DataPacket test = DTC_DataPacket(nextReadPtr_);
@@ -529,9 +568,9 @@ void DTCLib::DTC::ResetSERDESOscillator(){
     usleep(2);
     data[29] = 0;
     WriteControlRegister(data.to_ulong());
-    for (uint8_t i = 0; i < 6; ++i)
+    for (auto ring : DTC_Rings)
     {
-        ResetSERDES((DTC_Ring_ID)i);
+        ResetSERDES(ring);
     }
 }
 bool DTCLib::DTC::ReadResetSERDESOscillator()
@@ -883,19 +922,32 @@ uint16_t DTCLib::DTC::ReadPacketSize()
 DTCLib::DTC_ROC_ID DTCLib::DTC::SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc)
 {
     std::bitset<32> ringRocs = ReadNUMROCsRegister();
-    ringRocs[ring * 3] = lastRoc & 1;
-    ringRocs[ring * 3 + 1] = lastRoc & 3 >> 1;
-    ringRocs[ring * 3 + 2] = lastRoc & 7 >> 2;
+#if LOCAL_NUMROCS
+    maxROCs_[ring] = lastRoc;
+    for (auto ringNum : DTC_Rings) {
+        int numRocs = (maxROCs_[ringNum] == DTC_ROC_Unused) ? 0 : maxROCs_[ringNum] + 1;
+        ringRocs[ringNum * 3] = numRocs & 1;
+        ringRocs[ringNum * 3 + 1] = (numRocs & 2) >> 1;
+        ringRocs[ringNum * 3 + 2] = (numRocs & 4) >> 2;
+    }
+#else
+    int numRocs = (lastRoc == DTC_ROC_Unused) ? 0 : lastRoc + 1;
+    ringRocs[ring * 3] = numRocs & 1;
+    ringRocs[ring * 3 + 1] = (numRocs & 2) >> 1;
+    ringRocs[ring * 3 + 2] = (numRocs & 4) >> 2;
+#endif
     WriteNUMROCsRegister(ringRocs.to_ulong());
     return ReadRingROCCount(ring);
 }
 
 DTCLib::DTC_ROC_ID DTCLib::DTC::ReadRingROCCount(const DTC_Ring_ID& ring)
 {
+#if LOCAL_NUMROCS
+    return maxROCs_[ring];
+#endif
     std::bitset<32> ringRocs = ReadNUMROCsRegister();
     int number = ringRocs[ring * 3] + (ringRocs[ring * 3 + 1] << 1) + (ringRocs[ring * 3 + 2] << 2);
-    if (number == 0) { return DTC_ROC_Unused; }
-    else return static_cast<DTC_ROC_ID>(number - 1);
+    return DTC_ROCS[number];
 }
 
 
@@ -1114,21 +1166,28 @@ DTCLib::DTC_DataPacket DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel)
         errorCode = device_.read_data(channel, (void**)&buffer, 1000);
         retry--;
     } while (retry > 0 && errorCode == 0);
-    if (errorCode == 0)
-        throw DTC_WrongPacketTypeException();
+    if (errorCode == 0) // timeout
+        throw DTC_TimeoutOccurredException();
     else if (errorCode < 0)
         throw DTC_IOErrorException();
-    TRACE(16, "DTC::ReadDataPacket buffer_=%p errorCode=%d", (void*)buffer, errorCode);
+    TRACE(16, "DTC::ReadDataPacket buffer_=%p errorCode=%d *buffer_=0x%08x"
+        , (void*)buffer, errorCode, *(unsigned*)buffer);
     if (channel == DTC_DMA_Engine_DAQ) { daqbuffer_ = buffer; }
     else if (channel == DTC_DMA_Engine_DCS) { dcsbuffer_ = buffer; }
     return DTC_DataPacket(buffer);
 }
 void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPacket& packet)
 {
+    const uint16_t dmaSize = ReadMinDMATransferLength();
+    DTC_DataPacket thisPacket(packet);
+    if (packet.GetSize() < dmaSize)
+    {
+        thisPacket.Resize(dmaSize);
+    }
     int retry = 3;
     int errorCode = 0;
     do {
-        errorCode = device_.write_loopback_data(channel, packet.GetData(), 16 * sizeof(uint8_t));
+        errorCode = device_.write_data(channel, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
         retry--;
     } while (retry > 0 && errorCode != 0);
     if (errorCode != 0)

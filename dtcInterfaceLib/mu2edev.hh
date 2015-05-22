@@ -24,7 +24,7 @@ struct mu2edev
     int  read_register(uint16_t address, int tmo_ms, uint32_t *output);
     int  write_register(uint16_t address, int tmo_ms, uint32_t data);
     void meta_dump(int chn, int dir);
-    int  write_loopback_data(int chn, void *buffer, size_t bytes);
+    int  write_data(int chn, void *buffer, size_t bytes);
     int  read_pcie_state(m_ioc_pcistate_t *output);
     int  read_dma_state(int chn, int dir, m_ioc_engstate_t *output);
     int  read_dma_stats(m_ioc_engstats_t *output);
@@ -38,6 +38,6 @@ private:
     int	             devfd_;
     volatile void *  mu2e_mmap_ptrs_[MU2E_MAX_CHANNELS][2][2];
     m_ioc_get_info_t mu2e_channel_info_[MU2E_MAX_CHANNELS][2];
-    int              buffers_held_;
-    mu2esim          simulator_;
+    unsigned         buffers_held_;
+    mu2esim*          simulator_;
 };

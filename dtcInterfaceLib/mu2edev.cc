@@ -18,8 +18,7 @@
 #endif
 #include "mu2edev.hh"
 
-mu2edev::mu2edev() : devfd_(0), buffers_held_(0)
-		   , simulator_()
+mu2edev::mu2edev() : devfd_(0), buffers_held_(0), simulator_(nullptr)
 {
     //TRACE_CNTL( "lvlmskM", 0x3 );
     //TRACE_CNTL( "lvlmskS", 0x3 );
@@ -28,13 +27,19 @@ mu2edev::mu2edev() : devfd_(0), buffers_held_(0)
 int mu2edev::init(DTCLib::DTC_SimMode simMode)
 {
     if (simMode != DTCLib::DTC_SimMode_Disabled && simMode != DTCLib::DTC_SimMode_Hardware) {
-        simulator_.init(simMode);
+        simulator_ = new mu2esim();
+        simulator_->init(simMode);
     }
     else {
+        if (simulator_ != nullptr)
+        {
+            delete simulator_;
+            simulator_ = nullptr;
+        }
 #ifndef _WIN32
         int sts;
         devfd_ = open("/dev/" MU2E_DEV_FILE, O_RDWR);
-        if (devfd_ == -1) {
+        if (devfd_ == -1 || devfd_ == 0) {
             perror("open /dev/" MU2E_DEV_FILE);
             TRACE(1, "mu2e Device file not found and DTCLIB_SIM_ENABLE not set! Exiting.");
             exit(1);
@@ -54,29 +59,33 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode)
                     , get_info.hwIdx, get_info.swIdx);
                 for (unsigned map = 0; map < 2; ++map)
                 {   size_t length = get_info.num_buffs * ((map == MU2E_MAP_BUFF)
-							  ? get_info.buff_size
-							  : sizeof(int));
-		    //int prot = (((dir == S2C) && (map == MU2E_MAP_BUFF))? PROT_WRITE : PROT_READ);
-		    int prot = (( (map == MU2E_MAP_BUFF))? PROT_WRITE : PROT_READ);
-		    off64_t offset = chnDirMap2offset(chn, dir, map);
-                    mu2e_mmap_ptrs_[chn][dir][map]
-                        = mmap(  0 /* hint address */
-			       , length, prot, MAP_SHARED, devfd_, offset );
-                    if (mu2e_mmap_ptrs_[chn][dir][map] == MAP_FAILED)
-                    {
-                        perror("mmap"); exit(1);
-                    }
-                    TRACE(1, "mu2edev::init chnDirMap2offset=%lu mu2e_mmap_ptrs_[%d][%d][%d]=%p p=%c l=%lu"
-			  , offset
-			  , chn, dir, map
-			  , mu2e_mmap_ptrs_[chn][dir][map]
-			  , prot==PROT_READ? 'R': 'W'
-			  , length );
+                ? get_info.buff_size
+                : sizeof(int));
+                //int prot = (((dir == S2C) && (map == MU2E_MAP_BUFF))? PROT_WRITE : PROT_READ);
+                int prot = (( (map == MU2E_MAP_BUFF))? PROT_WRITE : PROT_READ);
+                off64_t offset = chnDirMap2offset(chn, dir, map);
+                mu2e_mmap_ptrs_[chn][dir][map]
+                    = mmap(  0 /* hint address */
+                    , length, prot, MAP_SHARED, devfd_, offset );
+                if (mu2e_mmap_ptrs_[chn][dir][map] == MAP_FAILED)
+                {
+                    perror("mmap"); exit(1);
                 }
-                //if (dir == DTC_DMA_Direction_C2S)
+                TRACE(1, "mu2edev::init chnDirMap2offset=%lu mu2e_mmap_ptrs_[%d][%d][%d]=%p p=%c l=%lu"
+                    , offset
+                    , chn, dir, map
+                    , mu2e_mmap_ptrs_[chn][dir][map]
+                    , prot==PROT_READ? 'R': 'W'
+                    , length );
+                }
+                if (dir == DTC_DMA_Direction_C2S)
+                {   release_all( chn );
+                }
+
+                // Enable DMA Engines
                 {   uint16_t addr = DTC_Register_Engine_Control(chn, dir);
                 TRACE(17, "mu2edev::init write Engine_Control reg 0x%x", addr);
-                write_register(DTC_Register_Engine_Control(chn, dir), 0, 0x100);
+                write_register(DTC_Register_Engine_Control(chn, dir), 0, 0x100);//bit 8 enable=1
                 }
             }
 #endif
@@ -87,11 +96,11 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode)
 /*****************************
    read_data
    returns number of bytes read; negative value indicates an error
- */
+   */
 int mu2edev::read_data(int chn, void **buffer, int tmo_ms)
 {
-    if (simulator_.active()) {
-        return simulator_.read_data(chn, buffer, tmo_ms);
+    if (simulator_ != nullptr) {
+        return simulator_->read_data(chn, buffer, tmo_ms);
     }
     else {
 #ifdef _WIN32
@@ -102,13 +111,13 @@ int mu2edev::read_data(int chn, void **buffer, int tmo_ms)
         TRACE(18, "mu2edev::read_data before (mu2e_mmap_ptrs_[0][0][0]!=NULL) || ((retsts=init())==0)");
         if ((mu2e_mmap_ptrs_[0][0][0] != NULL) || ((retsts = init()) == 0))
         {
-	    if (buffers_held_ >= 2)
-		read_release( chn, 1 );
+            if (buffers_held_ >= 2)
+                read_release( chn, 1 );
             has_recv_data = delta_(chn, C2S); // delta_ looks at mu2e_channel_info_
             TRACE(18, "mu2edev::read_data after %u=has_recv_data = delta_( chn, C2S )", has_recv_data);
             if ((has_recv_data > 0)
                 || (   (retsts = ioctl(devfd_, M_IOC_GET_INFO, &mu2e_channel_info_[chn][C2S])) == 0
-		    && (has_recv_data = delta_(chn, C2S)) > 0))
+                && (has_recv_data = delta_(chn, C2S)) > 0))
             {   // have data
                 // get byte count from new/next sw
                 unsigned newNxtIdx = idx_add(mu2e_channel_info_[chn][C2S].swIdx, 1, chn, C2S);
@@ -116,13 +125,13 @@ int mu2edev::read_data(int chn, void **buffer, int tmo_ms)
                 retsts = BC_p[newNxtIdx];
                 *buffer = ((mu2e_databuff_t*)(mu2e_mmap_ptrs_[chn][C2S][MU2E_MAP_BUFF]))[newNxtIdx];
                 TRACE(1, "mu2edev::read_data chn%d hIdx=%u, sIdx=%u "
-		      "%u hasRcvDat=%u %p[newNxtIdx=%d]=retsts=%d buf(%p)[0]=0x%08x"
-		      , chn
-		      , mu2e_channel_info_[chn][C2S].hwIdx
-		      , mu2e_channel_info_[chn][C2S].swIdx
-		      , mu2e_channel_info_[chn][C2S].num_buffs, has_recv_data
-		      , (void*)BC_p, newNxtIdx, retsts, *buffer, *(uint32_t*)*buffer );
-		++buffers_held_;
+                    "%u hasRcvDat=%u %p[newNxtIdx=%d]=retsts=%d buf(%p)[0]=0x%08x"
+                    , chn
+                    , mu2e_channel_info_[chn][C2S].hwIdx
+                    , mu2e_channel_info_[chn][C2S].swIdx
+                    , mu2e_channel_info_[chn][C2S].num_buffs, has_recv_data
+                    , (void*)BC_p, newNxtIdx, retsts, *buffer, *(uint32_t*)*buffer );
+                ++buffers_held_;
             }
             else
             {   // was it a tmo or error
@@ -138,12 +147,12 @@ int mu2edev::read_data(int chn, void **buffer, int tmo_ms)
 
 /* read_release
    release a number of buffers (usually 1)
- */
+   */
 int mu2edev::read_release(int chn, unsigned num)
 {
-    if (simulator_.active())
+    if (simulator_ != nullptr)
     {
-        return simulator_.read_release(chn, num);
+        return simulator_->read_release(chn, num);
     }
     else {
 #ifdef _WIN32
@@ -161,7 +170,11 @@ int mu2edev::read_release(int chn, unsigned num)
 
             // increment our cached info
             mu2e_channel_info_[chn][C2S].swIdx
-                = idx_add(mu2e_channel_info_[chn][C2S].swIdx, 1, chn, C2S);
+                = idx_add(mu2e_channel_info_[chn][C2S].swIdx, (int)num, chn, C2S);
+            if (num <= buffers_held_)
+                buffers_held_ -= num;
+            else
+                buffers_held_ = 0;
         }
 #endif
         return (retsts);
@@ -171,9 +184,9 @@ int mu2edev::read_release(int chn, unsigned num)
 
 int  mu2edev::read_register(uint16_t address, int tmo_ms, uint32_t *output)
 {
-    if (simulator_.active())
+    if (simulator_ != nullptr)
     {
-        return simulator_.read_register(address, tmo_ms, output);
+        return simulator_->read_register(address, tmo_ms, output);
     }
     else {
 #ifdef _WIN32
@@ -192,9 +205,9 @@ int  mu2edev::read_register(uint16_t address, int tmo_ms, uint32_t *output)
 
 int  mu2edev::write_register(uint16_t address, int tmo_ms, uint32_t data)
 {
-    if (simulator_.active())
+    if (simulator_ != nullptr)
     {
-        return simulator_.write_register(address, tmo_ms, data);
+        return simulator_->write_register(address, tmo_ms, data);
     }
     else {
 #ifdef _WIN32
@@ -212,7 +225,7 @@ int  mu2edev::write_register(uint16_t address, int tmo_ms, uint32_t data)
 
 void mu2edev::meta_dump(int chn, int dir)
 {
-    if (simulator_.active())
+    if (simulator_ != nullptr)
     {
         return;
     }
@@ -233,11 +246,11 @@ void mu2edev::meta_dump(int chn, int dir)
     }
 }
 
-int mu2edev::write_loopback_data(int chn, void *buffer, size_t bytes)
+int mu2edev::write_data(int chn, void *buffer, size_t bytes)
 {
-    if (simulator_.active())
+    if (simulator_ != nullptr)
     {
-        return simulator_.write_loopback_data(chn, buffer, bytes);
+        return simulator_->write_data(chn, buffer, bytes);
     }
     else
     {
@@ -246,28 +259,38 @@ int mu2edev::write_loopback_data(int chn, void *buffer, size_t bytes)
 #else
         int dir = S2C;
         int retsts = 0;
-        unsigned delta = delta_(chn, dir);
+        unsigned delta = delta_(chn, dir); // check cached info
         TRACE(3, "write_loopback_data delta=%u chn=%d dir=S2C", delta, chn);
+        if (delta == 0)  // recheck with module
+        {   m_ioc_get_info_t get_info;
+        get_info.chn = chn; get_info.dir = dir;
+        int sts = ioctl(devfd_, M_IOC_GET_INFO, &get_info);
+        if (sts != 0) { perror("M_IOC_GET_INFO"); exit(1); }
+        mu2e_channel_info_[chn][dir] = get_info; // copy info struct
+        delta = delta_(chn, dir);
+        }
         if (delta > 0)
-        {
-            unsigned idx = mu2e_channel_info_[chn][dir].swIdx;
-            void * data = ((mu2e_databuff_t*)(mu2e_mmap_ptrs_[chn][dir][MU2E_MAP_BUFF]))[idx];
-            memcpy(data, buffer, bytes);
-            unsigned long arg = (chn << 24) | (bytes & 0xffffff);// THIS OBIVOUSLY SHOULD BE A MACRO
-            retsts = ioctl(devfd_, M_IOC_BUF_XMIT, arg);
-            if (retsts != 0) { perror("M_IOC_BUF_GIVE"); exit(1); }
+        {   unsigned idx = mu2e_channel_info_[chn][dir].swIdx;
+        void * data = ((mu2e_databuff_t*)(mu2e_mmap_ptrs_[chn][dir][MU2E_MAP_BUFF]))[idx];
+        memcpy(data, buffer, bytes);
+        unsigned long arg = (chn << 24) | (bytes & 0xffffff);// THIS OBIVOUSLY SHOULD BE A MACRO
+        retsts = ioctl(devfd_, M_IOC_BUF_XMIT, arg);
+        if (retsts != 0) { perror("M_IOC_BUF_GIVE"); exit(1); }
+        // increment our cached info
+        mu2e_channel_info_[chn][dir].swIdx
+            = idx_add(mu2e_channel_info_[chn][dir].swIdx, 1, chn, dir);
         }
 #endif
         return retsts;
     }
-}  // write_loopback_data
+}   // write_data
 
 
 int mu2edev::read_pcie_state(m_ioc_pcistate_t *output)
 {
-    if (simulator_.active())
+    if (simulator_ != nullptr)
     {
-        return simulator_.read_pcie_state(output);
+        return simulator_->read_pcie_state(output);
     }
     else {
 #ifdef _WIN32
@@ -285,9 +308,9 @@ int mu2edev::read_pcie_state(m_ioc_pcistate_t *output)
 
 int mu2edev::read_dma_state(int chn, int dir, m_ioc_engstate_t *output)
 {
-    if (simulator_.active())
+    if (simulator_ != nullptr)
     {
-        return simulator_.read_dma_state(chn, dir, output);
+        return simulator_->read_dma_state(chn, dir, output);
     }
     else {
 #ifdef _WIN32
@@ -309,9 +332,9 @@ int mu2edev::read_dma_state(int chn, int dir, m_ioc_engstate_t *output)
 
 int mu2edev::read_dma_stats(m_ioc_engstats_t *output)
 {
-    if (simulator_.active())
+    if (simulator_ != nullptr)
     {
-        return simulator_.read_dma_stats(output);
+        return simulator_->read_dma_stats(output);
     }
     else {
 #ifdef _WIN32
@@ -329,9 +352,9 @@ int mu2edev::read_dma_stats(m_ioc_engstats_t *output)
 
 int mu2edev::read_trn_stats(TRNStatsArray *output)
 {
-    if (simulator_.active())
+    if (simulator_ != nullptr)
     {
-        return simulator_.read_trn_stats(output);
+        return simulator_->read_trn_stats(output);
     }
     else {
 #ifdef _WIN32
@@ -349,9 +372,9 @@ int mu2edev::read_trn_stats(TRNStatsArray *output)
 
 int mu2edev::read_test_command(m_ioc_cmd_t *output)
 {
-    if (simulator_.active())
+    if (simulator_ != nullptr)
     {
-        return simulator_.read_test_command(output);
+        return simulator_->read_test_command(output);
     }
     else {
 #ifdef _WIN32
@@ -369,9 +392,9 @@ int mu2edev::read_test_command(m_ioc_cmd_t *output)
 
 int mu2edev::write_test_command(m_ioc_cmd_t input, bool start)
 {
-    if (simulator_.active())
+    if (simulator_ != nullptr)
     {
-        return simulator_.write_test_command(input, start);
+        return simulator_->write_test_command(input, start);
     }
     else {
 #ifdef _WIN32
@@ -394,12 +417,19 @@ int mu2edev::write_test_command(m_ioc_cmd_t input, bool start)
     }
 }
 
+
+// applicable for recv.
 int mu2edev::release_all(int chn)
 {
-    int retsts = 0;
-    unsigned has_recv_data = delta_(chn, C2S);
-    if (has_recv_data) read_release( chn, has_recv_data );
-    return retsts;
+    if (simulator_ != nullptr) {
+        return simulator_->release_all(chn);
+    }
+    else {
+        int retsts = 0;
+        unsigned has_recv_data = delta_(chn, C2S);
+        if (has_recv_data) read_release(chn, has_recv_data);
+        return retsts;
+    }
 }
 
 unsigned mu2edev::delta_(int chn, int dir)

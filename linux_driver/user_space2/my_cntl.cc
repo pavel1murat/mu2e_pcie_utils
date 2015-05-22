@@ -106,15 +106,26 @@ main(  int	argc
 	printf("1dev.devfd_=%d\n", dev.get_devfd_() );
 	if (sts) { perror("dev.init"); return (1); }
 
-	int regs[]={0x9108,0x9168};
+	int regs[]={0x9108,0x9168};  // loopback enable
 	for (unsigned ii=0; ii<(sizeof(regs)/sizeof(regs[0])); ++ii)
 	{
 	    reg_access.reg_offset  = regs[ii];
-	    reg_access.access_type = 1;
+	    reg_access.access_type = 1;//wr
 	    reg_access.val         = 0x1;
 	    sts = ioctl( fd, M_IOC_REG_ACCESS, &reg_access );
 	    if (sts) { perror("ioctl M_IOC_REG_ACCESS write"); return (1); }
 	}
+	reg_access.reg_offset  = 0x9114;  // ring enable register
+	reg_access.access_type = 1;//wr
+	reg_access.val         = 0x101; // Ring 0 - both xmit and recv
+	sts = ioctl( fd, M_IOC_REG_ACCESS, &reg_access );
+	if (sts) { perror("ioctl M_IOC_REG_ACCESS write"); return (1); }
+
+	reg_access.reg_offset  = 0x2004;  // DMA channel-0 C2S control reg
+	reg_access.access_type = 1;//wr
+	reg_access.val         = 0x100; // bit 8 is DMA Enable (offset 0x2*** is for C2S chan 0)
+	sts = ioctl( fd, M_IOC_REG_ACCESS, &reg_access );
+	if (sts) { perror("ioctl M_IOC_REG_ACCESS write"); return (1); }
 
 	int chn=0;
 	struct

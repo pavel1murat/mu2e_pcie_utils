@@ -17,8 +17,8 @@ base.MasterInitFunction = function () {
 };
 
 base.GET_ReadLog = function () {
-    console.log("Reading " + (__dirname + "/../../../server.log"));
-    fs.readFile(__dirname + "/../../../server.log", function (err, data) {
+    console.log("Reading " + ("/tmp/serverbase.log"));
+    fs.readFile("/tmp/serverbase.log", function (err, data) {
         if (err) throw err;
         base.emit('end', data);
     });
