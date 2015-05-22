@@ -18,7 +18,7 @@
 #endif
 #include "mu2edev.hh"
 
-mu2edev::mu2edev() : devfd_(0), buffers_held_(0)
+mu2edev::mu2edev() : devfd_(0), buffers_held_(0), simulator_(nullptr)
 {
     //TRACE_CNTL( "lvlmskM", 0x3 );
     //TRACE_CNTL( "lvlmskS", 0x3 );
