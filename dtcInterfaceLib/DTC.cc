@@ -113,7 +113,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
                         TRACE(19, "DTC::GetData after  WriteDMADAQPacket - DTC_DataRequestPacket");
                     }
                 }
-                usleep(1000);
+                usleep(2000);
             }
         }
     }
