@@ -1,2 +1,15 @@
 *~
 make.out
+*.sln
+*.suo
+*.sdf
+*.dat
+*.*proj
+dtcInterfaceLib/DTCLibTest/
+dtcInterfaceLib/DTCRegDump/
+dtcInterfaceLib/Debug/
+dtcInterfaceLib/dtcInterfaceLib/
+dtcInterfaceLib/util/
+dtcInterfaceLib/web/bin/
+dtcInterfaceLib/web/obj/
+
