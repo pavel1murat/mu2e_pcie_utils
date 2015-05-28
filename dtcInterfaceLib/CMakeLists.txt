@@ -13,8 +13,9 @@ cet_make_exec(mu2eUtil SOURCE util_main.cc LIBRARIES DTCInterface)
 
 cet_make_exec(DTCRegDump SOURCE dtcRegDump.cc LIBRARIES DTCInterface)
 
-#install_source()
+# Install_headers MUST BE FIRST...for some reason
 install_headers()
+install_source()
 
 add_custom_command(
     OUTPUT DTC.node
@@ -23,17 +24,18 @@ add_custom_command(
     DEPENDS DTC.cc DTC_Types.cc mu2edev.cc mu2esim.cc
 )
 add_custom_target(DTCJSInterface ALL echo DEPENDS DTC.node)
-add_custom_command(TARGET DTCJSInterface PRE_BUILD
-                   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/web/  ${CMAKE_BINARY_DIR}/bin/web/
-)
+#add_custom_command(TARGET DTCJSInterface PRE_BUILD
+#                   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/web/  ${CMAKE_BINARY_DIR}/bin/web/
+#)
 add_custom_command(TARGET DTCJSInterface POST_BUILD
     #   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/DTC.node ../bin/web/modules/DTC/server/DTC.node
     #COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/DTCLibTest.node ../bin/web/modules/DTC/server/DTCLibTest.node
-   COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_BINARY_DIR}/DTC.node  ${CMAKE_BINARY_DIR}/bin/web/modules/DTC/server/DTC.node
-   COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_BINARY_DIR}/DTCLibTest.node  ${CMAKE_BINARY_DIR}/bin/web/modules/DTC/server/DTCLibTest.node
+   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/web/ ${CMAKE_CURRENT_BINARY_DIR}/bin/web/
+   COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_BINARY_DIR}/DTC.node ${CMAKE_CURRENT_BINARY_DIR}/bin/web/modules/DTC/server/DTC.node
+   COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_BINARY_DIR}/DTCLibTest.node  ${CMAKE_CURRENT_BINARY_DIR}/bin/web/modules/DTC/server/DTCLibTest.node
 )
 
-install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/web DESTINATION ${${product}_bin_dir})
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin/web DESTINATION ${${product}_bin_dir})
 
 
 cet_script(updateMu2e.sh)
