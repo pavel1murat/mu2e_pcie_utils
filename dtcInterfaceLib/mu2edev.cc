@@ -113,11 +113,12 @@ int mu2edev::read_data(int chn, void **buffer, int tmo_ms)
         {
             if (buffers_held_ >= 2)
                 read_release( chn, 1 );
-            has_recv_data = delta_(chn, C2S); // delta_ looks at mu2e_channel_info_
+            has_recv_data = mu2e_chn_info_delta_(chn, C2S, &mu2e_channel_info_);
             TRACE(18, "mu2edev::read_data after %u=has_recv_data = delta_( chn, C2S )", has_recv_data);
+	    mu2e_channel_info_[chn][C2S].tmo_ms = tmo_ms; // in case GET_INFO is called
             if ((has_recv_data > 0)
                 || (   (retsts = ioctl(devfd_, M_IOC_GET_INFO, &mu2e_channel_info_[chn][C2S])) == 0
-                && (has_recv_data = delta_(chn, C2S)) > 0))
+                && (has_recv_data = mu2e_chn_info_delta_(chn, C2S, &mu2e_channel_info_)) > 0))
             {   // have data
                 // get byte count from new/next sw
                 unsigned newNxtIdx = idx_add(mu2e_channel_info_[chn][C2S].swIdx, 1, chn, C2S);
@@ -161,7 +162,7 @@ int mu2edev::read_release(int chn, unsigned num)
         int retsts = 0;
         unsigned long arg;
         unsigned has_recv_data;
-        has_recv_data = delta_(chn, C2S);
+        has_recv_data = mu2e_chn_info_delta_(chn, C2S, &mu2e_channel_info_);
         if (num <= has_recv_data)
         {
             arg = (chn << 24) | (C2S << 16) | (num & 0xffff);// THIS OBIVOUSLY SHOULD BE A MACRO
@@ -259,26 +260,26 @@ int mu2edev::write_data(int chn, void *buffer, size_t bytes)
 #else
         int dir = S2C;
         int retsts = 0;
-        unsigned delta = delta_(chn, dir); // check cached info
+        unsigned delta = mu2e_chn_info_delta_(chn, dir, &mu2e_channel_info_); // check cached info
         TRACE(3, "write_loopback_data delta=%u chn=%d dir=S2C", delta, chn);
         if (delta == 0)  // recheck with module
         {   m_ioc_get_info_t get_info;
-        get_info.chn = chn; get_info.dir = dir;
-        int sts = ioctl(devfd_, M_IOC_GET_INFO, &get_info);
-        if (sts != 0) { perror("M_IOC_GET_INFO"); exit(1); }
-        mu2e_channel_info_[chn][dir] = get_info; // copy info struct
-        delta = delta_(chn, dir);
+	    get_info.chn = chn; get_info.dir = dir;
+	    int sts = ioctl(devfd_, M_IOC_GET_INFO, &get_info);
+	    if (sts != 0) { perror("M_IOC_GET_INFO"); exit(1); }
+	    mu2e_channel_info_[chn][dir] = get_info; // copy info struct
+	    delta = mu2e_chn_info_delta_(chn, dir, &mu2e_channel_info_);
         }
         if (delta > 0)
         {   unsigned idx = mu2e_channel_info_[chn][dir].swIdx;
-        void * data = ((mu2e_databuff_t*)(mu2e_mmap_ptrs_[chn][dir][MU2E_MAP_BUFF]))[idx];
-        memcpy(data, buffer, bytes);
-        unsigned long arg = (chn << 24) | (bytes & 0xffffff);// THIS OBIVOUSLY SHOULD BE A MACRO
-        retsts = ioctl(devfd_, M_IOC_BUF_XMIT, arg);
-        if (retsts != 0) { perror("M_IOC_BUF_GIVE"); exit(1); }
-        // increment our cached info
-        mu2e_channel_info_[chn][dir].swIdx
-            = idx_add(mu2e_channel_info_[chn][dir].swIdx, 1, chn, dir);
+	    void * data = ((mu2e_databuff_t*)(mu2e_mmap_ptrs_[chn][dir][MU2E_MAP_BUFF]))[idx];
+	    memcpy(data, buffer, bytes);
+	    unsigned long arg = (chn << 24) | (bytes & 0xffffff);// THIS OBIVOUSLY SHOULD BE A MACRO
+	    retsts = ioctl(devfd_, M_IOC_BUF_XMIT, arg);
+	    if (retsts != 0) { perror("M_IOC_BUF_GIVE"); exit(1); }
+	    // increment our cached info
+	    mu2e_channel_info_[chn][dir].swIdx
+		= idx_add(mu2e_channel_info_[chn][dir].swIdx, 1, chn, dir);
         }
 #endif
         return retsts;
@@ -426,12 +427,13 @@ int mu2edev::release_all(int chn)
     }
     else {
         int retsts = 0;
-        unsigned has_recv_data = delta_(chn, C2S);
+        unsigned has_recv_data = mu2e_chn_info_delta_(chn, C2S, &mu2e_channel_info_);
         if (has_recv_data) read_release(chn, has_recv_data);
         return retsts;
     }
 }
 
+#if 0
 unsigned mu2edev::delta_(int chn, int dir)
 {
     unsigned hw = mu2e_channel_info_[chn][dir].hwIdx;
@@ -447,3 +449,4 @@ unsigned mu2edev::delta_(int chn, int dir)
         ? mu2e_channel_info_[chn][dir].num_buffs - (sw - hw)
         : hw - sw);
 }
+#endif

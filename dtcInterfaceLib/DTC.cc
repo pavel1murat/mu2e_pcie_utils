@@ -113,13 +113,14 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
                         TRACE(19, "DTC::GetData after  WriteDMADAQPacket - DTC_DataRequestPacket");
                     }
                 }
-                usleep(2000);
+                //usleep(2000);
             }
         }
     }
     first_read_ = true;
     try{
         // Read the header packet
+	TRACE(19, "DTC::GetData before ReadNextDAQPacket" );
         DTC_DataHeaderPacket packet = ReadNextDAQPacket();
         TRACE(19, "DTC::GetData after  ReadDMADAQPacket");
 
@@ -1159,11 +1160,11 @@ DTCLib::DTC_PCIeStat DTCLib::DTC::ReadPCIeStats()
 DTCLib::DTC_DataPacket DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel)
 {
     mu2e_databuff_t* buffer;
-    int retry = 3;
+    int retry = 2;
     int errorCode;
     do {
         TRACE(19, "DTC::ReadBuffer before device_.read_data");
-        errorCode = device_.read_data(channel, (void**)&buffer, 1000);
+        errorCode = device_.read_data(channel, (void**)&buffer, 1);
         retry--;
     } while (retry > 0 && errorCode == 0);
     if (errorCode == 0) // timeout

@@ -55,6 +55,7 @@ static void poll_packets(unsigned long __opaque)
 	u32 newCmpltIdx=descDmaAdr2idx( Dma_mReadChnReg(chn,dir,REG_HW_CMPLT_BD)
 				       ,chn,dir );
 	// check just-read-HW-val (converted to idx) against "cached" copy
+	u32 do_once=0;
 	while (newCmpltIdx != mu2e_channel_info_[chn][dir].hwIdx/*ie.cachedCmplt*/)
 	{   // NEED TO UPDATE Receive Byte Counts
 	    int * BC_p=(int*)mu2e_mmap_ptrs[chn][dir][MU2E_MAP_META];
@@ -67,6 +68,11 @@ static void poll_packets(unsigned long __opaque)
 		  , buffdesc_C2S_p->ByteCount, newCmpltIdx );
 	    mu2e_channel_info_[chn][dir].hwIdx = nxtCachedCmpltIdx;
 	    // Now system SW can see another buffer with valid meta data
+	    do_once=1;
+	}
+	if (do_once)
+	{   /* and wake up the user process waiting for data */
+            wake_up_interruptible(&get_info_wait_queue);
 	}
     }
 

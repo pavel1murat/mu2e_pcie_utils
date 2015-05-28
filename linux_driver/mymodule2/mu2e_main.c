@@ -11,6 +11,8 @@
 #include <linux/fs.h>		/* struct inode */
 #include <linux/pci.h>          /* struct pci_dev *pci_get_device */
 #include <linux/delay.h>	/* msleep */
+#include <linux/wait.h>		/* wait_event_interruptible_timeout */
+#include <linux/jiffies.h>	/* msec_to_jiffies */
 #include <asm/uaccess.h>	/* access_ok, copy_to_user */
 
 #include "xdma_hw.h"		/* struct BuffDesc */
@@ -43,6 +45,13 @@ volatile void *  mu2e_mmap_ptrs[MU2E_MAX_CHANNELS][2][2];
 
 /* for exclusion of all program flows (processes, ISRs and BHs) */
 static DEFINE_SPINLOCK(DmaStatsLock);
+
+/**
+ * The get_info_wait_queue allows this module to put
+ * userspace processes that are reading data to sleep
+ * if there is no data available.
+ */
+DECLARE_WAIT_QUEUE_HEAD(get_info_wait_queue);
 
 #define MAX_STATS   100
 /* Statistics-related variables */
@@ -103,7 +112,7 @@ volatile mu2e_buffdesc_S2C_t   *desc_S2C_p;
 	int			which_engine, len, ii;
 	DMAStatistics	       *ds;
 	TRNStatistics	       *ts;
-
+	unsigned		tmo_jiffies;
 
 	TRACE( 11, "mu2e_ioctl: start - cmd=0x%x", cmd );
     if(_IOC_TYPE(cmd) != MU2E_IOC_MAGIC) return -ENOTTY;
@@ -309,6 +318,17 @@ volatile mu2e_buffdesc_S2C_t   *desc_S2C_p;
 	if(copy_from_user(&get_info, (void*)arg, sizeof(m_ioc_get_info_t)))
         {   printk("copy_from_user failed\n"); return (-EFAULT);
         }
+	tmo_jiffies = msecs_to_jiffies(get_info.tmo_ms);
+	if (!mu2e_chn_info_delta_(get_info.chn, C2S, &mu2e_channel_info_))
+	{
+	    TRACE( 11, "mu2e_ioctl: cmd=GET_INFO wait_event_interruptible_timeout jiffies=%u", tmo_jiffies );
+	    if (wait_event_interruptible_timeout(  get_info_wait_queue
+						 , mu2e_chn_info_delta_(get_info.chn, C2S, &mu2e_channel_info_)
+						 , tmo_jiffies) == 0)
+	    {   TRACE( 16, "mu2e_ioctl: cmd=GET_INFO tmo" );
+	    }
+
+	}
 	get_info = mu2e_channel_info_[get_info.chn][get_info.dir];
 	if(copy_to_user((void*)arg, &get_info, sizeof(m_ioc_get_info_t)))
 	{   printk("copy_to_user failed\n"); return (-EFAULT);

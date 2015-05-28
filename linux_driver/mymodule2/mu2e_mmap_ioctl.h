@@ -10,11 +10,15 @@
 
 #ifdef __KERNEL__
 # include <asm/ioctl.h>		// _IOWR
+# include "trace.h"
 #else
-#ifndef _WIN32
-# include <sys/ioctl.h>		// _IOWR
-# include <unistd.h>		// sysconf
-#endif
+# ifndef _WIN32
+#  include <sys/ioctl.h>		// _IOWR
+#  include <unistd.h>		// sysconf
+#  include "trace.h"
+# else
+#  define TRACE(...)
+# endif
 # include <sys/types.h>
 # include <stdint.h>		// uint16_t
 #endif
@@ -260,6 +264,30 @@ typedef struct
     unsigned hwIdx;
     unsigned swIdx;
 } m_ioc_get_info_t;
+
+
+/* This inline references mu2e_channel_info_ -- the name of a variable in both
+   userspace and kernel land. For userspace the variable is defined in
+   the mu2edev class (and therefore the using namsspace 
+ */
+static inline unsigned mu2e_chn_info_delta_( int chn, int dir, m_ioc_get_info_t (*mu2e_channel_info_)[MU2E_MAX_CHANNELS][2] )
+{
+    unsigned hw = (*mu2e_channel_info_)[chn][dir].hwIdx;
+    unsigned sw = (*mu2e_channel_info_)[chn][dir].swIdx;
+    unsigned retval;
+    TRACE(21, "mu2edev::delta_ chn=%d dir=%d hw=%u sw=%u num_buffs=%u"
+	  , chn, dir, hw, sw, (*mu2e_channel_info_)[chn][C2S].num_buffs);
+    if (dir == C2S)
+        retval = ((hw >= sw)
+		  ? hw - sw
+		  : (*mu2e_channel_info_)[chn][dir].num_buffs + hw - sw);
+    else
+        retval = ((sw >= hw)
+		  ? (*mu2e_channel_info_)[chn][dir].num_buffs - (sw - hw)
+		  : hw - sw);
+    return retval;
+}
+
 
 
 // stuff from obsolete include/xpmon_be.h
