@@ -63,6 +63,40 @@ main(int	argc
             usleep(0);
         }
     }
+    else if (argc > 1 && strcmp(argv[1],"DTC")==0)
+    {
+        DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
+	thisDTC->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
+	thisDTC->SetInternalSystemClock();
+        thisDTC->DisableTiming();
+	thisDTC->SetMaxROCNumber( DTC_Ring_0, DTC_ROC_0 );
+        unsigned gets = 1;
+        if (argc > 2) gets = strtoul(argv[2], NULL, 0);
+        for (unsigned ii = 0; ii < gets; ++ii)
+        {
+            vector<void*> data = thisDTC->GetData(DTC_Timestamp((uint64_t)ii));
+            if (data.size() > 0)
+            {
+                cout << data.size() << " packets returned\n";
+                for (size_t i = 0; i < data.size(); ++i)
+                {
+                    TRACE(19, "DTC::GetJSONData constructing DataPacket:");
+                    DTC_DataPacket     test = DTC_DataPacket(data[i]);
+                    //cout << test.toJSON() << '\n'; // dumps whole databuff_t
+                    printf("data@%p=0x%08x\n", data[i], *(uint32_t*)(data[i]));
+                    //DTC_DataHeaderPacket h1 = DTC_DataHeaderPacket(data[i]);
+                    //cout << h1.toJSON() << '\n';
+                    DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
+                    cout << h2.toJSON() << '\n';
+                    for (int jj = 0; jj < h2.GetPacketCount(); ++jj) {
+                        cout << "\t" << DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16)).toJSON() << endl;
+                    }
+                }
+            }
+            else
+                cout << "no data returned\n";
+        }
+    }
     else// if (argc > 1 && strcmp(argv[1],"get")==0)
     {
         DTC *thisDTC = new DTC(DTC_SimMode_Hardware);

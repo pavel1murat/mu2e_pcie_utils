@@ -529,8 +529,8 @@ namespace DTCLib
         bool debug_;
         uint8_t request_[4];
     public:
-        DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC = DTC_ROC_5, bool debug = false);
-        DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, uint8_t* request, DTC_ROC_ID maxROC = DTC_ROC_5, bool debug = false);
+        DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC = DTC_ROC_5, bool debug = true);
+        DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, uint8_t* request, DTC_ROC_ID maxROC = DTC_ROC_5, bool debug = true);
         DTC_ReadoutRequestPacket(const DTC_ReadoutRequestPacket& right) = default;
 #ifndef _WIN32
         DTC_ReadoutRequestPacket(DTC_ReadoutRequestPacket&& right) = default;
@@ -552,8 +552,8 @@ namespace DTCLib
         bool debug_;
         uint16_t debugPacketCount_;
     public:
-        DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, bool debug = false, uint16_t debugPacketCount = 0);
-        DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp timestamp, bool debug = false, uint16_t debugPacketCount = 0);
+        DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, bool debug = true, uint16_t debugPacketCount = 1);
+        DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp timestamp, bool debug = true, uint16_t debugPacketCount = 1);
         DTC_DataRequestPacket(const DTC_DataRequestPacket&) = default;
 #ifndef _WIN32
         DTC_DataRequestPacket(DTC_DataRequestPacket&&) = default;

@@ -64,6 +64,7 @@ DTCLib::DTC_SimMode DTCLib::DTC::SetSimMode(DTC_SimMode mode)
 
     for (auto ring : DTC_Rings) {
         SetMaxROCNumber(ring, DTC_ROC_Unused);
+        DisableROCEmulator(ring);
     }
 
     if (simMode_ != DTCLib::DTC_SimMode_Disabled)
