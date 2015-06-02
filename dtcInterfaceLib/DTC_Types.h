@@ -552,8 +552,8 @@ namespace DTCLib
         bool debug_;
         uint16_t debugPacketCount_;
     public:
-        DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, bool debug = true, uint16_t debugPacketCount = 1);
-        DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp timestamp, bool debug = true, uint16_t debugPacketCount = 1);
+        DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, bool debug = true, uint16_t debugPacketCount = 0);
+        DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp timestamp, bool debug = true, uint16_t debugPacketCount = 0);
         DTC_DataRequestPacket(const DTC_DataRequestPacket&) = default;
 #ifndef _WIN32
         DTC_DataRequestPacket(DTC_DataRequestPacket&&) = default;

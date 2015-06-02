@@ -329,6 +329,9 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DataRequestPacket::ConvertToDataPacket() cons
 {
     DTC_DataPacket output = DTC_DMAPacket::ConvertToDataPacket();
     timestamp_.GetTimestamp(output.GetData(), 6);
+    output.SetWord(12, debug_ ? 1 : 0);
+    output.SetWord(14, debugPacketCount_ & 0xF);
+    output.SetWord(15, (debugPacketCount_ >> 8) & 0xF);
     return output;
 }
 
