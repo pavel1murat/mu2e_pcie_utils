@@ -52,7 +52,7 @@ mu2esim::~mu2esim()
 {
     for (unsigned ii = 0; ii < MU2E_MAX_CHANNELS; ++ii) {
         for (unsigned jj = 0; jj < SIM_BUFFCOUNT; ++jj) {
-            delete dmaData_[ii][jj];
+            delete[] dmaData_[ii][jj];
         }
     }
 }
@@ -485,7 +485,7 @@ int mu2esim::read_release(int chn, unsigned num)
     //Always succeeds
     TRACE(17, "mu2esim::read_release: Simulating a release of %u buffers of channel %i", num, chn);
     for (unsigned ii = 0; ii < num; ++ii) {
-        delete dmaData_[chn][swIdx_[chn]];
+        delete[] dmaData_[chn][swIdx_[chn]];
         dmaData_[chn][swIdx_[chn]] = (mu2e_databuff_t*)new mu2e_databuff_t();
         swIdx_[chn] = (swIdx_[chn] + 1) % SIM_BUFFCOUNT;
     }

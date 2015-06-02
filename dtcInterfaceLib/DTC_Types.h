@@ -427,7 +427,8 @@ namespace DTCLib
         std::bitset<48> GetTimestamp() const { return timestamp_; }
         uint64_t GetTimestamp(bool dummy) const { if (dummy) { return timestamp_; } else return 0; }
         void GetTimestamp(uint8_t* timeArr, int offset = 0) const;
-
+        std::string toJSON(bool arrayMode = false);
+        std::string toPacketFormat();
     };
 
     class DTC_DataPacket {
@@ -457,6 +458,7 @@ namespace DTCLib
         uint8_t GetWord(int index) const;
         uint8_t* GetData() const { return dataPtr_; }
         std::string toJSON();
+        std::string toPacketFormat();
         bool Resize(const uint16_t dmaSize);
         uint16_t GetSize() const { return dataSize_; }
     };
@@ -491,6 +493,8 @@ namespace DTCLib
         DTC_PacketType GetPacketType() { return packetType_; }
 
         std::string headerJSON();
+        std::string headerPacketFormat();
+        virtual std::string toPacketFormat();
         virtual std::string toJSON();
         friend std::ostream& operator<<(std::ostream& stream, DTC_DMAPacket& packet) {
             stream << packet.toJSON();
@@ -521,6 +525,7 @@ namespace DTCLib
         uint8_t* GetData() { return data_; }
         DTC_DataPacket ConvertToDataPacket() const;
         std::string toJSON();
+        std::string toPacketFormat();
     };
 
     class DTC_ReadoutRequestPacket : public DTC_DMAPacket {
@@ -544,6 +549,7 @@ namespace DTCLib
         virtual uint8_t* GetData() { return request_; }
         DTC_DataPacket ConvertToDataPacket() const;
         std::string toJSON();
+        std::string toPacketFormat();
     };
 
     class DTC_DataRequestPacket : public DTC_DMAPacket {
@@ -566,6 +572,7 @@ namespace DTCLib
         DTC_Timestamp GetTimestamp() { return timestamp_; }
         DTC_DataPacket ConvertToDataPacket() const;
         std::string toJSON();
+        std::string toPacketFormat();
     };
 
     class DTC_DCSReplyPacket : public DTC_DMAPacket {
@@ -583,6 +590,7 @@ namespace DTCLib
         uint8_t* GetData() { return data_; }
         DTC_DataPacket ConvertToDataPacket() const;
         std::string toJSON();
+        std::string toPacketFormat();
     };
 
     class DTC_DataHeaderPacket : public DTC_DMAPacket {
@@ -608,6 +616,7 @@ namespace DTCLib
         DTC_Timestamp GetTimestamp() { return timestamp_; }
         DTC_DataStatus GetStatus() { return status_; }
         std::string toJSON();
+        std::string toPacketFormat();
     };
 
     class DTC_ClockFanoutPacket : public DTC_DataPacket {

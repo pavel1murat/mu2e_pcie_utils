@@ -6,9 +6,11 @@
 #include <sstream>
 
 #ifndef _WIN32
-#include "trace.h"
+# include "trace.h"
 #else
-#define TRACE //TRACE
+# ifndef TRACE
+#  define TRACE(...)
+# endif
 #endif
 
 DTCLib::DTCLibTest::DTCLibTest() : running_(false), regPassed_(0),

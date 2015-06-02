@@ -8,7 +8,9 @@
 # include <chrono>
 # include <thread>
 # define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
-# define TRACE(...) 
+# ifndef TRACE
+#  define TRACE(...)
+# endif
 #endif
 
 DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode) : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t))), device_(),
