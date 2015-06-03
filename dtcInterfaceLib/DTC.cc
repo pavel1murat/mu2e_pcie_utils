@@ -1167,7 +1167,7 @@ DTCLib::DTC_DataPacket DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel)
     int errorCode;
     do {
         TRACE(19, "DTC::ReadBuffer before device_.read_data");
-        errorCode = device_.read_data(channel, (void**)&buffer, 1);
+        errorCode = device_.read_data(channel, (void**)&buffer, 100/*tmo_ms*/);
         retry--;
     } while (retry > 0 && errorCode == 0);
     if (errorCode == 0) // timeout

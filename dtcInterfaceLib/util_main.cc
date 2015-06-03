@@ -36,14 +36,14 @@ main(int	argc
     {
         mu2edev device;
         device.init();
-        unsigned releases = 1;
-        if (argc > 2) releases = strtoul(argv[2], NULL, 0);
-        for (unsigned ii = 0; ii < releases; ++ii)
+        unsigned reads = 1;
+        if (argc > 2) reads = strtoul(argv[2], NULL, 0);
+        for (unsigned ii = 0; ii < reads; ++ii)
         {
             void *buffer;
             int tmo_ms = 0;
             int sts = device.read_data(DTC_DMA_Engine_DAQ, &buffer, tmo_ms);
-            TRACE(12, "util - release/read for DAQ and DCS ii=%u sts=%d %p", ii, sts, buffer);
+            TRACE( 1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, buffer);
             usleep(0);
         }
     }
@@ -94,7 +94,10 @@ main(int	argc
                 }
             }
             else
+	    {   TRACE_CNTL( "modeM", 0L );
                 cout << "no data returned\n";
+		return (0);
+	    }
         }
     }
     else// if (argc > 1 && strcmp(argv[1],"get")==0)
@@ -124,7 +127,10 @@ main(int	argc
                 }
             }
             else
+	    {   TRACE_CNTL( "modeM", 0L );
                 cout << "no data returned\n";
+		return (0);
+	    }
         }
     }
     return (0);
