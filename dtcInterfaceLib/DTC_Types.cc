@@ -64,7 +64,7 @@ std::string DTCLib::DTC_Timestamp::toJSON(bool arrayMode)
     if (arrayMode) {
         uint8_t ts[6];
         GetTimestamp(ts, 0);
-        ss << "timestamp: [" << (int)ts[0] << ",";
+        ss << "\"timestamp\": [" << (int)ts[0] << ",";
         ss << (int)ts[1] << ",";
         ss << (int)ts[2] << ",";
         ss << (int)ts[3] << ",";
@@ -72,7 +72,7 @@ std::string DTCLib::DTC_Timestamp::toJSON(bool arrayMode)
         ss << (int)ts[5] << "]";
     }
     else {
-        ss << "timestamp: " << timestamp_;
+        ss << "\"timestamp\": " << timestamp_;
     }
     return ss.str();
 }
@@ -133,8 +133,8 @@ bool DTCLib::DTC_DataPacket::Resize(const uint16_t dmaSize)
 std::string DTCLib::DTC_DataPacket::toJSON()
 {
     std::stringstream ss;
-    ss << "DataPacket: {";
-    ss << "data: [";
+    ss << "\"DataPacket\": {";
+    ss << "\"data\": [";
     ss << std::hex << std::setfill('0');
     for (uint16_t ii = 0; ii < dataSize_ - 1; ++ii) {
       ss << "0x" <<std::setw(2) << (int)dataPtr_[ii] << ",";
@@ -203,11 +203,11 @@ DTCLib::DTC_DMAPacket::DTC_DMAPacket(const DTC_DataPacket in)
 std::string DTCLib::DTC_DMAPacket::headerJSON()
 {
     std::stringstream ss;
-    ss << "isValid: " << valid_ << ",";
-    ss << "byteCount: " << std::hex << "0x" << byteCount_ << ",";
-    ss << "ringID: " << std::dec << ringID_ << ",";
-    ss << "packetType: " << packetType_ << ",";
-    ss << "rocID: " << rocID_;
+    ss << "\"isValid\": " << valid_ << ",";
+    ss << "\"byteCount\": " << std::hex << "0x" << byteCount_ << ",";
+    ss << "\"ringID\": " << std::dec << ringID_ << ",";
+    ss << "\"packetType\": " << packetType_ << ",";
+    ss << "\"rocID\": " << rocID_;
     return ss.str();
 }
 
@@ -224,7 +224,7 @@ std::string DTCLib::DTC_DMAPacket::headerPacketFormat()
 std::string DTCLib::DTC_DMAPacket::toJSON()
 {
     std::stringstream ss;
-    ss << "DMAPacket: {";
+    ss << "\"DMAPacket\": {";
     ss << headerJSON();
     ss << "}";
     return ss.str();
@@ -262,9 +262,9 @@ DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in) : DTC_DMAP
 std::string DTCLib::DTC_DCSRequestPacket::toJSON()
 {
     std::stringstream ss;
-    ss << "DCSRequestPacket: {";
+    ss << "\"DCSRequestPacket\": {";
     ss << headerJSON() << ",";
-    ss << "data: [" << std::hex << "0x" << (int)data_[0] << ",";
+    ss << "\"data\": [" << std::hex << "0x" << (int)data_[0] << ",";
     ss << std::hex << "0x" << (int)data_[1] << ",";
     ss << std::hex << "0x" << (int)data_[2] << ",";
     ss << std::hex << "0x" << (int)data_[3] << ",";
@@ -333,14 +333,14 @@ DTCLib::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_DataPacket in) : 
 std::string DTCLib::DTC_ReadoutRequestPacket::toJSON()
 {
     std::stringstream ss;
-    ss << "ReadoutRequestPacket: {";
+    ss << "\"ReadoutRequestPacket\": {";
     ss << headerJSON() << ",";
     ss << timestamp_.toJSON() << ",";
-    ss << "request: [" << std::hex << "0x" << (int)request_[0] << ",";
+    ss << "\"request\": [" << std::hex << "0x" << (int)request_[0] << ",";
     ss << std::hex << "0x" << (int)request_[1] << ",";
     ss << std::hex << "0x" << (int)request_[2] << ",";
     ss << std::hex << "0x" << (int)request_[3] << "],";
-    ss << "debug: " << (debug_ ? "true" : "false");
+    ss << "\"debug\": " << (debug_ ? "true" : "false");
     ss << "}";
     return ss.str();
 }
@@ -387,11 +387,11 @@ DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DataPacket in) : DTC_DM
 std::string DTCLib::DTC_DataRequestPacket::toJSON()
 {
     std::stringstream ss;
-    ss << "DataRequestPacket: {";
+    ss << "\"DataRequestPacket\": {";
     ss << headerJSON() << ",";
     ss << timestamp_.toJSON() << ",";
-    ss << "debug:" << (debug_ ? "true" : "false") << ",";
-    ss << "debugPacketCount: " << std::dec << (int)debugPacketCount_;
+    ss << "\"debug\":" << (debug_ ? "true" : "false") << ",";
+    ss << "\"debugPacketCount\": " << std::dec << (int)debugPacketCount_;
     ss << "}";
     return ss.str();
 }
@@ -450,9 +450,9 @@ DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_DataPacket in) : DTC_DMAPacke
 std::string DTCLib::DTC_DCSReplyPacket::toJSON()
 {
     std::stringstream ss;
-    ss << "DCSReplyPacket: {";
+    ss << "\"DCSReplyPacket\": {";
     ss << headerJSON() << ",";
-    ss << "data: [" << std::hex << "0x" << (int)data_[0] << ",";
+    ss << "\"data\": [" << std::hex << "0x" << (int)data_[0] << ",";
     ss << std::hex << "0x" << (int)data_[1] << ",";
     ss << std::hex << "0x" << (int)data_[2] << ",";
     ss << std::hex << "0x" << (int)data_[3] << ",";
@@ -525,12 +525,12 @@ DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket in) : DTC_DMAP
 std::string DTCLib::DTC_DataHeaderPacket::toJSON()
 {
     std::stringstream ss;
-    ss << "DataHeaderPacket: {";
+    ss << "\"DataHeaderPacket\": {";
     ss << headerJSON() << ",";
-    ss << "packetCount: " << std::dec << (int)packetCount_ << ",";
+    ss << "\"packetCount\": " << std::dec << (int)packetCount_ << ",";
     ss << timestamp_.toJSON() << ",";
-    ss << "status: " << std::dec << (int)status_ << ",";
-    ss << "data: [" << std::hex << "0x" << (int)dataStart_[0] << ",";
+    ss << "\"status\": " << std::dec << (int)status_ << ",";
+    ss << "\"data\": [" << std::hex << "0x" << (int)dataStart_[0] << ",";
     ss << std::hex << "0x" << (int)dataStart_[1] << ",";
     ss << std::hex << "0x" << (int)dataStart_[2] << "]";
     ss << "}";
@@ -752,11 +752,11 @@ DTCLib::DTC_DMAState::DTC_DMAState(m_ioc_engstate_t in)
 }
 std::string DTCLib::DTC_DMAState::toString() {
     std::stringstream stream;
-    stream << "E: " << Engine << ", D: " << Direction;
-    stream << ", BDs: " << BDs << ", Buffers: " << Buffers;
-    stream << ", PktSize: [" << MinPktSize << "," << MaxPktSize << "], ";
-    stream << "BDerrs: " << BDerrs << ", BDSerrs: " << BDSerrs;
-    stream << ", IntEnab: " << IntEnab << ", TestMode: " << TestMode.toString() << std::endl;
+    stream << "{\"E\": " << Engine << ", \"D\": " << Direction;
+    stream << ", \"BDs\": " << BDs << ", \"Buffers\": " << Buffers;
+    stream << ", \"PktSize\": [" << MinPktSize << "," << MaxPktSize << "], ";
+    stream << "\"BDerrs\": " << BDerrs << ", \"BDSerrs\": " << BDSerrs;
+    stream << ", \"IntEnab\": " << IntEnab << ", \"TestMode\": " << TestMode.toString() << "}" << std::endl;
     return stream.str();
 }
 
@@ -785,9 +785,9 @@ DTCLib::DTC_DMAStat::DTC_DMAStat(DMAStatistics in) : LBR(in.LBR), LAT(in.LAT), L
 std::string DTCLib::DTC_DMAStat::toString()
 {
     std::stringstream stream;
-    stream << "E: " << Engine << ", D: " << Direction;
-    stream << ", LBR: " << LBR << ", LAT: " << LAT;
-    stream << ", LWT: " << LWT << std::endl;
+    stream << "{\"E\": " << Engine << ", \"D\": " << Direction;
+    stream << ", \"LBR\": " << LBR << ", \"LAT\": " << LAT;
+    stream << ", \"LWT\": " << LWT << "}" << std::endl;
     return stream.str();
 }
 
@@ -826,21 +826,23 @@ std::string DTCLib::DTC_PCIeState::toString()
 {
     std::stringstream stream;
 
-    stream << "Version: " << Version << std::endl;
-    stream << "LinkState: " << LinkState << std::endl;
-    stream << "LinkSpeed: " << LinkSpeed << std::endl;              //* Link Speed */
-    stream << "LinkWidth: " << LinkWidth << std::endl;              //* Link Width */
-    stream << "VendorId: " << VendorId << std::endl;     //* Vendor ID */
-    stream << "DeviceId: " << DeviceId << std::endl;    //* Device ID */
-    stream << "IntMode: " << IntMode << std::endl;                //* Legacy or MSI interrupts */
-    stream << "MPS: " << MPS << std::endl;                    //* Max Payload Size */
-    stream << "MRRS: " << MRRS << std::endl;                   //* Max Read Request Size */
-    stream << "InitFCCplD: " << InitFCCplD << std::endl;             //* Initial FC Credits for Completion Data */
-    stream << "InitFCCplH: " << InitFCCplH << std::endl;             //* Initial FC Credits for Completion Header */
-    stream << "InitFCNPD: " << InitFCNPD << std::endl;              //* Initial FC Credits for Non-Posted Data */
-    stream << "InitFCNPH: " << InitFCNPH << std::endl;              //* Initial FC Credits for Non-Posted Data */
-    stream << "InitFCPD: " << InitFCPD << std::endl;               //* Initial FC Credits for Posted Data */
-    stream << "InitFCPH: " << InitFCPH << std::endl;               //* Initial FC Credits for Posted Data */
+    stream << "{" << std::endl;
+    stream << "\t\"Version\": " << Version << "," << std::endl;
+    stream << "\t\"LinkState\": " << LinkState << "," << std::endl;
+    stream << "\t\"LinkSpeed\": " << LinkSpeed << "," << std::endl;              //* Link Speed */
+    stream << "\t\"LinkWidth\": " << LinkWidth << "," << std::endl;              //* Link Width */
+    stream << "\t\"VendorId\": " << VendorId << "," << std::endl;     //* Vendor ID */
+    stream << "\t\"DeviceId\": " << DeviceId << "," << std::endl;    //* Device ID */
+    stream << "\t\"IntMode\": " << IntMode << "," << std::endl;                //* Legacy or MSI interrupts */
+    stream << "\t\"MPS\": " << MPS << "," << std::endl;                    //* Max Payload Size */
+    stream << "\t\"MRRS\": " << MRRS << "," << std::endl;                   //* Max Read Request Size */
+    stream << "\t\"InitFCCplD\": " << "," << InitFCCplD << std::endl;             //* Initial FC Credits for Completion Data */
+    stream << "\t\"InitFCCplH\": " << "," << InitFCCplH << std::endl;             //* Initial FC Credits for Completion Header */
+    stream << "\t\"InitFCNPD\": " << "," << InitFCNPD << std::endl;              //* Initial FC Credits for Non-Posted Data */
+    stream << "\t\"InitFCNPH\": " << "," << InitFCNPH << std::endl;              //* Initial FC Credits for Non-Posted Data */
+    stream << "\t\"InitFCPD\": " << "," << InitFCPD << std::endl;               //* Initial FC Credits for Posted Data */
+    stream << "\t\"InitFCPH\": " << "," << InitFCPH << std::endl;               //* Initial FC Credits for Posted Data */
+    stream << "}" << std::endl;
 
     return stream.str();
 }

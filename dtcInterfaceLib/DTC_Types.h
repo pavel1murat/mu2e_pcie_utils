@@ -99,46 +99,46 @@ namespace DTCLib
             {
             case DTC_RXBufferStatus_Unknown:
             default:
-                stream << "{Nominal:0,";
-                stream << "Empty:0,";
-                stream << "Full:0,";
-                stream << "Underflow:0,";
-                stream << "Overflow:0}";
+                stream << "{\"Nominal\":0,";
+                stream << "\"Empty\":0,";
+                stream << "\"Full\":0,";
+                stream << "\"Underflow\":0,";
+                stream << "\"Overflow\":0}";
                 break;
             case DTC_RXBufferStatus_Nominal:
-                stream << "{Nominal:1,";
-                stream << "Empty:0,";
-                stream << "Full:0,";
-                stream << "Underflow:0,";
-                stream << "Overflow:0}";
+                stream << "{\"Nominal\":1,";
+                stream << "\"Empty\":0,";
+                stream << "\"Full\":0,";
+                stream << "\"Underflow\":0,";
+                stream << "\"Overflow\":0}";
                 break;
             case DTC_RXBufferStatus_BufferEmpty:
-                stream << "{Nominal:0,";
-                stream << "Empty:1,";
-                stream << "Full:0,";
-                stream << "Underflow:0,";
-                stream << "Overflow:0}";
+                stream << "{\"Nominal\":0,";
+                stream << "\"Empty\":1,";
+                stream << "\"Full\":0,";
+                stream << "\"Underflow\":0,";
+                stream << "\"Overflow\":0}";
                 break;
             case DTC_RXBufferStatus_BufferFull:
-                stream << "{Nominal:0,";
-                stream << "Empty:0,";
-                stream << "Full:1,";
-                stream << "Underflow:0,";
-                stream << "Overflow:0}";
+                stream << "{\"Nominal\":0,";
+                stream << "\"Empty\":0,";
+                stream << "\"Full\":1,";
+                stream << "\"Underflow\":0,";
+                stream << "\"Overflow\":0}";
                 break;
             case DTC_RXBufferStatus_Overflow:
-                stream << "{Nominal:0,";
-                stream << "Empty:0,";
-                stream << "Full:0,";
-                stream << "Underflow:1,";
-                stream << "Overflow:0}";
+                stream << "{\"Nominal\":0,";
+                stream << "\"Empty\":0,";
+                stream << "\"Full\":0,";
+                stream << "\"Underflow\":1,";
+                stream << "\"Overflow\":0}";
                 break;
             case DTC_RXBufferStatus_Underflow:
-                stream << "{Nominal:0,";
-                stream << "Empty:0,";
-                stream << "Full:0,";
-                stream << "Underflow:0,";
-                stream << "Overflow:1}";
+                stream << "{\"Nominal\":0,";
+                stream << "\"Empty\":0,";
+                stream << "\"Full\":0,";
+                stream << "\"Underflow\":0,";
+                stream << "\"Overflow\":1}";
                 break;
             }
             return stream;
@@ -163,94 +163,94 @@ namespace DTCLib
             switch (status.status_)
             {
             default:
-                stream << "{DataOK:0,";
-                stream << "SKPAdded:0,";
-                stream << "SKPRemoved:0,";
-                stream << "ReceiverDetected:0,";
-                stream << "DecodeError:0,";
-                stream << "EOverflow:0,";
-                stream << "EUnderflow:0,";
-                stream << "DisparityError:0}";
+                stream << "{\"DataOK\":0,";
+                stream << "\"SKPAdded\":0,";
+                stream << "\"SKPRemoved\":0,";
+                stream << "\"ReceiverDetected\":0,";
+                stream << "\"DecodeError\":0,";
+                stream << "\"EOverflow\":0,";
+                stream << "\"EUnderflow\":0,";
+                stream << "\"DisparityError\":0}";
                 break;
             case DTC_RXStatus_DataOK:
-                stream << "{DataOK:1,";
-                stream << "SKPAdded:0,";
-                stream << "SKPRemoved:0,";
-                stream << "ReceiverDetected:0,";
-                stream << "DecodeError:0,";
-                stream << "EOverflow:0,";
-                stream << "EUnderflow:0,";
-                stream << "DisparityError:0}";
+                stream << "{\"DataOK\":1,";
+                stream << "\"SKPAdded\":0,";
+                stream << "\"SKPRemoved\":0,";
+                stream << "\"ReceiverDetected\":0,";
+                stream << "\"DecodeError\":0,";
+                stream << "\"EOverflow\":0,";
+                stream << "\"EUnderflow\":0,";
+                stream << "\"DisparityError\":0}";
                 break;
             case DTC_RXStatus_SKPAdded:
-                stream << "{DataOK:0,";
-                stream << "SKPAdded:1,";
-                stream << "SKPRemoved:0,";
-                stream << "ReceiverDetected:0,";
-                stream << "DecodeError:0,";
-                stream << "EOverflow:0,";
-                stream << "EUnderflow:0,";
-                stream << "DisparityError:0}";
+                stream << "{\"DataOK\":0,";
+                stream << "\"SKPAdded\":1,";
+                stream << "\"SKPRemoved\":0,";
+                stream << "\"ReceiverDetected\":0,";
+                stream << "\"DecodeError\":0,";
+                stream << "\"EOverflow\":0,";
+                stream << "\"EUnderflow\":0,";
+                stream << "\"DisparityError\":0}";
                 break;
             case DTC_RXStatus_SKPRemoved:
-                stream << "{DataOK:0,";
-                stream << "SKPAdded:0,";
-                stream << "SKPRemoved:1,";
-                stream << "ReceiverDetected:0,";
-                stream << "DecodeError:0,";
-                stream << "EOverflow:0,";
-                stream << "EUnderflow:0,";
-                stream << "DisparityError:0}";
+                stream << "{\"DataOK\":0,";
+                stream << "\"SKPAdded\":0,";
+                stream << "\"SKPRemoved\":1,";
+                stream << "\"ReceiverDetected\":0,";
+                stream << "\"DecodeError\":0,";
+                stream << "\"EOverflow\":0,";
+                stream << "\"EUnderflow\":0,";
+                stream << "\"DisparityError\":0}";
                 break;
             case DTC_RXStatus_ReceiverDetected:
-                stream << "{DataOK:0,";
-                stream << "SKPAdded:0,";
-                stream << "SKPRemoved:0,";
-                stream << "ReceiverDetected:1,";
-                stream << "DecodeError:0,";
-                stream << "EOverflow:0,";
-                stream << "EUnderflow:0,";
-                stream << "DisparityError:0}";
+                stream << "{\"DataOK\":0,";
+                stream << "\"SKPAdded\":0,";
+                stream << "\"SKPRemoved\":0,";
+                stream << "\"ReceiverDetected\":1,";
+                stream << "\"DecodeError\":0,";
+                stream << "\"EOverflow\":0,";
+                stream << "\"EUnderflow\":0,";
+                stream << "\"DisparityError\":0}";
                 break;
             case DTC_RXStatus_DecodeError:
-                stream << "{DataOK:0,";
-                stream << "SKPAdded:0,";
-                stream << "SKPRemoved:0,";
-                stream << "ReceiverDetected:0,";
-                stream << "DecodeError:1,";
-                stream << "EOverflow:0,";
-                stream << "EUnderflow:0,";
-                stream << "DisparityError:0}";
+                stream << "{\"DataOK\":0,";
+                stream << "\"SKPAdded\":0,";
+                stream << "\"SKPRemoved\":0,";
+                stream << "\"ReceiverDetected\":0,";
+                stream << "\"DecodeError\":1,";
+                stream << "\"EOverflow\":0,";
+                stream << "\"EUnderflow\":0,";
+                stream << "\"DisparityError\":0}";
                 break;
             case DTC_RXStatus_ElasticOverflow:
-                stream << "{DataOK:0,";
-                stream << "SKPAdded:0,";
-                stream << "SKPRemoved:0,";
-                stream << "ReceiverDetected:0,";
-                stream << "DecodeError:0,";
-                stream << "EOverflow:1,";
-                stream << "EUnderflow:0,";
-                stream << "DisparityError:0}";
+                stream << "{\"DataOK\":0,";
+                stream << "\"SKPAdded\":0,";
+                stream << "\"SKPRemoved\":0,";
+                stream << "\"ReceiverDetected\":0,";
+                stream << "\"DecodeError\":0,";
+                stream << "\"EOverflow\":1,";
+                stream << "\"EUnderflow\":0,";
+                stream << "\"DisparityError\":0}";
                 break;
             case DTC_RXStatus_ElasticUnderflow:
-                stream << "{DataOK:0,";
-                stream << "SKPAdded:0,";
-                stream << "SKPRemoved:0,";
-                stream << "ReceiverDetected:0,";
-                stream << "DecodeError:0,";
-                stream << "EOverflow:0,";
-                stream << "EUnderflow:1,";
-                stream << "DisparityError:0}";
+                stream << "{\"DataOK\":0,";
+                stream << "\"SKPAdded\":0,";
+                stream << "\"SKPRemoved\":0,";
+                stream << "\"ReceiverDetected\":0,";
+                stream << "\"DecodeError\":0,";
+                stream << "\"EOverflow\":0,";
+                stream << "\"EUnderflow\":1,";
+                stream << "\"DisparityError\":0}";
                 break;
             case DTC_RXStatus_RXDisparityError:
-                stream << "{DataOK:0,";
-                stream << "SKPAdded:0,";
-                stream << "SKPRemoved:0,";
-                stream << "ReceiverDetected:0,";
-                stream << "DecodeError:0,";
-                stream << "EOverflow:0,";
-                stream << "EUnderflow:0,";
-                stream << "DisparityError:1}";
+                stream << "{\"DataOK\":0,";
+                stream << "\"SKPAdded\":0,";
+                stream << "\"SKPRemoved\":0,";
+                stream << "\"ReceiverDetected\":0,";
+                stream << "\"DecodeError\":0,";
+                stream << "\"EOverflow\":0,";
+                stream << "\"EUnderflow\":0,";
+                stream << "\"DisparityError\":1}";
                 break;
             }
             return stream;
@@ -273,34 +273,34 @@ namespace DTCLib
             {
             case DTC_SERDESLoopbackMode_Disabled:
             default:
-                stream << "{NEPCS:0,";
-                stream << "NEMPA:0,";
-                stream << "FEPMA:0,";
-                stream << "FEPCS:0}";
+                stream << "{\"NEPCS\":0,";
+                stream << "\"NEMPA\":0,";
+                stream << "\"FEPMA\":0,";
+                stream << "\"FEPCS\":0}";
                 break;
             case DTC_SERDESLoopbackMode_NearPCS:
-                stream << "{NEPCS:1,";
-                stream << "NEMPA:0,";
-                stream << "FEPMA:0,";
-                stream << "FEPCS:0}";
+                stream << "{\"NEPCS\":1,";
+                stream << "\"NEMPA\":0,";
+                stream << "\"FEPMA\":0,";
+                stream << "\"FEPCS\":0}";
                 break;
             case DTC_SERDESLoopbackMode_NearPMA:
-                stream << "{NEPCS:0,";
-                stream << "NEMPA:1,";
-                stream << "FEPMA:0,";
-                stream << "FEPCS:0}";
+                stream << "{\"NEPCS\":0,";
+                stream << "\"NEMPA\":1,";
+                stream << "\"FEPMA\":0,";
+                stream << "\"FEPCS\":0}";
                 break;
             case DTC_SERDESLoopbackMode_FarPMA:
-                stream << "{NEPCS:0,";
-                stream << "NEMPA:0,";
-                stream << "FEPMA:1,";
-                stream << "FEPCS:0}";
+                stream << "{\"NEPCS\":0,";
+                stream << "\"NEMPA\":0,";
+                stream << "\"FEPMA\":1,";
+                stream << "\"FEPCS\":0}";
                 break;
             case DTC_SERDESLoopbackMode_FarPCS:
-                stream << "{NEPCS:0,";
-                stream << "NEMPA:0,";
-                stream << "FEPMA:0,";
-                stream << "FEPCS:1}";
+                stream << "{\"NEPCS\":0,";
+                stream << "\"NEMPA\":0,";
+                stream << "\"FEPMA\":0,";
+                stream << "\"FEPCS\":1}";
                 break;
             }
             return stream;
@@ -330,39 +330,39 @@ namespace DTCLib
             {
             case DTC_SimMode_Disabled:
             default:
-                stream << "{Disabled:1,";
-                stream << "Tracker:0,";
-                stream << "Calorimeter:0,";
-                stream << "CosmicVeto:0,";
-                stream << "Hardware:0}";
+                stream << "{\"Disabled\":1,";
+                stream << "\"Tracker\":0,";
+                stream << "\"Calorimeter\":0,";
+                stream << "\"CosmicVeto\":0,";
+                stream << "\"Hardware\":0}";
                 break;
             case DTC_SimMode_Tracker:
-                stream << "{Disabled:0,";
-                stream << "Tracker:1,";
-                stream << "Calorimeter:0,";
-                stream << "CosmicVeto:0,";
-                stream << "Hardware:0}";
+                stream << "{\"Disabled\":0,";
+                stream << "\"Tracker\":1,";
+                stream << "\"Calorimeter\":0,";
+                stream << "\"CosmicVeto\":0,";
+                stream << "\"Hardware\":0}";
                 break;
             case DTC_SimMode_Calorimeter:
-                stream << "{Disabled:0,";
-                stream << "Tracker:0,";
-                stream << "Calorimeter:1,";
-                stream << "CosmicVeto:0,";
-                stream << "Hardware:0}";
+                stream << "{\"Disabled\":0,";
+                stream << "\"Tracker\":0,";
+                stream << "\"Calorimeter\":1,";
+                stream << "\"CosmicVeto\":0,";
+                stream << "\"Hardware\":0}";
                 break;
             case DTC_SimMode_CosmicVeto:
-                stream << "{Disabled:0,";
-                stream << "Tracker:0,";
-                stream << "Calorimeter:0,";
-                stream << "CosmicVeto:1,";
-                stream << "Hardware:0}";
+                stream << "{\"Disabled\":0,";
+                stream << "\"Tracker\":0,";
+                stream << "\"Calorimeter\":0,";
+                stream << "\"CosmicVeto\":1,";
+                stream << "\"Hardware\":0}";
                 break;
             case DTC_SimMode_Hardware:
-                stream << "{Disabled:0,";
-                stream << "Tracker:0,";
-                stream << "Calorimeter:0,";
-                stream << "CosmicVeto:0,";
-                stream << "Hardware:1}";
+                stream << "{\"Disabled\":0,";
+                stream << "\"Tracker\":0,";
+                stream << "\"Calorimeter\":0,";
+                stream << "\"CosmicVeto\":0,";
+                stream << "\"Hardware\":1}";
                 break;
             }
             return stream;
@@ -665,7 +665,7 @@ namespace DTCLib
         std::bitset<2> GetData() { return data_; }
         int GetData(bool output) { if (output) return static_cast<int>(data_.to_ulong()); return 0; }
         friend std::ostream& operator<<(std::ostream& stream, DTC_SERDESRXDisparityError error) {
-            stream << "{low:" << error.GetData()[0] << ",high:" << error.GetData()[1] << "}";
+            stream << "{\"low\":" << error.GetData()[0] << ",\"high\":" << error.GetData()[1] << "}";
             return stream;
         }
     };
@@ -692,7 +692,7 @@ namespace DTCLib
         std::bitset<2> GetData() { return data_; }
         int GetData(bool output) { if (output) return static_cast<int>(data_.to_ulong()); return 0; }
         friend std::ostream& operator<<(std::ostream& stream, DTC_CharacterNotInTableError error) {
-            stream << "{low:" << error.GetData()[0] << ",high:" << error.GetData()[1] << "}";
+            stream << "{\"low\":" << error.GetData()[0] << ",\"high\":" << error.GetData()[1] << "}";
             return stream;
         }
     };
@@ -808,7 +808,7 @@ namespace DTCLib
         friend std::ostream& operator<<(std::ostream& stream, const DTC_RingEnableMode& mode) {
             bool formatSet = (stream.flags() & std::ios_base::boolalpha) != 0;
             stream.setf(std::ios_base::boolalpha);
-            stream << "{TransmitEnable:" << mode.TransmitEnable << ",ReceiveEnable:" << mode.ReceiveEnable << ",TimingEnable:" << mode.TimingEnable << "}";
+            stream << "{\"TransmitEnable\":" << mode.TransmitEnable << ",\"ReceiveEnable\":" << mode.ReceiveEnable << ",\"TimingEnable\":" << mode.TimingEnable << "}";
             if (!formatSet) stream.unsetf(std::ios_base::boolalpha);
             return stream;
         }
@@ -852,15 +852,15 @@ namespace DTCLib
         friend std::ostream& operator<<(std::ostream& stream, const DTC_FIFOFullErrorFlags& flags) {
             bool formatSet = (stream.flags() & std::ios_base::boolalpha) != 0;
             stream.setf(std::ios_base::boolalpha);
-            stream << "{OutputData:" << flags.OutputData
-                << ",CFOLinkInput:" << flags.CFOLinkInput
-                << ",ReadoutRequestOutput:" << flags.ReadoutRequestOutput
-                << "DataRequestOutput:" << flags.DataRequestOutput
-                << ",OtherOutput:" << flags.OtherOutput
-                << ",OutputDCS:" << flags.OutputDCS
-                << "OutputDCSStage2:" << flags.OutputDCSStage2
-                << ",DataInput:" << flags.DataInput
-                << ",DCSStatusInput:" << flags.DCSStatusInput << "}";
+            stream << "{\"OutputData\":" << flags.OutputData
+                << ",\"CFOLinkInput\":" << flags.CFOLinkInput
+                << ",\"ReadoutRequestOutput\":" << flags.ReadoutRequestOutput
+                << ",\"DataRequestOutput\":" << flags.DataRequestOutput
+                << ",\"OtherOutput\":" << flags.OtherOutput
+                << ",\"OutputDCS\":" << flags.OutputDCS
+                << ",\"OutputDCSStage2\":" << flags.OutputDCSStage2
+                << ",\"DataInput\":" << flags.DataInput
+                << ",\"DCSStatusInput\":" << flags.DCSStatusInput << "}";
             if (!formatSet) stream.unsetf(std::ios_base::boolalpha);
             return stream;
         }
