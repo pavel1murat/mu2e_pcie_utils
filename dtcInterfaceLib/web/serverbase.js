@@ -124,7 +124,7 @@ if (cluster.isMaster) {
                 return "";
             }
         });
-        if (moduleName == ".." || functionName.search("..") >= 0) {
+        if (moduleName === ".." || functionName.search("\\.\\.") >= 0) {
             console.log("Possible break-in attempt!: " + pathname);
             res.writeHeader(404, { 'Content-Type': 'text/html' });
             res.end("Error");
