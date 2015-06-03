@@ -334,6 +334,7 @@ dtcem.RW_toggleTimingEnable = function () {
 dtcem.RO_readTimingEnable = function () {
     return DTC.ReadTimingEnable();
 }
+
 dtcem.RW_setTriggerDMATransferLength = function (POST) {
     var val = DTC.SetTriggerDMATransferLength(POST.ring);
     logMessage("Trigger DMA Transfer Length to " + POST.ring, "set", POST.who);
@@ -733,7 +734,7 @@ dtcem.RW_StopDMATest = function (POST, testStatus) {
 }
 
 dtcem.RW_DMAIO = function (POST, testStatus) {
-    console.log(POST);
+    //console.log(POST);
     var packets = JSON.parse(POST.packets);
     var readDaq = false;
     var readDcs = false;
