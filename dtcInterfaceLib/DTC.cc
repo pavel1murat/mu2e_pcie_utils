@@ -124,7 +124,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
     try{
         // Read the header packet
 	TRACE(19, "DTC::GetData before ReadNextDAQPacket" );
-        DTC_DataHeaderPacket packet = ReadNextDAQPacket();
+        DTC_DataHeaderPacket packet = ReadNextDAQPacket(first_read_?100:1);
         TRACE(19, "DTC::GetData after  ReadDMADAQPacket");
 
         if (packet.GetTimestamp() != when && when.GetTimestamp(true) != 0)
@@ -290,7 +290,7 @@ PacketType DTCLib::DTC::ReadDMAPacket_OLD(const DTC_DMA_Engine& channel)
     return PacketType(ReadBuffer(channel));
 }
 
-DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket()
+DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 {
     TRACE(19, "DTC::ReadNextDAQPacket BEGIN");
     if (nextReadPtr_ != nullptr) {
@@ -308,7 +308,7 @@ DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket()
             lastReadPtr_ = nullptr;
         }
         TRACE(19, "DTC::ReadNextDAQPacket Obtaining new DAQ Buffer");
-        ReadBuffer(DTC_DMA_Engine_DAQ); // does return val of type DTCLib::DTC_DataPacket
+        ReadBuffer(DTC_DMA_Engine_DAQ,tmo_ms); // does return val of type DTCLib::DTC_DataPacket
         // MUST BE ABLE TO HANDLE daqbuffer_==nullptr OR retry forever?
         nextReadPtr_ = &(daqbuffer_[0]);
         TRACE(19, "DTC::ReadNextDAQPacket nextReadPtr_=%p *nextReadPtr_=0x%08x lastReadPtr_=%p"
@@ -1160,14 +1160,14 @@ DTCLib::DTC_PCIeStat DTCLib::DTC::ReadPCIeStats()
 //
 // Private Functions.
 //
-DTCLib::DTC_DataPacket DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel)
+DTCLib::DTC_DataPacket DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
 {
     mu2e_databuff_t* buffer;
     int retry = 2;
     int errorCode;
     do {
         TRACE(19, "DTC::ReadBuffer before device_.read_data");
-        errorCode = device_.read_data(channel, (void**)&buffer, 100/*tmo_ms*/);
+        errorCode = device_.read_data(channel, (void**)&buffer, tmo_ms);
         retry--;
     } while (retry > 0 && errorCode == 0);
     if (errorCode == 0) // timeout
