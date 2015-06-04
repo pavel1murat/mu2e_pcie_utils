@@ -49,6 +49,17 @@ namespace DTCLib
         DTC_Register_FPGACoreAccess = 0x9408,
         DTC_Register_Invalid,
     };
+    static const std::vector<DTC_Register> DTC_Registers = { DTC_Register_DesignVersion, DTC_Register_DesignDate,
+        DTC_Register_DTCControl, DTC_Register_DMATransferLength, DTC_Register_SERDESLoopbackEnable,
+        DTC_Register_SERDESLoopbackEnable_Temp, DTC_Register_SERDESOscillatorStatus, DTC_Register_ROCEmulationEnable,
+        DTC_Register_RingEnable, DTC_Register_SERDESReset, DTC_Register_SERDESRXDisparityError,
+        DTC_Register_SERDESRXCharacterNotInTableError, DTC_Register_SERDESUnlockError, DTC_Register_SERDESPLLLocked,
+        DTC_Register_SERDESTXBufferStatus, DTC_Register_SERDESRXBufferStatus, DTC_Register_SERDESRXStatus,
+        DTC_Register_SERDESResetDone, DTC_Register_SERDESEyescanData, DTC_Register_SERDESRXCDRLock,
+        DTC_Register_DMATimeoutPreset, DTC_Register_TimestampPreset0, DTC_Register_TimestampPreset1,
+        DTC_Register_DataPendingTimer, DTC_Register_NUMROCs, DTC_Register_FIFOFullErrorFlag0,
+        DTC_Register_FIFOFullErrorFlag1, DTC_Register_FIFOFullErrorFlag2, DTC_Register_PacketSize,
+        DTC_Register_FPGAPROMProgramStatus, DTC_Register_FPGACoreAccess };
 
     enum DTC_Ring_ID : uint8_t {
         DTC_Ring_0 = 0,
@@ -60,7 +71,7 @@ namespace DTCLib
         DTC_Ring_CFO = 6,
         DTC_Ring_Unused,
     };
-    static const std::vector<DTC_Ring_ID> DTC_Rings = { DTC_Ring_0, DTC_Ring_1, DTC_Ring_2, DTC_Ring_3, DTC_Ring_4, DTC_Ring_5};
+    static const std::vector<DTC_Ring_ID> DTC_Rings = { DTC_Ring_0, DTC_Ring_1, DTC_Ring_2, DTC_Ring_3, DTC_Ring_4, DTC_Ring_5 };
 
     enum DTC_PacketType : uint8_t {
         DTC_PacketType_DCSRequest = 0,
@@ -94,6 +105,31 @@ namespace DTCLib
     public:
         DTC_RXBufferStatus status_;
         DTC_RXBufferStatusConverter(DTC_RXBufferStatus status) : status_(status) {}
+        std::string toString()
+        {
+            switch (status_)
+            {
+            case DTC_RXBufferStatus_Unknown:
+            default:
+                return "Unknown";
+                break;
+            case DTC_RXBufferStatus_Nominal:
+                return "Nominal";
+                break;
+            case DTC_RXBufferStatus_BufferEmpty:
+                return "BufferEmpty";
+                break;
+            case DTC_RXBufferStatus_BufferFull:
+                return "BufferFull";
+                break;
+            case DTC_RXBufferStatus_Overflow:
+                return "Overflow";
+                break;
+            case DTC_RXBufferStatus_Underflow:
+                return "Underflow";
+                break;
+            }
+        }
         friend std::ostream& operator<<(std::ostream& stream, const DTC_RXBufferStatusConverter& status) {
             switch (status.status_)
             {
@@ -159,6 +195,28 @@ namespace DTCLib
     public:
         DTC_RXStatus status_;
         DTC_RXStatusConverter(DTC_RXStatus status) : status_(status) {}
+        std::string toString() {
+            switch (status_)
+            {
+            case DTC_RXStatus_DataOK:
+                return "DataOK";
+            case DTC_RXStatus_SKPAdded:
+                return "SKPAdded";
+            case DTC_RXStatus_SKPRemoved:
+                return "SKPRemoved";
+            case DTC_RXStatus_ReceiverDetected:
+                return "ReceiverDetected";
+            case DTC_RXStatus_DecodeError:
+                return "DecodeErr";
+            case DTC_RXStatus_ElasticOverflow:
+                return "ElasticOF";
+            case DTC_RXStatus_ElasticUnderflow:
+                return "ElasticUF";
+            case DTC_RXStatus_RXDisparityError:
+                return "RXDisparity";
+            }
+            return "Unknown";
+        }
         friend std::ostream& operator<<(std::ostream& stream, const DTC_RXStatusConverter& status) {
             switch (status.status_)
             {
@@ -268,6 +326,22 @@ namespace DTCLib
     public:
         DTC_SERDESLoopbackMode mode_;
         DTC_SERDESLoopbackModeConverter(DTC_SERDESLoopbackMode mode) : mode_(mode) {}
+        std::string toString() {
+            switch (mode_)
+            {
+            case DTC_SERDESLoopbackMode_Disabled:
+                return "Disabled";
+            case DTC_SERDESLoopbackMode_NearPCS:
+                return "NearPCS";
+            case DTC_SERDESLoopbackMode_NearPMA:
+                return "NearPMA";
+            case DTC_SERDESLoopbackMode_FarPMA:
+                return "FarPMA";
+            case DTC_SERDESLoopbackMode_FarPCS:
+                return "FarPCS";
+            }
+            return "Unknown";
+        }
         friend std::ostream& operator<<(std::ostream& stream, const DTC_SERDESLoopbackModeConverter& mode) {
             switch (mode.mode_)
             {

@@ -49,6 +49,8 @@ namespace DTCLib {
         std::string RegDump();
         std::string RingRegDump(const DTC_Ring_ID& ring, std::string id);
         std::string CFORegDump();
+        std::string ConsoleFormatRegDump();
+        std::string FormatRegister(const DTC_Register& address);
         std::string RegisterRead(const DTC_Register& address);
 
         std::string ReadDesignVersion();
@@ -142,6 +144,7 @@ namespace DTCLib {
 
         void ReloadFPGAFirmware();
         bool ReadFPGACoreAccessFIFOFull();
+        bool ReadFPGACoreAccessFIFOEmpty();
 
         //
         // PCIe/DMA Status and Performance

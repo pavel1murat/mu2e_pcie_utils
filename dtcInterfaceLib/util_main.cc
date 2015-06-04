@@ -14,6 +14,7 @@
 # include <thread>
 # define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
 # define TRACE(...)
+# define TRACE_CNTL(...)
 #else
 # include "trace.h"
 # include <unistd.h>		// usleep
