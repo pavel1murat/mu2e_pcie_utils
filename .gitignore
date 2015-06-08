@@ -14,7 +14,8 @@ dtcInterfaceLib/web/bin/
 dtcInterfaceLib/web/obj/
 cfoInterfaceLib/CFOLibTest/
 cfoInterfaceLib/CFORegDump/
-cfoInterfaceLib/Debug
-cfoInterfaceLib/util
+cfoInterfaceLib/Debug/
+cfoInterfaceLib/cfoInterfaceLib/
+cfoInterfaceLib/util/
 cfoInterfaceLib/web/bin/
 cfoInterfaceLib/web/obj/

@@ -1,0 +1,290 @@
+﻿<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>DTC Performance Monitor/Tester</title>
+    <style>
+        @import url(style.css);
+        @import url(PerfMon.css);
+    </style>
+    <script src="/base/jquery.min.js"></script>
+    <script src="/base/d3.v3.min.js"></script>
+    <script src="/base/MakeGraph.js"></script>
+    <script src="/base/AjaxPostAndGet.js"></script>
+    <script src="PerfMon.js"></script>
+</head>
+<body>
+    <form>
+        <fieldset>
+            <table>
+                <tr>
+                    <td>Raw Data Path0:</td>
+                    <td>Enable TX->RX Loopback<input type="checkbox" id="path0Loopback"></td>
+                    <td>Packet Size</td>
+                    <td><input type="number" id="path0PacketSize" value="32768"></td>
+                    <td><input type="button" id="path0StartStopButton" value="Start Test" onclick="path0StartStopClicked()"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>Enable TX Checker<input type="checkbox" id="path0TXChecker"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>Enable RX Generator<input type="checkbox" id="path0RXGenerator"></td>
+                </tr>
+            </table>
+        </fieldset>
+        <fieldset>
+            <table>
+                <tr>
+                    <td>Raw Data Path1:</td>
+                    <td>Enable TX->RX Loopback<input type="checkbox" id="path1Loopback"></td>
+                    <td>Packet Size</td>
+                    <td><input type="number" id="path1PacketSize" value="32768"></td>
+                    <td><input type="button" id="path1StartStopButton" value="Start Test" onclick="path1StartStopClicked()"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>Enable TX Checker<input type="checkbox" id="path1TXChecker"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>Enable RX Generator<input type="checkbox" id="path1RXGenerator"></td>
+                </tr>
+            </table>
+        </fieldset>
+    </form>
+
+    <div class="tabs">
+        <ul class="tab-links">
+            <li class="active"><a href="#tab1">Payload Statistics</a></li>
+            <li><a href="#tab2">System Status</a></li>
+            <li><a href="#tab3">PCIe Statistics</a></li>
+        </ul>
+
+        <div class="tab-content">
+            <div id="tab1" class="tab active">
+                <table>
+                    <tr>
+                        <td><p id="dma0TX"></p></td>
+                        <td><p id="dma0RX"></p></td>
+                    </tr>
+                    <tr>
+                        <td>Raw Data Path0: DMA Transmit Statistics</td>
+                        <td>Raw Data Path0: DMA Receive Statistics</td>
+                    </tr>
+                    <tr>
+                        <td><p id="dma1TX"></p></td>
+                        <td><p id="dma1RX"></p></td>
+                    </tr>
+                    <tr>
+                        <td>Raw Data Path1: DMA Transmit Statistics</td>
+                        <td>Raw Data Path1: DMA Receive Statistics</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div id="tab2" class="tab">
+                <form>
+                    <fieldset>
+                        <legend>DMA &amp; Software Status</legend>
+                        <table>
+                            <tr>
+                                <td>
+                                    <fieldset>
+                                        <legend>Raw Data Path0:</legend>
+                                        <table>
+                                            <tr>
+                                                <td></td>
+                                                <td>Transmit</td>
+                                                <td>Receive</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Throughput (Gbps)</td>
+                                                <td><input type="text" id="path0TXThroughput"></td>
+                                                <td><input type="text" id="path0RXThroughput"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>DMA Active Time (ns)</td>
+                                                <td><input type="text" id="path0TXDMAActive"></td>
+                                                <td><input type="text" id="path0RXDMAActive"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>DMA Wait Time (ns)</td>
+                                                <td><input type="text" id="path0TXDMAWait"></td>
+                                                <td><input type="text" id="path0RXDMAWait"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>BD Errors</td>
+                                                <td><input type="text" id="path0TXBDErrors"></td>
+                                                <td><input type="text" id="path0RXBDErrors"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>BD Short Errors</td>
+                                                <td><input type="text" id="path0TXBDSErrors"></td>
+                                            </tr>
+                                            <tr>
+                                                <td># SW BDs</td>
+                                                <td><input type="text" id="path0TXSWBDs"></td>
+                                                <td><input type="text" id="path0RXSWBDs"></td>
+                                            </tr>
+                                            <tr>
+                                                <td># SW Buffers</td>
+                                                <td><input type="text" id="path0TXSWBuffs"></td>
+                                                <td><input type="text" id="path0RXSWBuffs"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Interrupts Enabled</td>
+                                                <td><input type="checkbox" id="path0InterruptsEnabled"></td>
+                                            </tr>
+                                        </table>
+                                    </fieldset>
+                                </td>
+                                <td>
+                                    <fieldset>
+                                        <legend>Raw Data Path1:</legend>
+                                        <table>
+                                            <tr>
+                                                <td></td>
+                                                <td>Transmit</td>
+                                                <td>Receive</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Throughput (Gbps)</td>
+                                                <td><input type="text" id="path1TXThroughput"></td>
+                                                <td><input type="text" id="path1RXThroughput"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>DMA Active Time (ns)</td>
+                                                <td><input type="text" id="path1TXDMAActive"></td>
+                                                <td><input type="text" id="path1RXDMAActive"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>DMA Wait Time (ns)</td>
+                                                <td><input type="text" id="path1TXDMAWait"></td>
+                                                <td><input type="text" id="path1RXDMAWait"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>BD Errors</td>
+                                                <td><input type="text" id="path1TXBDErrors"></td>
+                                                <td><input type="text" id="path1RXBDErrors"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>BD Short Errors</td>
+                                                <td><input type="text" id="path1TXBDSErrors"></td>
+                                            </tr>
+                                            <tr>
+                                                <td># SW BDs</td>
+                                                <td><input type="text" id="path1TXSWBDs"></td>
+                                                <td><input type="text" id="path1RXSWBDs"></td>
+                                            </tr>
+                                            <tr>
+                                                <td># SW Buffers</td>
+                                                <td><input type="text" id="path1TXSWBuffs"></td>
+                                                <td><input type="text" id="path1RXSWBuffs"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Interrupts Enabled</td>
+                                                <td><input type="checkbox" id="path1InterruptsEnabled"></td>
+                                            </tr>
+                                        </table>
+                                    </fieldset>
+                                </td>
+                            </tr>
+                        </table>
+                    </fieldset>
+                    <fieldset>
+                        <table>
+                            <tr>
+                                <td>PCIe Transmit (writes) (Gbps)</td>
+                                <td><input type="text" id="pcieWritesRate"></td>
+                            </tr>
+                            <tr>
+                                <td>PCIe Receive (reads) (Gbps)</td>
+                                <td><input type="text" id="pcieReadsRate"></td>
+                            </tr>
+                        </table>
+                    </fieldset>
+                    <fieldset>
+                        <table>
+                            <tr>
+                                <td>
+                                    <fieldset>
+                                        <legend>PCIe Endpoint Status</legend>
+                                        <table>
+                                            <tr>
+                                                <td>Link Status</td>
+                                                <td><input type="text" id="pcieLinkStatus"></td>
+                                                <td>Vendor ID</td>
+                                                <td><input type="text" id="pcieVendorID"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Link Speed</td>
+                                                <td><input type="text" id="pcieLinkSpeed"></td>
+                                                <td>Device ID</td>
+                                                <td><input type="text" id="pcieDeviceID"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Link Width</td>
+                                                <td><input type="text" id="pcieLinkWidth"></td>
+                                                <td>MPS (bytes)</td>
+                                                <td><input type="text" id="pcieMPSBytes"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Interrupts</td>
+                                                <td><input type="text" id="pcieInterrupts"></td>
+                                                <td>MRRS (bytes)</td>
+                                                <td><input type="text" id="pcieMRRSBytes"></td>
+                                            </tr>
+                                        </table>
+                                    </fieldset>
+                                </td>
+                                <td>
+                                    <fieldset>
+                                        <legend>Host System's Initial Flow Control Credits</legend>
+                                        <table>
+                                            <tr>
+                                                <td>Posted Header</td>
+                                                <td><input type="text" id="phCredits"></td>
+                                                <td>Posted Data</td>
+                                                <td><input type="text" id="pdCredits"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Non-Posted Header</td>
+                                                <td><input type="text" id="nphCredits"></td>
+                                                <td>Non-Posted Data</td>
+                                                <td><input type="text" id="npdCredits"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Completion Header</td>
+                                                <td><input type="text" id="chCredits"></td>
+                                                <td>Completion Data</td>
+                                                <td><input type="text" id="cdCredits"></td>
+                                            </tr>
+
+                                        </table>
+                                    </fieldset>
+                                </td>
+                            </tr>
+                        </table>
+                    </fieldset>
+                </form>
+            </div>
+
+            <div id="tab3" class="tab">
+                <table>
+                    <tr>
+                        <td><p id="pcieTX"></p></td>
+                        <td><p id="pcieRX"></p></td>
+                    </tr>
+                    <tr>
+                        <td>PCIe Transmit (writes) Statistics</td>
+                        <td>PCIe Receive (reads) Statistics</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

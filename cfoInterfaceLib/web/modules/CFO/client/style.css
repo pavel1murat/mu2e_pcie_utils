@@ -1,0 +1,58 @@
+svg {
+    font: 10px sans-serif;
+}
+
+.line {
+    fill: none;
+    stroke-width: 1.5px;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+
+.x.axis line {
+    shape-rendering: auto;
+}
+
+.y.axis line {
+    shape-rendering: auto;
+}
+
+.p {
+    color: #333;
+    font-family: "PT Serif", serif;
+    margin: 6px 10px 6px 10px;
+    position: relative;
+    width: 100%;
+}
+
+fieldset {
+    margin-top: 1em;
+}
+
+    fieldset legend {
+        font-weight: bold;
+        font-size: large;
+    }
+
+th {
+    padding-left: 1em;
+    padding-right: 1em;
+    font-weight: 600;
+    font-size: medium;
+}
+
+td {
+    text-align: center;
+    padding-left: 1em;
+    padding-right: 1em;
+}
+
+table {
+    width: 100%;
+    table-layout: fixed;
+}
