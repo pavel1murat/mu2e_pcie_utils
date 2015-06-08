@@ -204,8 +204,8 @@ namespace DTCLib {
         uint32_t ReadDMATimeoutPresetRegister() { return ReadRegister(DTC_Register_DMATimeoutPreset); }
         void WriteDataPendingTimerRegister(uint32_t data) { WriteRegister(data, DTC_Register_DataPendingTimer); }
         uint32_t ReadDataPendingTimerRegister() { return ReadRegister(DTC_Register_DataPendingTimer); }
-        void WriteDMAPacketSizetRegister(uint32_t data) { WriteRegister(data, DTC_Register_DMATransferLength); }
-        uint32_t ReadDMAPacketSizeRegister() { return ReadRegister(DTC_Register_DMATransferLength); }
+        void WriteDMAPacketSizetRegister(uint32_t data) { WriteRegister(data, DTC_Register_PacketSize); }
+        uint32_t ReadDMAPacketSizeRegister() { return ReadRegister(DTC_Register_PacketSize); }
         void WriteNUMROCsRegister(uint32_t data){ WriteRegister(data, DTC_Register_NUMROCs); }
         uint32_t ReadNUMROCsRegister() { return ReadRegister(DTC_Register_NUMROCs); }
         void WriteFIFOFullErrorFlag0Register(uint32_t data){ WriteRegister(data, DTC_Register_FIFOFullErrorFlag0); }
