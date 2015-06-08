@@ -12,4 +12,9 @@ dtcInterfaceLib/dtcInterfaceLib/
 dtcInterfaceLib/util/
 dtcInterfaceLib/web/bin/
 dtcInterfaceLib/web/obj/
-
+cfoInterfaceLib/CFOLibTest/
+cfoInterfaceLib/CFORegDump/
+cfoInterfaceLib/Debug
+cfoInterfaceLib/util
+cfoInterfaceLib/web/bin/
+cfoInterfaceLib/web/obj/
