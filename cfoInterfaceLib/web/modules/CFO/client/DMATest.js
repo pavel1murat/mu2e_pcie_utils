@@ -50,7 +50,7 @@ function ApplyTestStats(testStats) {
 
 function GetTestStatistics() {
     var objData = null;
-    AjaxGet('/DTC/DMATestStatistics', function (returnValue) {
+    AjaxGet('/CFO/DMATestStatistics', function (returnValue) {
         var testStats = returnValue;
         $("#daqC2S").val(testStats.daqC2S);
         $("#daqS2C").val(testStats.daqS2C);
@@ -73,31 +73,31 @@ $(function () {
         data.dcs = $("#dcsEnabled").is(":checked");
         data.loopback = $("#loopbackEnabled").is(":checked");
         data.n = $("#numTests").val();
-        AjaxPost('/DTC/StartDMATest', data, function (returnValue) {
+        AjaxPost('/CFO/StartDMATest', data, function (returnValue) {
             ApplyTestStats(returnValue);
         });
     });
     
     $("#resetButton").click(function () {
-        AjaxPost('/DTC/ResetTestStatus', 1, function (returnValue) {
+        AjaxPost('/CFO/ResetTestStatus', 1, function (returnValue) {
             ApplyTestStats(returnValue);
         });
     });
     
     $("#stopButton").click(function () {
-        AjaxPost('/DTC/StopDMATest', 1, function (returnValue) {
+        AjaxPost('/CFO/StopDMATest', 1, function (returnValue) {
             ApplyTestStats(returnValue);
         });
     });
     
     var dma0 = {
-        dma0TX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA0Transmit" },
-        dma0RX: { data: [{ time: 0, value: 0 }], color: 'blue', jsonPath: "/DTC/DMA0Receive" },
+        dma0TX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/CFO/DMA0Transmit" },
+        dma0RX: { data: [{ time: 0, value: 0 }], color: 'blue', jsonPath: "/CFO/DMA0Receive" },
     };
     makeGraph("#dma0", dma0);
     var dma1 = {
-        dma1TX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA1Transmit" },
-        dma1RX: { data: [{ time: 0, value: 0 }], color: 'blue', jsonPath: "/DTC/DMA1Receive" },
+        dma1TX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/CFO/DMA1Transmit" },
+        dma1RX: { data: [{ time: 0, value: 0 }], color: 'blue', jsonPath: "/CFO/DMA1Receive" },
     };
     makeGraph("#dma1", dma1);
     

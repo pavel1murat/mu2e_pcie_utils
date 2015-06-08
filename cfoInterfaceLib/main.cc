@@ -1,4 +1,4 @@
-#include "DTCLibTest.h"
+#include "CFOLibTest.h"
 
 #include <iostream>
 #ifdef _WIN32
@@ -8,7 +8,7 @@
 #endif
 
 void usage() {
-    std::cout << "This program runs several functionality tests of libDTCInterface." << std::endl
+    std::cout << "This program runs several functionality tests of libCFOInterface." << std::endl
         << "If run with no options, it will run all 6 tests." << std::endl
         << "Otherwise, it accepts a space-delimited list of the tests to run," << std::endl
         << "defined either by test number {1,2,3,4,5,6}, or test name {reg, pcie, stats, dcs, daq, loopback}" << std::endl
@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
     bool testsSpecified = false;
 
     if (argc == 1) {
-        std::cout << "Running all DTC Tests." << std::endl << std::endl;
+        std::cout << "Running all CFO Tests." << std::endl << std::endl;
     }
     else {
 
@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
 
     }
 
-    DTCLib::DTCLibTest* tester = new DTCLib::DTCLibTest();
+    CFOLib::CFOLibTest* tester = new CFOLib::CFOLibTest();
 
     tester->startTest(registerTest, pcieTest, dmaStateTest, daqTest, dcsTest,loopbackTest, testCount, true);
 

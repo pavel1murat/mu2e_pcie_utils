@@ -8,7 +8,7 @@
 #include <cstdio>		// printf
 #include <cstdlib>		// strtoul
 #include <iostream>
-#include "DTC.h"
+#include "CFO.h"
 #ifdef _WIN32
 # include <chrono>
 # include <thread>
@@ -20,7 +20,7 @@
 # include <unistd.h>		// usleep
 #endif
 
-using namespace DTCLib;
+using namespace CFOLib;
 using namespace std;
 
 int
@@ -29,8 +29,8 @@ main(int	argc
 {
     if (argc > 1 && strcmp(argv[1], "read") == 0)
     {
-        DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
-        DTC_DataHeaderPacket packet = thisDTC->ReadNextDAQPacket();
+        CFO *thisCFO = new CFO(CFO_SimMode_Hardware);
+        CFO_DataHeaderPacket packet = thisCFO->ReadNextDAQPacket();
         cout << packet.toJSON() << '\n';
     }
     else if (argc > 1 && strcmp(argv[1], "read_data") == 0)
@@ -43,7 +43,7 @@ main(int	argc
         {
             void *buffer;
             int tmo_ms = 0;
-            int sts = device.read_data(DTC_DMA_Engine_DAQ, &buffer, tmo_ms);
+            int sts = device.read_data(CFO_DMA_Engine_DAQ, &buffer, tmo_ms);
             TRACE( 1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, buffer);
             usleep(0);
         }
@@ -58,39 +58,39 @@ main(int	argc
         {
             void *buffer;
             int tmo_ms = 0;
-            int stsRD = device.read_data(DTC_DMA_Engine_DAQ, &buffer, tmo_ms);
-            int stsRL = device.read_release(DTC_DMA_Engine_DAQ, 1);
+            int stsRD = device.read_data(CFO_DMA_Engine_DAQ, &buffer, tmo_ms);
+            int stsRL = device.read_release(CFO_DMA_Engine_DAQ, 1);
             TRACE(12, "util - release/read for DAQ and DCS ii=%u stsRD=%d stsRL=%d %p", ii, stsRD, stsRL, buffer);
             usleep(0);
         }
     }
-    else if (argc > 1 && strcmp(argv[1],"DTC")==0)
+    else if (argc > 1 && strcmp(argv[1],"CFO")==0)
     {
-        DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
-	thisDTC->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
-	thisDTC->SetInternalSystemClock();
-        thisDTC->DisableTiming();
-	thisDTC->SetMaxROCNumber( DTC_Ring_0, DTC_ROC_0 );
+        CFO *thisCFO = new CFO(CFO_SimMode_Hardware);
+	thisCFO->EnableRing(CFO_Ring_0, CFO_RingEnableMode(true, true, false), CFO_ROC_0);
+	thisCFO->SetInternalSystemClock();
+        thisCFO->DisableTiming();
+	thisCFO->SetMaxROCNumber( CFO_Ring_0, CFO_ROC_0 );
         unsigned gets = 1;
         if (argc > 2) gets = strtoul(argv[2], NULL, 0);
         for (unsigned ii = 0; ii < gets; ++ii)
         {
-            vector<void*> data = thisDTC->GetData(DTC_Timestamp((uint64_t)ii));
+            vector<void*> data = thisCFO->GetData(CFO_Timestamp((uint64_t)ii));
             if (data.size() > 0)
             {
                 cout << data.size() << " packets returned\n";
                 for (size_t i = 0; i < data.size(); ++i)
                 {
-                    TRACE(19, "DTC::GetJSONData constructing DataPacket:");
-                    DTC_DataPacket     test = DTC_DataPacket(data[i]);
+                    TRACE(19, "CFO::GetJSONData constructing DataPacket:");
+                    CFO_DataPacket     test = CFO_DataPacket(data[i]);
                     //cout << test.toJSON() << '\n'; // dumps whole databuff_t
                     printf("data@%p=0x%08x\n", data[i], *(uint32_t*)(data[i]));
-                    //DTC_DataHeaderPacket h1 = DTC_DataHeaderPacket(data[i]);
+                    //CFO_DataHeaderPacket h1 = CFO_DataHeaderPacket(data[i]);
                     //cout << h1.toJSON() << '\n';
-                    DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
+                    CFO_DataHeaderPacket h2 = CFO_DataHeaderPacket(test);
                     cout << h2.toJSON() << '\n';
                     for (int jj = 0; jj < h2.GetPacketCount(); ++jj) {
-                        cout << "\t" << DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16)).toJSON() << endl;
+                        cout << "\t" << CFO_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16)).toJSON() << endl;
                     }
                 }
             }
@@ -103,27 +103,27 @@ main(int	argc
     }
     else// if (argc > 1 && strcmp(argv[1],"get")==0)
     {
-        DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
+        CFO *thisCFO = new CFO(CFO_SimMode_Hardware);
         unsigned gets = 1;
         if (argc > 1) gets = strtoul(argv[1], NULL, 0);
         for (unsigned ii = 0; ii < gets; ++ii)
         {
-            vector<void*> data = thisDTC->GetData(DTC_Timestamp((uint64_t)ii));
+            vector<void*> data = thisCFO->GetData(CFO_Timestamp((uint64_t)ii));
             if (data.size() > 0)
             {
                 cout << data.size() << " packets returned\n";
                 for (size_t i = 0; i < data.size(); ++i)
                 {
-                    TRACE(19, "DTC::GetJSONData constructing DataPacket:");
-                    DTC_DataPacket     test = DTC_DataPacket(data[i]);
+                    TRACE(19, "CFO::GetJSONData constructing DataPacket:");
+                    CFO_DataPacket     test = CFO_DataPacket(data[i]);
                     //cout << test.toJSON() << '\n'; // dumps whole databuff_t
                     printf("data@%p=0x%08x\n", data[i], *(uint32_t*)(data[i]));
-                    //DTC_DataHeaderPacket h1 = DTC_DataHeaderPacket(data[i]);
+                    //CFO_DataHeaderPacket h1 = CFO_DataHeaderPacket(data[i]);
                     //cout << h1.toJSON() << '\n';
-                    DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
+                    CFO_DataHeaderPacket h2 = CFO_DataHeaderPacket(test);
                     cout << h2.toJSON() << '\n';
                     for (int jj = 0; jj < h2.GetPacketCount(); ++jj) {
-                        cout << "\t" << DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16)).toJSON() << endl;
+                        cout << "\t" << CFO_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16)).toJSON() << endl;
                     }
                 }
             }

@@ -38,7 +38,7 @@ namespace CFOLib
         CFO_Register_TimestampPreset0 = 0x9180,
         CFO_Register_TimestampPreset1 = 0x9184,
         CFO_Register_DataPendingTimer = 0x9188,
-        CFO_Register_NUMDTCs = 0x918C,
+        CFO_Register_NUMCFOs = 0x918C,
         CFO_Register_FIFOFullErrorFlag0 = 0x9190,
         CFO_Register_FIFOFullErrorFlag1 = 0x9194,
         CFO_Register_FIFOFullErrorFlag2 = 0x9198,
@@ -56,7 +56,7 @@ namespace CFOLib
         CFO_Register_SERDESRXBufferStatus, CFO_Register_SERDESRXStatus, CFO_Register_SERDESResetDone, 
         CFO_Register_SERDESEyescanData, CFO_Register_SERDESRXCDRLock, CFO_Register_DMATimeoutPreset, 
         CFO_Register_TimestampPreset0, CFO_Register_TimestampPreset1, CFO_Register_DataPendingTimer, 
-        CFO_Register_NUMDTCs, CFO_Register_FIFOFullErrorFlag0, CFO_Register_FIFOFullErrorFlag1, 
+        CFO_Register_NUMCFOs, CFO_Register_FIFOFullErrorFlag0, CFO_Register_FIFOFullErrorFlag1, 
         CFO_Register_FIFOFullErrorFlag2, CFO_Register_PacketSize, CFO_Register_RRInfoTableSize, 
         CFO_Register_FPGAPROMProgramStatus, CFO_Register_FPGACoreAccess };
 

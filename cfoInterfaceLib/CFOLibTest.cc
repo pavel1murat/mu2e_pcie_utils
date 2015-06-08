@@ -1,4 +1,4 @@
-#include "DTCLibTest.h"
+#include "CFOLibTest.h"
 
 #include <iostream>
 #include <iomanip>
@@ -13,7 +13,7 @@
 # endif
 #endif
 
-DTCLib::DTCLibTest::DTCLibTest() : running_(false), regPassed_(0),
+CFOLib::CFOLibTest::CFOLibTest() : running_(false), regPassed_(0),
 regFailed_(0), pciePassed_(0), pcieFailed_(0), dmaStatePassed_(0), dmaStateFailed_(0),
 daqPassed_(0), daqFailed_(0), dcsPassed_(0), dcsFailed_(0), loopbackPassed_(0),
 loopbackFailed_(0), regPassedTemp_(0), regFailedTemp_(0), pciePassedTemp_(0),
@@ -22,20 +22,20 @@ daqFailedTemp_(0), dcsPassedTemp_(0), dcsFailedTemp_(0), loopbackPassedTemp_(0),
 loopbackFailedTemp_(0), nTests_(0), runRegTest_(false), runPCIeTest_(false),
 runDMAStateTest_(false), runDAQTest_(false), runDCSTest_(false)
 {
-    thisDTC_ = new DTC();
+    thisCFO_ = new CFO();
 }
 
-DTCLib::DTCLibTest::~DTCLibTest()
+CFOLib::CFOLibTest::~CFOLibTest()
 {
     nTests_ = 0;
     if (workerThread_.joinable()) {
         workerThread_.join();
     }
-    delete thisDTC_;
+    delete thisCFO_;
 }
 
 // Test Control
-void DTCLib::DTCLibTest::startTest(bool regIOEnabled, bool pcieEnabled, bool dmaStateEnabled,
+void CFOLib::CFOLibTest::startTest(bool regIOEnabled, bool pcieEnabled, bool dmaStateEnabled,
     bool daqEnabled, bool dcsEnabled, bool loopbackEnabled, int nTests, bool printMessages)
 {
     runRegTest_ = regIOEnabled;
@@ -52,13 +52,13 @@ void DTCLib::DTCLibTest::startTest(bool regIOEnabled, bool pcieEnabled, bool dma
         std::cout << "Starting workerThread" << std::endl;
     }
     
-    workerThread_ = std::thread(&DTCLib::DTCLibTest::doTests, this);
+    workerThread_ = std::thread(&CFOLib::CFOLibTest::doTests, this);
     if (nTests_ >= 0) {
         workerThread_.join();
     }
 }
 
-void DTCLib::DTCLibTest::stopTests()
+void CFOLib::CFOLibTest::stopTests()
 {
     nTests_ = 0;
     if (workerThread_.joinable()) {
@@ -67,84 +67,84 @@ void DTCLib::DTCLibTest::stopTests()
 }
 
 // Accessors
-int DTCLib::DTCLibTest::regPassed()
+int CFOLib::CFOLibTest::regPassed()
 {
     int result = regPassed_ - regPassedTemp_;
     regPassedTemp_ = regPassed_;
     return result;
 }
 
-int DTCLib::DTCLibTest::regFailed()
+int CFOLib::CFOLibTest::regFailed()
 {
     int result = regFailed_ - regFailedTemp_;
     regFailedTemp_ = regFailed_;
     return result;
 }
 
-int DTCLib::DTCLibTest::pciePassed()
+int CFOLib::CFOLibTest::pciePassed()
 {
     int result = pciePassed_ - pciePassedTemp_;
     pciePassedTemp_ = pciePassed_;
     return result;
 }
 
-int DTCLib::DTCLibTest::pcieFailed()
+int CFOLib::CFOLibTest::pcieFailed()
 {
     int result = pcieFailed_ - pcieFailedTemp_;
     pcieFailedTemp_ = pcieFailed_;
     return result;
 }
 
-int DTCLib::DTCLibTest::dmaStatePassed()
+int CFOLib::CFOLibTest::dmaStatePassed()
 {
     int result = dmaStatePassed_ - dmaStatePassedTemp_;
     dmaStatePassedTemp_ = dmaStatePassed_;
     return result;
 }
 
-int DTCLib::DTCLibTest::dmaStateFailed()
+int CFOLib::CFOLibTest::dmaStateFailed()
 {
     int result = dmaStateFailed_ - dmaStateFailedTemp_;
     dmaStateFailedTemp_ = dmaStateFailed_;
     return result;
 }
 
-int DTCLib::DTCLibTest::daqPassed()
+int CFOLib::CFOLibTest::daqPassed()
 {
     int result = daqPassed_ - daqPassedTemp_;
     daqPassedTemp_ = daqPassed_;
     return result;
 }
 
-int DTCLib::DTCLibTest::daqFailed()
+int CFOLib::CFOLibTest::daqFailed()
 {
     int result = daqFailed_ - daqFailedTemp_;
     daqFailedTemp_ = daqFailed_;
     return result;
 }
 
-int DTCLib::DTCLibTest::dcsPassed()
+int CFOLib::CFOLibTest::dcsPassed()
 {
     int result = dcsPassed_ - dcsPassedTemp_;
     dcsPassedTemp_ = dcsPassed_;
     return result;
 }
 
-int DTCLib::DTCLibTest::dcsFailed()
+int CFOLib::CFOLibTest::dcsFailed()
 {
     int result = dcsFailed_ - dcsFailedTemp_;
     dcsFailedTemp_ = dcsFailed_;
     return result;
 }
 
-int DTCLib::DTCLibTest::loopbackPassed()
+int CFOLib::CFOLibTest::loopbackPassed()
 {
     int result = loopbackPassed_ - loopbackPassedTemp_;
     loopbackPassedTemp_ = loopbackPassed_;
     return result;
 }
 
-int DTCLib::DTCLibTest::loopbackFailed()
+int CFOLib::CFOLibTest::loopbackFailed()
 {
     int result = loopbackFailed_ - loopbackFailedTemp_;
     loopbackFailedTemp_ = loopbackFailed_;
@@ -153,7 +153,7 @@ int DTCLib::DTCLibTest::loopbackFailed()
 
 
 // Private Functions
-void DTCLib::DTCLibTest::doTests()
+void CFOLib::CFOLibTest::doTests()
 {
     if (printMessages_)
     {
@@ -162,7 +162,7 @@ void DTCLib::DTCLibTest::doTests()
     std::cout << "DEBUG 1" << std::endl;
     running_ = true;
     // Make sure that the ring is enabled before the tests.
-    thisDTC_->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true,true,false), DTC_ROC_0);
+    thisCFO_->EnableRing(CFO_Ring_0, CFO_RingEnableMode(true,true,false), CFO_ROC_0);
 
     int testCount = 0;
     while (testCount < nTests_ || nTests_ < 0)
@@ -225,28 +225,28 @@ void DTCLib::DTCLibTest::doTests()
     std::cout << std::dec << totalPassed << " of " << totalTests << " tests passed." << std::endl;
 }
 
-void DTCLib::DTCLibTest::doRegTest()
+void CFOLib::CFOLibTest::doRegTest()
 {
     if (printMessages_) {
         std::cout << "Test 1: Register R/W" << std::endl;
     }
     try{
-        std::string designVersion = thisDTC_->ReadDesignVersion();
+        std::string designVersion = thisCFO_->ReadDesignVersion();
         if (printMessages_) {
             std::cout << "Reading Design Version: " << designVersion << std::endl;
             std::cout << "If simulated, result will be 53494D44 (SIMD in ASCII)" << std::endl;
             std::cout << "Attempting to Toggle Ring 0." << std::endl;
         }
-        DTC_RingEnableMode ring0Value = thisDTC_->ReadRingEnabled(DTC_Ring_0);
+        CFO_RingEnableMode ring0Value = thisCFO_->ReadRingEnabled(CFO_Ring_0);
         if (printMessages_) {
             std::cout << "Value before: " << ring0Value << std::endl;
         }
-        DTC_RingEnableMode ring0New = thisDTC_->ToggleRingEnabled(DTC_Ring_0);
+        CFO_RingEnableMode ring0New = thisCFO_->ToggleRingEnabled(CFO_Ring_0);
         if (printMessages_) {
             std::cout << "Value after: " << ring0New << std::endl;
         }
         // Make sure that the ring is enabled after the test.
-        thisDTC_->EnableRing(DTC_Ring_0,DTC_RingEnableMode(true,true,false), DTC_ROC_0);
+        thisCFO_->EnableRing(CFO_Ring_0,CFO_RingEnableMode(true,true,false), CFO_ROC_0);
         if (ring0New != ring0Value)
         {
             if (printMessages_) {
@@ -274,14 +274,14 @@ void DTCLib::DTCLibTest::doRegTest()
     }
 }
 
-void DTCLib::DTCLibTest::doPCIeTest()
+void CFOLib::CFOLibTest::doPCIeTest()
 {
     if (printMessages_) {
         std::cout << "Test 2: PCIe State and Stats" << std::endl;
     }
     try {
-        DTC_PCIeState state = thisDTC_->ReadPCIeState();
-        DTC_PCIeStat stats = thisDTC_->ReadPCIeStats();
+        CFO_PCIeState state = thisCFO_->ReadPCIeState();
+        CFO_PCIeStat stats = thisCFO_->ReadPCIeStats();
         if (printMessages_) {
             std::cout << "PCIe State: " << std::endl
                 << state.toString() << std::endl << std::endl;
@@ -302,21 +302,21 @@ void DTCLib::DTCLibTest::doPCIeTest()
     }
 }
 
-void DTCLib::DTCLibTest::doDMAStateTest()
+void CFOLib::CFOLibTest::doDMAStateTest()
 {
     if (printMessages_) {
         std::cout << "Test 3: DMA State and Stats" << std::endl;
     }
     try {
-        DTC_DMAState eng0 = thisDTC_->ReadDMAState(DTC_DMA_Engine_DAQ, DTC_DMA_Direction_S2C);
-        DTC_DMAState eng1 = thisDTC_->ReadDMAState(DTC_DMA_Engine_DAQ, DTC_DMA_Direction_C2S);
-        DTC_DMAState eng32 = thisDTC_->ReadDMAState(DTC_DMA_Engine_DCS, DTC_DMA_Direction_S2C);
-        DTC_DMAState eng33 = thisDTC_->ReadDMAState(DTC_DMA_Engine_DCS, DTC_DMA_Direction_C2S);
+        CFO_DMAState eng0 = thisCFO_->ReadDMAState(CFO_DMA_Engine_DAQ, DTC_DMA_Direction_S2C);
+        CFO_DMAState eng1 = thisCFO_->ReadDMAState(CFO_DMA_Engine_DAQ, DTC_DMA_Direction_C2S);
+        CFO_DMAState eng32 = thisCFO_->ReadDMAState(CFO_DMA_Engine_DCS, DTC_DMA_Direction_S2C);
+        CFO_DMAState eng33 = thisCFO_->ReadDMAState(CFO_DMA_Engine_DCS, DTC_DMA_Direction_C2S);
 
-        DTC_DMAStats eng0Stats = thisDTC_->ReadDMAStats(DTC_DMA_Engine_DAQ, DTC_DMA_Direction_S2C);
-        DTC_DMAStats eng1Stats = thisDTC_->ReadDMAStats(DTC_DMA_Engine_DAQ, DTC_DMA_Direction_C2S);
-        DTC_DMAStats eng32Stats = thisDTC_->ReadDMAStats(DTC_DMA_Engine_DCS, DTC_DMA_Direction_S2C);
-        DTC_DMAStats eng33Stats = thisDTC_->ReadDMAStats(DTC_DMA_Engine_DCS, DTC_DMA_Direction_C2S);
+        CFO_DMAStats eng0Stats = thisCFO_->ReadDMAStats(CFO_DMA_Engine_DAQ, DTC_DMA_Direction_S2C);
+        CFO_DMAStats eng1Stats = thisCFO_->ReadDMAStats(CFO_DMA_Engine_DAQ, DTC_DMA_Direction_C2S);
+        CFO_DMAStats eng32Stats = thisCFO_->ReadDMAStats(CFO_DMA_Engine_DCS, DTC_DMA_Direction_S2C);
+        CFO_DMAStats eng33Stats = thisCFO_->ReadDMAStats(CFO_DMA_Engine_DCS, DTC_DMA_Direction_C2S);
 
         if (printMessages_) {
             std::cout << "DMA State: " << std::endl
@@ -345,7 +345,7 @@ void DTCLib::DTCLibTest::doDMAStateTest()
     }
 }
 
-void DTCLib::DTCLibTest::doDCSTest()
+void CFOLib::CFOLibTest::doDCSTest()
 {
     if (printMessages_) {
         std::cout << "Test 4: DMA R/W on DCS Channel" << std::endl;
@@ -363,7 +363,7 @@ void DTCLib::DTCLibTest::doDCSTest()
             }
             std::cout << std::endl;
         }
-        thisDTC_->DCSRequestReply(DTC_Ring_0, DTC_ROC_0, testData);
+        thisCFO_->DCSRequestReply(CFO_Ring_0, CFO_ROC_0, testData);
         if (printMessages_) {
             std::cout << "Data out: ";
             for (int i = 0; i < 12; i++)
@@ -371,7 +371,7 @@ void DTCLib::DTCLibTest::doDCSTest()
                 std::cout << std::dec << (int)testData[i] << " ";
             }
             std::cout << std::endl;
-            std::cout << "Simulated DTC should match before/after." << std::endl;
+            std::cout << "Simulated CFO should match before/after." << std::endl;
         }
         ++dcsPassed_;
     }
@@ -387,7 +387,7 @@ void DTCLib::DTCLibTest::doDCSTest()
     }
 }
 
-void DTCLib::DTCLibTest::doDAQTest()
+void CFOLib::CFOLibTest::doDAQTest()
 {
     if (printMessages_) {
         std::cout << "Test 5: DMA R/W on DAQ Channel" << std::endl;
@@ -396,12 +396,12 @@ void DTCLib::DTCLibTest::doDAQTest()
         if (printMessages_) {
             std::cout << "Sending Readout Request Packet on Ring 0" << std::endl;
         }
-        DTC_Timestamp now = DTC_Timestamp((uint64_t)time(0));
-        thisDTC_->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
+        CFO_Timestamp now = CFO_Timestamp((uint64_t)time(0));
+        thisCFO_->SetMaxROCNumber(CFO_Ring_0, CFO_ROC_0);
         int retry = 3;
         bool err = false;
         do {
-            std::vector<void*> data = thisDTC_->GetData(now);
+            std::vector<void*> data = thisCFO_->GetData(now);
             if (data.size() > 0) {
                 if (data.size() > 1) {
                     if (printMessages_) {
@@ -415,7 +415,7 @@ void DTCLib::DTCLibTest::doDAQTest()
                     if (printMessages_) {
                         std::cout << "Dumping data..." << std::endl;
                     }
-                    int length = DTC_DataHeaderPacket(DTC_DataPacket(data[0])).GetPacketCount();
+                    int length = CFO_DataHeaderPacket(CFO_DataPacket(data[0])).GetPacketCount();
                     for (int i = 0; i < length; ++i)
                     {
                         for (int j = 0; j < 8; ++j)
@@ -456,7 +456,7 @@ void DTCLib::DTCLibTest::doDAQTest()
 }
 
 
-void DTCLib::DTCLibTest::doLoopbackTest()
+void CFOLib::CFOLibTest::doLoopbackTest()
 {
     if (printMessages_) {
         std::cout << "Test 6: Loopback on DAQ Channel" << std::endl;
@@ -465,14 +465,14 @@ void DTCLib::DTCLibTest::doLoopbackTest()
         if (printMessages_) {
             std::cout << "Sending Readout Request Packet on Ring 0" << std::endl;
         }
-        DTC_Timestamp now = DTC_Timestamp((uint64_t)time(0));
-        thisDTC_->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
+        CFO_Timestamp now = CFO_Timestamp((uint64_t)time(0));
+        thisCFO_->SetMaxROCNumber(CFO_Ring_0, CFO_ROC_0);
         int retry = 3;
         bool err = false;
         do {
-            TRACE(15, "DTCLibTest before thisDTC->GetData");
-            std::vector<void*> data = thisDTC_->GetData(now);
-            TRACE(15, "DTCLibTest after  thisDTC->GetData");
+            TRACE(15, "CFOLibTest before thisCFO->GetData");
+            std::vector<void*> data = thisCFO_->GetData(now);
+            TRACE(15, "CFOLibTest after  thisCFO->GetData");
             if (data.size() > 0) {
                 if (data.size() > 1) {
                     if (printMessages_) {
@@ -486,7 +486,7 @@ void DTCLib::DTCLibTest::doLoopbackTest()
                     if (printMessages_) {
                         std::cout << "Dumping data..." << std::endl;
                     }
-                    int length = DTC_DataHeaderPacket(DTC_DataPacket(data[0])).GetPacketCount();
+                    int length = CFO_DataHeaderPacket(CFO_DataPacket(data[0])).GetPacketCount();
                     for (int i = 0; i < length; ++i)
                     {
                         for (int j = 0; j < 8; ++j)

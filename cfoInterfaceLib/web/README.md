@@ -1,4 +1,4 @@
-DTC Web Interface v0.2.1
+CFO Web Interface v0.2.1
 Eric Flumerfelt, FNAL RSI
 12/18/2014
 
@@ -6,7 +6,7 @@ Eric Flumerfelt, FNAL RSI
 ===                               DESCRIPTION                               ===
 ===============================================================================
 
-The DTC Web Interface allows for browser-based control of the DTC PCIe card.
+The CFO Web Interface allows for browser-based control of the CFO PCIe card.
 Users are authenticated using their KCA certificate, and authorized from a 
 Kerberos .k5login file. The interface includes direct register IO, Register
 R/W operations through named "LED-style" indicators, and monitoring of PCIe
@@ -23,14 +23,14 @@ plugin.
 Server:
  -- serverbase.js: Main HTTPS server file. Performs user authentication and
                    authorization. Translates HTTP GET and POST requests into
-                   DTCDriver.js calls.
- -- DTCDriver.js:  Javascript interface to the C++ DTCInterfaceLib library.
-                   Performs DTC operations and translates results into
+                   CFODriver.js calls.
+ -- CFODriver.js:  Javascript interface to the C++ CFOInterfaceLib library.
+                   Performs CFO operations and translates results into
                    Javascript objects. Has several convienience functions,
                    such as GetRegDump() and GetSend/RecieveStatistics()
- -- DTC.node:      Node.js module built from SWIG-wrapped C++ header file.
-                   Interfaces with the DTC UNIX driver to read and write
-                   DTC registers.
+ -- CFO.node:      Node.js module built from SWIG-wrapped C++ header file.
+                   Interfaces with the CFO UNIX driver to read and write
+                   CFO registers.
  -- gmetric.node:  Node.js module built from SWIG-wrapped send_gmetric library,
                    available in the artdaq-utilities repository. Sends metric
                    data to a local instance of Ganglia.
@@ -50,7 +50,7 @@ Client:
 ===============================================================================
 
 Requires:
-  -- DTC Card with Ron's driver installed. (/dev/mu2e must be accessible)
+  -- CFO Card with Ron's driver installed. (/dev/mu2e must be accessible)
   -- Node.js v10.33 or later (no additional modules required)
 
 Untar in directory of choice. Run `node serverbase.js` to start server.

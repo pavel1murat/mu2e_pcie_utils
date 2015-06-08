@@ -3,7 +3,7 @@
 
 
 function readSystemState() {
-    AjaxPost("/DTC/SystemStatus", null, function (returnValue) {
+    AjaxPost("/CFO/SystemStatus", null, function (returnValue) {
         var status = returnValue;
         $('#path0TXThroughput').val(status.path0.TX.stats.Throughput);
         $('#path0RXThroughput').val(status.path0.RX.stats.Throughput);
@@ -61,7 +61,7 @@ function path0StartStopClicked() {
         txChecker: $('#path0TXChecker').is(":checked"),  
         rxGenerator: $('#path0RXGenerator').is(":checked"),
     };
-    AjaxPost("DTC/TestControl", data, function (returnValue) {
+    AjaxPost("CFO/TestControl", data, function (returnValue) {
         if (returnValue) {
             $("#path0StartStopButton").val("Stop Test");
             path0Test = true;
@@ -81,7 +81,7 @@ function path1StartStopClicked() {
         txChecker: $('#path1TXChecker').is(":checked"),  
         rxGenerator: $('#path1RXGenerator').is(":checked"),
     };
-    AjaxPost("DTC/TestControl", data, function (returnValue) {
+    AjaxPost("CFO/TestControl", data, function (returnValue) {
         if (returnValue) {
             $("#path1StartStopButton").val("Stop Test");
             path1Test = true;
@@ -160,12 +160,12 @@ $(document).ready(function () {
         }
     });
     setInterval(function () { readSystemState() }, 1000);
-    makeGraph("#dma0TX", { dma0TX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA0Transmit" } });
-    makeGraph("#dma0RX", { dma0RX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA0Receive" } });
-    makeGraph("#dma1TX", { dma1TX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA1Transmit" } });
-    makeGraph("#dma1RX", { dma1RX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA1Receive" } });
+    makeGraph("#dma0TX", { dma0TX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/CFO/DMA0Transmit" } });
+    makeGraph("#dma0RX", { dma0RX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/CFO/DMA0Receive" } });
+    makeGraph("#dma1TX", { dma1TX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/CFO/DMA1Transmit" } });
+    makeGraph("#dma1RX", { dma1RX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/CFO/DMA1Receive" } });
     $('.tabs #tab3').show().siblings().hide();
-    makeGraph("#pcieTX", { pcieTX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/PCIeTransmit" } });
-    makeGraph("#pcieRX", { pcieRX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/PCIeReceive" } });
+    makeGraph("#pcieTX", { pcieTX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/CFO/PCIeTransmit" } });
+    makeGraph("#pcieRX", { pcieRX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/CFO/PCIeReceive" } });
     $('.tabs #tab1').show().siblings().hide();
 });

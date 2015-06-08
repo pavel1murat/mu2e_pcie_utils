@@ -1,16 +1,16 @@
-#ifndef DTCLibTest_H
-#define DTCLibTest_H
+#ifndef CFOLibTest_H
+#define CFOLibTest_H
 
-#include "DTC.h"
+#include "CFO.h"
 #include <bitset>
 #include <atomic>
 #include <thread>
 
-namespace DTCLib {
-    class DTCLibTest {
+namespace CFOLib {
+    class CFOLibTest {
     public:
-        DTCLibTest();
-        virtual ~DTCLibTest();
+        CFOLibTest();
+        virtual ~CFOLibTest();
 
         //Test Control
         void startTest(bool regIOEnabled, bool pcieEnabled, bool dmaStateEnabled,
@@ -69,7 +69,7 @@ namespace DTCLib {
         int loopbackFailedTemp_;
 
         // Test Internals
-        DTC* thisDTC_;
+        CFO* thisCFO_;
         int nTests_;
         bool runRegTest_;
         bool runPCIeTest_;
@@ -81,4 +81,4 @@ namespace DTCLib {
         std::thread workerThread_;
     };
 }
-#endif  //ifndef DTCLibTest_H
+#endif  //ifndef CFOLibTest_H

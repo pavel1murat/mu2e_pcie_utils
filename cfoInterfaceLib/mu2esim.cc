@@ -74,7 +74,7 @@ int mu2esim::init()
     registers_[0x9180] = 0x0;        // Timestamp preset to 0
     registers_[0x9184] = 0x0;
     registers_[0x9188] = 0x00002000; // Data pending timeout preset
-    registers_[0x918C] = 0x1;          // NUMDTCs 0 for all rings,except Ring 0 which has 1
+    registers_[0x918C] = 0x1;          // NUMCFOs 0 for all rings,except Ring 0 which has 1
     registers_[0x9190] = 0x0;  // NO FIFO Full flags
     registers_[0x9194] = 0x0;
     registers_[0x9198] = 0x0;

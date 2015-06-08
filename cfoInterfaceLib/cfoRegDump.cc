@@ -4,20 +4,20 @@
 
 #include <iostream>
 #ifndef _WIN32
-# include "dtcInterfaceLib/DTC.h"
+# include "cfoInterfaceLib/CFO.h"
 #else
-# include "DTC.h"
+# include "CFO.h"
 #endif
 
 int main(int argc, char** argv)
 {
-    DTCLib::DTC* thisDTC = new DTCLib::DTC();
+    CFOLib::CFO* thisCFO = new CFOLib::CFO();
 
     if (argc > 1) {
-        std::cout << thisDTC->RegDump() << std::endl;
+        std::cout << thisCFO->RegDump() << std::endl;
         std::cout << std::endl << std::endl;
     }
-    std::cout << thisDTC->ConsoleFormatRegDump() << std::endl;
+    std::cout << thisCFO->ConsoleFormatRegDump() << std::endl;
 
     return 0;
 }

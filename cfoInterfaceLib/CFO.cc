@@ -104,7 +104,7 @@ std::string CFOLib::CFO::RingRegDump(const CFO_Ring_ID& ring, std::string id)
     o << id << ":{\n";
 
     o << "\t\"Enabled\":" << ReadRingEnabled(ring) << ",\n";
-    o << "\t\"DTCCount\":" << ReadRingDTCCount(ring) << ",\n";
+    o << "\t\"CFOCount\":" << ReadRingCFOCount(ring) << ",\n";
     o << "\t\"ResetSERDES\":" << ReadResetSERDES(ring) << ",\n";
     o << "\t\"SERDESLoopback\":" << CFO_SERDESLoopbackModeConverter(ReadSERDESLoopback(ring)) << ",\n";
     o << "\t\"EyescanError\":" << ReadSERDESEyescanError(ring) << ",\n";
@@ -306,14 +306,14 @@ std::string CFOLib::CFO::FormatRegister(const CFO_Register& address)
         o << "| DMA Data Pending Timer      | ";
         o << "0x" << ReadDataPendingTimer();
         break;
-    case CFO_Register_NUMDTCs:
+    case CFO_Register_NUMCFOs:
         o << "| NUMROCs                     | ";
         for (auto r : CFO_Rings) {
             if ((int)r > 0) {
                 o << ", " << std::endl;
                 o << "                                                       | ";
             }
-            o << "Ring " << (int)r << ": " << ReadRingDTCCount(r);
+            o << "Ring " << (int)r << ": " << ReadRingCFOCount(r);
         }
         break;
     case CFO_Register_FIFOFullErrorFlag0:
@@ -550,13 +550,13 @@ CFOLib::CFO_SERDESLoopbackMode CFOLib::CFO::ReadSERDESLoopback(const CFO_Ring_ID
     return static_cast<CFO_SERDESLoopbackMode>(dataSet.to_ulong());
 }
 
-CFOLib::CFO_RingEnableMode CFOLib::CFO::EnableRing(const CFO_Ring_ID& ring, const CFO_RingEnableMode& mode, const int dtcCount)
+CFOLib::CFO_RingEnableMode CFOLib::CFO::EnableRing(const CFO_Ring_ID& ring, const CFO_RingEnableMode& mode, const int cfoCount)
 {
     std::bitset<32> data = ReadRingEnableRegister();
     data[ring] = mode.TransmitEnable;
     data[ring + 8] = mode.ReceiveEnable;
     WriteRingEnableRegister(data.to_ulong());
-    WriteRingDTCCount(ring, dtcCount);
+    WriteRingCFOCount(ring, cfoCount);
     return ReadRingEnabled(ring);
 }
 CFOLib::CFO_RingEnableMode CFOLib::CFO::DisableRing(const CFO_Ring_ID& ring, const CFO_RingEnableMode& mode)
@@ -726,22 +726,22 @@ uint16_t CFOLib::CFO::ReadPacketSize()
     return static_cast<uint16_t>(ReadDMAPacketSizeRegister());
 }
 
-int CFOLib::CFO::WriteRingDTCCount(const CFO_Ring_ID& ring, const int count)
+int CFOLib::CFO::WriteRingCFOCount(const CFO_Ring_ID& ring, const int count)
 {
-    std::bitset<32> ringDTCs = ReadNUMDTCsRegister();
+    std::bitset<32> ringCFOs = ReadNUMCFOsRegister();
 
-    ringDTCs[ring * 3] = count & 1;
-    ringDTCs[ring * 3 + 1] = (count & 2) >> 1;
-    ringDTCs[ring * 3 + 2] = (count & 4) >> 2;
+    ringCFOs[ring * 3] = count & 1;
+    ringCFOs[ring * 3 + 1] = (count & 2) >> 1;
+    ringCFOs[ring * 3 + 2] = (count & 4) >> 2;
 
-    WriteNUMDTCsRegister(ringDTCs.to_ulong());
-    return ReadRingDTCCount(ring);
+    WriteNUMCFOsRegister(ringCFOs.to_ulong());
+    return ReadRingCFOCount(ring);
 }
 
-int CFOLib::CFO::ReadRingDTCCount(const CFO_Ring_ID& ring)
+int CFOLib::CFO::ReadRingCFOCount(const CFO_Ring_ID& ring)
 {
-    std::bitset<32> ringDTCs = ReadNUMDTCsRegister();
-    return ringDTCs[ring * 3] + (ringDTCs[ring * 3 + 1] << 1) + (ringDTCs[ring * 3 + 2] << 2);
+    std::bitset<32> ringCFOs = ReadNUMCFOsRegister();
+    return ringCFOs[ring * 3] + (ringCFOs[ring * 3 + 1] << 1) + (ringCFOs[ring * 3 + 2] << 2);
 }
 
 
