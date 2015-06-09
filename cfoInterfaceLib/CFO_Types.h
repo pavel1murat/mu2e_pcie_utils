@@ -452,7 +452,7 @@ namespace CFOLib
     private:
         bool valid_;
         CFO_Ring_ID ring_;
-        const uint8_t packetType_ = 1;
+        uint8_t packetType_ = 1;
         int hopCount_;
         uint8_t request_[4];
         CFO_Timestamp timestamp_;
@@ -473,6 +473,7 @@ namespace CFOLib
 
         std::string toJSON();
         std::string toPacketFormat();
+
     };
 
     class CFO_SERDESRXDisparityError {

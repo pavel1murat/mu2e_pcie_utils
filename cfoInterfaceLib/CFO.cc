@@ -13,7 +13,7 @@
 # endif
 #endif
 
-CFOLib::CFO::CFO(CFOLib::CFO_SimMode mode) : CFO_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t))), device_(),
+CFOLib::CFO::CFO(CFOLib::CFO_SimMode mode) : device_(),
 rrqbuffer_(nullptr), simMode_(mode),
 first_read_(true), lastReadPtr_(nullptr), nextReadPtr_(nullptr)
 {
@@ -80,8 +80,6 @@ std::string CFOLib::CFO::RegDump()
     o << "\"SystemClock\":" << ReadSystemClock() << ",\n";
     o << "\"TriggerDMALength\":" << ReadTriggerDMATransferLength() << ",\n";
     o << "\"MinDMALength\":" << ReadMinDMATransferLength() << ",\n";
-    o << "\"SERDESOscillatorIICError\":" << ReadSERDESOscillatorIICError() << ",\n";
-    o << "\"SERDESOscillatorInitComplete\":" << ReadSERDESOscillatorInitializationComplete() << ",\n";
     o << "\"DMATimeout\":" << ReadDMATimeoutPreset() << ",\n";
     o << "\"Timestamp\":" << ReadTimestampPreset().GetTimestamp(true) << ",\n";
     o << "\"DataPendingTimer\":" << ReadDataPendingTimer() << ",\n";
@@ -104,7 +102,7 @@ std::string CFOLib::CFO::RingRegDump(const CFO_Ring_ID& ring, std::string id)
     o << id << ":{\n";
 
     o << "\t\"Enabled\":" << ReadRingEnabled(ring) << ",\n";
-    o << "\t\"CFOCount\":" << ReadRingCFOCount(ring) << ",\n";
+    o << "\t\"CFOCount\":" << ReadRingDTCCount(ring) << ",\n";
     o << "\t\"ResetSERDES\":" << ReadResetSERDES(ring) << ",\n";
     o << "\t\"SERDESLoopback\":" << CFO_SERDESLoopbackModeConverter(ReadSERDESLoopback(ring)) << ",\n";
     o << "\t\"EyescanError\":" << ReadSERDESEyescanError(ring) << ",\n";
@@ -307,17 +305,17 @@ std::string CFOLib::CFO::FormatRegister(const CFO_Register& address)
         o << "0x" << ReadDataPendingTimer();
         break;
     case CFO_Register_NUMCFOs:
-        o << "| NUMROCs                     | ";
+        o << "| NUMDTCs                     | ";
         for (auto r : CFO_Rings) {
             if ((int)r > 0) {
                 o << ", " << std::endl;
                 o << "                                                       | ";
             }
-            o << "Ring " << (int)r << ": " << ReadRingCFOCount(r);
+            o << "Ring " << (int)r << ": " << ReadRingDTCCount(r);
         }
         break;
     case CFO_Register_FIFOFullErrorFlag0:
-        o << "| FIFO Full Error Flags 0     | ([DataRequest, ReadoutRequest, CFOLink, OutputData])" << std::endl;
+        o << "| FIFO Full Error Flags 0     | ([DataRequest, ReadoutRequest, OutputData])" << std::endl;
         for (auto r : CFO_Rings) {
             if ((int)r > 0) { o << "," << std::endl; }
             o << "                                                       | ";
@@ -556,7 +554,7 @@ CFOLib::CFO_RingEnableMode CFOLib::CFO::EnableRing(const CFO_Ring_ID& ring, cons
     data[ring] = mode.TransmitEnable;
     data[ring + 8] = mode.ReceiveEnable;
     WriteRingEnableRegister(data.to_ulong());
-    WriteRingCFOCount(ring, cfoCount);
+    WriteRingDTCCount(ring, cfoCount);
     return ReadRingEnabled(ring);
 }
 CFOLib::CFO_RingEnableMode CFOLib::CFO::DisableRing(const CFO_Ring_ID& ring, const CFO_RingEnableMode& mode)
@@ -726,22 +724,22 @@ uint16_t CFOLib::CFO::ReadPacketSize()
     return static_cast<uint16_t>(ReadDMAPacketSizeRegister());
 }
 
-int CFOLib::CFO::WriteRingCFOCount(const CFO_Ring_ID& ring, const int count)
+int CFOLib::CFO::WriteRingDTCCount(const CFO_Ring_ID& ring, const int count)
 {
-    std::bitset<32> ringCFOs = ReadNUMCFOsRegister();
+    std::bitset<32> ringDTCs = ReadNUMDTCsRegister();
 
-    ringCFOs[ring * 3] = count & 1;
-    ringCFOs[ring * 3 + 1] = (count & 2) >> 1;
-    ringCFOs[ring * 3 + 2] = (count & 4) >> 2;
+    ringDTCs[ring * 3] = count & 1;
+    ringDTCs[ring * 3 + 1] = ((count & 2) >> 1) & 1;
+    ringDTCs[ring * 3 + 2] = ((count & 4) >> 2) & 1;
 
-    WriteNUMCFOsRegister(ringCFOs.to_ulong());
-    return ReadRingCFOCount(ring);
+    WriteNUMDTCsRegister(ringDTCs.to_ulong());
+    return ReadRingDTCCount(ring);
 }
 
-int CFOLib::CFO::ReadRingCFOCount(const CFO_Ring_ID& ring)
+int CFOLib::CFO::ReadRingDTCCount(const CFO_Ring_ID& ring)
 {
-    std::bitset<32> ringCFOs = ReadNUMCFOsRegister();
-    return ringCFOs[ring * 3] + (ringCFOs[ring * 3 + 1] << 1) + (ringCFOs[ring * 3 + 2] << 2);
+    std::bitset<32> ringDTCs = ReadNUMDTCsRegister();
+    return ringDTCs[ring * 3] + (ringDTCs[ring * 3 + 1] << 1) + (ringDTCs[ring * 3 + 2] << 2);
 }
 
 

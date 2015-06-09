@@ -162,7 +162,7 @@ void CFOLib::CFOLibTest::doTests()
     std::cout << "DEBUG 1" << std::endl;
     running_ = true;
     // Make sure that the ring is enabled before the tests.
-    thisCFO_->EnableRing(CFO_Ring_0, CFO_RingEnableMode(true,true,false), CFO_ROC_0);
+    thisCFO_->EnableRing(CFO_Ring_0, CFO_RingEnableMode(true,true), 1);
 
     int testCount = 0;
     while (testCount < nTests_ || nTests_ < 0)
@@ -246,7 +246,7 @@ void CFOLib::CFOLibTest::doRegTest()
             std::cout << "Value after: " << ring0New << std::endl;
         }
         // Make sure that the ring is enabled after the test.
-        thisCFO_->EnableRing(CFO_Ring_0,CFO_RingEnableMode(true,true,false), CFO_ROC_0);
+        thisCFO_->EnableRing(CFO_Ring_0,CFO_RingEnableMode(true,true), 1);
         if (ring0New != ring0Value)
         {
             if (printMessages_) {
@@ -308,27 +308,19 @@ void CFOLib::CFOLibTest::doDMAStateTest()
         std::cout << "Test 3: DMA State and Stats" << std::endl;
     }
     try {
-        CFO_DMAState eng0 = thisCFO_->ReadDMAState(CFO_DMA_Engine_DAQ, DTC_DMA_Direction_S2C);
-        CFO_DMAState eng1 = thisCFO_->ReadDMAState(CFO_DMA_Engine_DAQ, DTC_DMA_Direction_C2S);
-        CFO_DMAState eng32 = thisCFO_->ReadDMAState(CFO_DMA_Engine_DCS, DTC_DMA_Direction_S2C);
-        CFO_DMAState eng33 = thisCFO_->ReadDMAState(CFO_DMA_Engine_DCS, DTC_DMA_Direction_C2S);
+        CFO_DMAState eng0 = thisCFO_->ReadDMAState( DTC_DMA_Direction_S2C);
+        CFO_DMAState eng1 = thisCFO_->ReadDMAState( DTC_DMA_Direction_C2S);
 
-        CFO_DMAStats eng0Stats = thisCFO_->ReadDMAStats(CFO_DMA_Engine_DAQ, DTC_DMA_Direction_S2C);
-        CFO_DMAStats eng1Stats = thisCFO_->ReadDMAStats(CFO_DMA_Engine_DAQ, DTC_DMA_Direction_C2S);
-        CFO_DMAStats eng32Stats = thisCFO_->ReadDMAStats(CFO_DMA_Engine_DCS, DTC_DMA_Direction_S2C);
-        CFO_DMAStats eng33Stats = thisCFO_->ReadDMAStats(CFO_DMA_Engine_DCS, DTC_DMA_Direction_C2S);
+        CFO_DMAStats eng0Stats = thisCFO_->ReadDMAStats( DTC_DMA_Direction_S2C);
+        CFO_DMAStats eng1Stats = thisCFO_->ReadDMAStats( DTC_DMA_Direction_C2S);
 
         if (printMessages_) {
             std::cout << "DMA State: " << std::endl
                 << "DAQ Channel, S2C: " << eng0.toString() << std::endl
-                << "DAQ Channel, C2S: " << eng1.toString() << std::endl
-                << "DCS Channel, S2C: " << eng32.toString() << std::endl
-                << "DCS Channel, C2S: " << eng33.toString() << std::endl;
+                << "DAQ Channel, C2S: " << eng1.toString() << std::endl;
             std::cout << "DMA Stats: " << std::endl
                 << "DAQ Channel, S2C: " << eng0Stats.Stats[0].toString() << std::endl
-                << "DAQ Channel, C2S: " << eng1Stats.Stats[0].toString() << std::endl
-                << "DCS Channel, S2C: " << eng32Stats.Stats[0].toString() << std::endl
-                << "DCS Channel, C2S: " << eng33Stats.Stats[0].toString() << std::endl;
+                << "DAQ Channel, C2S: " << eng1Stats.Stats[0].toString() << std::endl;
             std::cout << "Test Passed." << std::endl;
         }
         ++dmaStatePassed_;
@@ -363,7 +355,7 @@ void CFOLib::CFOLibTest::doDCSTest()
             }
             std::cout << std::endl;
         }
-        thisCFO_->DCSRequestReply(CFO_Ring_0, CFO_ROC_0, testData);
+        //thisCFO_->DCSRequestReply(CFO_Ring_0, CFO_ROC_0, testData);
         if (printMessages_) {
             std::cout << "Data out: ";
             for (int i = 0; i < 12; i++)
@@ -397,39 +389,8 @@ void CFOLib::CFOLibTest::doDAQTest()
             std::cout << "Sending Readout Request Packet on Ring 0" << std::endl;
         }
         CFO_Timestamp now = CFO_Timestamp((uint64_t)time(0));
-        thisCFO_->SetMaxROCNumber(CFO_Ring_0, CFO_ROC_0);
-        int retry = 3;
+        thisCFO_->WriteRingDTCCount(CFO_Ring_0, 1);
         bool err = false;
-        do {
-            std::vector<void*> data = thisCFO_->GetData(now);
-            if (data.size() > 0) {
-                if (data.size() > 1) {
-                    if (printMessages_) {
-                        std::cout << "Data array is larger than expected! Cowardly refusing to continue the test." << std::endl;
-                    }
-                    err = true;
-                    ++daqFailed_;
-                    break;
-                }
-                else {
-                    if (printMessages_) {
-                        std::cout << "Dumping data..." << std::endl;
-                    }
-                    int length = CFO_DataHeaderPacket(CFO_DataPacket(data[0])).GetPacketCount();
-                    for (int i = 0; i < length; ++i)
-                    {
-                        for (int j = 0; j < 8; ++j)
-                        {
-                            if (printMessages_) {
-                                std::cout << "0x" << std::setfill('0') << std::setw(4) << std::hex
-                                    << ((uint16_t*)data[0])[i * 8 + j] << std::endl;
-                            }
-                        }
-                    }
-                }
-            }
-            retry--;
-        } while (retry > 0);
         if (err) {
             if (printMessages_) {
                 std::cout << "Test Aborted (fail!)" << std::endl;
@@ -466,41 +427,8 @@ void CFOLib::CFOLibTest::doLoopbackTest()
             std::cout << "Sending Readout Request Packet on Ring 0" << std::endl;
         }
         CFO_Timestamp now = CFO_Timestamp((uint64_t)time(0));
-        thisCFO_->SetMaxROCNumber(CFO_Ring_0, CFO_ROC_0);
-        int retry = 3;
+        thisCFO_->WriteRingDTCCount(CFO_Ring_0, 1);
         bool err = false;
-        do {
-            TRACE(15, "CFOLibTest before thisCFO->GetData");
-            std::vector<void*> data = thisCFO_->GetData(now);
-            TRACE(15, "CFOLibTest after  thisCFO->GetData");
-            if (data.size() > 0) {
-                if (data.size() > 1) {
-                    if (printMessages_) {
-                        std::cout << "Data array is larger than expected! Cowardly refusing to continue the test." << std::endl;
-                    }
-                    err = true;
-                    ++daqFailed_;
-                    break;
-                }
-                else {
-                    if (printMessages_) {
-                        std::cout << "Dumping data..." << std::endl;
-                    }
-                    int length = CFO_DataHeaderPacket(CFO_DataPacket(data[0])).GetPacketCount();
-                    for (int i = 0; i < length; ++i)
-                    {
-                        for (int j = 0; j < 8; ++j)
-                        {
-                            if (printMessages_) {
-                                std::cout << "0x" << std::setfill('0') << std::setw(4) << std::hex
-                                    << ((uint16_t*)data[0])[i * 8 + j] << std::endl;
-                            }
-                        }
-                    }
-                }
-            }
-            retry--;
-        } while (retry > 0);
         if (err) {
             if (printMessages_) {
                 std::cout << "Test Aborted (fail!)" << std::endl;

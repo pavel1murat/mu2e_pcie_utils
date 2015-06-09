@@ -35,11 +35,9 @@ mu2esim::mu2esim()
 
 mu2esim::~mu2esim()
 {
-    for (unsigned ii = 0; ii < MU2E_MAX_CHANNELS; ++ii) {
         for (unsigned jj = 0; jj < SIM_BUFFCOUNT; ++jj) {
-            delete[] dmaData_[ii][jj];
+            delete[] dmaData_[jj];
         }
-    }
 }
 
 int mu2esim::init()
@@ -140,12 +138,9 @@ int mu2esim::init()
    */
 int mu2esim::read_data(void **buffer, int tmo_ms)
 {
-    if (delta_(C2S) == 0) {
+    if (delta_(C2S) == 0 && tmo_ms >= 0) {
         clearBuffer_(false);
-
-        size_t bufferIndex = 0;
-        size_t bufferIndexMax = sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t));
-
+        
     }
 
     TRACE(17, "mu2esim::read_data Setting output buffer to dmaData_[%li]=%p, retsts=%lu", swIdx_, (void*)dmaData_[swIdx_], buffSize_[swIdx_]);
@@ -161,16 +156,16 @@ int mu2esim::write_data(void *buffer, size_t bytes)
     TRACE(17, "mu2esim::write_data start");
     uint32_t worda;
     memcpy(&worda, buffer, sizeof(worda));
-    uint16_t word = static_cast<uint16_t>(worda >> 16);
-    TRACE(17, "mu2esim::write_data worda is 0x%x and word is 0x%x", worda, word);
-    
+    //uint16_t word = static_cast<uint16_t>(worda >> 16);
+    TRACE(17, "mu2esim::write_data worda is 0x%x", worda);
+ 
     return 0;
 }
 
 int mu2esim::read_release(unsigned num)
 {
     //Always succeeds
-    TRACE(17, "mu2esim::read_release: Simulating a release of %u buffers of channel %i", num, chn);
+    TRACE(17, "mu2esim::read_release: Simulating a release of %u buffers of channel %i", num, 0);
     for (unsigned ii = 0; ii < num; ++ii) {
         delete[] dmaData_[swIdx_];
         dmaData_[swIdx_] = (mu2e_databuff_t*)new mu2e_databuff_t();

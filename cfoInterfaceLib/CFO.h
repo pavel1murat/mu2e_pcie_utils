@@ -7,12 +7,13 @@
 #include "mu2edev.hh"
 
 namespace CFOLib {
+    static const int CFO_BUFFSIZE = sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t));
+
     class CFO {
     public:
         CFO(CFO_SimMode mode = CFO_SimMode_Disabled);
         virtual ~CFO() = default;
 
-        const int CFO_BUFFSIZE;
 
         CFO_SimMode ReadSimMode() { return simMode_; }
         CFO_SimMode SetSimMode(CFO_SimMode mode);
@@ -61,10 +62,7 @@ namespace CFOLib {
 
         CFO_SERDESLoopbackMode SetSERDESLoopbackMode(const CFO_Ring_ID& ring, const CFO_SERDESLoopbackMode& mode);
         CFO_SERDESLoopbackMode ReadSERDESLoopback(const CFO_Ring_ID& ring);
-
-        bool ReadSERDESOscillatorIICError();
-        bool ReadSERDESOscillatorInitializationComplete();
-
+        
         CFO_RingEnableMode EnableRing(const CFO_Ring_ID& ring, const CFO_RingEnableMode& mode = CFO_RingEnableMode(), const int cfoCount = 0);
         CFO_RingEnableMode DisableRing(const CFO_Ring_ID& ring, const CFO_RingEnableMode& mode = CFO_RingEnableMode());
         CFO_RingEnableMode ToggleRingEnabled(const CFO_Ring_ID& ring, const CFO_RingEnableMode& mode = CFO_RingEnableMode());
@@ -104,8 +102,8 @@ namespace CFOLib {
         uint32_t WriteReadoutRequestInfoTableSize(uint32_t size);
 
         // Set number of CFOs in a Ring
-        int WriteRingCFOCount(const CFO_Ring_ID& ring, const int count);
-        int ReadRingCFOCount(const CFO_Ring_ID& ring);
+        int WriteRingDTCCount(const CFO_Ring_ID& ring, const int count);
+        int ReadRingDTCCount(const CFO_Ring_ID& ring);
 
         CFO_FIFOFullErrorFlags WriteFIFOFullErrorFlags(const CFO_Ring_ID& ring, const CFO_FIFOFullErrorFlags& flags);
         CFO_FIFOFullErrorFlags ToggleFIFOFullErrorFlags(const CFO_Ring_ID& ring, const CFO_FIFOFullErrorFlags& flags);
@@ -179,8 +177,8 @@ namespace CFOLib {
         uint32_t ReadDMAPacketSizeRegister() { return ReadRegister(CFO_Register_PacketSize); }
         void WriteRRInfoTableSizeRegister(uint32_t data) { return WriteRegister(data, CFO_Register_RRInfoTableSize); }
         uint32_t ReadRRInfoTableSizeRegister() { return ReadRegister(CFO_Register_RRInfoTableSize); }
-        void WriteNUMCFOsRegister(uint32_t data){ WriteRegister(data, CFO_Register_NUMCFOs); }
-        uint32_t ReadNUMCFOsRegister() { return ReadRegister(CFO_Register_NUMCFOs); }
+        void WriteNUMDTCsRegister(uint32_t data){ WriteRegister(data, CFO_Register_NUMCFOs); }
+        uint32_t ReadNUMDTCsRegister() { return ReadRegister(CFO_Register_NUMCFOs); }
         void WriteFIFOFullErrorFlag0Register(uint32_t data){ WriteRegister(data, CFO_Register_FIFOFullErrorFlag0); }
         uint32_t ReadFIFOFullErrorFlag0Register() { return ReadRegister(CFO_Register_FIFOFullErrorFlag0); }
         void WriteFIFOFullErrorFlag1Register(uint32_t data){ WriteRegister(data, CFO_Register_FIFOFullErrorFlag1); }
