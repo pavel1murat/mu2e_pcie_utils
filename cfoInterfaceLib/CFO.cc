@@ -62,6 +62,90 @@ CFOLib::CFO_SimMode CFOLib::CFO::SetSimMode(CFO_SimMode mode)
 //
 // DMA Functions
 //
+void CFOLib::CFO::WriteCFOTable(const CFO_ReadoutRequestTable& input)
+{
+    size_t size = input.size() * sizeof(CFO_ReadoutRequestTableItem) * 2;
+    WriteReadoutRequestInfoTableSize(size);
+    uint8_t* buf = new uint8_t[size];
+    size_t index = 0;
+
+    for (auto i : input)
+    {
+        for (int ring = 0; ring < CFO_RING_COUNT; ++ring) {
+            for (int byte = 0; byte < 4; ++byte) {
+                buf[index] = i.RequestBytes[ring][byte];
+                index++;
+            }
+            index += 4;
+        }
+    }
+
+    device_.write_data(buf, size);
+}
+
+std::vector<CFOLib::CFO_ReadoutRequestPacket> CFOLib::CFO::ReadLoopbackData(int maxCount)
+{
+    std::vector<CFO_ReadoutRequestPacket> output;
+    bool finished = false;
+
+    while (((int)output.size() < maxCount || maxCount < 0) && !finished) 
+    {
+        try {
+            output.push_back(ReadNextLoopbackPacket());
+        }
+        catch (CFO_WrongPacketTypeException ex) {
+            finished = true;
+        }
+    }
+
+    return output;
+}
+CFOLib::CFO_ReadoutRequestPacket&& CFOLib::CFO::ReadNextLoopbackPacket(int tmo_ms)
+{
+    TRACE(19, "CFO::ReadNextLoopbackPacket BEGIN");
+    if (nextReadPtr_ != nullptr) {
+        TRACE(19, "CFO::ReadNextLoopbackPacket BEFORE BUFFER CHECK nextReadPtr_=%p *nextReadPtr_=0x%08x"
+            , (void*)nextReadPtr_, *(unsigned*)nextReadPtr_);
+    }
+    else {
+        TRACE(19, "CFO::ReadNextLoopbackPacket BEFORE BUFFER CHECK nextReadPtr_=nullptr");
+    }
+    // Check if the nextReadPtr has been initialized, and if its pointing to a valid location
+    if (nextReadPtr_ == nullptr || nextReadPtr_ >= (uint8_t*)rrqbuffer_ + sizeof(mu2e_databuff_t) || (*((uint16_t*)nextReadPtr_)) == 0) {
+        if (first_read_) {
+            TRACE(19, "CFO::ReadNextLoopbackPacket: calling device_.release_all");
+            device_.release_all();
+            lastReadPtr_ = nullptr;
+        }
+        TRACE(19, "CFO::ReadNextLoopbackPacket Obtaining new DAQ Buffer");
+        ReadBuffer(tmo_ms); // does return val of type DTCLib::DTC_DataPacket
+        // MUST BE ABLE TO HANDLE daqbuffer_==nullptr OR retry forever?
+        nextReadPtr_ = &(rrqbuffer_[0]);
+        TRACE(19, "CFO::ReadNextLoopbackPacket nextReadPtr_=%p *nextReadPtr_=0x%08x lastReadPtr_=%p"
+            , (void*)nextReadPtr_, *(unsigned*)nextReadPtr_, (void*)lastReadPtr_);
+        if (nextReadPtr_ == lastReadPtr_) {
+            nextReadPtr_ = nullptr;
+            //We didn't actually get a new buffer...this probably means there's no more data
+            throw CFO_WrongPacketTypeException();
+        }
+    }
+    first_read_ = false;
+    //Read the next packet
+    TRACE(19, "CFO::ReadNextLoopbackPacket reading next packet from buffer: nextReadPtr_=%p:", (void*)nextReadPtr_);
+    CFO_ReadoutRequestPacket output = CFO_ReadoutRequestPacket((uint8_t*)nextReadPtr_);
+    TRACE(19, output.toJSON().c_str());
+
+    // Update the packet pointers
+
+    // lastReadPtr_ is easy...
+    lastReadPtr_ = nextReadPtr_;
+
+    // Increment by the size of the packet
+    nextReadPtr_ = (char*)nextReadPtr_ + 16;
+
+    TRACE(19, "CFO::ReadNextLoopbackPacket RETURN");
+    return std::move(output);
+}
 
 //
 // Register IO Functions
@@ -716,12 +800,23 @@ uint32_t CFOLib::CFO::ReadDataPendingTimer()
 }
 int CFOLib::CFO::SetPacketSize(uint16_t packetSize)
 {
-    WriteDMAPacketSizetRegister(0x00000000 + packetSize);
+    WriteDMAPacketSizeRegister(0x00000000 + packetSize);
     return ReadPacketSize();
 }
 uint16_t CFOLib::CFO::ReadPacketSize()
 {
     return static_cast<uint16_t>(ReadDMAPacketSizeRegister());
+}
+
+
+uint32_t CFOLib::CFO::ReadReadoutRequestInfoTableSize()
+{
+    return ReadRRInfoTableSizeRegister();
+}
+uint32_t CFOLib::CFO::WriteReadoutRequestInfoTableSize(uint32_t size)
+{
+    WriteRRInfoTableSizeRegister(size);
+    return ReadReadoutRequestInfoTableSize();
 }
 
 int CFOLib::CFO::WriteRingDTCCount(const CFO_Ring_ID& ring, const int count)
@@ -735,7 +830,6 @@ int CFOLib::CFO::WriteRingDTCCount(const CFO_Ring_ID& ring, const int count)
     WriteNUMDTCsRegister(ringDTCs.to_ulong());
     return ReadRingDTCCount(ring);
 }
-
 int CFOLib::CFO::ReadRingDTCCount(const CFO_Ring_ID& ring)
 {
     std::bitset<32> ringDTCs = ReadNUMDTCsRegister();
@@ -764,7 +858,6 @@ CFOLib::CFO_FIFOFullErrorFlags CFOLib::CFO::WriteFIFOFullErrorFlags(const CFO_Ri
 
     return ReadFIFOFullErrorFlags(ring);
 }
-
 CFOLib::CFO_FIFOFullErrorFlags CFOLib::CFO::ToggleFIFOFullErrorFlags(const CFO_Ring_ID& ring, const CFO_FIFOFullErrorFlags& flags)
 {
     std::bitset<32> data0 = ReadFIFOFullErrorFlag0Register();
@@ -786,7 +879,6 @@ CFOLib::CFO_FIFOFullErrorFlags CFOLib::CFO::ToggleFIFOFullErrorFlags(const CFO_R
 
     return ReadFIFOFullErrorFlags(ring);
 }
-
 CFOLib::CFO_FIFOFullErrorFlags CFOLib::CFO::ReadFIFOFullErrorFlags(const CFO_Ring_ID& ring)
 {
     std::bitset<32> data0 = ReadFIFOFullErrorFlag0Register();

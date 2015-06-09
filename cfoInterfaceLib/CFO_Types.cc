@@ -97,6 +97,21 @@ CFOLib::CFO_ReadoutRequestPacket::CFO_ReadoutRequestPacket(CFO_Ring_ID ring, int
     }
 }
 
+CFOLib::CFO_ReadoutRequestPacket::CFO_ReadoutRequestPacket(uint8_t* data)
+{
+    hopCount_ = data[2] & 0xF;
+    packetType_ = (data[2] & 0xF0) >> 4;
+    ring_ = (CFO_Ring_ID)(data[3] & 0xF);
+    valid_ = ((data[3] & 0x80) == 1);
+    if (packetType_ != 1) { throw CFO_WrongPacketTypeException(); }
+    request_[0] = data[4];
+    request_[1] = data[5];
+    timestamp_ = CFO_Timestamp(&(data[6]));
+    debug_ = ((data[12] & 0x1) == 1);
+    request_[2] = data[14];
+    request_[3] = data[15];
+}
+
 
 std::string CFOLib::CFO_ReadoutRequestPacket::toJSON()
 {

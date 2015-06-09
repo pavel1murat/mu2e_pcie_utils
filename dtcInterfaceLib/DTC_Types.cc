@@ -137,7 +137,7 @@ std::string DTCLib::DTC_DataPacket::toJSON()
     ss << "\"data\": [";
     ss << std::hex << std::setfill('0');
     for (uint16_t ii = 0; ii < dataSize_ - 1; ++ii) {
-      ss << "0x" <<std::setw(2) << (int)dataPtr_[ii] << ",";
+        ss << "0x" << std::setw(2) << (int)dataPtr_[ii] << ",";
     }
     ss << "0x" << std::setw(2) << (int)dataPtr_[dataSize_ - 1] << "]";
     ss << "}";

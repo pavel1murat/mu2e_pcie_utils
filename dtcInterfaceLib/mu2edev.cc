@@ -54,10 +54,10 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode)
                 if (sts != 0) { perror("M_IOC_GET_INFO"); exit(1); }
                 mu2e_channel_info_[chn][dir] = get_info;
                 TRACE(4, "mu2edev::init %u:%u - num=%u size=%u hwIdx=%u, swIdx=%u delta=%u"
-		      , chn, dir
-		      , get_info.num_buffs, get_info.buff_size
-		      , get_info.hwIdx, get_info.swIdx
-		      , mu2e_chn_info_delta_(chn, dir, &mu2e_channel_info_) );
+                    , chn, dir
+                    , get_info.num_buffs, get_info.buff_size
+                    , get_info.hwIdx, get_info.swIdx
+                    , mu2e_chn_info_delta_(chn, dir, &mu2e_channel_info_) );
                 for (unsigned map = 0; map < 2; ++map)
                 {   size_t length = get_info.num_buffs * ((map == MU2E_MAP_BUFF)
                 ? get_info.buff_size
@@ -116,7 +116,7 @@ int mu2edev::read_data(int chn, void **buffer, int tmo_ms)
                 read_release( chn, 1 );
             has_recv_data = mu2e_chn_info_delta_(chn, C2S, &mu2e_channel_info_);
             TRACE(18, "mu2edev::read_data after %u=has_recv_data = delta_( chn, C2S )", has_recv_data);
-	    mu2e_channel_info_[chn][C2S].tmo_ms = tmo_ms; // in case GET_INFO is called
+            mu2e_channel_info_[chn][C2S].tmo_ms = tmo_ms; // in case GET_INFO is called
             if ((has_recv_data > 0)
                 || (   (retsts = ioctl(devfd_, M_IOC_GET_INFO, &mu2e_channel_info_[chn][C2S])) == 0
                 && (has_recv_data = mu2e_chn_info_delta_(chn, C2S, &mu2e_channel_info_)) > 0))
@@ -265,22 +265,22 @@ int mu2edev::write_data(int chn, void *buffer, size_t bytes)
         TRACE(3, "write_loopback_data delta=%u chn=%d dir=S2C", delta, chn);
         if (delta == 0)  // recheck with module
         {   m_ioc_get_info_t get_info;
-	    get_info.chn = chn; get_info.dir = dir; get_info.tmo_ms = 0;
-	    int sts = ioctl(devfd_, M_IOC_GET_INFO, &get_info);
-	    if (sts != 0) { perror("M_IOC_GET_INFO"); exit(1); }
-	    mu2e_channel_info_[chn][dir] = get_info; // copy info struct
-	    delta = mu2e_chn_info_delta_(chn, dir, &mu2e_channel_info_);
+        get_info.chn = chn; get_info.dir = dir; get_info.tmo_ms = 0;
+        int sts = ioctl(devfd_, M_IOC_GET_INFO, &get_info);
+        if (sts != 0) { perror("M_IOC_GET_INFO"); exit(1); }
+        mu2e_channel_info_[chn][dir] = get_info; // copy info struct
+        delta = mu2e_chn_info_delta_(chn, dir, &mu2e_channel_info_);
         }
         if (delta > 0)
         {   unsigned idx = mu2e_channel_info_[chn][dir].swIdx;
-	    void * data = ((mu2e_databuff_t*)(mu2e_mmap_ptrs_[chn][dir][MU2E_MAP_BUFF]))[idx];
-	    memcpy(data, buffer, bytes);
-	    unsigned long arg = (chn << 24) | (bytes & 0xffffff);// THIS OBIVOUSLY SHOULD BE A MACRO
-	    retsts = ioctl(devfd_, M_IOC_BUF_XMIT, arg);
-	    if (retsts != 0) { perror("M_IOC_BUF_GIVE"); exit(1); }
-	    // increment our cached info
-	    mu2e_channel_info_[chn][dir].swIdx
-		= idx_add(mu2e_channel_info_[chn][dir].swIdx, 1, chn, dir);
+        void * data = ((mu2e_databuff_t*)(mu2e_mmap_ptrs_[chn][dir][MU2E_MAP_BUFF]))[idx];
+        memcpy(data, buffer, bytes);
+        unsigned long arg = (chn << 24) | (bytes & 0xffffff);// THIS OBIVOUSLY SHOULD BE A MACRO
+        retsts = ioctl(devfd_, M_IOC_BUF_XMIT, arg);
+        if (retsts != 0) { perror("M_IOC_BUF_GIVE"); exit(1); }
+        // increment our cached info
+        mu2e_channel_info_[chn][dir].swIdx
+            = idx_add(mu2e_channel_info_[chn][dir].swIdx, 1, chn, dir);
         }
 #endif
         return retsts;

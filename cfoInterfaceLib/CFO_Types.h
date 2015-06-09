@@ -13,6 +13,7 @@
 
 namespace CFOLib
 {
+    const int CFO_RING_COUNT = 8;
     const std::string ExpectedDesignVersion = "v1.0_2015-05-12-00";
 
     enum CFO_Register : uint16_t {
@@ -414,6 +415,30 @@ namespace CFOLib
             return "A Timeout occurred while communicating with the CFO";
         }
     };
+    class CFO_WrongPacketTypeException : public std::exception {
+    public:
+        virtual const char* what() const throw()
+        {
+            return "Received something other than a ReadoutRequest packet on DMA Channel 0";
+        }
+    };
+
+    struct CFO_ReadoutRequestTableItem {
+    public:
+        uint8_t RequestBytes[CFO_RING_COUNT][4];
+        CFO_ReadoutRequestTableItem() {
+            memset(RequestBytes, 0, sizeof(RequestBytes));
+        }
+        CFO_ReadoutRequestTableItem(uint8_t* bytes) {
+            for (int ring = 0; ring < CFO_RING_COUNT; ++ring) {
+                for (int byte = 0; byte < 4; ++byte)
+                {
+                    RequestBytes[ring][byte] = bytes[byte];
+                }
+            }
+        }
+    };
+    typedef std::vector<CFO_ReadoutRequestTableItem> CFO_ReadoutRequestTable;
 
     class CFO_Timestamp {
     private:
@@ -461,6 +486,7 @@ namespace CFOLib
     public:
         CFO_ReadoutRequestPacket() : valid_(true), ring_(CFO_Ring_Unused), hopCount_(0), timestamp_(), debug_(true) {}
         CFO_ReadoutRequestPacket(CFO_Ring_ID ring, int hopCount, uint8_t* request, CFO_Timestamp ts_ = CFO_Timestamp(), bool debug = false);
+        CFO_ReadoutRequestPacket(uint8_t* data);
 
         void setDebug(bool debug) { debug_ = debug; }
         bool getDebug() { return debug_; };

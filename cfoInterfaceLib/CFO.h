@@ -21,7 +21,9 @@ namespace CFOLib {
         //
         // DMA Functions
         //
-        void WriteCFOTable();
+        void WriteCFOTable(const CFO_ReadoutRequestTable& input);
+        std::vector<CFO_ReadoutRequestPacket> ReadLoopbackData(int maxCount = -1);
+        CFO_ReadoutRequestPacket&& ReadNextLoopbackPacket(int tmo_ms = 0);
 
         //
         // Register IO Functions
@@ -62,7 +64,7 @@ namespace CFOLib {
 
         CFO_SERDESLoopbackMode SetSERDESLoopbackMode(const CFO_Ring_ID& ring, const CFO_SERDESLoopbackMode& mode);
         CFO_SERDESLoopbackMode ReadSERDESLoopback(const CFO_Ring_ID& ring);
-        
+
         CFO_RingEnableMode EnableRing(const CFO_Ring_ID& ring, const CFO_RingEnableMode& mode = CFO_RingEnableMode(), const int cfoCount = 0);
         CFO_RingEnableMode DisableRing(const CFO_Ring_ID& ring, const CFO_RingEnableMode& mode = CFO_RingEnableMode());
         CFO_RingEnableMode ToggleRingEnabled(const CFO_Ring_ID& ring, const CFO_RingEnableMode& mode = CFO_RingEnableMode());
@@ -173,7 +175,7 @@ namespace CFOLib {
         uint32_t ReadDMATimeoutPresetRegister() { return ReadRegister(CFO_Register_DMATimeoutPreset); }
         void WriteDataPendingTimerRegister(uint32_t data) { WriteRegister(data, CFO_Register_DataPendingTimer); }
         uint32_t ReadDataPendingTimerRegister() { return ReadRegister(CFO_Register_DataPendingTimer); }
-        void WriteDMAPacketSizetRegister(uint32_t data) { WriteRegister(data, CFO_Register_PacketSize); }
+        void WriteDMAPacketSizeRegister(uint32_t data) { WriteRegister(data, CFO_Register_PacketSize); }
         uint32_t ReadDMAPacketSizeRegister() { return ReadRegister(CFO_Register_PacketSize); }
         void WriteRRInfoTableSizeRegister(uint32_t data) { return WriteRegister(data, CFO_Register_RRInfoTableSize); }
         uint32_t ReadRRInfoTableSizeRegister() { return ReadRegister(CFO_Register_RRInfoTableSize); }

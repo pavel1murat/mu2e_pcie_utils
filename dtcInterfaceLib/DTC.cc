@@ -13,7 +13,7 @@
 # endif
 #endif
 
-DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode) : DTC_BUFFSIZE(sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t))), device_(),
+DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode) : device_(),
 daqbuffer_(nullptr), dcsbuffer_(nullptr), simMode_(mode),
 #if LOCAL_NUMROCS
 maxROCs_(),
@@ -301,7 +301,7 @@ DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
         TRACE(19, "DTC::ReadNextDAQPacket BEFORE BUFFER CHECK nextReadPtr_=nullptr");
     }
     // Check if the nextReadPtr has been initialized, and if its pointing to a valid location
-    if (nextReadPtr_ == nullptr || nextReadPtr_ >= daqbuffer_ + sizeof(*daqbuffer_) || *((uint16_t*)nextReadPtr_) == 0) {
+    if (nextReadPtr_ == nullptr || nextReadPtr_ >= (uint8_t*)daqbuffer_ + sizeof(mu2e_databuff_t) || (*((uint16_t*)nextReadPtr_)) == 0) {
         if (first_read_) {
             TRACE(19, "DTC::ReadNextDAQPacket: calling device_.release_all");
             device_.release_all(DTC_DMA_Engine_DAQ);
@@ -341,7 +341,7 @@ DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 DTCLib::DTC_DCSReplyPacket DTCLib::DTC::ReadNextDCSPacket()
 {
     TRACE(19, "DTC::ReadNextDCSPacket BEGIN");
-    if (dcsReadPtr_ == nullptr || dcsReadPtr_ >= dcsbuffer_ + sizeof(*dcsbuffer_) || *((uint16_t*)dcsReadPtr_) == 0) {
+    if (dcsReadPtr_ == nullptr || dcsReadPtr_ >= (uint8_t*)dcsbuffer_ + sizeof(mu2e_databuff_t) || (*((uint16_t*)dcsReadPtr_)) == 0) {
         TRACE(19, "DTC::ReadNextDCSPacket Obtaining new DCS Buffer");
         ReadBuffer(DTC_DMA_Engine_DCS);
         dcsReadPtr_ = &(dcsbuffer_[0]);
@@ -1240,7 +1240,7 @@ uint32_t DTCLib::DTC::ReadDataPendingTimer()
 }
 int DTCLib::DTC::SetPacketSize(uint16_t packetSize)
 {
-    WriteDMAPacketSizetRegister(0x00000000 + packetSize);
+    WriteDMAPacketSizeRegister(0x00000000 + packetSize);
     return ReadPacketSize();
 }
 uint16_t DTCLib::DTC::ReadPacketSize()
@@ -1262,8 +1262,8 @@ DTCLib::DTC_ROC_ID DTCLib::DTC::SetMaxROCNumber(const DTC_Ring_ID& ring, const D
 #else
     int numRocs = (lastRoc == DTC_ROC_Unused) ? 0 : lastRoc + 1;
     ringRocs[ring * 3] = numRocs & 1;
-    ringRocs[ring * 3 + 1] = (numRocs & 2) >> 1;
-    ringRocs[ring * 3 + 2] = (numRocs & 4) >> 2;
+    ringRocs[ring * 3 + 1] = ((numRocs & 2) >> 1) & 1;
+    ringRocs[ring * 3 + 2] = ((numRocs & 4) >> 2) & 1;
 #endif
     WriteNUMROCsRegister(ringRocs.to_ulong());
     return ReadRingROCCount(ring);

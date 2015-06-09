@@ -11,9 +11,10 @@
 
 #define TRACE_NAME "MU2EDEV"
 #ifndef _WIN32
-#include <trace.h>
+# include <trace.h>
 #else
-#define TRACE(...)
+# define TRACE(...)
+# pragma warning(disable: 4351)
 #endif
 #include "mu2esim.hh"
 #include <ctime>
