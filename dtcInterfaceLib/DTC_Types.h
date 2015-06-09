@@ -400,6 +400,22 @@ namespace DTCLib
         DTC_SimMode mode_;
         DTC_SimModeConverter(DTC_SimMode mode) : mode_(mode) {}
         static DTC_SimMode ConvertToSimMode(std::string);
+        std::string toString() {
+            switch (mode_)
+            {
+            case DTC_SimMode_Disabled:
+            default:
+                return "Disabled";
+            case DTC_SimMode_Tracker:
+                return "Tracker";
+            case DTC_SimMode_Calorimeter:
+                return "Calorimeter";
+            case DTC_SimMode_CosmicVeto:
+                return "CosmicVeto";
+            case DTC_SimMode_Hardware:
+                return "Hardware";
+            }
+        }
         friend std::ostream& operator<<(std::ostream& stream, const DTC_SimModeConverter& mode) {
             switch (mode.mode_)
             {
