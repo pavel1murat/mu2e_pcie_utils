@@ -11,9 +11,10 @@
 
 #define TRACE_NAME "MU2EDEV"
 #ifndef _WIN32
-#include <trace.h>
+# include <trace.h>
 #else
-#define TRACE(...)
+# define TRACE(...)
+# pragma warning(disable: 4351)
 #endif
 #include "mu2esim.hh"
 #include <ctime>
@@ -181,7 +182,6 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
         clearBuffer_(chn, false);
 
         size_t bufferIndex = 0;
-        size_t bufferIndexMax = sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t));
 
         if (chn == 0)
         {
@@ -202,12 +202,12 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                 for (int ring = 0; ring <= DTCLib::DTC_Ring_5; ++ring)
                 {
                     auto rrIter = std::find(readoutRequestRecieved_[ring].begin(), readoutRequestRecieved_[ring].end(), ts);
-                    if (rrIter != readoutRequestRecieved_[ring].end() && bufferIndex < bufferIndexMax)
+                    if (rrIter != readoutRequestRecieved_[ring].end() && bufferIndex < DTCLib::DTC_BUFFSIZE)
                     {
                         for (int roc = 0; roc <= DTCLib::DTC_ROC_5; ++roc)
                         {
                             auto drIter = std::find(dataRequestRecieved_[ring][roc].begin(), dataRequestRecieved_[ring][roc].end(), ts);
-                            if (drIter != dataRequestRecieved_[ring][roc].end() && bufferIndex < bufferIndexMax)
+                            if (drIter != dataRequestRecieved_[ring][roc].end() && bufferIndex < DTCLib::DTC_BUFFSIZE)
                             {
                                 TRACE(17, "mu2esim::read_data, DAQ Channel w/Requests recieved");
                                 uint8_t packet[16];
@@ -218,7 +218,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                     if (nSamples <= 5) { nPackets = 1; }
                                     else { nPackets = (nSamples - 6) / 8 + 2; }
                                 }
-                                if (bufferIndex + nPackets + 1 > bufferIndexMax)
+                                if (bufferIndex + nPackets + 1 > DTCLib::DTC_BUFFSIZE)
                                 {
                                     buffSize_[chn][hwIdx_[chn]] = bufferIndex * 16 * sizeof(uint8_t);
                                     bufferIndex = 0;
@@ -229,7 +229,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                 packet[1] = 0;
                                 packet[2] = 0x50 + (roc & 0x0F);
                                 packet[3] = 0x80 + (ring & 0x0F);
-                                packet[4] = nPackets;
+                                packet[4] = (uint8_t)nPackets;
                                 packet[5] = 0;
                                 (*rrIter).GetTimestamp(packet, 6);
                                 packet[12] = 0;
@@ -238,7 +238,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                 packet[15] = 0;
 
                                 TRACE(17, "mu2esim::read_data Copying Data Header packet into buffer, chn=%i, idx=%li, buf=%p, packet=%p, off=%li"
-                                    ,chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)packet, bufferIndex * sizeof(packet));
+                                    , chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)packet, bufferIndex * sizeof(packet));
                                 memcpy((char*)dmaData_[chn][hwIdx_[chn]] + bufferIndex * sizeof(packet), &packet[0], sizeof(packet));
                                 bufferIndex++;
                                 buffSize_[chn][hwIdx_[chn]] = bufferIndex * 16 * sizeof(uint8_t);
@@ -409,7 +409,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                         buffSize_[chn][hwIdx_[chn]] = bufferIndex * 16 * sizeof(uint8_t);
                         dcsRequestRecieved_[ring][roc] = false;
 
-                        if (bufferIndex >= bufferIndexMax) {
+                        if (bufferIndex >= DTCLib::DTC_BUFFSIZE) {
                             bufferIndex = 0;
                             clearBuffer_(chn);
                         }

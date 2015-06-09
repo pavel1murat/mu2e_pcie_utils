@@ -1,0 +1,47 @@
+﻿<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<head>
+    <title>mu2e DAQ Server: CFO Web Interface v0.4</title>
+</head>
+<body>
+
+    <style>
+        html, body {
+            height: 95%;
+        }
+
+        div.menu {
+            float: left;
+            width: 10%;
+            height: 100%;
+        }
+
+        div.mainContent {
+            float: left;
+            width: 89%;
+            height: 100%;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <div class="menu">
+        -
+        <a href="/" title="/CFO/PerfMon.html" onclick="document.getElementById('frame').src = '/CFO/PerfMon.html';return false">CFO Performance Monitor GUI</a><br><br>
+
+        <a href="/" title="/CFO/client.html" onclick="document.getElementById('frame').src = '/CFO/client.html';return false">CFO Register I/O and PCIe Status</a><br><br>
+
+        <a href="/" title="/CFO/DMATest.html" onclick="document.getElementById('frame').src = '/CFO/DMATest.html';return false">CFO Test GUI</a><br><br>
+
+        <a href="/" title="/CFO/DMATest2.html" onclick="document.getElementById('frame').src = '/CFO/DMATest2.html';return false">CFO DMA Packet Input</a><br><br>
+        <a href="/" title="/base/ReadServerLog.html" onclick="document.getElementById('frame').src = '/base/ReadServerLog.html';return false">Read Server Log File</a><br><br>
+
+    </div>
+    <div class="mainContent">
+        <iframe id="frame" src="/CFO/client.html"></iframe>
+    </div>
+</body>
+</html>

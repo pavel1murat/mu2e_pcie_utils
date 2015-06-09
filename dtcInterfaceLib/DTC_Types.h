@@ -13,6 +13,7 @@
 
 namespace DTCLib
 {
+    static const int DTC_BUFFSIZE = sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t));
     const std::string ExpectedDesignVersion = "v1.0_2015-05-12-00";
 
     enum DTC_Register : uint16_t {
