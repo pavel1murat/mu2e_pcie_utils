@@ -1,18 +1,18 @@
-// DTCDriver.js
+// CFODriver.js
 // Author: Eric Flumerfelt, FNAL/RSI
 // Last Modified: March 11, 2015
 // 
-// This module for serverbase.js performs register I/O on the mu2e DTC board
+// This module for serverbase.js performs register I/O on the mu2e CFO board
 
-var dtc = require('./DTC');
-var dtclt = require('./DTCLibTest');
+var cfo = require('./CFO');
+var cfolt = require('./CFOLibTest');
 //var gmetric = require('./gmetric');
 var fs = require('fs');
 var emitter = require('events').EventEmitter;
 
-var DTC = new dtc.DTC();
+var CFO = new cfo.CFO();
 // So that we can send events back to serverbase
-var dtcem = new emitter();
+var cfoem = new emitter();
 // Variables used to store persistent data
 var date = new Date();
 date.setTime(0);
@@ -29,7 +29,7 @@ var send = 0,
     receiveP = 0;
 var regDump = {};
 var systemStatus = {};
-var dmatest = new dtclt.DTCLibTest();
+var dmatest = new cfolt.CFOLibTest();
 
 //
 // Local Functions
@@ -38,15 +38,15 @@ var dmatest = new dtclt.DTCLibTest();
 function logMessage(message, method, name) {
     message = "\n" + new Date().toLocaleString() + " " + name + " " + method + " " + message;
     console.log(message);
-    fs.appendFileSync("/tmp/DTC.log", message);
+    fs.appendFileSync("/tmp/CFO.log", message);
     console.log("Done logging message");
 }
 
 function SendStatistics() {
-    dtcem.GET_Receive();
-    dtcem.GET_Send();
-    //gmetric.send_gmetric("/etc/ganglia/gmond.conf", "PCIe Send Rate", send.toString(), "double", "B/s", "both", 15, 0, "DTC_PCIe", "mu2e DAQ", "PCIe Send Rate", "PCIe Send Rate");
-    //gmetric.send_gmetric("/etc/ganglia/gmond.conf", "PCIe Receive Rate", receive.toString(), "double", "B/s", "both", 15, 0, "DTC_PCIe", "mu2e DAQ", "PCIe Receive Rate", "PCIe Receive Rate");
+    cfoem.GET_Receive();
+    cfoem.GET_Send();
+    //gmetric.send_gmetric("/etc/ganglia/gmond.conf", "PCIe Send Rate", send.toString(), "double", "B/s", "both", 15, 0, "CFO_PCIe", "mu2e DAQ", "PCIe Send Rate", "PCIe Send Rate");
+    //gmetric.send_gmetric("/etc/ganglia/gmond.conf", "PCIe Receive Rate", receive.toString(), "double", "B/s", "both", 15, 0, "CFO_PCIe", "mu2e DAQ", "PCIe Receive Rate", "PCIe Receive Rate");
 };
 
 function readMaxRocs(input, ring) {
@@ -57,7 +57,7 @@ function readMaxRocs(input, ring) {
     input.ROC4Enabled = false;
     input.ROC5Enabled = false;
     
-    var rocs = DTC.ReadRingROCCount(ring);
+    var rocs = CFO.ReadRingROCCount(ring);
     switch (rocs) {
         case 5:
             input.ROC5Enabled = true;
@@ -77,22 +77,22 @@ function readMaxRocs(input, ring) {
 
 function getRegDump() {
     rdTime = new Date();
-    regDump = JSON.parse(DTC.RegDump());
+    regDump = JSON.parse(CFO.RegDump());
     console.log("Done with RegDump");
 }
 
 function startTest(dma, packetSize, loopback, txChecker, rxGenerator) {
-    var test = DTC.StartTest(dma, packetSize, loopback, txChecker, rxGenerator);
+    var test = CFO.StartTest(dma, packetSize, loopback, txChecker, rxGenerator);
     return test.GetState();
 };
 
 function stopTest(dma) {
-    var test = DTC.StopTest(dma);
+    var test = CFO.StopTest(dma);
     return test.GetState();
 };
 
 function getDMAStats(dma, dir) {
-    var stats = DTC.ReadDMAStats(dma, dir);
+    var stats = CFO.ReadDMAStats(dma, dir);
     var output = {};
     //console.log(stats.at(0));
     output.Throughput = stats.at(0).LBR;
@@ -102,7 +102,7 @@ function getDMAStats(dma, dir) {
 }
 
 function getDMAState(dma, dir) {
-    var state = DTC.ReadDMAState(dma, dir);
+    var state = CFO.ReadDMAState(dma, dir);
     var output = {};
     //console.log(state);
     output.BDErrors = state.BDerrs;
@@ -115,7 +115,7 @@ function getDMAState(dma, dir) {
 }
 
 function getPCIeStats() {
-    var stats = DTC.ReadPCIeStats();
+    var stats = CFO.ReadPCIeStats();
     var output = {};
     output.WritesRate = stats.LTX;
     output.ReadsRate = stats.LRX;
@@ -123,7 +123,7 @@ function getPCIeStats() {
 }
 
 function getPCIeState() {
-    var stats = DTC.ReadPCIeState();
+    var stats = CFO.ReadPCIeState();
     var output = {};
     switch (stats.LinkState) {
         case 0:
@@ -176,17 +176,17 @@ function getSystemStatus() {
     var status = {};
     status.path0 = {};
     status.path1 = {};
-    status.path0.TX = getDMAState(dtc.DTC_DMA_Engine_DAQ, dtc.DTC_DMA_Direction_C2S);
-    status.path0.RX = getDMAState(dtc.DTC_DMA_Engine_DAQ, dtc.DTC_DMA_Direction_S2C);
-    status.path1.TX = getDMAState(dtc.DTC_DMA_Engine_DCS, dtc.DTC_DMA_Direction_C2S);
-    status.path1.RX = getDMAState(dtc.DTC_DMA_Engine_DCS, dtc.DTC_DMA_Direction_S2C);
+    status.path0.TX = getDMAState(cfo.CFO_DMA_Engine_DAQ, cfo.DTC_DMA_Direction_C2S);
+    status.path0.RX = getDMAState(cfo.CFO_DMA_Engine_DAQ, cfo.DTC_DMA_Direction_S2C);
+    status.path1.TX = getDMAState(cfo.CFO_DMA_Engine_DCS, cfo.DTC_DMA_Direction_C2S);
+    status.path1.RX = getDMAState(cfo.CFO_DMA_Engine_DCS, cfo.DTC_DMA_Direction_S2C);
     status.pcie = getPCIeState();
     
     systemStatus = status;
 };
 
 function getDMAReadRate(channel) {
-    dtcem.RO_SystemStatus();
+    cfoem.RO_SystemStatus();
     var dmastats = systemStatus.path0.RX.stats;
     if (channel === 1) {
         dmastats = systemStatus.path1.RX.stats;
@@ -195,7 +195,7 @@ function getDMAReadRate(channel) {
 };
 
 function getDMAWriteRate(channel) {
-    dtcem.RO_SystemStatus();
+    cfoem.RO_SystemStatus();
     var dmastats = systemStatus.path0.TX.stats;
     if (channel === 1) {
         dmastats = systemStatus.path1.TX.stats;
@@ -220,16 +220,16 @@ function getDMATestStatus(testStatus) {
         testStatus.loopbackFailed += dmatest.loopbackFailed();
     } else {
         testStatus.testRunning = false;
-        dmatest = new dtclt.DTCLibTest();
+        dmatest = new cfolt.CFOLibTest();
     }
-    dtcem.emit('message', JSON.stringify(testStatus));
+    cfoem.emit('message', JSON.stringify(testStatus));
     return testStatus;
 }
 
 function read(address) {
     var addr = parseInt(address, 16);
     //console.log("Reading " + address);
-    return DTC.RegisterRead(addr);
+    return CFO.RegisterRead(addr);
 };
 
 /* Register Writes have been removed as of v1.0, sorry
@@ -237,7 +237,7 @@ function write(address, value) {
     var addr = parseInt(address, 16);
     var val = parseInt(value, 16);
     console.log("Writing " + val + " to " + addr);
-    dtcem.Err = DTC.WriteRegister(val, addr);
+    cfoem.Err = CFO.WriteRegister(val, addr);
     return read(address);
 };
 */
@@ -246,14 +246,14 @@ function write(address, value) {
 // Master Init Function
 // Runs once on the node.js cluster master
 //
-dtcem.MasterInitFunction = function (workerData) {
+cfoem.MasterInitFunction = function (workerData) {
     //Only the master should log Ganglia metrics
     setInterval(SendStatistics, 15000);
     
     console.log("Setting up log file");
-    if (!fs.existsSync("/tmp/DTC.log")) {
+    if (!fs.existsSync("/tmp/CFO.log")) {
         console.log("Creating new log file");
-        fs.writeFileSync("/tmp/DTC.log", "Log file created at " + new Date().toLocaleString());
+        fs.writeFileSync("/tmp/CFO.log", "Log file created at " + new Date().toLocaleString());
     }
     console.log("Done setting up log");
     var testStatus = {};
@@ -271,99 +271,99 @@ dtcem.MasterInitFunction = function (workerData) {
     testStatus.loopbackFailed = 0;
     testStatus.testRunning = false;
     
-    workerData['DTC'] = testStatus;
+    workerData['CFO'] = testStatus;
 }
 
 
 //
-// libDTCInterface Wrapper Functions
+// libCFOInterface Wrapper Functions
 // RO_: Read-only, any authenticated user can run these
 // RW_: Read-write, only authorized users can run these
-// 2/16/2015: Reordered functions to mimic DTC.h
+// 2/16/2015: Reordered functions to mimic CFO.h
 //
-dtcem.RO_readDesignVersion = function () {
-    return DTC.ReadDesignVersion();
+cfoem.RO_readDesignVersion = function () {
+    return CFO.ReadDesignVersion();
 }
 
-dtcem.RW_resetDTC = function (POST) {
-    DTC.ResetDTC();
-    logMessage("the DTC", "reset", POST.who);
-    return dtcem.RO_readResetDTC();
+cfoem.RW_resetCFO = function (POST) {
+    CFO.ResetCFO();
+    logMessage("the CFO", "reset", POST.who);
+    return cfoem.RO_readResetCFO();
 };
 
-dtcem.RO_readResetDTC = function () {
-    return DTC.ReadResetDTC();
+cfoem.RO_readResetCFO = function () {
+    return CFO.ReadResetCFO();
 };
 
-dtcem.RW_resetSERDESOscillator = function () {
-    DTC.ResetSERDESOscillator();
+cfoem.RW_resetSERDESOscillator = function () {
+    CFO.ResetSERDESOscillator();
     logMessage("the SERDES Oscillator", "reset", POST.who);
-    return dtcem.RO_readResetSERDESOscillator();
+    return cfoem.RO_readResetSERDESOscillator();
 }
 
-dtcem.RO_readResetSERDESOscillator = function () {
-    return DTC.ReadResetSERDESOscillator();
+cfoem.RO_readResetSERDESOscillator = function () {
+    return CFO.ReadResetSERDESOscillator();
 }
 
-dtcem.RW_toggleSERDESOscillatorClock = function () {
-    DTC.ToggleSERDESOscillatorClock();
+cfoem.RW_toggleSERDESOscillatorClock = function () {
+    CFO.ToggleSERDESOscillatorClock();
     logMessage("the SERDES Oscillator Clock Speed", "toggled", POST.who);
-    return dtcem.RO_readSERDESOscillatorClock();
+    return cfoem.RO_readSERDESOscillatorClock();
 }
 
-dtcem.RO_readSERDESOscillatorClock = function () {
-    return DTC.ReadSERDESOscillatorClock();
+cfoem.RO_readSERDESOscillatorClock = function () {
+    return CFO.ReadSERDESOscillatorClock();
 }
 
-dtcem.RW_toggleSystemClock = function () {
-    DTC.ToggleSystemClockEnable();
+cfoem.RW_toggleSystemClock = function () {
+    CFO.ToggleSystemClockEnable();
     logMessage("the System Clock", "toggled", POST.who);
-    return dtcem.RO_readSystemClock();
+    return cfoem.RO_readSystemClock();
 }
 
-dtcem.RO_readSystemClock = function () {
-    return DTC.ReadSystemClock();
+cfoem.RO_readSystemClock = function () {
+    return CFO.ReadSystemClock();
 }
 
-dtcem.RW_toggleTimingEnable = function () {
-    DTC.ToggleTimingEnable();
+cfoem.RW_toggleTimingEnable = function () {
+    CFO.ToggleTimingEnable();
     logMessage("internal timing", "toggled", POST.who);
-    return dtcem.RO_readTimingEnable();
+    return cfoem.RO_readTimingEnable();
 }
 
-dtcem.RO_readTimingEnable = function () {
-    return DTC.ReadTimingEnable();
+cfoem.RO_readTimingEnable = function () {
+    return CFO.ReadTimingEnable();
 }
 
-dtcem.RW_setTriggerDMATransferLength = function (POST) {
-    var val = DTC.SetTriggerDMATransferLength(POST.ring);
+cfoem.RW_setTriggerDMATransferLength = function (POST) {
+    var val = CFO.SetTriggerDMATransferLength(POST.ring);
     logMessage("Trigger DMA Transfer Length to " + POST.ring, "set", POST.who);
     return val;
 }
 
-dtcem.RO_readTriggerDMATransferLength = function () {
-    return DTC.ReadTriggerDMATransferLength();
+cfoem.RO_readTriggerDMATransferLength = function () {
+    return CFO.ReadTriggerDMATransferLength();
 }
 
-dtcem.RW_setMinDMATransferLength = function (POST) {
-    var val = DTC.SetMinDMATransferLength(POST.ring);
+cfoem.RW_setMinDMATransferLength = function (POST) {
+    var val = CFO.SetMinDMATransferLength(POST.ring);
     logMessage("Minimum DMA Transfer Length to " + POST.ring, "set", POST.who);
     return val;
 }
 
-dtcem.RO_readMinDMATransferLength = function () {
-    return DTC.ReadMinDMATransferLength();
+cfoem.RO_readMinDMATransferLength = function () {
+    return CFO.ReadMinDMATransferLength();
 }
 
-dtcem.RW_setSERDESLoopback = function (POST) {
-    var val = DTC.SetSERDESLoopbackMode(parseInt(POST.ring), parseInt(POST.val));
+cfoem.RW_setSERDESLoopback = function (POST) {
+    var val = CFO.SetSERDESLoopbackMode(parseInt(POST.ring), parseInt(POST.val));
     logMessage("SERDES Loopback on ring " + POST.ring + " to " + val, "set", POST.who);
     return val;
 };
 
-dtcem.RO_readSERDESLoopback = function (POST) {
+cfoem.RO_readSERDESLoopback = function (POST) {
     var output = { NEPCS: 0, NEPMA: 0, FEPMA: 0, FEPCS: 0 };
-    switch (DTC.ReadSERDESLoopback(parseInt(POST.ring))) {
+    switch (CFO.ReadSERDESLoopback(parseInt(POST.ring))) {
         case 1:
             output.NEPCS = 1;
             break;
@@ -380,27 +380,27 @@ dtcem.RO_readSERDESLoopback = function (POST) {
     return output;
 };
 
-dtcem.RO_readSERDESOscillatorICCError = function () {
-    return DTC.ReadSERDESOscillatorIICError();
+cfoem.RO_readSERDESOscillatorICCError = function () {
+    return CFO.ReadSERDESOscillatorIICError();
 }
 
-dtcem.RO_readSERDESOScillatorInitializationComplete = function () {
-    return DTC.ReadSERDESOscillatorInitializationComplete();
+cfoem.RO_readSERDESOScillatorInitializationComplete = function () {
+    return CFO.ReadSERDESOscillatorInitializationComplete();
 }
 
-dtcem.RW_toggleROCEmulator = function (POST) {
-    var val = DTC.ToggleROCEmulator(POST.ring);
+cfoem.RW_toggleROCEmulator = function (POST) {
+    var val = CFO.ToggleROCEmulator(POST.ring);
     logMessage("ROC Emulator on ring " + POST.ring + "(" + val + ")", "toggled", POST.who);
     return val;
 }
 
-dtcem.RO_readROCEmulator = function (POST) {
-    return DTC.ReadROCEmulator(POST.ring);
+cfoem.RO_readROCEmulator = function (POST) {
+    return CFO.ReadROCEmulator(POST.ring);
 }
 
-dtcem.RW_toggleRingEnabled = function (POST) {
+cfoem.RW_toggleRingEnabled = function (POST) {
     var id = POST.val;
-    var current = new dtc.DTC_RingEnableMode(false, false, false);
+    var current = new cfo.CFO_RingEnableMode(false, false, false);
     switch (id) {
         case 0:
             current.TransmitEnable = true;
@@ -412,35 +412,35 @@ dtcem.RW_toggleRingEnabled = function (POST) {
             current.TimingEnable = true;
             break;
     }
-    var val = DTC.ToggleRingEnabled(POST.ring, current);
+    var val = CFO.ToggleRingEnabled(POST.ring, current);
     logMessage("Ring Enable bit " + POST.val + " on ring " + POST.ring + " (" + val + ")", "toggled", POST.who);
     return val;
 }
 
-dtcem.RO_readRingEnabled = function (POST) {
+cfoem.RO_readRingEnabled = function (POST) {
     var output = { TransmitEnable: false, ReceiveEnable: false, TimingEnable: false };
-    var enable = DTC.ReadRingEnabled(parseInt(POST.ring));
+    var enable = CFO.ReadRingEnabled(parseInt(POST.ring));
     output.TransmitEnable = enable.TransmitEnable;
     output.ReceiveEnable = enable.ReceiveEnable;
     output.TimingEnable = enable.TimingEnable;
     return output;
 }
 
-dtcem.RW_resetSERDES = function (POST) {
+cfoem.RW_resetSERDES = function (POST) {
     logMessage("the SERDES on ring " + POST.ring, "is resetting", POST.who);
-    return DTC.ResetSERDES(parseInt(POST.ring));
+    return CFO.ResetSERDES(parseInt(POST.ring));
 }
 
-dtcem.RO_readResetSERDES = function (POST) {
-    return DTC.ReadResetSERDES(parseInt(POST.ring));
+cfoem.RO_readResetSERDES = function (POST) {
+    return CFO.ReadResetSERDES(parseInt(POST.ring));
 }
 
-dtcem.RO_readSERDESResetDone = function (POST) {
-    return DTC.ReadResetSERDESDone(parseInt(POST.ring));
+cfoem.RO_readSERDESResetDone = function (POST) {
+    return CFO.ReadResetSERDESDone(parseInt(POST.ring));
 }
 
-dtcem.RO_readSERDESRXDisparity = function (POST) {
-    switch (DTC.ReadSERDESRXDisparityError(parseInt(POST.ring)).GetData(true)) {
+cfoem.RO_readSERDESRXDisparity = function (POST) {
+    switch (CFO.ReadSERDESRXDisparityError(parseInt(POST.ring)).GetData(true)) {
         case 0:
             return { low: 0, high: 0 };
         case 1:
@@ -452,13 +452,13 @@ dtcem.RO_readSERDESRXDisparity = function (POST) {
     }
 }
 
-dtcem.RW_clearSERDESRXDisparity = function (POST) {
-    DTC.ClearSERDESRXDisparityError(parseInt(POST.ring))
+cfoem.RW_clearSERDESRXDisparity = function (POST) {
+    CFO.ClearSERDESRXDisparityError(parseInt(POST.ring))
     return RO_readSERDESRXDisparity(POST);
 }
 
-dtcem.RO_readSERDESRXCharacterError = function (POST) {
-    switch (DTC.ReadSERDESRXCharacterNotInTableError(parseInt(POST.ring)).GetData(true)) {
+cfoem.RO_readSERDESRXCharacterError = function (POST) {
+    switch (CFO.ReadSERDESRXCharacterNotInTableError(parseInt(POST.ring)).GetData(true)) {
         case 0:
             return { low: 0, high: 0 };
         case 1:
@@ -470,34 +470,34 @@ dtcem.RO_readSERDESRXCharacterError = function (POST) {
     }
 }
 
-dtcem.RW_clearSERDESRXCharacterError = function (POST) {
-    DTC.ClearSERDESRXCharacterNotInTableError(parseInt(POST.ring));
+cfoem.RW_clearSERDESRXCharacterError = function (POST) {
+    CFO.ClearSERDESRXCharacterNotInTableError(parseInt(POST.ring));
     return RO_readSREDESRXCharacterError(POST);
 }
 
-dtcem.RO_readSERDESUnlockError = function (POST) {
-    return DTC.ReadSERDESUnlockError(parseInt(POST.ring));
+cfoem.RO_readSERDESUnlockError = function (POST) {
+    return CFO.ReadSERDESUnlockError(parseInt(POST.ring));
 }
 
-dtcem.RW_clearSERDESUnlockError = function (POST) {
-    return DTC.ClearSERDESUnlockError(parseInt(POST.ring));
+cfoem.RW_clearSERDESUnlockError = function (POST) {
+    return CFO.ClearSERDESUnlockError(parseInt(POST.ring));
 }
 
-dtcem.RO_readSERDESPLLLocked = function (POST) {
-    return DTC.ReadSERDESPLLLocked(parseInt(POST.ring));
+cfoem.RO_readSERDESPLLLocked = function (POST) {
+    return CFO.ReadSERDESPLLLocked(parseInt(POST.ring));
 }
 
-dtcem.RO_readSERDESOverflowOrUnderflow = function (POST) {
-    return DTC.ReadSERDESOverflowOrUnderflow(parseInt(POST.ring));
+cfoem.RO_readSERDESOverflowOrUnderflow = function (POST) {
+    return CFO.ReadSERDESOverflowOrUnderflow(parseInt(POST.ring));
 }
 
-dtcem.RO_readSERDESBufferFIFOHalfFull = function (POST) {
-    return DTC.ReadSERDESBufferFIFOHalfFull(parseInt(POST.ring));
+cfoem.RO_readSERDESBufferFIFOHalfFull = function (POST) {
+    return CFO.ReadSERDESBufferFIFOHalfFull(parseInt(POST.ring));
 }
 
-dtcem.RO_readSERDESRXBufferStatus = function (POST) {
+cfoem.RO_readSERDESRXBufferStatus = function (POST) {
     var output = { Nominal: 0, Empty: 0, Full: 0, Underflow: 0, Overflow: 0 };
-    switch (DTC.ReadSERDESRXBufferStatus(parseInt(POST.ring))) {
+    switch (CFO.ReadSERDESRXBufferStatus(parseInt(POST.ring))) {
         case 0:
             output.Nominal = 1;
             break;
@@ -517,12 +517,12 @@ dtcem.RO_readSERDESRXBufferStatus = function (POST) {
     return output;
 }
 
-dtcem.RO_readSERDESRXStatus = function (POST) {
+cfoem.RO_readSERDESRXStatus = function (POST) {
     var output = {
         DataOK: 0, SKPAdded: 0, SKPRemoved: 0, ReceiverDetected: 0, 
         DecodeError: 0, EOverflow: 0, EUnderflow: 0, DisparityError: 0
     };
-    switch (DTC.ReadSERDESRXStatus(parseInt(POST.ring))) {
+    switch (CFO.ReadSERDESRXStatus(parseInt(POST.ring))) {
         case 0:
             output.DataOK = 1;
             break;
@@ -552,85 +552,85 @@ dtcem.RO_readSERDESRXStatus = function (POST) {
     return output;
 }
 
-dtcem.RO_readSERDESEyescanError = function (POST) {
-    return DTC.ReadSERDESEyescanError(parseInt(POST.ring));
+cfoem.RO_readSERDESEyescanError = function (POST) {
+    return CFO.ReadSERDESEyescanError(parseInt(POST.ring));
 }
 
-dtcem.RW_clearSERDESEyescanError = function (POST) {
-    return DTC.ClearSERDESEyescanError(parseInt(POST.ring));
+cfoem.RW_clearSERDESEyescanError = function (POST) {
+    return CFO.ClearSERDESEyescanError(parseInt(POST.ring));
 }
 
-dtcem.RO_readSERDESRXCDRLock = function (POST) {
-    return DTC.ReadSERDESRXCDRLock(parseInt(POST.ring));
+cfoem.RO_readSERDESRXCDRLock = function (POST) {
+    return CFO.ReadSERDESRXCDRLock(parseInt(POST.ring));
 }
 
-dtcem.RW_writeDMATimeoutPreset = function (POST) {
-    var val = DTC.WriteDMATimeoutPreset(POST.ring);
+cfoem.RW_writeDMATimeoutPreset = function (POST) {
+    var val = CFO.WriteDMATimeoutPreset(POST.ring);
     logMessage("DMA Timeout Preset to " + POST.ring, "set", POST.who);
     return val;
 }
 
-dtcem.RO_readDMATimeoutPreset = function () {
-    return DTC.ReadDMATimeoutPreset();
+cfoem.RO_readDMATimeoutPreset = function () {
+    return CFO.ReadDMATimeoutPreset();
 }
 
-dtcem.RW_writeDataPendingTimer = function (POST) {
-    var val = DTC.WriteDataPendingTimer(POST.ring);
+cfoem.RW_writeDataPendingTimer = function (POST) {
+    var val = CFO.WriteDataPendingTimer(POST.ring);
     logMessage("DMA Data Pending Timeout to " + POST.ring, "set", POST.who);
     return val;
 }
 
-dtcem.RO_readDataPendingTimer = function () {
-    return DTC.ReadDataPendingTimer();
+cfoem.RO_readDataPendingTimer = function () {
+    return CFO.ReadDataPendingTimer();
 }
 
-dtcem.RW_setPacketSize = function (POST) {
-    var val = DTC.SetPacketSize(POST.ring);
+cfoem.RW_setPacketSize = function (POST) {
+    var val = CFO.SetPacketSize(POST.ring);
     logMessage("DMA Packet Size to " + POST.ring, "set", POST.who);
     return val;
 }
 
-dtcem.RO_readPacketSize = function () {
-    return DTC.ReadPacketSize();
+cfoem.RO_readPacketSize = function () {
+    return CFO.ReadPacketSize();
 }
 
-dtcem.RO_readFIFOFlags = function (POST) {
-    return DTC.ReadFIFOFullErrorFlags(parseInt(POST.ring));
+cfoem.RO_readFIFOFlags = function (POST) {
+    return CFO.ReadFIFOFullErrorFlags(parseInt(POST.ring));
 }
 
-dtcem.RW_SetFIFOFlags = function (POST) {
+cfoem.RW_SetFIFOFlags = function (POST) {
     var activeFlag = POST.id;
-    var flags = new dtc.DTC_FIFOFullErrorFlags();
+    var flags = new cfo.CFO_FIFOFullErrorFlags();
     flags[activeFlag] = true;
-    return DTC.ToggleFIFOFullErrorFlags(parseInt(POST.ring), flags);
+    return CFO.ToggleFIFOFullErrorFlags(parseInt(POST.ring), flags);
 }
 
-dtcem.RW_setTimestampPreset = function (POST) {
-    var ts = DTC.WriteTimestampPreset(new dtc.DTC_Timestamp(parseInt(parseInt(POST.ring), 16)));
+cfoem.RW_setTimestampPreset = function (POST) {
+    var ts = CFO.WriteTimestampPreset(new cfo.CFO_Timestamp(parseInt(parseInt(POST.ring), 16)));
     logMessage("the timestamp preset (" + ts.GetTimestamp(true) + ")", "set", POST.who);
     return ts.GetTimestamp(true);
 }
 
-dtcem.RO_readTimestampPreset = function () {
-    return DTC.ReadTimestampPreset().GetTimestamp(true);
+cfoem.RO_readTimestampPreset = function () {
+    return CFO.ReadTimestampPreset().GetTimestamp(true);
 }
 
-dtcem.RO_readFPGAPROMProgramFIFOFull = function () {
-    return DTC.ReadFPGAPROMProgramFIFOFull();
+cfoem.RO_readFPGAPROMProgramFIFOFull = function () {
+    return CFO.ReadFPGAPROMProgramFIFOFull();
 }
 
-dtcem.RO_readFPGAPROMReady = function () {
-    return DTC.ReadFPGAPROMReady();
+cfoem.RO_readFPGAPROMReady = function () {
+    return CFO.ReadFPGAPROMReady();
 }
 
-dtcem.RO_readFPGACoreAccessFIFOFull = function () {
-    return DTC.ReadFPGACoreAccessFIFOFull();
+cfoem.RO_readFPGACoreAccessFIFOFull = function () {
+    return CFO.ReadFPGACoreAccessFIFOFull();
 }
 
-dtcem.RW_setSimMode = function (POST) {
+cfoem.RW_setSimMode = function (POST) {
     var mode = POST.id;
     var output = {Disabled:0,Tracker:0,Calorimeter:0,CosmicVeto:0,Hardware:0};
-    var modeOut = DTC.SetSimMode(mode);
+    var modeOut = CFO.SetSimMode(mode);
     if(modeOut == 0) { output.Disabled = 1;}
     if(modeOut == 1) { output.Tracker = 1; }
     if (modeOut == 2) { output.Calorimeter = 1; }
@@ -643,7 +643,7 @@ dtcem.RW_setSimMode = function (POST) {
 //
 // Other Functions
 //
-dtcem.RO_regDump = function () {
+cfoem.RO_regDump = function () {
     if (rdTime.getTime() + 1000 < new Date().getTime()) {
         console.log("Getting new regDump");
         getRegDump();
@@ -651,9 +651,9 @@ dtcem.RO_regDump = function () {
     
     return regDump;
 };
-dtcem.RW_regDump = function () { return dtcem.RO_regDump(); }
+cfoem.RW_regDump = function () { return cfoem.RO_regDump(); }
 
-dtcem.RO_SystemStatus = function () {
+cfoem.RO_SystemStatus = function () {
     if (ssTime.getTime() + 1000 < new Date().getTime()) {
         console.log("Getting new SystemStatus");
         getSystemStatus();
@@ -663,13 +663,13 @@ dtcem.RO_SystemStatus = function () {
     return systemStatus;
 }
 
-dtcem.RO_ReadLog = function () {
-    console.log("Reading DTC log file");
-    var logContent = "" + fs.readFileSync("/tmp/DTC.log");
+cfoem.RO_ReadLog = function () {
+    console.log("Reading CFO log file");
+    var logContent = "" + fs.readFileSync("/tmp/CFO.log");
     return logContent;
 };
 
-dtcem.RO_RegIO = function (POST) {
+cfoem.RO_RegIO = function (POST) {
     console.log("In RO Register IO handler");
     if (POST.option === "write") {
         throw new TypeError("Unauthorized Access Attempt!");
@@ -678,13 +678,13 @@ dtcem.RO_RegIO = function (POST) {
     return read(POST.address).toString(16);
 }
 
-dtcem.RW_WriteLog = function (POST) {
+cfoem.RW_WriteLog = function (POST) {
     logMessage(parseInt(POST.ring), "says", POST.who);
     res.end(readLog());
     console.log("Done sending log message reply");
 }
 
-dtcem.RW_StartDMATest = function (POST, testStatus) {
+cfoem.RW_StartDMATest = function (POST, testStatus) {
     console.log("Starting DMA I/O Test");
     console.log(POST);
     var regEnabled = POST.reg === 'true' ? true : false;
@@ -700,7 +700,7 @@ dtcem.RW_StartDMATest = function (POST, testStatus) {
     return getDMATestStatus(testStatus);
 }
 
-dtcem.RW_ResetTestStatus = function (POST, testStatus) {
+cfoem.RW_ResetTestStatus = function (POST, testStatus) {
     if (dmatest !== null && dmatest.isRunning()) {
         dmatest.stopTests();
         while (testStatus.testRunning) {
@@ -723,7 +723,7 @@ dtcem.RW_ResetTestStatus = function (POST, testStatus) {
     return getDMATestStatus(testStatus);
 }
 
-dtcem.RW_StopDMATest = function (POST, testStatus) {
+cfoem.RW_StopDMATest = function (POST, testStatus) {
     if (dmatest !== null) {
         dmatest.stopTests();
     }
@@ -733,38 +733,38 @@ dtcem.RW_StopDMATest = function (POST, testStatus) {
     return testStatus;
 }
 
-dtcem.RW_DMAIO = function (POST, testStatus) {
+cfoem.RW_DMAIO = function (POST, testStatus) {
     //console.log(POST);
     var packets = JSON.parse(POST.packets);
     var readDaq = false;
     var readDcs = false;
-    var timestamp = dtc.new_u8array(6);
+    var timestamp = cfo.new_u8array(6);
     
     console.log("packets.length: " + packets.length);
     for (var i = 0; i < packets.length; i++) {
         switch (packets[i].type) {
             case 0://DCS Request
                 console.log("Packet type DCS");
-                var data = dtc.new_u8array(12);
-                for (var j = 0; j < 12; j++) { dtc.u8array_setitem(data, j, packets[i].data[j]); }
-                var packet = new dtc.DTC_DCSRequestPacket(packets[i].ringID, packets[i].hopCount, data);
-                DTC.WriteDMADCSPacket(packet);
+                var data = cfo.new_u8array(12);
+                for (var j = 0; j < 12; j++) { cfo.u8array_setitem(data, j, packets[i].data[j]); }
+                var packet = new cfo.CFO_DCSRequestPacket(packets[i].ringID, packets[i].hopCount, data);
+                CFO.WriteDMADCSPacket(packet);
                 readDcs = true;
                 console.log("Done");
                 break;
             case 1:// Readout Request
                 console.log("Packet type Readout Request");
-                for (var j = 0; j < 6; j++) { dtc.u8array_setitem(timestamp, j, packets[i].timestamp[j]); }
-                var packet = new dtc.DTC_ReadoutRequestPacket(packets[i].ringID, new dtc.DTC_Timestamp(timestamp), packets[i].hopCount);
-                DTC.WriteDMADAQPacket(packet);
+                for (var j = 0; j < 6; j++) { cfo.u8array_setitem(timestamp, j, packets[i].timestamp[j]); }
+                var packet = new cfo.CFO_ReadoutRequestPacket(packets[i].ringID, new cfo.CFO_Timestamp(timestamp), packets[i].hopCount);
+                CFO.WriteDMADAQPacket(packet);
                 readDaq = true;
                 console.log("Done");
                 break;
             case 2:// Data Request
                 console.log("Packet type Data Request");
-                for (var j = 0; j < 6; j++) { dtc.u8array_setitem(timestamp, j, packets[i].timestamp[j]); }
-                var packet = new dtc.DTC_DataRequestPacket(packets[i].ringID, packets[i].hopCount, new dtc.DTC_Timestamp(timestamp));
-                DTC.WriteDMADAQPacket(packet);
+                for (var j = 0; j < 6; j++) { cfo.u8array_setitem(timestamp, j, packets[i].timestamp[j]); }
+                var packet = new cfo.CFO_DataRequestPacket(packets[i].ringID, packets[i].hopCount, new cfo.CFO_Timestamp(timestamp));
+                CFO.WriteDMADAQPacket(packet);
                 readDaq = true;
                 console.log("Done");
                 break;
@@ -774,26 +774,26 @@ dtcem.RW_DMAIO = function (POST, testStatus) {
     var res = "";
     if (readDaq) {
         console.log("Reading DAQ Response");
-        var daqResponse = DTC.GetJSONData(new dtc.DTC_Timestamp(timestamp));
+        var daqResponse = CFO.GetJSONData(new cfo.CFO_Timestamp(timestamp));
         res += daqResponse + "\n";
     }
     if (readDcs) {
         console.log("Reading DCS Response");
-        res += DTC.ReadNextDCSPacket().toJSON();
+        res += CFO.ReadNextDCSPacket().toJSON();
     }
     console.log("Result is " + res);
     return res;
 
 }
 
-dtcem.RW_setMaxROC = function (POST) {
-    DTC.SetMaxROCNumber(parseInt(POST.ring), parseInt(POST.val));
+cfoem.RW_setMaxROC = function (POST) {
+    CFO.SetMaxROCNumber(parseInt(POST.ring), parseInt(POST.val));
     logMessage("Max ROC on ring " + POST.ring + " to " + POST.val, "set", POST.who);
     return 1;
 }
 
 /* Script handler removed as of v1.0, sorry...
-dtcem.RW_RunScript = function (POST) {
+cfoem.RW_RunScript = function (POST) {
     console.log("In Script handler");
     
     var success = true;
@@ -816,14 +816,14 @@ dtcem.RW_RunScript = function (POST) {
     else {
         logMessage("the script had an error!", "noticed that", POST.who);
         status = "Script did not run successfully!!!";
-        console.log("DTC Error Status: " + dtcem.Err);
+        console.log("CFO Error Status: " + cfoem.Err);
     }
     
     return status;
 }
 */
 
-dtcem.RW_TestControl = function (POST) {
+cfoem.RW_TestControl = function (POST) {
     console.log("Starting or Stopping a DMA test");
     var dma = POST.dma;
     var started = POST.started;
@@ -843,10 +843,10 @@ dtcem.RW_TestControl = function (POST) {
 }
 
 /* Register writing removed as of v1.0, sorry
-dtcem.RW_RegIO = function (POST) {
+cfoem.RW_RegIO = function (POST) {
     console.log("In RO Register IO handler");
     if (POST.option === "read") {
-        return dtcem.RO_RegIO(POST);
+        return cfoem.RO_RegIO(POST);
     }
     
     logMessage(POST.value.toString(16) + " to " + POST.address.toString(16), "wrote", POST.who);
@@ -862,7 +862,7 @@ dtcem.RW_RegIO = function (POST) {
 // Get data in json form for d3 graphs
 // Format: { value:, time:, name: }
 //
-dtcem.GET_Send = function () {
+cfoem.GET_Send = function () {
     if (sTime.getTime() + 800 < new Date().getTime()) {
         send = (read("0x900C") & 0xFFFFFFFC) >>> 0;
         sTime = new Date();
@@ -871,7 +871,7 @@ dtcem.GET_Send = function () {
     return { name: "send", value: send, time: new Date() };
 }
 
-dtcem.GET_Receive = function () {
+cfoem.GET_Receive = function () {
     if (rTime.getTime() + 800 < new Date().getTime()) {
         receive = (read("0x9010") & 0xFFFFFFFC) >>> 0;
         rTime = new Date();
@@ -880,7 +880,7 @@ dtcem.GET_Receive = function () {
     return { name: "receive", value: receive, time: new Date() };
 }
 
-dtcem.GET_SPayload = function () {
+cfoem.GET_SPayload = function () {
     if (spTime.getTime() + 800 < new Date().getTime()) {
         sendP = (read("0x9014") & 0xFFFFFFFC) >>> 0;
         
@@ -890,7 +890,7 @@ dtcem.GET_SPayload = function () {
     return { name: "spayload", value: sendP, time: new Date() };
 }
 
-dtcem.GET_RPayload = function () {
+cfoem.GET_RPayload = function () {
     if (rpTime.getTime() + 800 < new Date().getTime()) {
         receiveP = (read("0x9018") & 0xFFFFFFFC) >>> 0;
         rpTime = new Date();
@@ -899,33 +899,33 @@ dtcem.GET_RPayload = function () {
     return { name: "rpayload", value: receiveP, time: new Date() };
 }
 
-dtcem.GET_PCIeTransmit = function () {
-    dtcem.RO_SystemStatus();
+cfoem.GET_PCIeTransmit = function () {
+    cfoem.RO_SystemStatus();
     return { name: "pcieTX", value: systemStatus.pcie.stats.WritesRate, time: new Date() };
 };
 
-dtcem.GET_PCIeReceive = function () {
-    dtcem.RO_SystemStatus();
+cfoem.GET_PCIeReceive = function () {
+    cfoem.RO_SystemStatus();
     return { name: "pcieRX", value: systemStatus.pcie.stats.ReadsRate, time: new Date() };
 };
 
-dtcem.GET_DMA0Transmit = function () {
+cfoem.GET_DMA0Transmit = function () {
     return { name: "dma0TX", value: getDMAWriteRate(0), time: new Date() };
 };
 
-dtcem.GET_DMA0Receive = function () {
+cfoem.GET_DMA0Receive = function () {
     return { name: "dma0RX", value: getDMAReadRate(0), time: new Date() };
 };
 
-dtcem.GET_DMA1Transmit = function () {
+cfoem.GET_DMA1Transmit = function () {
     return { name: "dma1TX", value: getDMAWriteRate(1), time: new Date() };
 };
 
-dtcem.GET_DMA1Receive = function () {
+cfoem.GET_DMA1Receive = function () {
     return { name: "dma1RX", value: getDMAReadRate(1), time: new Date() };
 };
 
-dtcem.GET_DMATestStatistics = function (testStatus) {
+cfoem.GET_DMATestStatistics = function (testStatus) {
     getDMATestStatus(testStatus);
     //console.log("In GET_DMATestStatistics");
     //console.log(testStatus);
@@ -944,5 +944,5 @@ dtcem.GET_DMATestStatistics = function (testStatus) {
 // A function that puts the emitter into the given array
 //
 module.exports = function (module_holder) {
-    module_holder["DTC"] = dtcem;
+    module_holder["CFO"] = cfoem;
 };

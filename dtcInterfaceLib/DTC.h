@@ -14,8 +14,6 @@ namespace DTCLib {
         DTC(DTC_SimMode mode = DTC_SimMode_Disabled);
         virtual ~DTC() = default;
 
-        const int DTC_BUFFSIZE;
-
         DTC_SimMode ReadSimMode() { return simMode_; }
         DTC_SimMode SetSimMode(DTC_SimMode mode);
 
@@ -39,7 +37,7 @@ namespace DTCLib {
         void WriteDMADCSPacket(const DTC_DMAPacket& packet);
         template<typename PacketType>
         PacketType ReadDMAPacket_OLD(const DTC_DMA_Engine& channel);
-        DTC_DataHeaderPacket ReadNextDAQPacket();
+        DTC_DataHeaderPacket ReadNextDAQPacket(int tmo_ms = 0);
         DTC_DCSReplyPacket ReadNextDCSPacket();
         void ReleaseAllBuffers(const DTC_DMA_Engine& channel) { device_.release_all(channel); }
 
@@ -49,6 +47,8 @@ namespace DTCLib {
         std::string RegDump();
         std::string RingRegDump(const DTC_Ring_ID& ring, std::string id);
         std::string CFORegDump();
+        std::string ConsoleFormatRegDump();
+        std::string FormatRegister(const DTC_Register& address);
         std::string RegisterRead(const DTC_Register& address);
 
         std::string ReadDesignVersion();
@@ -142,6 +142,7 @@ namespace DTCLib {
 
         void ReloadFPGAFirmware();
         bool ReadFPGACoreAccessFIFOFull();
+        bool ReadFPGACoreAccessFIFOEmpty();
 
         //
         // PCIe/DMA Status and Performance
@@ -157,7 +158,7 @@ namespace DTCLib {
         DTC_PCIeStat ReadPCIeStats();
 
     private:
-        DTC_DataPacket ReadBuffer(const DTC_DMA_Engine& channel);
+        DTC_DataPacket ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms = 0);
         void WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPacket& packet);
         void WriteDMAPacket(const DTC_DMA_Engine& channel, const DTC_DMAPacket& packet);
 
@@ -201,8 +202,8 @@ namespace DTCLib {
         uint32_t ReadDMATimeoutPresetRegister() { return ReadRegister(DTC_Register_DMATimeoutPreset); }
         void WriteDataPendingTimerRegister(uint32_t data) { WriteRegister(data, DTC_Register_DataPendingTimer); }
         uint32_t ReadDataPendingTimerRegister() { return ReadRegister(DTC_Register_DataPendingTimer); }
-        void WriteDMAPacketSizetRegister(uint32_t data) { WriteRegister(data, DTC_Register_DMATransferLength); }
-        uint32_t ReadDMAPacketSizeRegister() { return ReadRegister(DTC_Register_DMATransferLength); }
+        void WriteDMAPacketSizeRegister(uint32_t data) { WriteRegister(data, DTC_Register_PacketSize); }
+        uint32_t ReadDMAPacketSizeRegister() { return ReadRegister(DTC_Register_PacketSize); }
         void WriteNUMROCsRegister(uint32_t data){ WriteRegister(data, DTC_Register_NUMROCs); }
         uint32_t ReadNUMROCsRegister() { return ReadRegister(DTC_Register_NUMROCs); }
         void WriteFIFOFullErrorFlag0Register(uint32_t data){ WriteRegister(data, DTC_Register_FIFOFullErrorFlag0); }

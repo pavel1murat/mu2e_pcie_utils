@@ -13,6 +13,7 @@
 #include <linux/delay.h>	/* msleep */
 #include <linux/wait.h>		/* wait_event_interruptible_timeout */
 #include <linux/jiffies.h>	/* msec_to_jiffies */
+#include <linux/interrupt.h>	/* request_irq */
 #include <asm/uaccess.h>	/* access_ok, copy_to_user */
 
 #include "xdma_hw.h"		/* struct BuffDesc */
@@ -68,7 +69,23 @@ u32 SWrate[MAX_DMA_ENGINES];
 //////////////////////////////////////////////////////////////////////////////
 /* forward decl */
 static int ReadPCIState(struct pci_dev * pdev, m_ioc_pcistate_t * pcistate);
-//////////////////////////////////////////////////////////////////////////////
+
+
+
+
+static irqreturn_t DmaInterrupt(int irq, void *dev_id)
+{
+    struct pci_dev *dev = dev_id;
+
+    /* Handle DMA and any user interrupts */
+# if 0
+    if(IntrCheck(dev) == XST_SUCCESS)
+        return IRQ_HANDLED;
+    else
+#endif
+        return IRQ_NONE;
+}
+
 
 
 
@@ -789,6 +806,16 @@ static int __init init_mu2e(void)
 		  , 0x9204, 0x00000010 ); // set ring packet size
 
     ret = mu2e_event_up();
+
+# if 0
+    ret = request_irq( mu2e_pci_dev->irq, DmaInterrupt, IRQF_SHARED, "xdma", mu2e_pci_dev );
+    if(ret)
+    {
+        printk(KERN_ERR "xdma could not allocate interrupt %d\n", mu2e_pci_dev->irq);
+        printk(KERN_ERR "Unload driver and try running with polled mode instead\n");
+    }
+# endif
+
     return (ret);
 
  out:
