@@ -92,8 +92,8 @@ std::string DTCLib::DTC_Timestamp::toPacketFormat()
 DTCLib::DTC_DataPacket::DTC_DataPacket()
 {
     memPacket_ = false;
-    dataPtr_ = new uint8_t[16]; // current min. dma length is 64 bytes
-    dataSize_ = 16;
+    dataPtr_ = new uint8_t[64]; // current min. dma length is 64 bytes
+    dataSize_ = 64;
 }
 
 DTCLib::DTC_DataPacket::~DTC_DataPacket()
