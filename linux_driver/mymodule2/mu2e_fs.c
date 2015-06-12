@@ -58,6 +58,8 @@ int mu2e_fs_up()
 
     sts = cdev_add ( &mu2e_cdev, mu2e_dev_number, 1 );
     device_create( mu2e_dev_class, NULL, mu2e_dev_number, NULL, MU2E_DEV_FILE );
+    // NOTE: permissions set -- use udev - i.e:
+    // echo 'KERNEL=="mu2e", MODE="0666"' >/etc/udev/rules.d/98-mu2e.rules
 
     return (0);
 }   // mu2e_fs
