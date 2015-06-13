@@ -104,8 +104,8 @@ static struct pci_device_id xilinx_ids[] = {
 static struct pci_driver devl_driver =
     {   .name     = DRIVER_NAME,
         .id_table = xilinx_ids,
-        .probe    =             devl_pci_probe,
-        .remove   = __devexit_p(devl_pci_remove)
+        .probe    = devl_pci_probe,
+        .remove   = devl_pci_remove
     };
 
 void devl_pci_down( void )
