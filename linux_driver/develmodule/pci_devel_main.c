@@ -70,7 +70,7 @@ static int devl_pci_probe( struct pci_dev *pdev, const struct pci_device_id *ent
         return (pciRet);
     }
 
-    pciRet = pci_set_dma_mask( pdev, DMA_32BIT_MASK );
+    pciRet = pci_set_dma_mask( pdev, DMA_BIT_MASK(32) );
     if (pciRet < 0)
     {   TRACE( 0, KERN_ERR "pci_set_dma_mask failed." );
         goto out2;

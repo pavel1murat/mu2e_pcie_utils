@@ -115,7 +115,7 @@ static int __devinit mu2e_pci_probe(  struct pci_dev             *pdev
         return (pciRet);
     }
 
-    pciRet = pci_set_dma_mask( pdev, DMA_32BIT_MASK );
+    pciRet = pci_set_dma_mask( pdev, DMA_BIT_MASK(32) );
     if (pciRet < 0)
     {   printk( KERN_ERR "pci_set_dma_mask failed\n" );
 	goto out2;
