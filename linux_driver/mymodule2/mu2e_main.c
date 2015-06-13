@@ -18,8 +18,8 @@
 
 #include "xdma_hw.h"		/* struct BuffDesc */
 
-#include "trace.h"	/* TRACE */
-#include "mu2e_fs.h"
+#include "trace.h"		/* TRACE */
+#include "mu2e_fs.h"		/* mu2e_ioctl prototype */
 #include "mu2e_pci.h"		/* bar_info_t, extern mu2e_pci*  */
 #include "mu2e_event.h"
 #include "mu2e_mmap_ioctl.h"
@@ -110,8 +110,8 @@ int mu2e_mmap( struct file *file, struct vm_area_struct *vma )
     return (0);
 }   // mu2e_mmap
 
-int mu2e_ioctl(  struct inode *inode, struct file *filp
-	       , unsigned int cmd, unsigned long arg )
+int mu2e_ioctl(  IOCTL_ARGS(  struct inode *inode, struct file *filp
+			    , unsigned int cmd,    unsigned long arg ) )
 {
 	int			retval=0;
 	unsigned long		base;

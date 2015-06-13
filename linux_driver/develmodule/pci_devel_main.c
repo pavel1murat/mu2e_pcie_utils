@@ -15,6 +15,7 @@
 #include <linux/pci.h>          /* struct pci_dev *pci_get_device */
 #include <linux/delay.h>	/* msleep */
 #include <asm/uaccess.h>	/* access_ok, copy_to_user */
+#include <linux/version.h>      /* KERNEL_VERSION */
 
 #include "trace.h"	/* TRACE */
 
@@ -24,6 +25,13 @@
 #define XILINX_VENDOR_ID 0x10ee
 #define XILINX_DEVICE_ID 0x7042
 
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,39)
+# define IOCTL_ARGS( inode, filep, cmd, arg ) inode, filep, cmd, arg
+# define IOCTL_FILE_OPS_MEMBER ioctl
+#else
+# define IOCTL_ARGS( inode, filep, cmd, arg )        filep, cmd, arg
+# define IOCTL_FILE_OPS_MEMBER compat_ioctl
+#endif
 
 /* GLOBALS */
 
@@ -126,8 +134,8 @@ void devl_pci_down( void )
 
 
 
-int devl_ioctl(  struct inode *inode, struct file *filp
-	       , unsigned int cmd, unsigned long arg )
+int devl_ioctl( IOCTL_ARGS( struct inode *inode, struct file *filp
+			   , unsigned int cmd, unsigned long arg ) )
 {
     int			sts=0;
 
@@ -196,7 +204,7 @@ int devl_ioctl(  struct inode *inode, struct file *filp
 	break;
     case IOC_UINT32:
 	if (pcie_bar_info.baseVAddr == 0)
-	{   sts =devl_ioctl( inode, filp, IOC_IOREMAP, 0 );
+	{   sts =devl_ioctl( IOCTL_ARGS( inode, filp, IOC_IOREMAP, 0 ) );
 	    if (sts != 0) { return -1; }
 	}
 	{   u32 off, val;
@@ -212,7 +220,7 @@ int devl_ioctl(  struct inode *inode, struct file *filp
 	break;
     case IOC_IOOP:
 	if (pcie_bar_info.baseVAddr == 0)
-	{   sts =devl_ioctl( inode, filp, IOC_IOREMAP, 0 );
+	{   sts =devl_ioctl( IOCTL_ARGS( inode, filp, IOC_IOREMAP, 0 ) );
 	    if (sts != 0) { return -1; }
 	}
 	{   struct ioc_ioop ioop;
@@ -245,7 +253,7 @@ static struct file_operations devl_file_ops =
     .write=   NULL,             /* write        */
     .readdir= NULL,             /* readdir      */
     .poll=    NULL,             /* poll         */
-    .ioctl=   devl_ioctl,        /* ioctl        */
+    .IOCTL_FILE_OPS_MEMBER=devl_ioctl,/* ioctl  */
     .mmap=    NULL,             /* mmap         */
     NULL,                       /* open         */
     NULL,                       /* flush        */

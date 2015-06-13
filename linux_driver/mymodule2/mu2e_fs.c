@@ -23,7 +23,7 @@ static struct file_operations mu2e_file_ops =
     .write=   NULL,           	/* write        */
     .readdir= NULL,             /* readdir      */
     .poll=    NULL,             /* poll         */
-    .ioctl=   mu2e_ioctl,       /* ioctl        */
+    .IOCTL_FILE_OPS_MEMBER=mu2e_ioctl,/* ioctl  */
     .mmap=    mu2e_mmap,   	/* mmap         */
     NULL,                       /* open         */
     NULL,                       /* flush        */
