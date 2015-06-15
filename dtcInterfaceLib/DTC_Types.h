@@ -533,7 +533,7 @@ namespace DTCLib
         DTC_DataPacket(mu2e_databuff_t* data) : dataPtr_(*data), dataSize_(16), memPacket_(true){}
         DTC_DataPacket(void* data) : dataPtr_((uint8_t*)data), dataSize_(16), memPacket_(true){}
         DTC_DataPacket(uint8_t* data) : dataPtr_(data), dataSize_(16), memPacket_(true){}
-        DTC_DataPacket(const DTC_DataPacket&) = default;
+        DTC_DataPacket(const DTC_DataPacket&);
 #ifndef _WIN32
         DTC_DataPacket(DTC_DataPacket&&) = default;
 #endif
@@ -552,6 +552,7 @@ namespace DTCLib
         std::string toPacketFormat();
         bool Resize(const uint16_t dmaSize);
         uint16_t GetSize() const { return dataSize_; }
+        bool IsMemoryPacket() const { return memPacket_; }
     };
 
     class DTC_DMAPacket {

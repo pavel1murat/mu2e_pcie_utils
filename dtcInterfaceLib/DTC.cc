@@ -1521,7 +1521,7 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataP
     int retry = 3;
     int errorCode = 0;
     do {
-        errorCode = device_.write_data(channel, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
+      errorCode = device_.write_data(channel, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
         retry--;
     } while (retry > 0 && errorCode != 0);
     if (errorCode != 0)
@@ -1531,7 +1531,8 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataP
 }
 void DTCLib::DTC::WriteDMAPacket(const DTC_DMA_Engine& channel, const DTC_DMAPacket& packet)
 {
-    return WriteDataPacket(channel, packet.ConvertToDataPacket());
+  DTC_DataPacket dp = packet.ConvertToDataPacket();
+    WriteDataPacket(channel, dp);
 }
 
 void DTCLib::DTC::WriteRegister(uint32_t data, const DTC_Register& address)

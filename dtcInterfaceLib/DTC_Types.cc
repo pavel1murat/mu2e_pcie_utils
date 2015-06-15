@@ -96,10 +96,26 @@ DTCLib::DTC_DataPacket::DTC_DataPacket()
     dataSize_ = 64;
 }
 
+DTCLib::DTC_DataPacket::DTC_DataPacket(const DTC_DataPacket& in)
+{
+    dataSize_ = in.GetSize();
+    memPacket_ = in.IsMemoryPacket();
+  if(!memPacket_) 
+  {
+    dataPtr_ = new uint8_t[dataSize_];
+    memcpy(dataPtr_, in.GetData(), in.GetSize() * sizeof(uint8_t));
+  }
+  else
+  {
+    dataPtr_ = in.GetData();
+  }
+}
+
 DTCLib::DTC_DataPacket::~DTC_DataPacket()
 {
-    if (!memPacket_) {
+    if (!memPacket_ && dataPtr_ != nullptr) {
         delete[] dataPtr_;
+	dataPtr_ = nullptr;
     }
 }
 
