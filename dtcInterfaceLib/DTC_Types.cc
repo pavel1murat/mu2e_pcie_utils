@@ -83,9 +83,9 @@ std::string DTCLib::DTC_Timestamp::toPacketFormat()
     GetTimestamp(ts, 0);
     std::stringstream ss;
     ss << std::setfill('0') << std::hex;
-    ss << "0x" << std::setw(6) << ts[1] << "\t" << "0x" << std::setw(6) << ts[0] << "\n";
-    ss << "0x" << std::setw(6) << ts[3] << "\t" << "0x" << std::setw(6) << ts[2] << "\n";
-    ss << "0x" << std::setw(6) << ts[5] << "\t" << "0x" << std::setw(6) << ts[4] << "\n";
+    ss << "0x" << std::setw(6) << (int)ts[1] << "\t" << "0x" << std::setw(6) << (int)ts[0] << "\n";
+    ss << "0x" << std::setw(6) << (int)ts[3] << "\t" << "0x" << std::setw(6) << (int)ts[2] << "\n";
+    ss << "0x" << std::setw(6) << (int)ts[5] << "\t" << "0x" << std::setw(6) << (int)ts[4] << "\n";
     return ss.str();
 }
 
