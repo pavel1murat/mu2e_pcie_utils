@@ -15,6 +15,7 @@
 #include <linux/pci.h>          /* struct pci_dev *pci_get_device */
 #include <linux/delay.h>	/* msleep */
 #include <asm/uaccess.h>	/* access_ok, copy_to_user */
+#include <linux/version.h>      /* KERNEL_VERSION */
 
 #include "trace.h"	/* TRACE */
 
@@ -24,6 +25,15 @@
 #define XILINX_VENDOR_ID 0x10ee
 #define XILINX_DEVICE_ID 0x7042
 
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,39)
+# define IOCTL_ARGS( inode, filep, cmd, arg ) inode, filep, cmd, arg
+# define IOCTL_FILE_OPS_MEMBER                ioctl
+# define IOCTL_RET_TYPE                       int
+#else
+# define IOCTL_ARGS( inode, filep, cmd, arg )        filep, cmd, arg
+# define IOCTL_FILE_OPS_MEMBER                compat_ioctl
+# define IOCTL_RET_TYPE                       long
+#endif
 
 /* GLOBALS */
 
@@ -70,7 +80,7 @@ static int devl_pci_probe( struct pci_dev *pdev, const struct pci_device_id *ent
         return (pciRet);
     }
 
-    pciRet = pci_set_dma_mask( pdev, DMA_32BIT_MASK );
+    pciRet = pci_set_dma_mask( pdev, DMA_BIT_MASK(32) );
     if (pciRet < 0)
     {   TRACE( 0, KERN_ERR "pci_set_dma_mask failed." );
         goto out2;
@@ -104,8 +114,8 @@ static struct pci_device_id xilinx_ids[] = {
 static struct pci_driver devl_driver =
     {   .name     = DRIVER_NAME,
         .id_table = xilinx_ids,
-        .probe    =             devl_pci_probe,
-        .remove   = __devexit_p(devl_pci_remove)
+        .probe    = devl_pci_probe,
+        .remove   = devl_pci_remove
     };
 
 void devl_pci_down( void )
@@ -126,10 +136,11 @@ void devl_pci_down( void )
 
 
 
-int devl_ioctl(  struct inode *inode, struct file *filp
-	       , unsigned int cmd, unsigned long arg )
+IOCTL_RET_TYPE devl_ioctl( IOCTL_ARGS( struct inode *inode, struct file *filp
+				      , unsigned int cmd, unsigned long arg ) )
 {
-    int			sts=0;
+    IOCTL_RET_TYPE    sts=0;
+    int               sts2;
 
     if(_IOC_TYPE(cmd) != DEVL_IOC_MAGIC) return -ENOTTY;
 
@@ -148,8 +159,9 @@ int devl_ioctl(  struct inode *inode, struct file *filp
 	break;
     case IOC_REGISTER:
 	if (pci_dev_sp == 0)
-	{   sts = pci_register_driver( &devl_driver );
-	    TRACE( 6, "devl_ioctl - pci_register=%d", sts );
+	{   sts2 = pci_register_driver( &devl_driver );
+	    TRACE( 6, "devl_ioctl - pci_register=%d", sts2 );
+	    sts = (IOCTL_RET_TYPE)sts2;
 	}
 	else
 	    TRACE( 6, "devl_ioctl - already registered" );
@@ -160,8 +172,9 @@ int devl_ioctl(  struct inode *inode, struct file *filp
     case IOC_IOREMAP:
 	if (pci_dev_sp == 0)
 	{   TRACE( 6, "devl_ioctl - IOREMAP first need to register" );
-	    sts = pci_register_driver( &devl_driver );
-	    TRACE( 6, "devl_ioctl - pci_register=%d", sts );
+	    sts2 = pci_register_driver( &devl_driver );
+	    TRACE( 6, "devl_ioctl - pci_register=%d", sts2 );
+	    sts = (IOCTL_RET_TYPE)sts2;
 	}
 	if (sts == 0)
 	{   u32 size;
@@ -196,7 +209,7 @@ int devl_ioctl(  struct inode *inode, struct file *filp
 	break;
     case IOC_UINT32:
 	if (pcie_bar_info.baseVAddr == 0)
-	{   sts =devl_ioctl( inode, filp, IOC_IOREMAP, 0 );
+	{   sts =devl_ioctl( IOCTL_ARGS( inode, filp, IOC_IOREMAP, 0 ) );
 	    if (sts != 0) { return -1; }
 	}
 	{   u32 off, val;
@@ -212,7 +225,7 @@ int devl_ioctl(  struct inode *inode, struct file *filp
 	break;
     case IOC_IOOP:
 	if (pcie_bar_info.baseVAddr == 0)
-	{   sts =devl_ioctl( inode, filp, IOC_IOREMAP, 0 );
+	{   sts =devl_ioctl( IOCTL_ARGS( inode, filp, IOC_IOREMAP, 0 ) );
 	    if (sts != 0) { return -1; }
 	}
 	{   struct ioc_ioop ioop;
@@ -243,9 +256,9 @@ static struct file_operations devl_file_ops =
     .llseek=  NULL,             /* lseek        */
     .read=    NULL,             /* read         */
     .write=   NULL,             /* write        */
-    .readdir= NULL,             /* readdir      */
+    /*.readdir= NULL,              readdir      */
     .poll=    NULL,             /* poll         */
-    .ioctl=   devl_ioctl,        /* ioctl        */
+    .IOCTL_FILE_OPS_MEMBER=devl_ioctl,/* ioctl  */
     .mmap=    NULL,             /* mmap         */
     NULL,                       /* open         */
     NULL,                       /* flush        */

@@ -83,23 +83,39 @@ std::string DTCLib::DTC_Timestamp::toPacketFormat()
     GetTimestamp(ts, 0);
     std::stringstream ss;
     ss << std::setfill('0') << std::hex;
-    ss << "0x" << std::setw(6) << ts[1] << "\t" << "0x" << std::setw(6) << ts[0] << "\n";
-    ss << "0x" << std::setw(6) << ts[3] << "\t" << "0x" << std::setw(6) << ts[2] << "\n";
-    ss << "0x" << std::setw(6) << ts[5] << "\t" << "0x" << std::setw(6) << ts[4] << "\n";
+    ss << "0x" << std::setw(6) << (int)ts[1] << "\t" << "0x" << std::setw(6) << (int)ts[0] << "\n";
+    ss << "0x" << std::setw(6) << (int)ts[3] << "\t" << "0x" << std::setw(6) << (int)ts[2] << "\n";
+    ss << "0x" << std::setw(6) << (int)ts[5] << "\t" << "0x" << std::setw(6) << (int)ts[4] << "\n";
     return ss.str();
 }
 
 DTCLib::DTC_DataPacket::DTC_DataPacket()
 {
     memPacket_ = false;
-    dataPtr_ = new uint8_t[16]; // current min. dma length is 64 bytes
-    dataSize_ = 16;
+    dataPtr_ = new uint8_t[64]; // current min. dma length is 64 bytes
+    dataSize_ = 64;
+}
+
+DTCLib::DTC_DataPacket::DTC_DataPacket(const DTC_DataPacket& in)
+{
+    dataSize_ = in.GetSize();
+    memPacket_ = in.IsMemoryPacket();
+  if(!memPacket_) 
+  {
+    dataPtr_ = new uint8_t[dataSize_];
+    memcpy(dataPtr_, in.GetData(), in.GetSize() * sizeof(uint8_t));
+  }
+  else
+  {
+    dataPtr_ = in.GetData();
+  }
 }
 
 DTCLib::DTC_DataPacket::~DTC_DataPacket()
 {
-    if (!memPacket_) {
+    if (!memPacket_ && dataPtr_ != nullptr) {
         delete[] dataPtr_;
+	dataPtr_ = nullptr;
     }
 }
 
@@ -121,6 +137,7 @@ bool DTCLib::DTC_DataPacket::Resize(const uint16_t dmaSize)
         uint8_t *data = new uint8_t[dmaSize];
         memset(data, 0, dmaSize * sizeof(uint8_t));
         memcpy(data, dataPtr_, dataSize_ * sizeof(uint8_t));
+        delete[] dataPtr_;
         dataPtr_ = data;
         dataSize_ = dmaSize;
         return true;

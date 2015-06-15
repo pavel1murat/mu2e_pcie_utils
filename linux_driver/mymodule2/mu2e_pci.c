@@ -83,7 +83,7 @@ static int ReadDMAEngineConfiguration(  struct pci_dev * pdev
 }   // ReadDMAEngineConfiguration
 
 
-static int __devinit mu2e_pci_probe(  struct pci_dev             *pdev
+static int mu2e_pci_probe(  struct pci_dev             *pdev
 				    , const struct pci_device_id *ent )
 {
     int pciRet;
@@ -115,7 +115,7 @@ static int __devinit mu2e_pci_probe(  struct pci_dev             *pdev
         return (pciRet);
     }
 
-    pciRet = pci_set_dma_mask( pdev, DMA_32BIT_MASK );
+    pciRet = pci_set_dma_mask( pdev, DMA_BIT_MASK(32) );
     if (pciRet < 0)
     {   printk( KERN_ERR "pci_set_dma_mask failed\n" );
 	goto out2;
@@ -171,7 +171,7 @@ static int __devinit mu2e_pci_probe(  struct pci_dev             *pdev
 }   // mu2e_pci_probe
 
 
-static void __devexit  mu2e_pci_remove(struct pci_dev *pdev)
+static void mu2e_pci_remove(struct pci_dev *pdev)
 {
     printk( "mu2e_pci_remove start\n ");
     pci_release_regions( pdev );
@@ -187,8 +187,8 @@ static void __devexit  mu2e_pci_remove(struct pci_dev *pdev)
 static struct pci_driver mu2e_driver =
     {   .name     = DRIVER_NAME,
 	.id_table = xilinx_ids,
-	.probe    =             mu2e_pci_probe,
-	.remove   = __devexit_p(mu2e_pci_remove)
+	.probe    = mu2e_pci_probe,
+	.remove   = mu2e_pci_remove
     };
 
 int mu2e_pci_up( void )

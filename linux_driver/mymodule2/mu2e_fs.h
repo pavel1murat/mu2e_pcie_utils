@@ -8,11 +8,21 @@
 #ifndef MU2E_FS_H
 #define MU2E_FS_H
 
+#include <linux/version.h>      /* KERNEL_VERSION */
+
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,39)
+# define IOCTL_ARGS( inode, filep, cmd, arg ) inode, filep, cmd, arg
+# define IOCTL_FILE_OPS_MEMBER ioctl
+# define IOCTL_RET_TYPE                       int
+#else
+# define IOCTL_ARGS( inode, filep, cmd, arg )        filep, cmd, arg
+# define IOCTL_FILE_OPS_MEMBER unlocked_ioctl
+# define IOCTL_RET_TYPE                       long
+#endif
+
+IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(  struct inode *inode, struct file *filp
+				     , unsigned int cmd,    unsigned long arg));
 int  mu2e_mmap( struct file *file, struct vm_area_struct *vma );
-
-int  mu2e_ioctl(  struct inode *inode, struct file *filp
-		, unsigned int cmd, unsigned long arg );
-
 int  mu2e_fs_up( void );
 
 void mu2e_fs_down( void );

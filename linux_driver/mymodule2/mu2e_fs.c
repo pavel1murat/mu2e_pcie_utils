@@ -21,9 +21,9 @@ static struct file_operations mu2e_file_ops =
     .llseek=  NULL,           	/* lseek        */
     .read=    NULL,		/* read         */
     .write=   NULL,           	/* write        */
-    .readdir= NULL,             /* readdir      */
+    /*.readdir= NULL,              readdir      */
     .poll=    NULL,             /* poll         */
-    .ioctl=   mu2e_ioctl,       /* ioctl        */
+    .IOCTL_FILE_OPS_MEMBER=mu2e_ioctl,/* ioctl  */
     .mmap=    mu2e_mmap,   	/* mmap         */
     NULL,                       /* open         */
     NULL,                       /* flush        */
@@ -58,6 +58,8 @@ int mu2e_fs_up()
 
     sts = cdev_add ( &mu2e_cdev, mu2e_dev_number, 1 );
     device_create( mu2e_dev_class, NULL, mu2e_dev_number, NULL, MU2E_DEV_FILE );
+    // NOTE: permissions set -- use udev - i.e:
+    // echo 'KERNEL=="mu2e", MODE="0666"' >/etc/udev/rules.d/98-mu2e.rules
 
     return (0);
 }   // mu2e_fs

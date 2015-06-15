@@ -1,6 +1,6 @@
 add_custom_target(
     mymodule2 ALL
-    COMMAND make
+    COMMAND make CC=/usr/bin/gcc
     COMMAND mv mu2e.ko ..
     COMMAND make clean
     COMMAND mv ../mu2e.ko .
