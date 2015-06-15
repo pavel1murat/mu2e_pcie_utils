@@ -1,6 +1,6 @@
 add_custom_target(
     pci_devel_module ALL
-    COMMAND make
+    COMMAND make CC=/usr/bin/gcc
     COMMAND mv pci_devel_main.ko ..
     COMMAND make clean
     COMMAND mv ../pci_devel_main.ko .

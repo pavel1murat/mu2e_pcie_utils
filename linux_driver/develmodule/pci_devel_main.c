@@ -27,10 +27,12 @@
 
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,39)
 # define IOCTL_ARGS( inode, filep, cmd, arg ) inode, filep, cmd, arg
-# define IOCTL_FILE_OPS_MEMBER ioctl
+# define IOCTL_FILE_OPS_MEMBER                ioctl
+# define IOCTL_RET_TYPE                       int
 #else
 # define IOCTL_ARGS( inode, filep, cmd, arg )        filep, cmd, arg
-# define IOCTL_FILE_OPS_MEMBER compat_ioctl
+# define IOCTL_FILE_OPS_MEMBER                compat_ioctl
+# define IOCTL_RET_TYPE                       long
 #endif
 
 /* GLOBALS */
@@ -134,10 +136,11 @@ void devl_pci_down( void )
 
 
 
-int devl_ioctl( IOCTL_ARGS( struct inode *inode, struct file *filp
-			   , unsigned int cmd, unsigned long arg ) )
+IOCTL_RET_TYPE devl_ioctl( IOCTL_ARGS( struct inode *inode, struct file *filp
+				      , unsigned int cmd, unsigned long arg ) )
 {
-    int			sts=0;
+    IOCTL_RET_TYPE    sts=0;
+    int               sts2;
 
     if(_IOC_TYPE(cmd) != DEVL_IOC_MAGIC) return -ENOTTY;
 
@@ -156,8 +159,9 @@ int devl_ioctl( IOCTL_ARGS( struct inode *inode, struct file *filp
 	break;
     case IOC_REGISTER:
 	if (pci_dev_sp == 0)
-	{   sts = pci_register_driver( &devl_driver );
-	    TRACE( 6, "devl_ioctl - pci_register=%d", sts );
+	{   sts2 = pci_register_driver( &devl_driver );
+	    TRACE( 6, "devl_ioctl - pci_register=%d", sts2 );
+	    sts = (IOCTL_RET_TYPE)sts2;
 	}
 	else
 	    TRACE( 6, "devl_ioctl - already registered" );
@@ -168,8 +172,9 @@ int devl_ioctl( IOCTL_ARGS( struct inode *inode, struct file *filp
     case IOC_IOREMAP:
 	if (pci_dev_sp == 0)
 	{   TRACE( 6, "devl_ioctl - IOREMAP first need to register" );
-	    sts = pci_register_driver( &devl_driver );
-	    TRACE( 6, "devl_ioctl - pci_register=%d", sts );
+	    sts2 = pci_register_driver( &devl_driver );
+	    TRACE( 6, "devl_ioctl - pci_register=%d", sts2 );
+	    sts = (IOCTL_RET_TYPE)sts2;
 	}
 	if (sts == 0)
 	{   u32 size;
@@ -251,7 +256,7 @@ static struct file_operations devl_file_ops =
     .llseek=  NULL,             /* lseek        */
     .read=    NULL,             /* read         */
     .write=   NULL,             /* write        */
-    .readdir= NULL,             /* readdir      */
+    /*.readdir= NULL,              readdir      */
     .poll=    NULL,             /* poll         */
     .IOCTL_FILE_OPS_MEMBER=devl_ioctl,/* ioctl  */
     .mmap=    NULL,             /* mmap         */
