@@ -15,7 +15,11 @@
 #else
 # ifndef TRACE
 #  include <stdio.h>
-#  define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
+#  ifdef _DEBUG
+#   define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
+#  else
+#   define TRACE(...)
+#  endif
 # endif
 # pragma warning(disable: 4351)
 #endif
@@ -43,6 +47,8 @@ mu2esim::mu2esim()
         dmaData_[0][ii] = (mu2e_databuff_t*)new mu2e_databuff_t();
         dmaData_[1][ii] = (mu2e_databuff_t*)new mu2e_databuff_t();
     }
+    release_all(0);
+    release_all(1);
     for (int ring = 0; ring < 6; ++ring)
     {
         for (int roc = 0; roc < 6; ++roc)
@@ -500,7 +506,10 @@ int mu2esim::read_release(int chn, unsigned num)
 
 int mu2esim::release_all(int chn)
 {
-    return read_release(chn, SIM_BUFFCOUNT);
+    read_release(chn, SIM_BUFFCOUNT);
+    hwIdx_[chn] = 0;
+    swIdx_[chn] = 0;
+    return 0;
 }
 
 int  mu2esim::read_register(uint16_t address, int tmo_ms, uint32_t *output)
@@ -597,7 +606,7 @@ unsigned mu2esim::delta_(int chn, int dir)
 {
     unsigned hw = hwIdx_[chn];
     unsigned sw = swIdx_[chn];
-    TRACE(21, "mu2edev::delta_ chn=%d dir=%d hw=%u sw=%u num_buffs=%u"
+    TRACE(21, "mu2esim::delta_ chn=%d dir=%d hw=%u sw=%u num_buffs=%u"
         , chn, dir, hw, sw, SIM_BUFFCOUNT);
     if (dir == C2S)
         return ((hw >= sw)

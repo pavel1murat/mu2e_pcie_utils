@@ -15,7 +15,11 @@
 # define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
 # ifndef TRACE
 #  include <stdio.h>
-#  define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
+#  ifdef _DEBUG
+#   define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
+#  else
+#   define TRACE(...)
+#  endif
 # endif
 # define TRACE_CNTL(...)
 #else

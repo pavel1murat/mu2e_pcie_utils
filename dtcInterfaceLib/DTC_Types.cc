@@ -6,7 +6,12 @@
 # include "trace.h"
 #else
 # ifndef TRACE
-#  define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
+#  include <stdio.h>
+#  ifdef _DEBUG
+#   define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
+#  else
+#   define TRACE(...)
+#  endif
 # endif
 #endif
 

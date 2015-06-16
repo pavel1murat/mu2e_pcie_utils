@@ -19,7 +19,11 @@
 # else
 #  ifndef TRACE
 #   include <stdio.h>
-#  define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
+#   ifdef _DEBUG
+#    define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
+#   else
+#    define TRACE(...)
+#   endif
 #  endif
 # endif
 # include <sys/types.h>
