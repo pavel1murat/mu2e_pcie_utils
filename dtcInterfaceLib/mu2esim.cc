@@ -36,8 +36,8 @@ mu2esim::mu2esim()
     hwIdx_[1] = 0;
     swIdx_[0] = 0;
     swIdx_[1] = 0;
-    release_all(0);
-    release_all(1);
+    release_all(0,true);
+    release_all(1,true);
     for (int ring = 0; ring < 6; ++ring)
     {
         for (int roc = 0; roc < 6; ++roc)
@@ -480,21 +480,25 @@ int mu2esim::write_data(int chn, void *buffer, size_t bytes)
     return 0;
 }
 
-int mu2esim::read_release(int chn, unsigned num)
+int mu2esim::read_release(int chn, unsigned num, bool realloc)
 {
     //Always succeeds
     TRACE(17, "mu2esim::read_release: Simulating a release of %u buffers of channel %i", num, chn);
     for (unsigned ii = 0; ii < num; ++ii) {
-        delete[] dmaData_[chn][swIdx_[chn]];
-        dmaData_[chn][swIdx_[chn]] = (mu2e_databuff_t*)new mu2e_databuff_t();
+        if(realloc) {
+          delete[] dmaData_[chn][swIdx_[chn]];
+          dmaData_[chn][swIdx_[chn]] = (mu2e_databuff_t*)new mu2e_databuff_t();
+        } else { 
+            memset(*(dmaData_[chn][swIdx_[chn]]),0,sizeof(mu2e_databuff_t));
+        }
         swIdx_[chn] = (swIdx_[chn] + 1) % SIM_BUFFCOUNT;
     }
     return 0;
 }
 
-int mu2esim::release_all(int chn)
+int mu2esim::release_all(int chn, bool realloc)
 {
-    return read_release(chn, SIM_BUFFCOUNT);
+    return read_release(chn, SIM_BUFFCOUNT, realloc);
 }
 
 int  mu2esim::read_register(uint16_t address, int tmo_ms, uint32_t *output)
