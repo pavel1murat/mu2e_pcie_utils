@@ -9,15 +9,14 @@
 # include <thread>
 # define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
 # ifndef TRACE
-#  define TRACE(...)
+#  include <stdio.h>
+#  define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
 # endif
 #endif
 
 DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode) : device_(),
 daqbuffer_(nullptr), dcsbuffer_(nullptr), simMode_(mode),
-#if LOCAL_NUMROCS
 maxROCs_(),
-#endif
 first_read_(true), lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 {
 #ifdef _WIN32
@@ -67,6 +66,7 @@ DTCLib::DTC_SimMode DTCLib::DTC::SetSimMode(DTC_SimMode mode)
     for (auto ring : DTC_Rings) {
         SetMaxROCNumber(ring, DTC_ROC_Unused);
         DisableROCEmulator(ring);
+        ringEnabledMode_[(int)ring] = ReadRingEnabled(ring);
     }
 
     if (simMode_ != DTCLib::DTC_SimMode_Disabled)
@@ -93,10 +93,10 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
     TRACE(19, "DTC::GetData begin");
     std::vector<void*> output;
     for (auto ring : DTC_Rings){
-        DTC_RingEnableMode mode = ReadRingEnabled(ring);
-        if (!mode.TimingEnable)
+        //DTC_RingEnableMode mode = ReadRingEnabled(ring);
+        if (!ringEnabledMode_[ring].TimingEnable) //mode.TimingEnable)
         {
-            if (ReadRingEnabled(ring).TransmitEnable)
+            if (ringEnabledMode_[ring].TransmitEnable)
             {
                 TRACE(19, "DTC::GetData before DTC_ReadoutRequestPacket req");
                 uint8_t* request = new uint8_t[4];
@@ -1251,29 +1251,20 @@ uint16_t DTCLib::DTC::ReadPacketSize()
 DTCLib::DTC_ROC_ID DTCLib::DTC::SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc)
 {
     std::bitset<32> ringRocs = ReadNUMROCsRegister();
-#if LOCAL_NUMROCS
     maxROCs_[ring] = lastRoc;
-    for (auto ringNum : DTC_Rings) {
-        int numRocs = (maxROCs_[ringNum] == DTC_ROC_Unused) ? 0 : maxROCs_[ringNum] + 1;
-        ringRocs[ringNum * 3] = numRocs & 1;
-        ringRocs[ringNum * 3 + 1] = (numRocs & 2) >> 1;
-        ringRocs[ringNum * 3 + 2] = (numRocs & 4) >> 2;
-    }
-#else
     int numRocs = (lastRoc == DTC_ROC_Unused) ? 0 : lastRoc + 1;
     ringRocs[ring * 3] = numRocs & 1;
     ringRocs[ring * 3 + 1] = ((numRocs & 2) >> 1) & 1;
     ringRocs[ring * 3 + 2] = ((numRocs & 4) >> 2) & 1;
-#endif
     WriteNUMROCsRegister(ringRocs.to_ulong());
     return ReadRingROCCount(ring);
 }
 
-DTCLib::DTC_ROC_ID DTCLib::DTC::ReadRingROCCount(const DTC_Ring_ID& ring)
+DTCLib::DTC_ROC_ID DTCLib::DTC::ReadRingROCCount(const DTC_Ring_ID& ring, bool local)
 {
-#if LOCAL_NUMROCS
-    return maxROCs_[ring];
-#endif
+    if (local) {
+        return maxROCs_[ring];
+}
     std::bitset<32> ringRocs = ReadNUMROCsRegister();
     int number = ringRocs[ring * 3] + (ringRocs[ring * 3 + 1] << 1) + (ringRocs[ring * 3 + 2] << 2);
     return DTC_ROCS[number];

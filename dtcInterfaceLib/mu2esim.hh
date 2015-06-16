@@ -21,8 +21,8 @@ struct mu2esim
     int  init(DTCLib::DTC_SimMode mode = DTCLib::DTC_SimMode_Tracker);
     int  read_data(int chn, void **buffer, int tmo_ms); // return bytes read; error if negative
     int  write_data(int chn, void *buffer, size_t bytes);
-    int  read_release(int chn, unsigned num, bool realloc = false);
-    int  release_all(int chn, bool realloc = false);
+    int  read_release(int chn, unsigned num);
+    int  release_all(int chn);
     int  read_register(uint16_t address, int tmo_ms, uint32_t *output);
     int  write_register(uint16_t address, int tmo_ms, uint32_t data);
     int  read_pcie_state(m_ioc_pcistate_t *output);

@@ -2,7 +2,8 @@
 make.out
 *.sln
 *.suo
-*.sdf
+*.*sdf
+*.psess
 *.dat
 *.*proj
 dtcInterfaceLib/DTCLibTest/

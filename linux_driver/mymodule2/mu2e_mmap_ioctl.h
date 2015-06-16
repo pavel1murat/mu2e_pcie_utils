@@ -17,7 +17,10 @@
 #  include <unistd.h>		// sysconf
 #  include "trace.h"
 # else
-#  define TRACE(...)
+#  ifndef TRACE
+#   include <stdio.h>
+#  define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
+#  endif
 # endif
 # include <sys/types.h>
 # include <stdint.h>		// uint16_t

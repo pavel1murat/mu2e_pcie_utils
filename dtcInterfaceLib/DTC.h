@@ -1,8 +1,6 @@
 #ifndef DTC_H
 #define DTC_H
 
-#define LOCAL_NUMROCS 0
-
 #include "DTC_Types.h"
 #include <vector>
 #include <cstdlib>
@@ -128,7 +126,7 @@ namespace DTCLib {
 
         // Set number of ROCs in a Ring
         DTC_ROC_ID SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc);
-        DTC_ROC_ID ReadRingROCCount(const DTC_Ring_ID& ring);
+        DTC_ROC_ID ReadRingROCCount(const DTC_Ring_ID& ring, bool local = true);
 
         DTC_FIFOFullErrorFlags WriteFIFOFullErrorFlags(const DTC_Ring_ID& ring, const DTC_FIFOFullErrorFlags& flags);
         DTC_FIFOFullErrorFlags ToggleFIFOFullErrorFlags(const DTC_Ring_ID& ring, const DTC_FIFOFullErrorFlags& flags);
@@ -228,9 +226,8 @@ namespace DTCLib {
         mu2e_databuff_t* daqbuffer_;
         mu2e_databuff_t* dcsbuffer_;
         DTC_SimMode simMode_;
-#if LOCAL_NUMROCS
         DTC_ROC_ID maxROCs_[6];
-#endif
+        DTC_RingEnableMode ringEnabledMode_[6];
         bool first_read_;
         void* lastReadPtr_;
         void* nextReadPtr_;

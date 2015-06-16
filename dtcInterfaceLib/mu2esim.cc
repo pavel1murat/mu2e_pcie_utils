@@ -13,7 +13,10 @@
 #ifndef _WIN32
 # include <trace.h>
 #else
-# define TRACE(...)
+# ifndef TRACE
+#  include <stdio.h>
+#  define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
+# endif
 # pragma warning(disable: 4351)
 #endif
 #include "mu2esim.hh"
@@ -36,8 +39,10 @@ mu2esim::mu2esim()
     hwIdx_[1] = 0;
     swIdx_[0] = 0;
     swIdx_[1] = 0;
-    release_all(0,true);
-    release_all(1,true);
+    for (int ii = 0; ii < SIM_BUFFCOUNT; ++ii) {
+        dmaData_[0][ii] = (mu2e_databuff_t*)new mu2e_databuff_t();
+        dmaData_[1][ii] = (mu2e_databuff_t*)new mu2e_databuff_t();
+    }
     for (int ring = 0; ring < 6; ++ring)
     {
         for (int roc = 0; roc < 6; ++roc)
@@ -423,8 +428,11 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
     size_t bytesReturned = buffSize_[chn][swIdx_[chn]];
     *buffer = dmaData_[chn][swIdx_[chn]];
     swIdx_[chn] = (swIdx_[chn] + 1) % SIM_BUFFCOUNT;
-
+#ifdef _WIN32
+    return 1;
+#else
     return bytesReturned;
+#endif
 }
 
 int mu2esim::write_data(int chn, void *buffer, size_t bytes)
@@ -480,25 +488,19 @@ int mu2esim::write_data(int chn, void *buffer, size_t bytes)
     return 0;
 }
 
-int mu2esim::read_release(int chn, unsigned num, bool realloc)
+int mu2esim::read_release(int chn, unsigned num)
 {
     //Always succeeds
     TRACE(17, "mu2esim::read_release: Simulating a release of %u buffers of channel %i", num, chn);
     for (unsigned ii = 0; ii < num; ++ii) {
-        if(realloc) {
-          delete[] dmaData_[chn][swIdx_[chn]];
-          dmaData_[chn][swIdx_[chn]] = (mu2e_databuff_t*)new mu2e_databuff_t();
-        } else { 
-            memset(*(dmaData_[chn][swIdx_[chn]]),0,sizeof(mu2e_databuff_t));
-        }
         swIdx_[chn] = (swIdx_[chn] + 1) % SIM_BUFFCOUNT;
     }
     return 0;
 }
 
-int mu2esim::release_all(int chn, bool realloc)
+int mu2esim::release_all(int chn)
 {
-    return read_release(chn, SIM_BUFFCOUNT, realloc);
+    return read_release(chn, SIM_BUFFCOUNT);
 }
 
 int  mu2esim::read_register(uint16_t address, int tmo_ms, uint32_t *output)
