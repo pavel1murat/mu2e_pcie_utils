@@ -44,6 +44,7 @@ DTCLib::DTC_Timestamp::DTC_Timestamp(uint8_t *timeArr)
         uint64_t temp = (uint64_t)timeArr[i] << i * 8;
         timestamp_ += temp;
     }
+    delete[] timeArr;
 }
 
 DTCLib::DTC_Timestamp::DTC_Timestamp(std::bitset<48> timestamp)
@@ -105,22 +106,22 @@ DTCLib::DTC_DataPacket::DTC_DataPacket(const DTC_DataPacket& in)
 {
     dataSize_ = in.GetSize();
     memPacket_ = in.IsMemoryPacket();
-  if(!memPacket_) 
-  {
-    dataPtr_ = new uint8_t[dataSize_];
-    memcpy(dataPtr_, in.GetData(), in.GetSize() * sizeof(uint8_t));
-  }
-  else
-  {
-    dataPtr_ = in.GetData();
-  }
+    if (!memPacket_)
+    {
+        dataPtr_ = new uint8_t[dataSize_];
+        memcpy(dataPtr_, in.GetData(), in.GetSize() * sizeof(uint8_t));
+    }
+    else
+    {
+        dataPtr_ = in.GetData();
+    }
 }
 
 DTCLib::DTC_DataPacket::~DTC_DataPacket()
 {
     if (!memPacket_ && dataPtr_ != nullptr) {
         delete[] dataPtr_;
-	dataPtr_ = nullptr;
+        dataPtr_ = nullptr;
     }
 }
 
@@ -270,6 +271,7 @@ DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID 
     {
         data_[i] = data[i];
     }
+    delete[] data;
 }
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
@@ -458,6 +460,7 @@ DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t* data)
     {
         data_[i] = data[i];
     }
+    delete[] data;
 }
 
 DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
@@ -526,6 +529,7 @@ DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t pa
     {
         dataStart_[i] = data[i];
     }
+    delete[] data;
 }
 
 DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
@@ -596,6 +600,7 @@ DTCLib::DTC_ClockFanoutPacket::DTC_ClockFanoutPacket(uint8_t partition, DTC_Time
     {
         dataStart_[i] = data[i];
     }
+    delete[] data;
 }
 
 DTCLib::DTC_ClockFanoutPacket::DTC_ClockFanoutPacket(DTC_DataPacket in) :

@@ -229,6 +229,8 @@ namespace DTCLib {
         DTC_ROC_ID maxROCs_[6];
         DTC_RingEnableMode ringEnabledMode_[6];
         bool first_read_;
+        uint16_t daqDMAByteCount_;
+        uint16_t dcsDMAByteCount_;
         void* lastReadPtr_;
         void* nextReadPtr_;
         void* dcsReadPtr_;

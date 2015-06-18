@@ -21,7 +21,7 @@
 
 DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode) : device_(),
 daqbuffer_(nullptr), dcsbuffer_(nullptr), simMode_(mode),
-maxROCs_(),
+maxROCs_(), daqDMAByteCount_(0), dcsDMAByteCount_(0),
 first_read_(true), lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 {
 #ifdef _WIN32
@@ -302,8 +302,14 @@ DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
     else {
         TRACE(19, "DTC::ReadNextDAQPacket BEFORE BUFFER CHECK nextReadPtr_=nullptr");
     }
+    bool newBuffer = false;
     // Check if the nextReadPtr has been initialized, and if its pointing to a valid location
-    if (nextReadPtr_ == nullptr || nextReadPtr_ >= (uint8_t*)daqbuffer_ + sizeof(mu2e_databuff_t) || (*((uint16_t*)nextReadPtr_)) == 0) {
+    if (nextReadPtr_ == nullptr 
+        || nextReadPtr_ >= (uint8_t*)daqbuffer_ + sizeof(mu2e_databuff_t) 
+        || nextReadPtr_ >= (uint8_t*)daqbuffer_ + daqDMAByteCount_
+        || (*((uint16_t*)nextReadPtr_)) == 0)
+    {
+        newBuffer = true;
         if (first_read_) {
             TRACE(19, "DTC::ReadNextDAQPacket: calling device_.release_all");
             device_.release_all(DTC_DMA_Engine_DAQ);
@@ -321,13 +327,16 @@ DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
             throw DTC_WrongPacketTypeException();
         }
     }
-    first_read_ = false;
     //Read the next packet
     TRACE(19, "DTC::ReadNextDAQPacket reading next packet from buffer: nextReadPtr_=%p:", (void*)nextReadPtr_);
     DTC_DataPacket test = DTC_DataPacket(nextReadPtr_);
     TRACE(19, test.toJSON().c_str());
     DTC_DataHeaderPacket output = DTC_DataHeaderPacket(test);
     TRACE(19, output.toJSON().c_str());
+    if (newBuffer) {
+        daqDMAByteCount_ = output.GetByteCount();
+    }
+    first_read_ = false;
 
     // Update the packet pointers
 

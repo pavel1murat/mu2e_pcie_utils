@@ -586,6 +586,7 @@ namespace DTCLib
 
         std::string headerJSON();
         std::string headerPacketFormat();
+        uint16_t GetByteCount() { return byteCount_; }
         virtual std::string toPacketFormat();
         virtual std::string toJSON();
         friend std::ostream& operator<<(std::ostream& stream, DTC_DMAPacket& packet) {
