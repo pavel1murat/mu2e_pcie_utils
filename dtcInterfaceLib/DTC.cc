@@ -103,12 +103,8 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
         {
             if (ringEnabledMode_[ring].TransmitEnable)
             {
-                TRACE(19, "DTC::GetData before DTC_ReadoutRequestPacket req");
-                uint8_t* request = new uint8_t[4];
-                DTC_ReadoutRequestPacket req(ring, when, request, ReadRingROCCount(ring));
-                TRACE(19, "DTC::GetData before WriteDMADAQPacket - DTC_ReadoutRequestPacket");
-                WriteDMADAQPacket(req);
-                TRACE(19, "DTC::GetData after  WriteDMADAQPacket - DTC_ReadoutRequestPacket");
+                TRACE(19, "DTC::GetData before SendReadoutRequestPacket");
+                SendReadoutRequestPacket(ring, when);
                 int maxRoc;
                 if ((maxRoc = ReadRingROCCount(ring)) != DTC_ROC_Unused)
                 {
@@ -275,9 +271,10 @@ void DTCLib::DTC::DCSRequestReply_OLD(const DTC_Ring_ID& ring, const DTC_ROC_ID&
 
 void DTCLib::DTC::SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Timestamp& when)
 {
-    uint8_t* request = new uint8_t[4];
-    DTC_ReadoutRequestPacket req(ring, when, request, ReadRingROCCount((DTC_Ring_ID)ring));
+    DTC_ReadoutRequestPacket req(ring, when, new uint8_t[4], ReadRingROCCount((DTC_Ring_ID)ring));
+    TRACE(19, "DTC::SendReadoutRequestPacket before WriteDMADAQPacket - DTC_ReadoutRequestPacket");
     WriteDMADAQPacket(req);
+    TRACE(19, "DTC::SendReadoutRequestPacket after  WriteDMADAQPacket - DTC_ReadoutRequestPacket");
 }
 
 void DTCLib::DTC::WriteDMADAQPacket(const DTC_DMAPacket& packet)
