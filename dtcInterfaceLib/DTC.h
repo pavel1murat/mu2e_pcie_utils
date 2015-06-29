@@ -19,7 +19,7 @@ namespace DTCLib {
         // DMA Functions
         //
         // Data read-out
-        std::vector<void*> GetData(DTC_Timestamp when = DTC_Timestamp());
+        std::vector<void*> GetData(DTC_Timestamp when = DTC_Timestamp(), bool debug = false, int debugCount = 0);
         std::string GetJSONData(DTC_Timestamp when = DTC_Timestamp());
         std::vector<void*> GetData_OLD(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const DTC_Timestamp& when, int* length);
 

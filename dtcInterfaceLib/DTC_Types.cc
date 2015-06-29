@@ -44,7 +44,7 @@ DTCLib::DTC_Timestamp::DTC_Timestamp(uint8_t *timeArr)
         uint64_t temp = (uint64_t)timeArr[i] << i * 8;
         timestamp_ += temp;
     }
-    delete[] timeArr;
+    //delete[] timeArr;
 }
 
 DTCLib::DTC_Timestamp::DTC_Timestamp(std::bitset<48> timestamp)
@@ -517,19 +517,25 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSReplyPacket::ConvertToDataPacket() const
 }
 
 DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status)
-    : DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, (1 + packetCount) * 16), status_(status) {}
+    : DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, (1 + packetCount) * 16), packetCount_(packetCount), timestamp_(), status_(status) {}
 
 DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp)
-    : DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, (1 + packetCount) * 16), timestamp_(timestamp), status_(status) {}
+    : DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, (1 + packetCount) * 16), packetCount_(packetCount), timestamp_(timestamp), status_(status) 
+{
+  for(int i = 0; i < 3; ++i)
+  {
+     dataStart_[i] = 0;
+  }
+}
 
 DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp, uint8_t* data)
-    : DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, (1 + packetCount) * 16), timestamp_(timestamp), status_(status)
+    : DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, (1 + packetCount) * 16), packetCount_(packetCount), timestamp_(timestamp), status_(status)
 {
     for (int i = 0; i < 3; ++i)
     {
         dataStart_[i] = data[i];
     }
-    delete[] data;
+    //delete[] data;
 }
 
 DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket in) : DTC_DMAPacket(in)

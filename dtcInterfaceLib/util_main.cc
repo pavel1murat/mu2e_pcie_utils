@@ -71,6 +71,25 @@ main(int	argc
             usleep(0);
         }
     }
+    else if (argc > 1 && strcmp(argv[1], "HW") == 0)
+    {
+        DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
+        thisDTC->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true,true,false), DTC_ROC_0);
+        thisDTC->SetInternalSystemClock();
+        thisDTC->DisableTiming();
+        thisDTC->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
+
+        unsigned gets = 1;
+        if(argc > 2) gets = strtoul(argv[2], NULL, 0);
+  
+        for(unsigned ii = 0; ii < gets; ++ii)
+        {
+            DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)0, DTC_DataStatus_Valid, DTC_Timestamp((uint64_t)ii));
+            std::cout << "Request: " << header.toJSON() << std::endl;
+            thisDTC->WriteDMADAQPacket(header);
+            std::cout << "Reply:   " << thisDTC->ReadNextDAQPacket().toJSON() << std::endl;
+        }
+    }
     else if (argc > 1 && strcmp(argv[1], "DTC") == 0)
     {
         DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
@@ -80,9 +99,19 @@ main(int	argc
         thisDTC->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
         unsigned gets = 1;
         if (argc > 2) gets = strtoul(argv[2], NULL, 0);
+        unsigned debug = 0;
+        if (argc > 3) debug = strtoul(argv[3], NULL, 0);
+        unsigned debugCount = 0;
+        if (argc > 4) debugCount = strtoul(argv[4], NULL, 0);
+        unsigned offset = 1;
+        if(argc > 5) offset = strtoul(argv[5], NULL, 0);
+        unsigned increment = 1;
+        if(argc > 6) increment = strtoul(argv[6], NULL, 0);  
+      
         for (unsigned ii = 0; ii < gets; ++ii)
         {
-            vector<void*> data = thisDTC->GetData(DTC_Timestamp((uint64_t)ii));
+            uint64_t ts = increment ? ii + offset : offset;
+            vector<void*> data = thisDTC->GetData(DTC_Timestamp((uint64_t)ts), debug, debugCount);
             if (data.size() > 0)
             {
                 cout << data.size() << " packets returned\n";
@@ -90,7 +119,7 @@ main(int	argc
                 {
                     TRACE(19, "DTC::GetJSONData constructing DataPacket:");
                     DTC_DataPacket     test = DTC_DataPacket(data[i]);
-                    //cout << test.toJSON() << '\n'; // dumps whole databuff_t
+                    cout << test.toJSON() << '\n'; // dumps whole databuff_t
                     printf("data@%p=0x%08x\n", data[i], *(uint32_t*)(data[i]));
                     //DTC_DataHeaderPacket h1 = DTC_DataHeaderPacket(data[i]);
                     //cout << h1.toJSON() << '\n';
