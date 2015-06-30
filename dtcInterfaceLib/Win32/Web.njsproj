@@ -4,7 +4,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{c9836b29-39f2-4519-bd61-1f9548effdc3}</ProjectGuid>
-    <ProjectHome />
+    <ProjectHome>..\web</ProjectHome>
     <ProjectView>ShowAllFiles</ProjectView>
     <StartupFile>..\web\serverbase.js</StartupFile>
     <WorkingDirectory>.</WorkingDirectory>
@@ -36,6 +36,13 @@
     <Folder Include="..\web\modules\DTC\" />
     <Folder Include="..\web\modules\DTC\client\" />
     <Folder Include="..\web\modules\DTC\server\" />
+    <Folder Include="modules\" />
+    <Folder Include="modules\base\" />
+    <Folder Include="modules\base\client\" />
+    <Folder Include="modules\base\server\" />
+    <Folder Include="modules\DTC\" />
+    <Folder Include="modules\DTC\client\" />
+    <Folder Include="modules\DTC\server\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\web\client.html" />

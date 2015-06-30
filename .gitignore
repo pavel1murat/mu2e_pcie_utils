@@ -2,3 +2,4 @@
 make.out
 *.suo
 *.dat
+*.tmp
