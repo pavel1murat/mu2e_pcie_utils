@@ -8,6 +8,7 @@
 #include <cstdio>		// printf
 #include <cstdlib>		// strtoul
 #include <iostream>
+#include <string>
 #include "DTC.h"
 #ifdef _WIN32
 # include <chrono>
@@ -33,7 +34,7 @@ using namespace std;
 unsigned getOptionValue(int *index, char **argv[])
 {
   char* arg = (*argv)[*index];
-  if(arg[2] != '\0') {
+  if(arg[2] == '\0') {
     (*index)++;
     return strtoul((*argv)[*index], NULL, 0);
   }
@@ -47,6 +48,19 @@ unsigned getOptionValue(int *index, char **argv[])
   }
 }
 
+void printHelpMsg() {
+  cout << "Usage: mu2eUtil [options] [read,read_data,read_release,HW,DTC]" << endl;
+  cout << "Options are:" << endl
+       << "    -h: This message." << endl
+       << "    -n: Number of times to repeat test. (Default: 1)" << endl
+       << "    -p: Pause after sending a packet." << endl
+       << "    -o: Starting Timestamp offest. (Default: 1)." << endl
+       << "    -i: Do not increment Timestamps." << endl
+       << "    -d: Delay between tests, in us (Default: 0)." << endl
+       << "    -c: Number of Debug Packets to request (Default: 0)." << endl;
+  exit(0);
+}
+
 int
 main(int	argc
 , char	*argv[])
@@ -57,13 +71,11 @@ main(int	argc
   unsigned number = 1;
   unsigned timestampOffset = 1;
   unsigned packetCount = 0;
-  char* op = NULL;
+  string op = "";
 
   for(int optind = 1; optind < argc; ++optind) {
     if(argv[optind][0] == '-') {
       switch(argv[optind][1]) {
-      case 'h':
-        
       case 'p':
         pause = true;
         break;
@@ -83,99 +95,91 @@ main(int	argc
         packetCount = getOptionValue(&optind, &argv);
         break;
       default:
+        cout << "Unknown option: " << argv[optind] << endl;
+        printHelpMsg();
+        break;
+      case 'h':
+        printHelpMsg();
         break;
       }
     }
     else {
-      op = argv[optind];
+      op = string(argv[optind]);
     }
   }
-  sprintf("Options are: Operation: %s, Num: %u, Delay: %u, TS Offset: %u, PacketCount: %u, Pause: %s, Inrement TS: %s",op, number, delay, timestampOffset, packetCount, pause ? "true" : "false", incrementTimestamp ? "true" : "false");
-  exit(0);
+  
+  string pauseStr = pause ? "true" : "false";
+  string incrementStr = incrementTimestamp ? "true" : "false";
+  cout << "Options are: Operation: " << string(op) << ", Num: " << number << ", Delay: " << delay << ", TS Offset: " << timestampOffset << ", PacketCount: " << packetCount << ", Pause: " << pauseStr << ", Increment TS: " << incrementStr << endl;
 
-    if (argc > 1 && strcmp(argv[1], "read") == 0)
+    if (op == "read")
     {
+      cout << "Operation \"read\"" << endl;
         DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
         DTC_DataHeaderPacket packet = thisDTC->ReadNextDAQPacket();
         cout << packet.toJSON() << '\n';
     }
-    else if (argc > 1 && strcmp(argv[1], "read_data") == 0)
+    else if (op == "read_data")
     {
+      cout << "Operation \"read_data\"" << endl;
         mu2edev device;
         device.init();
-        unsigned reads = 1;
-        if (argc > 2) reads = strtoul(argv[2], NULL, 0);
-        for (unsigned ii = 0; ii < reads; ++ii)
+        for (unsigned ii = 0; ii < number; ++ii)
         {
             void *buffer;
             int tmo_ms = 0;
             int sts = device.read_data(DTC_DMA_Engine_DAQ, &buffer, tmo_ms);
             TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, buffer);
-            usleep(0);
+            usleep(delay);
         }
     }
-    else if (argc > 1 && strcmp(argv[1], "read_release") == 0)
+    else if (op == "read_release" )
     {
         mu2edev device;
         device.init();
-        unsigned releases = 1;
-        if (argc > 2) releases = strtoul(argv[2], NULL, 0);
-        for (unsigned ii = 0; ii < releases; ++ii)
+        for (unsigned ii = 0; ii < number; ++ii)
         {
             void *buffer;
             int tmo_ms = 0;
             int stsRD = device.read_data(DTC_DMA_Engine_DAQ, &buffer, tmo_ms);
             int stsRL = device.read_release(DTC_DMA_Engine_DAQ, 1);
             TRACE(12, "util - release/read for DAQ and DCS ii=%u stsRD=%d stsRL=%d %p", ii, stsRD, stsRL, buffer);
-            usleep(0);
+            usleep(delay);
         }
     }
-    else if (argc > 1 && strcmp(argv[1], "HW") == 0)
+    else if (op == "HW")
     {
         DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
         thisDTC->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true,true,false), DTC_ROC_0);
         thisDTC->SetInternalSystemClock();
         thisDTC->DisableTiming();
         thisDTC->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
-
-        unsigned gets = 1;
-        if(argc > 2) gets = strtoul(argv[2], NULL, 0);
   
-        for(unsigned ii = 0; ii < gets; ++ii)
+        for(unsigned ii = 0; ii < number; ++ii)
         {
-            DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)0, DTC_DataStatus_Valid, DTC_Timestamp((uint64_t)ii));
+            uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
+            DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)0, DTC_DataStatus_Valid, DTC_Timestamp(ts));
             std::cout << "Request: " << header.toJSON() << std::endl;
             thisDTC->WriteDMADAQPacket(header);
             thisDTC->SetFirstRead(true);
             std::cout << "Reply:   " << thisDTC->ReadNextDAQPacket().toJSON() << std::endl;
+            usleep(delay);
         }
     }
-    else if (argc > 1 && strcmp(argv[1], "DTC") == 0)
+    else if (op == "DTC")
     {
         DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
         thisDTC->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
         thisDTC->SetInternalSystemClock();
         thisDTC->DisableTiming();
         thisDTC->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
-        if(!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now
-        unsigned gets = 1;
-        if (argc > 2) gets = strtoul(argv[2], NULL, 0);
-        unsigned debug = 0;
-        if (argc > 3) debug = strtoul(argv[3], NULL, 0);
-        unsigned debugCount = 0;
-        if (argc > 4) debugCount = strtoul(argv[4], NULL, 0);
-        unsigned offset = 1;
-        if(argc > 5) offset = strtoul(argv[5], NULL, 0);
-        unsigned increment = 1;
-        if(argc > 6) increment = strtoul(argv[6], NULL, 0);  
-        unsigned delay = 0;
-        if(argc > 7) delay = strtoul(argv[7], NULL, 0);       
+        if(!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
        
-        for (unsigned ii = 0; ii < gets; ++ii)
+        for (unsigned ii = 0; ii < number; ++ii)
         {
             usleep(delay);
-            uint64_t ts = increment ? ii + offset : offset;
-            vector<void*> data = thisDTC->GetData(DTC_Timestamp((uint64_t)ts), debug, debugCount);
+            uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
+            vector<void*> data = thisDTC->GetData(DTC_Timestamp(ts), pause, packetCount);
             if (data.size() > 0)
             {
                 cout << data.size() << " packets returned\n";
@@ -205,12 +209,12 @@ main(int	argc
     else// if (argc > 1 && strcmp(argv[1],"get")==0)
     {
         DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
-        unsigned gets = 1000000;
-        if (argc > 1) gets = strtoul(argv[1], NULL, 0);
 
-        for (unsigned ii = 0; ii < gets; ++ii)
+        for (unsigned ii = 0; ii < number; ++ii)
         {
-            vector<void*> data = thisDTC->GetData(DTC_Timestamp((uint64_t)ii));
+            usleep(delay);
+            uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
+            vector<void*> data = thisDTC->GetData(DTC_Timestamp(ts), pause, packetCount);
             if (data.size() > 0)
             {
                 //cout << data.size() << " packets returned\n";

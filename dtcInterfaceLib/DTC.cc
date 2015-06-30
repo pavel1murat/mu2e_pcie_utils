@@ -108,7 +108,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool debug, int debu
                 if(debug) {
                 std::cout << "Sent ReadoutRequest. Press any key." << std::endl;
                 std::string dummy;
-                std::cin >> dummy;
+                getline(std::cin, dummy);
                 }
                 int maxRoc;
                 if ((maxRoc = ReadRingROCCount(ring)) != DTC_ROC_Unused)
@@ -121,8 +121,6 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool debug, int debu
                         std::cout << req.toJSON() << std::endl;
                        WriteDMADAQPacket(req);
                         TRACE(19, "DTC::GetData after  WriteDMADAQPacket - DTC_DataRequestPacket");
-                         //std::cout << "Sent DataRequest. Press any key." << std::endl;
-                         //std::cin >> dummy;
                     }
                 }
                 //usleep(2000);
