@@ -93,7 +93,7 @@ DTCLib::DTC_SimMode DTCLib::DTC::SetSimMode(DTC_SimMode mode)
 //
 // DMA Functions
 //
-std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool debug, int debugCount)
+std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool debug, int debugCount, bool quiet)
 {
     TRACE(19, "DTC::GetData begin");
     std::vector<void*> output;
@@ -104,7 +104,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool debug, int debu
             if (ringEnabledMode_[ring].TransmitEnable)
             {
                 TRACE(19, "DTC::GetData before SendReadoutRequestPacket");
-                SendReadoutRequestPacket(ring, when);
+                SendReadoutRequestPacket(ring, when, quiet);
                 if(debug) {
                 std::cout << "Sent ReadoutRequest. Press any key." << std::endl;
                 std::string dummy;
@@ -118,7 +118,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool debug, int debu
                         TRACE(19, "DTC::GetData before DTC_DataRequestPacket req");
                         DTC_DataRequestPacket req(ring, (DTC_ROC_ID)roc, when, true, debugCount);
                         TRACE(19, "DTC::GetData before WriteDMADAQPacket - DTC_DataRequestPacket");
-                        std::cout << req.toJSON() << std::endl;
+                        if(!quiet) std::cout << req.toJSON() << std::endl;
                        WriteDMADAQPacket(req);
                         TRACE(19, "DTC::GetData after  WriteDMADAQPacket - DTC_DataRequestPacket");
                     }
@@ -277,11 +277,11 @@ void DTCLib::DTC::DCSRequestReply_OLD(const DTC_Ring_ID& ring, const DTC_ROC_ID&
     }
 }
 
-void DTCLib::DTC::SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Timestamp& when)
+void DTCLib::DTC::SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Timestamp& when, bool quiet)
 {
     DTC_ReadoutRequestPacket req(ring, when, new uint8_t[4], ReadRingROCCount((DTC_Ring_ID)ring));
     TRACE(19, "DTC::SendReadoutRequestPacket before WriteDMADAQPacket - DTC_ReadoutRequestPacket");
-    std::cout << req.toJSON() << std::endl;
+    if(!quiet) std::cout << req.toJSON() << std::endl;
     WriteDMADAQPacket(req);
     TRACE(19, "DTC::SendReadoutRequestPacket after  WriteDMADAQPacket - DTC_ReadoutRequestPacket");
 }

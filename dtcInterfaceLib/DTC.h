@@ -19,7 +19,7 @@ namespace DTCLib {
         // DMA Functions
         //
         // Data read-out
-        std::vector<void*> GetData(DTC_Timestamp when = DTC_Timestamp(), bool debug = false, int debugCount = 0);
+        std::vector<void*> GetData(DTC_Timestamp when = DTC_Timestamp(), bool debug = false, int debugCount = 0, bool quiet = true);
         std::string GetJSONData(DTC_Timestamp when = DTC_Timestamp());
         std::vector<void*> GetData_OLD(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const DTC_Timestamp& when, int* length);
 
@@ -28,7 +28,7 @@ namespace DTCLib {
         void DCSRequestReply_OLD(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, uint8_t *dataIn);
 
         // Broadcast Readout
-        void SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Timestamp& when);
+        void SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Timestamp& when, bool quiet = true);
 
         // For loopback testing...
         void SetFirstRead(bool read) { first_read_ = read; }

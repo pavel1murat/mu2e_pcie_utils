@@ -58,6 +58,7 @@ void printHelpMsg() {
        << "    -i: Do not increment Timestamps." << endl
        << "    -d: Delay between tests, in us (Default: 0)." << endl
        << "    -c: Number of Debug Packets to request (Default: 0)." << endl
+       << "    -q: Quiet mode (Don't print)" << endl
        << "    -s: Stop on SERDES Error." << endl;
   exit(0);
 }
@@ -69,6 +70,7 @@ main(int	argc
   bool pause = false;
   bool incrementTimestamp = true;
   bool checkSERDES = false;
+  bool quiet = false;
   unsigned delay = 0;
   unsigned number = 1;
   unsigned timestampOffset = 1;
@@ -95,6 +97,9 @@ main(int	argc
         break;
       case 'c':
         packetCount = getOptionValue(&optind, &argv);
+        break;
+      case 'q':
+        quiet = true;
         break;
       case 's':
         checkSERDES = true;
@@ -184,29 +189,31 @@ main(int	argc
         {
             usleep(delay);
             uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
-            vector<void*> data = thisDTC->GetData(DTC_Timestamp(ts), pause, packetCount);
+            vector<void*> data = thisDTC->GetData(DTC_Timestamp(ts), pause, packetCount, quiet);
             if (data.size() > 0)
             {
-                cout << data.size() << " packets returned\n";
+                if(!quiet) cout << data.size() << " packets returned\n";
                 for (size_t i = 0; i < data.size(); ++i)
                 {
                     TRACE(19, "DTC::GetJSONData constructing DataPacket:");
                     DTC_DataPacket     test = DTC_DataPacket(data[i]);
-                    cout << test.toJSON() << '\n'; // dumps whole databuff_t
+                    if(!quiet) cout << test.toJSON() << '\n'; // dumps whole databuff_t
                     printf("data@%p=0x%08x\n", data[i], *(uint32_t*)(data[i]));
                     //DTC_DataHeaderPacket h1 = DTC_DataHeaderPacket(data[i]);
                     //cout << h1.toJSON() << '\n';
                     DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
-                    cout << h2.toJSON() << '\n';
-                    for (int jj = 0; jj < h2.GetPacketCount(); ++jj) {
-                        cout << "\t" << DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16)).toJSON() << endl;
+                    if(!quiet) {
+                        cout << h2.toJSON() << '\n';
+                        for (int jj = 0; jj < h2.GetPacketCount(); ++jj) {
+                            cout << "\t" << DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16)).toJSON() << endl;
+                        }
                     }
                 }
             }
             else
             {
                 TRACE_CNTL("modeM", 0L);
-                cout << "no data returned\n";
+                if(!quiet) cout << "no data returned\n";
                 return (0);
             }
             if(checkSERDES) {
@@ -215,18 +222,22 @@ main(int	argc
                auto rxBufferStatus = thisDTC->ReadSERDESRXBufferStatus(DTC_Ring_0);
                bool eyescan = thisDTC->ReadSERDESEyescanError(DTC_Ring_0);
                if(eyescan) {
+                  TRACE_CNTL("modeM", 0L);
                   cout << "SERDES Eyescan Error Detected" << endl;
                   return 0;
                }
                if((int)rxBufferStatus > 2) {
+                TRACE_CNTL("modeM", 0L);
                   cout << "Bad Buffer status detected: " << rxBufferStatus << endl;
                   return 0;
                }
                if(cnit.GetData()[0] || cnit.GetData()[1]) {
+                TRACE_CNTL("modeM", 0L);
                   cout << "Character Not In Table Error detected" << endl;
                   return 0;
                }
                if(disparity.GetData()[0] || disparity.GetData()[1]) {
+                TRACE_CNTL("modeM", 0L);
                   cout << "Disparity Error Detected" << endl;
                   return 0;
                }
@@ -241,7 +252,7 @@ main(int	argc
         {
             usleep(delay);
             uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
-            vector<void*> data = thisDTC->GetData(DTC_Timestamp(ts), pause, packetCount);
+            vector<void*> data = thisDTC->GetData(DTC_Timestamp(ts), pause, packetCount,quiet);
             if (data.size() > 0)
             {
                 //cout << data.size() << " packets returned\n";
