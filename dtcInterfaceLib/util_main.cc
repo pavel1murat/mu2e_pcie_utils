@@ -57,7 +57,8 @@ void printHelpMsg() {
        << "    -o: Starting Timestamp offest. (Default: 1)." << endl
        << "    -i: Do not increment Timestamps." << endl
        << "    -d: Delay between tests, in us (Default: 0)." << endl
-       << "    -c: Number of Debug Packets to request (Default: 0)." << endl;
+       << "    -c: Number of Debug Packets to request (Default: 0)." << endl
+       << "    -s: Stop on SERDES Error." << endl;
   exit(0);
 }
 
@@ -67,6 +68,7 @@ main(int	argc
 {
   bool pause = false;
   bool incrementTimestamp = true;
+  bool checkSERDES = false;
   unsigned delay = 0;
   unsigned number = 1;
   unsigned timestampOffset = 1;
@@ -93,6 +95,9 @@ main(int	argc
         break;
       case 'c':
         packetCount = getOptionValue(&optind, &argv);
+        break;
+      case 's':
+        checkSERDES = true;
         break;
       default:
         cout << "Unknown option: " << argv[optind] << endl;
@@ -204,6 +209,28 @@ main(int	argc
                 cout << "no data returned\n";
                 return (0);
             }
+            if(checkSERDES) {
+               auto disparity = thisDTC->ReadSERDESRXDisparityError(DTC_Ring_0);
+               auto cnit =  thisDTC->ReadSERDESRXCharacterNotInTableError(DTC_Ring_0);
+               auto rxBufferStatus = thisDTC->ReadSERDESRXBufferStatus(DTC_Ring_0);
+               bool eyescan = thisDTC->ReadSERDESEyescanError(DTC_Ring_0);
+               if(eyescan) {
+                  cout << "SERDES Eyescan Error Detected" << endl;
+                  return 0;
+               }
+               if((int)rxBufferStatus > 2) {
+                  cout << "Bad Buffer status detected: " << rxBufferStatus << endl;
+                  return 0;
+               }
+               if(cnit.GetData()[0] || cnit.GetData()[1]) {
+                  cout << "Character Not In Table Error detected" << endl;
+                  return 0;
+               }
+               if(disparity.GetData()[0] || disparity.GetData()[1]) {
+                  cout << "Disparity Error Detected" << endl;
+                  return 0;
+               }
+       	    }
         }
     }
     else// if (argc > 1 && strcmp(argv[1],"get")==0)
