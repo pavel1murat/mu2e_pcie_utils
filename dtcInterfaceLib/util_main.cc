@@ -140,7 +140,7 @@ main(int	argc
             int tmo_ms = 0;
             int sts = device.read_data(DTC_DMA_Engine_DAQ, &buffer, tmo_ms);
             TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, buffer);
-            usleep(delay);
+            if(delay > 0) usleep(delay);
         }
     }
     else if (op == "read_release" )
@@ -154,7 +154,7 @@ main(int	argc
             int stsRD = device.read_data(DTC_DMA_Engine_DAQ, &buffer, tmo_ms);
             int stsRL = device.read_release(DTC_DMA_Engine_DAQ, 1);
             TRACE(12, "util - release/read for DAQ and DCS ii=%u stsRD=%d stsRL=%d %p", ii, stsRD, stsRL, buffer);
-            usleep(delay);
+            if(delay > 0) usleep(delay);
         }
     }
     else if (op == "HW")
@@ -173,7 +173,7 @@ main(int	argc
             thisDTC->WriteDMADAQPacket(header);
             thisDTC->SetFirstRead(true);
             std::cout << "Reply:   " << thisDTC->ReadNextDAQPacket().toJSON() << std::endl;
-            usleep(delay);
+            if(delay > 0) usleep(delay);
         }
     }
     else if (op == "DTC")
@@ -187,7 +187,7 @@ main(int	argc
        
         for (unsigned ii = 0; ii < number; ++ii)
         {
-            usleep(delay);
+            if(delay > 0) usleep(delay);
             uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
             vector<void*> data = thisDTC->GetData(DTC_Timestamp(ts), pause, packetCount, quiet);
             if (data.size() > 0)
@@ -250,7 +250,7 @@ main(int	argc
 
         for (unsigned ii = 0; ii < number; ++ii)
         {
-            usleep(delay);
+            if(delay > 0) usleep(delay);
             uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
             vector<void*> data = thisDTC->GetData(DTC_Timestamp(ts), pause, packetCount,quiet);
             if (data.size() > 0)
