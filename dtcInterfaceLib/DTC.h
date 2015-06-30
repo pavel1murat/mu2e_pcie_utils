@@ -31,6 +31,7 @@ namespace DTCLib {
         void SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Timestamp& when);
 
         // For loopback testing...
+        void SetFirstRead(bool read) { first_read_ = read; }
         void WriteDMADAQPacket(const DTC_DMAPacket& packet);
         void WriteDMADCSPacket(const DTC_DMAPacket& packet);
         template<typename PacketType>

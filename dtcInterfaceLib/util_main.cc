@@ -30,10 +30,69 @@
 using namespace DTCLib;
 using namespace std;
 
+unsigned getOptionValue(int *index, char **argv[])
+{
+  char* arg = (*argv)[*index];
+  if(arg[2] != '\0') {
+    (*index)++;
+    return strtoul((*argv)[*index], NULL, 0);
+  }
+  else {
+    int offset = 2;
+    if(arg[2] == '=') {
+      offset = 3;
+    }
+
+    return strtoul(&(arg[offset]), NULL, 0);
+  }
+}
+
 int
 main(int	argc
 , char	*argv[])
 {
+  bool pause = false;
+  bool incrementTimestamp = true;
+  unsigned delay = 0;
+  unsigned number = 1;
+  unsigned timestampOffset = 1;
+  unsigned packetCount = 0;
+  char* op = NULL;
+
+  for(int optind = 1; optind < argc; ++optind) {
+    if(argv[optind][0] == '-') {
+      switch(argv[optind][1]) {
+      case 'h':
+        
+      case 'p':
+        pause = true;
+        break;
+      case 'i':
+        incrementTimestamp = false;
+        break;
+      case 'd':
+        delay = getOptionValue(&optind, &argv);
+        break;
+      case 'n':
+        number = getOptionValue(&optind, &argv);
+        break;
+      case 'o':
+        timestampOffset = getOptionValue(&optind, &argv);
+        break;
+      case 'c':
+        packetCount = getOptionValue(&optind, &argv);
+        break;
+      default:
+        break;
+      }
+    }
+    else {
+      op = argv[optind];
+    }
+  }
+  sprintf("Options are: Operation: %s, Num: %u, Delay: %u, TS Offset: %u, PacketCount: %u, Pause: %s, Inrement TS: %s",op, number, delay, timestampOffset, packetCount, pause ? "true" : "false", incrementTimestamp ? "true" : "false");
+  exit(0);
+
     if (argc > 1 && strcmp(argv[1], "read") == 0)
     {
         DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
@@ -87,6 +146,7 @@ main(int	argc
             DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)0, DTC_DataStatus_Valid, DTC_Timestamp((uint64_t)ii));
             std::cout << "Request: " << header.toJSON() << std::endl;
             thisDTC->WriteDMADAQPacket(header);
+            thisDTC->SetFirstRead(true);
             std::cout << "Reply:   " << thisDTC->ReadNextDAQPacket().toJSON() << std::endl;
         }
     }
@@ -97,6 +157,7 @@ main(int	argc
         thisDTC->SetInternalSystemClock();
         thisDTC->DisableTiming();
         thisDTC->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
+        if(!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now
         unsigned gets = 1;
         if (argc > 2) gets = strtoul(argv[2], NULL, 0);
         unsigned debug = 0;
@@ -107,9 +168,12 @@ main(int	argc
         if(argc > 5) offset = strtoul(argv[5], NULL, 0);
         unsigned increment = 1;
         if(argc > 6) increment = strtoul(argv[6], NULL, 0);  
-      
+        unsigned delay = 0;
+        if(argc > 7) delay = strtoul(argv[7], NULL, 0);       
+       
         for (unsigned ii = 0; ii < gets; ++ii)
         {
+            usleep(delay);
             uint64_t ts = increment ? ii + offset : offset;
             vector<void*> data = thisDTC->GetData(DTC_Timestamp((uint64_t)ts), debug, debugCount);
             if (data.size() > 0)

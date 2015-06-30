@@ -1142,6 +1142,8 @@ bool DTCLib::DTC::ResetSERDES(const DTC_Ring_ID& ring, int interval)
         data[ring] = 0;
         WriteSERDESResetRegister(data.to_ulong());
 
+        usleep(interval);
+
         resetDone = ReadSERDESResetDone(ring);
         TRACE(0, "End of SERDES Reset loop, done %d", resetDone);
     }
