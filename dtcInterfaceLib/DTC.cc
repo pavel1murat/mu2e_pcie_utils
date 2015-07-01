@@ -294,8 +294,8 @@ DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
     TRACE(19, test.toJSON().c_str());
     DTC_DataHeaderPacket output = DTC_DataHeaderPacket(test);
     TRACE(19, output.toJSON().c_str());
-    if ((1 + output.GetPacketCount()) * 16 != blockByteCount) {
-        TRACE(19, "Data Error Detected: PacketCount: %i, ExpectedByteCount: %i, BlockByteCount: %i", output.GetPacketCount(), (1+output.GetPacketCount()) * 16, blockByteCount);
+    if (static_cast<uint64_t>((1 + output.GetPacketCount()) * 16) != blockByteCount) {
+        TRACE(19, "Data Error Detected: PacketCount: %u, ExpectedByteCount: %u, BlockByteCount: %lu", output.GetPacketCount(), (1+output.GetPacketCount()) * 16, blockByteCount);
         throw DTC_DataCorruptionException();
     }
     first_read_ = false;
