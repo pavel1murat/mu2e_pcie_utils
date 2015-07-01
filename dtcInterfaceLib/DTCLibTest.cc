@@ -12,20 +12,22 @@
 #  include <stdio.h>
 #  ifdef _DEBUG
 #   define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
+#   define TRACE_CNTL(...)
 #  else
 #   define TRACE(...)
+#   define TRACE_CNTL(...)
 #  endif
 # endif
 #endif
 
-DTCLib::DTCLibTest::DTCLibTest() : running_(false), regPassed_(0),
-regFailed_(0), pciePassed_(0), pcieFailed_(0), dmaStatePassed_(0), dmaStateFailed_(0),
-daqPassed_(0), daqFailed_(0), dcsPassed_(0), dcsFailed_(0), loopbackPassed_(0),
-loopbackFailed_(0), regPassedTemp_(0), regFailedTemp_(0), pciePassedTemp_(0),
-pcieFailedTemp_(0), dmaStatePassedTemp_(0), dmaStateFailedTemp_(0), daqPassedTemp_(0),
-daqFailedTemp_(0), dcsPassedTemp_(0), dcsFailedTemp_(0), loopbackPassedTemp_(0),
-loopbackFailedTemp_(0), nTests_(0), runRegTest_(false), runPCIeTest_(false),
-runDMAStateTest_(false), runDAQTest_(false), runDCSTest_(false)
+DTCLib::DTCLibTest::DTCLibTest() : running_(false), classPassed_(0), classFailed_(0),
+regPassed_(0), regFailed_(0), pciePassed_(0), pcieFailed_(0), dmaStatePassed_(0),
+dmaStateFailed_(0), daqPassed_(0), daqFailed_(0), dcsPassed_(0), dcsFailed_(0),
+classPassedTemp_(0), classFailedTemp_(0), regPassedTemp_(0), regFailedTemp_(0),
+pciePassedTemp_(0), pcieFailedTemp_(0), dmaStatePassedTemp_(0), dmaStateFailedTemp_(0),
+daqPassedTemp_(0), daqFailedTemp_(0), dcsPassedTemp_(0), dcsFailedTemp_(0), nTests_(0),
+runClassTest_(false), runRegTest_(false), runPCIeTest_(false), runDMAStateTest_(false),
+runDAQTest_(false), runDCSTest_(false)
 {
     thisDTC_ = new DTC();
 }
@@ -40,15 +42,15 @@ DTCLib::DTCLibTest::~DTCLibTest()
 }
 
 // Test Control
-void DTCLib::DTCLibTest::startTest(bool regIOEnabled, bool pcieEnabled, bool dmaStateEnabled,
-    bool daqEnabled, bool dcsEnabled, bool loopbackEnabled, int nTests, bool printMessages)
+void DTCLib::DTCLibTest::startTest(bool classEnabled, bool regIOEnabled, bool pcieEnabled, bool dmaStateEnabled,
+    bool daqEnabled, bool dcsEnabled, int nTests, bool printMessages)
 {
+    runClassTest_ = classEnabled;
     runRegTest_ = regIOEnabled;
     runPCIeTest_ = pcieEnabled;
     runDMAStateTest_ = dmaStateEnabled;
     runDCSTest_ = dcsEnabled;
     runDAQTest_ = daqEnabled;
-    runLoopbackTest_ = loopbackEnabled;
     nTests_ = nTests;
     printMessages_ = printMessages;
 
@@ -56,7 +58,7 @@ void DTCLib::DTCLibTest::startTest(bool regIOEnabled, bool pcieEnabled, bool dma
     {
         std::cout << "Starting workerThread" << std::endl;
     }
-    
+
     workerThread_ = std::thread(&DTCLib::DTCLibTest::doTests, this);
     if (nTests_ >= 0) {
         workerThread_.join();
@@ -72,6 +74,20 @@ void DTCLib::DTCLibTest::stopTests()
 }
 
 // Accessors
+int DTCLib::DTCLibTest::classPassed()
+{
+    int result = classPassed_ - classPassedTemp_;
+    classPassedTemp_ = classPassed_;
+    return result;
+}
+
+int DTCLib::DTCLibTest::classFailed()
+{
+    int result = classFailed_ - classFailedTemp_;
+    classFailedTemp_ = classFailed_;
+    return result;
+}
+
 int DTCLib::DTCLibTest::regPassed()
 {
     int result = regPassed_ - regPassedTemp_;
@@ -142,20 +158,6 @@ int DTCLib::DTCLibTest::dcsFailed()
     return result;
 }
 
-int DTCLib::DTCLibTest::loopbackPassed()
-{
-    int result = loopbackPassed_ - loopbackPassedTemp_;
-    loopbackPassedTemp_ = loopbackPassed_;
-    return result;
-}
-
-int DTCLib::DTCLibTest::loopbackFailed()
-{
-    int result = loopbackFailed_ - loopbackFailedTemp_;
-    loopbackFailedTemp_ = loopbackFailed_;
-    return result;
-}
-
 
 // Private Functions
 void DTCLib::DTCLibTest::doTests()
@@ -167,12 +169,15 @@ void DTCLib::DTCLibTest::doTests()
     std::cout << "DEBUG 1" << std::endl;
     running_ = true;
     // Make sure that the ring is enabled before the tests.
-    thisDTC_->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true,true,false), DTC_ROC_0);
+    thisDTC_->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
 
     int testCount = 0;
     while (testCount < nTests_ || nTests_ < 0)
     {
         ++testCount;
+        if (runClassTest_) {
+            doClassTest();
+        }
         if (runRegTest_){
             doRegTest();
         }
@@ -188,15 +193,17 @@ void DTCLib::DTCLibTest::doTests()
         if (runDAQTest_){
             doDAQTest();
         }
-        if (runLoopbackTest_){
-            doLoopbackTest();
-        }
     }
     running_ = false;
 
     int totalPassed = 0;
     int totalTests = 0;
 
+    if (runClassTest_){
+        totalPassed += classPassed_;
+        totalTests += classPassed_ + classFailed_;
+        std::cout << std::dec << classPassed_ << " of " << (classPassed_ + classFailed_) << " Class Construction/Destruction Tests passed." << std::endl;
+    }
     if (runRegTest_) {
         totalPassed += regPassed_;
         totalTests += regPassed_ + regFailed_;
@@ -222,12 +229,148 @@ void DTCLib::DTCLibTest::doTests()
         totalTests += daqPassed_ + daqFailed_;
         std::cout << std::dec << daqPassed_ << " of " << (daqPassed_ + daqFailed_) << " DAQ DMA I/O tests passed." << std::endl;
     }
-    if (runLoopbackTest_){
-        totalPassed += loopbackPassed_;
-        totalTests += loopbackPassed_ + loopbackFailed_;
-        std::cout << std::dec << loopbackPassed_ << " of " << (loopbackPassed_ + loopbackFailed_) << " DAQ Loopback Tests passed." << std::endl;
-    }
     std::cout << std::dec << totalPassed << " of " << totalTests << " tests passed." << std::endl;
+}
+
+void DTCLib::DTCLibTest::doClassTest()
+{
+    if (printMessages_) {
+        std::cout << std::endl << "Test 0: Class Construction/Destruction" << std::endl;
+    }
+    bool err = false;
+    try{
+        if (printMessages_) std::cout << "Testing DTC_Timestamp Class..." << std::endl;
+
+        auto defaultTS = DTC_Timestamp();
+        if (printMessages_) std::cout << "Default Constructor, TS should be 0: " << defaultTS.GetTimestamp(true) << std::endl;
+        err = err || defaultTS.GetTimestamp(true) != 0;
+
+        auto tsSixtyFour = DTC_Timestamp((uint64_t)0xFFFFBEEFDEADBEEF);
+        if (printMessages_) std::cout << "uint64_t Constructor, TS should be 0xBEEFDEADBEEF: "
+            << std::hex << std::showbase << tsSixtyFour.GetTimestamp(true) << std::endl;
+        err = err || tsSixtyFour.GetTimestamp(true) != 0xBEEFDEADBEEF;
+
+        auto tsSixteenThirtyTwo = DTC_Timestamp((uint32_t)0xDEADBEEF, (uint16_t)0xDEAD);
+        if (printMessages_) std::cout << "uint32_t/uint16_t Constructor, TS should be 0xDEADDEADBEEF: "
+            << tsSixteenThirtyTwo.GetTimestamp(true) << std::endl;
+        err = err || tsSixteenThirtyTwo.GetTimestamp(true) != 0xDEADDEADBEEF;
+
+        uint8_t arr[6] = { 0xAD, 0xDE, 0xAD, 0xDE, 0xEF, 0xBE };
+        auto tsArray = DTC_Timestamp(arr);
+        if (printMessages_) std::cout << "Array Constructor, TS should be 0xBEEFDEADDEAD: "
+            << tsArray.GetTimestamp(true) << std::endl;
+        err = err || tsArray.GetTimestamp(true) != 0xBEEFDEADDEAD;
+
+        auto tsCopy = new DTC_Timestamp(defaultTS);
+        if (printMessages_) std::cout << "Copy Constructor, TS should be 0: "
+            << tsCopy->GetTimestamp(true) << std::endl;
+        err = err || tsCopy->GetTimestamp(true) != 0;
+
+        tsCopy->SetTimestamp(0xBEEFDEAD, 0xBEEF);
+        if (printMessages_) std::cout << "SetTimestamp 32/16 Method, TS should be 0xBEEFBEEFDEAD: "
+            << tsCopy->GetTimestamp(true) << std::endl;
+        err = err || tsCopy->GetTimestamp().to_ullong() != 0xBEEFBEEFDEAD;
+
+        tsCopy->SetTimestamp(0xDEADDEADBEEFBEEF);
+        if (printMessages_) std::cout << "SetTimestamp 64 Method, TS should be 0xDEADBEEFBEEF: "
+            << tsCopy->GetTimestamp(true) << std::endl;
+        err = err || tsCopy->GetTimestamp().to_ullong() != 0xDEADBEEFBEEF;
+
+        if (printMessages_) std::cout << "Running DTC_Timestamp destructor" << std::endl;
+        delete tsCopy;
+
+        if (err) {
+            if (printMessages_) std::cout << "DTC_Timestamp Class failed checks!" << std::endl;
+            goto end;
+        }
+
+        if (printMessages_) std::cout << "Testing DTC_DataPacket Class..." << std::endl;
+        auto defaultDP = new DTC_DataPacket();
+        if (printMessages_) std::cout << "Default Constructor, Size should be 64: " << std::dec
+            << (int)defaultDP->GetSize() << ", and IsMemoryPacket should be false: "
+            << (defaultDP->IsMemoryPacket() ? "true" : "false") << std::endl;
+        err = defaultDP->GetSize() != 64;
+        err = err || defaultDP->IsMemoryPacket();
+
+        defaultDP->Resize(128);
+        if (printMessages_) std::cout << "Resize(128), Size should be 128: "
+            << (int)defaultDP->GetSize() << std::endl;
+        err = err || defaultDP->GetSize() != 128;
+
+        if (printMessages_) std::cout << "Running Data Integrity Check" << std::endl;
+        err = err || !DataPacketIntegrityCheck(defaultDP);
+
+        auto memCopyDP = DTC_DataPacket(*defaultDP);
+        if (printMessages_) std::cout << "Copy Constructor, MemoryPacket, data[64] should be 64: "
+            << (int)memCopyDP.GetWord(64) << std::endl;
+        err = err || memCopyDP.GetWord(64) != 64;
+
+        if (printMessages_) std::cout << "Running DTC_DataPacket Destructor" << std::endl;
+        delete defaultDP;
+
+        mu2e_databuff_t buf;
+        auto dataBufPtrfDP = new DTC_DataPacket(&buf);
+        if (printMessages_) std::cout << "Databuff Pointer Constructor, Size should be 16: "
+            << (int)dataBufPtrfDP->GetSize() << ", and IsMemoryPacket should be true: "
+            << (dataBufPtrfDP->IsMemoryPacket() ? "true" : "false") << std::endl;
+        err = dataBufPtrfDP->GetSize() != 16;
+        err = err || !dataBufPtrfDP->IsMemoryPacket();
+                    
+        auto nonmemCopyDP = DTC_DataPacket(*dataBufPtrfDP);
+        buf[0] = 0x8F;
+        if (printMessages_) std::cout
+            << "DataPacket Memory Packet Copy Constructor: Modifications to original buffer should modify both packets: "
+            << std::hex
+            << "COPY[0]: " << (int)nonmemCopyDP.GetData()[0] << ", ORIGINAL[0]: " << (int)dataBufPtrfDP->GetWord(0) << std::endl;
+        err = err || nonmemCopyDP.GetData()[0] != 0x8F || nonmemCopyDP.GetWord(0) != 0x8F
+                  || dataBufPtrfDP->GetData()[0] != 0x8F || dataBufPtrfDP->GetWord(0) != 0x8F;
+
+        delete dataBufPtrfDP;
+        if (printMessages_) std::cout << "Deleting ORIGINAL should not affect COPY: " << (int)nonmemCopyDP.GetWord(0) << std::endl;
+        err = err || nonmemCopyDP.GetWord(0) != 0x8F;
+
+        uint8_t buff2[16] = { 0xf, 0xe, 0xd, 0xc, 0xb, 0xa, 0x9, 0x8, 0x7, 0x6, 0x5, 0x4, 0x3, 0x2, 0x1, 0x0 };
+        auto uintBufDP = new DTC_DataPacket(buff2);
+        if (printMessages_) std::cout << "Integer Array Constructor, IsMemoryPacket should be true: "
+            << (uintBufDP->IsMemoryPacket() ? "true" : "false") << ", and data[0] should be 0xf: "
+            << (int)uintBufDP->GetWord(0) << std::endl;
+        err = err || !uintBufDP->IsMemoryPacket() || uintBufDP->GetWord(0) != 0xf;
+
+        uintBufDP->Resize(128);
+        if (printMessages_) std::cout << "Resizing a memory packet should not work, size should be 16: "
+            << std::dec << (int)uintBufDP->GetSize() << std::endl;
+        err = err || uintBufDP->GetSize() != 16;
+
+        if (printMessages_) std::cout << "Running DTC_DataPacket Destructor" << std::endl;
+        delete uintBufDP;
+
+        if (err) {
+            if (printMessages_) std::cout << "DTC_DataPacket Class failed checks!" << std::endl;
+            goto end;
+        }
+
+    }
+    catch (std::exception ex)
+    {
+        if (printMessages_) {
+            std::cout << "Test failed with exception: " << ex.what() << std::endl;
+        }
+        ++classFailed_;
+    }
+
+end:
+    if (err) {
+        if (printMessages_) std::cout << "One or more classes failed!" << std::endl;
+        ++classFailed_;
+    }
+    else {
+        if (printMessages_) std::cout << "All Classes Passed" << std::endl;
+        ++classPassed_;
+    }
+
+    if (printMessages_) {
+        std::cout << std::endl << std::endl;
+    }
 }
 
 void DTCLib::DTCLibTest::doRegTest()
@@ -239,7 +382,7 @@ void DTCLib::DTCLibTest::doRegTest()
         std::string designVersion = thisDTC_->ReadDesignVersion();
         if (printMessages_) {
             std::cout << "Reading Design Version: " << designVersion << std::endl;
-            std::cout << "If simulated, result will be 53494D44 (SIMD in ASCII)" << std::endl;
+            std::cout << "If simulated, result will be v99.99_2053-49-53-44 (SIMD in ASCII)" << std::endl;
             std::cout << "Attempting to Toggle Ring 0." << std::endl;
         }
         DTC_RingEnableMode ring0Value = thisDTC_->ReadRingEnabled(DTC_Ring_0);
@@ -251,7 +394,7 @@ void DTCLib::DTCLibTest::doRegTest()
             std::cout << "Value after: " << ring0New << std::endl;
         }
         // Make sure that the ring is enabled after the test.
-        thisDTC_->EnableRing(DTC_Ring_0,DTC_RingEnableMode(true,true,false), DTC_ROC_0);
+        thisDTC_->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
         if (ring0New != ring0Value)
         {
             if (printMessages_) {
@@ -398,55 +541,72 @@ void DTCLib::DTCLibTest::doDAQTest()
         std::cout << "Test 5: DMA R/W on DAQ Channel" << std::endl;
     }
     try{
-        if (printMessages_) {
-            std::cout << "Sending Readout Request Packet on Ring 0" << std::endl;
-        }
-        DTC_Timestamp now = DTC_Timestamp((uint64_t)time(0));
+        thisDTC_->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
+        thisDTC_->SetInternalSystemClock();
+        thisDTC_->DisableTiming();
         thisDTC_->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
-        int retry = 3;
-        bool err = false;
-        do {
-            std::vector<void*> data = thisDTC_->GetData(now);
-            if (data.size() > 0) {
-                if (data.size() > 1) {
-                    if (printMessages_) {
-                        std::cout << "Data array is larger than expected! Cowardly refusing to continue the test." << std::endl;
-                    }
-                    err = true;
-                    ++daqFailed_;
-                    break;
-                }
-                else {
-                    if (printMessages_) {
-                        std::cout << "Dumping data..." << std::endl;
-                    }
-                    int length = DTC_DataHeaderPacket(DTC_DataPacket(data[0])).GetPacketCount();
-                    for (int i = 0; i < length; ++i)
-                    {
-                        for (int j = 0; j < 8; ++j)
-                        {
-                            if (printMessages_) {
-                                std::cout << "0x" << std::setfill('0') << std::setw(4) << std::hex
-                                    << ((uint16_t*)data[0])[i * 8 + j] << std::endl;
-                            }
-                        }
+        if (!thisDTC_->ReadSERDESOscillatorClock()) { thisDTC_->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
+
+        std::vector<void*> data = thisDTC_->GetData(DTC_Timestamp((uint64_t)0), false, 0, !printMessages_);
+        if (data.size() > 0)
+        {
+            if (printMessages_) std::cout << data.size() << " packets returned\n";
+            for (size_t i = 0; i < data.size(); ++i)
+            {
+                TRACE(19, "DTC::GetJSONData constructing DataPacket:");
+                DTC_DataPacket     test = DTC_DataPacket(data[i]);
+                if (printMessages_) std::cout << test.toJSON() << '\n'; // dumps whole databuff_t
+                DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
+                if (printMessages_) {
+                    std::cout << h2.toJSON() << '\n';
+                    for (int jj = 0; jj < h2.GetPacketCount(); ++jj) {
+                        std::cout << "\t" << DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16)).toJSON() << std::endl;
                     }
                 }
             }
-            retry--;
-        } while (retry > 0);
-        if (err) {
-            if (printMessages_) {
-                std::cout << "Test Aborted (fail!)" << std::endl;
-            }
+        }
+        else
+        {
+            TRACE_CNTL("modeM", 0L);
+            if (printMessages_) std::cout << "no data returned\n";
             ++daqFailed_;
+            return;
         }
-        else {
-            if (printMessages_) {
-                std::cout << "Test Passed" << std::endl;
-            }
-            ++daqPassed_;
+
+        auto disparity = thisDTC_->ReadSERDESRXDisparityError(DTC_Ring_0);
+        auto cnit = thisDTC_->ReadSERDESRXCharacterNotInTableError(DTC_Ring_0);
+        auto rxBufferStatus = thisDTC_->ReadSERDESRXBufferStatus(DTC_Ring_0);
+        bool eyescan = thisDTC_->ReadSERDESEyescanError(DTC_Ring_0);
+        if (eyescan) {
+            TRACE_CNTL("modeM", 0L);
+            std::cout << "SERDES Eyescan Error Detected" << std::endl;
+            ++daqFailed_;
+            return;
         }
+        if ((int)rxBufferStatus > 2) {
+            TRACE_CNTL("modeM", 0L);
+            std::cout << "Bad Buffer status detected: " << rxBufferStatus << std::endl;
+            ++daqFailed_;
+            return;
+        }
+        if (cnit.GetData()[0] || cnit.GetData()[1]) {
+            TRACE_CNTL("modeM", 0L);
+            std::cout << "Character Not In Table Error detected" << std::endl;
+            ++daqFailed_;
+            return;
+        }
+        if (disparity.GetData()[0] || disparity.GetData()[1]) {
+            TRACE_CNTL("modeM", 0L);
+            std::cout << "Disparity Error Detected" << std::endl;
+            ++daqFailed_;
+            return;
+        }
+
+        if (printMessages_) {
+            std::cout << "Test Passed" << std::endl;
+        }
+        ++daqPassed_;
+
     }
     catch (std::exception ex)
     {
@@ -460,73 +620,19 @@ void DTCLib::DTCLibTest::doDAQTest()
     }
 }
 
-
-void DTCLib::DTCLibTest::doLoopbackTest()
+bool DTCLib::DTCLibTest::DataPacketIntegrityCheck(DTC_DataPacket* packet)
 {
-    if (printMessages_) {
-        std::cout << "Test 6: Loopback on DAQ Channel" << std::endl;
-    }
-    try{
-        if (printMessages_) {
-            std::cout << "Sending Readout Request Packet on Ring 0" << std::endl;
-        }
-        DTC_Timestamp now = DTC_Timestamp((uint64_t)time(0));
-        thisDTC_->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
-        int retry = 3;
-        bool err = false;
-        do {
-            TRACE(15, "DTCLibTest before thisDTC->GetData");
-            std::vector<void*> data = thisDTC_->GetData(now);
-            TRACE(15, "DTCLibTest after  thisDTC->GetData");
-            if (data.size() > 0) {
-                if (data.size() > 1) {
-                    if (printMessages_) {
-                        std::cout << "Data array is larger than expected! Cowardly refusing to continue the test." << std::endl;
-                    }
-                    err = true;
-                    ++daqFailed_;
-                    break;
-                }
-                else {
-                    if (printMessages_) {
-                        std::cout << "Dumping data..." << std::endl;
-                    }
-                    int length = DTC_DataHeaderPacket(DTC_DataPacket(data[0])).GetPacketCount();
-                    for (int i = 0; i < length; ++i)
-                    {
-                        for (int j = 0; j < 8; ++j)
-                        {
-                            if (printMessages_) {
-                                std::cout << "0x" << std::setfill('0') << std::setw(4) << std::hex
-                                    << ((uint16_t*)data[0])[i * 8 + j] << std::endl;
-                            }
-                        }
-                    }
-                }
-            }
-            retry--;
-        } while (retry > 0);
-        if (err) {
-            if (printMessages_) {
-                std::cout << "Test Aborted (fail!)" << std::endl;
-            }
-            ++loopbackFailed_;
-        }
-        else {
-            if (printMessages_) {
-                std::cout << "Test Passed" << std::endl;
-            }
-            ++loopbackPassed_;
-        }
-    }
-    catch (std::exception ex)
+    bool retCode = true;
+    for (int ii = 0; ii < packet->GetSize(); ++ii)
     {
-        if (printMessages_) {
-            std::cout << "Test failed with exception: " << ex.what() << std::endl;
-        }
-        ++loopbackFailed_;
+        packet->SetWord(ii, ii);
     }
-    if (printMessages_) {
-        std::cout << std::endl << std::endl;
+
+    for (int ii = 0; ii < packet->GetSize(); ++ii)
+    {
+        retCode = packet->GetData()[ii] == ii && packet->GetWord(ii) == ii;
+        if (!retCode) break;
     }
+
+    return retCode;
 }

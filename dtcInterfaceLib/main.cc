@@ -11,18 +11,18 @@ void usage() {
     std::cout << "This program runs several functionality tests of libDTCInterface." << std::endl
         << "If run with no options, it will run all 6 tests." << std::endl
         << "Otherwise, it accepts a space-delimited list of the tests to run," << std::endl
-        << "defined either by test number {1,2,3,4,5,6}, or test name {reg, pcie, stats, dcs, daq, loopback}" << std::endl
+        << "defined either by test number {0,1,2,3,4,5}, or test name {class, reg, pcie, stats, dcs, daq}" << std::endl
         << "It also accepts a -n argument indicating how many iterations of the tests it should run" << std::endl;
 }
 
 int main(int argc, char* argv[]) {
     int testCount = 1;
-    bool registerTest = false,
+    bool classTest = false,
+        registerTest = false,
         pcieTest = false,
         dmaStateTest = false,
         dcsTest = false,
-        daqTest = false,
-        loopbackTest = false;
+        daqTest = false;
     bool testsSpecified = false;
 
     if (argc == 1) {
@@ -47,6 +47,9 @@ int main(int argc, char* argv[]) {
             if (isdigit(argv[i][firstChar])) {
                 testsSpecified = true;
                 switch (argv[i][firstChar] - '0') {
+                case 0:
+                    classTest = true;
+                    break;
                 case 1:
                     registerTest = true;
                     break;
@@ -62,14 +65,15 @@ int main(int argc, char* argv[]) {
                 case 5:
                     daqTest = true;
                     break;
-                case 6:
-                    loopbackTest = true;
-                    break;
                 }
             }
             else {
                 std::string arg(argv[i]);
                 arg = arg.substr(firstChar);
+                if (arg.find("class") != std::string::npos) {
+                    testsSpecified = true;
+                    classTest = true;
+                }
                 if (arg.find("reg") != std::string::npos) {
                     testsSpecified = true;
                     registerTest = true;
@@ -90,34 +94,34 @@ int main(int argc, char* argv[]) {
                     daqTest = true;
                     testsSpecified = true;
                 }
-                else if (arg.find("loopback") != std::string::npos) {
-                    loopbackTest = true;
-                    testsSpecified = true;
-                }
                 else {
                     usage();
                     exit(0);
                 }
             }
         }
-        if (!testsSpecified){
-            registerTest = true;
-            pcieTest = true;
-            dmaStateTest = true;
-            dcsTest = true;
-            daqTest = true;
-            loopbackTest = true;
-        }
-
-        std::cout << "Running tests: " << (registerTest ? "Register I/O " : "") << (pcieTest ? " PCIe State/Stats " : "")
-            << (dmaStateTest ? " DMA State/Stats " : "") << (dcsTest ? " DCS DMA I/O " : "") << (daqTest ? " DAQ DMA I/O " : "") << (loopbackTest ? " DMA Loopback" : "")
-            << ", " << testCount << " times." << std::endl;
-
     }
+    if (!testsSpecified){
+        classTest = true;
+        registerTest = true;
+        pcieTest = true;
+        dmaStateTest = true;
+        dcsTest = true;
+        daqTest = true;
+    }
+
+    std::cout << "Running tests: "
+        << (classTest ? "Class Construction/Destruction " : "")
+        << (registerTest ? "Register I/O " : "")
+        << (pcieTest ? "PCIe State/Stats " : "")
+        << (dmaStateTest ? "DMA State/Stats " : "")
+        << (dcsTest ? "DCS DMA I/O " : "")
+        << (daqTest ? "DAQ DMA I/O " : "")
+        << ", " << testCount << " times." << std::endl;
 
     DTCLib::DTCLibTest* tester = new DTCLib::DTCLibTest();
 
-    tester->startTest(registerTest, pcieTest, dmaStateTest, daqTest, dcsTest,loopbackTest, testCount, true);
+    tester->startTest(classTest, registerTest, pcieTest, dmaStateTest, daqTest, dcsTest, testCount, true);
 
     while (tester->isRunning()) {
         usleep(500000);

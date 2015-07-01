@@ -475,13 +475,6 @@ namespace DTCLib
             return "Unable to communicate with the DTC";
         }
     };
-    class DTC_NotImplementedException : public std::exception {
-    public:
-        virtual const char* what() const throw()
-        {
-            return "I'm sorry, Dave, but I can't do that. (Because I don't know how)";
-        }
-    };
     class DTC_TimeoutOccurredException : public std::exception {
     public:
         virtual const char* what() const throw()
@@ -514,6 +507,7 @@ namespace DTCLib
         bool operator!=(const DTC_Timestamp r) { return r.GetTimestamp(true) != timestamp_; }
         bool operator< (const DTC_Timestamp r) { return r.GetTimestamp(true) < timestamp_; }
 
+        void SetTimestamp(uint64_t timestamp) { timestamp_ = timestamp & 0x0000FFFFFFFFFFFF; }
         void SetTimestamp(uint32_t timestampLow, uint16_t timestampHigh);
         std::bitset<48> GetTimestamp() const { return timestamp_; }
         uint64_t GetTimestamp(bool dummy) const { if (dummy) { return timestamp_; } else return 0; }
@@ -711,31 +705,7 @@ namespace DTCLib
         std::string toJSON();
         std::string toPacketFormat();
     };
-
-    class DTC_ClockFanoutPacket : public DTC_DataPacket {
-    private:
-        uint16_t byteCount_;
-        uint8_t partition_;
-        bool valid_;
-        DTC_Timestamp timestamp_;
-        uint8_t dataStart_[4];
-
-    public:
-        DTC_ClockFanoutPacket(uint8_t partition);
-        DTC_ClockFanoutPacket(uint8_t partition, DTC_Timestamp timestamp);
-        DTC_ClockFanoutPacket(uint8_t partition, DTC_Timestamp timestamp, uint8_t* data);
-        DTC_ClockFanoutPacket(const DTC_ClockFanoutPacket&) = default;
-#ifndef _WIN32
-        DTC_ClockFanoutPacket(DTC_ClockFanoutPacket&&) = default;
-#endif
-        DTC_ClockFanoutPacket(DTC_DataPacket in);
-
-        DTC_DataPacket ConvertToDataPacket() const;
-        virtual uint8_t* GetData() { return dataStart_; }
-        DTC_Timestamp GetTimestamp() { return timestamp_; }
-        uint8_t GetPartition() { return partition_; }
-    };
-
+    
     class DTC_SERDESRXDisparityError {
     private:
         std::bitset<2> data_;
@@ -905,7 +875,8 @@ namespace DTCLib
             if (!formatSet) stream.unsetf(std::ios_base::boolalpha);
             return stream;
         }
-        friend bool operator!=(const DTC_RingEnableMode& left, const DTC_RingEnableMode& right){ return (left.TransmitEnable == right.TransmitEnable) && (left.ReceiveEnable == right.ReceiveEnable) && (left.TimingEnable == right.TimingEnable); }
+        friend bool operator==(const DTC_RingEnableMode& left, const DTC_RingEnableMode& right){ return (left.TransmitEnable == right.TransmitEnable) && (left.ReceiveEnable == right.ReceiveEnable) && (left.TimingEnable == right.TimingEnable); }
+        friend bool operator!=(const DTC_RingEnableMode& left, const DTC_RingEnableMode& right){ return !(left == right); }
     };
 
     struct DTC_FIFOFullErrorFlags {

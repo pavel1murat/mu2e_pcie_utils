@@ -4,15 +4,6 @@
 #include <cstring>
 #ifndef _WIN32
 # include "trace.h"
-#else
-# ifndef TRACE
-#  include <stdio.h>
-#  ifdef _DEBUG
-#   define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
-#  else
-#   define TRACE(...)
-#  endif
-# endif
 #endif
 
 
@@ -44,16 +35,14 @@ DTCLib::DTC_Timestamp::DTC_Timestamp(uint8_t *timeArr)
         uint64_t temp = (uint64_t)timeArr[i] << i * 8;
         timestamp_ += temp;
     }
-    //delete[] timeArr;
 }
 
 DTCLib::DTC_Timestamp::DTC_Timestamp(std::bitset<48> timestamp)
     : timestamp_(timestamp.to_ullong()) {}
 
-
 void DTCLib::DTC_Timestamp::SetTimestamp(uint32_t timestampLow, uint16_t timestampHigh)
 {
-    timestamp_ = timestampLow + timestampHigh * 0x10000;
+    timestamp_ = timestampLow + ((uint64_t)timestampHigh << 32);
 }
 
 void DTCLib::DTC_Timestamp::GetTimestamp(uint8_t* timeArr, int offset) const
@@ -271,7 +260,6 @@ DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID 
     {
         data_[i] = data[i];
     }
-    delete[] data;
 }
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
@@ -336,7 +324,6 @@ DTCLib::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC
     {
         request_[i] = request[i];
     }
-    delete[] request;
 }
 
 DTCLib::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
@@ -593,54 +580,6 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DataHeaderPacket::ConvertToDataPacket() const
     return output;
 }
 
-DTCLib::DTC_ClockFanoutPacket::DTC_ClockFanoutPacket(uint8_t partition)
-    : partition_(partition) {}
-
-DTCLib::DTC_ClockFanoutPacket::DTC_ClockFanoutPacket(uint8_t partition, DTC_Timestamp timestamp)
-    : partition_(partition), timestamp_(timestamp) {}
-
-DTCLib::DTC_ClockFanoutPacket::DTC_ClockFanoutPacket(uint8_t partition, DTC_Timestamp timestamp, uint8_t* data)
-    : partition_(partition), timestamp_(timestamp)
-{
-    for (int i = 0; i < 4; ++i)
-    {
-        dataStart_[i] = data[i];
-    }
-    delete[] data;
-}
-
-DTCLib::DTC_ClockFanoutPacket::DTC_ClockFanoutPacket(DTC_DataPacket in) :
-partition_(in.GetWord(3) & 0x0F)
-{
-    uint8_t timestampProto[6];
-    for (int i = 0; i < 6; i++)
-    {
-        timestampProto[i] = in.GetWord(6 + i);
-    }
-    timestamp_ = DTC_Timestamp(timestampProto);
-    for (int i = 0; i < 4; i++)
-    {
-        dataStart_[i] = in.GetWord(i + 12);
-    }
-}
-
-
-DTCLib::DTC_DataPacket DTCLib::DTC_ClockFanoutPacket::ConvertToDataPacket() const
-{
-    uint8_t data[16];
-    data[0] = static_cast<uint8_t>(byteCount_);
-    data[1] = static_cast<uint8_t>(byteCount_ >> 8);
-    data[2] = 0x00;
-    data[3] = (valid_ ? 0x80 : 0x00) + (partition_ & 0xF);
-    timestamp_.GetTimestamp(data, 6);
-    for (int ii = 0; ii < 4; ++ii)
-    {
-        data[ii + 12] = dataStart_[ii];
-    }
-    return DTC_DataPacket(data);
-}
-
-
 DTCLib::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError() : data_(0) {}
 
 DTCLib::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError(std::bitset<2> data) : data_(data) {}
@@ -870,12 +809,12 @@ std::string DTCLib::DTC_PCIeState::toString()
     stream << "\t\"IntMode\": " << IntMode << "," << std::endl;                //* Legacy or MSI interrupts */
     stream << "\t\"MPS\": " << MPS << "," << std::endl;                    //* Max Payload Size */
     stream << "\t\"MRRS\": " << MRRS << "," << std::endl;                   //* Max Read Request Size */
-    stream << "\t\"InitFCCplD\": " << "," << InitFCCplD << std::endl;             //* Initial FC Credits for Completion Data */
-    stream << "\t\"InitFCCplH\": " << "," << InitFCCplH << std::endl;             //* Initial FC Credits for Completion Header */
-    stream << "\t\"InitFCNPD\": " << "," << InitFCNPD << std::endl;              //* Initial FC Credits for Non-Posted Data */
-    stream << "\t\"InitFCNPH\": " << "," << InitFCNPH << std::endl;              //* Initial FC Credits for Non-Posted Data */
-    stream << "\t\"InitFCPD\": " << "," << InitFCPD << std::endl;               //* Initial FC Credits for Posted Data */
-    stream << "\t\"InitFCPH\": " << "," << InitFCPH << std::endl;               //* Initial FC Credits for Posted Data */
+    stream << "\t\"InitFCCplD\": " << InitFCCplD << "," << std::endl;             //* Initial FC Credits for Completion Data */
+    stream << "\t\"InitFCCplH\": " << InitFCCplH << "," << std::endl;             //* Initial FC Credits for Completion Header */
+    stream << "\t\"InitFCNPD\": "  << InitFCNPD << "," << std::endl;              //* Initial FC Credits for Non-Posted Data */
+    stream << "\t\"InitFCNPH\": "  << InitFCNPH << "," << std::endl;              //* Initial FC Credits for Non-Posted Data */
+    stream << "\t\"InitFCPD\": "  << InitFCPD << "," << std::endl;               //* Initial FC Credits for Posted Data */
+    stream << "\t\"InitFCPH\": "  << InitFCPH << "," << std::endl;               //* Initial FC Credits for Posted Data */
     stream << "}" << std::endl;
 
     return stream.str();

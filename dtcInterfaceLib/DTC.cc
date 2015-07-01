@@ -5,18 +5,6 @@
 # include <unistd.h>
 # include "trace.h"
 #else
-# include <chrono>
-# include <thread>
-# define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
-# ifndef TRACE
-#  include <stdio.h>
-#  ifdef _DEBUG
-#   define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
-#  else
-#   define TRACE(...)
-#  endif
-# endif
-# pragma warning(disable: 4351)
 #endif
 
 DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode) : device_(),
@@ -116,7 +104,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool debug, int debu
                     for (uint8_t roc = 0; roc <= maxRoc; ++roc)
                     {
                         TRACE(19, "DTC::GetData before DTC_DataRequestPacket req");
-                        DTC_DataRequestPacket req(ring, (DTC_ROC_ID)roc, when, true, debugCount);
+                        DTC_DataRequestPacket req(ring, (DTC_ROC_ID)roc, when, true, (uint16_t)debugCount);
                         TRACE(19, "DTC::GetData before WriteDMADAQPacket - DTC_DataRequestPacket");
                         if(!quiet) std::cout << req.toJSON() << std::endl;
                        WriteDMADAQPacket(req);

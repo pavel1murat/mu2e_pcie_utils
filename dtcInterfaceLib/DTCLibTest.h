@@ -13,12 +13,14 @@ namespace DTCLib {
         virtual ~DTCLibTest();
 
         //Test Control
-        void startTest(bool regIOEnabled, bool pcieEnabled, bool dmaStateEnabled,
-            bool daqEnabled, bool dcsEnabled, bool loopbackEnabled, int nTests, bool printMessages = false);
+        void startTest(bool classEnabled, bool regIOEnabled, bool pcieEnabled, bool dmaStateEnabled,
+            bool daqEnabled, bool dcsEnabled, int nTests, bool printMessages = false);
         void stopTests();
 
         // Accessors
         bool isRunning() { return running_; }
+        int classPassed();
+        int classFailed();
         int regPassed();
         int regFailed();
         int pciePassed();
@@ -29,20 +31,23 @@ namespace DTCLib {
         int daqFailed();
         int dcsPassed();
         int dcsFailed();
-        int loopbackPassed();
-        int loopbackFailed();
     private:
         //Test Worker
         void doTests();
+        void doClassTest();
         void doRegTest();
         void doPCIeTest();
         void doDMAStateTest();
         void doDCSTest();
         void doDAQTest();
-        void doLoopbackTest();
+
+        bool DataPacketIntegrityCheck(DTC_DataPacket*);
 
         //Test Status
         std::atomic<bool> running_;
+
+        std::atomic<int> classPassed_;
+        std::atomic<int> classFailed_;
         std::atomic<int> regPassed_;
         std::atomic<int> regFailed_;
         std::atomic<int> pciePassed_;
@@ -53,8 +58,9 @@ namespace DTCLib {
         std::atomic<int> daqFailed_;
         std::atomic<int> dcsPassed_;
         std::atomic<int> dcsFailed_;
-        std::atomic<int> loopbackPassed_;
-        std::atomic<int> loopbackFailed_;
+
+        int classPassedTemp_;
+        int classFailedTemp_;
         int regPassedTemp_;
         int regFailedTemp_;
         int pciePassedTemp_;
@@ -65,18 +71,18 @@ namespace DTCLib {
         int daqFailedTemp_;
         int dcsPassedTemp_;
         int dcsFailedTemp_;
-        int loopbackPassedTemp_;
-        int loopbackFailedTemp_;
 
         // Test Internals
         DTC* thisDTC_;
         int nTests_;
+
+        bool runClassTest_;
         bool runRegTest_;
         bool runPCIeTest_;
         bool runDMAStateTest_;
         bool runDAQTest_;
         bool runDCSTest_;
-        bool runLoopbackTest_;
+
         bool printMessages_;
         std::thread workerThread_;
     };
