@@ -13,7 +13,14 @@
 #ifndef _WIN32
 # include <trace.h>
 #else
-# define TRACE(...)
+# ifndef TRACE
+#  include <stdio.h>
+#  ifdef _DEBUG
+#   define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
+#  else
+#   define TRACE(...)
+#  endif
+# endif
 # pragma warning(disable: 4351)
 #endif
 #include "mu2esim.hh"
@@ -36,6 +43,10 @@ mu2esim::mu2esim()
     hwIdx_[1] = 0;
     swIdx_[0] = 0;
     swIdx_[1] = 0;
+    for (int ii = 0; ii < SIM_BUFFCOUNT; ++ii) {
+        dmaData_[0][ii] = (mu2e_databuff_t*)new mu2e_databuff_t();
+        dmaData_[1][ii] = (mu2e_databuff_t*)new mu2e_databuff_t();
+    }
     release_all(0);
     release_all(1);
     for (int ring = 0; ring < 6; ++ring)
@@ -90,6 +101,9 @@ int mu2esim::init(DTCLib::DTC_SimMode mode)
     registers_[0x913C] = 0x0;        // No Eyescan Error
     registers_[0x9140] = 0x7F;       // RX CDR Locked
     registers_[0x9144] = 0x800;      // DMA Timeout Preset
+    registers_[0x9148] = 0x200000;   // ROC Timeout Preset
+    registers_[0x914C] = 0x0;        // ROC Timeout Error
+    registers_[0x9150] = 0x0;        // Receive Packet Error
     registers_[0x9180] = 0x0;        // Timestamp preset to 0
     registers_[0x9184] = 0x0;
     registers_[0x9188] = 0x00002000; // Data pending timeout preset
@@ -423,8 +437,11 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
     size_t bytesReturned = buffSize_[chn][swIdx_[chn]];
     *buffer = dmaData_[chn][swIdx_[chn]];
     swIdx_[chn] = (swIdx_[chn] + 1) % SIM_BUFFCOUNT;
-
+#ifdef _WIN32
+    return 1;
+#else
     return bytesReturned;
+#endif
 }
 
 int mu2esim::write_data(int chn, void *buffer, size_t bytes)
@@ -485,8 +502,6 @@ int mu2esim::read_release(int chn, unsigned num)
     //Always succeeds
     TRACE(17, "mu2esim::read_release: Simulating a release of %u buffers of channel %i", num, chn);
     for (unsigned ii = 0; ii < num; ++ii) {
-        delete[] dmaData_[chn][swIdx_[chn]];
-        dmaData_[chn][swIdx_[chn]] = (mu2e_databuff_t*)new mu2e_databuff_t();
         swIdx_[chn] = (swIdx_[chn] + 1) % SIM_BUFFCOUNT;
     }
     return 0;
@@ -494,7 +509,10 @@ int mu2esim::read_release(int chn, unsigned num)
 
 int mu2esim::release_all(int chn)
 {
-    return read_release(chn, SIM_BUFFCOUNT);
+    read_release(chn, SIM_BUFFCOUNT);
+    hwIdx_[chn] = 0;
+    swIdx_[chn] = 0;
+    return 0;
 }
 
 int  mu2esim::read_register(uint16_t address, int tmo_ms, uint32_t *output)
@@ -591,7 +609,7 @@ unsigned mu2esim::delta_(int chn, int dir)
 {
     unsigned hw = hwIdx_[chn];
     unsigned sw = swIdx_[chn];
-    TRACE(21, "mu2edev::delta_ chn=%d dir=%d hw=%u sw=%u num_buffs=%u"
+    TRACE(21, "mu2esim::delta_ chn=%d dir=%d hw=%u sw=%u num_buffs=%u"
         , chn, dir, hw, sw, SIM_BUFFCOUNT);
     if (dir == C2S)
         return ((hw >= sw)

@@ -8,12 +8,20 @@
 #include <cstdio>		// printf
 #include <cstdlib>		// strtoul
 #include <iostream>
+#include <string>
 #include "DTC.h"
 #ifdef _WIN32
 # include <chrono>
 # include <thread>
 # define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
-# define TRACE(...)
+# ifndef TRACE
+#  include <stdio.h>
+#  ifdef _DEBUG
+#   define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
+#  else
+#   define TRACE(...)
+#  endif
+# endif
 # define TRACE_CNTL(...)
 #else
 # include "trace.h"
@@ -23,115 +31,252 @@
 using namespace DTCLib;
 using namespace std;
 
+unsigned getOptionValue(int *index, char **argv[])
+{
+  char* arg = (*argv)[*index];
+  if(arg[2] == '\0') {
+    (*index)++;
+    return strtoul((*argv)[*index], NULL, 0);
+  }
+  else {
+    int offset = 2;
+    if(arg[2] == '=') {
+      offset = 3;
+    }
+
+    return strtoul(&(arg[offset]), NULL, 0);
+  }
+}
+
+void printHelpMsg() {
+  cout << "Usage: mu2eUtil [options] [read,read_data,read_release,HW,DTC]" << endl;
+  cout << "Options are:" << endl
+       << "    -h: This message." << endl
+       << "    -n: Number of times to repeat test. (Default: 1)" << endl
+       << "    -p: Pause after sending a packet." << endl
+       << "    -o: Starting Timestamp offest. (Default: 1)." << endl
+       << "    -i: Do not increment Timestamps." << endl
+       << "    -d: Delay between tests, in us (Default: 0)." << endl
+       << "    -c: Number of Debug Packets to request (Default: 0)." << endl
+       << "    -q: Quiet mode (Don't print)" << endl
+       << "    -s: Stop on SERDES Error." << endl;
+  exit(0);
+}
+
 int
 main(int	argc
 , char	*argv[])
 {
-    if (argc > 1 && strcmp(argv[1], "read") == 0)
+  bool pause = false;
+  bool incrementTimestamp = true;
+  bool checkSERDES = false;
+  bool quiet = false;
+  unsigned delay = 0;
+  unsigned number = 1;
+  unsigned timestampOffset = 1;
+  unsigned packetCount = 0;
+  string op = "";
+
+  for(int optind = 1; optind < argc; ++optind) {
+    if(argv[optind][0] == '-') {
+      switch(argv[optind][1]) {
+      case 'p':
+        pause = true;
+        break;
+      case 'i':
+        incrementTimestamp = false;
+        break;
+      case 'd':
+        delay = getOptionValue(&optind, &argv);
+        break;
+      case 'n':
+        number = getOptionValue(&optind, &argv);
+        break;
+      case 'o':
+        timestampOffset = getOptionValue(&optind, &argv);
+        break;
+      case 'c':
+        packetCount = getOptionValue(&optind, &argv);
+        break;
+      case 'q':
+        quiet = true;
+        break;
+      case 's':
+        checkSERDES = true;
+        break;
+      default:
+        cout << "Unknown option: " << argv[optind] << endl;
+        printHelpMsg();
+        break;
+      case 'h':
+        printHelpMsg();
+        break;
+      }
+    }
+    else {
+      op = string(argv[optind]);
+    }
+  }
+  
+  string pauseStr = pause ? "true" : "false";
+  string incrementStr = incrementTimestamp ? "true" : "false";
+  cout << "Options are: Operation: " << string(op) << ", Num: " << number << ", Delay: " << delay << ", TS Offset: " << timestampOffset << ", PacketCount: " << packetCount << ", Pause: " << pauseStr << ", Increment TS: " << incrementStr << endl;
+
+    if (op == "read")
     {
+      cout << "Operation \"read\"" << endl;
         DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
         DTC_DataHeaderPacket packet = thisDTC->ReadNextDAQPacket();
         cout << packet.toJSON() << '\n';
     }
-    else if (argc > 1 && strcmp(argv[1], "read_data") == 0)
+    else if (op == "read_data")
     {
+      cout << "Operation \"read_data\"" << endl;
         mu2edev device;
         device.init();
-        unsigned reads = 1;
-        if (argc > 2) reads = strtoul(argv[2], NULL, 0);
-        for (unsigned ii = 0; ii < reads; ++ii)
+        for (unsigned ii = 0; ii < number; ++ii)
         {
             void *buffer;
             int tmo_ms = 0;
             int sts = device.read_data(DTC_DMA_Engine_DAQ, &buffer, tmo_ms);
-            TRACE( 1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, buffer);
-            usleep(0);
+            TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, buffer);
+            if(delay > 0) usleep(delay);
         }
     }
-    else if (argc > 1 && strcmp(argv[1], "read_release") == 0)
+    else if (op == "read_release" )
     {
         mu2edev device;
         device.init();
-        unsigned releases = 1;
-        if (argc > 2) releases = strtoul(argv[2], NULL, 0);
-        for (unsigned ii = 0; ii < releases; ++ii)
+        for (unsigned ii = 0; ii < number; ++ii)
         {
             void *buffer;
             int tmo_ms = 0;
             int stsRD = device.read_data(DTC_DMA_Engine_DAQ, &buffer, tmo_ms);
             int stsRL = device.read_release(DTC_DMA_Engine_DAQ, 1);
             TRACE(12, "util - release/read for DAQ and DCS ii=%u stsRD=%d stsRL=%d %p", ii, stsRD, stsRL, buffer);
-            usleep(0);
+            if(delay > 0) usleep(delay);
         }
     }
-    else if (argc > 1 && strcmp(argv[1],"DTC")==0)
+    else if (op == "HW")
     {
         DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
-	thisDTC->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
-	thisDTC->SetInternalSystemClock();
+        thisDTC->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true,true,false), DTC_ROC_0);
+        thisDTC->SetInternalSystemClock();
         thisDTC->DisableTiming();
-	thisDTC->SetMaxROCNumber( DTC_Ring_0, DTC_ROC_0 );
-        unsigned gets = 1;
-        if (argc > 2) gets = strtoul(argv[2], NULL, 0);
-        for (unsigned ii = 0; ii < gets; ++ii)
+        thisDTC->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
+  
+        for(unsigned ii = 0; ii < number; ++ii)
         {
-            vector<void*> data = thisDTC->GetData(DTC_Timestamp((uint64_t)ii));
+            uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
+            DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)0, DTC_DataStatus_Valid, DTC_Timestamp(ts));
+            std::cout << "Request: " << header.toJSON() << std::endl;
+            thisDTC->WriteDMADAQPacket(header);
+            thisDTC->SetFirstRead(true);
+            std::cout << "Reply:   " << thisDTC->ReadNextDAQPacket().toJSON() << std::endl;
+            if(delay > 0) usleep(delay);
+        }
+    }
+    else if (op == "DTC")
+    {
+        DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
+        thisDTC->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
+        thisDTC->SetInternalSystemClock();
+        thisDTC->DisableTiming();
+        thisDTC->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
+        if(!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
+       
+        for (unsigned ii = 0; ii < number; ++ii)
+        {
+            if(delay > 0) usleep(delay);
+            uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
+            vector<void*> data = thisDTC->GetData(DTC_Timestamp(ts), pause, packetCount, quiet);
             if (data.size() > 0)
             {
-                cout << data.size() << " packets returned\n";
+                if(!quiet) cout << data.size() << " packets returned\n";
                 for (size_t i = 0; i < data.size(); ++i)
                 {
                     TRACE(19, "DTC::GetJSONData constructing DataPacket:");
                     DTC_DataPacket     test = DTC_DataPacket(data[i]);
-                    //cout << test.toJSON() << '\n'; // dumps whole databuff_t
+                    if(!quiet) cout << test.toJSON() << '\n'; // dumps whole databuff_t
                     printf("data@%p=0x%08x\n", data[i], *(uint32_t*)(data[i]));
                     //DTC_DataHeaderPacket h1 = DTC_DataHeaderPacket(data[i]);
                     //cout << h1.toJSON() << '\n';
                     DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
-                    cout << h2.toJSON() << '\n';
-                    for (int jj = 0; jj < h2.GetPacketCount(); ++jj) {
-                        cout << "\t" << DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16)).toJSON() << endl;
+                    if(!quiet) {
+                        cout << h2.toJSON() << '\n';
+                        for (int jj = 0; jj < h2.GetPacketCount(); ++jj) {
+                            cout << "\t" << DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16)).toJSON() << endl;
+                        }
                     }
                 }
             }
             else
-	    {   TRACE_CNTL( "modeM", 0L );
-                cout << "no data returned\n";
-		return (0);
-	    }
+            {
+                TRACE_CNTL("modeM", 0L);
+                if(!quiet) cout << "no data returned\n";
+                return (0);
+            }
+            if(checkSERDES) {
+               auto disparity = thisDTC->ReadSERDESRXDisparityError(DTC_Ring_0);
+               auto cnit =  thisDTC->ReadSERDESRXCharacterNotInTableError(DTC_Ring_0);
+               auto rxBufferStatus = thisDTC->ReadSERDESRXBufferStatus(DTC_Ring_0);
+               bool eyescan = thisDTC->ReadSERDESEyescanError(DTC_Ring_0);
+               if(eyescan) {
+                  TRACE_CNTL("modeM", 0L);
+                  cout << "SERDES Eyescan Error Detected" << endl;
+                  return 0;
+               }
+               if((int)rxBufferStatus > 2) {
+                TRACE_CNTL("modeM", 0L);
+                  cout << "Bad Buffer status detected: " << rxBufferStatus << endl;
+                  return 0;
+               }
+               if(cnit.GetData()[0] || cnit.GetData()[1]) {
+                TRACE_CNTL("modeM", 0L);
+                  cout << "Character Not In Table Error detected" << endl;
+                  return 0;
+               }
+               if(disparity.GetData()[0] || disparity.GetData()[1]) {
+                TRACE_CNTL("modeM", 0L);
+                  cout << "Disparity Error Detected" << endl;
+                  return 0;
+               }
+       	    }
         }
     }
     else// if (argc > 1 && strcmp(argv[1],"get")==0)
     {
         DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
-        unsigned gets = 1;
-        if (argc > 1) gets = strtoul(argv[1], NULL, 0);
-        for (unsigned ii = 0; ii < gets; ++ii)
+
+        for (unsigned ii = 0; ii < number; ++ii)
         {
-            vector<void*> data = thisDTC->GetData(DTC_Timestamp((uint64_t)ii));
+            if(delay > 0) usleep(delay);
+            uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
+            vector<void*> data = thisDTC->GetData(DTC_Timestamp(ts), pause, packetCount,quiet);
             if (data.size() > 0)
             {
-                cout << data.size() << " packets returned\n";
+                //cout << data.size() << " packets returned\n";
                 for (size_t i = 0; i < data.size(); ++i)
                 {
                     TRACE(19, "DTC::GetJSONData constructing DataPacket:");
                     DTC_DataPacket     test = DTC_DataPacket(data[i]);
                     //cout << test.toJSON() << '\n'; // dumps whole databuff_t
-                    printf("data@%p=0x%08x\n", data[i], *(uint32_t*)(data[i]));
+                    //printf("data@%p=0x%08x\n", data[i], *(uint32_t*)(data[i]));
                     //DTC_DataHeaderPacket h1 = DTC_DataHeaderPacket(data[i]);
                     //cout << h1.toJSON() << '\n';
                     DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
-                    cout << h2.toJSON() << '\n';
-                    for (int jj = 0; jj < h2.GetPacketCount(); ++jj) {
-                        cout << "\t" << DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16)).toJSON() << endl;
-                    }
+                    //cout << h2.toJSON() << '\n';
+                    // for (int jj = 0; jj < h2.GetPacketCount(); ++jj) {
+                    //    cout << "\t" << DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16)).toJSON() << endl;
+                    //}
                 }
             }
             else
-	    {   TRACE_CNTL( "modeM", 0L );
+            {
+                TRACE_CNTL("modeM", 0L);
                 cout << "no data returned\n";
-		return (0);
-	    }
+                return (0);
+            }
         }
     }
     return (0);

@@ -17,7 +17,20 @@
 #  include <unistd.h>		// sysconf
 #  include "trace.h"
 # else
-#  define TRACE(...)
+#  include <chrono>
+#  include <thread>
+#  define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
+#  pragma warning(disable: 4351)
+#  ifndef TRACE
+#   include <stdio.h>
+#   ifdef _DEBUG
+#    define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
+#   define TRACE_CNTL(...)
+#   else
+#    define TRACE(...)
+#   define TRACE_CNTL(...)
+#   endif
+#  endif
 # endif
 # include <sys/types.h>
 # include <stdint.h>		// uint16_t

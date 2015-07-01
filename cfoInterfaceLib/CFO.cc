@@ -81,6 +81,7 @@ void CFOLib::CFO::WriteCFOTable(const CFO_ReadoutRequestTable& input)
     }
 
     device_.write_data(buf, size);
+    delete[] buf;
 }
 
 std::vector<CFOLib::CFO_ReadoutRequestPacket> CFOLib::CFO::ReadLoopbackData(int maxCount)
