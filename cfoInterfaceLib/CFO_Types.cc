@@ -37,7 +37,6 @@ CFOLib::CFO_Timestamp::CFO_Timestamp(uint8_t *timeArr)
         uint64_t temp = (uint64_t)timeArr[i] << i * 8;
         timestamp_ += temp;
     }
-    delete[] timeArr;
 }
 
 CFOLib::CFO_Timestamp::CFO_Timestamp(std::bitset<48> timestamp)
@@ -96,7 +95,6 @@ CFOLib::CFO_ReadoutRequestPacket::CFO_ReadoutRequestPacket(CFO_Ring_ID ring, int
     {
         request_[i] = request[i];
     }
-    delete[] request;
 }
 
 CFOLib::CFO_ReadoutRequestPacket::CFO_ReadoutRequestPacket(uint8_t* data)

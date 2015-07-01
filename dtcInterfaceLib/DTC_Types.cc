@@ -447,7 +447,6 @@ DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t* data)
     {
         data_[i] = data[i];
     }
-    delete[] data;
 }
 
 DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
