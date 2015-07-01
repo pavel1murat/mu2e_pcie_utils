@@ -21,11 +21,9 @@ namespace DTCLib {
         // Data read-out
         std::vector<void*> GetData(DTC_Timestamp when = DTC_Timestamp(), bool debug = false, int debugCount = 0, bool quiet = true);
         std::string GetJSONData(DTC_Timestamp when = DTC_Timestamp());
-        std::vector<void*> GetData_OLD(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const DTC_Timestamp& when, int* length);
-
+        
         // DCS Read/Write Cycle
         void DCSRequestReply(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, uint8_t *dataIn);
-        void DCSRequestReply_OLD(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, uint8_t *dataIn);
 
         // Broadcast Readout
         void SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Timestamp& when, bool quiet = true);
@@ -34,8 +32,6 @@ namespace DTCLib {
         void SetFirstRead(bool read) { first_read_ = read; }
         void WriteDMADAQPacket(const DTC_DMAPacket& packet);
         void WriteDMADCSPacket(const DTC_DMAPacket& packet);
-        template<typename PacketType>
-        PacketType ReadDMAPacket_OLD(const DTC_DMA_Engine& channel);
         DTC_DataHeaderPacket ReadNextDAQPacket(int tmo_ms = 0);
         DTC_DCSReplyPacket ReadNextDCSPacket();
         void ReleaseAllBuffers(const DTC_DMA_Engine& channel) { device_.release_all(channel); }
@@ -133,6 +129,21 @@ namespace DTCLib {
         DTC_FIFOFullErrorFlags ToggleFIFOFullErrorFlags(const DTC_Ring_ID& ring, const DTC_FIFOFullErrorFlags& flags);
         DTC_FIFOFullErrorFlags ReadFIFOFullErrorFlags(const DTC_Ring_ID& ring);
 
+        uint32_t ReadROCTimeoutPreset();
+        int WriteROCTimeoutPreset(uint32_t preset);
+
+        bool ReadROCTimeoutError(DTC_Ring_ID& ring);
+        bool ClearROCTimeoutError(DTC_Ring_ID& ring);
+
+        bool ReadRXElasticBufferUnderrun(DTC_Ring_ID& ring);
+        bool ClearRXElasticBufferUnderrun(DTC_Ring_ID& ring);
+        bool ReadRXElasticBufferOverrun(DTC_Ring_ID& ring);
+        bool ClearRXElasticBufferOverrun(DTC_Ring_ID& ring);
+        bool ReadPacketError(DTC_Ring_ID& ring);
+        bool ClearPacketError(DTC_Ring_ID& ring);
+        bool ReadPacketCRCError(DTC_Ring_ID& ring);
+        bool ClearPacketCRCError(DTC_Ring_ID& ring);
+
         DTC_Timestamp WriteTimestampPreset(const DTC_Timestamp& preset);
         DTC_Timestamp ReadTimestampPreset();
 
@@ -199,6 +210,12 @@ namespace DTCLib {
         uint32_t ReadSERDESRXCDRLockRegister() { return ReadRegister(DTC_Register_SERDESRXCDRLock); }
         void WriteDMATimeoutPresetRegister(uint32_t data) { WriteRegister(data, DTC_Register_DMATimeoutPreset); }
         uint32_t ReadDMATimeoutPresetRegister() { return ReadRegister(DTC_Register_DMATimeoutPreset); }
+        void WriteROCTimeoutPresetRegister(uint32_t data) { WriteRegister(data, DTC_Register_ROCReplyTimeout); }
+        uint32_t ReadROCTimeoutPresetRegister() { return ReadRegister(DTC_Register_ROCReplyTimeout); }
+        void WriteROCTimeoutErrorRegister(uint32_t data) { WriteRegister(data, DTC_Register_ROCTimeoutError); }
+        uint32_t ReadROCTimeoutErrorRegister() { return ReadRegister(DTC_Register_ROCTimeoutError); }
+        void WriteReceivePacketErrorRegister(uint32_t data) { WriteRegister(data, DTC_Register_ReceivePacketError); }
+        uint32_t ReadReceivePacketErrorRegister() { return ReadRegister(DTC_Register_ReceivePacketError); }
         void WriteDataPendingTimerRegister(uint32_t data) { WriteRegister(data, DTC_Register_DataPendingTimer); }
         uint32_t ReadDataPendingTimerRegister() { return ReadRegister(DTC_Register_DataPendingTimer); }
         void WriteDMAPacketSizeRegister(uint32_t data) { WriteRegister(data, DTC_Register_PacketSize); }

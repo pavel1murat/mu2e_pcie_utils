@@ -101,6 +101,9 @@ int mu2esim::init(DTCLib::DTC_SimMode mode)
     registers_[0x913C] = 0x0;        // No Eyescan Error
     registers_[0x9140] = 0x7F;       // RX CDR Locked
     registers_[0x9144] = 0x800;      // DMA Timeout Preset
+    registers_[0x9148] = 0x200000;   // ROC Timeout Preset
+    registers_[0x914C] = 0x0;        // ROC Timeout Error
+    registers_[0x9150] = 0x0;        // Receive Packet Error
     registers_[0x9180] = 0x0;        // Timestamp preset to 0
     registers_[0x9184] = 0x0;
     registers_[0x9188] = 0x00002000; // Data pending timeout preset

@@ -14,7 +14,7 @@
 namespace DTCLib
 {
     static const int DTC_BUFFSIZE = sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t));
-    const std::string ExpectedDesignVersion = "v1.0_2015-05-12-00";
+    const std::string ExpectedDesignVersion = "v1.4_2015-07-01-00";
 
     enum DTC_Register : uint16_t {
         DTC_Register_DesignVersion = 0x9000,
@@ -38,6 +38,9 @@ namespace DTCLib
         DTC_Register_SERDESEyescanData = 0x913C,
         DTC_Register_SERDESRXCDRLock = 0x9140,
         DTC_Register_DMATimeoutPreset = 0x9144,
+        DTC_Register_ROCReplyTimeout = 0x9148,
+        DTC_Register_ROCTimeoutError = 0x914C,
+        DTC_Register_ReceivePacketError = 0x9150,
         DTC_Register_TimestampPreset0 = 0x9180,
         DTC_Register_TimestampPreset1 = 0x9184,
         DTC_Register_DataPendingTimer = 0x9188,
@@ -57,9 +60,10 @@ namespace DTCLib
         DTC_Register_SERDESRXCharacterNotInTableError, DTC_Register_SERDESUnlockError, DTC_Register_SERDESPLLLocked,
         DTC_Register_SERDESTXBufferStatus, DTC_Register_SERDESRXBufferStatus, DTC_Register_SERDESRXStatus,
         DTC_Register_SERDESResetDone, DTC_Register_SERDESEyescanData, DTC_Register_SERDESRXCDRLock,
-        DTC_Register_DMATimeoutPreset, DTC_Register_TimestampPreset0, DTC_Register_TimestampPreset1,
-        DTC_Register_DataPendingTimer, DTC_Register_NUMROCs, DTC_Register_FIFOFullErrorFlag0,
-        DTC_Register_FIFOFullErrorFlag1, DTC_Register_FIFOFullErrorFlag2, DTC_Register_PacketSize,
+        DTC_Register_DMATimeoutPreset, DTC_Register_ROCReplyTimeout, DTC_Register_ROCTimeoutError, 
+        DTC_Register_ReceivePacketError, DTC_Register_TimestampPreset0, DTC_Register_TimestampPreset1,
+        DTC_Register_DataPendingTimer, DTC_Register_NUMROCs, DTC_Register_FIFOFullErrorFlag0, 
+        DTC_Register_FIFOFullErrorFlag1, DTC_Register_FIFOFullErrorFlag2, DTC_Register_PacketSize, 
         DTC_Register_FPGAPROMProgramStatus, DTC_Register_FPGACoreAccess };
 
     enum DTC_Ring_ID : uint8_t {
@@ -475,6 +479,13 @@ namespace DTCLib
             return "Unable to communicate with the DTC";
         }
     };
+    class DTC_DataCorruptionException : public std::exception {
+    public:
+        virtual const char* what() const throw()
+        {
+            return "Corruption detected in data stream from DTC";
+        }
+    };
     class DTC_TimeoutOccurredException : public std::exception {
     public:
         virtual const char* what() const throw()
@@ -705,7 +716,7 @@ namespace DTCLib
         std::string toJSON();
         std::string toPacketFormat();
     };
-    
+
     class DTC_SERDESRXDisparityError {
     private:
         std::bitset<2> data_;
