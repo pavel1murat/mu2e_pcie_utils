@@ -397,6 +397,7 @@ namespace DTCLib
         DTC_SimMode_Calorimeter = 2,
         DTC_SimMode_CosmicVeto = 3,
         DTC_SimMode_Hardware = 4,
+        DTC_SimMode_Performance = 5,
     };
     struct DTC_SimModeConverter {
     public:
@@ -417,6 +418,8 @@ namespace DTCLib
                 return "CosmicVeto";
             case DTC_SimMode_Hardware:
                 return "Hardware";
+            case DTC_SimMode_Performance:
+                return "Performance";
             }
         }
         friend std::ostream& operator<<(std::ostream& stream, const DTC_SimModeConverter& mode) {
@@ -428,35 +431,48 @@ namespace DTCLib
                 stream << "\"Tracker\":0,";
                 stream << "\"Calorimeter\":0,";
                 stream << "\"CosmicVeto\":0,";
-                stream << "\"Hardware\":0}";
+                stream << "\"Hardware\":0,";
+                stream << "\"Performance\":0}";
                 break;
             case DTC_SimMode_Tracker:
                 stream << "{\"Disabled\":0,";
                 stream << "\"Tracker\":1,";
                 stream << "\"Calorimeter\":0,";
                 stream << "\"CosmicVeto\":0,";
-                stream << "\"Hardware\":0}";
+                stream << "\"Hardware\":0,";
+                stream << "\"Performance\":0}";
                 break;
             case DTC_SimMode_Calorimeter:
                 stream << "{\"Disabled\":0,";
                 stream << "\"Tracker\":0,";
                 stream << "\"Calorimeter\":1,";
                 stream << "\"CosmicVeto\":0,";
-                stream << "\"Hardware\":0}";
+                stream << "\"Hardware\":0,";
+                stream << "\"Performance\":0}";
                 break;
             case DTC_SimMode_CosmicVeto:
                 stream << "{\"Disabled\":0,";
                 stream << "\"Tracker\":0,";
                 stream << "\"Calorimeter\":0,";
                 stream << "\"CosmicVeto\":1,";
-                stream << "\"Hardware\":0}";
+                stream << "\"Hardware\":0,";
+                stream << "\"Performance\":0}";
                 break;
             case DTC_SimMode_Hardware:
                 stream << "{\"Disabled\":0,";
                 stream << "\"Tracker\":0,";
                 stream << "\"Calorimeter\":0,";
                 stream << "\"CosmicVeto\":0,";
-                stream << "\"Hardware\":1}";
+                stream << "\"Hardware\":1,";
+                stream << "\"Performance\":0}";
+                break;
+            case DTC_SimMode_Performance:
+                stream << "{\"Disabled\":0,";
+                stream << "\"Tracker\":0,";
+                stream << "\"Calorimeter\":0,";
+                stream << "\"CosmicVeto\":0,";
+                stream << "\"Hardware\":0,";
+                stream << "\"Performance\":1}";
                 break;
             }
             return stream;

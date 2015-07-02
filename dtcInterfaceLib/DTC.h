@@ -132,17 +132,17 @@ namespace DTCLib {
         uint32_t ReadROCTimeoutPreset();
         int WriteROCTimeoutPreset(uint32_t preset);
 
-        bool ReadROCTimeoutError(DTC_Ring_ID& ring);
-        bool ClearROCTimeoutError(DTC_Ring_ID& ring);
+        bool ReadROCTimeoutError(const DTC_Ring_ID& ring);
+        bool ClearROCTimeoutError(const DTC_Ring_ID& ring);
 
-        bool ReadRXElasticBufferUnderrun(DTC_Ring_ID& ring);
-        bool ClearRXElasticBufferUnderrun(DTC_Ring_ID& ring);
-        bool ReadRXElasticBufferOverrun(DTC_Ring_ID& ring);
-        bool ClearRXElasticBufferOverrun(DTC_Ring_ID& ring);
-        bool ReadPacketError(DTC_Ring_ID& ring);
-        bool ClearPacketError(DTC_Ring_ID& ring);
-        bool ReadPacketCRCError(DTC_Ring_ID& ring);
-        bool ClearPacketCRCError(DTC_Ring_ID& ring);
+        bool ReadRXElasticBufferUnderrun(const DTC_Ring_ID& ring);
+        bool ClearRXElasticBufferUnderrun(const DTC_Ring_ID& ring);
+        bool ReadRXElasticBufferOverrun(const DTC_Ring_ID& ring);
+        bool ClearRXElasticBufferOverrun(const DTC_Ring_ID& ring);
+        bool ReadPacketError(const DTC_Ring_ID& ring);
+        bool ClearPacketError(const DTC_Ring_ID& ring);
+        bool ReadPacketCRCError(const DTC_Ring_ID& ring);
+        bool ClearPacketCRCError(const DTC_Ring_ID& ring);
 
         DTC_Timestamp WriteTimestampPreset(const DTC_Timestamp& preset);
         DTC_Timestamp ReadTimestampPreset();

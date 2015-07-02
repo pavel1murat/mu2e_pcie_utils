@@ -40,6 +40,11 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
         case 'H':
             simMode_ = DTCLib::DTC_SimMode_Hardware;
             break;
+        case '5':
+        case 'p':
+        case 'P':
+            simMode_ = DTCLib::DTC_SimMode_Performance;
+            break;
         case '0':
         default:
             simMode_ = DTCLib::DTC_SimMode_Disabled;
@@ -363,6 +368,7 @@ std::string DTCLib::DTC::RegDump()
     o << "\"SERDESOscillatorIICError\":" << ReadSERDESOscillatorIICError() << ",\n";
     o << "\"SERDESOscillatorInitComplete\":" << ReadSERDESOscillatorInitializationComplete() << ",\n";
     o << "\"DMATimeout\":" << ReadDMATimeoutPreset() << ",\n";
+    o << "\"ROC DataBlock Timeout\":" << ReadROCTimeoutPreset() << ",\n";
     o << "\"Timestamp\":" << ReadTimestampPreset().GetTimestamp(true) << ",\n";
     o << "\"DataPendingTimer\":" << ReadDataPendingTimer() << ",\n";
     o << "\"PacketSize\":" << ReadPacketSize() << ",\n";
@@ -464,6 +470,11 @@ std::string DTCLib::DTC::RingRegDump(const DTC_Ring_ID& ring, std::string id)
     o << "\t\"RXStatus\":" << DTC_RXStatusConverter(ReadSERDESRXStatus(ring)) << ",\n";
     o << "\t\"SERDESRXDisparity\":" << ReadSERDESRXDisparityError(ring) << ",\n";
     o << "\t\"CharacterError\":" << ReadSERDESRXCharacterNotInTableError(ring) << "\n";
+    o << "\t\"TimeoutError\":" << ReadROCTimeoutError(ring) << "\n";
+    o << "\t\"PacketCRCError\":" << ReadPacketCRCError(ring) << "\n";
+    o << "\t\"PacketError\":" << ReadPacketError(ring) << "\n";
+    o << "\t\"RXElasticBufferOverrun\":" << ReadRXElasticBufferOverrun(ring) << "\n";
+    o << "\t\"RXElasticBufferUnderrun\":" << ReadRXElasticBufferUnderrun(ring) << "\n";
     o << "}";
 
     return o.str();
@@ -490,6 +501,10 @@ std::string DTCLib::DTC::CFORegDump()
     o << "\t\"ResetSERDES\":" << ReadResetSERDES(DTC_Ring_CFO) << ",\n";
     o << "\t\"SERDESRXDisparity\":" << ReadSERDESRXDisparityError(DTC_Ring_CFO) << ",\n";
     o << "\t\"UnlockError\":" << ReadSERDESUnlockError(DTC_Ring_CFO) << "\n";
+    o << "\t\"PacketCRCError\":" << ReadPacketCRCError(DTC_Ring_CFO) << "\n";
+    o << "\t\"PacketError\":" << ReadPacketError(DTC_Ring_CFO) << "\n";
+    o << "\t\"RXElasticBufferOverrun\":" << ReadRXElasticBufferOverrun(DTC_Ring_CFO) << "\n";
+    o << "\t\"RXElasticBufferUnderrun\":" << ReadRXElasticBufferUnderrun(DTC_Ring_CFO) << "\n";
 
     o << "}";
 
@@ -726,6 +741,40 @@ std::string DTCLib::DTC::FormatRegister(const DTC_Register& address)
     case DTC_Register_DMATimeoutPreset:
         o << "| DMA Timeout                 | ";
         o << "0x" << ReadDMATimeoutPreset();
+        break;
+    case DTC_Register_ROCReplyTimeout:
+        o << "| ROC Reply Timeout           | ";
+        o << "0x" << ReadROCTimeoutPreset();
+        break;
+    case DTC_Register_ROCTimeoutError:
+        o << "| ROC Reply Timeout Error     | ";
+        for (auto r : DTC_Rings)
+        {
+            if ((int)r > 0) {
+                o << ", " << std::endl;
+                o << "                                                       | ";
+            }
+            o << "Ring " << (int)r << ": [" << (ReadROCTimeoutError(r) ? "x" : " ") << "]";
+        }
+        break;
+    case DTC_Register_ReceivePacketError:
+        o << "| Receive Packet Error        | ([CRC, PacketError, RX Overrun, RX Underrun])" << std::endl;
+        for (auto r : DTC_Rings) {
+            o << "                                                       | ";
+            o << "Ring " << (int)r << ": [";
+            o << (ReadPacketCRCError(r) ? "x" : " ") << ",";
+            o << (ReadPacketError(r) ? "x" : " ") << ",";
+            o << (ReadRXElasticBufferOverrun(r) ? "x" : " ") << ",";
+            o << (ReadRXElasticBufferUnderrun(r) ? "x" : " ") << "]," << std::endl;
+        }
+        {
+            o << "                                                       | ";
+            o << "CFO:    [";
+            o << (ReadPacketCRCError(DTC_Ring_CFO) ? "x" : " ") << ",";
+            o << (ReadPacketError(DTC_Ring_CFO) ? "x" : " ") << ",";
+            o << (ReadRXElasticBufferOverrun(DTC_Ring_CFO) ? "x" : " ") << ",";
+            o << (ReadRXElasticBufferUnderrun(DTC_Ring_CFO) ? "x" : " ") << "]";
+        }
         break;
     case DTC_Register_TimestampPreset0:
         o << "| Timestamp Preset 0          | ";
@@ -1333,13 +1382,13 @@ int DTCLib::DTC::WriteROCTimeoutPreset(uint32_t preset)
     return ReadROCTimeoutPreset();
 }
 
-bool DTCLib::DTC::ReadROCTimeoutError(DTC_Ring_ID& ring)
+bool DTCLib::DTC::ReadROCTimeoutError(const DTC_Ring_ID& ring)
 {
     std::bitset<32> data = ReadROCTimeoutErrorRegister();
     return data[(int)ring];
 }
 
-bool DTCLib::DTC::ClearROCTimeoutError(DTC_Ring_ID& ring)
+bool DTCLib::DTC::ClearROCTimeoutError(const DTC_Ring_ID& ring)
 {
     std::bitset<32> data = 0x0;
     data[ring] = 1;
@@ -1347,13 +1396,13 @@ bool DTCLib::DTC::ClearROCTimeoutError(DTC_Ring_ID& ring)
     return ReadROCTimeoutError(ring);
 }
 
-bool DTCLib::DTC::ReadRXElasticBufferUnderrun(DTC_Ring_ID& ring)
+bool DTCLib::DTC::ReadRXElasticBufferUnderrun(const DTC_Ring_ID& ring)
 {
     std::bitset<32> data = ReadReceivePacketErrorRegister();
     return data[(int)ring + 24];
 }
 
-bool DTCLib::DTC::ClearRXElasticBufferUnderrun(DTC_Ring_ID& ring)
+bool DTCLib::DTC::ClearRXElasticBufferUnderrun(const DTC_Ring_ID& ring)
 {
     std::bitset<32> data = ReadReceivePacketErrorRegister();
     data[(int)ring + 24] = 0;
@@ -1361,13 +1410,13 @@ bool DTCLib::DTC::ClearRXElasticBufferUnderrun(DTC_Ring_ID& ring)
     return ReadRXElasticBufferUnderrun(ring);
 }
 
-bool DTCLib::DTC::ReadRXElasticBufferOverrun(DTC_Ring_ID& ring)
+bool DTCLib::DTC::ReadRXElasticBufferOverrun(const DTC_Ring_ID& ring)
 {
     std::bitset<32> data = ReadReceivePacketErrorRegister();
     return data[(int)ring + 16];
 }
 
-bool DTCLib::DTC::ClearRXElasticBufferOverrun(DTC_Ring_ID& ring)
+bool DTCLib::DTC::ClearRXElasticBufferOverrun(const DTC_Ring_ID& ring)
 {
     std::bitset<32> data = ReadReceivePacketErrorRegister();
     data[(int)ring + 16] = 0;
@@ -1375,13 +1424,13 @@ bool DTCLib::DTC::ClearRXElasticBufferOverrun(DTC_Ring_ID& ring)
     return ReadRXElasticBufferUnderrun(ring);
 }
 
-bool DTCLib::DTC::ReadPacketError(DTC_Ring_ID& ring)
+bool DTCLib::DTC::ReadPacketError(const DTC_Ring_ID& ring)
 {
     std::bitset<32> data = ReadReceivePacketErrorRegister();
     return data[(int)ring + 8];
 }
 
-bool DTCLib::DTC::ClearPacketError(DTC_Ring_ID& ring)
+bool DTCLib::DTC::ClearPacketError(const DTC_Ring_ID& ring)
 {
     std::bitset<32> data = ReadReceivePacketErrorRegister();
     data[(int)ring + 8] = 0;
@@ -1389,22 +1438,19 @@ bool DTCLib::DTC::ClearPacketError(DTC_Ring_ID& ring)
     return ReadRXElasticBufferUnderrun(ring);
 }
 
-bool DTCLib::DTC::ReadPacketCRCError(DTC_Ring_ID& ring)
+bool DTCLib::DTC::ReadPacketCRCError(const DTC_Ring_ID& ring)
 {
     std::bitset<32> data = ReadReceivePacketErrorRegister();
     return data[(int)ring];
 }
 
-bool DTCLib::DTC::ClearPacketCRCError(DTC_Ring_ID& ring)
+bool DTCLib::DTC::ClearPacketCRCError(const DTC_Ring_ID& ring)
 {
     std::bitset<32> data = ReadReceivePacketErrorRegister();
     data[(int)ring] = 0;
     WriteReceivePacketErrorRegister(data.to_ulong());
     return ReadRXElasticBufferUnderrun(ring);
 }
-
-
-
 
 DTCLib::DTC_Timestamp DTCLib::DTC::WriteTimestampPreset(const DTC_Timestamp& preset)
 {

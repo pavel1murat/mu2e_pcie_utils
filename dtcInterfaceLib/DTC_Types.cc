@@ -12,6 +12,7 @@ DTCLib::DTC_SimMode DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::string m
     if (modeName.find("alorimeter") != std::string::npos) { return DTC_SimMode_Calorimeter; }
     if (modeName.find("osmic") != std::string::npos) { return DTC_SimMode_CosmicVeto; }
     if (modeName.find("ardware") != std::string::npos) { return DTC_SimMode_Hardware; }
+    if (modeName.find("erformance") != std::string::npos) { return DTC_SimMode_Performance; }
 
     return DTC_SimMode_Disabled;
 }

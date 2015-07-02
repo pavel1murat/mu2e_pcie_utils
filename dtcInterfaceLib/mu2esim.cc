@@ -237,6 +237,9 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                     if (nSamples <= 5) { nPackets = 1; }
                                     else { nPackets = (nSamples - 6) / 8 + 2; }
                                 }
+                                else if (mode_ == DTCLib::DTC_SimMode_Performance) {
+                                    nPackets = 0;
+                                }
                                 if ((currentOffset + (nPackets + 1) * 16 + 8) > sizeof(mu2e_databuff_t))
                                 {
                                     exitLoop = true;
@@ -393,6 +396,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                 }
                                 break;
                                 case DTCLib::DTC_SimMode_Disabled:
+                                case DTCLib::DTC_SimMode_Performance:
                                 default:
                                     break;
                                 }
