@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
                     exit(0);
                 }
             }
-            if (isdigit(argv[i][firstChar])) {
+            if (isdigit((unsigned char)argv[i][firstChar])) {
                 testsSpecified = true;
                 switch (argv[i][firstChar] - '0') {
                 case 0:

@@ -52,7 +52,7 @@ void printHelpMsg() {
   cout << "Usage: mu2eUtil [options] [read,read_data,read_release,HW,DTC]" << endl;
   cout << "Options are:" << endl
        << "    -h: This message." << endl
-       << "    -n: Number of times to repeat test. (Default: 1)" << endl
+       << "    -n: Number of times to repeat test. (Default: 192500)" << endl
        << "    -p: Pause after sending a packet." << endl
        << "    -o: Starting Timestamp offest. (Default: 1)." << endl
        << "    -i: Do not increment Timestamps." << endl
@@ -70,9 +70,9 @@ main(int	argc
   bool pause = false;
   bool incrementTimestamp = true;
   bool checkSERDES = false;
-  bool quiet = false;
+  bool quiet = true;
   unsigned delay = 0;
-  unsigned number = 1;
+  unsigned number = 1925000;
   unsigned timestampOffset = 1;
   unsigned packetCount = 0;
   string op = "";
@@ -120,7 +120,17 @@ main(int	argc
   
   string pauseStr = pause ? "true" : "false";
   string incrementStr = incrementTimestamp ? "true" : "false";
-  cout << "Options are: Operation: " << string(op) << ", Num: " << number << ", Delay: " << delay << ", TS Offset: " << timestampOffset << ", PacketCount: " << packetCount << ", Pause: " << pauseStr << ", Increment TS: " << incrementStr << endl;
+  string quietStr = quiet ? "true" : "false";
+  cout << "Options are: "
+       << "Operation: " << string(op) 
+       << ", Num: " << number 
+       << ", Delay: " << delay 
+       << ", TS Offset: " << timestampOffset 
+       << ", PacketCount: " << packetCount 
+       << ", Pause: " << pauseStr 
+       << ", Increment TS: " << incrementStr 
+       << ", Quiet Mode: " << quietStr
+       << endl;
 
     if (op == "read")
     {
@@ -198,7 +208,7 @@ main(int	argc
                     TRACE(19, "DTC::GetJSONData constructing DataPacket:");
                     DTC_DataPacket     test = DTC_DataPacket(data[i]);
                     if(!quiet) cout << test.toJSON() << '\n'; // dumps whole databuff_t
-                    printf("data@%p=0x%08x\n", data[i], *(uint32_t*)(data[i]));
+                    //printf("data@%p=0x%08x\n", data[i], *(uint32_t*)(data[i]));
                     //DTC_DataHeaderPacket h1 = DTC_DataHeaderPacket(data[i]);
                     //cout << h1.toJSON() << '\n';
                     DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);

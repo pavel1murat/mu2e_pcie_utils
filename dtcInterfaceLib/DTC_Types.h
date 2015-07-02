@@ -13,7 +13,6 @@
 
 namespace DTCLib
 {
-    static const int DTC_BUFFSIZE = sizeof(mu2e_databuff_t) / (16 * sizeof(uint8_t));
     const std::string ExpectedDesignVersion = "v1.4_2015-07-01-00";
 
     enum DTC_Register : uint16_t {
@@ -501,7 +500,7 @@ namespace DTCLib
         DTC_Timestamp();
         DTC_Timestamp(uint64_t timestamp);
         DTC_Timestamp(uint32_t timestampLow, uint16_t timestampHigh);
-        DTC_Timestamp(uint8_t* timeArr);
+        DTC_Timestamp(uint8_t* timeArr, int offset = 0);
         DTC_Timestamp(std::bitset<48> timestamp);
         DTC_Timestamp(const DTC_Timestamp&) = default;
 #ifndef _WIN32
@@ -528,6 +527,13 @@ namespace DTCLib
     };
 
     class DTC_DataPacket {
+        friend class DTC;
+        friend class DTC_DMAPacket;
+        friend class DTC_ReadoutRequestPacket;
+        friend class DTC_DataRequestPacket;
+        friend class DTC_DCSRequestPacket;
+        friend class DTC_DCSReplyPacket;
+        friend class DTC_DataHeaderPacket;
     private:
         uint8_t* dataPtr_;
         uint16_t dataSize_;
@@ -550,14 +556,16 @@ namespace DTCLib
         DTC_DataPacket& operator=(DTC_DataPacket&&) = default;
 #endif
 
-        void SetWord(int index, uint8_t data);
-        uint8_t GetWord(int index) const;
-        uint8_t* GetData() const { return dataPtr_; }
+        void SetWord(uint16_t index, uint8_t data);
+        uint8_t GetWord(uint16_t index) const;
         std::string toJSON();
         std::string toPacketFormat();
         bool Resize(const uint16_t dmaSize);
         uint16_t GetSize() const { return dataSize_; }
         bool IsMemoryPacket() const { return memPacket_; }
+
+    protected:
+        uint8_t* GetData() const { return dataPtr_; }
     };
 
     class DTC_DMAPacket {
@@ -633,7 +641,7 @@ namespace DTCLib
         uint8_t request_[4];
     public:
         DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC = DTC_ROC_5, bool debug = true);
-        DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, uint8_t* request, DTC_ROC_ID maxROC = DTC_ROC_5, bool debug = true);
+        DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC = DTC_ROC_5, bool debug = true, uint8_t* request = nullptr);
         DTC_ReadoutRequestPacket(const DTC_ReadoutRequestPacket& right) = default;
 #ifndef _WIN32
         DTC_ReadoutRequestPacket(DTC_ReadoutRequestPacket&& right) = default;

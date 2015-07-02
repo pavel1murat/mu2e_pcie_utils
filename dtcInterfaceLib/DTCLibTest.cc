@@ -308,22 +308,21 @@ void DTCLib::DTCLibTest::doClassTest()
         if (printMessages_) std::cout << "Running DTC_DataPacket Destructor" << std::endl;
         delete defaultDP;
 
-        mu2e_databuff_t buf;
-        auto dataBufPtrfDP = new DTC_DataPacket(&buf);
+        mu2e_databuff_t* buf = (mu2e_databuff_t*)new mu2e_databuff_t();
+        auto dataBufPtrfDP = new DTC_DataPacket(buf);
         if (printMessages_) std::cout << "Databuff Pointer Constructor, Size should be 16: "
             << (int)dataBufPtrfDP->GetSize() << ", and IsMemoryPacket should be true: "
             << (dataBufPtrfDP->IsMemoryPacket() ? "true" : "false") << std::endl;
         err = dataBufPtrfDP->GetSize() != 16;
         err = err || !dataBufPtrfDP->IsMemoryPacket();
-                    
+
         auto nonmemCopyDP = DTC_DataPacket(*dataBufPtrfDP);
-        buf[0] = 0x8F;
+        (*buf)[0] = 0x8F;
         if (printMessages_) std::cout
             << "DataPacket Memory Packet Copy Constructor: Modifications to original buffer should modify both packets: "
             << std::hex
-            << "COPY[0]: " << (int)nonmemCopyDP.GetData()[0] << ", ORIGINAL[0]: " << (int)dataBufPtrfDP->GetWord(0) << std::endl;
-        err = err || nonmemCopyDP.GetData()[0] != 0x8F || nonmemCopyDP.GetWord(0) != 0x8F
-                  || dataBufPtrfDP->GetData()[0] != 0x8F || dataBufPtrfDP->GetWord(0) != 0x8F;
+            << "COPY[0]: " << (int)nonmemCopyDP.GetWord(0) << ", ORIGINAL[0]: " << (int)dataBufPtrfDP->GetWord(0) << std::endl;
+        err = err || nonmemCopyDP.GetWord(0) != 0x8F || dataBufPtrfDP->GetWord(0) != 0x8F;
 
         delete dataBufPtrfDP;
         if (printMessages_) std::cout << "Deleting ORIGINAL should not affect COPY: " << (int)nonmemCopyDP.GetWord(0) << std::endl;
@@ -630,7 +629,7 @@ bool DTCLib::DTCLibTest::DataPacketIntegrityCheck(DTC_DataPacket* packet)
 
     for (int ii = 0; ii < packet->GetSize(); ++ii)
     {
-        retCode = packet->GetData()[ii] == ii && packet->GetWord(ii) == ii;
+        retCode = packet->GetWord(ii) == ii;
         if (!retCode) break;
     }
 
