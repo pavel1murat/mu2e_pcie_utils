@@ -182,7 +182,7 @@ main(int	argc
             std::cout << "Request: " << header.toJSON() << std::endl;
             thisDTC->WriteDMADAQPacket(header);
             thisDTC->SetFirstRead(true);
-            std::cout << "Reply:   " << thisDTC->ReadNextDAQPacket().toJSON() << std::endl;
+            std::cout << "Reply:   " << thisDTC->ReadNextDAQPacket()->toJSON() << std::endl;
             if(delay > 0) usleep(delay);
         }
     }

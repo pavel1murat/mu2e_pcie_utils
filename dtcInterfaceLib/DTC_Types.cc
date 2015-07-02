@@ -29,13 +29,8 @@ DTCLib::DTC_Timestamp::DTC_Timestamp(uint32_t timestampLow, uint16_t timestampHi
 
 DTCLib::DTC_Timestamp::DTC_Timestamp(uint8_t *timeArr, int offset)
 {
-    uint8_t* arr = timeArr + offset;
-    timestamp_ = 0;
-    for (int i = 0; i < 6; ++i)
-    {
-        uint64_t temp = (uint64_t)arr[i] << i * 8;
-        timestamp_ += temp;
-    }
+    uint64_t* arr = (uint64_t*)(timeArr + offset);
+    timestamp_ = *arr;
 }
 
 DTCLib::DTC_Timestamp::DTC_Timestamp(std::bitset<48> timestamp)
@@ -88,8 +83,8 @@ std::string DTCLib::DTC_Timestamp::toPacketFormat()
 DTCLib::DTC_DataPacket::DTC_DataPacket()
 {
     memPacket_ = false;
-    dataPtr_ = new uint8_t[64]; // current min. dma length is 64 bytes
-    dataSize_ = 64;
+    dataPtr_ = new uint8_t[16]; // current min. dma length is 64 bytes
+    dataSize_ = 16;
 }
 
 DTCLib::DTC_DataPacket::DTC_DataPacket(const DTC_DataPacket& in)
@@ -187,10 +182,6 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DMAPacket::ConvertToDataPacket() const
     uint8_t word1B = static_cast<uint8_t>(ringID_)+(valid_ ? 0x80 : 0x0);
     output.SetWord(2, word1A);
     output.SetWord(3, word1B);
-    for (int i = 0; i < 12; ++i)
-    {
-        output.SetWord(i + 4, 0);
-    }
     return output;
 }
 
@@ -517,7 +508,10 @@ DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t pa
 
 DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
 {
-    if (packetType_ != DTC_PacketType_DataHeader) { throw DTC_WrongPacketTypeException(); }
+    if (packetType_ != DTC_PacketType_DataHeader) 
+    { 
+        throw DTC_WrongPacketTypeException(); 
+    }
     uint8_t* arr = in.GetData();
     packetCount_ = arr[4] + (arr[5] << 8);
     timestamp_ = DTC_Timestamp(arr, 6);

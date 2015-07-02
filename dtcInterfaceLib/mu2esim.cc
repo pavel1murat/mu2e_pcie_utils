@@ -46,6 +46,8 @@ mu2esim::mu2esim()
     for (int ii = 0; ii < SIM_BUFFCOUNT; ++ii) {
         dmaData_[0][ii] = (mu2e_databuff_t*)new mu2e_databuff_t();
         dmaData_[1][ii] = (mu2e_databuff_t*)new mu2e_databuff_t();
+        buffSize_[0][ii] = 0;
+        buffSize_[1][ii] = 0;
     }
     release_all(0);
     release_all(1);
@@ -83,7 +85,7 @@ int mu2esim::init(DTCLib::DTC_SimMode mode)
     registers_[0x9014] = 0x00000100; // SPayload
     registers_[0x9018] = 0x00000400; // RPayload
     registers_[0x9100] = 0x40000003; // Clear latched errors, System Clock, Timing Enable
-    registers_[0x9104] = 0x80000040; //Default value from HWUG
+    registers_[0x9104] = 0x80000010; //Default value from HWUG
     registers_[0x9108] = 0x00049249; // SERDES Loopback PCS Near-End
     registers_[0x9168] = 0x00049249;
     registers_[0x910C] = 0x2; // Initialization Complete, no IIC Error
@@ -245,6 +247,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                 uint64_t dataBlockByteCount = (nPackets + 1) * 16;
                                 memcpy((char*)dmaData_[chn][hwIdx_[chn]] + currentOffset, &dataBlockByteCount, sizeof(uint64_t));
                                 currentOffset += sizeof(uint64_t);
+                                buffSize_[chn][hwIdx_[chn]] = currentOffset;
 
                                 // Add a Data Header packet to the reply
                                 packet[0] = 32;
@@ -263,6 +266,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                     , chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)packet, currentOffset);
                                 memcpy((char*)dmaData_[chn][hwIdx_[chn]] + currentOffset, &packet[0], sizeof(packet));
                                 currentOffset += sizeof(packet);
+                                buffSize_[chn][hwIdx_[chn]] = currentOffset;
 
                                 switch (mode_)
                                 {
@@ -291,6 +295,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                         , chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)packet, currentOffset);
                                     memcpy((char*)dmaData_[chn][hwIdx_[chn]] + currentOffset, &packet, sizeof(packet));
                                     currentOffset += sizeof(packet);
+                                    buffSize_[chn][hwIdx_[chn]] = currentOffset;
                                 }
                                 break;
                                 case DTCLib::DTC_SimMode_Calorimeter:
@@ -317,6 +322,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                         , chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)packet, currentOffset);
                                     memcpy((char*)dmaData_[chn][hwIdx_[chn]] + currentOffset, &packet, sizeof(packet));
                                     currentOffset += sizeof(packet);
+                                    buffSize_[chn][hwIdx_[chn]] = currentOffset;
 
                                     int samplesProcessed = 5;
                                     while (samplesProcessed < nSamples)
@@ -344,6 +350,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                             , chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)packet, currentOffset);
                                         memcpy((char*)dmaData_[chn][hwIdx_[chn]] + currentOffset, &packet, sizeof(packet));
                                         currentOffset += sizeof(packet);
+                                        buffSize_[chn][hwIdx_[chn]] = currentOffset;
                                     }
 
                                 }
@@ -382,6 +389,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                         , chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)packet, currentOffset);
                                     memcpy((char*)dmaData_[chn][hwIdx_[chn]] + currentOffset, &packet, sizeof(packet));
                                     currentOffset += sizeof(packet);
+                                    buffSize_[chn][hwIdx_[chn]] = currentOffset;
                                 }
                                 break;
                                 case DTCLib::DTC_SimMode_Disabled:
@@ -428,18 +436,17 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                             , chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)replyPacket, currentOffset);
                         memcpy((char*)dmaData_[chn][hwIdx_[chn]] + currentOffset, &replyPacket, sizeof(replyPacket));
                         currentOffset += sizeof(replyPacket);
+                        buffSize_[chn][hwIdx_[chn]] = currentOffset;
                         dcsRequestRecieved_[ring][roc] = false;
 
                     }
                 }
             }
         }
-
-        buffSize_[chn][hwIdx_[chn]] = currentOffset;
     }
 
     TRACE(17, "mu2esim::read_data Setting output buffer to dmaData_[%i][%li]=%p, retsts=%lu", chn, swIdx_[chn], (void*)dmaData_[chn][swIdx_[chn]], buffSize_[chn][swIdx_[chn]]);
-    size_t bytesReturned = buffSize_[chn][swIdx_[chn]];
+    uint64_t bytesReturned = buffSize_[chn][swIdx_[chn]];
     memcpy(dmaData_[chn][swIdx_[chn]], (uint64_t*)&bytesReturned, sizeof(uint64_t));
     *buffer = dmaData_[chn][swIdx_[chn]];
     swIdx_[chn] = (swIdx_[chn] + 1) % SIM_BUFFCOUNT;

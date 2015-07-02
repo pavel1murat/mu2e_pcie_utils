@@ -600,6 +600,7 @@ namespace DTCLib
         std::string headerJSON();
         std::string headerPacketFormat();
         uint16_t GetByteCount() { return byteCount_; }
+        DTC_Ring_ID GetRingID() { return ringID_; }
         virtual std::string toPacketFormat();
         virtual std::string toJSON();
         friend std::ostream& operator<<(std::ostream& stream, DTC_DMAPacket& packet) {

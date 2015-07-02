@@ -120,19 +120,19 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool debug, int debu
     try{
         // Read the header packet
         TRACE(19, "DTC::GetData before ReadNextDAQPacket");
-        DTC_DataHeaderPacket packet = ReadNextDAQPacket(first_read_ ? 10000 : 1);
+        DTC_DataHeaderPacket* packet = ReadNextDAQPacket(first_read_ ? 10000 : 1);
         TRACE(19, "DTC::GetData after  ReadDMADAQPacket");
 
-        if (packet.GetTimestamp() != when && when.GetTimestamp(true) != 0)
+        if (packet->GetTimestamp() != when && when.GetTimestamp(true) != 0)
         {
-            std::cout << packet.toJSON() << std::endl;
             TRACE(0, "DTC::GetData: Error: Lead packet has wrong timestamp! 0x%lx(expected) != 0x%lx"
-                , when.GetTimestamp(true), packet.GetTimestamp().GetTimestamp(true));
+                , when.GetTimestamp(true), packet->GetTimestamp().GetTimestamp(true));
             return output;
         }
         else {
-            when = packet.GetTimestamp();
+            when = packet->GetTimestamp();
         }
+        delete packet;
 
         TRACE(19, "DTC::GetData: Adding pointer %p to the list", (void*)lastReadPtr_);
         output.push_back(lastReadPtr_);
@@ -140,20 +140,22 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool debug, int debu
         bool done = false;
         while (!done) {
             try{
-                DTC_DataHeaderPacket thispacket = ReadNextDAQPacket();
-                if (thispacket.GetTimestamp() != when) {
+                DTC_DataHeaderPacket* thispacket = ReadNextDAQPacket();
+                if (thispacket == nullptr)  // End of Data
+                {
+                    done = true;
+                    nextReadPtr_ = nullptr;
+                    break;
+                }
+                if (thispacket->GetTimestamp() != when ) {
                     done = true;
                     nextReadPtr_ = lastReadPtr_;
                     break;
                 }
+                delete thispacket;
 
                 TRACE(19, "DTC::GetData: Adding pointer %p to the list", (void*)lastReadPtr_);
                 output.push_back(lastReadPtr_);
-            }
-            catch (DTC_WrongPacketTypeException ex)
-            {
-                TRACE(19, "DTC::GetData: End of data stream reached!");
-                done = true;
             }
             catch (DTC_TimeoutOccurredException ex)
             {
@@ -165,6 +167,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool debug, int debu
     catch (DTC_WrongPacketTypeException ex)
     {
         TRACE(19, "DTC::GetData: Bad omen: Wrong packet type at the current read position");
+        nextReadPtr_ = nullptr;
     }
     catch (DTC_TimeoutOccurredException ex)
     {
@@ -249,7 +252,7 @@ void DTCLib::DTC::WriteDMADCSPacket(const DTC_DMAPacket& packet)
     return WriteDMAPacket(DTC_DMA_Engine_DCS, packet);
 }
 
-DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
+DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 {
     TRACE(19, "DTC::ReadNextDAQPacket BEGIN");
     if (nextReadPtr_ != nullptr) {
@@ -281,7 +284,7 @@ DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
         if (nextReadPtr_ == lastReadPtr_) {
             nextReadPtr_ = nullptr;
             //We didn't actually get a new buffer...this probably means there's no more data
-            throw DTC_WrongPacketTypeException();
+            return nullptr;
         }
     }
     //Read the next packet
@@ -291,13 +294,16 @@ DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
         nextReadPtr_ = (char*)nextReadPtr_ + 8;
     }
     uint64_t blockByteCount = *((uint64_t*)nextReadPtr_);
+    if (blockByteCount == 0) {
+        return nullptr; 
+    }
     nextReadPtr_ = (char*)nextReadPtr_ + 8;
     DTC_DataPacket test = DTC_DataPacket(nextReadPtr_);
     TRACE(19, test.toJSON().c_str());
-    DTC_DataHeaderPacket output = DTC_DataHeaderPacket(test);
-    TRACE(19, output.toJSON().c_str());
-    if (static_cast<uint64_t>((1 + output.GetPacketCount()) * 16) != blockByteCount) {
-        TRACE(19, "Data Error Detected: PacketCount: %u, ExpectedByteCount: %u, BlockByteCount: %lu", output.GetPacketCount(), (1 + output.GetPacketCount()) * 16, blockByteCount);
+    DTC_DataHeaderPacket* output = new DTC_DataHeaderPacket(test);
+    TRACE(19, output->toJSON().c_str());
+    if (static_cast<uint64_t>((1 + output->GetPacketCount()) * 16) != blockByteCount) {
+        TRACE(19, "Data Error Detected: PacketCount: %u, ExpectedByteCount: %u, BlockByteCount: %lu", output->GetPacketCount(), (1 + output->GetPacketCount()) * 16, blockByteCount);
         throw DTC_DataCorruptionException();
     }
     first_read_ = false;
@@ -313,7 +319,7 @@ DTCLib::DTC_DataHeaderPacket DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
     TRACE(19, "DTC::ReadNextDAQPacket RETURN");
     return output;
 }
-DTCLib::DTC_DCSReplyPacket DTCLib::DTC::ReadNextDCSPacket()
+DTCLib::DTC_DCSReplyPacket* DTCLib::DTC::ReadNextDCSPacket()
 {
     TRACE(19, "DTC::ReadNextDCSPacket BEGIN");
     if (dcsReadPtr_ == nullptr || dcsReadPtr_ >= (uint8_t*)dcsbuffer_ + sizeof(mu2e_databuff_t) || (*((uint16_t*)dcsReadPtr_)) == 0) {
@@ -325,8 +331,8 @@ DTCLib::DTC_DCSReplyPacket DTCLib::DTC::ReadNextDCSPacket()
 
     //Read the next packet
     TRACE(19, "DTC::ReadNextDCSPacket Reading packet from buffer: dcsReadPtr_=%p:", (void*)dcsReadPtr_);
-    DTC_DCSReplyPacket output = DTC_DCSReplyPacket(DTC_DataPacket(dcsReadPtr_));
-    TRACE(19, output.toJSON().c_str());
+    DTC_DCSReplyPacket* output = new DTC_DCSReplyPacket(DTC_DataPacket(dcsReadPtr_));
+    TRACE(19, output->toJSON().c_str());
 
     // Update the packet pointer
 
@@ -1543,7 +1549,7 @@ DTCLib::DTC_PCIeStat DTCLib::DTC::ReadPCIeStats()
 //
 // Private Functions.
 //
-DTCLib::DTC_DataPacket DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
+void DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
 {
     mu2e_databuff_t* buffer;
     int retry = 2;
@@ -1561,7 +1567,7 @@ DTCLib::DTC_DataPacket DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, in
         , (void*)buffer, errorCode, *(unsigned*)buffer);
     if (channel == DTC_DMA_Engine_DAQ) { daqbuffer_ = buffer; }
     else if (channel == DTC_DMA_Engine_DCS) { dcsbuffer_ = buffer; }
-    return DTC_DataPacket(buffer);
+    //return DTC_DataPacket(buffer);
 }
 void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPacket& packet)
 {

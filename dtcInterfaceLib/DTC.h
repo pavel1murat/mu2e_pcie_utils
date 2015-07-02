@@ -32,8 +32,8 @@ namespace DTCLib {
         void SetFirstRead(bool read) { first_read_ = read; }
         void WriteDMADAQPacket(const DTC_DMAPacket& packet);
         void WriteDMADCSPacket(const DTC_DMAPacket& packet);
-        DTC_DataHeaderPacket ReadNextDAQPacket(int tmo_ms = 0);
-        DTC_DCSReplyPacket ReadNextDCSPacket();
+        DTC_DataHeaderPacket* ReadNextDAQPacket(int tmo_ms = 0);
+        DTC_DCSReplyPacket* ReadNextDCSPacket();
         void ReleaseAllBuffers(const DTC_DMA_Engine& channel) { device_.release_all(channel); }
 
         //
@@ -168,7 +168,7 @@ namespace DTCLib {
         DTC_PCIeStat ReadPCIeStats();
 
     private:
-        DTC_DataPacket ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms = 0);
+        void ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms = 0);
         void WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPacket& packet);
         void WriteDMAPacket(const DTC_DMA_Engine& channel, const DTC_DMAPacket& packet);
 
