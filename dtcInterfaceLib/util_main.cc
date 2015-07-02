@@ -136,8 +136,8 @@ main(int	argc
     {
       cout << "Operation \"read\"" << endl;
         DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
-        DTC_DataHeaderPacket packet = thisDTC->ReadNextDAQPacket();
-        cout << packet.toJSON() << '\n';
+        DTC_DataHeaderPacket* packet = thisDTC->ReadNextDAQPacket();
+        cout << packet->toJSON() << '\n';
     }
     else if (op == "read_data")
     {

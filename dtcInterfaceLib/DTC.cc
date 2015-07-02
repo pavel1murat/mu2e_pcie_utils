@@ -226,11 +226,11 @@ void DTCLib::DTC::DCSRequestReply(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc
     device_.release_all(1);
     DTC_DCSRequestPacket req(ring, roc, dataIn);
     WriteDMADCSPacket(req);
-    DTC_DCSReplyPacket packet = ReadNextDCSPacket();
+    DTC_DCSReplyPacket* packet = ReadNextDCSPacket();
 
     TRACE(19, "DTC::DCSReqeuestReply after ReadNextDCSPacket");
     for (int ii = 0; ii < 12; ++ii) {
-        dataIn[ii] = packet.GetData()[ii];
+        dataIn[ii] = packet->GetData()[ii];
     }
 }
 
