@@ -298,16 +298,15 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
         daqDMAByteCount_ = static_cast<uint16_t>(*((uint64_t*)nextReadPtr_));
         nextReadPtr_ = (char*)nextReadPtr_ + 8;
     }
-    uint64_t blockByteCount = *((uint64_t*)nextReadPtr_);
+    uint64_t blockByteCount = *((uint16_t*)nextReadPtr_);
     if (blockByteCount == 0) {
         return nullptr; 
     }
-    nextReadPtr_ = (char*)nextReadPtr_ + 8;
     DTC_DataPacket test = DTC_DataPacket(nextReadPtr_);
     TRACE(19, test.toJSON().c_str());
     DTC_DataHeaderPacket* output = new DTC_DataHeaderPacket(test);
     TRACE(19, output->toJSON().c_str());
-    if (static_cast<uint64_t>((1 + output->GetPacketCount()) * 16) != blockByteCount) {
+    if (static_cast<uint16_t>((1 + output->GetPacketCount()) * 16) != blockByteCount) {
         TRACE(19, "Data Error Detected: PacketCount: %u, ExpectedByteCount: %u, BlockByteCount: %lu", output->GetPacketCount(), (1 + output->GetPacketCount()) * 16, blockByteCount);
         throw DTC_DataCorruptionException();
     }
