@@ -36,6 +36,7 @@ cet_set_compiler_flags(DIAGS VIGILANT
 cet_report_compiler_flags()
 
 # these are minimum required versions, not the actual product versions
+find_ups_product( gcc v4_9_0 )
 find_ups_product( cetbuildtools v3_03_00 )
 find_ups_product( swig v3_0_0 )
 find_ups_product( TRACE v3_03_00 )
