@@ -52,7 +52,7 @@ void printHelpMsg() {
   cout << "Usage: mu2eUtil [options] [read,read_data,read_release,HW,DTC]" << endl;
   cout << "Options are:" << endl
        << "    -h: This message." << endl
-       << "    -n: Number of times to repeat test. (Default: 192500)" << endl
+       << "    -n: Number of times to repeat test. (Default: 1)" << endl
        << "    -p: Pause after sending a packet." << endl
        << "    -o: Starting Timestamp offest. (Default: 1)." << endl
        << "    -i: Do not increment Timestamps." << endl
@@ -70,9 +70,9 @@ main(int	argc
   bool pause = false;
   bool incrementTimestamp = true;
   bool checkSERDES = false;
-  bool quiet = true;
+  bool quiet = false;
   unsigned delay = 0;
-  unsigned number = 1925000;
+  unsigned number = 1;
   unsigned timestampOffset = 1;
   unsigned packetCount = 0;
   string op = "";
