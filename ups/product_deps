@@ -19,6 +19,8 @@ fcldir      -
 #
 product		 version	optional
 TRACE            v3_05_00
+gcc              v4_9_1          e6
+gcc              v4_9_2          e7
 swig             v3_0_2          -       only_for_build
 cetbuildtools    v4_09_02        -       only_for_build
 end_product_list
