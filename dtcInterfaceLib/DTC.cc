@@ -64,7 +64,6 @@ DTCLib::DTC_SimMode DTCLib::DTC::SetSimMode(DTC_SimMode mode)
     for (auto ring : DTC_Rings) {
         SetMaxROCNumber(ring, DTC_ROC_Unused);
         DisableROCEmulator(ring);
-        ringEnabledMode_[(int)ring] = ReadRingEnabled(ring);
     }
 
     if (simMode_ != DTCLib::DTC_SimMode_Disabled)
@@ -88,10 +87,12 @@ DTCLib::DTC_SimMode DTCLib::DTC::SetSimMode(DTC_SimMode mode)
 //
 // DMA Functions
 //
-std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool debug, int debugCount, bool quiet)
+std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
 {
     TRACE(19, "DTC::GetData begin");
     std::vector<void*> output;
+#if 0
+    //This code is disabled in favor of a separate Software CFO Emulator
     for (auto ring : DTC_Rings){
         if (!ringEnabledMode_[ring].TimingEnable)
         {
@@ -121,6 +122,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when, bool debug, int debu
             }
         }
     }
+#endif
     first_read_ = true;
     try{
         // Read the header packet

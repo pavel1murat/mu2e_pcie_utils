@@ -1,4 +1,5 @@
 #include "DTCLibTest.h"
+#include "DTCSoftwareCFO.h"
 
 #include <iostream>
 #include <iomanip>
@@ -546,7 +547,9 @@ void DTCLib::DTCLibTest::doDAQTest()
         thisDTC_->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
         if (!thisDTC_->ReadSERDESOscillatorClock()) { thisDTC_->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
 
-        std::vector<void*> data = thisDTC_->GetData(DTC_Timestamp((uint64_t)0), false, 0, !printMessages_);
+        DTCSoftwareCFO theCFO(thisDTC_, 0, !printMessages_);
+        theCFO.SendRequestForTimestamp();
+        std::vector<void*> data = thisDTC_->GetData();
         if (data.size() > 0)
         {
             if (printMessages_) std::cout << data.size() << " packets returned\n";

@@ -19,7 +19,7 @@ namespace DTCLib {
         // DMA Functions
         //
         // Data read-out
-        std::vector<void*> GetData(DTC_Timestamp when = DTC_Timestamp(), bool debug = false, int debugCount = 0, bool quiet = true);
+        std::vector<void*> GetData(DTC_Timestamp when = DTC_Timestamp());
         std::string GetJSONData(DTC_Timestamp when = DTC_Timestamp());
         
         // DCS Read/Write Cycle
@@ -245,7 +245,6 @@ namespace DTCLib {
         mu2e_databuff_t* dcsbuffer_;
         DTC_SimMode simMode_;
         DTC_ROC_ID maxROCs_[6];
-        DTC_RingEnableMode ringEnabledMode_[6];
         uint16_t dmaSize_;
         bool first_read_;
         uint16_t daqDMAByteCount_;

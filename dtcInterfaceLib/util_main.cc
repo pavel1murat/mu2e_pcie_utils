@@ -10,6 +10,7 @@
 #include <iostream>
 #include <string>
 #include "DTC.h"
+#include "DTCSoftwareCFO.h"
 #ifdef _WIN32
 # include <chrono>
 # include <thread>
@@ -195,11 +196,21 @@ main(int	argc
         thisDTC->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
         if(!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
        
+
+        DTCSoftwareCFO theCFO(thisDTC, packetCount, quiet);
+        theCFO.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay);
         for (unsigned ii = 0; ii < number; ++ii)
         {
-            if(delay > 0) usleep(delay);
-            uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
-            vector<void*> data = thisDTC->GetData(DTC_Timestamp(ts), pause, packetCount, quiet);
+            //if(delay > 0) usleep(delay);
+            //uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
+            vector<void*> data = thisDTC->GetData(); // DTC_Timestamp(ts));
+
+            if (pause) {
+                std::cout << "GetData Called. Press any key." << std::endl;
+                std::string dummy;
+                getline(std::cin, dummy);
+            }
+
             if (data.size() > 0)
             {
                 if(!quiet) cout << data.size() << " packets returned\n";
@@ -258,11 +269,20 @@ main(int	argc
     {
         DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
 
+        DTCSoftwareCFO theCFO(thisDTC, packetCount, quiet);
+        theCFO.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay);
+
         for (unsigned ii = 0; ii < number; ++ii)
         {
-            if(delay > 0) usleep(delay);
-            uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
-            vector<void*> data = thisDTC->GetData(DTC_Timestamp(ts), pause, packetCount,quiet);
+            //if(delay > 0) usleep(delay);
+            //uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
+            vector<void*> data = thisDTC->GetData(); // DTC_Timestamp(ts));
+            if (pause) {
+                std::cout << "GetData Called. Press any key." << std::endl;
+                std::string dummy;
+                getline(std::cin, dummy);
+            }
+
             if (data.size() > 0)
             {
                 //cout << data.size() << " packets returned\n";
