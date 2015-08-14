@@ -298,10 +298,12 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
     TRACE(19, "DTC::ReadNextDAQPacket reading next packet from buffer: nextReadPtr_=%p:", (void*)nextReadPtr_);
     if (newBuffer) {
         daqDMAByteCount_ = static_cast<uint16_t>(*((uint64_t*)nextReadPtr_));
-        nextReadPtr_ = (char*)nextReadPtr_ + 8;
+        nextReadPtr_ = (uint8_t*)nextReadPtr_ + 8;
     }
-    uint64_t blockByteCount = *((uint16_t*)nextReadPtr_);
+    uint16_t blockByteCount = *((uint16_t*)nextReadPtr_);
+    TRACE(19, "DTC::ReadNextDAQPacket: blockByteCount=%u, daqDMAByteCount=%u, nextReadPtr_=%p, *nextReadPtr=0x%x", blockByteCount, daqDMAByteCount_, (void*)nextReadPtr_,*((uint8_t*)nextReadPtr_));
     if (blockByteCount == 0) {
+        TRACE(19, "DTC::ReadNextDAQPacket: blockByteCount is 0, returning NULL!");
         return nullptr; 
     }
     DTC_DataPacket test = DTC_DataPacket(nextReadPtr_);
@@ -309,7 +311,7 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
     DTC_DataHeaderPacket* output = new DTC_DataHeaderPacket(test);
     TRACE(19, output->toJSON().c_str());
     if (static_cast<uint16_t>((1 + output->GetPacketCount()) * 16) != blockByteCount) {
-        TRACE(19, "Data Error Detected: PacketCount: %u, ExpectedByteCount: %u, BlockByteCount: %lu", output->GetPacketCount(), (1 + output->GetPacketCount()) * 16, blockByteCount);
+        TRACE(19, "Data Error Detected: PacketCount: %u, ExpectedByteCount: %u, BlockByteCount: %u", output->GetPacketCount(), (1 + output->GetPacketCount()) * 16, blockByteCount);
         throw DTC_DataCorruptionException();
     }
     first_read_ = false;

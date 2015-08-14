@@ -235,26 +235,24 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                 int nPackets = 1;
                                 if (mode_ == DTCLib::DTC_SimMode_Calorimeter) {
                                     if (nSamples <= 5) { nPackets = 1; }
-                                    else { nPackets = (nSamples - 6) / 8 + 2; }
+                                    else { nPackets = floor((nSamples - 6) / 8 + 2); }
                                 }
                                 else if (mode_ == DTCLib::DTC_SimMode_Performance) {
                                     nPackets = 0;
                                 }
-                                if ((currentOffset + (nPackets + 1) * 16 + 8) > sizeof(mu2e_databuff_t))
+                                if ((currentOffset + (nPackets + 1) * 16) > sizeof(mu2e_databuff_t))
                                 {
                                     exitLoop = true;
                                     break;
                                 }
 
                                 // Record the DataBlock size
-                                uint64_t dataBlockByteCount = (nPackets + 1) * 16;
-                                memcpy((char*)dmaData_[chn][hwIdx_[chn]] + currentOffset, &dataBlockByteCount, sizeof(uint64_t));
-                                currentOffset += sizeof(uint64_t);
-                                buffSize_[chn][hwIdx_[chn]] = currentOffset;
+                                uint16_t dataBlockByteCount = (nPackets + 1) * 16;
+                                TRACE(17, "mu2esim::read_data DataBlock size is %u", dataBlockByteCount);
 
                                 // Add a Data Header packet to the reply
-                                packet[0] = 32;
-                                packet[1] = 0;
+                                packet[0] = static_cast<uint8_t>(dataBlockByteCount & 0xFF);
+                                packet[1] = static_cast<uint8_t>(dataBlockByteCount >> 8);
                                 packet[2] = 0x50 + (roc & 0x0F);
                                 packet[3] = 0x80 + (ring & 0x0F);
                                 packet[4] = (uint8_t)nPackets;
@@ -328,7 +326,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                     buffSize_[chn][hwIdx_[chn]] = currentOffset;
 
                                     int samplesProcessed = 5;
-                                    while (samplesProcessed < nSamples)
+                                    while (samplesProcessed <= nSamples)
                                     {
                                         packet[0] = static_cast<uint8_t>(samplesProcessed * simIndex_[ring][roc]);
                                         packet[1] = static_cast<uint8_t>((samplesProcessed * simIndex_[ring][roc]) >> 8);
