@@ -28,6 +28,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 
 mu2esim::mu2esim()
     : hwIdx_()
