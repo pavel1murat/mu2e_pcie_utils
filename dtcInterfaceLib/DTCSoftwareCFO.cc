@@ -1,4 +1,4 @@
-#include "DTCSoftwareCFO.h"
+#INclude "DTCSoftwareCFO.h"
 
 #include <thread>
 
@@ -59,6 +59,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTCLib::DTC_Timesta
 void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImpl(DTCLib::DTC_Timestamp start, int count,
     bool increment, int delayBetweenDataRequests)
 {
+    TRACE( 19, "DTCSoftwareCFO::SendRequestsForRangeImpl Start");
     for (auto ring : DTCLib::DTC_Rings) { ringMode_[ring] = theDTC_->ReadRingEnabled(ring); }
 
     // Send Readout Requests first
