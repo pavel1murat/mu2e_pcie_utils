@@ -15,6 +15,8 @@
 #include "DTC.h"
 #include "DTC_Types.h"
 
+#include <thread>
+
 namespace DTCLib {
     class DTCSoftwareCFO {
     public:
@@ -39,6 +41,7 @@ namespace DTCLib {
         DTC *theDTC_;
         bool ownDTC_;
         DTC_RingEnableMode ringMode_[6];
+        std::thread theThread_;
     };
 
 } // namespace DTCLib

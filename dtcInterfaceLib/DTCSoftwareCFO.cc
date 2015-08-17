@@ -1,6 +1,5 @@
-#INclude "DTCSoftwareCFO.h"
+#include "DTCSoftwareCFO.h"
 
-#include <thread>
 
 DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(int debugPacketCount, bool quiet) :
 debugPacketCount_(debugPacketCount), quiet_(quiet)
@@ -19,6 +18,7 @@ debugPacketCount_(debugPacketCount), quiet_(quiet)
 DTCLib::DTCSoftwareCFO::~DTCSoftwareCFO()
 {
     if (ownDTC_) delete theDTC_;
+    theThread_.join();
 }
 
 void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTCLib::DTC_Timestamp ts)
@@ -53,7 +53,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTCLib::DTC_Timestamp ts)
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTCLib::DTC_Timestamp start, bool increment, int delayBetweenDataRequests)
 {
-    std::thread(&DTCLib::DTCSoftwareCFO::SendRequestsForRangeImpl, this, start, count, increment, delayBetweenDataRequests);
+    theThread_ = std::thread(&DTCLib::DTCSoftwareCFO::SendRequestsForRangeImpl, this, start, count, increment, delayBetweenDataRequests);
 }
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImpl(DTCLib::DTC_Timestamp start, int count,

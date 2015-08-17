@@ -194,11 +194,16 @@ main(int	argc
         thisDTC->SetInternalSystemClock();
         thisDTC->DisableTiming();
         thisDTC->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
-        if(!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
-       
+        if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
+
 
         DTCSoftwareCFO theCFO(thisDTC, packetCount, quiet);
-        theCFO.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay);
+        if (number > 1) {
+            theCFO.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay);
+        }
+        else {
+            theCFO.SendRequestForTimestamp(DTC_Timestamp(timestampOffset));
+        }
         for (unsigned ii = 0; ii < number; ++ii)
         {
             //if(delay > 0) usleep(delay);
