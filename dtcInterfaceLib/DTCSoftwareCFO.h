@@ -16,6 +16,7 @@
 #include "DTC_Types.h"
 
 #include <thread>
+#include <atomic>
 
 namespace DTCLib {
     class DTCSoftwareCFO {
@@ -31,6 +32,7 @@ namespace DTCLib {
             bool increment = true, int delayBetweenDataRequests = 0);
         void setQuiet(bool quiet) { quiet_ = quiet; }
         void setDebugPacketCount(int dbc) { debugPacketCount_ = dbc; }
+        void WaitForRequestsToBeSent();
     private:
         // Request Parameters
         int debugPacketCount_;
@@ -42,6 +44,8 @@ namespace DTCLib {
         bool ownDTC_;
         DTC_RingEnableMode ringMode_[6];
         std::thread theThread_;
+        std::atomic<bool> requestsSent_;
+        std::atomic<bool> abort_;
     };
 
 } // namespace DTCLib

@@ -203,15 +203,33 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
         if (chn == 0)
         {
             std::vector<DTCLib::DTC_Timestamp> activeTimestamps;
+            rrMutex_.lock();
             for (int ring = 0; ring <= DTCLib::DTC_Ring_5; ++ring)
             {
-                for (auto i : readoutRequestRecieved_[ring])
-                {
-                    bool found = false;
-                    for (auto ts : activeTimestamps) { found = found || ts == i; }
-                    if (!found) { activeTimestamps.push_back(i); }
+                if (readoutRequestRecieved_[ring].size() > 0) {
+                    std::sort(readoutRequestRecieved_[ring].begin(), readoutRequestRecieved_[ring].end());
+                    bool active = true;
+                    unsigned ii = 0;
+                    while (active && ii < readoutRequestRecieved_[ring].size())
+                    {
+                        bool found = false;
+                        DTCLib::DTC_Timestamp ts = readoutRequestRecieved_[ring][ii];
+                        for (auto roc : DTCLib::DTC_ROCS)
+                        {
+                            std::lock_guard<std::mutex>drLock(drMutex_);
+                            if (std::find(dataRequestRecieved_[ring][roc].begin(), dataRequestRecieved_[ring][roc].end(), ts) != dataRequestRecieved_[ring][roc].end()
+                                && std::find(activeTimestamps.begin(), activeTimestamps.end(), ts) == activeTimestamps.end())
+                            {
+                                activeTimestamps.push_back(ts);
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found) active = false;
+                    }
                 }
             }
+            rrMutex_.unlock();
             std::sort(activeTimestamps.begin(), activeTimestamps.end());
 
             bool exitLoop = false;
@@ -221,11 +239,13 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                 for (int ring = 0; ring <= DTCLib::DTC_Ring_5; ++ring)
                 {
                     if (exitLoop) break;
+                    rrMutex_.lock();
                     auto rrIter = std::find(readoutRequestRecieved_[ring].begin(), readoutRequestRecieved_[ring].end(), ts);
                     if (rrIter != readoutRequestRecieved_[ring].end() && currentOffset < sizeof(mu2e_databuff_t))
                     {
                         for (int roc = 0; roc <= DTCLib::DTC_ROC_5; ++roc)
                         {
+                            drMutex_.lock();
                             auto drIter = std::find(dataRequestRecieved_[ring][roc].begin(), dataRequestRecieved_[ring][roc].end(), ts);
                             if (drIter != dataRequestRecieved_[ring][roc].end() && currentOffset < sizeof(mu2e_databuff_t))
                             {
@@ -327,7 +347,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                     buffSize_[chn][hwIdx_[chn]] = currentOffset;
 
                                     int samplesProcessed = 5;
-                                    while (samplesProcessed <= nSamples)
+                                    for (int i = 1; i < nPackets; ++i)
                                     {
                                         packet[0] = static_cast<uint8_t>(samplesProcessed * simIndex_[ring][roc]);
                                         packet[1] = static_cast<uint8_t>((samplesProcessed * simIndex_[ring][roc]) >> 8);
@@ -400,13 +420,16 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                     break;
                                 }
                                 simIndex_[ring][roc] = (simIndex_[ring][roc] + 1) % 0x3FF;
-                                TRACE(17, "mu2esim::read_data: Erasing DTC_Timestamp from DataRequestReceived list");
+                                TRACE(17, "mu2esim::read_data: Erasing DTC_Timestamp %li from DataRequestReceived list", drIter->GetTimestamp(true));
                                 dataRequestRecieved_[ring][roc].erase(drIter);
+
                             }
+                            drMutex_.unlock();
                         }
-                        TRACE(17, "mu2esim::read_data: Erasing DTC_Timestamp from ReadoutRequestReceived list");
+                        TRACE(17, "mu2esim::read_data: Erasing DTC_Timestamp %li from ReadoutRequestReceived list", rrIter->GetTimestamp(true));
                         readoutRequestRecieved_[ring].erase(rrIter);
                     }
+                    rrMutex_.unlock();
                 }
             }
         }
@@ -474,23 +497,34 @@ int mu2esim::write_data(int chn, void *buffer, size_t bytes)
         DTCLib::DTC_Timestamp ts((uint8_t*)buffer + 6);
         if ((word & 0x8010) == 0x8010) {
             int activeDAQRing = (word & 0x0F00) >> 8;
-            TRACE(17, "mu2esim::write_data: Readout Request: activeDAQRing is %i", activeDAQRing);
+            TRACE(17, "mu2esim::write_data: Readout Request: activeDAQRing=%i, ts=%li", activeDAQRing, ts.GetTimestamp(true));
+            rrMutex_.lock();
             if (std::find(readoutRequestRecieved_[activeDAQRing].begin(), readoutRequestRecieved_[activeDAQRing].end(), ts) == readoutRequestRecieved_[activeDAQRing].end())
             {
                 readoutRequestRecieved_[activeDAQRing].push_back(ts);
             }
+            rrMutex_.unlock();
         }
         else if ((word & 0x8020) == 0x8020) {
             DTCLib::DTC_Ring_ID activeDAQRing = static_cast<DTCLib::DTC_Ring_ID>((word & 0x0F00) >> 8);
-            TRACE(17, "mu2esim::write_data: Data Request: activeDAQRing is %i", activeDAQRing);
-            if (activeDAQRing != DTCLib::DTC_Ring_Unused && 
-                std::find(readoutRequestRecieved_[activeDAQRing].begin(), readoutRequestRecieved_[activeDAQRing].end(), ts) != readoutRequestRecieved_[activeDAQRing].end()) {
+            TRACE(17, "mu2esim::write_data: Data Request: activeDAQRing=%i, ts=%li", activeDAQRing, ts.GetTimestamp(true));
+
+            if (activeDAQRing != DTCLib::DTC_Ring_Unused)
+            {
+                rrMutex_.lock();
+                if (std::find(readoutRequestRecieved_[activeDAQRing].begin(), readoutRequestRecieved_[activeDAQRing].end(), ts) == readoutRequestRecieved_[activeDAQRing].end())
+                {
+                    TRACE(17, "mu2esim::write_data: Data Request Received but missing Readout Request!");
+                }
+                rrMutex_.unlock();
                 DTCLib::DTC_ROC_ID activeROC = static_cast<DTCLib::DTC_ROC_ID>(word & 0xF);
-                if (activeROC != DTCLib::DTC_ROC_Unused && 
+                drMutex_.lock();
+                if (activeROC != DTCLib::DTC_ROC_Unused &&
                     std::find(dataRequestRecieved_[activeDAQRing][activeROC].begin(), dataRequestRecieved_[activeDAQRing][activeROC].end(), ts) == dataRequestRecieved_[activeDAQRing][activeROC].end())
                 {
                     dataRequestRecieved_[activeDAQRing][activeROC].push_back(ts);
                 }
+                drMutex_.unlock();
             }
         }
         break;

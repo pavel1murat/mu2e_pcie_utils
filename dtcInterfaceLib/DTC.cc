@@ -126,9 +126,19 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
     first_read_ = true;
     try{
         // Read the header packet
-        TRACE(19, "DTC::GetData before ReadNextDAQPacket");
-        DTC_DataHeaderPacket* packet = ReadNextDAQPacket(first_read_ ? 10000 : 1);
-        TRACE(19, "DTC::GetData after  ReadDMADAQPacket");
+        DTC_DataHeaderPacket* packet = nullptr;
+        int tries = 0;
+        while (packet == nullptr && tries < 3) {
+            TRACE(19, "DTC::GetData before ReadNextDAQPacket, tries=%i", tries);
+            packet = ReadNextDAQPacket(first_read_ ? 10000 : 1);
+            TRACE(19, "DTC::GetData after  ReadDMADAQPacket");
+            tries++;
+            if (packet == nullptr) usleep(1000);
+        }
+        if (packet == nullptr) {
+            TRACE(19, "DTC::GetData: Timeout Occurred! (Lead packet is nullptr after retries)");
+            return output;
+        }
 
         if (packet->GetTimestamp() != when && when.GetTimestamp(true) != 0)
         {
@@ -154,7 +164,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
                     nextReadPtr_ = nullptr;
                     break;
                 }
-                if (thispacket->GetTimestamp() != when ) {
+                if (thispacket->GetTimestamp() != when) {
                     done = true;
                     nextReadPtr_ = lastReadPtr_;
                     break;
@@ -264,7 +274,7 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
     TRACE(19, "DTC::ReadNextDAQPacket BEGIN");
     if (nextReadPtr_ != nullptr) {
         TRACE(19, "DTC::ReadNextDAQPacket BEFORE BUFFER CHECK nextReadPtr_=%p *nextReadPtr_=0x%08x"
-            , (void*)nextReadPtr_, *(unsigned*)nextReadPtr_);
+            , (void*)nextReadPtr_, *(uint16_t*)nextReadPtr_);
     }
     else {
         TRACE(19, "DTC::ReadNextDAQPacket BEFORE BUFFER CHECK nextReadPtr_=nullptr");
@@ -301,10 +311,10 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
         nextReadPtr_ = (uint8_t*)nextReadPtr_ + 8;
     }
     uint16_t blockByteCount = *((uint16_t*)nextReadPtr_);
-    TRACE(19, "DTC::ReadNextDAQPacket: blockByteCount=%u, daqDMAByteCount=%u, nextReadPtr_=%p, *nextReadPtr=0x%x", blockByteCount, daqDMAByteCount_, (void*)nextReadPtr_,*((uint8_t*)nextReadPtr_));
+    TRACE(19, "DTC::ReadNextDAQPacket: blockByteCount=%u, daqDMAByteCount=%u, nextReadPtr_=%p, *nextReadPtr=0x%x", blockByteCount, daqDMAByteCount_, (void*)nextReadPtr_, *((uint8_t*)nextReadPtr_));
     if (blockByteCount == 0) {
         TRACE(19, "DTC::ReadNextDAQPacket: blockByteCount is 0, returning NULL!");
-        return nullptr; 
+        return nullptr;
     }
     DTC_DataPacket test = DTC_DataPacket(nextReadPtr_);
     TRACE(19, test.toJSON().c_str());
@@ -312,6 +322,7 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
     TRACE(19, output->toJSON().c_str());
     if (static_cast<uint16_t>((1 + output->GetPacketCount()) * 16) != blockByteCount) {
         TRACE(19, "Data Error Detected: PacketCount: %u, ExpectedByteCount: %u, BlockByteCount: %u", output->GetPacketCount(), (1 + output->GetPacketCount()) * 16, blockByteCount);
+        delete output;
         throw DTC_DataCorruptionException();
     }
     first_read_ = false;

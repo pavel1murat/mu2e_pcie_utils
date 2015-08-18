@@ -196,6 +196,8 @@ main(int	argc
         thisDTC->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
         if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
 
+        double totalIncTime = 0, aveIncTime = 0, aveRate = 0;
+        auto startTime = std::chrono::high_resolution_clock::now();
 
         DTCSoftwareCFO theCFO(thisDTC, packetCount, quiet);
         if (number > 1) {
@@ -204,11 +206,16 @@ main(int	argc
         else {
             theCFO.SendRequestForTimestamp(DTC_Timestamp(timestampOffset));
         }
-        for (unsigned ii = 0; ii < number; ++ii)
+
+        unsigned ii = 0;
+        for (ii = 0; ii < number; ++ii)
         {
             //if(delay > 0) usleep(delay);
-            //uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
-            vector<void*> data = thisDTC->GetData(); // DTC_Timestamp(ts));
+            uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
+            auto start = std::chrono::high_resolution_clock::now();
+            vector<void*> data = thisDTC->GetData(DTC_Timestamp(ts));
+            auto time = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+                (std::chrono::high_resolution_clock::now() - start).count();
 
             if (pause) {
                 std::cout << "GetData Called. Press any key." << std::endl;
@@ -216,6 +223,7 @@ main(int	argc
                 getline(std::cin, dummy);
             }
 
+            int totalSize = 0;
             if (data.size() > 0)
             {
                 if(!quiet) cout << data.size() << " packets returned\n";
@@ -234,41 +242,60 @@ main(int	argc
                             cout << "\t" << DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16)).toJSON() << endl;
                         }
                     }
+                    totalSize += 16 * (1 + h2.GetPacketCount());
                 }
             }
             else
             {
-                TRACE_CNTL("modeM", 0L);
+                //TRACE_CNTL("modeM", 0L);
                 if(!quiet) cout << "no data returned\n";
-                return (0);
+                //return (0);
+                break;
             }
+
+            totalIncTime += time;
+            aveIncTime += time / number;
+            aveRate += totalSize / time / number / 1024;
+
             if(checkSERDES) {
                auto disparity = thisDTC->ReadSERDESRXDisparityError(DTC_Ring_0);
                auto cnit =  thisDTC->ReadSERDESRXCharacterNotInTableError(DTC_Ring_0);
                auto rxBufferStatus = thisDTC->ReadSERDESRXBufferStatus(DTC_Ring_0);
                bool eyescan = thisDTC->ReadSERDESEyescanError(DTC_Ring_0);
                if(eyescan) {
-                  TRACE_CNTL("modeM", 0L);
+                  //TRACE_CNTL("modeM", 0L);
                   cout << "SERDES Eyescan Error Detected" << endl;
-                  return 0;
+                  //return 0;
+                  break;
                }
                if((int)rxBufferStatus > 2) {
-                TRACE_CNTL("modeM", 0L);
+                //TRACE_CNTL("modeM", 0L);
                   cout << "Bad Buffer status detected: " << rxBufferStatus << endl;
-                  return 0;
+                  //return 0;
+                  break;
                }
                if(cnit.GetData()[0] || cnit.GetData()[1]) {
-                TRACE_CNTL("modeM", 0L);
+                //TRACE_CNTL("modeM", 0L);
                   cout << "Character Not In Table Error detected" << endl;
-                  return 0;
+                  //return 0;
+                  break;
                }
                if(disparity.GetData()[0] || disparity.GetData()[1]) {
-                TRACE_CNTL("modeM", 0L);
+                //TRACE_CNTL("modeM", 0L);
                   cout << "Disparity Error Detected" << endl;
-                  return 0;
+                  //return 0;
+                  break;
                }
        	    }
         }
+
+        auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+            (std::chrono::high_resolution_clock::now() - startTime).count();
+        std::cout << "STATS, " << ii << " DataBlocks processed:" << std::endl
+            << "Total Elapsed Time: " << (double)totalTime << " s." << std::endl
+            << "DTC::GetData Time: " << totalIncTime << " s." << std::endl
+            << "Average DTC::GetData Time: " << aveIncTime << " s." << std::endl
+            << "Average Data Rate: " << aveRate << " KB/s." << std::endl;
     }
     else// if (argc > 1 && strcmp(argv[1],"get")==0)
     {
