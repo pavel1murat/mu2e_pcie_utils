@@ -19,7 +19,7 @@ namespace DTCLib {
         // DMA Functions
         //
         // Data read-out
-        std::vector<void*> GetData(DTC_Timestamp when = DTC_Timestamp(), bool debug = false, int debugCount = 0, bool quiet = true);
+        std::vector<void*> GetData(DTC_Timestamp when = DTC_Timestamp());
         std::string GetJSONData(DTC_Timestamp when = DTC_Timestamp());
         
         // DCS Read/Write Cycle
@@ -32,8 +32,8 @@ namespace DTCLib {
         void SetFirstRead(bool read) { first_read_ = read; }
         void WriteDMADAQPacket(const DTC_DMAPacket& packet);
         void WriteDMADCSPacket(const DTC_DMAPacket& packet);
-        DTC_DataHeaderPacket ReadNextDAQPacket(int tmo_ms = 0);
-        DTC_DCSReplyPacket ReadNextDCSPacket();
+        DTC_DataHeaderPacket* ReadNextDAQPacket(int tmo_ms = 0);
+        DTC_DCSReplyPacket* ReadNextDCSPacket();
         void ReleaseAllBuffers(const DTC_DMA_Engine& channel) { device_.release_all(channel); }
 
         //
@@ -132,17 +132,17 @@ namespace DTCLib {
         uint32_t ReadROCTimeoutPreset();
         int WriteROCTimeoutPreset(uint32_t preset);
 
-        bool ReadROCTimeoutError(DTC_Ring_ID& ring);
-        bool ClearROCTimeoutError(DTC_Ring_ID& ring);
+        bool ReadROCTimeoutError(const DTC_Ring_ID& ring);
+        bool ClearROCTimeoutError(const DTC_Ring_ID& ring);
 
-        bool ReadRXElasticBufferUnderrun(DTC_Ring_ID& ring);
-        bool ClearRXElasticBufferUnderrun(DTC_Ring_ID& ring);
-        bool ReadRXElasticBufferOverrun(DTC_Ring_ID& ring);
-        bool ClearRXElasticBufferOverrun(DTC_Ring_ID& ring);
-        bool ReadPacketError(DTC_Ring_ID& ring);
-        bool ClearPacketError(DTC_Ring_ID& ring);
-        bool ReadPacketCRCError(DTC_Ring_ID& ring);
-        bool ClearPacketCRCError(DTC_Ring_ID& ring);
+        bool ReadRXElasticBufferUnderrun(const DTC_Ring_ID& ring);
+        bool ClearRXElasticBufferUnderrun(const DTC_Ring_ID& ring);
+        bool ReadRXElasticBufferOverrun(const DTC_Ring_ID& ring);
+        bool ClearRXElasticBufferOverrun(const DTC_Ring_ID& ring);
+        bool ReadPacketError(const DTC_Ring_ID& ring);
+        bool ClearPacketError(const DTC_Ring_ID& ring);
+        bool ReadPacketCRCError(const DTC_Ring_ID& ring);
+        bool ClearPacketCRCError(const DTC_Ring_ID& ring);
 
         DTC_Timestamp WriteTimestampPreset(const DTC_Timestamp& preset);
         DTC_Timestamp ReadTimestampPreset();
@@ -168,7 +168,7 @@ namespace DTCLib {
         DTC_PCIeStat ReadPCIeStats();
 
     private:
-        DTC_DataPacket ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms = 0);
+        void ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms = 0);
         void WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPacket& packet);
         void WriteDMAPacket(const DTC_DMA_Engine& channel, const DTC_DMAPacket& packet);
 
@@ -245,7 +245,7 @@ namespace DTCLib {
         mu2e_databuff_t* dcsbuffer_;
         DTC_SimMode simMode_;
         DTC_ROC_ID maxROCs_[6];
-        DTC_RingEnableMode ringEnabledMode_[6];
+        uint16_t dmaSize_;
         bool first_read_;
         uint16_t daqDMAByteCount_;
         uint16_t dcsDMAByteCount_;

@@ -1,15 +1,19 @@
 cet_make_library(LIBRARY_NAME DTCInterface SOURCE
             DTC.cc
             DTCLibTest.cc
+            DTCSoftwareCFO.cc
             DTC_Types.cc
             mu2edev.cc
 	    mu2esim.cc
+        LIBRARIES
+        pthread
 )
 
 cet_make_exec(DTCLibTest SOURCE main.cc LIBRARIES DTCInterface)
-target_link_libraries(DTCLibTest pthread)
 
 cet_make_exec(mu2eUtil SOURCE util_main.cc LIBRARIES DTCInterface)
+
+cet_make_Exec(requestSender SOURCE requestSender.cc LIBRARIES DTCInterface)
 
 cet_make_exec(DTCRegDump SOURCE dtcRegDump.cc LIBRARIES DTCInterface)
 

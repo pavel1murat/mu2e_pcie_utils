@@ -10,6 +10,7 @@
 #include <iostream>
 #include <string>
 #include "DTC.h"
+#include "DTCSoftwareCFO.h"
 #ifdef _WIN32
 # include <chrono>
 # include <thread>
@@ -120,14 +121,24 @@ main(int	argc
   
   string pauseStr = pause ? "true" : "false";
   string incrementStr = incrementTimestamp ? "true" : "false";
-  cout << "Options are: Operation: " << string(op) << ", Num: " << number << ", Delay: " << delay << ", TS Offset: " << timestampOffset << ", PacketCount: " << packetCount << ", Pause: " << pauseStr << ", Increment TS: " << incrementStr << endl;
+  string quietStr = quiet ? "true" : "false";
+  cout << "Options are: "
+       << "Operation: " << string(op) 
+       << ", Num: " << number 
+       << ", Delay: " << delay 
+       << ", TS Offset: " << timestampOffset 
+       << ", PacketCount: " << packetCount 
+       << ", Pause: " << pauseStr 
+       << ", Increment TS: " << incrementStr 
+       << ", Quiet Mode: " << quietStr
+       << endl;
 
     if (op == "read")
     {
       cout << "Operation \"read\"" << endl;
         DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
-        DTC_DataHeaderPacket packet = thisDTC->ReadNextDAQPacket();
-        cout << packet.toJSON() << '\n';
+        DTC_DataHeaderPacket* packet = thisDTC->ReadNextDAQPacket();
+        cout << packet->toJSON() << '\n';
     }
     else if (op == "read_data")
     {
@@ -172,7 +183,7 @@ main(int	argc
             std::cout << "Request: " << header.toJSON() << std::endl;
             thisDTC->WriteDMADAQPacket(header);
             thisDTC->SetFirstRead(true);
-            std::cout << "Reply:   " << thisDTC->ReadNextDAQPacket().toJSON() << std::endl;
+            std::cout << "Reply:   " << thisDTC->ReadNextDAQPacket()->toJSON() << std::endl;
             if(delay > 0) usleep(delay);
         }
     }
@@ -183,13 +194,36 @@ main(int	argc
         thisDTC->SetInternalSystemClock();
         thisDTC->DisableTiming();
         thisDTC->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
-        if(!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
-       
-        for (unsigned ii = 0; ii < number; ++ii)
+        if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
+
+        double totalIncTime = 0, aveIncTime = 0, aveRate = 0;
+        auto startTime = std::chrono::high_resolution_clock::now();
+
+        DTCSoftwareCFO theCFO(thisDTC, packetCount, quiet);
+        if (number > 1) {
+            theCFO.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay);
+        }
+        else {
+            theCFO.SendRequestForTimestamp(DTC_Timestamp(timestampOffset));
+        }
+
+        unsigned ii = 0;
+        for (ii = 0; ii < number; ++ii)
         {
-            if(delay > 0) usleep(delay);
+            //if(delay > 0) usleep(delay);
             uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
-            vector<void*> data = thisDTC->GetData(DTC_Timestamp(ts), pause, packetCount, quiet);
+            auto start = std::chrono::high_resolution_clock::now();
+            vector<void*> data = thisDTC->GetData(DTC_Timestamp(ts));
+            auto time = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+                (std::chrono::high_resolution_clock::now() - start).count();
+
+            if (pause) {
+                std::cout << "GetData Called. Press any key." << std::endl;
+                std::string dummy;
+                getline(std::cin, dummy);
+            }
+
+            int totalSize = 0;
             if (data.size() > 0)
             {
                 if(!quiet) cout << data.size() << " packets returned\n";
@@ -198,7 +232,7 @@ main(int	argc
                     TRACE(19, "DTC::GetJSONData constructing DataPacket:");
                     DTC_DataPacket     test = DTC_DataPacket(data[i]);
                     if(!quiet) cout << test.toJSON() << '\n'; // dumps whole databuff_t
-                    printf("data@%p=0x%08x\n", data[i], *(uint32_t*)(data[i]));
+                    //printf("data@%p=0x%08x\n", data[i], *(uint32_t*)(data[i]));
                     //DTC_DataHeaderPacket h1 = DTC_DataHeaderPacket(data[i]);
                     //cout << h1.toJSON() << '\n';
                     DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
@@ -208,51 +242,79 @@ main(int	argc
                             cout << "\t" << DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16)).toJSON() << endl;
                         }
                     }
+                    totalSize += 16 * (1 + h2.GetPacketCount());
                 }
             }
             else
             {
-                TRACE_CNTL("modeM", 0L);
+                //TRACE_CNTL("modeM", 0L);
                 if(!quiet) cout << "no data returned\n";
-                return (0);
+                //return (0);
+                break;
             }
+
+            totalIncTime += time;
+            aveIncTime += time / number;
+            aveRate += totalSize / time / number / 1024;
+
             if(checkSERDES) {
                auto disparity = thisDTC->ReadSERDESRXDisparityError(DTC_Ring_0);
                auto cnit =  thisDTC->ReadSERDESRXCharacterNotInTableError(DTC_Ring_0);
                auto rxBufferStatus = thisDTC->ReadSERDESRXBufferStatus(DTC_Ring_0);
                bool eyescan = thisDTC->ReadSERDESEyescanError(DTC_Ring_0);
                if(eyescan) {
-                  TRACE_CNTL("modeM", 0L);
+                  //TRACE_CNTL("modeM", 0L);
                   cout << "SERDES Eyescan Error Detected" << endl;
-                  return 0;
+                  //return 0;
+                  break;
                }
                if((int)rxBufferStatus > 2) {
-                TRACE_CNTL("modeM", 0L);
+                //TRACE_CNTL("modeM", 0L);
                   cout << "Bad Buffer status detected: " << rxBufferStatus << endl;
-                  return 0;
+                  //return 0;
+                  break;
                }
                if(cnit.GetData()[0] || cnit.GetData()[1]) {
-                TRACE_CNTL("modeM", 0L);
+                //TRACE_CNTL("modeM", 0L);
                   cout << "Character Not In Table Error detected" << endl;
-                  return 0;
+                  //return 0;
+                  break;
                }
                if(disparity.GetData()[0] || disparity.GetData()[1]) {
-                TRACE_CNTL("modeM", 0L);
+                //TRACE_CNTL("modeM", 0L);
                   cout << "Disparity Error Detected" << endl;
-                  return 0;
+                  //return 0;
+                  break;
                }
        	    }
         }
+
+        auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+            (std::chrono::high_resolution_clock::now() - startTime).count();
+        std::cout << "STATS, " << ii << " DataBlocks processed:" << std::endl
+            << "Total Elapsed Time: " << (double)totalTime << " s." << std::endl
+            << "DTC::GetData Time: " << totalIncTime << " s." << std::endl
+            << "Average DTC::GetData Time: " << aveIncTime << " s." << std::endl
+            << "Average Data Rate: " << aveRate << " KB/s." << std::endl;
     }
     else// if (argc > 1 && strcmp(argv[1],"get")==0)
     {
         DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
 
+        DTCSoftwareCFO theCFO(thisDTC, packetCount, quiet);
+        theCFO.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay);
+
         for (unsigned ii = 0; ii < number; ++ii)
         {
-            if(delay > 0) usleep(delay);
-            uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
-            vector<void*> data = thisDTC->GetData(DTC_Timestamp(ts), pause, packetCount,quiet);
+            //if(delay > 0) usleep(delay);
+            //uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
+            vector<void*> data = thisDTC->GetData(); // DTC_Timestamp(ts));
+            if (pause) {
+                std::cout << "GetData Called. Press any key." << std::endl;
+                std::string dummy;
+                getline(std::cin, dummy);
+            }
+
             if (data.size() > 0)
             {
                 //cout << data.size() << " packets returned\n";

@@ -3,3 +3,5 @@ make.out
 *.suo
 *.dat
 *.tmp
+*.*.user
+*.psess

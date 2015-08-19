@@ -1,4 +1,5 @@
 #include "DTCLibTest.h"
+#include "DTCSoftwareCFO.h"
 
 #include <iostream>
 #include <iomanip>
@@ -308,22 +309,21 @@ void DTCLib::DTCLibTest::doClassTest()
         if (printMessages_) std::cout << "Running DTC_DataPacket Destructor" << std::endl;
         delete defaultDP;
 
-        mu2e_databuff_t buf;
-        auto dataBufPtrfDP = new DTC_DataPacket(&buf);
+        mu2e_databuff_t* buf = (mu2e_databuff_t*)new mu2e_databuff_t();
+        auto dataBufPtrfDP = new DTC_DataPacket(buf);
         if (printMessages_) std::cout << "Databuff Pointer Constructor, Size should be 16: "
             << (int)dataBufPtrfDP->GetSize() << ", and IsMemoryPacket should be true: "
             << (dataBufPtrfDP->IsMemoryPacket() ? "true" : "false") << std::endl;
         err = dataBufPtrfDP->GetSize() != 16;
         err = err || !dataBufPtrfDP->IsMemoryPacket();
-                    
+
         auto nonmemCopyDP = DTC_DataPacket(*dataBufPtrfDP);
-        buf[0] = 0x8F;
+        (*buf)[0] = 0x8F;
         if (printMessages_) std::cout
             << "DataPacket Memory Packet Copy Constructor: Modifications to original buffer should modify both packets: "
             << std::hex
-            << "COPY[0]: " << (int)nonmemCopyDP.GetData()[0] << ", ORIGINAL[0]: " << (int)dataBufPtrfDP->GetWord(0) << std::endl;
-        err = err || nonmemCopyDP.GetData()[0] != 0x8F || nonmemCopyDP.GetWord(0) != 0x8F
-                  || dataBufPtrfDP->GetData()[0] != 0x8F || dataBufPtrfDP->GetWord(0) != 0x8F;
+            << "COPY[0]: " << (int)nonmemCopyDP.GetWord(0) << ", ORIGINAL[0]: " << (int)dataBufPtrfDP->GetWord(0) << std::endl;
+        err = err || nonmemCopyDP.GetWord(0) != 0x8F || dataBufPtrfDP->GetWord(0) != 0x8F;
 
         delete dataBufPtrfDP;
         if (printMessages_) std::cout << "Deleting ORIGINAL should not affect COPY: " << (int)nonmemCopyDP.GetWord(0) << std::endl;
@@ -547,7 +547,9 @@ void DTCLib::DTCLibTest::doDAQTest()
         thisDTC_->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
         if (!thisDTC_->ReadSERDESOscillatorClock()) { thisDTC_->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
 
-        std::vector<void*> data = thisDTC_->GetData(DTC_Timestamp((uint64_t)0), false, 0, !printMessages_);
+        DTCSoftwareCFO theCFO(thisDTC_, 0, !printMessages_);
+        theCFO.SendRequestForTimestamp();
+        std::vector<void*> data = thisDTC_->GetData();
         if (data.size() > 0)
         {
             if (printMessages_) std::cout << data.size() << " packets returned\n";
@@ -630,7 +632,7 @@ bool DTCLib::DTCLibTest::DataPacketIntegrityCheck(DTC_DataPacket* packet)
 
     for (int ii = 0; ii < packet->GetSize(); ++ii)
     {
-        retCode = packet->GetData()[ii] == ii && packet->GetWord(ii) == ii;
+        retCode = packet->GetWord(ii) == ii;
         if (!retCode) break;
     }
 

@@ -33,6 +33,9 @@
     <ClCompile Include="..\mu2esim.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\DTCSoftwareCFO.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\DTC.h">
@@ -45,6 +48,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\mu2esim.hh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DTCSoftwareCFO.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -10,6 +10,7 @@
 #include "../linux_driver/mymodule2/mu2e_mmap_ioctl.h"
 #endif
 #include <unordered_map>
+#include <mutex>
 #include "DTC_Types.h"
 
 #define SIM_BUFFCOUNT 4
@@ -51,6 +52,8 @@ private:
     uint16_t simIndex_[6][6];
     bool dcsRequestRecieved_[6][6];
     std::vector<DTCLib::DTC_Timestamp> readoutRequestRecieved_[6];
+    std::mutex rrMutex_;
     std::vector<DTCLib::DTC_Timestamp> dataRequestRecieved_[6][6];
+    std::mutex drMutex_;
     DTCLib::DTC_DCSRequestPacket dcsRequest_[6][6];
 };
