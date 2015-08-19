@@ -26,6 +26,7 @@
 #include "mu2esim.hh"
 #include <ctime>
 #include <vector>
+#include <forward_list>
 #include <iostream>
 #include <algorithm>
 #include <cmath>
@@ -202,35 +203,33 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 
         if (chn == 0)
         {
-            std::vector<DTCLib::DTC_Timestamp> activeTimestamps;
+            std::set<uint64_t> activeTimestamps;
             rrMutex_.lock();
             for (int ring = 0; ring <= DTCLib::DTC_Ring_5; ++ring)
             {
                 if (readoutRequestRecieved_[ring].size() > 0) {
-                    std::sort(readoutRequestRecieved_[ring].begin(), readoutRequestRecieved_[ring].end());
                     bool active = true;
-                    unsigned ii = 0;
-                    while (active && ii < readoutRequestRecieved_[ring].size())
+                    auto ii = readoutRequestRecieved_[ring].begin();
+                    while (active && ii != readoutRequestRecieved_[ring].end())
                     {
                         bool found = false;
-                        DTCLib::DTC_Timestamp ts = readoutRequestRecieved_[ring][ii];
+                        uint64_t ts = *ii;
                         for (auto roc : DTCLib::DTC_ROCS)
                         {
                             std::lock_guard<std::mutex>drLock(drMutex_);
-                            if (std::find(dataRequestRecieved_[ring][roc].begin(), dataRequestRecieved_[ring][roc].end(), ts) != dataRequestRecieved_[ring][roc].end()
-                                && std::find(activeTimestamps.begin(), activeTimestamps.end(), ts) == activeTimestamps.end())
+                            if (dataRequestRecieved_[ring][roc].count(ts) == 0)
                             {
-                                activeTimestamps.push_back(ts);
+                                activeTimestamps.insert(ts);
                                 found = true;
                                 break;
                             }
                         }
                         if (!found) active = false;
+                        ++ii;
                     }
                 }
             }
             rrMutex_.unlock();
-            std::sort(activeTimestamps.begin(), activeTimestamps.end());
 
             bool exitLoop = false;
             for (auto ts : activeTimestamps)
@@ -278,7 +277,8 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                 packet[3] = 0x80 + (ring & 0x0F);
                                 packet[4] = (uint8_t)nPackets;
                                 packet[5] = 0;
-                                (*rrIter).GetTimestamp(packet, 6);
+                                DTCLib::DTC_Timestamp ts(*rrIter);
+                                ts.GetTimestamp(packet, 6);
                                 packet[12] = 0;
                                 packet[13] = 0;
                                 packet[14] = 0;
@@ -420,13 +420,13 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                     break;
                                 }
                                 simIndex_[ring][roc] = (simIndex_[ring][roc] + 1) % 0x3FF;
-                                TRACE(17, "mu2esim::read_data: Erasing DTC_Timestamp %li from DataRequestReceived list", drIter->GetTimestamp(true));
+                                TRACE(17, "mu2esim::read_data: Erasing DTC_Timestamp %li from DataRequestReceived list", *drIter);
                                 dataRequestRecieved_[ring][roc].erase(drIter);
 
                             }
                             drMutex_.unlock();
                         }
-                        TRACE(17, "mu2esim::read_data: Erasing DTC_Timestamp %li from ReadoutRequestReceived list", rrIter->GetTimestamp(true));
+                        TRACE(17, "mu2esim::read_data: Erasing DTC_Timestamp %li from ReadoutRequestReceived list", *rrIter);
                         readoutRequestRecieved_[ring].erase(rrIter);
                     }
                     rrMutex_.unlock();
@@ -499,10 +499,7 @@ int mu2esim::write_data(int chn, void *buffer, size_t bytes)
             int activeDAQRing = (word & 0x0F00) >> 8;
             TRACE(17, "mu2esim::write_data: Readout Request: activeDAQRing=%i, ts=%li", activeDAQRing, ts.GetTimestamp(true));
             rrMutex_.lock();
-            if (std::find(readoutRequestRecieved_[activeDAQRing].begin(), readoutRequestRecieved_[activeDAQRing].end(), ts) == readoutRequestRecieved_[activeDAQRing].end())
-            {
-                readoutRequestRecieved_[activeDAQRing].push_back(ts);
-            }
+            readoutRequestRecieved_[activeDAQRing].insert(ts.GetTimestamp(true));
             rrMutex_.unlock();
         }
         else if ((word & 0x8020) == 0x8020) {
@@ -512,17 +509,16 @@ int mu2esim::write_data(int chn, void *buffer, size_t bytes)
             if (activeDAQRing != DTCLib::DTC_Ring_Unused)
             {
                 rrMutex_.lock();
-                if (std::find(readoutRequestRecieved_[activeDAQRing].begin(), readoutRequestRecieved_[activeDAQRing].end(), ts) == readoutRequestRecieved_[activeDAQRing].end())
+                if (readoutRequestRecieved_[activeDAQRing].count(ts.GetTimestamp(true)) == 0)
                 {
                     TRACE(17, "mu2esim::write_data: Data Request Received but missing Readout Request!");
                 }
                 rrMutex_.unlock();
                 DTCLib::DTC_ROC_ID activeROC = static_cast<DTCLib::DTC_ROC_ID>(word & 0xF);
                 drMutex_.lock();
-                if (activeROC != DTCLib::DTC_ROC_Unused &&
-                    std::find(dataRequestRecieved_[activeDAQRing][activeROC].begin(), dataRequestRecieved_[activeDAQRing][activeROC].end(), ts) == dataRequestRecieved_[activeDAQRing][activeROC].end())
+                if (activeROC != DTCLib::DTC_ROC_Unused)
                 {
-                    dataRequestRecieved_[activeDAQRing][activeROC].push_back(ts);
+                    dataRequestRecieved_[activeDAQRing][activeROC].insert(ts.GetTimestamp(true));
                 }
                 drMutex_.unlock();
             }

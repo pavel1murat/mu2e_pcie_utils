@@ -532,6 +532,7 @@ namespace DTCLib
         bool operator==(const DTC_Timestamp r) { return r.GetTimestamp(true) == timestamp_; }
         bool operator!=(const DTC_Timestamp r) { return r.GetTimestamp(true) != timestamp_; }
         bool operator< (const DTC_Timestamp r) { return r.GetTimestamp(true) > timestamp_; }
+        bool operator< (const DTC_Timestamp r) const { return r.GetTimestamp(true) > timestamp_; }
         DTC_Timestamp operator+(const int r) { return DTC_Timestamp(r + timestamp_); }
 
         void SetTimestamp(uint64_t timestamp) { timestamp_ = timestamp & 0x0000FFFFFFFFFFFF; }

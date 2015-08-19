@@ -15,6 +15,9 @@ namespace DTCLib {
         DTC_SimMode ReadSimMode() { return simMode_; }
         DTC_SimMode SetSimMode(DTC_SimMode mode);
 
+        double GetDeviceTime() { return deviceTime_; }
+        void ResetDeviceTime() { deviceTime_ = 0; }
+
         //
         // DMA Functions
         //
@@ -34,7 +37,12 @@ namespace DTCLib {
         void WriteDMADCSPacket(const DTC_DMAPacket& packet);
         DTC_DataHeaderPacket* ReadNextDAQPacket(int tmo_ms = 0);
         DTC_DCSReplyPacket* ReadNextDCSPacket();
-        void ReleaseAllBuffers(const DTC_DMA_Engine& channel) { device_.release_all(channel); }
+        void ReleaseAllBuffers(const DTC_DMA_Engine& channel) {
+            auto start = std::chrono::high_resolution_clock::now();
+            device_.release_all(channel); 
+            deviceTime_ += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+                (std::chrono::high_resolution_clock::now() - start).count();
+        }
 
         //
         // Register IO Functions
@@ -252,6 +260,7 @@ namespace DTCLib {
         void* lastReadPtr_;
         void* nextReadPtr_;
         void* dcsReadPtr_;
+        double deviceTime_;
     };
 }
 #endif

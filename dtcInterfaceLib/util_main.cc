@@ -9,10 +9,10 @@
 #include <cstdlib>		// strtoul
 #include <iostream>
 #include <string>
+#include <chrono>
 #include "DTC.h"
 #include "DTCSoftwareCFO.h"
 #ifdef _WIN32
-# include <chrono>
 # include <thread>
 # define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
 # ifndef TRACE
@@ -196,7 +196,7 @@ main(int	argc
         thisDTC->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
         if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
 
-        double totalIncTime = 0, aveIncTime = 0, aveRate = 0;
+        double totalIncTime = 0, totalSize = 0, totalDevTime = 0;
         auto startTime = std::chrono::high_resolution_clock::now();
 
         DTCSoftwareCFO theCFO(thisDTC, packetCount, quiet);
@@ -207,15 +207,22 @@ main(int	argc
             theCFO.SendRequestForTimestamp(DTC_Timestamp(timestampOffset));
         }
 
+        double readoutRequestTime = thisDTC->GetDeviceTime();
+        thisDTC->ResetDeviceTime();
+
         unsigned ii = 0;
         for (ii = 0; ii < number; ++ii)
         {
             //if(delay > 0) usleep(delay);
             uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
-            auto start = std::chrono::high_resolution_clock::now();
+            auto startDTC = std::chrono::high_resolution_clock::now();
             vector<void*> data = thisDTC->GetData(DTC_Timestamp(ts));
-            auto time = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
-                (std::chrono::high_resolution_clock::now() - start).count();
+            auto endDTC = std::chrono::high_resolution_clock::now();
+            totalIncTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+                (endDTC - startDTC).count();
+
+            totalDevTime += thisDTC->GetDeviceTime();
+            thisDTC->ResetDeviceTime();
 
             if (pause) {
                 std::cout << "GetData Called. Press any key." << std::endl;
@@ -223,7 +230,6 @@ main(int	argc
                 getline(std::cin, dummy);
             }
 
-            int totalSize = 0;
             if (data.size() > 0)
             {
                 if(!quiet) cout << data.size() << " packets returned\n";
@@ -253,9 +259,6 @@ main(int	argc
                 break;
             }
 
-            totalIncTime += time;
-            aveIncTime += time / number;
-            aveRate += totalSize / time / number / 1024;
 
             if(checkSERDES) {
                auto disparity = thisDTC->ReadSERDESRXDisparityError(DTC_Ring_0);
@@ -289,13 +292,17 @@ main(int	argc
        	    }
         }
 
+        double aveRate = totalSize / totalDevTime / ii / 1024;
+
         auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
             (std::chrono::high_resolution_clock::now() - startTime).count();
         std::cout << "STATS, " << ii << " DataBlocks processed:" << std::endl
-            << "Total Elapsed Time: " << (double)totalTime << " s." << std::endl
+            << "Total Elapsed Time: " << totalTime << " s." << std::endl
             << "DTC::GetData Time: " << totalIncTime << " s." << std::endl
-            << "Average DTC::GetData Time: " << aveIncTime << " s." << std::endl
-            << "Average Data Rate: " << aveRate << " KB/s." << std::endl;
+            << "Total Data Size: " << totalSize / 1024 << " KB." << std::endl
+            << "Average Data Rate: " << aveRate << " KB/s." << std::endl
+            << "Readout Request Time: " << readoutRequestTime << " s." << std::endl
+            << "Total Device Time: " << totalDevTime << " s." << std::endl;
     }
     else// if (argc > 1 && strcmp(argv[1],"get")==0)
     {
