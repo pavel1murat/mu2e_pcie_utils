@@ -63,7 +63,7 @@ DTCLib::DTC_SimMode DTCLib::DTC::SetSimMode(DTC_SimMode mode)
 
     auto start = std::chrono::high_resolution_clock::now();
     device_.init(simMode_);
-    deviceTime_ += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+    deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
         (std::chrono::high_resolution_clock::now() - start).count();
 
     for (auto ring : DTC_Rings) {
@@ -247,7 +247,7 @@ void DTCLib::DTC::DCSRequestReply(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc
 {
     auto start = std::chrono::high_resolution_clock::now();
     device_.release_all(1);
-    deviceTime_ += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+    deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds >
         (std::chrono::high_resolution_clock::now() - start).count();
 
     DTC_DCSRequestPacket req(ring, roc, dataIn);
@@ -300,7 +300,7 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
             TRACE(19, "DTC::ReadNextDAQPacket: calling device_.release_all");
             auto start = std::chrono::high_resolution_clock::now();
             device_.release_all(DTC_DMA_Engine_DAQ);
-            deviceTime_ += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+            deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
                 (std::chrono::high_resolution_clock::now() - start).count();
 
             lastReadPtr_ = nullptr;
@@ -1562,7 +1562,7 @@ DTCLib::DTC_DMAState DTCLib::DTC::ReadDMAState(const DTC_DMA_Engine& dma, const 
     do {
         auto start = std::chrono::high_resolution_clock::now();
         errorCode = device_.read_dma_state(dma, dir, &state);
-        deviceTime_ += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+        deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
             (std::chrono::high_resolution_clock::now() - start).count();
         --retry;
     } while (retry > 0 && errorCode != 0);
@@ -1585,7 +1585,7 @@ DTCLib::DTC_DMAStats DTCLib::DTC::ReadDMAStats(const DTC_DMA_Engine& dma, const 
     do {
         auto start = std::chrono::high_resolution_clock::now();
         errorCode = device_.read_dma_stats(&stats);
-        deviceTime_ += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+        deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
             (std::chrono::high_resolution_clock::now() - start).count();
         --retry;
     } while (retry > 0 && errorCode != 0);
@@ -1605,7 +1605,7 @@ DTCLib::DTC_PCIeState DTCLib::DTC::ReadPCIeState()
     do {
         auto start = std::chrono::high_resolution_clock::now();
         errorCode = device_.read_pcie_state(&state);
-        deviceTime_ += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+        deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds >
             (std::chrono::high_resolution_clock::now() - start).count();
         --retry;
     } while (retry > 0 && errorCode != 0);
@@ -1623,7 +1623,7 @@ DTCLib::DTC_PCIeStat DTCLib::DTC::ReadPCIeStats()
     do {
         auto start = std::chrono::high_resolution_clock::now();
         errorCode = device_.read_trn_stats(&stats);
-        deviceTime_ += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+        deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds >
             (std::chrono::high_resolution_clock::now() - start).count();
         --retry;
     } while (retry > 0 && errorCode != 0);
@@ -1643,7 +1643,7 @@ void DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
         TRACE(19, "DTC::ReadBuffer before device_.read_data");
         auto start = std::chrono::high_resolution_clock::now();
         errorCode = device_.read_data(channel, (void**)&buffer, tmo_ms);
-        deviceTime_ += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+        deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds >
             (std::chrono::high_resolution_clock::now() - start).count();
         retry--;
     } while (retry > 0 && errorCode == 0);
@@ -1668,7 +1668,7 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataP
         do {
             auto start = std::chrono::high_resolution_clock::now();
             errorCode = device_.write_data(channel, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
-            deviceTime_ += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+            deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
                 (std::chrono::high_resolution_clock::now() - start).count();
             retry--;
         } while (retry > 0 && errorCode != 0);
@@ -1683,7 +1683,7 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataP
         do {
             auto start = std::chrono::high_resolution_clock::now();
             errorCode = device_.write_data(channel, packet.GetData(), packet.GetSize() * sizeof(uint8_t));
-            deviceTime_ += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+            deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
                 (std::chrono::high_resolution_clock::now() - start).count();
             retry--;
         } while (retry > 0 && errorCode != 0);
@@ -1706,7 +1706,7 @@ void DTCLib::DTC::WriteRegister(uint32_t data, const DTC_Register& address)
     do {
         auto start = std::chrono::high_resolution_clock::now();
         errorCode = device_.write_register(address, 100, data);
-        deviceTime_ += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+        deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
             (std::chrono::high_resolution_clock::now() - start).count();
         --retry;
     } while (retry > 0 && errorCode != 0);
@@ -1723,7 +1723,7 @@ uint32_t DTCLib::DTC::ReadRegister(const DTC_Register& address)
     do {
         auto start = std::chrono::high_resolution_clock::now();
         errorCode = device_.read_register(address, 100, &data);
-        deviceTime_ += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+        deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
             (std::chrono::high_resolution_clock::now() - start).count();
         --retry;
     } while (retry > 0 && errorCode != 0);
@@ -1749,7 +1749,7 @@ void DTCLib::DTC::WriteTestCommand(const DTC_TestCommand& comm, bool start)
     do {
         auto startTime = std::chrono::high_resolution_clock::now();
         errorCode = device_.write_test_command(comm.GetCommand(), start);
-        deviceTime_ += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+        deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
             (std::chrono::high_resolution_clock::now() - startTime).count();
         --retry;
     } while (retry > 0 && errorCode != 0);
@@ -1766,7 +1766,7 @@ DTCLib::DTC_TestCommand DTCLib::DTC::ReadTestCommand()
     do {
         auto start = std::chrono::high_resolution_clock::now();
         errorCode = device_.read_test_command(&comm);
-        deviceTime_ += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+        deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
             (std::chrono::high_resolution_clock::now() - start).count();
         --retry;
     } while (retry > 0 && errorCode != 0);

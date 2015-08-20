@@ -4,6 +4,7 @@
 #include "DTC_Types.h"
 #include <vector>
 #include <cstdlib>
+#include <atomic>
 #include "mu2edev.hh"
 
 namespace DTCLib {
@@ -15,7 +16,7 @@ namespace DTCLib {
         DTC_SimMode ReadSimMode() { return simMode_; }
         DTC_SimMode SetSimMode(DTC_SimMode mode);
 
-        double GetDeviceTime() { return deviceTime_; }
+        double GetDeviceTime() { return deviceTime_  / 1000000000.0; }
         void ResetDeviceTime() { deviceTime_ = 0; }
 
         //
@@ -40,7 +41,7 @@ namespace DTCLib {
         void ReleaseAllBuffers(const DTC_DMA_Engine& channel) {
             auto start = std::chrono::high_resolution_clock::now();
             device_.release_all(channel); 
-            deviceTime_ += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+            deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
                 (std::chrono::high_resolution_clock::now() - start).count();
         }
 
@@ -260,7 +261,7 @@ namespace DTCLib {
         void* lastReadPtr_;
         void* nextReadPtr_;
         void* dcsReadPtr_;
-        double deviceTime_;
+        std::atomic<long long> deviceTime_;
     };
 }
 #endif

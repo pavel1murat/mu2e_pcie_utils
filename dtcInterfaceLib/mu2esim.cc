@@ -216,13 +216,15 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                         uint64_t ts = *ii;
                         for (auto roc : DTCLib::DTC_ROCS)
                         {
-                            std::lock_guard<std::mutex>drLock(drMutex_);
-                            if (dataRequestRecieved_[ring][roc].count(ts) == 0)
+                            drMutex_.lock();
+                            if (dataRequestRecieved_[ring][roc].count(ts) != 0)
                             {
+                                drMutex_.unlock();
                                 activeTimestamps.insert(ts);
                                 found = true;
                                 break;
                             }
+                            drMutex_.unlock();
                         }
                         if (!found) active = false;
                         ++ii;

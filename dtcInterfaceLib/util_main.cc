@@ -292,7 +292,7 @@ main(int	argc
        	    }
         }
 
-        double aveRate = totalSize / totalDevTime / ii / 1024;
+        double aveRate = totalSize / totalDevTime / 1024;
 
         auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
             (std::chrono::high_resolution_clock::now() - startTime).count();
