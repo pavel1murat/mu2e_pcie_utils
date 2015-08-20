@@ -84,6 +84,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync(DTCLib::DTC_Timestamp 
         SendRequestForTimestamp(ts);
 
         usleep(delayBetweenDataRequests);
+        if (abort_) return;
     }
 }
 

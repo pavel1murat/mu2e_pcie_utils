@@ -216,7 +216,7 @@ main(int	argc
             //if(delay > 0) usleep(delay);
             uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
             auto startDTC = std::chrono::high_resolution_clock::now();
-            vector<void*> data = thisDTC->GetData(DTC_Timestamp(ts));
+            vector<void*> data = thisDTC->GetData(); //DTC_Timestamp(ts));
             auto endDTC = std::chrono::high_resolution_clock::now();
             totalIncTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
                 (endDTC - startDTC).count();
