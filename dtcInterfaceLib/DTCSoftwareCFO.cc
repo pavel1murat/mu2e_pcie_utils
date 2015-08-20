@@ -1,18 +1,20 @@
 #include "DTCSoftwareCFO.h"
 
 
-DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(int debugPacketCount, bool quiet) :
-debugPacketCount_(debugPacketCount), quiet_(quiet), requestsSent_(false), abort_(false)
+DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(int debugPacketCount, bool quiet, bool asyncRR) :
+debugPacketCount_(debugPacketCount), quiet_(quiet), asyncRR_(asyncRR), requestsSent_(false), abort_(false)
 {
     theDTC_ = new DTCLib::DTC();
     ownDTC_ = true;
+    for (auto ring : DTCLib::DTC_Rings) { ringMode_[ring] = theDTC_->ReadRingEnabled(ring); }
 }
 
-DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(DTCLib::DTC* dtc, int debugPacketCount, bool quiet) :
-debugPacketCount_(debugPacketCount), quiet_(quiet), requestsSent_(false), abort_(false)
+DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(DTCLib::DTC* dtc, int debugPacketCount, bool quiet, bool asyncRR) :
+debugPacketCount_(debugPacketCount), quiet_(quiet), asyncRR_(asyncRR), requestsSent_(false), abort_(false)
 {
     theDTC_ = dtc;
     ownDTC_ = false;
+    for (auto ring : DTCLib::DTC_Rings) { ringMode_[ring] = theDTC_->ReadRingEnabled(ring); }
 }
 
 DTCLib::DTCSoftwareCFO::~DTCSoftwareCFO()
@@ -31,8 +33,6 @@ void DTCLib::DTCSoftwareCFO::WaitForRequestsToBeSent()
 
 void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTCLib::DTC_Timestamp ts)
 {
-    requestsSent_ = false;
-    for (auto ring : DTCLib::DTC_Rings) { ringMode_[ring] = theDTC_->ReadRingEnabled(ring); }
     for (auto ring : DTCLib::DTC_Rings){
         if (!ringMode_[ring].TimingEnable)
         {
@@ -63,16 +63,34 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTCLib::DTC_Timestamp ts)
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTCLib::DTC_Timestamp start, bool increment, int delayBetweenDataRequests)
 {
-    theThread_ = std::thread(&DTCLib::DTCSoftwareCFO::SendRequestsForRangeImpl, this, start, count, increment, delayBetweenDataRequests);
+    requestsSent_ = false;
+    if (asyncRR_) {
+        theThread_ = std::thread(&DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync, this, start, count, increment, delayBetweenDataRequests);
+    }
+    else
+    {
+        theThread_ = std::thread(&DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync, this, start, count, increment, delayBetweenDataRequests);
+    }
     WaitForRequestsToBeSent();
 }
 
-void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImpl(DTCLib::DTC_Timestamp start, int count,
+void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync(DTCLib::DTC_Timestamp start, int count,
     bool increment, int delayBetweenDataRequests)
 {
-    TRACE( 19, "DTCSoftwareCFO::SendRequestsForRangeImpl Start");
-    requestsSent_ = false;
-    for (auto ring : DTCLib::DTC_Rings) { ringMode_[ring] = theDTC_->ReadRingEnabled(ring); }
+    TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImplSync Start");
+    for (int ii = 0; ii < count; ++ii) {
+        DTCLib::DTC_Timestamp ts = start + (increment ? ii : 0);
+
+        SendRequestForTimestamp(ts);
+
+        usleep(delayBetweenDataRequests);
+    }
+}
+
+void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync(DTCLib::DTC_Timestamp start, int count,
+    bool increment, int delayBetweenDataRequests)
+{
+    TRACE( 19, "DTCSoftwareCFO::SendRequestsForRangeImplAsync Start");
 
     // Send Readout Requests first
     for (int ii = 0; ii < count; ++ii) {

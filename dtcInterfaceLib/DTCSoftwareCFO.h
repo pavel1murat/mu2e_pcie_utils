@@ -21,14 +21,16 @@
 namespace DTCLib {
     class DTCSoftwareCFO {
     public:
-        DTCSoftwareCFO(int debugPacketCount = 0, bool quiet = false);
-        DTCSoftwareCFO(DTC* dtc, int debugPacketCount = 0, bool quiet = false);
+        DTCSoftwareCFO(int debugPacketCount = 0, bool quiet = false, bool asyncRR = false);
+        DTCSoftwareCFO(DTC* dtc, int debugPacketCount = 0, bool quiet = false, bool asyncRR = false);
         ~DTCSoftwareCFO();
 
         void SendRequestForTimestamp(DTC_Timestamp ts = DTC_Timestamp((uint64_t)0));
         void SendRequestsForRange(int count, DTC_Timestamp start = DTC_Timestamp((uint64_t)0),
             bool increment = true, int delayBetweenDataRequests = 0);
-        void SendRequestsForRangeImpl(DTC_Timestamp start, int count,
+        void SendRequestsForRangeImplAsync(DTC_Timestamp start, int count,
+            bool increment = true, int delayBetweenDataRequests = 0);
+        void SendRequestsForRangeImplSync(DTC_Timestamp start, int count,
             bool increment = true, int delayBetweenDataRequests = 0);
         void setQuiet(bool quiet) { quiet_ = quiet; }
         void setDebugPacketCount(int dbc) { debugPacketCount_ = dbc; }
@@ -36,8 +38,8 @@ namespace DTCLib {
     private:
         // Request Parameters
         int debugPacketCount_;
-        bool quiet_;
-
+        bool quiet_; // Don't print as much
+        bool asyncRR_;
 
         // Object basic properties (not accessible)
         DTC *theDTC_;
