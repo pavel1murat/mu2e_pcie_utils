@@ -306,12 +306,13 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
             lastReadPtr_ = nullptr;
         }
         TRACE(19, "DTC::ReadNextDAQPacket Obtaining new DAQ Buffer");
+        void* oldBufferPtr = &(daqbuffer_[0]);
         ReadBuffer(DTC_DMA_Engine_DAQ, tmo_ms); // does return val of type DTCLib::DTC_DataPacket
         // MUST BE ABLE TO HANDLE daqbuffer_==nullptr OR retry forever?
         nextReadPtr_ = &(daqbuffer_[0]);
         TRACE(19, "DTC::ReadNextDAQPacket nextReadPtr_=%p *nextReadPtr_=0x%08x lastReadPtr_=%p"
             , (void*)nextReadPtr_, *(unsigned*)nextReadPtr_, (void*)lastReadPtr_);
-        if (nextReadPtr_ == lastReadPtr_) {
+        if (nextReadPtr_ == oldBufferPtr) {
             nextReadPtr_ = nullptr;
             //We didn't actually get a new buffer...this probably means there's no more data
             return nullptr;
