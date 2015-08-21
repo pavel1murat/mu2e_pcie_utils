@@ -1,6 +1,7 @@
 #include "DTCSoftwareCFO.h"
 
 
+#define TRACE_NAME "MU2EDEV"
 DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(int debugPacketCount, bool quiet, bool asyncRR) :
 debugPacketCount_(debugPacketCount), quiet_(quiet), asyncRR_(asyncRR), requestsSent_(false), abort_(false)
 {

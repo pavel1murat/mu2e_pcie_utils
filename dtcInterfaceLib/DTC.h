@@ -19,12 +19,14 @@ namespace DTCLib {
         double GetDeviceTime() { return deviceTime_  / 1000000000.0; }
         void ResetDeviceTime() { deviceTime_ = 0; }
 
+
         //
         // DMA Functions
         //
         // Data read-out
         std::vector<void*> GetData(DTC_Timestamp when = DTC_Timestamp());
         std::string GetJSONData(DTC_Timestamp when = DTC_Timestamp());
+        mu2edev GetDevice() { return device_; }
         
         // DCS Read/Write Cycle
         void DCSRequestReply(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, uint8_t *dataIn);

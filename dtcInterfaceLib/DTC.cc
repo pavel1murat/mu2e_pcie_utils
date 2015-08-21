@@ -17,7 +17,7 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr), deviceTime_(
     simMode_ = DTCLib::DTC_SimMode_Tracker;
 #else
     char* sim = getenv("DTCLIB_SIM_ENABLE");
-    if(sim != NULL) 
+    if (sim != NULL)
     {
         switch (sim[0])
         {
@@ -54,7 +54,6 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr), deviceTime_(
     }
 #endif
     SetSimMode(simMode_);
-
 }
 
 DTCLib::DTC_SimMode DTCLib::DTC::SetSimMode(DTC_SimMode mode)
@@ -248,7 +247,7 @@ void DTCLib::DTC::DCSRequestReply(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc
 {
     auto start = std::chrono::high_resolution_clock::now();
     device_.release_all(1);
-    deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds >
+    deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
         (std::chrono::high_resolution_clock::now() - start).count();
 
     DTC_DCSRequestPacket req(ring, roc, dataIn);
@@ -1606,7 +1605,7 @@ DTCLib::DTC_PCIeState DTCLib::DTC::ReadPCIeState()
     do {
         auto start = std::chrono::high_resolution_clock::now();
         errorCode = device_.read_pcie_state(&state);
-        deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds >
+        deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
             (std::chrono::high_resolution_clock::now() - start).count();
         --retry;
     } while (retry > 0 && errorCode != 0);
@@ -1624,7 +1623,7 @@ DTCLib::DTC_PCIeStat DTCLib::DTC::ReadPCIeStats()
     do {
         auto start = std::chrono::high_resolution_clock::now();
         errorCode = device_.read_trn_stats(&stats);
-        deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds >
+        deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
             (std::chrono::high_resolution_clock::now() - start).count();
         --retry;
     } while (retry > 0 && errorCode != 0);
@@ -1644,7 +1643,7 @@ void DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
         TRACE(19, "DTC::ReadBuffer before device_.read_data");
         auto start = std::chrono::high_resolution_clock::now();
         errorCode = device_.read_data(channel, (void**)&buffer, tmo_ms);
-        deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds >
+        deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
             (std::chrono::high_resolution_clock::now() - start).count();
         retry--;
     } while (retry > 0 && errorCode == 0);

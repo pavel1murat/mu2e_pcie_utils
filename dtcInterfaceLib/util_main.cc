@@ -29,6 +29,7 @@
 # include "trace.h"
 # include <unistd.h>		// usleep
 #endif
+#define TRACE_NAME "MU2EDEV"
 
 using namespace DTCLib;
 using namespace std;
@@ -51,7 +52,7 @@ unsigned getOptionValue(int *index, char **argv[])
 }
 
 void printHelpMsg() {
-    cout << "Usage: mu2eUtil [options] [read,read_data,read_release,HW,DTC]" << endl;
+    cout << "Usage: mu2eUtil [options] [read,read_data,buffer_test,read_release,HW,DTC]" << endl;
     cout << "Options are:" << endl
         << "    -h: This message." << endl
         << "    -n: Number of times to repeat test. (Default: 1)" << endl
@@ -158,28 +159,32 @@ main(int	argc
     else if (op == "buffer_test")
     {
         cout << "Operation \"buffer_test\"" << endl;
-        mu2edev device;
-        device.init();
-        DTCSoftwareCFO cfo(packetCount, quiet, false);
+        DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
+        mu2edev device = thisDTC->GetDevice();
+        DTCSoftwareCFO cfo(thisDTC, packetCount, quiet, false);
         cfo.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay);
 
         for (unsigned ii = 0; ii < number; ++ii)
         {
-            void *buffer;
+            mu2e_databuff_t* buffer;
             int tmo_ms = 0;
-            int sts = device.read_data(DTC_DMA_Engine_DAQ, &buffer, tmo_ms);
-            TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, buffer);
-            uint64_t bufSize = *(uint64_t*)buffer;
-            unsigned line = 0;
-            while (line < bufSize / 16 + 1)
-            {
-                cout << "0x" << hex << setw(6) << setfill('0') << line << ":";
-                cout << setw(2);
-                for (unsigned byte = 0; byte < 16; ++byte)
+            device.release_all(DTC_DMA_Engine_DAQ);
+            int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
+            TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, (void*)buffer);
+            if (sts > 0) {
+                void* readPtr = &(buffer[0]);
+                uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)readPtr));
+                readPtr = (uint8_t*)readPtr + 8;
+                TRACE(1, "util - bufSize is %u", bufSize);
+                for (unsigned line = 0; line < (unsigned)(((bufSize -8) / 16)); ++line)
                 {
-                    if ((line * 16) + byte < bufSize) cout << (int)(((uint8_t*)buffer)[8 + line*16 + byte]) << " ";
+                    cout << "0x" << hex << setw(5) << setfill('0') << line << "0: ";
+                    for (unsigned byte = 0; byte < 16; ++byte)
+                    {
+                        if ((line * 16) + byte < (bufSize - 8u)) cout << setw(2) << (int)(((uint8_t*)buffer)[8 + (line * 16) + byte]) << " ";
+                    }
+                    cout << endl;
                 }
-                cout << endl;
             }
             if (delay > 0) usleep(delay);
         }
