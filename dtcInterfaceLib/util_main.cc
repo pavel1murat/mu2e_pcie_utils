@@ -61,6 +61,7 @@ void printHelpMsg() {
         << "    -i: Do not increment Timestamps." << endl
         << "    -d: Delay between tests, in us (Default: 0)." << endl
         << "    -c: Number of Debug Packets to request (Default: 0)." << endl
+        << "    -a: Number of Readout Request/Data Requests to send before starting to read data (Default: 2)." << endl
         << "    -q: Quiet mode (Don't print)" << endl
         << "    -s: Stop on SERDES Error." << endl;
     exit(0);
@@ -78,6 +79,7 @@ main(int	argc
     unsigned number = 1;
     unsigned timestampOffset = 1;
     unsigned packetCount = 0;
+    int requestsAhead = 2;
     string op = "";
 
     for (int optind = 1; optind < argc; ++optind) {
@@ -100,6 +102,9 @@ main(int	argc
                 break;
             case 'c':
                 packetCount = getOptionValue(&optind, &argv);
+                break;
+            case 'a':
+                requestsAhead = getOptionValue(&optind, &argv);
                 break;
             case 'q':
                 quiet = true;
@@ -130,6 +135,7 @@ main(int	argc
         << ", Delay: " << delay
         << ", TS Offset: " << timestampOffset
         << ", PacketCount: " << packetCount
+        << ", Requests Ahead of Reads: " << requestsAhead
         << ", Pause: " << pauseStr
         << ", Increment TS: " << incrementStr
         << ", Quiet Mode: " << quietStr
@@ -168,7 +174,7 @@ main(int	argc
 
         mu2edev device = thisDTC->GetDevice();
         DTCSoftwareCFO cfo(thisDTC, packetCount, quiet, false);
-        cfo.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay);
+        cfo.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
 
         for (unsigned ii = 0; ii < number; ++ii)
         {
@@ -241,7 +247,7 @@ main(int	argc
         auto startTime = std::chrono::high_resolution_clock::now();
 
         DTCSoftwareCFO theCFO(thisDTC, packetCount, quiet);
-        theCFO.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay);
+        theCFO.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
         double readoutRequestTime = thisDTC->GetDeviceTime();
         thisDTC->ResetDeviceTime();
 
@@ -344,7 +350,7 @@ main(int	argc
         DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
 
         DTCSoftwareCFO theCFO(thisDTC, packetCount, quiet);
-        theCFO.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay);
+        theCFO.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
 
         for (unsigned ii = 0; ii < number; ++ii)
         {

@@ -27,11 +27,11 @@ namespace DTCLib {
 
         void SendRequestForTimestamp(DTC_Timestamp ts = DTC_Timestamp((uint64_t)0));
         void SendRequestsForRange(int count, DTC_Timestamp start = DTC_Timestamp((uint64_t)0),
-            bool increment = true, int delayBetweenDataRequests = 0);
+            bool increment = true, int delayBetweenDataRequests = 0, int requestsAhead = 1);
         void SendRequestsForRangeImplAsync(DTC_Timestamp start, int count,
             bool increment = true, int delayBetweenDataRequests = 0);
         void SendRequestsForRangeImplSync(DTC_Timestamp start, int count,
-            bool increment = true, int delayBetweenDataRequests = 0);
+            bool increment = true, int delayBetweenDataRequests = 0, int requestsAhead = 1);
         void setQuiet(bool quiet) { quiet_ = quiet; }
         void setDebugPacketCount(int dbc) { debugPacketCount_ = dbc; }
         void WaitForRequestsToBeSent();

@@ -59,10 +59,9 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTCLib::DTC_Timestamp ts)
             }
         }
     }
-    requestsSent_ = true;
 }
 
-void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTCLib::DTC_Timestamp start, bool increment, int delayBetweenDataRequests)
+void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTCLib::DTC_Timestamp start, bool increment, int delayBetweenDataRequests, int requestsAhead)
 {
     requestsSent_ = false;
     if (asyncRR_) {
@@ -70,19 +69,20 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTCLib::DTC_Timesta
     }
     else
     {
-        theThread_ = std::thread(&DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync, this, start, count, increment, delayBetweenDataRequests);
+        theThread_ = std::thread(&DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync, this, start, count, increment, delayBetweenDataRequests, requestsAhead);
     }
     WaitForRequestsToBeSent();
 }
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync(DTCLib::DTC_Timestamp start, int count,
-    bool increment, int delayBetweenDataRequests)
+    bool increment, int delayBetweenDataRequests, int requestsAhead)
 {
     TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImplSync Start");
     for (int ii = 0; ii < count; ++ii) {
         DTCLib::DTC_Timestamp ts = start + (increment ? ii : 0);
 
         SendRequestForTimestamp(ts);
+        if (ii >= requestsAhead || ii == count - 1) { requestsSent_ = true; }
 
         usleep(delayBetweenDataRequests);
         if (abort_) return;
