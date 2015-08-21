@@ -160,6 +160,12 @@ main(int	argc
     {
         cout << "Operation \"buffer_test\"" << endl;
         DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
+        thisDTC->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
+        thisDTC->SetInternalSystemClock();
+        thisDTC->DisableTiming();
+        thisDTC->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
+        if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
+
         mu2edev device = thisDTC->GetDevice();
         DTCSoftwareCFO cfo(thisDTC, packetCount, quiet, false);
         cfo.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay);
