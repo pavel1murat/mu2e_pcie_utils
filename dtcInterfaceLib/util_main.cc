@@ -8,6 +8,7 @@
 #include <cstdio>		// printf
 #include <cstdlib>		// strtoul
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <chrono>
 #include "DTC.h"
@@ -34,115 +35,115 @@ using namespace std;
 
 unsigned getOptionValue(int *index, char **argv[])
 {
-  char* arg = (*argv)[*index];
-  if(arg[2] == '\0') {
-    (*index)++;
-    return strtoul((*argv)[*index], NULL, 0);
-  }
-  else {
-    int offset = 2;
-    if(arg[2] == '=') {
-      offset = 3;
+    char* arg = (*argv)[*index];
+    if (arg[2] == '\0') {
+        (*index)++;
+        return strtoul((*argv)[*index], NULL, 0);
     }
+    else {
+        int offset = 2;
+        if (arg[2] == '=') {
+            offset = 3;
+        }
 
-    return strtoul(&(arg[offset]), NULL, 0);
-  }
+        return strtoul(&(arg[offset]), NULL, 0);
+    }
 }
 
 void printHelpMsg() {
-  cout << "Usage: mu2eUtil [options] [read,read_data,read_release,HW,DTC]" << endl;
-  cout << "Options are:" << endl
-       << "    -h: This message." << endl
-       << "    -n: Number of times to repeat test. (Default: 1)" << endl
-       << "    -p: Pause after sending a packet." << endl
-       << "    -o: Starting Timestamp offest. (Default: 1)." << endl
-       << "    -i: Do not increment Timestamps." << endl
-       << "    -d: Delay between tests, in us (Default: 0)." << endl
-       << "    -c: Number of Debug Packets to request (Default: 0)." << endl
-       << "    -q: Quiet mode (Don't print)" << endl
-       << "    -s: Stop on SERDES Error." << endl;
-  exit(0);
+    cout << "Usage: mu2eUtil [options] [read,read_data,read_release,HW,DTC]" << endl;
+    cout << "Options are:" << endl
+        << "    -h: This message." << endl
+        << "    -n: Number of times to repeat test. (Default: 1)" << endl
+        << "    -p: Pause after sending a packet." << endl
+        << "    -o: Starting Timestamp offest. (Default: 1)." << endl
+        << "    -i: Do not increment Timestamps." << endl
+        << "    -d: Delay between tests, in us (Default: 0)." << endl
+        << "    -c: Number of Debug Packets to request (Default: 0)." << endl
+        << "    -q: Quiet mode (Don't print)" << endl
+        << "    -s: Stop on SERDES Error." << endl;
+    exit(0);
 }
 
 int
 main(int	argc
 , char	*argv[])
 {
-  bool pause = false;
-  bool incrementTimestamp = true;
-  bool checkSERDES = false;
-  bool quiet = false;
-  unsigned delay = 0;
-  unsigned number = 1;
-  unsigned timestampOffset = 1;
-  unsigned packetCount = 0;
-  string op = "";
+    bool pause = false;
+    bool incrementTimestamp = true;
+    bool checkSERDES = false;
+    bool quiet = false;
+    unsigned delay = 0;
+    unsigned number = 1;
+    unsigned timestampOffset = 1;
+    unsigned packetCount = 0;
+    string op = "";
 
-  for(int optind = 1; optind < argc; ++optind) {
-    if(argv[optind][0] == '-') {
-      switch(argv[optind][1]) {
-      case 'p':
-        pause = true;
-        break;
-      case 'i':
-        incrementTimestamp = false;
-        break;
-      case 'd':
-        delay = getOptionValue(&optind, &argv);
-        break;
-      case 'n':
-        number = getOptionValue(&optind, &argv);
-        break;
-      case 'o':
-        timestampOffset = getOptionValue(&optind, &argv);
-        break;
-      case 'c':
-        packetCount = getOptionValue(&optind, &argv);
-        break;
-      case 'q':
-        quiet = true;
-        break;
-      case 's':
-        checkSERDES = true;
-        break;
-      default:
-        cout << "Unknown option: " << argv[optind] << endl;
-        printHelpMsg();
-        break;
-      case 'h':
-        printHelpMsg();
-        break;
-      }
+    for (int optind = 1; optind < argc; ++optind) {
+        if (argv[optind][0] == '-') {
+            switch (argv[optind][1]) {
+            case 'p':
+                pause = true;
+                break;
+            case 'i':
+                incrementTimestamp = false;
+                break;
+            case 'd':
+                delay = getOptionValue(&optind, &argv);
+                break;
+            case 'n':
+                number = getOptionValue(&optind, &argv);
+                break;
+            case 'o':
+                timestampOffset = getOptionValue(&optind, &argv);
+                break;
+            case 'c':
+                packetCount = getOptionValue(&optind, &argv);
+                break;
+            case 'q':
+                quiet = true;
+                break;
+            case 's':
+                checkSERDES = true;
+                break;
+            default:
+                cout << "Unknown option: " << argv[optind] << endl;
+                printHelpMsg();
+                break;
+            case 'h':
+                printHelpMsg();
+                break;
+            }
+        }
+        else {
+            op = string(argv[optind]);
+        }
     }
-    else {
-      op = string(argv[optind]);
-    }
-  }
-  
-  string pauseStr = pause ? "true" : "false";
-  string incrementStr = incrementTimestamp ? "true" : "false";
-  string quietStr = quiet ? "true" : "false";
-  cout << "Options are: "
-       << "Operation: " << string(op) 
-       << ", Num: " << number 
-       << ", Delay: " << delay 
-       << ", TS Offset: " << timestampOffset 
-       << ", PacketCount: " << packetCount 
-       << ", Pause: " << pauseStr 
-       << ", Increment TS: " << incrementStr 
-       << ", Quiet Mode: " << quietStr
-       << endl;
+
+    string pauseStr = pause ? "true" : "false";
+    string incrementStr = incrementTimestamp ? "true" : "false";
+    string quietStr = quiet ? "true" : "false";
+    cout << "Options are: "
+        << "Operation: " << string(op)
+        << ", Num: " << number
+        << ", Delay: " << delay
+        << ", TS Offset: " << timestampOffset
+        << ", PacketCount: " << packetCount
+        << ", Pause: " << pauseStr
+        << ", Increment TS: " << incrementStr
+        << ", Quiet Mode: " << quietStr
+        << endl;
 
     if (op == "read")
     {
-      cout << "Operation \"read\"" << endl;
+        cout << "Operation \"read\"" << endl;
         DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
         DTC_DataHeaderPacket* packet = thisDTC->ReadNextDAQPacket();
         cout << packet->toJSON() << '\n';
     }
     else if (op == "read_data")
     {
-      cout << "Operation \"read_data\"" << endl;
+        cout << "Operation \"read_data\"" << endl;
         mu2edev device;
         device.init();
         for (unsigned ii = 0; ii < number; ++ii)
@@ -151,10 +152,39 @@ main(int	argc
             int tmo_ms = 0;
             int sts = device.read_data(DTC_DMA_Engine_DAQ, &buffer, tmo_ms);
             TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, buffer);
-            if(delay > 0) usleep(delay);
+            if (delay > 0) usleep(delay);
         }
     }
-    else if (op == "read_release" )
+    else if (op == "buffer_test")
+    {
+        cout << "Operation \"buffer_test\"" << endl;
+        mu2edev device;
+        device.init();
+        DTCSoftwareCFO cfo(packetCount, quiet, false);
+        cfo.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay);
+
+        for (unsigned ii = 0; ii < number; ++ii)
+        {
+            void *buffer;
+            int tmo_ms = 0;
+            int sts = device.read_data(DTC_DMA_Engine_DAQ, &buffer, tmo_ms);
+            TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, buffer);
+            uint64_t bufSize = *(uint64_t*)buffer;
+            unsigned line = 0;
+            while (line < bufSize / 16 + 1)
+            {
+                cout << "0x" << hex << setw(6) << setfill('0') << line << ":";
+                cout << setw(2);
+                for (unsigned byte = 0; byte < 16; ++byte)
+                {
+                    if ((line * 16) + byte < bufSize) cout << (int)(((uint8_t*)buffer)[8 + line*16 + byte]) << " ";
+                }
+                cout << endl;
+            }
+            if (delay > 0) usleep(delay);
+        }
+    }
+    else if (op == "read_release")
     {
         mu2edev device;
         device.init();
@@ -165,18 +195,18 @@ main(int	argc
             int stsRD = device.read_data(DTC_DMA_Engine_DAQ, &buffer, tmo_ms);
             int stsRL = device.read_release(DTC_DMA_Engine_DAQ, 1);
             TRACE(12, "util - release/read for DAQ and DCS ii=%u stsRD=%d stsRL=%d %p", ii, stsRD, stsRL, buffer);
-            if(delay > 0) usleep(delay);
+            if (delay > 0) usleep(delay);
         }
     }
     else if (op == "HW")
     {
         DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
-        thisDTC->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true,true,false), DTC_ROC_0);
+        thisDTC->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
         thisDTC->SetInternalSystemClock();
         thisDTC->DisableTiming();
         thisDTC->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
-  
-        for(unsigned ii = 0; ii < number; ++ii)
+
+        for (unsigned ii = 0; ii < number; ++ii)
         {
             uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
             DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)0, DTC_DataStatus_Valid, DTC_Timestamp(ts));
@@ -184,7 +214,7 @@ main(int	argc
             thisDTC->WriteDMADAQPacket(header);
             thisDTC->SetFirstRead(true);
             std::cout << "Reply:   " << thisDTC->ReadNextDAQPacket()->toJSON() << std::endl;
-            if(delay > 0) usleep(delay);
+            if (delay > 0) usleep(delay);
         }
     }
     else if (op == "DTC")
@@ -200,13 +230,7 @@ main(int	argc
         auto startTime = std::chrono::high_resolution_clock::now();
 
         DTCSoftwareCFO theCFO(thisDTC, packetCount, quiet);
-        if (number > 1) {
-            theCFO.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay);
-        }
-        else {
-            theCFO.SendRequestForTimestamp(DTC_Timestamp(timestampOffset));
-        }
-
+        theCFO.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay);
         double readoutRequestTime = thisDTC->GetDeviceTime();
         thisDTC->ResetDeviceTime();
 
@@ -218,7 +242,7 @@ main(int	argc
             auto startDTC = std::chrono::high_resolution_clock::now();
             vector<void*> data = thisDTC->GetData(); //DTC_Timestamp(ts));
             auto endDTC = std::chrono::high_resolution_clock::now();
-            totalIncTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+            totalIncTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
                 (endDTC - startDTC).count();
 
             totalDevTime += thisDTC->GetDeviceTime();
@@ -232,17 +256,17 @@ main(int	argc
 
             if (data.size() > 0)
             {
-                if(!quiet) cout << data.size() << " packets returned\n";
+                if (!quiet) cout << data.size() << " packets returned\n";
                 for (size_t i = 0; i < data.size(); ++i)
                 {
                     TRACE(19, "DTC::GetJSONData constructing DataPacket:");
                     DTC_DataPacket     test = DTC_DataPacket(data[i]);
-                    if(!quiet) cout << test.toJSON() << '\n'; // dumps whole databuff_t
+                    if (!quiet) cout << test.toJSON() << '\n'; // dumps whole databuff_t
                     //printf("data@%p=0x%08x\n", data[i], *(uint32_t*)(data[i]));
                     //DTC_DataHeaderPacket h1 = DTC_DataHeaderPacket(data[i]);
                     //cout << h1.toJSON() << '\n';
                     DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
-                    if(!quiet) {
+                    if (!quiet) {
                         cout << h2.toJSON() << '\n';
                         for (int jj = 0; jj < h2.GetPacketCount(); ++jj) {
                             cout << "\t" << DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16)).toJSON() << endl;
@@ -254,47 +278,47 @@ main(int	argc
             else
             {
                 //TRACE_CNTL("modeM", 0L);
-                if(!quiet) cout << "no data returned\n";
+                if (!quiet) cout << "no data returned\n";
                 //return (0);
                 break;
             }
 
 
-            if(checkSERDES) {
-               auto disparity = thisDTC->ReadSERDESRXDisparityError(DTC_Ring_0);
-               auto cnit =  thisDTC->ReadSERDESRXCharacterNotInTableError(DTC_Ring_0);
-               auto rxBufferStatus = thisDTC->ReadSERDESRXBufferStatus(DTC_Ring_0);
-               bool eyescan = thisDTC->ReadSERDESEyescanError(DTC_Ring_0);
-               if(eyescan) {
-                  //TRACE_CNTL("modeM", 0L);
-                  cout << "SERDES Eyescan Error Detected" << endl;
-                  //return 0;
-                  break;
-               }
-               if((int)rxBufferStatus > 2) {
-                //TRACE_CNTL("modeM", 0L);
-                  cout << "Bad Buffer status detected: " << rxBufferStatus << endl;
-                  //return 0;
-                  break;
-               }
-               if(cnit.GetData()[0] || cnit.GetData()[1]) {
-                //TRACE_CNTL("modeM", 0L);
-                  cout << "Character Not In Table Error detected" << endl;
-                  //return 0;
-                  break;
-               }
-               if(disparity.GetData()[0] || disparity.GetData()[1]) {
-                //TRACE_CNTL("modeM", 0L);
-                  cout << "Disparity Error Detected" << endl;
-                  //return 0;
-                  break;
-               }
-       	    }
+            if (checkSERDES) {
+                auto disparity = thisDTC->ReadSERDESRXDisparityError(DTC_Ring_0);
+                auto cnit = thisDTC->ReadSERDESRXCharacterNotInTableError(DTC_Ring_0);
+                auto rxBufferStatus = thisDTC->ReadSERDESRXBufferStatus(DTC_Ring_0);
+                bool eyescan = thisDTC->ReadSERDESEyescanError(DTC_Ring_0);
+                if (eyescan) {
+                    //TRACE_CNTL("modeM", 0L);
+                    cout << "SERDES Eyescan Error Detected" << endl;
+                    //return 0;
+                    break;
+                }
+                if ((int)rxBufferStatus > 2) {
+                    //TRACE_CNTL("modeM", 0L);
+                    cout << "Bad Buffer status detected: " << rxBufferStatus << endl;
+                    //return 0;
+                    break;
+                }
+                if (cnit.GetData()[0] || cnit.GetData()[1]) {
+                    //TRACE_CNTL("modeM", 0L);
+                    cout << "Character Not In Table Error detected" << endl;
+                    //return 0;
+                    break;
+                }
+                if (disparity.GetData()[0] || disparity.GetData()[1]) {
+                    //TRACE_CNTL("modeM", 0L);
+                    cout << "Disparity Error Detected" << endl;
+                    //return 0;
+                    break;
+                }
+            }
         }
 
         double aveRate = totalSize / totalDevTime / 1024;
 
-        auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> > >
+        auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
             (std::chrono::high_resolution_clock::now() - startTime).count();
         std::cout << "STATS, " << ii << " DataBlocks processed:" << std::endl
             << "Total Elapsed Time: " << totalTime << " s." << std::endl
