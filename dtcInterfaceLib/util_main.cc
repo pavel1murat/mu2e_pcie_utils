@@ -255,6 +255,7 @@ main(int	argc
 
         unsigned ii = 0;
         int retries = 4;
+        uint64_t expectedTS = timestampOffset;
         for (; ii < number; ++ii)
         {
             //if(delay > 0) usleep(delay);
@@ -288,6 +289,14 @@ main(int	argc
                     //DTC_DataHeaderPacket h1 = DTC_DataHeaderPacket(data[i]);
                     //cout << h1.toJSON() << '\n';
                     DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
+                    if (expectedTS != h2.GetTimestamp().GetTimestamp(true))
+                    {
+                        cout << dec << h2.GetTimestamp().GetTimestamp(true) << " does not match expected timestamp of " << expectedTS << "!!!" << endl;
+                        expectedTS = h2.GetTimestamp().GetTimestamp(true) + (incrementTimestamp ? 1 : 0);
+                    }
+                    else {
+                        expectedTS += (incrementTimestamp ? 1 : 0);
+                    }
                     TRACE(19, h2.toJSON().c_str());
                     if (!quiet) {
                         cout << h2.toJSON() << '\n';

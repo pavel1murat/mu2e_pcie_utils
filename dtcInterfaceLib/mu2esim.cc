@@ -454,6 +454,11 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                             }
                             drMutex_.unlock();
                         }
+                        if (exitLoop)
+                        {
+                            rrMutex_.unlock();
+                            break;
+                        }
                         TRACE(17, "mu2esim::read_data: Erasing DTC_Timestamp %li from ReadoutRequestReceived list", ts);
                         readoutRequestReceived_[ring].erase(ts);
                     }
