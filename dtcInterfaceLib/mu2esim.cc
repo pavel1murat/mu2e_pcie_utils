@@ -260,6 +260,11 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                 }
                                 else if (mode_ == DTCLib::DTC_SimMode_Performance) {
                                     nPackets = dataRequestReceived_[ring][roc][ts];
+                                    // Safety Check
+                                    if ((uint32_t)((nPackets + 1) * 16) >= sizeof(mu2e_databuff_t))
+                                    {
+                                        nPackets = (sizeof(mu2e_databuff_t) / 16) - 3;
+                                    }
                                 }
                                 if ((currentOffset + (nPackets + 1) * 16) > sizeof(mu2e_databuff_t))
                                 {
