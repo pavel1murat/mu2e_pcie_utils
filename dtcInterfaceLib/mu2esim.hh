@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <mutex>
 #include <set>
+#include <map>
 #include "DTC_Types.h"
 
 #define SIM_BUFFCOUNT 4
@@ -51,10 +52,10 @@ private:
     bool testStarted_;
     DTCLib::DTC_SimMode mode_;
     uint16_t simIndex_[6][6];
-    bool dcsRequestRecieved_[6][6];
-    std::set<uint64_t> readoutRequestRecieved_[6];
+    bool dcsRequestReceived_[6][6];
+    std::set<uint64_t> readoutRequestReceived_[6];
     std::mutex rrMutex_;
-    std::set<uint64_t> dataRequestRecieved_[6][6];
+    std::map<uint64_t, uint16_t> dataRequestReceived_[6][6];
     std::mutex drMutex_;
     DTCLib::DTC_DCSRequestPacket dcsRequest_[6][6];
 };

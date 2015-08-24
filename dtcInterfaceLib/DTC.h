@@ -257,6 +257,7 @@ namespace DTCLib {
         DTC_SimMode simMode_;
         DTC_ROC_ID maxROCs_[6];
         uint16_t dmaSize_;
+        uint32_t bufferIndex_;
         bool first_read_;
         uint16_t daqDMAByteCount_;
         uint16_t dcsDMAByteCount_;

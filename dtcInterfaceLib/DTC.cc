@@ -7,10 +7,11 @@
 # include "trace.h"
 #else
 #endif
+#define TRACE_NAME "MU2EDEV"
 
 DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode) : device_(),
 daqbuffer_(nullptr), dcsbuffer_(nullptr), simMode_(mode),
-maxROCs_(), dmaSize_(16), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
+maxROCs_(), dmaSize_(16),bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
 lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr), deviceTime_(0)
 {
 #ifdef _WIN32
@@ -312,17 +313,22 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
         nextReadPtr_ = &(daqbuffer_[0]);
         TRACE(19, "DTC::ReadNextDAQPacket nextReadPtr_=%p *nextReadPtr_=0x%08x lastReadPtr_=%p"
             , (void*)nextReadPtr_, *(unsigned*)nextReadPtr_, (void*)lastReadPtr_);
-        if (nextReadPtr_ == oldBufferPtr) {
+        void* bufferIndexPointer = (uint8_t*)nextReadPtr_ + 2;
+        if (nextReadPtr_ == oldBufferPtr && bufferIndex_ == *(uint32_t*)bufferIndexPointer)
+        {
             nextReadPtr_ = nullptr;
             //We didn't actually get a new buffer...this probably means there's no more data
             return nullptr;
         }
+        bufferIndex_++;
     }
     //Read the next packet
     TRACE(19, "DTC::ReadNextDAQPacket reading next packet from buffer: nextReadPtr_=%p:", (void*)nextReadPtr_);
     if (newBuffer) {
-        daqDMAByteCount_ = static_cast<uint16_t>(*((uint64_t*)nextReadPtr_));
-        nextReadPtr_ = (uint8_t*)nextReadPtr_ + 8;
+        daqDMAByteCount_ = static_cast<uint16_t>(*((uint16_t*)nextReadPtr_));
+        nextReadPtr_ = (uint8_t*)nextReadPtr_ + 2;
+        *(uint32_t*)nextReadPtr_ = bufferIndex_;
+        nextReadPtr_ = (uint8_t*)nextReadPtr_ + 6;
     }
     uint16_t blockByteCount = *((uint16_t*)nextReadPtr_);
     TRACE(19, "DTC::ReadNextDAQPacket: blockByteCount=%u, daqDMAByteCount=%u, nextReadPtr_=%p, *nextReadPtr=0x%x", blockByteCount, daqDMAByteCount_, (void*)nextReadPtr_, *((uint8_t*)nextReadPtr_));

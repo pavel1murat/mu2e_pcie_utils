@@ -178,6 +178,7 @@ main(int	argc
 
         for (unsigned ii = 0; ii < number; ++ii)
         {
+            cout << "Buffer Read " << ii << endl;
             mu2e_databuff_t* buffer;
             int tmo_ms = 0;
             device.release_all(DTC_DMA_Engine_DAQ);
@@ -198,6 +199,7 @@ main(int	argc
                     cout << endl;
                 }
             }
+            cout << endl << endl;
             if (delay > 0) usleep(delay);
         }
     }
@@ -252,7 +254,8 @@ main(int	argc
         thisDTC->ResetDeviceTime();
 
         unsigned ii = 0;
-        for (ii = 0; ii < number; ++ii)
+        int retries = 4;
+        for (; ii < number; ++ii)
         {
             //if(delay > 0) usleep(delay);
             //uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
@@ -273,16 +276,19 @@ main(int	argc
 
             if (data.size() > 0)
             {
+                TRACE(19, "util_main %lu packets returned", data.size());
                 if (!quiet) cout << data.size() << " packets returned\n";
                 for (size_t i = 0; i < data.size(); ++i)
                 {
-                    TRACE(19, "DTC::GetJSONData constructing DataPacket:");
+                    TRACE(19, "util_main constructing DataPacket:");
                     DTC_DataPacket     test = DTC_DataPacket(data[i]);
+                    TRACE(19, test.toJSON().c_str());
                     if (!quiet) cout << test.toJSON() << '\n'; // dumps whole databuff_t
                     //printf("data@%p=0x%08x\n", data[i], *(uint32_t*)(data[i]));
                     //DTC_DataHeaderPacket h1 = DTC_DataHeaderPacket(data[i]);
                     //cout << h1.toJSON() << '\n';
                     DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
+                    TRACE(19, h2.toJSON().c_str());
                     if (!quiet) {
                         cout << h2.toJSON() << '\n';
                         for (int jj = 0; jj < h2.GetPacketCount(); ++jj) {
@@ -297,9 +303,14 @@ main(int	argc
                 //TRACE_CNTL("modeM", 0L);
                 if (!quiet) cout << "no data returned\n";
                 //return (0);
-                break;
+                //break;
+                usleep(100000);
+                ii--;
+                retries--;
+                if (retries <= 0) break;
+                continue;
             }
-
+            retries = 4;
 
             if (checkSERDES) {
                 auto disparity = thisDTC->ReadSERDESRXDisparityError(DTC_Ring_0);

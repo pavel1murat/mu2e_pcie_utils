@@ -57,7 +57,7 @@ mu2esim::mu2esim()
     {
         for (int roc = 0; roc < 6; ++roc)
         {
-            dcsRequestRecieved_[ring][roc] = false;
+            dcsRequestReceived_[ring][roc] = false;
             simIndex_[ring][roc] = 0;
             dcsRequest_[ring][roc] = DTCLib::DTC_DCSRequestPacket((DTCLib::DTC_Ring_ID)ring, (DTCLib::DTC_ROC_ID)roc);
         }
@@ -200,6 +200,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
         clearBuffer_(chn, false);
 
         size_t currentOffset = 8;
+        buffSize_[chn][swIdx_[chn]] = currentOffset;
 
         if (chn == 0)
         {
@@ -207,17 +208,17 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
             rrMutex_.lock();
             for (int ring = 0; ring <= DTCLib::DTC_Ring_5; ++ring)
             {
-                if (readoutRequestRecieved_[ring].size() > 0) {
+                if (readoutRequestReceived_[ring].size() > 0) {
                     bool active = true;
-                    auto ii = readoutRequestRecieved_[ring].begin();
-                    while (active && ii != readoutRequestRecieved_[ring].end())
+                    auto ii = readoutRequestReceived_[ring].begin();
+                    while (active && ii != readoutRequestReceived_[ring].end())
                     {
                         bool found = false;
                         uint64_t ts = *ii;
                         for (auto roc : DTCLib::DTC_ROCS)
                         {
                             drMutex_.lock();
-                            if (dataRequestRecieved_[ring][roc].count(ts) != 0)
+                            if (dataRequestReceived_[ring][roc].count(ts))
                             {
                                 drMutex_.unlock();
                                 activeTimestamps.insert(ts);
@@ -241,35 +242,34 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                 {
                     if (exitLoop) break;
                     rrMutex_.lock();
-                    auto rrIter = std::find(readoutRequestRecieved_[ring].begin(), readoutRequestRecieved_[ring].end(), ts);
-                    if (rrIter != readoutRequestRecieved_[ring].end() && currentOffset < sizeof(mu2e_databuff_t))
+                    if (readoutRequestReceived_[ring].count(ts) > 0 && currentOffset < sizeof(mu2e_databuff_t))
                     {
                         for (int roc = 0; roc <= DTCLib::DTC_ROC_5; ++roc)
                         {
                             drMutex_.lock();
-                            auto drIter = std::find(dataRequestRecieved_[ring][roc].begin(), dataRequestRecieved_[ring][roc].end(), ts);
-                            if (drIter != dataRequestRecieved_[ring][roc].end() && currentOffset < sizeof(mu2e_databuff_t))
+                            if (dataRequestReceived_[ring][roc].count(ts) > 0 && currentOffset < sizeof(mu2e_databuff_t))
                             {
                                 TRACE(17, "mu2esim::read_data, DAQ Channel w/Requests recieved");
                                 uint8_t packet[16];
 
                                 int nSamples = rand() % 10 + 10;
-                                int nPackets = 1;
+                                uint16_t nPackets = 1;
                                 if (mode_ == DTCLib::DTC_SimMode_Calorimeter) {
                                     if (nSamples <= 5) { nPackets = 1; }
                                     else { nPackets = floor((nSamples - 6) / 8 + 2); }
                                 }
                                 else if (mode_ == DTCLib::DTC_SimMode_Performance) {
-                                    nPackets = 0;
+                                    nPackets = dataRequestReceived_[ring][roc][ts];
                                 }
                                 if ((currentOffset + (nPackets + 1) * 16) > sizeof(mu2e_databuff_t))
                                 {
                                     exitLoop = true;
+                                    drMutex_.unlock();
                                     break;
                                 }
 
                                 // Record the DataBlock size
-                                uint16_t dataBlockByteCount = (nPackets + 1) * 16;
+                                uint16_t dataBlockByteCount = static_cast<uint16_t>((nPackets + 1) * 16);
                                 TRACE(17, "mu2esim::read_data DataBlock size is %u", dataBlockByteCount);
 
                                 // Add a Data Header packet to the reply
@@ -277,10 +277,10 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                 packet[1] = static_cast<uint8_t>(dataBlockByteCount >> 8);
                                 packet[2] = 0x50 + (roc & 0x0F);
                                 packet[3] = 0x80 + (ring & 0x0F);
-                                packet[4] = (uint8_t)nPackets;
-                                packet[5] = 0;
-                                DTCLib::DTC_Timestamp ts(*rrIter);
-                                ts.GetTimestamp(packet, 6);
+                                packet[4] = static_cast<uint8_t>(nPackets & 0xFF);
+                                packet[5] = static_cast<uint8_t>(nPackets >> 8);
+                                DTCLib::DTC_Timestamp dts(ts);
+                                dts.GetTimestamp(packet, 6);
                                 packet[12] = 0;
                                 packet[13] = 0;
                                 packet[14] = 0;
@@ -416,20 +416,46 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                                     buffSize_[chn][hwIdx_[chn]] = currentOffset;
                                 }
                                 break;
-                                case DTCLib::DTC_SimMode_Disabled:
                                 case DTCLib::DTC_SimMode_Performance:
+                                    for (uint16_t ii = 0; ii < nPackets; ++ii)
+                                    {
+                                        packet[0] = static_cast<uint8_t>(ii);
+                                        packet[1] = 0x11;
+                                        packet[2] = 0x22;
+                                        packet[3] = 0x33;
+                                        packet[4] = 0x44;
+                                        packet[5] = 0x55;
+                                        packet[6] = 0x66;
+                                        packet[7] = 0x77;
+                                        packet[8] = 0x88;
+                                        packet[9] = 0x99;
+                                        packet[10] = 0xaa;
+                                        packet[11] = 0xbb;
+                                        packet[12] = 0xcc;
+                                        packet[13] = 0xdd;
+                                        packet[14] = 0xee;
+                                        packet[15] = 0xff;
+
+                                        TRACE(17, "mu2esim::read_data Copying Data packet into buffer, chn=%i, idx=%li, buf=%p, packet=%p, off=%li"
+                                            , chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)packet, currentOffset);
+                                        memcpy((char*)dmaData_[chn][hwIdx_[chn]] + currentOffset, &packet, sizeof(packet));
+                                        currentOffset += sizeof(packet);
+                                        buffSize_[chn][hwIdx_[chn]] = currentOffset;
+                                    }
+                                    break;
+                                case DTCLib::DTC_SimMode_Disabled:
                                 default:
                                     break;
                                 }
                                 simIndex_[ring][roc] = (simIndex_[ring][roc] + 1) % 0x3FF;
-                                TRACE(17, "mu2esim::read_data: Erasing DTC_Timestamp %li from DataRequestReceived list", *drIter);
-                                dataRequestRecieved_[ring][roc].erase(drIter);
+                                TRACE(17, "mu2esim::read_data: Erasing DTC_Timestamp %li from DataRequestReceived list", ts);
+                                dataRequestReceived_[ring][roc].erase(ts);
 
                             }
                             drMutex_.unlock();
                         }
-                        TRACE(17, "mu2esim::read_data: Erasing DTC_Timestamp %li from ReadoutRequestReceived list", *rrIter);
-                        readoutRequestRecieved_[ring].erase(rrIter);
+                        TRACE(17, "mu2esim::read_data: Erasing DTC_Timestamp %li from ReadoutRequestReceived list", ts);
+                        readoutRequestReceived_[ring].erase(ts);
                     }
                     rrMutex_.unlock();
                 }
@@ -443,7 +469,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                 if (exitLoop) break;
                 for (int roc = 0; roc <= DTCLib::DTC_ROC_5; ++roc)
                 {
-                    if (dcsRequestRecieved_[ring][roc])
+                    if (dcsRequestReceived_[ring][roc])
                     {
                         if (currentOffset + 16 >= sizeof(mu2e_databuff_t)) {
                             exitLoop = true;
@@ -465,7 +491,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
                         memcpy((char*)dmaData_[chn][hwIdx_[chn]] + currentOffset, &replyPacket, sizeof(replyPacket));
                         currentOffset += sizeof(replyPacket);
                         buffSize_[chn][hwIdx_[chn]] = currentOffset;
-                        dcsRequestRecieved_[ring][roc] = false;
+                        dcsRequestReceived_[ring][roc] = false;
 
                     }
                 }
@@ -501,17 +527,16 @@ int mu2esim::write_data(int chn, void *buffer, size_t bytes)
             int activeDAQRing = (word & 0x0F00) >> 8;
             TRACE(17, "mu2esim::write_data: Readout Request: activeDAQRing=%i, ts=%li", activeDAQRing, ts.GetTimestamp(true));
             rrMutex_.lock();
-            readoutRequestRecieved_[activeDAQRing].insert(ts.GetTimestamp(true));
+            readoutRequestReceived_[activeDAQRing].insert(ts.GetTimestamp(true));
             rrMutex_.unlock();
         }
         else if ((word & 0x8020) == 0x8020) {
             DTCLib::DTC_Ring_ID activeDAQRing = static_cast<DTCLib::DTC_Ring_ID>((word & 0x0F00) >> 8);
             TRACE(17, "mu2esim::write_data: Data Request: activeDAQRing=%i, ts=%li", activeDAQRing, ts.GetTimestamp(true));
-
             if (activeDAQRing != DTCLib::DTC_Ring_Unused)
             {
                 rrMutex_.lock();
-                if (readoutRequestRecieved_[activeDAQRing].count(ts.GetTimestamp(true)) == 0)
+                if (readoutRequestReceived_[activeDAQRing].count(ts.GetTimestamp(true)) == 0)
                 {
                     TRACE(17, "mu2esim::write_data: Data Request Received but missing Readout Request!");
                 }
@@ -520,7 +545,8 @@ int mu2esim::write_data(int chn, void *buffer, size_t bytes)
                 drMutex_.lock();
                 if (activeROC != DTCLib::DTC_ROC_Unused)
                 {
-                    dataRequestRecieved_[activeDAQRing][activeROC].insert(ts.GetTimestamp(true));
+                    uint16_t packetCount = *((uint16_t*)buffer + 7);
+                    dataRequestReceived_[activeDAQRing][activeROC][ts.GetTimestamp(true)] = packetCount;
                 }
                 drMutex_.unlock();
             }
@@ -534,7 +560,7 @@ int mu2esim::write_data(int chn, void *buffer, size_t bytes)
             DTCLib::DTC_ROC_ID activeDCSROC = static_cast<DTCLib::DTC_ROC_ID>(word & 0xF);
             TRACE(17, "mu2esim::write_data activeDCSRing is %i, roc is %i", activeDCSRing, activeDCSROC);
             if (activeDCSRing != DTCLib::DTC_Ring_Unused && activeDCSROC != DTCLib::DTC_ROC_Unused) {
-                dcsRequestRecieved_[activeDCSRing][activeDCSROC] = true;
+                dcsRequestReceived_[activeDCSRing][activeDCSROC] = true;
                 uint8_t data[12];
                 memcpy(&data[0], (char*)buffer + (2 * sizeof(uint16_t)), sizeof(data));
                 dcsRequest_[activeDCSRing][activeDCSROC] = DTCLib::DTC_DCSRequestPacket((DTCLib::DTC_Ring_ID)activeDCSRing, (DTCLib::DTC_ROC_ID)activeDCSROC, data);
