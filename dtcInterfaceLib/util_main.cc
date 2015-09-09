@@ -8,6 +8,7 @@
 #include <cstdio>		// printf
 #include <cstdlib>		// strtoul
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <string>
 #include <chrono>
@@ -51,6 +52,23 @@ unsigned getOptionValue(int *index, char **argv[])
     }
 }
 
+std::string getOptionString(int *index, char **argv[])
+{
+	char* arg = (*argv)[*index];
+	if (arg[2] == '\0') {
+		(*index)++;
+		return std::string((*argv)[*index]);
+	}
+	else {
+		int offset = 2;
+		if (arg[2] == '=') {
+			offset = 3;
+		}
+
+		return std::string(&(arg[offset]));
+	}
+}
+
 void printHelpMsg() {
     cout << "Usage: mu2eUtil [options] [read,read_data,buffer_test,read_release,HW,DTC]" << endl;
     cout << "Options are:" << endl
@@ -63,7 +81,8 @@ void printHelpMsg() {
         << "    -c: Number of Debug Packets to request (Default: 0)." << endl
         << "    -a: Number of Readout Request/Data Requests to send before starting to read data (Default: 2)." << endl
         << "    -q: Quiet mode (Don't print)" << endl
-        << "    -s: Stop on SERDES Error." << endl;
+        << "    -s: Stop on SERDES Error." << endl
+		<< "    -f: RAW Output file path" << endl;
     exit(0);
 }
 
@@ -75,6 +94,8 @@ main(int	argc
     bool incrementTimestamp = true;
     bool checkSERDES = false;
     bool quiet = false;
+	bool rawOutput = false;
+	std::string rawOutputFile = "/tmp/mu2eUtil.raw";
     unsigned delay = 0;
     unsigned number = 1;
     unsigned timestampOffset = 1;
@@ -112,6 +133,10 @@ main(int	argc
             case 's':
                 checkSERDES = true;
                 break;
+			case 'f':
+				rawOutput = true;
+				rawOutputFile = getOptionString(&optind, &argv);
+				break;
             default:
                 cout << "Unknown option: " << argv[optind] << endl;
                 printHelpMsg();
@@ -147,6 +172,17 @@ main(int	argc
         DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
         DTC_DataHeaderPacket* packet = thisDTC->ReadNextDAQPacket();
         cout << packet->toJSON() << '\n';
+		if (rawOutput) {
+			std::ofstream outputStream;
+			outputStream.open(rawOutputFile, std::ios::out | std::ios::app | std::ios::binary);
+			DTC_DataPacket rawPacket = packet->ConvertToDataPacket();
+			for (int ii = 0; ii < 16; ++ii)
+			{
+				uint8_t word = rawPacket.GetWord(ii);
+				outputStream.write((char*)&word, sizeof(uint8_t));
+			}
+			outputStream.close();
+		}
     }
     else if (op == "read_data")
     {
@@ -155,10 +191,19 @@ main(int	argc
         device.init();
         for (unsigned ii = 0; ii < number; ++ii)
         {
-            void *buffer;
+			mu2e_databuff_t buffer;
             int tmo_ms = 0;
-            int sts = device.read_data(DTC_DMA_Engine_DAQ, &buffer, tmo_ms);
+            int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
             TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, buffer);
+			if (rawOutput) {
+				std::ofstream outputStream;
+				outputStream.open(rawOutputFile, std::ios::out | std::ios::app | std::ios::binary);
+				for (int ii = 0; ii < sts; ++ii)
+				{
+					outputStream.write((char*)&(buffer[ii]), sizeof(unsigned char));
+				}
+				outputStream.close();
+			}
             if (delay > 0) usleep(delay);
         }
     }
@@ -232,7 +277,19 @@ main(int	argc
             std::cout << "Request: " << header.toJSON() << std::endl;
             thisDTC->WriteDMADAQPacket(header);
             thisDTC->SetFirstRead(true);
-            std::cout << "Reply:   " << thisDTC->ReadNextDAQPacket()->toJSON() << std::endl;
+			DTC_DataHeaderPacket* packet = thisDTC->ReadNextDAQPacket();
+            std::cout << "Reply:   " << packet->toJSON() << std::endl;
+			if (rawOutput) {
+				std::ofstream outputStream;
+				outputStream.open(rawOutputFile, std::ios::out | std::ios::app | std::ios::binary);
+				DTC_DataPacket rawPacket = packet->ConvertToDataPacket();
+				for (int ii = 0; ii < 16; ++ii)
+				{
+					uint8_t word = rawPacket.GetWord(ii);
+					outputStream.write((char*)&word, sizeof(uint8_t));
+				}
+				outputStream.close();
+			}
             if (delay > 0) usleep(delay);
         }
     }
@@ -300,8 +357,30 @@ main(int	argc
                     TRACE(19, h2.toJSON().c_str());
                     if (!quiet) {
                         cout << h2.toJSON() << '\n';
+						if (rawOutput) {
+							std::ofstream outputStream;
+							outputStream.open(rawOutputFile, std::ios::out | std::ios::app | std::ios::binary);
+							DTC_DataPacket rawPacket = h2.ConvertToDataPacket();
+							for (int ii = 0; ii < 16; ++ii)
+							{
+								uint8_t word = rawPacket.GetWord(ii);
+								outputStream.write((char*)&word, sizeof(uint8_t));
+							}
+							outputStream.close();
+						}
                         for (int jj = 0; jj < h2.GetPacketCount(); ++jj) {
-                            cout << "\t" << DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16)).toJSON() << endl;
+							DTC_DataPacket packet = DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16));
+                            cout << "\t" << packet.toJSON() << endl;
+							if (rawOutput) {
+								std::ofstream outputStream;
+								outputStream.open(rawOutputFile, std::ios::out | std::ios::app | std::ios::binary);
+								for (int ii = 0; ii < 16; ++ii)
+								{
+									uint8_t word = packet.GetWord(ii);
+									outputStream.write((char*)&word, sizeof(uint8_t));
+								}
+								outputStream.close();
+							}
                         }
                     }
                     totalSize += 16 * (1 + h2.GetPacketCount());
@@ -395,6 +474,16 @@ main(int	argc
                     //DTC_DataHeaderPacket h1 = DTC_DataHeaderPacket(data[i]);
                     //cout << h1.toJSON() << '\n';
                     DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
+					if (rawOutput) {
+						std::ofstream outputStream;
+						outputStream.open(rawOutputFile, std::ios::out | std::ios::app | std::ios::binary);
+						for (int ii = 0; ii < 16; ++ii)
+						{
+							uint8_t word = test.GetWord(ii);
+							outputStream.write((char*)&word, sizeof(uint8_t));
+						}
+						outputStream.close();
+					}
                     //cout << h2.toJSON() << '\n';
                     // for (int jj = 0; jj < h2.GetPacketCount(); ++jj) {
                     //    cout << "\t" << DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16)).toJSON() << endl;
