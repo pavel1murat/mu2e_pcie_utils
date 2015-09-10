@@ -391,6 +391,44 @@ namespace DTCLib
         DTC_DataStatus_Invalid = 2,
     };
 
+	enum DTC_DebugType {
+		DTC_DebugType_SpecialSequence = 0,
+		DTC_DebugType_ExternalSerial = 1,
+		DTC_DebugType_ExternalSerialWithReset = 2,
+	};
+	struct DTC_DebugTypeConverter {
+	public:
+		DTC_DebugType type_;
+		DTC_DebugTypeConverter(DTC_DebugType type) : type_(type) {}
+		std::string toString() {
+			switch (type_)
+			{
+			case DTC_DebugType_SpecialSequence:
+				return "Special Sequence";
+			case DTC_DebugType_ExternalSerial:
+				return "External Serial";
+			case DTC_DebugType_ExternalSerialWithReset:
+				return "External Serial with FIFO Reset";
+			}
+			return "Unknown";
+		}
+		friend std::ostream& operator<<(std::ostream& stream, const DTC_DebugTypeConverter& type) {
+			switch (type.type_)
+			{
+			case DTC_DebugType_SpecialSequence:
+				stream << "\"Special Sequence\"";
+				break;
+			case DTC_DebugType_ExternalSerial:
+				stream << "\"External Serial\"";
+				break;
+			case DTC_DebugType_ExternalSerialWithReset:
+				stream << "\"External Serial with FIFO Reset\"";
+				break;
+			}
+			return stream;
+		}
+	};
+
     enum DTC_SimMode {
         DTC_SimMode_Disabled = 0,
         DTC_SimMode_Tracker = 1,
@@ -519,14 +557,10 @@ namespace DTCLib
         DTC_Timestamp(uint8_t* timeArr, int offset = 0);
         DTC_Timestamp(std::bitset<48> timestamp);
         DTC_Timestamp(const DTC_Timestamp&) = default;
-#ifndef _WIN32
         DTC_Timestamp(DTC_Timestamp&&) = default;
-#endif
 
         virtual ~DTC_Timestamp() = default;
-#ifndef _WIN32
         DTC_Timestamp& operator=(DTC_Timestamp&&) = default;
-#endif
         DTC_Timestamp& operator=(const DTC_Timestamp&) = default;
 
         bool operator==(const DTC_Timestamp r) { return r.GetTimestamp(true) == timestamp_; }
@@ -563,16 +597,12 @@ namespace DTCLib
         DTC_DataPacket(void* data) : dataPtr_((uint8_t*)data), dataSize_(16), memPacket_(true){}
         DTC_DataPacket(uint8_t* data) : dataPtr_(data), dataSize_(16), memPacket_(true){}
         DTC_DataPacket(const DTC_DataPacket&);
-#ifndef _WIN32
         DTC_DataPacket(DTC_DataPacket&&) = default;
-#endif
 
         virtual ~DTC_DataPacket();
 
         DTC_DataPacket& operator=(const DTC_DataPacket&) = default;
-#ifndef _WIN32
         DTC_DataPacket& operator=(DTC_DataPacket&&) = default;
-#endif
 
         void SetWord(uint16_t index, uint8_t data);
         uint8_t GetWord(uint16_t index) const;
@@ -600,16 +630,12 @@ namespace DTCLib
 
         DTC_DMAPacket(const DTC_DataPacket in);
         DTC_DMAPacket(const DTC_DMAPacket&) = default;
-#ifndef _WIN32
         DTC_DMAPacket(DTC_DMAPacket&&) = default;
-#endif
 
         virtual ~DTC_DMAPacket() = default;
 
         DTC_DMAPacket& operator=(const DTC_DMAPacket&) = default;
-#ifndef _WIN32
         DTC_DMAPacket& operator=(DTC_DMAPacket&&) = default;
-#endif
 
         virtual DTC_DataPacket ConvertToDataPacket() const;
 
@@ -635,15 +661,11 @@ namespace DTCLib
         DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc);
         DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t* data);
         DTC_DCSRequestPacket(const DTC_DCSRequestPacket&) = default;
-#ifndef _WIN32
         DTC_DCSRequestPacket(DTC_DCSRequestPacket&&) = default;
-#endif
         DTC_DCSRequestPacket(DTC_DataPacket in);
 
         DTC_DCSRequestPacket& operator=(const DTC_DCSRequestPacket&) = default;
-#ifndef _WIN32
         DTC_DCSRequestPacket& operator=(DTC_DCSRequestPacket&&) = default;
-#endif
 
         virtual ~DTC_DCSRequestPacket() = default;
 
@@ -662,9 +684,7 @@ namespace DTCLib
         DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC = DTC_ROC_5, bool debug = true);
         DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC = DTC_ROC_5, bool debug = true, uint8_t* request = nullptr);
         DTC_ReadoutRequestPacket(const DTC_ReadoutRequestPacket& right) = default;
-#ifndef _WIN32
         DTC_ReadoutRequestPacket(DTC_ReadoutRequestPacket&& right) = default;
-#endif
         DTC_ReadoutRequestPacket(DTC_DataPacket in);
 
         virtual ~DTC_ReadoutRequestPacket() = default;
@@ -682,16 +702,17 @@ namespace DTCLib
         DTC_Timestamp timestamp_;
         bool debug_;
         uint16_t debugPacketCount_;
+		DTC_DebugType type_;
+
     public:
-        DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, bool debug = true, uint16_t debugPacketCount = 0);
-        DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp timestamp, bool debug = true, uint16_t debugPacketCount = 0);
+        DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, bool debug = true, uint16_t debugPacketCount = 0, DTC_DebugType type = DTC_DebugType_SpecialSequence);
+        DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp timestamp, bool debug = true, uint16_t debugPacketCount = 0, DTC_DebugType type = DTC_DebugType_SpecialSequence);
         DTC_DataRequestPacket(const DTC_DataRequestPacket&) = default;
-#ifndef _WIN32
         DTC_DataRequestPacket(DTC_DataRequestPacket&&) = default;
-#endif
         DTC_DataRequestPacket(DTC_DataPacket in);
 
         bool GetDebug() { return debug_; }
+		DTC_DebugType GetDebugType() { return type_; }
         uint16_t GetDebugPacketCount() { return debugPacketCount_; }
         void SetDebugPacketCount(uint16_t count);
         DTC_Timestamp GetTimestamp() { return timestamp_; }
@@ -707,9 +728,7 @@ namespace DTCLib
         DTC_DCSReplyPacket(DTC_Ring_ID ring);
         DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t* data);
         DTC_DCSReplyPacket(const DTC_DCSReplyPacket&) = default;
-#ifndef _WIN32
         DTC_DCSReplyPacket(DTC_DCSReplyPacket&&) = default;
-#endif
         DTC_DCSReplyPacket(DTC_DataPacket in);
 
         uint8_t* GetData() { return data_; }
@@ -730,9 +749,7 @@ namespace DTCLib
         DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp);
         DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp, uint8_t* data);
         DTC_DataHeaderPacket(const DTC_DataHeaderPacket&) = default;
-#ifndef _WIN32
         DTC_DataHeaderPacket(DTC_DataHeaderPacket&&) = default;
-#endif
         DTC_DataHeaderPacket(DTC_DataPacket in);
 
         DTC_DataPacket ConvertToDataPacket() const;
@@ -753,14 +770,10 @@ namespace DTCLib
         DTC_SERDESRXDisparityError(std::bitset<2> data);
         DTC_SERDESRXDisparityError(uint32_t data, DTC_Ring_ID ring);
         DTC_SERDESRXDisparityError(const DTC_SERDESRXDisparityError&) = default;
-#ifndef _WIN32
         DTC_SERDESRXDisparityError(DTC_SERDESRXDisparityError&&) = default;
-#endif
 
         DTC_SERDESRXDisparityError& operator=(const DTC_SERDESRXDisparityError&) = default;
-#ifndef _WIN32
         DTC_SERDESRXDisparityError& operator=(DTC_SERDESRXDisparityError&&) = default;
-#endif
 
         void SetData(std::bitset<2> data) { data_ = data; }
         std::bitset<2> GetData() { return data_; }
@@ -780,14 +793,10 @@ namespace DTCLib
         DTC_CharacterNotInTableError(std::bitset<2> data);
         DTC_CharacterNotInTableError(uint32_t data, DTC_Ring_ID ring);
         DTC_CharacterNotInTableError(const DTC_CharacterNotInTableError&) = default;
-#ifndef _WIN32
         DTC_CharacterNotInTableError(DTC_CharacterNotInTableError&&) = default;
-#endif
 
         DTC_CharacterNotInTableError& operator=(const DTC_CharacterNotInTableError&) = default;
-#ifndef _WIN32
         DTC_CharacterNotInTableError& operator=(DTC_CharacterNotInTableError&&) = default;
-#endif
 
         void SetData(std::bitset<2> data) { data_ = data; }
         std::bitset<2> GetData() { return data_; }

@@ -370,17 +370,18 @@ DTCLib::DTC_DataPacket DTCLib::DTC_ReadoutRequestPacket::ConvertToDataPacket() c
 }
 
 
-DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, bool debug, uint16_t debugPacketCount)
-    : DTC_DMAPacket(DTC_PacketType_DataRequest, ring, roc), timestamp_(), debug_(debug), debugPacketCount_(debugPacketCount) {}
+DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, bool debug, uint16_t debugPacketCount, DTC_DebugType type)
+    : DTC_DMAPacket(DTC_PacketType_DataRequest, ring, roc), timestamp_(), debug_(debug), debugPacketCount_(debugPacketCount), type_(type) {}
 
-DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp timestamp, bool debug, uint16_t debugPacketCount)
-    : DTC_DMAPacket(DTC_PacketType_DataRequest, ring, roc), timestamp_(timestamp), debug_(debug), debugPacketCount_(debugPacketCount) {}
+DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp timestamp, bool debug, uint16_t debugPacketCount, DTC_DebugType type)
+    : DTC_DMAPacket(DTC_PacketType_DataRequest, ring, roc), timestamp_(timestamp), debug_(debug), debugPacketCount_(debugPacketCount), type_(type) {}
 
 DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
 {
     if (packetType_ != DTC_PacketType_DataRequest) { throw DTC_WrongPacketTypeException(); }
     timestamp_ = DTC_Timestamp(in.GetData(), 6);
     debug_ = (in.GetData()[12] & 0x1) == 1;
+	type_ = DTC_DebugType((in.GetData()[12] & 0xF0) >> 4);
     debugPacketCount_ = in.GetData()[14] + (in.GetData()[15] << 8);
 }
 
@@ -391,7 +392,8 @@ std::string DTCLib::DTC_DataRequestPacket::toJSON()
     ss << headerJSON() << ",";
     ss << timestamp_.toJSON() << ",";
     ss << "\"debug\":" << (debug_ ? "true" : "false") << ",";
-    ss << "\"debugPacketCount\": " << std::dec << (int)debugPacketCount_;
+    ss << "\"debugPacketCount\": " << std::dec << (int)debugPacketCount_ << ",";
+	ss << "\"debugType\": " << DTC_DebugTypeConverter(type_);
     ss << "}";
     return ss.str();
 }
@@ -402,7 +404,7 @@ std::string DTCLib::DTC_DataRequestPacket::toPacketFormat()
     ss << headerPacketFormat() << std::setfill('0') << std::hex;
     ss << "        \t        \n";
     ss << timestamp_.toPacketFormat();
-    ss << "        \t       " << std::setw(1) << (int)debug_ << "\n";
+    ss << "        \t0x" << std::setw(2) << (int)type_  << "   " << std::setw(1) << (int)debug_ << "\n";
     ss << "0x" << std::setw(6) << ((debugPacketCount_ & 0xFF00) >> 8) << "\t" << "0x" << std::setw(6) << (debugPacketCount_ & 0xFF) << "\n";
     return ss.str();
 }
@@ -411,7 +413,7 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DataRequestPacket::ConvertToDataPacket() cons
 {
     DTC_DataPacket output = DTC_DMAPacket::ConvertToDataPacket();
     timestamp_.GetTimestamp(output.GetData(), 6);
-    output.SetWord(12, debug_ ? 1 : 0);
+    output.SetWord(12, ((int)type_ << 4) + (debug_ ? 1 : 0));
     output.SetWord(14, debugPacketCount_ & 0xFF);
     output.SetWord(15, (debugPacketCount_ >> 8) & 0xFF);
     return output;

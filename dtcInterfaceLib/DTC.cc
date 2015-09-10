@@ -393,6 +393,7 @@ std::string DTCLib::DTC::RegDump()
     o << "\"SimMode\":" << DTC_SimModeConverter(simMode_) << ",\n";
     o << "\"Version\":\"" << ReadDesignVersion() << "\",\n";
     o << "\"ResetDTC\":" << ReadResetDTC() << ",\n";
+	o << "\"CFOEmulation\":" << ReadCFOEmulation() << ",\n";
     o << "\"ResetSERDESOscillator\":" << ReadResetSERDESOscillator() << ",\n";
     o << "\"SERDESOscillatorClock\":" << ReadSERDESOscillatorClock() << ",\n";
     o << "\"SystemClock\":" << ReadSystemClock() << ",\n";
@@ -575,6 +576,8 @@ std::string DTCLib::DTC::FormatRegister(const DTC_Register& address)
         o << "| DTC Control                 | ";
         o << "Reset: [" << (ReadResetDTC() ? "x" : " ") << "]," << std::endl;
         o << "                                                       | ";
+		o << "CFO Emulation Enable: [" << (ReadCFOEmulation() ? "x" : " ") << "]," << std::endl;
+		o << "                                                       | ";
         o << "SERDES Oscillator Reset: [" << (ReadResetSERDESOscillator() ? "x" : " ") << "]," << std::endl;
         o << "                                                       | ";
         o << "SERDES Oscillator Clock Select : [" << (ReadSERDESOscillatorClock() ? " 2.5Gbs" : "3.125Gbs") << "], " << std::endl;
@@ -952,6 +955,27 @@ bool DTCLib::DTC::ReadResetDTC()
 {
     std::bitset<32> dataSet = ReadControlRegister();
     return dataSet[31];
+}
+
+void DTCLib::DTC::EnableCFOEmulation()
+{
+	std::bitset<32> data = ReadControlRegister();
+	data[30] = 1;
+	WriteControlRegister(data.to_ulong());
+}
+
+
+void DTCLib::DTC::DisableCFOEmulation()
+{
+	std::bitset<32> data = ReadControlRegister();
+	data[30] = 0;
+	WriteControlRegister(data.to_ulong());
+}
+
+bool DTCLib::DTC::ReadCFOEmulation()
+{
+	std::bitset<32> dataSet = ReadControlRegister();
+	return dataSet[30];
 }
 
 void DTCLib::DTC::ResetSERDESOscillator(){

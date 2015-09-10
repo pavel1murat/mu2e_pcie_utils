@@ -64,6 +64,10 @@ namespace DTCLib {
         void ResetDTC();
         bool ReadResetDTC();
 
+		void EnableCFOEmulation();
+		void DisableCFOEmulation();
+		bool ReadCFOEmulation();
+
         void ResetSERDESOscillator();
         bool ReadResetSERDESOscillator();
 
