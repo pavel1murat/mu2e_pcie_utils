@@ -81,137 +81,11 @@ function getRegDump() {
     console.log("Done with RegDump");
 }
 
-function startTest(dma, packetSize, loopback, txChecker, rxGenerator) {
-    var test = DTC.StartTest(dma, packetSize, loopback, txChecker, rxGenerator);
-    return test.GetState();
-};
-
-function stopTest(dma) {
-    var test = DTC.StopTest(dma);
-    return test.GetState();
-};
-
-function getDMAStats(dma, dir) {
-    var stats = DTC.ReadDMAStats(dma, dir);
-    var output = {};
-    //console.log(stats.at(0));
-    output.Throughput = stats.at(0).LBR;
-    output.DMAActive = stats.at(0).LAT;
-    output.DMAWait = stats.at(0).LWT;
-    return output;
-}
-
-function getDMAState(dma, dir) {
-    var state = DTC.ReadDMAState(dma, dir);
-    var output = {};
-    //console.log(state);
-    output.BDErrors = state.BDerrs;
-    output.BDSErrors = state.BDSerrs;
-    output.SWBDs = state.BDs;
-    output.SWBuffs = state.Buffers;
-    output.Interrupts = state.IntEnab;
-    output.stats = getDMAStats(dma, dir);
-    return output;
-}
-
-function getPCIeStats() {
-    var stats = DTC.ReadPCIeStats();
-    var output = {};
-    output.WritesRate = stats.LTX;
-    output.ReadsRate = stats.LRX;
-    return output;
-}
-
-function getPCIeState() {
-    var stats = DTC.ReadPCIeState();
-    var output = {};
-    switch (stats.LinkState) {
-        case 0:
-            output.LinkStatus = "Down";
-            break;
-        case 1:
-            output.LinkStatus = "Up";
-            break;
-    }
-    output.LinkWidth = stats.LinkWidth + "x";
-    switch (stats.LinkSpeed) {
-        case 1:
-            output.LinkSpeed = "2.5";
-            break;
-        case 2:
-            output.LinkSpeed = "5";
-            break;
-    }
-    output.VendorID = stats.VendorId;
-    output.DeviceID = stats.DeviceId;
-    output.MPS = stats.MPS;
-    output.MRRS = stats.MRRS;
-    switch (stats.IntMode) {
-        case 0:
-            output.Interrupts = "None"
-            break;
-        case 1:
-            output.Interrupts = "Legacy";
-            break;
-        case 2:
-            output.Interrupts = "MSI";
-            break;
-        case 3:
-            output.Interrupts = "MSI-X"
-            break;
-
-    }
-    output.credits = {};
-    output.credits.ph = stats.InitFCPH;
-    output.credits.pd = stats.InitFCPD;
-    output.credits.nph = stats.InitFCNPH;
-    output.credits.npd = stats.InitFCNPD;
-    output.credits.ch = stats.InitFCCplH;
-    output.credits.cd = stats.InitFCCplD;
-    output.stats = getPCIeStats();
-    return output;
-}
-
-function getSystemStatus() {
-    var status = {};
-    status.path0 = {};
-    status.path1 = {};
-    status.path0.TX = getDMAState(dtc.DTC_DMA_Engine_DAQ, dtc.DTC_DMA_Direction_C2S);
-    status.path0.RX = getDMAState(dtc.DTC_DMA_Engine_DAQ, dtc.DTC_DMA_Direction_S2C);
-    status.path1.TX = getDMAState(dtc.DTC_DMA_Engine_DCS, dtc.DTC_DMA_Direction_C2S);
-    status.path1.RX = getDMAState(dtc.DTC_DMA_Engine_DCS, dtc.DTC_DMA_Direction_S2C);
-    status.pcie = getPCIeState();
-    
-    systemStatus = status;
-};
-
-function getDMAReadRate(channel) {
-    dtcem.RO_SystemStatus();
-    var dmastats = systemStatus.path0.RX.stats;
-    if (channel === 1) {
-        dmastats = systemStatus.path1.RX.stats;
-    }
-    return dmastats.Throughput;
-};
-
-function getDMAWriteRate(channel) {
-    dtcem.RO_SystemStatus();
-    var dmastats = systemStatus.path0.TX.stats;
-    if (channel === 1) {
-        dmastats = systemStatus.path1.TX.stats;
-    }
-    return dmastats.Throughput;
-};
-
 function getDMATestStatus(testStatus) {
     if (dmatest !== null) {
         testStatus.testRunning = dmatest.isRunning();
         testStatus.regPassed += dmatest.regPassed();
         testStatus.regFailed += dmatest.regFailed();
-        testStatus.pciePassed += dmatest.pciePassed();
-        testStatus.pcieFailed += dmatest.pcieFailed();
-        testStatus.dmaPassed += dmatest.dmaStatePassed();
-        testStatus.dmaFailed += dmatest.dmaStateFailed();
         testStatus.daqPassed += dmatest.daqPassed();
         testStatus.daqFailed += dmatest.daqFailed();
         testStatus.dcsPassed += dmatest.dcsPassed();
@@ -259,10 +133,6 @@ dtcem.MasterInitFunction = function (workerData) {
     var testStatus = {};
     testStatus.regPassed = 0;
     testStatus.regFailed = 0;
-    testStatus.pciePassed = 0;
-    testStatus.pcieFailed = 0;
-    testStatus.dmaPassed = 0;
-    testStatus.dmaFailed = 0;
     testStatus.daqPassed = 0;
     testStatus.daqFailed = 0;
     testStatus.dcsPassed = 0;
@@ -688,14 +558,12 @@ dtcem.RW_StartDMATest = function (POST, testStatus) {
     console.log("Starting DMA I/O Test");
     console.log(POST);
     var regEnabled = POST.reg === 'true' ? true : false;
-    var pcieEnabled = POST.pcie === 'true' ? true : false;
-    var dmaEnabled = POST.dma === 'true' ? true : false;
     var daqEnabled = POST.daq === 'true' ? true : false;
     var dcsEnabled = POST.dcs === 'true' ? true : false;
     var loopbackEnabled = POST.loopback === 'true' ? true : false;
     var numTests = parseInt(POST.n);
     if (!testStatus.testRunning) {
-        dmatest.startTest(regEnabled, pcieEnabled, dmaEnabled, daqEnabled, dcsEnabled, loopbackEnabled, numTests, false);
+        dmatest.startTest(regEnabled, daqEnabled, dcsEnabled, loopbackEnabled, numTests, false);
     }
     return getDMATestStatus(testStatus);
 }
@@ -709,10 +577,6 @@ dtcem.RW_ResetTestStatus = function (POST, testStatus) {
     }
     testStatus.regPassed = 0;
     testStatus.regFailed = 0;
-    testStatus.pciePassed = 0;
-    testStatus.pcieFailed = 0;
-    testStatus.dmaPassed = 0;
-    testStatus.dmaFailed = 0;
     testStatus.daqPassed = 0;
     testStatus.daqFailed = 0;
     testStatus.dcsPassed = 0;
@@ -823,25 +687,6 @@ dtcem.RW_RunScript = function (POST) {
 }
 */
 
-dtcem.RW_TestControl = function (POST) {
-    console.log("Starting or Stopping a DMA test");
-    var dma = POST.dma;
-    var started = POST.started;
-    var packetSize = POST.size;
-    var enableLoopback = POST.loopbackEnabled;
-    var enableTXChecker = POST.txChecker;
-    var enableRXGenerator = POST.rxGenerator;
-    if (started) {
-        logMessage("a DMA test on channel " + dma, "started", POST.who);
-        started = startTest(dma, packetSize, enableLoopback, enableTXChecker, enableRXGenerator);
-    } else {
-        logMessage("a DMA test on channel " + dma, "stopped", POST.who);
-        started = stopTest(dma);
-    }
-    
-    return started;
-}
-
 /* Register writing removed as of v1.0, sorry
 dtcem.RW_RegIO = function (POST) {
     console.log("In RO Register IO handler");
@@ -899,16 +744,6 @@ dtcem.GET_RPayload = function () {
     return { name: "rpayload", value: receiveP, time: new Date() };
 }
 
-dtcem.GET_PCIeTransmit = function () {
-    dtcem.RO_SystemStatus();
-    return { name: "pcieTX", value: systemStatus.pcie.stats.WritesRate, time: new Date() };
-};
-
-dtcem.GET_PCIeReceive = function () {
-    dtcem.RO_SystemStatus();
-    return { name: "pcieRX", value: systemStatus.pcie.stats.ReadsRate, time: new Date() };
-};
-
 dtcem.GET_DMA0Transmit = function () {
     return { name: "dma0TX", value: getDMAWriteRate(0), time: new Date() };
 };
@@ -933,8 +768,6 @@ dtcem.GET_DMATestStatistics = function (testStatus) {
         daqC2S: getDMAReadRate(0), daqS2C: getDMAWriteRate(0), daqPassed: testStatus.daqPassed, daqFailed: testStatus.daqFailed,
         dcsC2S: getDMAReadRate(1), dcsS2C: getDMAWriteRate(1), dcsPassed: testStatus.dcsPassed, dcsFailed: testStatus.dcsFailed,
         regPassed: testStatus.regPassed, regFailed: testStatus.regFailed, 
-        pciePassed: testStatus.pciePassed, pcieFailed: testStatus.pcieFailed,
-        dmaPassed: testStatus.dmaPassed, dmaFailed: testStatus.dmaFailed,
         loopbackPassed: testStatus.loopbackPassed, loopbackFailed: testStatus.loopbackFailed,
         testRunning: testStatus.testRunning
     };

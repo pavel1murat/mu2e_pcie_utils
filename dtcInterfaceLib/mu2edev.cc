@@ -11,10 +11,17 @@
 
 #define TRACE_NAME "MU2EDEV"
 #ifndef _WIN32
-# include "trace.h"
+# include <trace.h>
 #else
-# define TRACE(...)
-# define TRACE_CNTL(...)
+# ifndef TRACE
+#  include <stdio.h>
+#  ifdef _DEBUG
+#   define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
+#  else
+#   define TRACE(...)
+#  endif
+# endif
+# pragma warning(disable: 4351)
 #endif
 #include "mu2edev.hh"
 
@@ -233,6 +240,7 @@ void mu2edev::meta_dump(int chn, int dir)
     }
     else {
 #ifdef _WIN32
+		TRACE(17, "mu2edev::meta_dump: chn=%i, dir=%i", chn, dir);
         return;
 #else
         int retsts = 0;

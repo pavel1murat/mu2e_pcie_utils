@@ -95,6 +95,7 @@ main(int	argc
     bool checkSERDES = false;
     bool quiet = false;
 	bool rawOutput = false;
+	bool useCFOEmulator = true;
 	std::string rawOutputFile = "/tmp/mu2eUtil.raw";
     unsigned delay = 0;
     unsigned number = 1;
@@ -191,16 +192,16 @@ main(int	argc
         device.init();
         for (unsigned ii = 0; ii < number; ++ii)
         {
-			mu2e_databuff_t buffer;
+			mu2e_databuff_t *buffer = (mu2e_databuff_t*)new mu2e_databuff_t();
             int tmo_ms = 0;
-            int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
-            TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, buffer);
+            int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)buffer, tmo_ms);
+            TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, *buffer);
 			if (rawOutput) {
 				std::ofstream outputStream;
 				outputStream.open(rawOutputFile, std::ios::out | std::ios::app | std::ios::binary);
 				for (int ii = 0; ii < sts; ++ii)
 				{
-					outputStream.write((char*)&(buffer[ii]), sizeof(unsigned char));
+					outputStream.write((char*)(buffer[ii]), sizeof(unsigned char));
 				}
 				outputStream.close();
 			}
@@ -218,8 +219,8 @@ main(int	argc
         if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
 
         mu2edev device = thisDTC->GetDevice();
-        DTCSoftwareCFO cfo(thisDTC, packetCount, quiet, false);
-        cfo.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
+        DTCSoftwareCFO *cfo = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, quiet, false);
+        cfo->SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
 
         for (unsigned ii = 0; ii < number; ++ii)
         {
@@ -305,8 +306,8 @@ main(int	argc
         double totalIncTime = 0, totalSize = 0, totalDevTime = 0;
         auto startTime = std::chrono::high_resolution_clock::now();
 
-        DTCSoftwareCFO theCFO(thisDTC, packetCount, quiet);
-        theCFO.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
+        DTCSoftwareCFO *theCFO = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, quiet);
+        theCFO->SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
         double readoutRequestTime = thisDTC->GetDeviceTime();
         thisDTC->ResetDeviceTime();
 
@@ -448,8 +449,8 @@ main(int	argc
     {
         DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
 
-        DTCSoftwareCFO theCFO(thisDTC, packetCount, quiet);
-        theCFO.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
+        DTCSoftwareCFO *theCFO = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, quiet);
+        theCFO->SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
 
         for (unsigned ii = 0; ii < number; ++ii)
         {

@@ -3,6 +3,9 @@
 // Eric Flumerfelt
 // January 27, 2015
 //
+#ifndef MU2ESIM_HH
+#define MU2ESIM_HH 1
+
 #include <cstdint>
 #ifndef _WIN32
 #include "linux_driver/mymodule2/mu2e_mmap_ioctl.h" // 
@@ -13,9 +16,10 @@
 #include <mutex>
 #include <set>
 #include <map>
+#include <thread>
 #include "DTC_Types.h"
 
-#define SIM_BUFFCOUNT 4
+#define SIM_BUFFCOUNT 4U
 
 struct mu2esim
 {
@@ -37,12 +41,13 @@ struct mu2esim
 private:
     unsigned delta_(int chn, int dir);
     void clearBuffer_(int chn, bool increment = true);
+	void CFOEmulator_();
 
     //const DTCLib::DTC_Timestamp NULL_TIMESTAMP = DTCLib::DTC_Timestamp(0xffffffffffffffff);
     std::unordered_map<uint16_t, uint32_t> registers_;
-    size_t hwIdx_[MU2E_MAX_CHANNELS];
-    size_t swIdx_[MU2E_MAX_CHANNELS];
-    size_t buffSize_[MU2E_MAX_CHANNELS][SIM_BUFFCOUNT];
+    unsigned hwIdx_[MU2E_MAX_CHANNELS];
+	unsigned swIdx_[MU2E_MAX_CHANNELS];
+	uint64_t buffSize_[MU2E_MAX_CHANNELS][SIM_BUFFCOUNT];
     mu2e_databuff_t* dmaData_[MU2E_MAX_CHANNELS][SIM_BUFFCOUNT];
     //mu2e_databuff_t* dmaDAQData_[SIM_BUFFCOUNT];
     //mu2e_databuff_t* dmaDCSData_[SIM_BUFFCOUNT];
@@ -58,4 +63,8 @@ private:
     std::map<uint64_t, uint16_t> dataRequestReceived_[6][6];
     std::mutex drMutex_;
     DTCLib::DTC_DCSRequestPacket dcsRequest_[6][6];
+	std::thread cfoEmulatorThread_;
+	bool cancelCFO_;
 };
+
+#endif

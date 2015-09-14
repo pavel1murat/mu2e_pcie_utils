@@ -22,12 +22,10 @@
 #endif
 
 DTCLib::DTCLibTest::DTCLibTest() : running_(false), classPassed_(0), classFailed_(0),
-regPassed_(0), regFailed_(0), pciePassed_(0), pcieFailed_(0), dmaStatePassed_(0),
-dmaStateFailed_(0), daqPassed_(0), daqFailed_(0), dcsPassed_(0), dcsFailed_(0),
+regPassed_(0), regFailed_(0), daqPassed_(0), daqFailed_(0), dcsPassed_(0), dcsFailed_(0),
 classPassedTemp_(0), classFailedTemp_(0), regPassedTemp_(0), regFailedTemp_(0),
-pciePassedTemp_(0), pcieFailedTemp_(0), dmaStatePassedTemp_(0), dmaStateFailedTemp_(0),
 daqPassedTemp_(0), daqFailedTemp_(0), dcsPassedTemp_(0), dcsFailedTemp_(0), nTests_(0),
-runClassTest_(false), runRegTest_(false), runPCIeTest_(false), runDMAStateTest_(false),
+runClassTest_(false), runRegTest_(false),
 runDAQTest_(false), runDCSTest_(false)
 {
     thisDTC_ = new DTC();
@@ -43,13 +41,11 @@ DTCLib::DTCLibTest::~DTCLibTest()
 }
 
 // Test Control
-void DTCLib::DTCLibTest::startTest(bool classEnabled, bool regIOEnabled, bool pcieEnabled, bool dmaStateEnabled,
+void DTCLib::DTCLibTest::startTest(bool classEnabled, bool regIOEnabled,
     bool daqEnabled, bool dcsEnabled, int nTests, bool printMessages)
 {
     runClassTest_ = classEnabled;
     runRegTest_ = regIOEnabled;
-    runPCIeTest_ = pcieEnabled;
-    runDMAStateTest_ = dmaStateEnabled;
     runDCSTest_ = dcsEnabled;
     runDAQTest_ = daqEnabled;
     nTests_ = nTests;
@@ -100,34 +96,6 @@ int DTCLib::DTCLibTest::regFailed()
 {
     int result = regFailed_ - regFailedTemp_;
     regFailedTemp_ = regFailed_;
-    return result;
-}
-
-int DTCLib::DTCLibTest::pciePassed()
-{
-    int result = pciePassed_ - pciePassedTemp_;
-    pciePassedTemp_ = pciePassed_;
-    return result;
-}
-
-int DTCLib::DTCLibTest::pcieFailed()
-{
-    int result = pcieFailed_ - pcieFailedTemp_;
-    pcieFailedTemp_ = pcieFailed_;
-    return result;
-}
-
-int DTCLib::DTCLibTest::dmaStatePassed()
-{
-    int result = dmaStatePassed_ - dmaStatePassedTemp_;
-    dmaStatePassedTemp_ = dmaStatePassed_;
-    return result;
-}
-
-int DTCLib::DTCLibTest::dmaStateFailed()
-{
-    int result = dmaStateFailed_ - dmaStateFailedTemp_;
-    dmaStateFailedTemp_ = dmaStateFailed_;
     return result;
 }
 
@@ -182,12 +150,6 @@ void DTCLib::DTCLibTest::doTests()
         if (runRegTest_){
             doRegTest();
         }
-        if (runPCIeTest_){
-            doPCIeTest();
-        }
-        if (runDMAStateTest_){
-            doDMAStateTest();
-        }
         if (runDCSTest_){
             doDCSTest();
         }
@@ -209,16 +171,6 @@ void DTCLib::DTCLibTest::doTests()
         totalPassed += regPassed_;
         totalTests += regPassed_ + regFailed_;
         std::cout << std::dec << regPassed_ << " of " << (regPassed_ + regFailed_) << " register I/O tests passed." << std::endl;
-    }
-    if (runPCIeTest_){
-        totalPassed += pciePassed_;
-        totalTests += pciePassed_ + pcieFailed_;
-        std::cout << std::dec << pciePassed_ << " of " << (pciePassed_ + pcieFailed_) << " PCIe Status tests passed." << std::endl;
-    }
-    if (runDMAStateTest_){
-        totalPassed += dmaStatePassed_;
-        totalTests += dmaStatePassed_ + dmaStateFailed_;
-        std::cout << std::dec << dmaStatePassed_ << " of " << (dmaStatePassed_ + dmaStateFailed_) << " DMA State tests passed." << std::endl;
     }
     if (runDCSTest_){
         totalPassed += dcsPassed_;
@@ -422,77 +374,6 @@ void DTCLib::DTCLibTest::doRegTest()
     }
 }
 
-void DTCLib::DTCLibTest::doPCIeTest()
-{
-    if (printMessages_) {
-        std::cout << "Test 2: PCIe State and Stats" << std::endl;
-    }
-    try {
-        DTC_PCIeState state = thisDTC_->ReadPCIeState();
-        DTC_PCIeStat stats = thisDTC_->ReadPCIeStats();
-        if (printMessages_) {
-            std::cout << "PCIe State: " << std::endl
-                << state.toString() << std::endl << std::endl;
-            std::cout << "PCIe Stats, RX: " << stats.LRX << ", TX: " << stats.LTX << std::endl;
-            std::cout << "Test Passed" << std::endl;
-        }
-        ++pciePassed_;
-    }
-    catch (std::exception ex)
-    {
-        if (printMessages_) {
-            std::cout << "Test failed with exception: " << ex.what() << std::endl;
-        }
-        ++pcieFailed_;
-    }
-    if (printMessages_) {
-        std::cout << std::endl << std::endl;
-    }
-}
-
-void DTCLib::DTCLibTest::doDMAStateTest()
-{
-    if (printMessages_) {
-        std::cout << "Test 3: DMA State and Stats" << std::endl;
-    }
-    try {
-        DTC_DMAState eng0 = thisDTC_->ReadDMAState(DTC_DMA_Engine_DAQ, DTC_DMA_Direction_S2C);
-        DTC_DMAState eng1 = thisDTC_->ReadDMAState(DTC_DMA_Engine_DAQ, DTC_DMA_Direction_C2S);
-        DTC_DMAState eng32 = thisDTC_->ReadDMAState(DTC_DMA_Engine_DCS, DTC_DMA_Direction_S2C);
-        DTC_DMAState eng33 = thisDTC_->ReadDMAState(DTC_DMA_Engine_DCS, DTC_DMA_Direction_C2S);
-
-        DTC_DMAStats eng0Stats = thisDTC_->ReadDMAStats(DTC_DMA_Engine_DAQ, DTC_DMA_Direction_S2C);
-        DTC_DMAStats eng1Stats = thisDTC_->ReadDMAStats(DTC_DMA_Engine_DAQ, DTC_DMA_Direction_C2S);
-        DTC_DMAStats eng32Stats = thisDTC_->ReadDMAStats(DTC_DMA_Engine_DCS, DTC_DMA_Direction_S2C);
-        DTC_DMAStats eng33Stats = thisDTC_->ReadDMAStats(DTC_DMA_Engine_DCS, DTC_DMA_Direction_C2S);
-
-        if (printMessages_) {
-            std::cout << "DMA State: " << std::endl
-                << "DAQ Channel, S2C: " << eng0.toString() << std::endl
-                << "DAQ Channel, C2S: " << eng1.toString() << std::endl
-                << "DCS Channel, S2C: " << eng32.toString() << std::endl
-                << "DCS Channel, C2S: " << eng33.toString() << std::endl;
-            std::cout << "DMA Stats: " << std::endl
-                << "DAQ Channel, S2C: " << eng0Stats.Stats[0].toString() << std::endl
-                << "DAQ Channel, C2S: " << eng1Stats.Stats[0].toString() << std::endl
-                << "DCS Channel, S2C: " << eng32Stats.Stats[0].toString() << std::endl
-                << "DCS Channel, C2S: " << eng33Stats.Stats[0].toString() << std::endl;
-            std::cout << "Test Passed." << std::endl;
-        }
-        ++dmaStatePassed_;
-    }
-    catch (std::exception ex)
-    {
-        if (printMessages_) {
-            std::cout << "Test failed with exception: " << ex.what() << std::endl;
-        }
-        ++dmaStateFailed_;
-    }
-    if (printMessages_) {
-        std::cout << std::endl << std::endl;
-    }
-}
-
 void DTCLib::DTCLibTest::doDCSTest()
 {
     if (printMessages_) {
@@ -547,7 +428,7 @@ void DTCLib::DTCLibTest::doDAQTest()
         thisDTC_->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
         if (!thisDTC_->ReadSERDESOscillatorClock()) { thisDTC_->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
 
-        DTCSoftwareCFO theCFO(thisDTC_, 0, !printMessages_);
+        DTCSoftwareCFO theCFO(thisDTC_, true, 0, !printMessages_);
         theCFO.SendRequestForTimestamp();
         std::vector<void*> data = thisDTC_->GetData();
         if (data.size() > 0)

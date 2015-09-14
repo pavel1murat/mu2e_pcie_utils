@@ -11,6 +11,7 @@
 #include "../linux_driver/mymodule2/mu2e_mmap_ioctl.h"
 #endif
 
+struct mu2esim;
 namespace DTCLib
 {
     const std::string ExpectedDesignVersion = "v1.4_2015-07-01-00";
@@ -21,7 +22,6 @@ namespace DTCLib
         DTC_Register_DTCControl = 0x9100,
         DTC_Register_DMATransferLength = 0x9104,
         DTC_Register_SERDESLoopbackEnable = 0x9108,
-        DTC_Register_SERDESLoopbackEnable_Temp = 0x9168,
         DTC_Register_SERDESOscillatorStatus = 0x910C,
         DTC_Register_ROCEmulationEnable = 0x9110,
         DTC_Register_RingEnable = 0x9114,
@@ -39,7 +39,6 @@ namespace DTCLib
         DTC_Register_DMATimeoutPreset = 0x9144,
         DTC_Register_ROCReplyTimeout = 0x9148,
         DTC_Register_ROCTimeoutError = 0x914C,
-        DTC_Register_ReceivePacketError = 0x9150,
         DTC_Register_TimestampPreset0 = 0x9180,
         DTC_Register_TimestampPreset1 = 0x9184,
         DTC_Register_DataPendingTimer = 0x9188,
@@ -47,6 +46,12 @@ namespace DTCLib
         DTC_Register_FIFOFullErrorFlag0 = 0x9190,
         DTC_Register_FIFOFullErrorFlag1 = 0x9194,
         DTC_Register_FIFOFullErrorFlag2 = 0x9198,
+		DTC_Register_ReceivePacketError = 0x919C,
+		DTC_Register_CFOEmulationTimestampLow = 0x91A0,
+		DTC_Register_CFOEmulationTimestampHigh = 0x91A4,
+		DTC_Register_CFOEmulationRequestInterval = 0x91A8,
+		DTC_Register_CFOEmulationNumRequests = 0x91AC,
+		DTC_Register_CFOEmulationNumPackets = 0x91B0,
         DTC_Register_PacketSize = 0x9204,
         DTC_Register_FPGAPROMProgramStatus = 0x9404,
         DTC_Register_FPGACoreAccess = 0x9408,
@@ -54,15 +59,17 @@ namespace DTCLib
     };
     static const std::vector<DTC_Register> DTC_Registers = { DTC_Register_DesignVersion, DTC_Register_DesignDate,
         DTC_Register_DTCControl, DTC_Register_DMATransferLength, DTC_Register_SERDESLoopbackEnable,
-        DTC_Register_SERDESLoopbackEnable_Temp, DTC_Register_SERDESOscillatorStatus, DTC_Register_ROCEmulationEnable,
+        DTC_Register_SERDESOscillatorStatus, DTC_Register_ROCEmulationEnable,
         DTC_Register_RingEnable, DTC_Register_SERDESReset, DTC_Register_SERDESRXDisparityError,
         DTC_Register_SERDESRXCharacterNotInTableError, DTC_Register_SERDESUnlockError, DTC_Register_SERDESPLLLocked,
         DTC_Register_SERDESTXBufferStatus, DTC_Register_SERDESRXBufferStatus, DTC_Register_SERDESRXStatus,
         DTC_Register_SERDESResetDone, DTC_Register_SERDESEyescanData, DTC_Register_SERDESRXCDRLock,
         DTC_Register_DMATimeoutPreset, DTC_Register_ROCReplyTimeout, DTC_Register_ROCTimeoutError, 
-        DTC_Register_ReceivePacketError, DTC_Register_TimestampPreset0, DTC_Register_TimestampPreset1,
-        DTC_Register_DataPendingTimer, DTC_Register_NUMROCs, DTC_Register_FIFOFullErrorFlag0, 
-        DTC_Register_FIFOFullErrorFlag1, DTC_Register_FIFOFullErrorFlag2, DTC_Register_PacketSize, 
+        DTC_Register_TimestampPreset0, DTC_Register_TimestampPreset1, DTC_Register_DataPendingTimer, 
+		DTC_Register_NUMROCs, DTC_Register_FIFOFullErrorFlag0, DTC_Register_FIFOFullErrorFlag1, 
+		DTC_Register_FIFOFullErrorFlag2, DTC_Register_ReceivePacketError, DTC_Register_CFOEmulationTimestampLow,
+		DTC_Register_CFOEmulationTimestampHigh, DTC_Register_CFOEmulationRequestInterval,
+		DTC_Register_CFOEmulationNumRequests, DTC_Register_CFOEmulationNumPackets, DTC_Register_PacketSize, 
         DTC_Register_FPGAPROMProgramStatus, DTC_Register_FPGACoreAccess };
 
     enum DTC_Ring_ID : uint8_t {
@@ -580,6 +587,7 @@ namespace DTCLib
 
     class DTC_DataPacket {
         friend class DTC;
+		friend struct ::mu2esim;
         friend class DTC_DMAPacket;
         friend class DTC_ReadoutRequestPacket;
         friend class DTC_DataRequestPacket;
@@ -805,107 +813,6 @@ namespace DTCLib
             stream << "{\"low\":" << error.GetData()[0] << ",\"high\":" << error.GetData()[1] << "}";
             return stream;
         }
-    };
-
-    struct DTC_TestMode {
-    public:
-        bool loopbackEnabled;
-        bool txChecker;
-        bool rxGenerator;
-        bool state_;
-    public:
-        DTC_TestMode();
-        DTC_TestMode(bool state, bool loopback, bool txChecker, bool rxGenerator);
-        DTC_TestMode(uint32_t input);
-        bool GetLoopbackState() { return loopbackEnabled; }
-        bool GetTXCheckerState() { return txChecker; }
-        bool GetRXGeneratorState() { return rxGenerator; }
-        bool GetState() { return state_; }
-        uint32_t GetWord() const;
-        std::string toString();
-    };
-
-    struct DTC_TestCommand {
-    public:
-        DTC_TestMode TestMode;
-        int PacketSize;
-        DTC_DMA_Engine Engine;
-        DTC_TestCommand();
-        DTC_TestCommand(DTC_DMA_Engine dma, bool state = false, int PacketSize = 0, bool loopback = false, bool txChecker = false, bool rxGenerator = false);
-        DTC_TestCommand(m_ioc_cmd_t in);
-        m_ioc_cmd_t GetCommand() const;
-        DTC_TestMode GetMode() { return TestMode; }
-
-    };
-
-    struct DTC_DMAState {
-    public:
-        DTC_DMA_Engine Engine;
-        DTC_DMA_Direction Direction;
-        int BDs;                    /**< Total Number of BDs */
-        int Buffers;                /**< Total Number of buffers */
-        uint32_t MinPktSize;        /**< Minimum packet size */
-        uint32_t MaxPktSize;        /**< Maximum packet size */
-        int BDerrs;                 /**< Total BD errors */
-        int BDSerrs;                /**< Total BD short errors - only TX BDs */
-        int IntEnab;                /**< Interrupts enabled or not */
-        DTC_TestMode TestMode;
-        DTC_DMAState() {}
-        DTC_DMAState(m_ioc_engstate_t in);
-        std::string toString();
-    };
-
-    struct DTC_DMAStat
-    {
-    public:
-        DTC_DMA_Engine Engine;
-        DTC_DMA_Direction Direction;
-        uint32_t LBR;           /**< Last Byte Rate */
-        uint32_t LAT;           /**< Last Active Time */
-        uint32_t LWT;           /**< Last Wait Time */
-        DTC_DMAStat() : Engine(DTC_DMA_Engine_Invalid), Direction(DTC_DMA_Direction_Invalid), LBR(0), LAT(0), LWT(0) {}
-        DTC_DMAStat(DMAStatistics in);
-        std::string toString();
-    };
-    struct DTC_DMAStats {
-    public:
-        std::vector<DTC_DMAStat> Stats;
-        DTC_DMAStats() {}
-        DTC_DMAStats(m_ioc_engstats_t in);
-        DTC_DMAStats getData(DTC_DMA_Engine dma, DTC_DMA_Direction dir);
-        void addStat(DTC_DMAStat in) { Stats.push_back(in); }
-        size_t size() { return Stats.size(); }
-        DTC_DMAStat at(int index) { return Stats.at(index); }
-    };
-
-    struct DTC_PCIeState {
-    public:
-        uint32_t Version;       /**< Hardware design version info */
-        bool LinkState;              /**< Link State - up or down */
-        int LinkSpeed;              /**< Link Speed */
-        int LinkWidth;              /**< Link Width */
-        uint32_t VendorId;     /**< Vendor ID */
-        uint32_t DeviceId;    /**< Device ID */
-        int IntMode;                /**< Legacy or MSI interrupts */
-        int MPS;                    /**< Max Payload Size */
-        int MRRS;                   /**< Max Read Request Size */
-        int InitFCCplD;             /**< Initial FC Credits for Completion Data */
-        int InitFCCplH;             /**< Initial FC Credits for Completion Header */
-        int InitFCNPD;              /**< Initial FC Credits for Non-Posted Data */
-        int InitFCNPH;              /**< Initial FC Credits for Non-Posted Data */
-        int InitFCPD;               /**< Initial FC Credits for Posted Data */
-        int InitFCPH;               /**< Initial FC Credits for Posted Data */
-        DTC_PCIeState() {}
-        DTC_PCIeState(m_ioc_pcistate_t in);
-        std::string toString();
-    };
-
-    struct DTC_PCIeStat {
-    public:
-        uint32_t LTX;           /**< Last TX Byte Rate */
-        uint32_t LRX;           /**< Last RX Byte Rate */
-        DTC_PCIeStat() {}
-        DTC_PCIeStat(TRNStatistics in);
     };
 
     struct DTC_RingEnableMode {

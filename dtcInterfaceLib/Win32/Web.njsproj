@@ -22,9 +22,7 @@
     <Compile Include="..\web\modules\base\client\MakeGraph.js" />
     <Compile Include="..\web\modules\base\server\base_module.js" />
     <Compile Include="..\web\modules\DTC\client\client.js" />
-    <Compile Include="..\web\modules\DTC\client\DMATest.js" />
     <Compile Include="..\web\modules\DTC\client\DMATest2.js" />
-    <Compile Include="..\web\modules\DTC\client\PerfMon.js" />
     <Compile Include="..\web\modules\DTC\server\DTC_module.js" />
     <Compile Include="..\web\serverbase.js" />
   </ItemGroup>
@@ -50,10 +48,7 @@
     <Content Include="..\web\modules\DTC\client\client.html" />
     <Content Include="..\web\modules\DTC\client\DataRequestPacket.html" />
     <Content Include="..\web\modules\DTC\client\DCSRequestPacket.html" />
-    <Content Include="..\web\modules\DTC\client\DMATest.html" />
     <Content Include="..\web\modules\DTC\client\DMATest2.html" />
-    <Content Include="..\web\modules\DTC\client\PerfMon.css" />
-    <Content Include="..\web\modules\DTC\client\PerfMon.html" />
     <Content Include="..\web\modules\DTC\client\ReadoutRequestPacket.html" />
     <Content Include="..\web\modules\DTC\client\style.css" />
     <Content Include="..\web\modules\DTC\server\gmetric.node" />

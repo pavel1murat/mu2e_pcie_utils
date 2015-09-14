@@ -21,23 +21,25 @@
 namespace DTCLib {
     class DTCSoftwareCFO {
     public:
-        DTCSoftwareCFO(int debugPacketCount = 0, bool quiet = false, bool asyncRR = false);
-        DTCSoftwareCFO(DTC* dtc, int debugPacketCount = 0, bool quiet = false, bool asyncRR = false);
+        DTCSoftwareCFO(bool useCFOEmulator, uint16_t debugPacketCount = 0, bool quiet = false, bool asyncRR = false);
+        DTCSoftwareCFO(DTC* dtc, bool useCFOEmulator, uint16_t debugPacketCount = 0, bool quiet = false, bool asyncRR = false);
         ~DTCSoftwareCFO();
 
         void SendRequestForTimestamp(DTC_Timestamp ts = DTC_Timestamp((uint64_t)0));
         void SendRequestsForRange(int count, DTC_Timestamp start = DTC_Timestamp((uint64_t)0),
-            bool increment = true, int delayBetweenDataRequests = 0, int requestsAhead = 1);
-        void SendRequestsForRangeImplAsync(DTC_Timestamp start, int count,
-            bool increment = true, int delayBetweenDataRequests = 0);
-        void SendRequestsForRangeImplSync(DTC_Timestamp start, int count,
-            bool increment = true, int delayBetweenDataRequests = 0, int requestsAhead = 1);
+            bool increment = true, uint32_t delayBetweenDataRequests = 0, int requestsAhead = 1);
         void setQuiet(bool quiet) { quiet_ = quiet; }
-        void setDebugPacketCount(int dbc) { debugPacketCount_ = dbc; }
+        void setDebugPacketCount(uint16_t dbc) { debugPacketCount_ = dbc; }
         void WaitForRequestsToBeSent();
+	private:
+        void SendRequestsForRangeImplAsync(DTC_Timestamp start, int count,
+            bool increment = true, uint32_t delayBetweenDataRequests = 0);
+        void SendRequestsForRangeImplSync(DTC_Timestamp start, int count,
+            bool increment = true, uint32_t delayBetweenDataRequests = 0, int requestsAhead = 1);
     private:
         // Request Parameters
-        int debugPacketCount_;
+		bool useCFOEmulator_;
+        uint16_t debugPacketCount_;
         bool quiet_; // Don't print as much
         bool asyncRR_;
 

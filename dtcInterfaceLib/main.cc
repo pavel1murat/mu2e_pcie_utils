@@ -9,9 +9,9 @@
 
 void usage() {
     std::cout << "This program runs several functionality tests of libDTCInterface." << std::endl
-        << "If run with no options, it will run all 6 tests." << std::endl
+        << "If run with no options, it will run all 4 tests." << std::endl
         << "Otherwise, it accepts a space-delimited list of the tests to run," << std::endl
-        << "defined either by test number {0,1,2,3,4,5}, or test name {class, reg, pcie, stats, dcs, daq}" << std::endl
+        << "defined either by test number {0,1,4,5}, or test name {class, reg, dcs, daq}" << std::endl
         << "It also accepts a -n argument indicating how many iterations of the tests it should run" << std::endl;
 }
 
@@ -19,8 +19,6 @@ int main(int argc, char* argv[]) {
     int testCount = 1;
     bool classTest = false,
         registerTest = false,
-        pcieTest = false,
-        dmaStateTest = false,
         dcsTest = false,
         daqTest = false;
     bool testsSpecified = false;
@@ -53,12 +51,6 @@ int main(int argc, char* argv[]) {
                 case 1:
                     registerTest = true;
                     break;
-                case 2:
-                    pcieTest = true;
-                    break;
-                case 3:
-                    dmaStateTest = true;
-                    break;
                 case 4:
                     dcsTest = true;
                     break;
@@ -78,14 +70,6 @@ int main(int argc, char* argv[]) {
                     testsSpecified = true;
                     registerTest = true;
                 }
-                else if (arg.find("pcie") != std::string::npos) {
-                    testsSpecified = true;
-                    pcieTest = true;
-                }
-                else if (arg.find("stats") != std::string::npos) {
-                    dmaStateTest = true;
-                    testsSpecified = true;
-                }
                 else if (arg.find("dcs") != std::string::npos) {
                     testsSpecified = true;
                     dcsTest = true;
@@ -104,8 +88,6 @@ int main(int argc, char* argv[]) {
     if (!testsSpecified){
         classTest = true;
         registerTest = true;
-        pcieTest = true;
-        dmaStateTest = true;
         dcsTest = true;
         daqTest = true;
     }
@@ -113,15 +95,13 @@ int main(int argc, char* argv[]) {
     std::cout << "Running tests: "
         << (classTest ? "Class Construction/Destruction " : "")
         << (registerTest ? "Register I/O " : "")
-        << (pcieTest ? "PCIe State/Stats " : "")
-        << (dmaStateTest ? "DMA State/Stats " : "")
         << (dcsTest ? "DCS DMA I/O " : "")
         << (daqTest ? "DAQ DMA I/O " : "")
         << ", " << testCount << " times." << std::endl;
 
     DTCLib::DTCLibTest* tester = new DTCLib::DTCLibTest();
 
-    tester->startTest(classTest, registerTest, pcieTest, dmaStateTest, daqTest, dcsTest, testCount, true);
+    tester->startTest(classTest, registerTest, daqTest, dcsTest, testCount, true);
 
     while (tester->isRunning()) {
         usleep(500000);
