@@ -562,7 +562,7 @@ std::string DTCLib::DTC::ConsoleFormatRegDump()
 {
 	std::ostringstream o;
 	o << "Memory Map: " << std::endl;
-	o << "    Address | Value      | Name                        | Translation" << std::endl;
+	o << "    Address | Value      | Name                         | Translation" << std::endl;
 	for (auto i : DTC_Registers)
 	{
 		o << "================================================================================" << std::endl;
@@ -894,15 +894,15 @@ std::string DTCLib::DTC::FormatRegister(const DTC_Register& address)
 		o << "0x" << ReadRegister(DTC_Register_CFOEmulationTimestampHigh);
 		break;
 	case DTC_Register_CFOEmulationRequestInterval:
-		o << "| DMA Packet Size              | ";
+		o << "| CFO Emu. Request Interval    | ";
 		o << "0x" << ReadCFOEmulationRequestInterval();
 		break;
 	case DTC_Register_CFOEmulationNumRequests:
-		o << "| DMA Packet Size              | ";
+		o << "| CFO Emulator Number Requests | ";
 		o << "0x" << ReadCFOEmulationNumRequests();
 		break;
 	case DTC_Register_CFOEmulationNumPackets:
-		o << "| DMA Packet Size              | ";
+		o << "| CFO Emulator Number Packets  | ";
 		o << "0x" << ReadCFOEmulationNumPackets();
 		break;
 	case DTC_Register_PacketSize:
