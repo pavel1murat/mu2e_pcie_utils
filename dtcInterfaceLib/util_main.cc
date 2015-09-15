@@ -82,6 +82,7 @@ void printHelpMsg() {
         << "    -a: Number of Readout Request/Data Requests to send before starting to read data (Default: 2)." << endl
         << "    -q: Quiet mode (Don't print)" << endl
         << "    -s: Stop on SERDES Error." << endl
+		<< "    -e: Use DTC CFO Emulator instead of DTCLib's SoftwareCFO" << endl
 		<< "    -f: RAW Output file path" << endl;
     exit(0);
 }
@@ -95,7 +96,7 @@ main(int	argc
     bool checkSERDES = false;
     bool quiet = false;
 	bool rawOutput = false;
-	bool useCFOEmulator = true;
+	bool useCFOEmulator = false;
 	std::string rawOutputFile = "/tmp/mu2eUtil.raw";
     unsigned delay = 0;
     unsigned number = 1;
@@ -134,6 +135,9 @@ main(int	argc
             case 's':
                 checkSERDES = true;
                 break;
+			case 'e':
+				useCFOEmulator = true;
+				break;
 			case 'f':
 				rawOutput = true;
 				rawOutputFile = getOptionString(&optind, &argv);
@@ -155,14 +159,16 @@ main(int	argc
     string pauseStr = pause ? "true" : "false";
     string incrementStr = incrementTimestamp ? "true" : "false";
     string quietStr = quiet ? "true" : "false";
-    cout << "Options are: "
-        << "Operation: " << string(op)
-        << ", Num: " << number
-        << ", Delay: " << delay
-        << ", TS Offset: " << timestampOffset
-        << ", PacketCount: " << packetCount
-        << ", Requests Ahead of Reads: " << requestsAhead
-        << ", Pause: " << pauseStr
+	string cfoStr = useCFOEmulator ? "true" : "false";
+	cout << "Options are: "
+		<< "Operation: " << string(op)
+		<< ", Num: " << number
+		<< ", Delay: " << delay
+		<< ", TS Offset: " << timestampOffset
+		<< ", PacketCount: " << packetCount
+		<< ", Requests Ahead of Reads: " << requestsAhead
+		<< ", Pause: " << pauseStr
+		<< ", Use DTC CFO Emulator: " << cfoStr
         << ", Increment TS: " << incrementStr
         << ", Quiet Mode: " << quietStr
         << endl;
@@ -335,7 +341,7 @@ main(int	argc
 
             if (data.size() > 0)
             {
-                TRACE(19, "util_main %lu packets returned", data.size());
+                TRACE(19, "util_main %zu packets returned", data.size());
                 if (!quiet) cout << data.size() << " packets returned\n";
                 for (size_t i = 0; i < data.size(); ++i)
                 {

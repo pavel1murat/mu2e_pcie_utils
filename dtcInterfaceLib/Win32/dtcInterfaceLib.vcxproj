@@ -104,6 +104,7 @@
     <RunCodeAnalysis>true</RunCodeAnalysis>
     <TargetExt>.lib</TargetExt>
     <IncludePath>..\..;$(IncludePath)</IncludePath>
+    <IntDir>dtcInterfaceLib\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
