@@ -550,7 +550,7 @@ namespace DTCLib
 				stream << "\"Loopback\":0,";
 				stream << "\"Performance\":0}";
 				break;
-			case DTC_SimMode_Hardware:
+			case DTC_SimMode_NoCFO:
 				stream << "{\"Disabled\":0,";
 				stream << "\"Tracker\":0,";
 				stream << "\"Calorimeter\":0,";

@@ -11,7 +11,9 @@ DTCLib::DTC_SimMode DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::string m
     if (modeName.find("racker") != std::string::npos) { return DTC_SimMode_Tracker; }
     if (modeName.find("alorimeter") != std::string::npos) { return DTC_SimMode_Calorimeter; }
     if (modeName.find("osmic") != std::string::npos) { return DTC_SimMode_CosmicVeto; }
-    if (modeName.find("ardware") != std::string::npos) { return DTC_SimMode_Hardware; }
+    if (modeName.find("oopback") != std::string::npos) { return DTC_SimMode_Loopback; }
+	if (modeName.find("CFO") != std::string::npos || modeName.find("cfo") != std::string::npos) { return DTC_SimMode_NoCFO; }
+	if (modeName.find("mulator") != std::string::npos) { return DTC_SimMode_ROCEmulator; }
     if (modeName.find("erformance") != std::string::npos) { return DTC_SimMode_Performance; }
 
     return DTC_SimMode_Disabled;
