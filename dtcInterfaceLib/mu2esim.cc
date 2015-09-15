@@ -87,7 +87,7 @@ int mu2esim::init(DTCLib::DTC_SimMode mode)
 	registers_[0x9010] = 0x00000040; // Recieve
 	registers_[0x9014] = 0x00000100; // SPayload
 	registers_[0x9018] = 0x00000400; // RPayload
-	registers_[0x9100] = 0x40000003; // Clear latched errors, System Clock, Timing Enable
+	registers_[0x9100] = 0x00000003; // System Clock, Timing Enable
 	registers_[0x9104] = 0x80000010; //Default value from HWUG
 	registers_[0x9108] = 0x00049249; // SERDES Loopback PCS Near-End
 	registers_[0x910C] = 0x2; // Initialization Complete, no IIC Error

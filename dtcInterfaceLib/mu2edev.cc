@@ -33,7 +33,7 @@ mu2edev::mu2edev() : devfd_(0), buffers_held_(0), simulator_(nullptr)
 
 int mu2edev::init(DTCLib::DTC_SimMode simMode)
 {
-    if (simMode != DTCLib::DTC_SimMode_Disabled && simMode != DTCLib::DTC_SimMode_Hardware) {
+    if (simMode != DTCLib::DTC_SimMode_Disabled && simMode != DTCLib::DTC_SimMode_Hardware && simMode != DTCLib::DTC_SimMode_ROCEmulator) {
         simulator_ = new mu2esim();
         simulator_->init(simMode);
     }
