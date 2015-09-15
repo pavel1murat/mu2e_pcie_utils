@@ -46,7 +46,7 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr), deviceTime_(
 		case '5':
 		case 'r':
 		case 'R':
-			simMode_ = DTCLib::STC_SimMode_ROCEmulator;
+			simMode_ = DTCLib::DTC_SimMode_ROCEmulator;
 			break;
 		case '6':
 		case 'p':
