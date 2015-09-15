@@ -176,7 +176,7 @@ main(int	argc
     if (op == "read")
     {
         cout << "Operation \"read\"" << endl;
-        DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
+        DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
         DTC_DataHeaderPacket* packet = thisDTC->ReadNextDAQPacket();
         cout << packet->toJSON() << '\n';
 		if (rawOutput) {
@@ -217,11 +217,7 @@ main(int	argc
     else if (op == "buffer_test")
     {
         cout << "Operation \"buffer_test\"" << endl;
-        DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
-        thisDTC->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
-        thisDTC->SetInternalSystemClock();
-        thisDTC->DisableTiming();
-        thisDTC->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
+        DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
         if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
 
         mu2edev device = thisDTC->GetDevice();
@@ -271,11 +267,7 @@ main(int	argc
     }
     else if (op == "HW")
     {
-        DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
-        thisDTC->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
-        thisDTC->SetInternalSystemClock();
-        thisDTC->DisableTiming();
-        thisDTC->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
+        DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 
         for (unsigned ii = 0; ii < number; ++ii)
         {
@@ -302,11 +294,7 @@ main(int	argc
     }
     else if (op == "DTC")
     {
-        DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
-        thisDTC->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
-        thisDTC->SetInternalSystemClock();
-        thisDTC->DisableTiming();
-        thisDTC->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
+        DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
         if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
 
         double totalIncTime = 0, totalSize = 0, totalDevTime = 0;
@@ -453,7 +441,7 @@ main(int	argc
     }
     else// if (argc > 1 && strcmp(argv[1],"get")==0)
     {
-        DTC *thisDTC = new DTC(DTC_SimMode_Hardware);
+        DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 
         DTCSoftwareCFO *theCFO = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, quiet);
         theCFO->SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);

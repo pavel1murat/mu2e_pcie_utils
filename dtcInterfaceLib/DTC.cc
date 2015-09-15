@@ -39,9 +39,9 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr), deviceTime_(
 			simMode_ = DTCLib::DTC_SimMode_CosmicVeto;
 			break;
 		case '4':
-		case 'h':
-		case 'H':
-			simMode_ = DTCLib::DTC_SimMode_Hardware;
+		case 'n':
+		case 'N':
+			simMode_ = DTCLib::DTC_SimMode_NoCFO;
 			break;
 		case '5':
 		case 'r':
@@ -49,6 +49,11 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr), deviceTime_(
 			simMode_ = DTCLib::DTC_SimMode_ROCEmulator;
 			break;
 		case '6':
+		case 'l':
+		case 'L':
+			simMode_ = DTCLib::DTC_SimMode_Loopback;
+			break;
+		case '7':
 		case 'p':
 		case 'P':
 			simMode_ = DTCLib::DTC_SimMode_Performance;
@@ -84,15 +89,17 @@ DTCLib::DTC_SimMode DTCLib::DTC::SetSimMode(DTC_SimMode mode)
 			DisableRing(ring);
 		}
 		EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
-		if (simMode_ == DTC_SimMode_Hardware)
+		if (simMode_ == DTC_SimMode_Loopback)
 		{
 			SetSERDESLoopbackMode(DTC_Ring_0, DTC_SERDESLoopbackMode_NearPCS);
 			DisableROCEmulator(DTC_Ring_0);
+			SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
 		}
-		else 
+		else if(simMode_ == DTC_SimMode_ROCEmulator)
 		{
 			SetSERDESLoopbackMode(DTC_Ring_0, DTC_SERDESLoopbackMode_Disabled);
 			EnableROCEmulator(DTC_Ring_0);
+			SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
 		}
 		SetInternalSystemClock();
 		DisableTiming();
@@ -835,7 +842,7 @@ std::string DTCLib::DTC::FormatRegister(const DTC_Register& address)
 				o << ", " << std::endl;
 				o << "                                                        | ";
 			}
-			o << "Ring " << (int)r << ": " << ReadRingROCCount(r);
+			o << "Ring " << (int)r << ": " << DTC_ROCIDConverter(ReadRingROCCount(r, false));
 		}
 		break;
 	case DTC_Register_FIFOFullErrorFlag0:
