@@ -442,7 +442,8 @@ namespace DTCLib
         DTC_SimMode_Calorimeter = 2,
         DTC_SimMode_CosmicVeto = 3,
         DTC_SimMode_Hardware = 4,
-        DTC_SimMode_Performance = 5,
+		DTC_SimMode_ROCEmulator = 5,
+        DTC_SimMode_Performance = 6,
     };
     struct DTC_SimModeConverter {
     public:
@@ -463,6 +464,8 @@ namespace DTCLib
                 return "CosmicVeto";
             case DTC_SimMode_Hardware:
                 return "Hardware";
+			case DTC_SimMode_ROCEmulator:
+				return "ROCEmulator";
             case DTC_SimMode_Performance:
                 return "Performance";
             }
@@ -477,6 +480,7 @@ namespace DTCLib
                 stream << "\"Calorimeter\":0,";
                 stream << "\"CosmicVeto\":0,";
                 stream << "\"Hardware\":0,";
+				stream << "\"ROCEmulator\":0,";
                 stream << "\"Performance\":0}";
                 break;
             case DTC_SimMode_Tracker:
@@ -485,6 +489,7 @@ namespace DTCLib
                 stream << "\"Calorimeter\":0,";
                 stream << "\"CosmicVeto\":0,";
                 stream << "\"Hardware\":0,";
+				stream << "\"ROCEmulator\":0,";
                 stream << "\"Performance\":0}";
                 break;
             case DTC_SimMode_Calorimeter:
@@ -493,6 +498,7 @@ namespace DTCLib
                 stream << "\"Calorimeter\":1,";
                 stream << "\"CosmicVeto\":0,";
                 stream << "\"Hardware\":0,";
+				stream << "\"ROCEmulator\":0,";
                 stream << "\"Performance\":0}";
                 break;
             case DTC_SimMode_CosmicVeto:
@@ -501,6 +507,7 @@ namespace DTCLib
                 stream << "\"Calorimeter\":0,";
                 stream << "\"CosmicVeto\":1,";
                 stream << "\"Hardware\":0,";
+				stream << "\"ROCEmulator\":0,";
                 stream << "\"Performance\":0}";
                 break;
             case DTC_SimMode_Hardware:
@@ -509,14 +516,25 @@ namespace DTCLib
                 stream << "\"Calorimeter\":0,";
                 stream << "\"CosmicVeto\":0,";
                 stream << "\"Hardware\":1,";
+				stream << "\"ROCEmulator\":0,";
                 stream << "\"Performance\":0}";
                 break;
+			case DTC_SimMode_ROCEmulator:
+				stream << "{\"Disabled\":0,";
+				stream << "\"Tracker\":0,";
+				stream << "\"Calorimeter\":0,";
+				stream << "\"CosmicVeto\":0,";
+				stream << "\"Hardware\":0,";
+				stream << "\"ROCEmulator\":1,";
+				stream << "\"Performance\":1}";
+				break;
             case DTC_SimMode_Performance:
                 stream << "{\"Disabled\":0,";
                 stream << "\"Tracker\":0,";
                 stream << "\"Calorimeter\":0,";
                 stream << "\"CosmicVeto\":0,";
                 stream << "\"Hardware\":0,";
+				stream << "\"ROCEmulator\":0,";
                 stream << "\"Performance\":1}";
                 break;
             }
