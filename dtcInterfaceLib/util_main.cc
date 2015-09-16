@@ -219,12 +219,20 @@ main(int	argc
     {
         cout << "Operation \"buffer_test\"" << endl;
         DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-        if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
+       // if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
 
         mu2edev device = thisDTC->GetDevice();
+        if(thisDTC->ReadSimMode() != DTC_SimMode_Loopback) {
         DTCSoftwareCFO *cfo = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, quiet, false);
         cfo->SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
-
+         }
+        else {
+            uint64_t ts = timestampOffset;
+            DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)0, DTC_DataStatus_Valid, DTC_Timestamp(ts));
+            std::cout << "Request: " << header.toJSON() << std::endl;
+            thisDTC->WriteDMADAQPacket(header);
+        }
+ 
         for (unsigned ii = 0; ii < number; ++ii)
         {
             cout << "Buffer Read " << ii << endl;
@@ -296,7 +304,7 @@ main(int	argc
     else if (op == "DTC")
     {
         DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-        if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
+        //if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
 
         double totalIncTime = 0, totalSize = 0, totalDevTime = 0;
         auto startTime = std::chrono::high_resolution_clock::now();
