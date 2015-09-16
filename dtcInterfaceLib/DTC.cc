@@ -1639,7 +1639,10 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataP
 		int retry = 3;
 		int errorCode = 0;
 		do {
+            
 			auto start = std::chrono::high_resolution_clock::now();
+			std::string output = "DTC::WriteDataPacket: Writing packet: " + packet.toJSON();
+			TRACE(21, output.c_str());
 			errorCode = device_.write_data(channel, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
 			deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
 				(std::chrono::high_resolution_clock::now() - start).count();
@@ -1655,6 +1658,8 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataP
 		int errorCode = 0;
 		do {
 			auto start = std::chrono::high_resolution_clock::now();
+			std::string output = "DTC::WriteDataPacket: Writing packet: " + packet.toJSON();
+			TRACE(21, output.c_str());
 			errorCode = device_.write_data(channel, packet.GetData(), packet.GetSize() * sizeof(uint8_t));
 			deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
 				(std::chrono::high_resolution_clock::now() - start).count();

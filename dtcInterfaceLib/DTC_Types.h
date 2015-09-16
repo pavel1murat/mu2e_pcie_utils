@@ -685,7 +685,7 @@ namespace DTCLib
 
 		void SetWord(uint16_t index, uint8_t data);
 		uint8_t GetWord(uint16_t index) const;
-		std::string toJSON();
+		std::string toJSON() const;
 		std::string toPacketFormat();
 		bool Resize(const uint16_t dmaSize);
 		uint16_t GetSize() const { return dataSize_; }

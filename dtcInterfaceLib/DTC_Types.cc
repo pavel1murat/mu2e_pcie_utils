@@ -142,7 +142,7 @@ bool DTCLib::DTC_DataPacket::Resize(const uint16_t dmaSize)
     return false;
 }
 
-std::string DTCLib::DTC_DataPacket::toJSON()
+std::string DTCLib::DTC_DataPacket::toJSON() const
 {
     std::stringstream ss;
     ss << "\"DataPacket\": {";
@@ -185,6 +185,10 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DMAPacket::ConvertToDataPacket() const
     uint8_t word1B = static_cast<uint8_t>(ringID_)+(valid_ ? 0x80 : 0x0);
     output.SetWord(2, word1A);
     output.SetWord(3, word1B);
+	for (int i = 4; i < 16; ++i)
+	{
+		output.SetWord(i, 0);
+	}
     return output;
 }
 

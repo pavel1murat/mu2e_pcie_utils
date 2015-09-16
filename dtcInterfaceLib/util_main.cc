@@ -12,6 +12,7 @@
 #include <iomanip>
 #include <string>
 #include <chrono>
+#include <cmath>
 #include "DTC.h"
 #include "DTCSoftwareCFO.h"
 #ifdef _WIN32
@@ -237,7 +238,7 @@ main(int	argc
                 uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)readPtr));
                 readPtr = (uint8_t*)readPtr + 8;
                 TRACE(1, "util - bufSize is %u", bufSize);
-                for (unsigned line = 0; line < (unsigned)(((bufSize -8) / 16)); ++line)
+                for (unsigned line = 0; line < (unsigned)(ceil((bufSize - 8) / 16)); ++line)
                 {
                     cout << "0x" << hex << setw(5) << setfill('0') << line << "0: ";
                     for (unsigned byte = 0; byte < 16; ++byte)
