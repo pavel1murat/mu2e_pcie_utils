@@ -183,6 +183,8 @@ main(int	argc
 	string serdesStr = checkSERDES ? "true" : "false";
 	string typeString = "Special Sequence";
 	switch (debugType) {
+        case DTC_DebugType_SpecialSequence:
+                break;
 	case DTC_DebugType_ExternalSerial:
 		typeString = "External Serial";
 		break;
