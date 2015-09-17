@@ -21,8 +21,12 @@
 namespace DTCLib {
     class DTCSoftwareCFO {
     public:
-        DTCSoftwareCFO(bool useCFOEmulator, uint16_t debugPacketCount = 0, bool quiet = false, bool asyncRR = false);
-        DTCSoftwareCFO(DTC* dtc, bool useCFOEmulator, uint16_t debugPacketCount = 0, bool quiet = false, bool asyncRR = false);
+		DTCSoftwareCFO(bool useCFOEmulator, uint16_t debugPacketCount = 0,
+			DTCLib::DTC_DebugType debugType = DTCLib::DTC_DebugType_ExternalSerialWithReset, bool stickyDebugType = false,
+			bool quiet = false, bool asyncRR = false);
+        DTCSoftwareCFO(DTC* dtc, bool useCFOEmulator, uint16_t debugPacketCount = 0, 
+			DTCLib::DTC_DebugType debugType = DTCLib::DTC_DebugType_ExternalSerialWithReset, bool stickyDebugType = false,
+			bool quiet = false, bool asyncRR = false);
         ~DTCSoftwareCFO();
 
         void SendRequestForTimestamp(DTC_Timestamp ts = DTC_Timestamp((uint64_t)0));
@@ -40,6 +44,8 @@ namespace DTCLib {
         // Request Parameters
 		bool useCFOEmulator_;
         uint16_t debugPacketCount_;
+		DTCLib::DTC_DebugType debugType_;
+		bool stickyDebugType_;
         bool quiet_; // Don't print as much
         bool asyncRR_;
 
