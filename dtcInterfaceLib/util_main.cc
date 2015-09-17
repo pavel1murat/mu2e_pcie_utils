@@ -75,12 +75,11 @@ void printHelpMsg() {
 	cout << "Options are:" << endl
 		<< "    -h: This message." << endl
 		<< "    -n: Number of times to repeat test. (Default: 1)" << endl
-		<< "    -p: Pause after sending a packet." << endl
 		<< "    -o: Starting Timestamp offest. (Default: 1)." << endl
 		<< "    -i: Do not increment Timestamps." << endl
 		<< "    -d: Delay between tests, in us (Default: 0)." << endl
 		<< "    -c: Number of Debug Packets to request (Default: 0)." << endl
-		<< "    -a: Number of Readout Request/Data Requests to send before starting to read data (Default: 2)." << endl
+		<< "    -a: Number of Readout Request/Data Requests to send before starting to read data (Default: 0)." << endl
 		<< "    -q: Quiet mode (Don't print)" << endl
 		<< "    -s: Stop on SERDES Error." << endl
 		<< "    -e: Use DTC CFO Emulator instead of DTCLib's SoftwareCFO" << endl
@@ -94,7 +93,6 @@ int
 main(int	argc
 	, char	*argv[])
 {
-	bool pause = false;
 	bool incrementTimestamp = true;
 	bool checkSERDES = false;
 	bool quiet = false;
@@ -105,7 +103,7 @@ main(int	argc
 	unsigned number = 1;
 	unsigned timestampOffset = 1;
 	unsigned packetCount = 0;
-	int requestsAhead = 2;
+	int requestsAhead = 0;
 	string op = "";
 	DTCLib::DTC_DebugType debugType = DTCLib::DTC_DebugType_SpecialSequence;
 	bool stickyDebugType = true;
@@ -114,9 +112,6 @@ main(int	argc
 	for (int optind = 1; optind < argc; ++optind) {
 		if (argv[optind][0] == '-') {
 			switch (argv[optind][1]) {
-			case 'p':
-				pause = true;
-				break;
 			case 'i':
 				incrementTimestamp = false;
 				break;
@@ -176,7 +171,6 @@ main(int	argc
 		}
 	}
 
-	string pauseStr = pause ? "true" : "false";
 	string incrementStr = incrementTimestamp ? "true" : "false";
 	string quietStr = quiet ? "true" : "false";
 	string cfoStr = useCFOEmulator ? "true" : "false";
@@ -200,7 +194,6 @@ main(int	argc
 		<< ", TS Offset: " << timestampOffset
 		<< ", PacketCount: " << packetCount
 		<< ", Requests Ahead of Reads: " << requestsAhead
-		<< ", Pause: " << pauseStr
 		<< ", Use DTC CFO Emulator: " << cfoStr
 		<< ", Increment TS: " << incrementStr
 		<< ", Quiet Mode: " << quietStr
@@ -258,6 +251,8 @@ main(int	argc
 	else if (op == "buffer_test")
 	{
 		cout << "Operation \"buffer_test\"" << endl;
+		double totalIncTime = 0, totalSize = 0;
+		auto startTime = std::chrono::high_resolution_clock::now();
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
 
@@ -272,18 +267,28 @@ main(int	argc
 			std::cout << "Request: " << header.toJSON() << std::endl;
 			thisDTC->WriteDMADAQPacket(header);
 		}
+		double readoutRequestTime = thisDTC->GetDeviceTime();
+
+		std::ofstream outputStream;
+		if (rawOutput) outputStream.open(rawOutputFile, std::ios::out | std::ios::app | std::ios::binary);
 
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
 			cout << "Buffer Read " << ii << endl;
 			mu2e_databuff_t* buffer;
 			int tmo_ms = 0;
+			auto startDTC = std::chrono::high_resolution_clock::now();
 			device.release_all(DTC_DMA_Engine_DAQ);
 			int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
+			auto endDTC = std::chrono::high_resolution_clock::now();
+			totalIncTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
+				(endDTC - startDTC).count();
+
 			TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, (void*)buffer);
 			if (sts > 0) {
 				void* readPtr = &(buffer[0]);
 				uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)readPtr));
+					totalSize += bufSize;
 				readPtr = (uint8_t*)readPtr + 8;
 				TRACE(1, "util - bufSize is %u", bufSize);
 				for (unsigned line = 0; line < (unsigned)(ceil((bufSize - 8) / 16)); ++line)
@@ -291,7 +296,10 @@ main(int	argc
 					cout << "0x" << hex << setw(5) << setfill('0') << line << "0: ";
 					for (unsigned byte = 0; byte < 16; ++byte)
 					{
-						if ((line * 16) + byte < (bufSize - 8u)) cout << setw(2) << (int)(((uint8_t*)buffer)[8 + (line * 16) + byte]) << " ";
+						if ((line * 16) + byte < (bufSize - 8u)) {
+							cout << setw(2) << (int)(((uint8_t*)buffer)[8 + (line * 16) + byte]) << " ";
+							if (rawOutput) outputStream.write((char*)&(((uint8_t*)buffer)[8 + (line * 16) + byte]), sizeof(uint8_t));
+						}
 					}
 					cout << endl;
 				}
@@ -299,6 +307,18 @@ main(int	argc
 			cout << endl << endl;
 			if (delay > 0) usleep(delay);
 		}
+		if (rawOutput) outputStream.close();
+
+		double aveRate = totalSize / totalIncTime / 1024;
+
+		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
+			(std::chrono::high_resolution_clock::now() - startTime).count();
+		std::cout << "STATS, "
+			<< "Total Elapsed Time: " << totalTime << " s." << std::endl
+			<< "Devive Time: " << totalIncTime << " s." << std::endl
+			<< "Total Data Size: " << totalSize / 1024 << " KB." << std::endl
+			<< "Average Data Rate: " << aveRate << " KB/s." << std::endl
+			<< "Readout Request Time: " << readoutRequestTime << " s." << std::endl;
 	}
 	else if (op == "read_release")
 	{
@@ -369,12 +389,6 @@ main(int	argc
 
 			totalDevTime += thisDTC->GetDeviceTime();
 			thisDTC->ResetDeviceTime();
-
-			if (pause) {
-				std::cout << "GetData Called. Press any key." << std::endl;
-				std::string dummy;
-				getline(std::cin, dummy);
-			}
 
 			if (data.size() > 0)
 			{
@@ -500,11 +514,6 @@ main(int	argc
 			//if(delay > 0) usleep(delay);
 			//uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
 			vector<void*> data = thisDTC->GetData(); // DTC_Timestamp(ts));
-			if (pause) {
-				std::cout << "GetData Called. Press any key." << std::endl;
-				std::string dummy;
-				getline(std::cin, dummy);
-			}
 
 			if (data.size() > 0)
 			{
