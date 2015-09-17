@@ -1012,7 +1012,10 @@ void DTCLib::DTC::ResetSERDESOscillator() {
 	usleep(2);
 	data[29] = 0;
 	WriteRegister(data.to_ulong(), DTC_Register_DTCControl);
-	for (auto ring : DTC_Rings)
+	while(!ReadSERDESOscillatorInitializationComplete()) {
+           usleep(1000);
+        }
+        for (auto ring : DTC_Rings)
 	{
 		ResetSERDES(ring);
 	}

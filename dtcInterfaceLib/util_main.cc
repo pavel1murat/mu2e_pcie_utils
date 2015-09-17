@@ -71,7 +71,7 @@ std::string getOptionString(int *index, char **argv[])
 }
 
 void printHelpMsg() {
-    cout << "Usage: mu2eUtil [options] [read,read_data,buffer_test,read_release,HW,DTC]" << endl;
+    cout << "Usage: mu2eUtil [options] [read,read_data,toggle_serdes,buffer_test,read_release,HW,DTC]" << endl;
     cout << "Options are:" << endl
         << "    -h: This message." << endl
         << "    -n: Number of times to repeat test. (Default: 1)" << endl
@@ -215,11 +215,17 @@ main(int	argc
             if (delay > 0) usleep(delay);
         }
     }
+    else if (op == "toggle_serdes")
+    {
+        cout << "Swapping SERDES Oscillator Clock" << endl;
+        DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
+        thisDTC->ToggleSERDESOscillatorClock();
+    }
     else if (op == "buffer_test")
     {
         cout << "Operation \"buffer_test\"" << endl;
         DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-       // if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
+        //if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
 
         mu2edev device = thisDTC->GetDevice();
         if(thisDTC->ReadSimMode() != DTC_SimMode_Loopback) {
