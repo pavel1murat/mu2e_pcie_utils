@@ -180,6 +180,17 @@ main(int	argc
 	string incrementStr = incrementTimestamp ? "true" : "false";
 	string quietStr = quiet ? "true" : "false";
 	string cfoStr = useCFOEmulator ? "true" : "false";
+	string serdesStr = checkSERDES ? "true" : "false";
+	string typeString = "Special Sequence";
+	switch (debugType) {
+	case DTC_DebugType_ExternalSerial:
+		typeString = "External Serial";
+		break;
+	case DTC_DebugType_ExternalSerialWithReset:
+		typeString = "External Serial w/ FIFO Reset";
+		if (!stickyDebugType) typeString += ", will change to External Serial after first Request";
+		break;
+	}
 	cout << "Options are: "
 		<< "Operation: " << string(op)
 		<< ", Num: " << number
@@ -191,6 +202,8 @@ main(int	argc
 		<< ", Use DTC CFO Emulator: " << cfoStr
 		<< ", Increment TS: " << incrementStr
 		<< ", Quiet Mode: " << quietStr
+		<< ", Check SERDES Error Status: " << serdesStr
+		<< ", Debug Type: " << typeString
 		<< endl;
 
 	if (op == "read")
@@ -244,7 +257,7 @@ main(int	argc
 	{
 		cout << "Operation \"buffer_test\"" << endl;
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-		//if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
+		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
 
 		mu2edev device = thisDTC->GetDevice();
 		if (thisDTC->ReadSimMode() != DTC_SimMode_Loopback) {
@@ -329,7 +342,7 @@ main(int	argc
 	else if (op == "DTC")
 	{
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-		//if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
+		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
 
 		double totalIncTime = 0, totalSize = 0, totalDevTime = 0;
 		auto startTime = std::chrono::high_resolution_clock::now();
