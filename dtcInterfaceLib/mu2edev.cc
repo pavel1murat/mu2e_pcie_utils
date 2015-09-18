@@ -297,6 +297,7 @@ int mu2edev::write_data(int chn, void *buffer, size_t bytes)
 }   // write_data
 
 
+/*
 int mu2edev::read_pcie_state(m_ioc_pcistate_t *output)
 {
     if (simulator_ != nullptr)
@@ -316,7 +317,8 @@ int mu2edev::read_pcie_state(m_ioc_pcistate_t *output)
         return error;
     }
 }
-
+*/
+/*
 int mu2edev::read_dma_state(int chn, int dir, m_ioc_engstate_t *output)
 {
     if (simulator_ != nullptr)
@@ -340,7 +342,8 @@ int mu2edev::read_dma_state(int chn, int dir, m_ioc_engstate_t *output)
         return error;
     }
 }
-
+*/
+/*
 int mu2edev::read_dma_stats(m_ioc_engstats_t *output)
 {
     if (simulator_ != nullptr)
@@ -360,7 +363,8 @@ int mu2edev::read_dma_stats(m_ioc_engstats_t *output)
         return error;
     }
 }
-
+*/
+/*
 int mu2edev::read_trn_stats(TRNStatsArray *output)
 {
     if (simulator_ != nullptr)
@@ -380,7 +384,8 @@ int mu2edev::read_trn_stats(TRNStatsArray *output)
         return error;
     }
 }
-
+*/
+/*
 int mu2edev::read_test_command(m_ioc_cmd_t *output)
 {
     if (simulator_ != nullptr)
@@ -400,7 +405,8 @@ int mu2edev::read_test_command(m_ioc_cmd_t *output)
 #endif
     }
 }
-
+*/
+/*
 int mu2edev::write_test_command(m_ioc_cmd_t input, bool start)
 {
     if (simulator_ != nullptr)
@@ -427,7 +433,7 @@ int mu2edev::write_test_command(m_ioc_cmd_t input, bool start)
 #endif
     }
 }
-
+*/
 
 // applicable for recv.
 int mu2edev::release_all(int chn)

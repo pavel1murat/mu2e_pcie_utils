@@ -236,7 +236,7 @@ std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when)
 	std::stringstream ss;
 	TRACE(19, "DTC::GetJSONData before call to GetData");
 	std::vector<void*> data = GetData(when);
-	TRACE(19, "DTC::GetJSONData after call to GetData, data size %zu", data.size());
+	TRACE(19, "DTC::GetJSONData after call to GetData, data size %llu", (unsigned long long)data.size());
 
 	for (size_t i = 0; i < data.size(); ++i)
 	{

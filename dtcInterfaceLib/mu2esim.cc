@@ -35,6 +35,7 @@ mu2esim::mu2esim()
 	: hwIdx_()
 	, swIdx_()
 	, dmaData_()
+	, loopbackData_()
 	, mode_(DTCLib::DTC_SimMode_Disabled)
 	, cancelCFO_(true)
 {
@@ -89,7 +90,7 @@ int mu2esim::init(DTCLib::DTC_SimMode mode)
 	registers_[0x9018] = 0x00000400; // RPayload
 	registers_[0x9100] = 0x00000003; // System Clock, Timing Enable
 	registers_[0x9104] = 0x80000010; //Default value from HWUG
-	registers_[0x9108] = 0x00049249; // SERDES Loopback PCS Near-End
+	registers_[0x9108] = 0x00000000; // SERDES Loopback Disabled
 	registers_[0x910C] = 0x2; // Initialization Complete, no IIC Error
 	registers_[0x9110] = 0x3F;        // ROC Emulators enabled (of course!)
 	registers_[0x9114] = 0x3F3F;       // All rings Tx/Rx enabled, CFO and timing disabled
@@ -125,72 +126,6 @@ int mu2esim::init(DTCLib::DTC_SimMode mode)
 	registers_[0x9404] = 0x1;
 	registers_[0x9408] = 0x0;        // FPGA Core Access OK
 
-	TRACE(17, "mu2esim::init Initializing DMA State Objects");
-	// Set DMA State
-	dmaState_[0][0].BDerrs = 0;
-	dmaState_[0][0].BDSerrs = 0;
-	dmaState_[0][0].BDs = 399;
-	dmaState_[0][0].Buffers = 4;
-	dmaState_[0][0].Engine = 0;
-	dmaState_[0][0].IntEnab = 0;
-	dmaState_[0][0].MaxPktSize = 0x100000;
-	dmaState_[0][0].MinPktSize = 0x40;
-	dmaState_[0][0].TestMode = 0;
-
-	dmaState_[0][1].BDerrs = 0;
-	dmaState_[0][1].BDSerrs = 0;
-	dmaState_[0][1].BDs = 399;
-	dmaState_[0][1].Buffers = 4;
-	dmaState_[0][1].Engine = 0x20;
-	dmaState_[0][1].IntEnab = 0;
-	dmaState_[0][1].MaxPktSize = 0x100000;
-	dmaState_[0][1].MinPktSize = 0x40;
-	dmaState_[0][1].TestMode = 0;
-
-	dmaState_[1][0].BDerrs = 0;
-	dmaState_[1][0].BDSerrs = 0;
-	dmaState_[1][0].BDs = 399;
-	dmaState_[1][0].Buffers = 4;
-	dmaState_[1][0].Engine = 1;
-	dmaState_[1][0].IntEnab = 0;
-	dmaState_[1][0].MaxPktSize = 0x100000;
-	dmaState_[1][0].MinPktSize = 0x40;
-	dmaState_[1][0].TestMode = 0;
-
-	dmaState_[1][1].BDerrs = 0;
-	dmaState_[1][1].BDSerrs = 0;
-	dmaState_[1][1].BDs = 399;
-	dmaState_[1][1].Buffers = 4;
-	dmaState_[1][1].Engine = 0x21;
-	dmaState_[1][1].IntEnab = 0;
-	dmaState_[1][1].MaxPktSize = 0x100000;
-	dmaState_[1][1].MinPktSize = 0x40;
-	dmaState_[1][1].TestMode = 0;
-
-	TRACE(17, "mu2esim::init Initializing PCIe State Object");
-	// Set PCIe State
-	pcieState_.VendorId = 4334;
-	pcieState_.DeviceId = 28738;
-	pcieState_.LinkState = true;
-	pcieState_.LinkSpeed = 5;
-	pcieState_.LinkWidth = 4;
-	pcieState_.IntMode = 0;
-	pcieState_.MPS = 256;
-	pcieState_.MRRS = 512;
-	pcieState_.Version = 0x53494D44;
-	pcieState_.InitFCCplD = 0;
-	pcieState_.InitFCCplH = 0;
-	pcieState_.InitFCNPD = 16;
-	pcieState_.InitFCNPH = 124;
-	pcieState_.InitFCPD = 552;
-	pcieState_.InitFCPH = 112;
-
-	// Test State
-	testStarted_ = false;
-	testState_.Engine = 0;
-	testState_.TestMode = 0;
-
-
 	TRACE(17, "mu2esim::init finished");
 	return (0);
 }
@@ -210,6 +145,17 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 
 		if (chn == 0)
 		{
+			if (!loopbackData_.empty())
+			{
+				memcpy((char*)dmaData_[chn][swIdx_[chn]]+8, loopbackData_.front(), sizeof(mu2e_databuff_t)-sizeof(uint64_t));
+				uint64_t bytesReturned = 24;
+				memcpy(dmaData_[chn][swIdx_[chn]], (uint64_t*)&bytesReturned, sizeof(uint64_t));
+				*buffer = dmaData_[chn][swIdx_[chn]];
+				delete loopbackData_.front();
+			    loopbackData_.pop();
+				swIdx_[chn] = (swIdx_[chn] + 1) % SIM_BUFFCOUNT;
+				return static_cast<int>(*(uint64_t*)buffer[0]);
+			}
 			std::set<uint64_t> activeTimestamps;
 			rrMutex_.lock();
 			for (int ring = 0; ring <= DTCLib::DTC_Ring_5; ++ring)
@@ -522,16 +468,13 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 	memcpy(dmaData_[chn][swIdx_[chn]], (uint64_t*)&bytesReturned, sizeof(uint64_t));
 	*buffer = dmaData_[chn][swIdx_[chn]];
 	swIdx_[chn] = (swIdx_[chn] + 1) % SIM_BUFFCOUNT;
-#ifdef _WIN32
-	return 1;
-#else
-	return bytesReturned;
-#endif
+
+	return static_cast<int>(bytesReturned);
 }
 
 int mu2esim::write_data(int chn, void *buffer, size_t bytes)
 {
-	TRACE(17, "mu2esim::write_data start: chn=%i, buf=%p, bytes=%zu", chn, buffer, bytes);
+	TRACE(17, "mu2esim::write_data start: chn=%i, buf=%p, bytes=%llu", chn, buffer, (unsigned long long)bytes);
 	uint32_t worda;
 	memcpy(&worda, buffer, sizeof(worda));
 	uint16_t word = static_cast<uint16_t>(worda >> 16);
@@ -540,16 +483,27 @@ int mu2esim::write_data(int chn, void *buffer, size_t bytes)
 	switch (chn) {
 	case 0: // DAQ Channel
 	{
+		DTCLib::DTC_Ring_ID activeDAQRing = static_cast<DTCLib::DTC_Ring_ID>((word & 0x0F00) >> 8);
+		if (registers_[0x9108] != 0)
+		{
+			TRACE(17, "mu2esim::write_data: loopback mode is %u", registers_[0x9108]);
+			if ((registers_[0x9108] & (0x7 << activeDAQRing * 3)) != 0)
+			{
+				TRACE(17, "mu2esim::write_data: adding buffer to loopback queue");
+				mu2e_databuff_t* lpBuf((mu2e_databuff_t*)new mu2e_databuff_t());
+				memcpy(lpBuf, buffer, bytes*sizeof(uint8_t));
+				loopbackData_.push(lpBuf);
+				return 0;
+			}
+		}
 		DTCLib::DTC_Timestamp ts((uint8_t*)buffer + 6);
 		if ((word & 0x8010) == 0x8010) {
-			int activeDAQRing = (word & 0x0F00) >> 8;
-			TRACE(17, "mu2esim::write_data: Readout Request: activeDAQRing=%i, ts=%llu", activeDAQRing, (unsigned long long)ts.GetTimestamp(true));
+			TRACE(17, "mu2esim::write_data: Readout Request: activeDAQRing=%u, ts=%llu", activeDAQRing, (unsigned long long)ts.GetTimestamp(true));
 			rrMutex_.lock();
 			readoutRequestReceived_[activeDAQRing].insert(ts.GetTimestamp(true));
 			rrMutex_.unlock();
 		}
 		else if ((word & 0x8020) == 0x8020) {
-			DTCLib::DTC_Ring_ID activeDAQRing = static_cast<DTCLib::DTC_Ring_ID>((word & 0x0F00) >> 8);
 			TRACE(17, "mu2esim::write_data: Data Request: activeDAQRing=%u, ts=%llu", activeDAQRing, (unsigned long long)ts.GetTimestamp(true));
 			if (activeDAQRing != DTCLib::DTC_Ring_Unused)
 			{
@@ -693,76 +647,6 @@ void mu2esim::CFOEmulator_()
 		usleep(ticksToWait);
 	}
 
-}
-
-int mu2esim::read_pcie_state(m_ioc_pcistate_t *output)
-{
-	*output = pcieState_;
-	return 0;
-}
-
-int mu2esim::read_dma_state(int chn, int dir, m_ioc_engstate_t *output)
-{
-	*output = dmaState_[chn][dir];
-	return 0;
-}
-
-int mu2esim::read_dma_stats(m_ioc_engstats_t *output)
-{
-	int engi[4]{ 0, 0, 0, 0 };
-
-	for (int i = 0; i < output->Count; ++i)
-	{
-		DMAStatistics thisStat;
-		int eng = rand() % 4;
-		++(engi[eng]);
-		switch (eng) {
-		case 0:
-			thisStat.Engine = 0;
-			break;
-		case 1:
-			thisStat.Engine = 1;
-			break;
-		case 2:
-			thisStat.Engine = 32;
-			break;
-		case 3:
-			thisStat.Engine = 33;
-			break;
-		}
-		thisStat.LWT = 0;
-		thisStat.LBR = engi[eng] * 1000000;
-		thisStat.LAT = thisStat.LBR / 1000000;
-		output->engptr[i] = thisStat;
-	}
-
-	return 0;
-}
-
-int mu2esim::read_trn_stats(TRNStatsArray *output)
-{
-
-	for (int i = 0; i < output->Count; ++i) {
-		TRNStatistics thisStat;
-		thisStat.LRX = (i + 1) * 1000000;
-		thisStat.LTX = (i + 1) * 1000000;
-		output->trnptr[i] = thisStat;
-	}
-
-	return 0;
-}
-
-int mu2esim::read_test_command(m_ioc_cmd_t *output)
-{
-	*output = testState_;
-	return 0;
-}
-
-int mu2esim::write_test_command(m_ioc_cmd_t input, bool start)
-{
-	testState_ = input;
-	testStarted_ = start;
-	return 0;
 }
 
 unsigned mu2esim::delta_(int chn, int dir)

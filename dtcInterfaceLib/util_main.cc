@@ -251,42 +251,66 @@ main(int	argc
 	else if (op == "loopback")
 	{
 		cout << "Operation \"loopback\"" << endl;
-		double totalIncTime = 0, totalSize = 0;
+		double totalReadTime = 0, totalWriteTime = 0, totalSize = 0;
 		auto startTime = std::chrono::high_resolution_clock::now();
 		DTC *thisDTC = new DTC(DTC_SimMode_Loopback);
 		mu2edev device = thisDTC->GetDevice();
 
-		if (thisDTC->ReadSimMode() != DTC_SimMode_Loopback) {
-			cout << "You must run this operation with DTCLIB_SIM_ENABLE unset or \"L\"!" << endl;
-			exit(1);
-		}
+		thisDTC->SetSERDESLoopbackMode(DTC_Ring_0, DTC_SERDESLoopbackMode_NearPCS);
+
 		unsigned ii = 0;
 		for (; ii < number; ++ii)
 		{
 			uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
 			DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)0, DTC_DataStatus_Valid, DTC_Timestamp(ts));
 			if (!quiet) std::cout << "Request: " << header.toJSON() << std::endl;
+			auto startDTC = std::chrono::high_resolution_clock::now();
 			thisDTC->WriteDMADAQPacket(header);
+			auto endDTC = std::chrono::high_resolution_clock::now();
+			totalWriteTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
+				(endDTC - startDTC).count();
 			bool returned = false;
 			int count = 5;
 			while (!returned && count > 0)
 			{
 				mu2e_databuff_t* buffer;
-				int tmo_ms = 0xffffffff;
+				int tmo_ms = 0x1500;
 				auto startDTC = std::chrono::high_resolution_clock::now();
 				device.release_all(DTC_DMA_Engine_DAQ);
 				int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
 				auto endDTC = std::chrono::high_resolution_clock::now();
-				totalIncTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
+				totalReadTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
 					(endDTC - startDTC).count();
 				count--;
 				if (sts > 0)
 				{
 					void* readPtr = &(buffer[0]);
 					uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)readPtr));
+					TRACE(19, "mu2eUtil::loopback test, bufSize is %u", bufSize);
 					totalSize += bufSize;
-					DTC_DataHeaderPacket out = DTC_DataHeaderPacket(DTC_DataPacket(&(buffer[8])));;
-					returned = out == header;
+					if (!quiet) {
+						for (unsigned line = 0; line < (unsigned)(ceil((bufSize - 8) / 16)); ++line)
+						{
+							cout << "0x" << hex << setw(5) << setfill('0') << line << "0: ";
+							//for (unsigned byte = 0; byte < 16; ++byte)
+							for (unsigned byte = 0; byte < 8; ++byte)
+							{
+								if ((line * 16) + (2 * byte) < (bufSize - 8u)) {
+									uint16_t thisWord = (((uint16_t*)buffer)[4 + (line * 8) + byte]);
+									//uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
+									cout << setw(4) << (int)thisWord << " ";
+								}
+							}
+							cout << endl;
+						}
+					}
+					if (bufSize > 8) {
+						DTC_DataPacket test = DTC_DataPacket(&((uint8_t*)buffer)[8]);
+						//std::string output = "mu2eUtil::loopback test: " + test.toJSON();
+						//TRACE(19, output.c_str());
+						DTC_DataHeaderPacket out = DTC_DataHeaderPacket(test);
+						returned = out == header;
+					}
 				}
 				if (delay > 0) usleep(delay);
 			}
@@ -294,14 +318,15 @@ main(int	argc
 			if (delay > 0) usleep(delay);
 		}
 
-		double aveRate = totalSize / totalIncTime / 1024;
+		double aveRate = totalSize / totalReadTime / 1024;
 
 		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
 			(std::chrono::high_resolution_clock::now() - startTime).count();
-		std::cout << "STATS, " << std::dec << ii << " DataHeaders looped back:" << std::endl
-			<< "(Out of " << number << " requested)" << std::endl
+		std::cout << "STATS, " << std::dec << ii << " DataHeaders looped back "
+			<< "(Out of " << number << " requested):" << std::endl
 			<< "Total Elapsed Time: " << totalTime << " s." << std::endl
-			<< "DTC::GetData Time: " << totalIncTime << " s." << std::endl
+			<< "Device Read Time: " << totalReadTime << " s." << std::endl
+			<< "Device Write Time: " << totalWriteTime << " s." << std::endl
 			<< "Total Data Size: " << totalSize / 1024 << " KB." << std::endl
 			<< "Average Data Rate: " << aveRate << " KB/s." << std::endl;
 	}
@@ -354,9 +379,9 @@ main(int	argc
 					//for (unsigned byte = 0; byte < 16; ++byte)
 					for (unsigned byte = 0; byte < 8; ++byte)
 					{
-						if ((line * 16) + (2*byte) < (bufSize - 8u)) {
-                                                        uint16_t thisWord = (((uint16_t*)buffer)[4 + (line * 8) + byte]);
-                                                        //uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
+						if ((line * 16) + (2 * byte) < (bufSize - 8u)) {
+							uint16_t thisWord = (((uint16_t*)buffer)[4 + (line * 8) + byte]);
+							//uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
 							cout << setw(4) << (int)thisWord << " ";
 							if (rawOutput) outputStream.write((char*)&thisWord, sizeof(uint16_t));
 						}
@@ -452,7 +477,7 @@ main(int	argc
 
 			if (data.size() > 0)
 			{
-				TRACE(19, "util_main %zu packets returned", data.size());
+				TRACE(19, "util_main %llu packets returned", (unsigned long long)data.size());
 				if (!quiet) cout << data.size() << " packets returned\n";
 				for (size_t i = 0; i < data.size(); ++i)
 				{

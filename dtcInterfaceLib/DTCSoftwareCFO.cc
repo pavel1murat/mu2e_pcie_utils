@@ -1,6 +1,5 @@
 #include "DTCSoftwareCFO.h"
 
-
 #define TRACE_NAME "MU2EDEV"
 DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(bool useCFOEmulator, uint16_t debugPacketCount, 
 	DTCLib::DTC_DebugType debugType, bool stickyDebugType,

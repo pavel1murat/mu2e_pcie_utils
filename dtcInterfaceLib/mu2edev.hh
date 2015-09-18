@@ -25,12 +25,12 @@ struct mu2edev
     int  write_register(uint16_t address, int tmo_ms, uint32_t data);
     void meta_dump(int chn, int dir);
     int  write_data(int chn, void *buffer, size_t bytes);
-    int  read_pcie_state(m_ioc_pcistate_t *output);
-    int  read_dma_state(int chn, int dir, m_ioc_engstate_t *output);
-    int  read_dma_stats(m_ioc_engstats_t *output);
-    int  read_trn_stats(TRNStatsArray *output);
-    int  read_test_command(m_ioc_cmd_t *output);
-    int  write_test_command(m_ioc_cmd_t input, bool start);
+    //int  read_pcie_state(m_ioc_pcistate_t *output);
+    //int  read_dma_state(int chn, int dir, m_ioc_engstate_t *output);
+    //int  read_dma_stats(m_ioc_engstats_t *output);
+    //int  read_trn_stats(TRNStatsArray *output);
+    //int  read_test_command(m_ioc_cmd_t *output);
+    //int  write_test_command(m_ioc_cmd_t input, bool start);
 
 private:
     unsigned         delta_(int chn, int dir);
