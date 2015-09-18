@@ -147,9 +147,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 		{
 			if (!loopbackData_.empty())
 			{
-				memcpy((char*)dmaData_[chn][swIdx_[chn]]+8, loopbackData_.front(), sizeof(mu2e_databuff_t)-sizeof(uint64_t));
-				uint64_t bytesReturned = 24;
-				memcpy(dmaData_[chn][swIdx_[chn]], (uint64_t*)&bytesReturned, sizeof(uint64_t));
+				memcpy((char*)dmaData_[chn][swIdx_[chn]], loopbackData_.front(), sizeof(mu2e_databuff_t)-sizeof(uint64_t));
 				*buffer = dmaData_[chn][swIdx_[chn]];
 				delete loopbackData_.front();
 			    loopbackData_.pop();
@@ -490,10 +488,13 @@ int mu2esim::write_data(int chn, void *buffer, size_t bytes)
 			if ((registers_[0x9108] & (0x7 << activeDAQRing * 3)) != 0)
 			{
 				TRACE(17, "mu2esim::write_data: adding buffer to loopback queue");
-				mu2e_databuff_t* lpBuf((mu2e_databuff_t*)new mu2e_databuff_t());
-				memcpy(lpBuf, buffer, bytes*sizeof(uint8_t));
-				loopbackData_.push(lpBuf);
-				return 0;
+				if (bytes <= sizeof(mu2e_databuff_t) - sizeof(uint64_t)) {
+					mu2e_databuff_t* lpBuf((mu2e_databuff_t*)new mu2e_databuff_t());
+					memcpy(lpBuf, (uint64_t*)&bytes, sizeof(uint64_t));
+					memcpy((char*)lpBuf + 8, buffer, bytes*sizeof(uint8_t));
+					loopbackData_.push(lpBuf);
+					return 0;
+				}
 			}
 		}
 		DTCLib::DTC_Timestamp ts((uint8_t*)buffer + 6);

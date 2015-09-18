@@ -263,9 +263,15 @@ main(int	argc
 		{
 			uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
 			DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)0, DTC_DataStatus_Valid, DTC_Timestamp(ts));
-			if (!quiet) std::cout << "Request: " << header.toJSON() << std::endl;
+			DTC_DataPacket packet = header.ConvertToDataPacket();
+			DTC_DataPacket thisPacket = header.ConvertToDataPacket();
+			thisPacket.Resize(16 * (packetCount + 1));
+			for (unsigned jj = 0; jj < packetCount; ++jj)
+			{
+				thisPacket.CramIn(packet, 16 * jj);
+			}
 			auto startDTC = std::chrono::high_resolution_clock::now();
-			thisDTC->WriteDMADAQPacket(header);
+			device.write_data(0, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
 			auto endDTC = std::chrono::high_resolution_clock::now();
 			totalWriteTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
 				(endDTC - startDTC).count();

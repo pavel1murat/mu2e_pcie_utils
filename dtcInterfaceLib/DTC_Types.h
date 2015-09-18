@@ -657,14 +657,6 @@ namespace DTCLib
 	};
 
 	class DTC_DataPacket {
-		friend class DTC;
-		friend struct ::mu2esim;
-		friend class DTC_DMAPacket;
-		friend class DTC_ReadoutRequestPacket;
-		friend class DTC_DataRequestPacket;
-		friend class DTC_DCSRequestPacket;
-		friend class DTC_DCSReplyPacket;
-		friend class DTC_DataHeaderPacket;
 	private:
 		uint8_t* dataPtr_;
 		uint16_t dataSize_;
@@ -690,13 +682,12 @@ namespace DTCLib
 		bool Resize(const uint16_t dmaSize);
 		uint16_t GetSize() const { return dataSize_; }
 		bool IsMemoryPacket() const { return memPacket_; }
+		void CramIn(DTC_DataPacket& other, int offset) { if(other.dataSize_ + offset <= dataSize_) memcpy(dataPtr_ + offset, other.dataPtr_, other.dataSize_); }
+		uint8_t* GetData() const { return dataPtr_; }
 
 		bool operator==(const DTC_DataPacket& other) { return Equals(other); }
 		bool operator!=(const DTC_DataPacket& other) { return !Equals(other); }
 		bool Equals(const DTC_DataPacket& other);
-
-	protected:
-		uint8_t* GetData() const { return dataPtr_; }
 	};
 
 	class DTC_DMAPacket {
