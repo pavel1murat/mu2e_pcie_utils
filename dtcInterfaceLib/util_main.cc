@@ -276,7 +276,7 @@ main(int	argc
 		{
 			cout << "Buffer Read " << ii << endl;
 			mu2e_databuff_t* buffer;
-			int tmo_ms = 0;
+			int tmo_ms = 1500;
 			auto startDTC = std::chrono::high_resolution_clock::now();
 			device.release_all(DTC_DMA_Engine_DAQ);
 			int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
@@ -294,11 +294,14 @@ main(int	argc
 				for (unsigned line = 0; line < (unsigned)(ceil((bufSize - 8) / 16)); ++line)
 				{
 					cout << "0x" << hex << setw(5) << setfill('0') << line << "0: ";
-					for (unsigned byte = 0; byte < 16; ++byte)
+					//for (unsigned byte = 0; byte < 16; ++byte)
+					for (unsigned byte = 0; byte < 8; ++byte)
 					{
-						if ((line * 16) + byte < (bufSize - 8u)) {
-							cout << setw(2) << (int)(((uint8_t*)buffer)[8 + (line * 16) + byte]) << " ";
-							if (rawOutput) outputStream.write((char*)&(((uint8_t*)buffer)[8 + (line * 16) + byte]), sizeof(uint8_t));
+						if ((line * 16) + (2*byte) < (bufSize - 8u)) {
+                                                        uint16_t thisWord = (((uint16_t*)buffer)[4 + (line * 8) + byte]);
+                                                        //uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
+							cout << setw(4) << (int)thisWord << " ";
+							if (rawOutput) outputStream.write((char*)&thisWord, sizeof(uint16_t));
 						}
 					}
 					cout << endl;
