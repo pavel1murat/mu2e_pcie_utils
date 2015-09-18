@@ -280,7 +280,7 @@ main(int	argc
 			while (returned < packetCount + 1 && count > 0)
 			{
 				mu2e_databuff_t* buffer;
-				int tmo_ms = 0x1500;
+				int tmo_ms = 0x150;
 				auto startDTC = std::chrono::high_resolution_clock::now();
 				device.release_all(DTC_DMA_Engine_DAQ);
 				int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
@@ -313,7 +313,10 @@ main(int	argc
 					
 					for (int offset = 0; offset < (bufSize - 8) / 16; ++offset)
 					{
-						DTC_DataPacket test = DTC_DataPacket(&((uint8_t*)buffer)[8 + offset*16]);
+						DTC_DataPacket test = DTC_DataPacket(&((uint8_t*)buffer)[8 + offset*16]);                        
+						std::string output = "returned=" + std::to_string(returned) + ", test=" + test.toJSON();
+						TRACE(19, output.c_str());
+
 						if (test == packet) {
 							returned++;
 						}
