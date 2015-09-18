@@ -80,6 +80,7 @@ DTCLib::DTC_SimMode DTCLib::DTC::SetSimMode(DTC_SimMode mode)
 	for (auto ring : DTC_Rings) {
 		SetMaxROCNumber(ring, DTC_ROC_Unused);
 		DisableROCEmulator(ring);
+		SetSERDESLoopbackMode(DTC_Ring_0, DTC_SERDESLoopbackMode_Disabled);
 	}
 
 	if (simMode_ != DTCLib::DTC_SimMode_Disabled)
@@ -92,12 +93,10 @@ DTCLib::DTC_SimMode DTCLib::DTC::SetSimMode(DTC_SimMode mode)
 		if (simMode_ == DTC_SimMode_Loopback)
 		{
 			SetSERDESLoopbackMode(DTC_Ring_0, DTC_SERDESLoopbackMode_NearPCS);
-			DisableROCEmulator(DTC_Ring_0);
 			SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
 		}
-		else if(simMode_ == DTC_SimMode_ROCEmulator)
+		else if (simMode_ == DTC_SimMode_ROCEmulator)
 		{
-			SetSERDESLoopbackMode(DTC_Ring_0, DTC_SERDESLoopbackMode_Disabled);
 			EnableROCEmulator(DTC_Ring_0);
 			SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
 		}
@@ -146,7 +145,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
 				//usleep(2000);
 			}
 		}
-}
+	}
 #endif
 	first_read_ = true;
 	try {
@@ -1012,10 +1011,10 @@ void DTCLib::DTC::ResetSERDESOscillator() {
 	usleep(2);
 	data[29] = 0;
 	WriteRegister(data.to_ulong(), DTC_Register_DTCControl);
-	while(!ReadSERDESOscillatorInitializationComplete()) {
-           usleep(1000);
-        }
-        for (auto ring : DTC_Rings)
+	while (!ReadSERDESOscillatorInitializationComplete()) {
+		usleep(1000);
+	}
+	for (auto ring : DTC_Rings)
 	{
 		ResetSERDES(ring);
 	}
@@ -1642,7 +1641,7 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataP
 		int retry = 3;
 		int errorCode = 0;
 		do {
-            
+
 			auto start = std::chrono::high_resolution_clock::now();
 			std::string output = "DTC::WriteDataPacket: Writing packet: " + packet.toJSON();
 			TRACE(21, output.c_str());

@@ -168,6 +168,19 @@ std::string DTCLib::DTC_DataPacket::toPacketFormat()
     return ss.str();
 }
 
+bool DTCLib::DTC_DataPacket::Equals(DTC_DataPacket& other)
+{
+	bool equal = true;
+	for (uint16_t ii = 0; ii < 16; ++ii)
+	{
+		if (other.GetWord(ii) != GetWord(ii)) {
+			equal = false;
+			break;
+		}
+	}
+
+	return equal;
+}
 
 DTCLib::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t byteCount, bool valid)
     : valid_(valid), byteCount_(byteCount < 64 ? 64 : byteCount), ringID_(ring), packetType_(type), rocID_(roc) {}
@@ -572,6 +585,11 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DataHeaderPacket::ConvertToDataPacket() const
         output.SetWord(i + 13, dataStart_[i]);
     }
     return output;
+}
+
+bool DTCLib::DTC_DataHeaderPacket::Equals(DTC_DataHeaderPacket& other)
+{
+	return ConvertToDataPacket() == other.ConvertToDataPacket();
 }
 
 DTCLib::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError() : data_(0) {}

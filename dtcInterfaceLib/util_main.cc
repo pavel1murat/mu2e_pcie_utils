@@ -177,8 +177,8 @@ main(int	argc
 	string serdesStr = checkSERDES ? "true" : "false";
 	string typeString = "Special Sequence";
 	switch (debugType) {
-        case DTC_DebugType_SpecialSequence:
-                break;
+	case DTC_DebugType_SpecialSequence:
+		break;
 	case DTC_DebugType_ExternalSerial:
 		typeString = "External Serial";
 		break;
@@ -248,6 +248,63 @@ main(int	argc
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		thisDTC->ToggleSERDESOscillatorClock();
 	}
+	else if (op == "loopback")
+	{
+		cout << "Operation \"loopback\"" << endl;
+		double totalIncTime = 0, totalSize = 0;
+		auto startTime = std::chrono::high_resolution_clock::now();
+		DTC *thisDTC = new DTC(DTC_SimMode_Loopback);
+		mu2edev device = thisDTC->GetDevice();
+
+		if (thisDTC->ReadSimMode() != DTC_SimMode_Loopback) {
+			cout << "You must run this operation with DTCLIB_SIM_ENABLE unset or \"L\"!" << endl;
+			exit(1);
+		}
+		unsigned ii = 0;
+		for (; ii < number; ++ii)
+		{
+			uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
+			DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)0, DTC_DataStatus_Valid, DTC_Timestamp(ts));
+			if (!quiet) std::cout << "Request: " << header.toJSON() << std::endl;
+			thisDTC->WriteDMADAQPacket(header);
+			bool returned = false;
+			int count = 5;
+			while (!returned && count > 0)
+			{
+				mu2e_databuff_t* buffer;
+				int tmo_ms = 0xffffffff;
+				auto startDTC = std::chrono::high_resolution_clock::now();
+				device.release_all(DTC_DMA_Engine_DAQ);
+				int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
+				auto endDTC = std::chrono::high_resolution_clock::now();
+				totalIncTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
+					(endDTC - startDTC).count();
+				count--;
+				if (sts > 0)
+				{
+					void* readPtr = &(buffer[0]);
+					uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)readPtr));
+					totalSize += bufSize;
+					DTC_DataHeaderPacket out = DTC_DataHeaderPacket(DTC_DataPacket(&(buffer[8])));;
+					returned = out == header;
+				}
+				if (delay > 0) usleep(delay);
+			}
+			if (!returned) { break; }
+			if (delay > 0) usleep(delay);
+		}
+
+		double aveRate = totalSize / totalIncTime / 1024;
+
+		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
+			(std::chrono::high_resolution_clock::now() - startTime).count();
+		std::cout << "STATS, " << std::dec << ii << " DataHeaders looped back:" << std::endl
+			<< "(Out of " << number << " requested)" << std::endl
+			<< "Total Elapsed Time: " << totalTime << " s." << std::endl
+			<< "DTC::GetData Time: " << totalIncTime << " s." << std::endl
+			<< "Total Data Size: " << totalSize / 1024 << " KB." << std::endl
+			<< "Average Data Rate: " << aveRate << " KB/s." << std::endl;
+	}
 	else if (op == "buffer_test")
 	{
 		cout << "Operation \"buffer_test\"" << endl;
@@ -276,7 +333,7 @@ main(int	argc
 		{
 			cout << "Buffer Read " << ii << endl;
 			mu2e_databuff_t* buffer;
-			int tmo_ms = 0;
+			int tmo_ms = 0xffffffff;
 			auto startDTC = std::chrono::high_resolution_clock::now();
 			device.release_all(DTC_DMA_Engine_DAQ);
 			int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
@@ -288,7 +345,7 @@ main(int	argc
 			if (sts > 0) {
 				void* readPtr = &(buffer[0]);
 				uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)readPtr));
-					totalSize += bufSize;
+				totalSize += bufSize;
 				readPtr = (uint8_t*)readPtr + 8;
 				TRACE(1, "util - bufSize is %u", bufSize);
 				for (unsigned line = 0; line < (unsigned)(ceil((bufSize - 8) / 16)); ++line)

@@ -691,6 +691,10 @@ namespace DTCLib
 		uint16_t GetSize() const { return dataSize_; }
 		bool IsMemoryPacket() const { return memPacket_; }
 
+		bool operator==(DTC_DataPacket& other) { return Equals(other); }
+		bool operator!=(DTC_DataPacket& other) { return !Equals(other); }
+		bool Equals(DTC_DataPacket& other);
+
 	protected:
 		uint8_t* GetData() const { return dataPtr_; }
 	};
@@ -838,6 +842,10 @@ namespace DTCLib
 		DTC_DataStatus GetStatus() { return status_; }
 		std::string toJSON();
 		std::string toPacketFormat();
+
+		bool operator==(DTC_DataHeaderPacket& other) { return Equals(other); }
+		bool operator!=(DTC_DataHeaderPacket& other) { return !Equals(other); }
+		bool Equals(DTC_DataHeaderPacket& other);
 	};
 
 	class DTC_SERDESRXDisparityError {
