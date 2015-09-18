@@ -489,8 +489,9 @@ int mu2esim::write_data(int chn, void *buffer, size_t bytes)
 			{
 				TRACE(17, "mu2esim::write_data: adding buffer to loopback queue");
 				if (bytes <= sizeof(mu2e_databuff_t) - sizeof(uint64_t)) {
+					uint64_t bufSize = bytes + 8;
 					mu2e_databuff_t* lpBuf((mu2e_databuff_t*)new mu2e_databuff_t());
-					memcpy(lpBuf, (uint64_t*)&bytes, sizeof(uint64_t));
+					memcpy(lpBuf, (uint64_t*)&bufSize, sizeof(uint64_t));
 					memcpy((char*)lpBuf + 8, buffer, bytes*sizeof(uint8_t));
 					loopbackData_.push(lpBuf);
 					return 0;

@@ -268,7 +268,7 @@ main(int	argc
 			thisPacket.Resize(16 * (packetCount + 1));
 			for (unsigned jj = 0; jj < packetCount; ++jj)
 			{
-				thisPacket.CramIn(packet, 16 * jj);
+				thisPacket.CramIn(packet, 16 * (jj+1));
 			}
 			auto startDTC = std::chrono::high_resolution_clock::now();
 			device.write_data(0, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
@@ -311,13 +311,16 @@ main(int	argc
 							cout << endl;
 						}
 					}
+					
 					if (bufSize > 8) error = 16 * (packetCount + 1) + 8 != bufSize;
+					TRACE(19, "mu2eUtil::loopback: bufSize=%u, packetCount=%u, error=%i", bufSize, packetCount, error);
 					for (int offset = 0; offset < (bufSize - 8) / 16; ++offset)
 					{
 						DTC_DataPacket test = DTC_DataPacket(&((uint8_t*)buffer)[8 + offset*16]);
 						//std::string output = "mu2eUtil::loopback test: " + test.toJSON();
 						//TRACE(19, output.c_str());
 						error = error || test != packet;
+						TRACE(19, "mu2eUtil::loopback: packet=%i, error=%i", offset, error);
 						returned = true;
 					}
 				}
