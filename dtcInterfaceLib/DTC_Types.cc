@@ -171,9 +171,9 @@ std::string DTCLib::DTC_DataPacket::toPacketFormat()
 bool DTCLib::DTC_DataPacket::Equals(const DTC_DataPacket& other)
 {
 	bool equal = true;
-	for (uint16_t ii = 0; ii < 16; ++ii)
+	for (uint16_t ii = 2; ii < 16; ++ii)
 	{
-		TRACE(21, "DTC_DataPacket::Equals: Comparing %u to %u", GetWord(ii), other.GetWord(ii));
+		//TRACE(21, "DTC_DataPacket::Equals: Comparing %u to %u", GetWord(ii), other.GetWord(ii));
 		if (other.GetWord(ii) != GetWord(ii)) {
 			equal = false;
 			break;
