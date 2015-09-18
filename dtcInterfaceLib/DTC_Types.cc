@@ -168,7 +168,7 @@ std::string DTCLib::DTC_DataPacket::toPacketFormat()
     return ss.str();
 }
 
-bool DTCLib::DTC_DataPacket::Equals(DTC_DataPacket& other)
+bool DTCLib::DTC_DataPacket::Equals(const DTC_DataPacket& other)
 {
 	bool equal = true;
 	for (uint16_t ii = 0; ii < 16; ++ii)
@@ -198,7 +198,7 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DMAPacket::ConvertToDataPacket() const
     uint8_t word1B = static_cast<uint8_t>(ringID_)+(valid_ ? 0x80 : 0x0);
     output.SetWord(2, word1A);
     output.SetWord(3, word1B);
-	for (int i = 4; i < 16; ++i)
+	for (uint16_t i = 4; i < 16; ++i)
 	{
 		output.SetWord(i, 0);
 	}
@@ -587,7 +587,7 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DataHeaderPacket::ConvertToDataPacket() const
     return output;
 }
 
-bool DTCLib::DTC_DataHeaderPacket::Equals(DTC_DataHeaderPacket& other)
+bool DTCLib::DTC_DataHeaderPacket::Equals(const DTC_DataHeaderPacket& other)
 {
 	return ConvertToDataPacket() == other.ConvertToDataPacket();
 }
