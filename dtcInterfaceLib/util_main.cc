@@ -276,7 +276,6 @@ main(int	argc
 			totalWriteTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
 				(endDTC - startDTC).count();
 			unsigned returned = 0;
-			bool error = false;
 			int count = 5;
 			while (returned < packetCount + 1 && count > 0)
 			{
@@ -315,18 +314,14 @@ main(int	argc
 					for (int offset = 0; offset < (bufSize - 8) / 16; ++offset)
 					{
 						DTC_DataPacket test = DTC_DataPacket(&((uint8_t*)buffer)[8 + offset*16]);
-						//std::string output = "mu2eUtil::loopback test: " + test.toJSON();
-						//TRACE(19, output.c_str());
-						error = error || test != packet;
-						TRACE(19, "mu2eUtil::loopback: packet=%i, error=%i", offset, error);
-						if (!error) {
+						if (test == packet) {
 							returned++;
 						}
 					}
 				}
 				if (delay > 0) usleep(delay);
 			}
-			if (returned < packetCount + 1 || error) { break; }
+			if (returned < packetCount + 1) { break; }
 			if (delay > 0) usleep(delay);
 		}
 
