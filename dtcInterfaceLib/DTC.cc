@@ -11,7 +11,7 @@
 #define TRACE_NAME "MU2EDEV"
 
 DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode) : device_(),
-daqbuffer_(nullptr), dcsbuffer_(nullptr), simMode_(mode),
+daqbuffer_(nullptr), buffers_used_(0), dcsbuffer_(nullptr), simMode_(mode),
 maxROCs_(), dmaSize_(16), bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
 lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr), deviceTime_(0)
 {
@@ -148,6 +148,9 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
 	}
 #endif
 	first_read_ = true;
+	device_.read_release(DTC_DMA_Engine_DAQ, buffers_used_);
+	buffers_used_ = 0;
+
 	try {
 		// Read the header packet
 		DTC_DataHeaderPacket* packet = nullptr;
@@ -318,7 +321,7 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 		if (first_read_) {
 			TRACE(19, "DTC::ReadNextDAQPacket: calling device_.release_all");
 			auto start = std::chrono::high_resolution_clock::now();
-			device_.release_all(DTC_DMA_Engine_DAQ);
+			//device_.release_all(DTC_DMA_Engine_DAQ);
 			deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
 				(std::chrono::high_resolution_clock::now() - start).count();
 
@@ -338,6 +341,7 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 			//We didn't actually get a new buffer...this probably means there's no more data
 			return nullptr;
 		}
+		buffers_used_++;
 		bufferIndex_++;
 	}
 	//Read the next packet

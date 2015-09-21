@@ -190,6 +190,7 @@ namespace DTCLib {
     private:
         mu2edev device_;
         mu2e_databuff_t* daqbuffer_;
+		int buffers_used_;
         mu2e_databuff_t* dcsbuffer_;
         DTC_SimMode simMode_;
         DTC_ROC_ID maxROCs_[6];

@@ -282,7 +282,8 @@ main(int	argc
 				mu2e_databuff_t* buffer;
 				int tmo_ms = 0x150;
 				auto startDTC = std::chrono::high_resolution_clock::now();
-				device.release_all(DTC_DMA_Engine_DAQ);
+				//device.release_all(DTC_DMA_Engine_DAQ);
+				device.read_release(DTC_DMA_Engine_DAQ, 1);
 				int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
 				auto endDTC = std::chrono::high_resolution_clock::now();
 				totalReadTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
@@ -370,7 +371,8 @@ main(int	argc
 			mu2e_databuff_t* buffer;
 			int tmo_ms = 1500;
 			auto startDTC = std::chrono::high_resolution_clock::now();
-			device.release_all(DTC_DMA_Engine_DAQ);
+			//device.release_all(DTC_DMA_Engine_DAQ);
+			device.read_release(DTC_DMA_Engine_DAQ,1);
 			int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
 			auto endDTC = std::chrono::high_resolution_clock::now();
 			totalIncTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
