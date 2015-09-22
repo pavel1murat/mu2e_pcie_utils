@@ -147,10 +147,10 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 		{
 			if (!loopbackData_.empty())
 			{
-				memcpy((char*)dmaData_[chn][swIdx_[chn]], loopbackData_.front(), sizeof(mu2e_databuff_t)-sizeof(uint64_t));
+				memcpy((char*)dmaData_[chn][swIdx_[chn]], loopbackData_.front(), sizeof(mu2e_databuff_t) - sizeof(uint64_t));
 				*buffer = dmaData_[chn][swIdx_[chn]];
 				delete loopbackData_.front();
-			    loopbackData_.pop();
+				loopbackData_.pop();
 				swIdx_[chn] = (swIdx_[chn] + 1) % SIM_BUFFCOUNT;
 				return static_cast<int>(*(uint64_t*)buffer[0]);
 			}
@@ -506,7 +506,8 @@ int mu2esim::write_data(int chn, void *buffer, size_t bytes)
 			rrMutex_.unlock();
 		}
 		else if ((word & 0x8020) == 0x8020) {
-			TRACE(17, "mu2esim::write_data: Data Request: activeDAQRing=%u, ts=%llu", activeDAQRing, (unsigned long long)ts.GetTimestamp(true));
+			DTCLib::DTC_ROC_ID activeROC = static_cast<DTCLib::DTC_ROC_ID>(word & 0xF);
+			TRACE(17, "mu2esim::write_data: Data Request: activeDAQRing=%u, activeROC=%u, ts=%llu", activeDAQRing, activeROC, (unsigned long long)ts.GetTimestamp(true));
 			if (activeDAQRing != DTCLib::DTC_Ring_Unused)
 			{
 				rrMutex_.lock();
@@ -515,7 +516,6 @@ int mu2esim::write_data(int chn, void *buffer, size_t bytes)
 					TRACE(17, "mu2esim::write_data: Data Request Received but missing Readout Request!");
 				}
 				rrMutex_.unlock();
-				DTCLib::DTC_ROC_ID activeROC = static_cast<DTCLib::DTC_ROC_ID>(word & 0xF);
 				drMutex_.lock();
 				if (activeROC < DTCLib::DTC_ROC_Unused)
 				{
@@ -554,7 +554,7 @@ int mu2esim::read_release(int chn, unsigned num)
 	//Always succeeds
 	TRACE(17, "mu2esim::read_release: Simulating a release of %u buffers of channel %i", num, chn);
 	for (unsigned ii = 0; ii < num; ++ii) {
-		swIdx_[chn] = (swIdx_[chn] + 1) % SIM_BUFFCOUNT;
+		if(delta_(chn, C2S) != 0) swIdx_[chn] = (swIdx_[chn] + 1) % SIM_BUFFCOUNT;
 	}
 	return 0;
 }
@@ -610,9 +610,9 @@ void mu2esim::CFOEmulator_()
 	uint32_t count = registers_[0x91AC];
 	uint16_t debugCount = static_cast<uint16_t>(registers_[0x91B0]);
 	long long ticksToWait = static_cast<long long>(registers_[0x91A8] * 0.0064);
-	DTCLib::DTC_ROC_ID numROCS[6]{ DTCLib::DTC_ROC_Unused,  DTCLib::DTC_ROC_Unused,  
-		                           DTCLib::DTC_ROC_Unused,  DTCLib::DTC_ROC_Unused,  
-		                           DTCLib::DTC_ROC_Unused,  DTCLib::DTC_ROC_Unused};
+	DTCLib::DTC_ROC_ID numROCS[6]{ DTCLib::DTC_ROC_Unused,  DTCLib::DTC_ROC_Unused,
+								   DTCLib::DTC_ROC_Unused,  DTCLib::DTC_ROC_Unused,
+								   DTCLib::DTC_ROC_Unused,  DTCLib::DTC_ROC_Unused };
 	for (auto ring : DTCLib::DTC_Rings)
 	{
 		std::bitset<32> ringRocs(registers_[0x918C]);

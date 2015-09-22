@@ -148,6 +148,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
 	}
 #endif
 	first_read_ = true;
+	TRACE(19, "DTC::GetData: Releasing %i buffers", buffers_used_);
 	device_.read_release(DTC_DMA_Engine_DAQ, buffers_used_);
 	buffers_used_ = 0;
 
@@ -319,12 +320,6 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 	{
 		newBuffer = true;
 		if (first_read_) {
-			TRACE(19, "DTC::ReadNextDAQPacket: calling device_.release_all");
-			auto start = std::chrono::high_resolution_clock::now();
-			//device_.release_all(DTC_DMA_Engine_DAQ);
-			deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
-				(std::chrono::high_resolution_clock::now() - start).count();
-
 			lastReadPtr_ = nullptr;
 		}
 		TRACE(19, "DTC::ReadNextDAQPacket Obtaining new DAQ Buffer");

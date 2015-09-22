@@ -682,12 +682,15 @@ namespace DTCLib
 		bool Resize(const uint16_t dmaSize);
 		uint16_t GetSize() const { return dataSize_; }
 		bool IsMemoryPacket() const { return memPacket_; }
-		void CramIn(DTC_DataPacket& other, int offset) { if(other.dataSize_ + offset <= dataSize_) memcpy(dataPtr_ + offset, other.dataPtr_, other.dataSize_); }
+		void CramIn(DTC_DataPacket& other, int offset) { if (other.dataSize_ + offset <= dataSize_) memcpy(dataPtr_ + offset, other.dataPtr_, other.dataSize_); }
 		uint8_t* GetData() const { return dataPtr_; }
 
 		bool operator==(const DTC_DataPacket& other) { return Equals(other); }
 		bool operator!=(const DTC_DataPacket& other) { return !Equals(other); }
 		bool Equals(const DTC_DataPacket& other);
+		friend std::ostream& operator<<(std::ostream& s, DTC_DataPacket& p) {
+			return s.write((char*)p.dataPtr_, p.dataSize_);
+		}
 	};
 
 	class DTC_DMAPacket {

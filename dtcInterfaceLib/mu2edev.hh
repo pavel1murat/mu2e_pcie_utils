@@ -16,28 +16,28 @@
 
 struct mu2edev
 {
-    mu2edev();
-    int  init(DTCLib::DTC_SimMode simMode = DTCLib::DTC_SimMode_Disabled);
-    int  read_data(int chn, void **buffer, int tmo_ms); // return bytes read; error if negative
-    int  read_release(int chn, unsigned num);
-    int  release_all(int chn);
-    int  read_register(uint16_t address, int tmo_ms, uint32_t *output);
-    int  write_register(uint16_t address, int tmo_ms, uint32_t data);
-    void meta_dump(int chn, int dir);
-    int  write_data(int chn, void *buffer, size_t bytes);
-    //int  read_pcie_state(m_ioc_pcistate_t *output);
-    //int  read_dma_state(int chn, int dir, m_ioc_engstate_t *output);
-    //int  read_dma_stats(m_ioc_engstats_t *output);
-    //int  read_trn_stats(TRNStatsArray *output);
-    //int  read_test_command(m_ioc_cmd_t *output);
-    //int  write_test_command(m_ioc_cmd_t input, bool start);
+	mu2edev();
+	int  init(DTCLib::DTC_SimMode simMode = DTCLib::DTC_SimMode_Disabled);
+	int  read_data(int chn, void **buffer, int tmo_ms); // return bytes read; error if negative
+	int  read_release(int chn, unsigned num);
+	int  release_all(int chn);
+	int  read_register(uint16_t address, int tmo_ms, uint32_t *output);
+	int  write_register(uint16_t address, int tmo_ms, uint32_t data);
+	void meta_dump(int chn, int dir);
+	int  write_data(int chn, void *buffer, size_t bytes);
+	//int  read_pcie_state(m_ioc_pcistate_t *output);
+	//int  read_dma_state(int chn, int dir, m_ioc_engstate_t *output);
+	//int  read_dma_stats(m_ioc_engstats_t *output);
+	//int  read_trn_stats(TRNStatsArray *output);
+	//int  read_test_command(m_ioc_cmd_t *output);
+	//int  write_test_command(m_ioc_cmd_t input, bool start);
 
 private:
-    unsigned         delta_(int chn, int dir);
+	unsigned         delta_(int chn, int dir);
 
-    int	             devfd_;
-    volatile void *  mu2e_mmap_ptrs_[MU2E_MAX_CHANNELS][2][2];
-    m_ioc_get_info_t mu2e_channel_info_[MU2E_MAX_CHANNELS][2];
-    unsigned         buffers_held_;
-    mu2esim*          simulator_;
+	int	             devfd_;
+	volatile void *  mu2e_mmap_ptrs_[MU2E_MAX_CHANNELS][2][2];
+	m_ioc_get_info_t mu2e_channel_info_[MU2E_MAX_CHANNELS][2];
+	unsigned         buffers_held_;
+	mu2esim*          simulator_;
 };
