@@ -367,7 +367,7 @@ main(int	argc
 
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
-			cout << "Buffer Read " << ii << endl;
+			if(!rawOutput) cout << "Buffer Read " << ii << endl;
 			mu2e_databuff_t* buffer;
 			int tmo_ms = 1500;
 			auto startDTC = std::chrono::high_resolution_clock::now();
@@ -387,18 +387,20 @@ main(int	argc
 				TRACE(1, "util - bufSize is %u", bufSize);
 				for (unsigned line = 0; line < (unsigned)(ceil((bufSize - 8) / 16)); ++line)
 				{
-					cout << "0x" << hex << setw(5) << setfill('0') << line << "0: ";
+					if(!rawOutput) cout << "0x" << hex << setw(5) << setfill('0') << line << "0: ";
 					//for (unsigned byte = 0; byte < 16; ++byte)
 					for (unsigned byte = 0; byte < 8; ++byte)
 					{
 						if ((line * 16) + (2 * byte) < (bufSize - 8u)) {
 							uint16_t thisWord = (((uint16_t*)buffer)[4 + (line * 8) + byte]);
 							//uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
-							cout << setw(4) << (int)thisWord << " ";
-							if (rawOutput) outputStream.write((char*)&thisWord, sizeof(uint16_t));
+							//cout << setw(4) << (int)thisWord << " ";
+
+							if (rawOutput) {outputStream.write((char*)&thisWord, sizeof(uint16_t));}
+                                                        else { cout << setw(4) << (int)thisWord << " "; }
 						}
 					}
-					cout << endl;
+					if(!rawOutput) cout << endl;
 				}
 			}
 			cout << endl << endl;
