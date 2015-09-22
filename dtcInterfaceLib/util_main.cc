@@ -430,14 +430,16 @@ main(int	argc
 		if (rawOutput) outputStream.close();
 
 		double aveRate = totalSize / totalIncTime / 1024;
-
 		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
 			(std::chrono::high_resolution_clock::now() - startTime).count();
+		double aveTotalRate = totalSize / totalTime / 1024;
+
 		std::cout << "STATS, "
 			<< "Total Elapsed Time: " << totalTime << " s." << std::endl
 			<< "Device Time: " << totalIncTime << " s." << std::endl
 			<< "Total Data Size: " << totalSize / 1024 << " KB." << std::endl
-			<< "Average Data Rate: " << aveRate << " KB/s." << std::endl
+			<< "Average Data Rate (device): " << aveRate << " KB/s." << std::endl
+			<< "Average Data Rate (Total): " << aveTotalRate << " KB/s" << std::endl
 			<< "Readout Request Time: " << readoutRequestTime << " s." << std::endl;
 	}
 	else if (op == "read_release")
@@ -463,9 +465,10 @@ main(int	argc
 		auto startTime = std::chrono::high_resolution_clock::now();
 
 		DTCSoftwareCFO *theCFO = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet);
-		double readoutRequestTime = thisDTC->GetDeviceTime();
+		double readoutRequestTime = 0;
 		if (!syncRequests) {
 			theCFO->SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
+			readoutRequestTime += thisDTC->GetDeviceTime();
 			thisDTC->ResetDeviceTime();
 		}
 
@@ -586,15 +589,17 @@ main(int	argc
 		}
 
 		if (rawOutput) outputStream.close();
-		double aveRate = totalSize / totalDevTime / 1024;
-
+		double aveRate = totalSize / totalIncTime / 1024;
 		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
 			(std::chrono::high_resolution_clock::now() - startTime).count();
+		double aveTotalRate = totalSize / totalTime / 1024;
+
 		std::cout << "STATS, " << ii << " DataBlocks processed:" << std::endl
 			<< "Total Elapsed Time: " << totalTime << " s." << std::endl
 			<< "DTC::GetData Time: " << totalIncTime << " s." << std::endl
 			<< "Total Data Size: " << totalSize / 1024 << " KB." << std::endl
-			<< "Average Data Rate: " << aveRate << " KB/s." << std::endl
+			<< "Average Data Rate (device): " << aveRate << " KB/s." << std::endl
+			<< "Average Data Rate (total): " << aveTotalRate << " KB/s." << std::endl
 			<< "Readout Request Time: " << readoutRequestTime << " s." << std::endl
 			<< "Total Device Time: " << totalDevTime << " s." << std::endl;
 	}
