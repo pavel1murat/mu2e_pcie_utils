@@ -13,7 +13,7 @@ namespace DTCLib {
         virtual ~DTCLibTest();
 
         //Test Control
-        void startTest(bool classEnabled, bool regIOEnabled, bool pcieEnabled, bool dmaStateEnabled,
+        void startTest(bool classEnabled, bool regIOEnabled,
             bool daqEnabled, bool dcsEnabled, int nTests, bool printMessages = false);
         void stopTests();
 
@@ -23,10 +23,6 @@ namespace DTCLib {
         int classFailed();
         int regPassed();
         int regFailed();
-        int pciePassed();
-        int pcieFailed();
-        int dmaStatePassed();
-        int dmaStateFailed();
         int daqPassed();
         int daqFailed();
         int dcsPassed();
@@ -36,8 +32,6 @@ namespace DTCLib {
         void doTests();
         void doClassTest();
         void doRegTest();
-        void doPCIeTest();
-        void doDMAStateTest();
         void doDCSTest();
         void doDAQTest();
 
@@ -50,10 +44,6 @@ namespace DTCLib {
         std::atomic<int> classFailed_;
         std::atomic<int> regPassed_;
         std::atomic<int> regFailed_;
-        std::atomic<int> pciePassed_;
-        std::atomic<int> pcieFailed_;
-        std::atomic<int> dmaStatePassed_;
-        std::atomic<int> dmaStateFailed_;
         std::atomic<int> daqPassed_;
         std::atomic<int> daqFailed_;
         std::atomic<int> dcsPassed_;
@@ -63,10 +53,6 @@ namespace DTCLib {
         int classFailedTemp_;
         int regPassedTemp_;
         int regFailedTemp_;
-        int pciePassedTemp_;
-        int pcieFailedTemp_;
-        int dmaStatePassedTemp_;
-        int dmaStateFailedTemp_;
         int daqPassedTemp_;
         int daqFailedTemp_;
         int dcsPassedTemp_;
@@ -78,8 +64,6 @@ namespace DTCLib {
 
         bool runClassTest_;
         bool runRegTest_;
-        bool runPCIeTest_;
-        bool runDMAStateTest_;
         bool runDAQTest_;
         bool runDCSTest_;
 

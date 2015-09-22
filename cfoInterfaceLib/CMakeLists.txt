@@ -18,17 +18,25 @@ install_headers()
 install_source()
 
 add_custom_command(
-    OUTPUT CFO.node
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/bin/web/modules/CFO/server/CFO.node
+           ${CMAKE_CURRENT_BINARY_DIR}/bin/web/modules/CFO/server/CFOLibTest.node
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMAND V=1 ${CMAKE_CURRENT_SOURCE_DIR}/build.sh ${CMAKE_CURRENT_SOURCE_DIR}
-    DEPENDS CFO.cc CFO_Types.cc mu2edev.cc mu2esim.cc
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/web/ ${CMAKE_CURRENT_BINARY_DIR}/bin/web/
+    COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_BINARY_DIR}/CFO.node ${CMAKE_CURRENT_BINARY_DIR}/bin/web/modules/CFO/server/CFO.node
+    COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_BINARY_DIR}/CFOLibTest.node  ${CMAKE_CURRENT_BINARY_DIR}/bin/web/modules/CFO/server/CFOLibTest.node
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/CFO.cc 
+            ${CMAKE_CURRENT_SOURCE_DIR}/CFOLibTest.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/CFO_Types.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/mu2edev.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/mu2esim.cc
 )
-add_custom_target(CFOJSInterface ALL echo DEPENDS CFO.node)
-add_custom_command(TARGET CFOJSInterface POST_BUILD
-   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/web/ ${CMAKE_CURRENT_BINARY_DIR}/bin/web/
-   COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_BINARY_DIR}/CFO.node ${CMAKE_CURRENT_BINARY_DIR}/bin/web/modules/CFO/server/CFO.node
-   COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_BINARY_DIR}/CFOLibTest.node  ${CMAKE_CURRENT_BINARY_DIR}/bin/web/modules/CFO/server/CFOLibTest.node
+add_custom_target(CFOJSInterface ALL 
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/bin/web/modules/CFO/server/CFO.node
+            ${CMAKE_CURRENT_BINARY_DIR}/bin/web/modules/CFO/server/CFOLibTest.node
 )
+add_dependencies(CFOJSInterface CFOInterface)
+
 
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin/web DESTINATION ${${product}_bin_dir})
 
