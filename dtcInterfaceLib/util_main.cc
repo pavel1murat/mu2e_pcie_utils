@@ -266,7 +266,8 @@ main(int	argc
 	else if (op == "loopback")
 	{
 		cout << "Operation \"loopback\"" << endl;
-		double totalReadTime = 0, totalWriteTime = 0, totalSize = 0;
+		double totalReadTime = 0, totalWriteTime = 0, totalSize = 0, totalRTTime = 0;
+		int rtCount = 0;
 		auto startTime = std::chrono::high_resolution_clock::now();
 		DTC *thisDTC = new DTC(DTC_SimMode_Loopback);
 		mu2edev device = thisDTC->GetDevice();
@@ -296,15 +297,17 @@ main(int	argc
 			{
 				mu2e_databuff_t* buffer;
 				int tmo_ms = 0x150;
-				auto startDTC = std::chrono::high_resolution_clock::now();
+				auto startDTCRead = std::chrono::high_resolution_clock::now();
 				device.read_release(DTC_DMA_Engine_DAQ, 1);
 				int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
-				auto endDTC = std::chrono::high_resolution_clock::now();
+				auto endDTCRead = std::chrono::high_resolution_clock::now();
 				totalReadTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
-					(endDTC - startDTC).count();
+					(endDTCRead - startDTCRead).count();
 				count--;
 				if (sts > 0)
 				{
+					totalRTTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>(endDTCRead - startDTC).count();
+					rtCount++;
 					void* readPtr = &(buffer[0]);
 					uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)readPtr));
 					TRACE(19, "mu2eUtil::loopback test, bufSize is %u", bufSize);
@@ -344,6 +347,7 @@ main(int	argc
 		}
 
 		double aveRate = totalSize / totalReadTime / 1024;
+		double rtTime = totalRTTime / (rtCount > 0 ? rtCount : 1);
 
 		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
 			(std::chrono::high_resolution_clock::now() - startTime).count();
@@ -353,12 +357,14 @@ main(int	argc
 			<< "Device Read Time: " << totalReadTime << " s." << std::endl
 			<< "Device Write Time: " << totalWriteTime << " s." << std::endl
 			<< "Total Data Size: " << totalSize / 1024 << " KB." << std::endl
-			<< "Average Data Rate: " << aveRate << " KB/s." << std::endl;
+			<< "Average Data Rate: " << aveRate << " KB/s." << std::endl
+			<< "Average Round-Trip time: " << rtTime << " s." << std::endl;
 	}
 	else if (op == "buffer_test")
 	{
 		cout << "Operation \"buffer_test\"" << endl;
-		double totalIncTime = 0, totalSize = 0;
+		double totalIncTime = 0, totalSize = 0, totalRTTime = 0;
+		int rtCount = 0;
 		auto startTime = std::chrono::high_resolution_clock::now();
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
@@ -379,13 +385,16 @@ main(int	argc
 
 		std::ofstream outputStream;
 		if (rawOutput) outputStream.open(rawOutputFile, std::ios::out | std::ios::app | std::ios::binary);
+		auto startRT = std::chrono::high_resolution_clock::now();
 
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
 			if (syncRequests) {
 				auto startRequest = std::chrono::high_resolution_clock::now();
 				cfo->SendRequestForTimestamp(DTC_Timestamp(timestampOffset + (incrementTimestamp ? ii : 0)));
-				readoutRequestTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(std::chrono::high_resolution_clock::now() - startRequest).count();
+				auto endRequest = std::chrono::high_resolution_clock::now();
+				readoutRequestTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(endRequest - startRequest).count();
+				startRT = endRequest;
 			}
 			if (!reallyQuiet) cout << "Buffer Read " << ii << endl;
 			mu2e_databuff_t* buffer;
@@ -400,6 +409,10 @@ main(int	argc
 
 			TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, (void*)buffer);
 			if (sts > 0) {
+			totalRTTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
+				(endDTC - startRT).count();
+			rtCount++;
+			startRT = endDTC;
 				void* readPtr = &(buffer[0]);
 				uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)readPtr));
 				totalSize += bufSize;
@@ -433,6 +446,7 @@ main(int	argc
 		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
 			(std::chrono::high_resolution_clock::now() - startTime).count();
 		double aveTotalRate = totalSize / totalTime / 1024;
+		double rtTime = totalRTTime / (rtCount > 0 ? rtCount : 1);
 
 		std::cout << "STATS, "
 			<< "Total Elapsed Time: " << totalTime << " s." << std::endl
@@ -440,7 +454,8 @@ main(int	argc
 			<< "Total Data Size: " << totalSize / 1024 << " KB." << std::endl
 			<< "Average Data Rate (device): " << aveRate << " KB/s." << std::endl
 			<< "Average Data Rate (Total): " << aveTotalRate << " KB/s" << std::endl
-			<< "Readout Request Time: " << readoutRequestTime << " s." << std::endl;
+			<< "Readout Request Time: " << readoutRequestTime << " s." << std::endl
+		<< "Average Round-Trip time: " << rtTime << " s." << std::endl;
 	}
 	else if (op == "read_release")
 	{
@@ -461,7 +476,8 @@ main(int	argc
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
 
-		double totalIncTime = 0, totalSize = 0, totalDevTime = 0;
+		double totalIncTime = 0, totalSize = 0, totalDevTime = 0, totalRTTime = 0;
+		int rtCount = 0;
 		auto startTime = std::chrono::high_resolution_clock::now();
 
 		DTCSoftwareCFO *theCFO = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet);
@@ -478,13 +494,17 @@ main(int	argc
 		unsigned ii = 0;
 		int retries = 4;
 		uint64_t expectedTS = timestampOffset;
+		auto startRT = std::chrono::high_resolution_clock::now();
+
 		for (; ii < number; ++ii)
 		{
 			if (syncRequests) {
 				auto startRequest = std::chrono::high_resolution_clock::now();
 				uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
 				theCFO->SendRequestForTimestamp(DTC_Timestamp(ts));
-				readoutRequestTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(std::chrono::high_resolution_clock::now() - startRequest).count();
+				auto endRequest = std::chrono::high_resolution_clock::now();
+				readoutRequestTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(endRequest - startRequest).count();
+				startRT = endRequest;
 			}
 
 			auto startDTC = std::chrono::high_resolution_clock::now();
@@ -498,6 +518,11 @@ main(int	argc
 
 			if (data.size() > 0)
 			{
+				totalRTTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
+					(endDTC - startRT).count();
+				rtCount++;
+				startRT = endDTC;
+
 				TRACE(19, "util_main %llu packets returned", (unsigned long long)data.size());
 				if (!reallyQuiet) cout << data.size() << " packets returned\n";
 				for (size_t i = 0; i < data.size(); ++i)
@@ -528,7 +553,7 @@ main(int	argc
 					}
 					for (int jj = 0; jj < h2.GetPacketCount(); ++jj) {
 						DTC_DataPacket packet = DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16));
-						if(!reallyQuiet) cout << "\t" << packet.toJSON() << endl;
+						if (!reallyQuiet) cout << "\t" << packet.toJSON() << endl;
 						if (rawOutput) {
 							outputStream << packet;
 							/*for (int ii = 0; ii < 16; ++ii)
@@ -593,6 +618,7 @@ main(int	argc
 		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
 			(std::chrono::high_resolution_clock::now() - startTime).count();
 		double aveTotalRate = totalSize / totalTime / 1024;
+		double rtTime = totalRTTime / (rtCount > 0 ? rtCount : 1);
 
 		std::cout << "STATS, " << ii << " DataBlocks processed:" << std::endl
 			<< "Total Elapsed Time: " << totalTime << " s." << std::endl
@@ -601,7 +627,8 @@ main(int	argc
 			<< "Average Data Rate (device): " << aveRate << " KB/s." << std::endl
 			<< "Average Data Rate (total): " << aveTotalRate << " KB/s." << std::endl
 			<< "Readout Request Time: " << readoutRequestTime << " s." << std::endl
-			<< "Total Device Time: " << totalDevTime << " s." << std::endl;
+			<< "Total Device Time: " << totalDevTime << " s." << std::endl
+		<< "Average Round-Trip time: " << rtTime << " s." << std::endl;
 	}
 	else {
 		std::cout << "Unrecognized operation: " << op << std::endl;
