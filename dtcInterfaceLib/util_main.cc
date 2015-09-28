@@ -239,21 +239,40 @@ main(int	argc
 		cout << "Operation \"read_data\"" << endl;
 		mu2edev device;
 		device.init();
+
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
-			mu2e_databuff_t *buffer = (mu2e_databuff_t*)new mu2e_databuff_t();
-			int tmo_ms = 0;
-			int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)buffer, tmo_ms);
-			TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, *buffer);
-			if (rawOutput) {
-				std::ofstream outputStream;
-				outputStream.open(rawOutputFile, std::ios::out | std::ios::app | std::ios::binary);
-				for (int ii = 0; ii < sts; ++ii)
-				{
-					outputStream.write((char*)(buffer[ii]), sizeof(unsigned char));
+			if (!reallyQuiet) cout << "Buffer Read " << ii << endl;
+			mu2e_databuff_t* buffer;
+			int tmo_ms = 1500;
+			int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
+
+			TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, (void*)buffer);
+			if (sts > 0) {
+				void* readPtr = &(buffer[0]);
+				uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)readPtr));
+				readPtr = (uint8_t*)readPtr + 8;
+				TRACE(1, "util - bufSize is %u", bufSize);
+
+				if (!reallyQuiet) {
+					for (unsigned line = 0; line < (unsigned)(ceil((bufSize - 8) / 16)); ++line)
+					{
+						cout << "0x" << hex << setw(5) << setfill('0') << line << "0: ";
+						//for (unsigned byte = 0; byte < 16; ++byte)
+						for (unsigned byte = 0; byte < 8; ++byte)
+						{
+							if ((line * 16) + (2 * byte) < (bufSize - 8u)) {
+								uint16_t thisWord = (((uint16_t*)buffer)[4 + (line * 8) + byte]);
+								//uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
+								cout << setw(4) << (int)thisWord << " ";
+							}
+						}
+						cout << endl;
+					}
 				}
-				outputStream.close();
 			}
+			if (!reallyQuiet) cout << endl << endl;
+			device.read_release(DTC_DMA_Engine_DAQ, 1);
 			if (delay > 0) usleep(delay);
 		}
 	}
@@ -400,8 +419,6 @@ main(int	argc
 			mu2e_databuff_t* buffer;
 			int tmo_ms = 1500;
 			auto startDTC = std::chrono::high_resolution_clock::now();
-			//device.release_all(DTC_DMA_Engine_DAQ);
-			device.read_release(DTC_DMA_Engine_DAQ, 1);
 			int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
 			auto endDTC = std::chrono::high_resolution_clock::now();
 			totalIncTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
@@ -438,6 +455,7 @@ main(int	argc
 				}
 			}
 			if (!reallyQuiet) cout << endl << endl;
+			device.read_release(DTC_DMA_Engine_DAQ, 1);
 			if (delay > 0) usleep(delay);
 		}
 		if (rawOutput) outputStream.close();
