@@ -117,7 +117,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTCLib::DTC_Timesta
 		theDTC_->SetCFOEmulationTimestamp(start);
 		theDTC_->SetCFOEmulationNumPackets(debugPacketCount_);
 		theDTC_->SetCFOEmulationNumRequests(count);
-		theDTC_->SetCFOEmulationRequestInterval(delayBetweenDataRequests);
+		theDTC_->SetCFOEmulationRequestInterval(delayBetweenDataRequests * 1000);
 		theDTC_->EnableCFOEmulation();
 	}
 }
