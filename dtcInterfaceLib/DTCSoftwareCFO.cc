@@ -2,8 +2,8 @@
 
 #define TRACE_NAME "MU2EDEV"
 DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(bool useCFOEmulator, uint16_t debugPacketCount,
-	DTCLib::DTC_DebugType debugType, bool stickyDebugType,
-	bool quiet, bool asyncRR)
+									   DTCLib::DTC_DebugType debugType, bool stickyDebugType,
+									   bool quiet, bool asyncRR)
 	: useCFOEmulator_(useCFOEmulator)
 	, debugPacketCount_(debugPacketCount)
 	, debugType_(debugType)
@@ -19,8 +19,8 @@ DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(bool useCFOEmulator, uint16_t debugPacket
 }
 
 DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(DTCLib::DTC* dtc, bool useCFOEmulator, uint16_t debugPacketCount,
-	DTCLib::DTC_DebugType debugType, bool stickyDebugType,
-	bool quiet, bool asyncRR)
+									   DTCLib::DTC_DebugType debugType, bool stickyDebugType,
+									   bool quiet, bool asyncRR)
 	: useCFOEmulator_(useCFOEmulator)
 	, debugPacketCount_(debugPacketCount)
 	, debugType_(debugType)
@@ -44,15 +44,18 @@ DTCLib::DTCSoftwareCFO::~DTCSoftwareCFO()
 
 void DTCLib::DTCSoftwareCFO::WaitForRequestsToBeSent()
 {
-	while (!requestsSent_) {
+	while (!requestsSent_)
+	{
 		usleep(1000);
 	}
 }
 
 void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTCLib::DTC_Timestamp ts)
 {
-	if (!useCFOEmulator_) {
-		for (auto ring : DTCLib::DTC_Rings) {
+	if (!useCFOEmulator_)
+	{
+		for (auto ring : DTCLib::DTC_Rings)
+		{
 			if (!ringMode_[ring].TimingEnable)
 			{
 				if (ringMode_[ring].TransmitEnable)
@@ -66,8 +69,9 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTCLib::DTC_Timestamp ts)
 						{
 							TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp before DTC_DataRequestPacket req");
 							DTCLib::DTC_DataRequestPacket req(ring, (DTCLib::DTC_ROC_ID)roc, ts, true,
-								debugPacketCount_, debugType_);
-							if (debugType_ == DTCLib::DTC_DebugType_ExternalSerialWithReset && !stickyDebugType_) {
+															  debugPacketCount_, debugType_);
+							if (debugType_ == DTCLib::DTC_DebugType_ExternalSerialWithReset && !stickyDebugType_)
+							{
 								debugType_ = DTCLib::DTC_DebugType_ExternalSerial;
 							}
 							TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp before WriteDMADAQPacket - DTC_DataRequestPacket");
@@ -97,7 +101,8 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTCLib::DTC_Timesta
 	if (!useCFOEmulator_)
 	{
 		requestsSent_ = false;
-		if (asyncRR_) {
+		if (asyncRR_)
+		{
 			theThread_ = std::thread(&DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync, this, start, count, increment, delayBetweenDataRequests);
 		}
 		else
@@ -118,10 +123,11 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTCLib::DTC_Timesta
 }
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync(DTCLib::DTC_Timestamp start, int count,
-	bool increment, uint32_t delayBetweenDataRequests, int requestsAhead)
+														  bool increment, uint32_t delayBetweenDataRequests, int requestsAhead)
 {
 	TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImplSync Start");
-	for (int ii = 0; ii < count; ++ii) {
+	for (int ii = 0; ii < count; ++ii)
+	{
 		DTCLib::DTC_Timestamp ts = start + (increment ? ii : 0);
 
 		SendRequestForTimestamp(ts);
@@ -133,14 +139,16 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync(DTCLib::DTC_Timestamp 
 }
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync(DTCLib::DTC_Timestamp start, int count,
-	bool increment, uint32_t delayBetweenDataRequests)
+														   bool increment, uint32_t delayBetweenDataRequests)
 {
 	TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImplAsync Start");
 
 	// Send Readout Requests first
-	for (int ii = 0; ii < count; ++ii) {
+	for (int ii = 0; ii < count; ++ii)
+	{
 		DTCLib::DTC_Timestamp ts = start + (increment ? ii : 0);
-		for (auto ring : DTCLib::DTC_Rings) {
+		for (auto ring : DTCLib::DTC_Rings)
+		{
 			if (!ringMode_[ring].TimingEnable)
 			{
 				if (ringMode_[ring].TransmitEnable)
@@ -156,9 +164,11 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync(DTCLib::DTC_Timestamp
 	requestsSent_ = true;
 
 	// Now do the DataRequests, sleeping for the required delay between each.
-	for (int ii = 0; ii < count; ++ii) {
+	for (int ii = 0; ii < count; ++ii)
+	{
 		DTCLib::DTC_Timestamp ts = start + (increment ? ii : 0);
-		for (auto ring : DTCLib::DTC_Rings) {
+		for (auto ring : DTCLib::DTC_Rings)
+		{
 			if (!ringMode_[ring].TimingEnable)
 			{
 				if (ringMode_[ring].TransmitEnable)
@@ -170,8 +180,9 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync(DTCLib::DTC_Timestamp
 						{
 							TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImpl before DTC_DataRequestPacket req");
 							DTCLib::DTC_DataRequestPacket req(ring, (DTCLib::DTC_ROC_ID)roc, ts, true,
-								(uint16_t)debugPacketCount_, debugType_);
-							if (debugType_ == DTCLib::DTC_DebugType_ExternalSerialWithReset && !stickyDebugType_) {
+															  (uint16_t)debugPacketCount_, debugType_);
+							if (debugType_ == DTCLib::DTC_DebugType_ExternalSerialWithReset && !stickyDebugType_)
+							{
 								debugType_ = DTCLib::DTC_DebugType_ExternalSerial;
 							}
 							TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImpl before WriteDMADAQPacket - DTC_DataRequestPacket");
@@ -188,5 +199,4 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync(DTCLib::DTC_Timestamp
 		}
 		usleep(delayBetweenDataRequests);
 	}
-
 }
