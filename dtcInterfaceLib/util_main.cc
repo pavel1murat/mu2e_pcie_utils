@@ -170,7 +170,7 @@ main(int	argc
 				break;
 			case 'T':
 				val = getOptionValue(&optind, &argv);
-				if (val == 0 || val == 1 || val == 2)
+				if (val < (int)DTCLib::DTC_DebugType_Invalid)
 				{
 					stickyDebugType = true;
 					debugType = (DTCLib::DTC_DebugType)val;

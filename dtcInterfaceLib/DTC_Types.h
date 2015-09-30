@@ -453,6 +453,8 @@ enum DTC_DebugType
 	DTC_DebugType_SpecialSequence = 0,
 	DTC_DebugType_ExternalSerial = 1,
 	DTC_DebugType_ExternalSerialWithReset = 2,
+        DTC_DebugType_RAMTest = 3,
+        DTC_DebugType_Invalid = 4,
 };
 struct DTC_DebugTypeConverter
 {
@@ -469,6 +471,8 @@ public:
 			return "External Serial";
 		case DTC_DebugType_ExternalSerialWithReset:
 			return "External Serial with FIFO Reset";
+                case DTC_DebugType_RAMTest:
+                        return "RAM Error Checking";
 		}
 		return "Unknown";
 	}
@@ -485,7 +489,13 @@ public:
 		case DTC_DebugType_ExternalSerialWithReset:
 			stream << "\"External Serial with FIFO Reset\"";
 			break;
-		}
+                case DTC_DebugType_RAMTest:
+                        stream << "\"RAM Error Checking\"";
+                        break;
+                case DTC_DebugType_Invalid:
+                        stream << "\"\"";
+                        break;
+                }
 		return stream;
 	}
 };
