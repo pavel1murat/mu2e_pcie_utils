@@ -473,6 +473,8 @@ public:
 			return "External Serial with FIFO Reset";
                 case DTC_DebugType_RAMTest:
                         return "RAM Error Checking";
+                case DTC_DebugType_Invalid:
+                        return "INVALID!!!";
 		}
 		return "Unknown";
 	}

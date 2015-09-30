@@ -212,6 +212,12 @@ main(int	argc
 		typeString = "External Serial w/ FIFO Reset";
 		if (!stickyDebugType) typeString += ", will change to External Serial after first Request";
 		break;
+        case DTC_DebugType_RAMTest:
+                typeString = "RAM Test";
+                break;
+        case DTC_DebugType_Invalid:
+                typeString = "INVALID!!! YOU DID SOMETHING WRONG!!!";
+                break;
 	}
 	cout << "Options are: "
 		<< "Operation: " << string(op)
