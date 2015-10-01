@@ -53,7 +53,7 @@ private:
 	DTC *theDTC_;
 	bool ownDTC_;
 	DTC_RingEnableMode ringMode_[6];
-	std::thread theThread_;
+	std::thread* theThread_;
 	std::atomic<bool> requestsSent_;
 	std::atomic<bool> abort_;
 };

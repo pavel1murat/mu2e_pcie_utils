@@ -39,7 +39,7 @@ DTCLib::DTCSoftwareCFO::~DTCSoftwareCFO()
 {
 	if (ownDTC_) delete theDTC_;
 	abort_ = true;
-	theThread_.join();
+	if(theThread_) { theThread_->join(); }
 }
 
 void DTCLib::DTCSoftwareCFO::WaitForRequestsToBeSent()
@@ -94,6 +94,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTCLib::DTC_Timestamp ts)
 		theDTC_->SetCFOEmulationRequestInterval(0);
 		theDTC_->EnableCFOEmulation();
 	}
+        requestsSent_ = true;
 }
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTCLib::DTC_Timestamp start, bool increment, uint32_t delayBetweenDataRequests, int requestsAhead)
@@ -103,11 +104,11 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTCLib::DTC_Timesta
 		requestsSent_ = false;
 		if (asyncRR_)
 		{
-			theThread_ = std::thread(&DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync, this, start, count, increment, delayBetweenDataRequests);
+			theThread_ = new std::thread(&DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync, this, start, count, increment, delayBetweenDataRequests);
 		}
 		else
 		{
-			theThread_ = std::thread(&DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync, this, start, count, increment, delayBetweenDataRequests, requestsAhead);
+			theThread_ = new std::thread(&DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync, this, start, count, increment, delayBetweenDataRequests, requestsAhead);
 		}
 		WaitForRequestsToBeSent();
 	}
