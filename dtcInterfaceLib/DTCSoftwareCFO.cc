@@ -1,23 +1,6 @@
 #include "DTCSoftwareCFO.h"
 
 #define TRACE_NAME "MU2EDEV"
-DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(bool useCFOEmulator, uint16_t debugPacketCount,
-									   DTCLib::DTC_DebugType debugType, bool stickyDebugType,
-									   bool quiet, bool asyncRR)
-	: useCFOEmulator_(useCFOEmulator)
-	, debugPacketCount_(debugPacketCount)
-	, debugType_(debugType)
-	, stickyDebugType_(stickyDebugType)
-	, quiet_(quiet)
-	, asyncRR_(asyncRR)
-	, requestsSent_(false)
-	, abort_(false)
-{
-	theDTC_ = new DTCLib::DTC();
-	ownDTC_ = true;
-	for (auto ring : DTCLib::DTC_Rings) { ringMode_[ring] = theDTC_->ReadRingEnabled(ring); }
-}
-
 DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(DTCLib::DTC* dtc, bool useCFOEmulator, uint16_t debugPacketCount,
 									   DTCLib::DTC_DebugType debugType, bool stickyDebugType,
 									   bool quiet, bool asyncRR)
@@ -31,15 +14,12 @@ DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(DTCLib::DTC* dtc, bool useCFOEmulator, ui
 	, abort_(false)
 {
 	theDTC_ = dtc;
-	ownDTC_ = false;
 	for (auto ring : DTCLib::DTC_Rings) { ringMode_[ring] = theDTC_->ReadRingEnabled(ring); }
 }
 
 DTCLib::DTCSoftwareCFO::~DTCSoftwareCFO()
 {
-	if (ownDTC_) delete theDTC_;
 	abort_ = true;
-	if(theThread_) { theThread_->join(); }
 }
 
 void DTCLib::DTCSoftwareCFO::WaitForRequestsToBeSent()
@@ -87,14 +67,17 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTCLib::DTC_Timestamp ts)
 	}
 	else
 	{
+		TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp setting up DTC CFO Emulator");
 		theDTC_->DisableCFOEmulation();
 		theDTC_->SetCFOEmulationTimestamp(ts);
 		theDTC_->SetCFOEmulationNumPackets(debugPacketCount_);
 		theDTC_->SetCFOEmulationNumRequests(1);
 		theDTC_->SetCFOEmulationRequestInterval(0);
+		TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp enabling DTC CFO Emulator");
 		theDTC_->EnableCFOEmulation();
+		TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp done");
 	}
-        requestsSent_ = true;
+	requestsSent_ = true;
 }
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTCLib::DTC_Timestamp start, bool increment, uint32_t delayBetweenDataRequests, int requestsAhead)
@@ -104,22 +87,25 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTCLib::DTC_Timesta
 		requestsSent_ = false;
 		if (asyncRR_)
 		{
-			theThread_ = new std::thread(&DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync, this, start, count, increment, delayBetweenDataRequests);
+			theThread_ = std::thread(&DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync, this, start, count, increment, delayBetweenDataRequests);
 		}
 		else
 		{
-			theThread_ = new std::thread(&DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync, this, start, count, increment, delayBetweenDataRequests, requestsAhead);
+			theThread_ = std::thread(&DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync, this, start, count, increment, delayBetweenDataRequests, requestsAhead);
 		}
 		WaitForRequestsToBeSent();
 	}
 	else
 	{
+		TRACE(19, "DTCSoftwareCFO::SendRequestsForRange setting up DTC CFO Emulator");
 		theDTC_->DisableCFOEmulation();
 		theDTC_->SetCFOEmulationTimestamp(start);
 		theDTC_->SetCFOEmulationNumPackets(debugPacketCount_);
 		theDTC_->SetCFOEmulationNumRequests(count);
 		theDTC_->SetCFOEmulationRequestInterval(delayBetweenDataRequests * 1000);
+		TRACE(19, "DTCSoftwareCFO::SendRequestsForRange enabling DTC CFO Emulator");
 		theDTC_->EnableCFOEmulation();
+		TRACE(19, "DTCSoftwareCFO::SendRequestsForRange done");
 	}
 }
 

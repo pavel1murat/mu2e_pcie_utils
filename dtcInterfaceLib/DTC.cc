@@ -1251,7 +1251,7 @@ bool DTCLib::DTC::ResetSERDES(const DTC_Ring_ID& ring, int interval)
 	bool resetDone = false;
 	while (!resetDone)
 	{
-		TRACE(0, "Entering SERDES Reset Loop for Ring %i", ring);
+		TRACE(0, "Entering SERDES Reset Loop for Ring %u", ring);
 		std::bitset<32> data = ReadRegister(DTC_Register_SERDESReset);
 		data[ring] = 1;
 		WriteRegister(data.to_ulong(), DTC_Register_SERDESReset);

@@ -21,9 +21,6 @@ namespace DTCLib {
 class DTCSoftwareCFO
 {
 public:
-	DTCSoftwareCFO(bool useCFOEmulator, uint16_t debugPacketCount = 0,
-				   DTCLib::DTC_DebugType debugType = DTCLib::DTC_DebugType_ExternalSerialWithReset, bool stickyDebugType = false,
-				   bool quiet = false, bool asyncRR = false);
 	DTCSoftwareCFO(DTC* dtc, bool useCFOEmulator, uint16_t debugPacketCount = 0,
 				   DTCLib::DTC_DebugType debugType = DTCLib::DTC_DebugType_ExternalSerialWithReset, bool stickyDebugType = false,
 				   bool quiet = false, bool asyncRR = false);
@@ -35,6 +32,7 @@ public:
 	void setQuiet(bool quiet) { quiet_ = quiet; }
 	void setDebugPacketCount(uint16_t dbc) { debugPacketCount_ = dbc; }
 	void WaitForRequestsToBeSent();
+	DTCLib::DTC* GetDTC() { return theDTC_; }
 private:
 	void SendRequestsForRangeImplAsync(DTC_Timestamp start, int count,
 									   bool increment = true, uint32_t delayBetweenDataRequests = 0);
@@ -51,9 +49,8 @@ private:
 
 	// Object basic properties (not accessible)
 	DTC *theDTC_;
-	bool ownDTC_;
 	DTC_RingEnableMode ringMode_[6];
-	std::thread* theThread_;
+	std::thread theThread_;
 	std::atomic<bool> requestsSent_;
 	std::atomic<bool> abort_;
 };

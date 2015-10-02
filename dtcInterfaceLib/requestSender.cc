@@ -58,7 +58,8 @@ void printHelpMsg()
 
 int main(int argc, char* argv[])
 {
-	DTCLib::DTCSoftwareCFO theEmulator(false);
+	DTCLib::DTC theDTC;
+	DTCLib::DTCSoftwareCFO theEmulator(&theDTC, false);
 
 	bool incrementTimestamp = true;
 	bool quiet = false;

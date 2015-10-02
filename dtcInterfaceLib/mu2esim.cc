@@ -160,8 +160,9 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 			}
 			std::set<uint64_t> activeTimestamps;
 			rrMutex_.lock();
-			for (int ring = 0; ring <= DTCLib::DTC_Ring_5; ++ring)
+			for (unsigned ring = 0; ring <= DTCLib::DTC_Ring_5; ++ring)
 			{
+				//TRACE(21, "mu2esim::read_data ring=%u RR list size=%llu p=%p this=%p", ring, (unsigned long long)readoutRequestReceived_[ring].size(), (void*)&readoutRequestReceived_, (void*)this);
 				if (readoutRequestReceived_[ring].size() > 0)
 				{
 					bool active = true;
@@ -170,6 +171,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 					{
 						bool found = false;
 						uint64_t ts = *ii;
+						//TRACE(21, "mu2esim::read_data checking if there are DataRequests for ts=%llu", (unsigned long long)ts);
 						for (auto roc : DTCLib::DTC_ROCS)
 						{
 							drMutex_.lock();
@@ -192,6 +194,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 			bool exitLoop = false;
 			for (auto ts : activeTimestamps)
 			{
+				TRACE(17, "mu2esim::read_data, checking timestamp %llu", (unsigned long long)ts);
 				if (exitLoop) break;
 				for (int ring = 0; ring <= DTCLib::DTC_Ring_5; ++ring)
 				{
@@ -606,8 +609,9 @@ int  mu2esim::write_register(uint16_t address, int tmo_ms, uint32_t data)
 		std::bitset<32> dataBS(data);
 		if (dataBS[30] == 1)
 		{
+			TRACE(19, "mu2esim::write_register: CFO Emulator Enable Detected!");
 			cancelCFO_ = true;
-			cfoEmulatorThread_.join();
+			if (cfoEmulatorThread_.joinable()) cfoEmulatorThread_.join();
 			cancelCFO_ = false;
 			cfoEmulatorThread_ = std::thread(&mu2esim::CFOEmulator_, this);
 		}
@@ -621,6 +625,7 @@ void mu2esim::CFOEmulator_()
 	uint32_t count = registers_[0x91AC];
 	uint16_t debugCount = static_cast<uint16_t>(registers_[0x91B0]);
 	long long ticksToWait = static_cast<long long>(registers_[0x91A8] * 0.0064);
+	TRACE(19, "mu2esim::CFOEmulator_ start timestamp=%llu, count=%lu, delayBetween=%lli", (unsigned long long)start.GetTimestamp(true), (unsigned long)count, (long long)ticksToWait);
 	DTCLib::DTC_ROC_ID numROCS[6]{ DTCLib::DTC_ROC_Unused,  DTCLib::DTC_ROC_Unused,
 								   DTCLib::DTC_ROC_Unused,  DTCLib::DTC_ROC_Unused,
 								   DTCLib::DTC_ROC_Unused,  DTCLib::DTC_ROC_Unused };
@@ -629,16 +634,22 @@ void mu2esim::CFOEmulator_()
 		std::bitset<32> ringRocs(registers_[0x918C]);
 		int number = ringRocs[ring * 3] + (ringRocs[ring * 3 + 1] << 1) + (ringRocs[ring * 3 + 2] << 2);
 		numROCS[ring] = DTCLib::DTC_ROCS[number];
+		TRACE(19, "mu2esim::CFOEmulator_ ringRocs[%u]=%u", ring, numROCS[ring]);
 	}
 	unsigned sentCount = 0;
 	while (sentCount < count && !cancelCFO_)
 	{
 		for (auto ring : DTCLib::DTC_Rings)
 		{
-			DTCLib::DTC_ReadoutRequestPacket packet(ring, start + sentCount, numROCS[ring], true);
-			DTCLib::DTC_DataPacket thisPacket = packet.ConvertToDataPacket();
-			write_data(0, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
+			if (numROCS[ring] != DTCLib::DTC_ROC_Unused)
+			{
+				TRACE(21, "mu2esim::CFOEmulator_ writing DTC_ReadoutRequestPacket to ring=%u for timestamp=%llu", ring, (unsigned long long)(start + sentCount).GetTimestamp(true));
+				DTCLib::DTC_ReadoutRequestPacket packet(ring, start + sentCount, numROCS[ring], true);
+				DTCLib::DTC_DataPacket thisPacket = packet.ConvertToDataPacket();
+				write_data(0, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
+			}
 		}
+		sentCount++;
 	}
 	sentCount = 0;
 	while (sentCount < count && !cancelCFO_)
@@ -649,17 +660,16 @@ void mu2esim::CFOEmulator_()
 			{
 				for (uint8_t roc = 0; roc <= numROCS[ring]; ++roc)
 				{
+					TRACE(21, "mu2esim::CFOEmulator_ writing DTC_DataRequestPacket to ring=%u, roc=%u, for timestamp=%llu", ring, roc, (unsigned long long)(start + sentCount).GetTimestamp(true));
 					DTCLib::DTC_DataRequestPacket req(ring, (DTCLib::DTC_ROC_ID)roc, start + sentCount, true,
 													  (uint16_t)debugCount);
 					DTCLib::DTC_DataPacket thisPacket = req.ConvertToDataPacket();
 					write_data(0, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
 				}
 			}
-			DTCLib::DTC_DataRequestPacket packet(ring, numROCS[ring], true);
-			DTCLib::DTC_DataPacket thisPacket = packet.ConvertToDataPacket();
-			write_data(0, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
 		}
 		usleep(ticksToWait);
+		sentCount++;
 	}
 }
 
