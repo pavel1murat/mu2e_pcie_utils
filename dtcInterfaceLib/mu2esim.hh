@@ -8,7 +8,7 @@
 
 #include <cstdint>
 #ifndef _WIN32
-#include "linux_driver/mymodule2/mu2e_mmap_ioctl.h" // 
+#include "linux_driver/mymodule2/mu2e_mmap_ioctl.h" //
 #else
 #include "../linux_driver/mymodule2/mu2e_mmap_ioctl.h"
 #endif
@@ -26,13 +26,13 @@ struct mu2esim
 {
 	mu2esim();
 	~mu2esim();
-	int  init(DTCLib::DTC_SimMode mode = DTCLib::DTC_SimMode_Tracker);
-	int  read_data(int chn, void **buffer, int tmo_ms); // return bytes read; error if negative
-	int  write_data(int chn, void *buffer, size_t bytes);
-	int  read_release(int chn, unsigned num);
-	int  release_all(int chn);
-	int  read_register(uint16_t address, int tmo_ms, uint32_t *output);
-	int  write_register(uint16_t address, int tmo_ms, uint32_t data);
+	int init(DTCLib::DTC_SimMode mode = DTCLib::DTC_SimMode_Tracker);
+	int read_data(int chn, void **buffer, int tmo_ms); // return bytes read; error if negative
+	int write_data(int chn, void *buffer, size_t bytes);
+	int read_release(int chn, unsigned num);
+	int release_all(int chn);
+	int read_register(uint16_t address, int tmo_ms, uint32_t *output);
+	int write_register(uint16_t address, int tmo_ms, uint32_t data);
 private:
 	unsigned delta_(int chn, int dir);
 	void clearBuffer_(int chn, bool increment = true);

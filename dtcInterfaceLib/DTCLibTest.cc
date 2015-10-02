@@ -34,7 +34,8 @@ runDAQTest_(false), runDCSTest_(false)
 DTCLib::DTCLibTest::~DTCLibTest()
 {
 	nTests_ = 0;
-	if (workerThread_.joinable()) {
+	if (workerThread_.joinable())
+	{
 		workerThread_.join();
 	}
 	delete thisDTC_;
@@ -42,7 +43,7 @@ DTCLib::DTCLibTest::~DTCLibTest()
 
 // Test Control
 void DTCLib::DTCLibTest::startTest(bool classEnabled, bool regIOEnabled,
-	bool daqEnabled, bool dcsEnabled, int nTests, bool printMessages)
+								   bool daqEnabled, bool dcsEnabled, int nTests, bool printMessages)
 {
 	runClassTest_ = classEnabled;
 	runRegTest_ = regIOEnabled;
@@ -57,7 +58,8 @@ void DTCLib::DTCLibTest::startTest(bool classEnabled, bool regIOEnabled,
 	}
 
 	workerThread_ = std::thread(&DTCLib::DTCLibTest::doTests, this);
-	if (nTests_ >= 0) {
+	if (nTests_ >= 0)
+	{
 		workerThread_.join();
 	}
 }
@@ -65,7 +67,8 @@ void DTCLib::DTCLibTest::startTest(bool classEnabled, bool regIOEnabled,
 void DTCLib::DTCLibTest::stopTests()
 {
 	nTests_ = 0;
-	if (workerThread_.joinable()) {
+	if (workerThread_.joinable())
+	{
 		workerThread_.join();
 	}
 }
@@ -127,7 +130,6 @@ int DTCLib::DTCLibTest::dcsFailed()
 	return result;
 }
 
-
 // Private Functions
 void DTCLib::DTCLibTest::doTests()
 {
@@ -144,16 +146,20 @@ void DTCLib::DTCLibTest::doTests()
 	while (testCount < nTests_ || nTests_ < 0)
 	{
 		++testCount;
-		if (runClassTest_) {
+		if (runClassTest_)
+		{
 			doClassTest();
 		}
-		if (runRegTest_) {
+		if (runRegTest_)
+		{
 			doRegTest();
 		}
-		if (runDCSTest_) {
+		if (runDCSTest_)
+		{
 			doDCSTest();
 		}
-		if (runDAQTest_) {
+		if (runDAQTest_)
+		{
 			doDAQTest();
 		}
 	}
@@ -162,22 +168,26 @@ void DTCLib::DTCLibTest::doTests()
 	int totalPassed = 0;
 	int totalTests = 0;
 
-	if (runClassTest_) {
+	if (runClassTest_)
+	{
 		totalPassed += classPassed_;
 		totalTests += classPassed_ + classFailed_;
 		std::cout << std::dec << classPassed_ << " of " << (classPassed_ + classFailed_) << " Class Construction/Destruction Tests passed." << std::endl;
 	}
-	if (runRegTest_) {
+	if (runRegTest_)
+	{
 		totalPassed += regPassed_;
 		totalTests += regPassed_ + regFailed_;
 		std::cout << std::dec << regPassed_ << " of " << (regPassed_ + regFailed_) << " register I/O tests passed." << std::endl;
 	}
-	if (runDCSTest_) {
+	if (runDCSTest_)
+	{
 		totalPassed += dcsPassed_;
 		totalTests += dcsPassed_ + dcsFailed_;
 		std::cout << std::dec << dcsPassed_ << " of " << (dcsPassed_ + dcsFailed_) << " DCS DMA I/O tests passed." << std::endl;
 	}
-	if (runDAQTest_) {
+	if (runDAQTest_)
+	{
 		totalPassed += daqPassed_;
 		totalTests += daqPassed_ + daqFailed_;
 		std::cout << std::dec << daqPassed_ << " of " << (daqPassed_ + daqFailed_) << " DAQ DMA I/O tests passed." << std::endl;
@@ -187,11 +197,13 @@ void DTCLib::DTCLibTest::doTests()
 
 void DTCLib::DTCLibTest::doClassTest()
 {
-	if (printMessages_) {
+	if (printMessages_)
+	{
 		std::cout << std::endl << "Test 0: Class Construction/Destruction" << std::endl;
 	}
 	bool err = false;
-	try {
+	try
+	{
 		if (printMessages_) std::cout << "Testing DTC_Timestamp Class..." << std::endl;
 
 		auto defaultTS = DTC_Timestamp();
@@ -232,7 +244,8 @@ void DTCLib::DTCLibTest::doClassTest()
 		if (printMessages_) std::cout << "Running DTC_Timestamp destructor" << std::endl;
 		delete tsCopy;
 
-		if (err) {
+		if (err)
+		{
 			if (printMessages_) std::cout << "DTC_Timestamp Class failed checks!" << std::endl;
 			goto end;
 		}
@@ -296,67 +309,78 @@ void DTCLib::DTCLibTest::doClassTest()
 		if (printMessages_) std::cout << "Running DTC_DataPacket Destructor" << std::endl;
 		delete uintBufDP;
 
-		if (err) {
+		if (err)
+		{
 			if (printMessages_) std::cout << "DTC_DataPacket Class failed checks!" << std::endl;
 			goto end;
 		}
-
 	}
 	catch (std::exception ex)
 	{
-		if (printMessages_) {
+		if (printMessages_)
+		{
 			std::cout << "Test failed with exception: " << ex.what() << std::endl;
 		}
 		++classFailed_;
 	}
 
 end:
-	if (err) {
+	if (err)
+	{
 		if (printMessages_) std::cout << "One or more classes failed!" << std::endl;
 		++classFailed_;
 	}
-	else {
+	else
+	{
 		if (printMessages_) std::cout << "All Classes Passed" << std::endl;
 		++classPassed_;
 	}
 
-	if (printMessages_) {
+	if (printMessages_)
+	{
 		std::cout << std::endl << std::endl;
 	}
 }
 
 void DTCLib::DTCLibTest::doRegTest()
 {
-	if (printMessages_) {
+	if (printMessages_)
+	{
 		std::cout << "Test 1: Register R/W" << std::endl;
 	}
-	try {
+	try
+	{
 		std::string designVersion = thisDTC_->ReadDesignVersion();
-		if (printMessages_) {
+		if (printMessages_)
+		{
 			std::cout << "Reading Design Version: " << designVersion << std::endl;
 			std::cout << "If simulated, result will be v99.99_2053-49-53-44 (SIMD in ASCII)" << std::endl;
 			std::cout << "Attempting to Toggle Ring 0." << std::endl;
 		}
 		DTC_RingEnableMode ring0Value = thisDTC_->ReadRingEnabled(DTC_Ring_0);
-		if (printMessages_) {
+		if (printMessages_)
+		{
 			std::cout << "Value before: " << ring0Value << std::endl;
 		}
 		DTC_RingEnableMode ring0New = thisDTC_->ToggleRingEnabled(DTC_Ring_0);
-		if (printMessages_) {
+		if (printMessages_)
+		{
 			std::cout << "Value after: " << ring0New << std::endl;
 		}
 		// Make sure that the ring is enabled after the test.
 		thisDTC_->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
 		if (ring0New != ring0Value)
 		{
-			if (printMessages_) {
+			if (printMessages_)
+			{
 				std::cout << "Test Succeeded" << std::endl;
 			}
 			++regPassed_;
 		}
 		else
 		{
-			if (printMessages_) {
+			if (printMessages_)
+			{
 				std::cout << "Test Failed" << std::endl;
 			}
 			++regFailed_;
@@ -364,27 +388,33 @@ void DTCLib::DTCLibTest::doRegTest()
 	}
 	catch (std::exception ex)
 	{
-		if (printMessages_) {
+		if (printMessages_)
+		{
 			std::cout << "Test failed with exception: " << ex.what() << std::endl;
 		}
 		++regFailed_;
 	}
-	if (printMessages_) {
+	if (printMessages_)
+	{
 		std::cout << std::endl << std::endl;
 	}
 }
 
 void DTCLib::DTCLibTest::doDCSTest()
 {
-	if (printMessages_) {
+	if (printMessages_)
+	{
 		std::cout << "Test 4: DMA R/W on DCS Channel" << std::endl;
 	}
-	try {
-		if (printMessages_) {
+	try
+	{
+		if (printMessages_)
+		{
 			std::cout << "Running DCS Request/Reply Cycle with 0-11 sequence" << std::endl;
 		}
 		uint8_t testData[12]{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
-		if (printMessages_) {
+		if (printMessages_)
+		{
 			std::cout << "Data in: ";
 			for (int i = 0; i < 12; i++)
 			{
@@ -393,7 +423,8 @@ void DTCLib::DTCLibTest::doDCSTest()
 			std::cout << std::endl;
 		}
 		thisDTC_->DCSRequestReply(DTC_Ring_0, DTC_ROC_0, testData);
-		if (printMessages_) {
+		if (printMessages_)
+		{
 			std::cout << "Data out: ";
 			for (int i = 0; i < 12; i++)
 			{
@@ -406,27 +437,31 @@ void DTCLib::DTCLibTest::doDCSTest()
 	}
 	catch (std::exception ex)
 	{
-		if (printMessages_) {
+		if (printMessages_)
+		{
 			std::cout << "Test failed with exception: " << ex.what() << std::endl;
 		}
 		++dcsFailed_;
 	}
-	if (printMessages_) {
+	if (printMessages_)
+	{
 		std::cout << std::endl << std::endl;
 	}
 }
 
 void DTCLib::DTCLibTest::doDAQTest()
 {
-	if (printMessages_) {
+	if (printMessages_)
+	{
 		std::cout << "Test 5: DMA R/W on DAQ Channel" << std::endl;
 	}
-	try {
+	try
+	{
 		thisDTC_->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
 		thisDTC_->SetInternalSystemClock();
 		thisDTC_->DisableTiming();
 		thisDTC_->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
-		if (!thisDTC_->ReadSERDESOscillatorClock()) { thisDTC_->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now    
+		if (!thisDTC_->ReadSERDESOscillatorClock()) { thisDTC_->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now
 
 		DTCSoftwareCFO theCFO(thisDTC_, true, 0, DTC_DebugType_SpecialSequence, true, !printMessages_);
 		theCFO.SendRequestForTimestamp();
@@ -440,9 +475,11 @@ void DTCLib::DTCLibTest::doDAQTest()
 				DTC_DataPacket     test = DTC_DataPacket(data[i]);
 				if (printMessages_) std::cout << test.toJSON() << '\n'; // dumps whole databuff_t
 				DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
-				if (printMessages_) {
+				if (printMessages_)
+				{
 					std::cout << h2.toJSON() << '\n';
-					for (int jj = 0; jj < h2.GetPacketCount(); ++jj) {
+					for (int jj = 0; jj < h2.GetPacketCount(); ++jj)
+					{
 						std::cout << "\t" << DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16)).toJSON() << std::endl;
 					}
 				}
@@ -460,45 +497,51 @@ void DTCLib::DTCLibTest::doDAQTest()
 		auto cnit = thisDTC_->ReadSERDESRXCharacterNotInTableError(DTC_Ring_0);
 		auto rxBufferStatus = thisDTC_->ReadSERDESRXBufferStatus(DTC_Ring_0);
 		bool eyescan = thisDTC_->ReadSERDESEyescanError(DTC_Ring_0);
-		if (eyescan) {
+		if (eyescan)
+		{
 			TRACE_CNTL("modeM", 0L);
 			std::cout << "SERDES Eyescan Error Detected" << std::endl;
 			++daqFailed_;
 			return;
 		}
-		if ((int)rxBufferStatus > 2) {
+		if ((int)rxBufferStatus > 2)
+		{
 			TRACE_CNTL("modeM", 0L);
 			std::cout << "Bad Buffer status detected: " << rxBufferStatus << std::endl;
 			++daqFailed_;
 			return;
 		}
-		if (cnit.GetData()[0] || cnit.GetData()[1]) {
+		if (cnit.GetData()[0] || cnit.GetData()[1])
+		{
 			TRACE_CNTL("modeM", 0L);
 			std::cout << "Character Not In Table Error detected" << std::endl;
 			++daqFailed_;
 			return;
 		}
-		if (disparity.GetData()[0] || disparity.GetData()[1]) {
+		if (disparity.GetData()[0] || disparity.GetData()[1])
+		{
 			TRACE_CNTL("modeM", 0L);
 			std::cout << "Disparity Error Detected" << std::endl;
 			++daqFailed_;
 			return;
 		}
 
-		if (printMessages_) {
+		if (printMessages_)
+		{
 			std::cout << "Test Passed" << std::endl;
 		}
 		++daqPassed_;
-
 	}
 	catch (std::exception ex)
 	{
-		if (printMessages_) {
+		if (printMessages_)
+		{
 			std::cout << "Test failed with exception: " << ex.what() << std::endl;
 		}
 		++daqFailed_;
 	}
-	if (printMessages_) {
+	if (printMessages_)
+	{
 		std::cout << std::endl << std::endl;
 	}
 }
