@@ -28,8 +28,9 @@ public:
 	std::string GetJSONData(DTC_Timestamp when = DTC_Timestamp());
 	mu2edev GetDevice() { return device_; }
 
-	// DCS Read/Write Cycle
-	void DCSRequestReply(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, uint8_t *dataIn);
+	// DCS Register R/W
+	uint16_t ReadROCRegister(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const uint8_t address);
+	uint16_t WriteROCRegister(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const uint8_t address, const uint16_t data);
 
 	// Broadcast Readout
 	void SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Timestamp& when, bool quiet = true);

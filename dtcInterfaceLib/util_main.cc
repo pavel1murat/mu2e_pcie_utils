@@ -296,6 +296,17 @@ main(int	argc
 			if (delay > 0) usleep(delay);
 		}
 	}
+	else if (op == "read_dcs")
+	{
+		cout << "Operation \"read\"" << endl;
+		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
+		DTC_DCSReplyPacket* packet = thisDTC->ReadNextDCSPacket();
+		if (!reallyQuiet) cout << packet->toJSON() << '\n';
+	}
+	else if (op == "test_dcs")
+	{
+
+	}
 	else if (op == "toggle_serdes")
 	{
 		cout << "Swapping SERDES Oscillator Clock" << endl;

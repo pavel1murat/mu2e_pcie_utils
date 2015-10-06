@@ -449,9 +449,17 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 						replyPacket[1] = 0;
 						replyPacket[2] = 0x40;
 						replyPacket[3] = (ring & 0x0F) + 0x80;
-						for (int i = 4; i < 16; ++i)
+						replyPacket[4] = (uint8_t)dcsRequest_[ring][roc].GetType();
+						replyPacket[5] = 0x3E;
+						replyPacket[6] = dcsRequest_[ring][roc].GetAddress();
+						replyPacket[7] = 0x8;
+						replyPacket[8] = 0;
+						replyPacket[9] = 0;
+						replyPacket[10] = dcsRequest_[ring][roc].GetData() & 0xFF;
+						replyPacket[11] = (dcsRequest_[ring][roc].GetData() & 0xFF00) >> 8;
+						for (int i = 12; i < 16; ++i)
 						{
-							replyPacket[i] = dcsRequest_[ring][roc].GetData()[i - 4];
+							replyPacket[i] = 0;
 						}
 
 						TRACE(17, "mu2esim::read_data Copying DCS Reply packet into buffer, chn=%i, idx=%u, buf=%p, packet=%p, off=%llu"
@@ -547,12 +555,16 @@ int mu2esim::write_data(int chn, void *buffer, size_t bytes)
 			TRACE(17, "mu2esim::write_data activeDCSRing is %u, roc is %u", activeDCSRing, activeDCSROC);
 			if (activeDCSRing != DTCLib::DTC_Ring_Unused && activeDCSROC != DTCLib::DTC_ROC_Unused)
 			{
-				dcsRequestReceived_[activeDCSRing][activeDCSROC] = true;
-				uint8_t data[12];
-				memcpy(&data[0], (char*)buffer + (2 * sizeof(uint16_t)), sizeof(data));
-				dcsRequest_[activeDCSRing][activeDCSROC] = DTCLib::DTC_DCSRequestPacket((DTCLib::DTC_Ring_ID)activeDCSRing, (DTCLib::DTC_ROC_ID)activeDCSROC, data);
-				TRACE(17, "mu2esim::write_data: Recieved DCS Request:");
-				TRACE(17, dcsRequest_[activeDCSRing][activeDCSROC].toJSON().c_str());
+				DTCLib::DTC_DataPacket packet(buffer);
+				DTCLib::DTC_DCSRequestPacket thisPacket(packet);
+				if (thisPacket.GetType() == DTCLib::DTC_DCSOperationType_Read ||
+					thisPacket.GetType() == DTCLib::DTC_DCSOperationType_WriteWithAck)
+				{
+					dcsRequestReceived_[activeDCSRing][activeDCSROC] = true;
+					dcsRequest_[activeDCSRing][activeDCSROC] = std::move(thisPacket);
+					TRACE(17, "mu2esim::write_data: Recieved DCS Request:");
+					TRACE(17, dcsRequest_[activeDCSRing][activeDCSROC].toJSON().c_str());
+				}
 			}
 		}
 		break;

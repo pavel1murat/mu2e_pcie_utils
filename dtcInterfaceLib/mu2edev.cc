@@ -137,7 +137,7 @@ int mu2edev::read_data(int chn, void **buffer, int tmo_ms)
 				|| ((retsts = ioctl(devfd_, M_IOC_GET_INFO, &mu2e_channel_info_[chn][C2S])) == 0
 					&& (has_recv_data = mu2e_chn_info_delta_(chn, C2S, &mu2e_channel_info_)) > 0))
 			{   // have data
-// get byte count from new/next sw
+				// get byte count from new/next
 				unsigned newNxtIdx = idx_add(mu2e_channel_info_[chn][C2S].swIdx, 1, chn, C2S);
 				int *    BC_p = (int*)mu2e_mmap_ptrs_[chn][C2S][MU2E_MAP_META];
 				retsts = BC_p[newNxtIdx];

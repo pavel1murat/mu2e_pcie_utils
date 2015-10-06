@@ -277,22 +277,18 @@ std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when)
 	return ss.str();
 }
 
-void DTCLib::DTC::DCSRequestReply(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, uint8_t* dataIn)
+// ROC Register Functions
+uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const uint8_t address)
 {
-	auto start = std::chrono::high_resolution_clock::now();
-	device_.release_all(1);
-	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
-		(std::chrono::high_resolution_clock::now() - start).count();
+  DTC_DCSRequestPacket packet(ring, roc, DTC_DCSOperationType_Read, address, 0x0, false);
+  WriteDMADCSPacket(packet);
+  auto reply = ReadNextDCSPacket();
+  return reply->GetData();
+}
 
-	DTC_DCSRequestPacket req(ring, roc, dataIn);
-	WriteDMADCSPacket(req);
-	DTC_DCSReplyPacket* packet = ReadNextDCSPacket();
-
-	TRACE(19, "DTC::DCSReqeuestReply after ReadNextDCSPacket");
-	for (int ii = 0; ii < 12; ++ii)
-	{
-		dataIn[ii] = packet->GetData()[ii];
-	}
+uint16_t DTCLib::DTC::WriteROCRegister(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const uint8_t address, const uint16_t data)
+{
+  return 0xFFFF;
 }
 
 void DTCLib::DTC::SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Timestamp& when, bool quiet)
