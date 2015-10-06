@@ -34,6 +34,7 @@ public:
 
 	// Broadcast Readout
 	void SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Timestamp& when, bool quiet = true);
+	void SendDCSRequestPacket(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const DTC_DCSOperationType type, const uint8_t address, const uint16_t data = 0x0, bool quiet = true);
 
 	// For loopback testing...
 	void SetFirstRead(bool read) { first_read_ = read; }

@@ -280,15 +280,15 @@ std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when)
 // ROC Register Functions
 uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const uint8_t address)
 {
-  DTC_DCSRequestPacket packet(ring, roc, DTC_DCSOperationType_Read, address, 0x0, false);
-  WriteDMADCSPacket(packet);
-  auto reply = ReadNextDCSPacket();
-  return reply->GetData();
+	SendDCSRequestPacket(ring, roc, DTC_DCSOperationType_Read, address);
+	auto reply = ReadNextDCSPacket();
+	return reply->GetData();
 }
 
 uint16_t DTCLib::DTC::WriteROCRegister(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const uint8_t address, const uint16_t data)
 {
-  return 0xFFFF;
+	SendDCSRequestPacket(ring, roc, DTC_DCSOperationType_WriteWithAck, address, data);
+	return ReadNextDCSPacket()->GetData();
 }
 
 void DTCLib::DTC::SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Timestamp& when, bool quiet)
@@ -298,6 +298,15 @@ void DTCLib::DTC::SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Ti
 	if (!quiet) std::cout << req.toJSON() << std::endl;
 	WriteDMADAQPacket(req);
 	TRACE(19, "DTC::SendReadoutRequestPacket after  WriteDMADAQPacket - DTC_ReadoutRequestPacket");
+}
+
+void DTCLib::DTC::SendDCSRequestPacket(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const DTC_DCSOperationType type, const uint8_t address, const uint16_t data, bool quiet)
+{
+	DTC_DCSRequestPacket req(ring, roc, type, address, data, (type != DTC_DCSOperationType_Read));
+	TRACE(19, "DTC::SendDCSRequestPacket before WriteDMADCSPacket - DTC_DCSRequestPacket");
+	if (!quiet) std::cout << req.toJSON() << std::endl;
+	WriteDMADCSPacket(req);
+	TRACE(19, "DTC::SendDCSRequestPacket after  WriteDMADCSPacket - DTC_DCSRequestPacket");
 }
 
 void DTCLib::DTC::WriteDMADAQPacket(const DTC_DMAPacket& packet)

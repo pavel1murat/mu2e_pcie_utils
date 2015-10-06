@@ -306,8 +306,11 @@ main(int	argc
 	else if (op == "test_dcs")
 	{
 		cout << "Operation \"test_dcs\"" << endl;
-		mu2edev device;
-		device.init();
+		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
+		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now
+
+		mu2edev device = thisDTC->GetDevice();
+		thisDTC->SendDCSRequestPacket(DTC_Ring_0, DTC_ROC_0, DTC_DCSOperationType_Read, 0x2);
 
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
