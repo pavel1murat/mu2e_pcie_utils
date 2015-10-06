@@ -298,10 +298,10 @@ main(int	argc
 	}
 	else if (op == "read_dcs")
 	{
-		cout << "Operation \"read\"" << endl;
+		cout << "Operation \"read_dcs\"" << endl;
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-		DTC_DCSReplyPacket* packet = thisDTC->ReadNextDCSPacket();
-		if (!reallyQuiet) cout << packet->toJSON() << '\n';
+		auto data = thisDTC->ReadROCRegister(DTC_Ring_0, DTC_ROC_0, 2);
+		if (!reallyQuiet) cout << data << '\n';
 	}
 	else if (op == "test_dcs")
 	{
