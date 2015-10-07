@@ -284,6 +284,28 @@ main(int	argc
 		auto data = thisDTC->ReadROCRegister(DTC_Ring_0, DTC_ROC_0, 2);
 		if (!reallyQuiet) cout << data << '\n';
 	}
+        else if (op == "reset_roc")
+        {
+                cout << "Operation \"reset_roc\"" << endl;
+		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
+                thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 8, 1, 0x11);
+                thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 9, 1, 0x11);
+                thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 10, 1, 0x11);
+                thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 11, 1, 0x11);
+                thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 12, 1, 0x11);
+        }
+        else if (op == "write_roc")
+	{
+		cout <<"Operation \"write_roc\"" << endl;
+		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
+		thisDTC->WriteROCRegister(DTC_Ring_0, DTC_ROC_0, number, packetCount);
+	}
+        else if (op == "write_rocext")
+        {
+                cout << "Operation \"write_rocext\"" << endl;
+                DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
+                thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 10, 2, packetCount);
+        }
 	else if (op == "test_dcs")
 	{
 		cout << "Operation \"test_dcs\"" << endl;
