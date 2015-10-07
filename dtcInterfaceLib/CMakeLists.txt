@@ -13,6 +13,8 @@ cet_make_exec(DTCLibTest SOURCE main.cc LIBRARIES DTCInterface)
 
 cet_make_exec(mu2eUtil SOURCE util_main.cc LIBRARIES DTCInterface)
 
+cet_make_exec(mu2eDcsUtil SOURCE dcs_main.cc LIBRARIES DTCInterface)
+
 cet_make_Exec(requestSender SOURCE requestSender.cc LIBRARIES DTCInterface)
 
 cet_make_exec(DTCRegDump SOURCE dtcRegDump.cc LIBRARIES DTCInterface)
