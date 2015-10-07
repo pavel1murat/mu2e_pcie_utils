@@ -200,25 +200,6 @@ main(int	argc
 	string syncStr = syncRequests ? "true" : "false";
 	string cfoStr = useCFOEmulator ? "true" : "false";
 	string serdesStr = checkSERDES ? "true" : "false";
-	string typeString = "Special Sequence";
-	switch (debugType)
-	{
-	case DTC_DebugType_SpecialSequence:
-		break;
-	case DTC_DebugType_ExternalSerial:
-		typeString = "External Serial";
-		break;
-	case DTC_DebugType_ExternalSerialWithReset:
-		typeString = "External Serial w/ FIFO Reset";
-		if (!stickyDebugType) typeString += ", will change to External Serial after first Request";
-		break;
-        case DTC_DebugType_RAMTest:
-                typeString = "RAM Test";
-                break;
-        case DTC_DebugType_Invalid:
-                typeString = "INVALID!!! YOU DID SOMETHING WRONG!!!";
-                break;
-	}
 	cout << "Options are: "
 		<< "Operation: " << string(op)
 		<< ", Num: " << number
@@ -232,7 +213,7 @@ main(int	argc
 		<< ", Quiet Mode: " << quietStr
 		<< ", Really Quiet Mode: " << reallyQuietStr
 		<< ", Check SERDES Error Status: " << serdesStr
-		<< ", Debug Type: " << typeString
+		<< ", Debug Type: " << DTCLib::DTC_DebugTypeConverter(debugType).toString()
 		<< endl;
 
 	if (op == "read")

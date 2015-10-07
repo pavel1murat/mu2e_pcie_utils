@@ -285,17 +285,17 @@ uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Ring_ID& ring, const DTC_ROC_ID&
 	return reply->GetData();
 }
 
-void DTCLib::DTC::WriteROCRegister(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const uint8_t address, const uint16_t data, bool writeEnable)
+void DTCLib::DTC::WriteROCRegister(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const uint8_t address, const uint16_t data)
 {
-  SendDCSRequestPacket(ring, roc, DTC_DCSOperationType_Write, address, data, writeEnable);
+  SendDCSRequestPacket(ring, roc, DTC_DCSOperationType_Write, address, data);
 }
 
 uint16_t DTCLib::DTC::ReadExtROCRegister(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const uint8_t block, const uint16_t address)
 {
   uint16_t addressT =  address & 0x7FFF;
   WriteROCRegister(ring, roc, 12, block);
-  WriteROCRegister(ring, roc, 13, addressT, false);
-  WriteROCRegister(ring, roc, 13, addressT, true);
+  WriteROCRegister(ring, roc, 13, addressT);
+  WriteROCRegister(ring, roc, 13, addressT + 0x8000);
   return ReadROCRegister(ring, roc, 22);
 }
 
@@ -303,8 +303,8 @@ void DTCLib::DTC::WriteExtROCRegister(const DTC_Ring_ID& ring, const DTC_ROC_ID&
 {
   uint16_t dataT = data & 0x7FFF;
   WriteROCRegister(ring, roc, 12, block + (address << 8));
-  WriteROCRegister(ring, roc, 13, dataT, false);
-  WriteROCRegister(ring, roc, 13, dataT, true);
+  WriteROCRegister(ring, roc, 13, dataT);
+  WriteROCRegister(ring, roc, 13, dataT + 0x8000);
 }
 
 std::string DTCLib::DTC::ROCRegDump(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc)
@@ -336,9 +336,9 @@ void DTCLib::DTC::SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Ti
 	TRACE(19, "DTC::SendReadoutRequestPacket after  WriteDMADAQPacket - DTC_ReadoutRequestPacket");
 }
 
-void DTCLib::DTC::SendDCSRequestPacket(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const DTC_DCSOperationType type, const uint8_t address, const uint16_t data, bool writeEnable, bool quiet)
+void DTCLib::DTC::SendDCSRequestPacket(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const DTC_DCSOperationType type, const uint8_t address, const uint16_t data, bool quiet)
 {
-	DTC_DCSRequestPacket req(ring, roc, type, address, data, writeEnable);
+	DTC_DCSRequestPacket req(ring, roc, type, address, data);
 	TRACE(19, "DTC::SendDCSRequestPacket before WriteDMADCSPacket - DTC_DCSRequestPacket");
 	if (!quiet) std::cout << req.toJSON() << std::endl;
 	WriteDMADCSPacket(req);
