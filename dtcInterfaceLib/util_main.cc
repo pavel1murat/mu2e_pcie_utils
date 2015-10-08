@@ -194,12 +194,7 @@ main(int	argc
 		}
 	}
 
-	string incrementStr = incrementTimestamp ? "true" : "false";
-	string quietStr = quiet ? "true" : "false";
-	string reallyQuietStr = reallyQuiet ? "true" : "false";
-	string syncStr = syncRequests ? "true" : "false";
-	string cfoStr = useCFOEmulator ? "true" : "false";
-	string serdesStr = checkSERDES ? "true" : "false";
+	cout.setf(std::ios_base::boolalpha);
 	cout << "Options are: "
 		<< "Operation: " << string(op)
 		<< ", Num: " << number
@@ -207,12 +202,12 @@ main(int	argc
 		<< ", TS Offset: " << timestampOffset
 		<< ", PacketCount: " << packetCount
 		<< ", Requests Ahead of Reads: " << requestsAhead
-		<< ", Synchronous Request Mode: " << syncStr
-		<< ", Use DTC CFO Emulator: " << cfoStr
-		<< ", Increment TS: " << incrementStr
-		<< ", Quiet Mode: " << quietStr
-		<< ", Really Quiet Mode: " << reallyQuietStr
-		<< ", Check SERDES Error Status: " << serdesStr
+		<< ", Synchronous Request Mode: " << syncRequests
+		<< ", Use DTC CFO Emulator: " << useCFOEmulator
+		<< ", Increment TS: " << incrementTimestamp
+		<< ", Quiet Mode: " << quiet
+		<< ", Really Quiet Mode: " << reallyQuiet
+		<< ", Check SERDES Error Status: " << checkSERDES
 		<< ", Debug Type: " << DTCLib::DTC_DebugTypeConverter(debugType).toString()
 		<< endl;
 
@@ -249,80 +244,6 @@ main(int	argc
 			int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
 
 			TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, (void*)buffer);
-			if (sts > 0) {
-				void* readPtr = &(buffer[0]);
-				uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)readPtr));
-				readPtr = (uint8_t*)readPtr + 8;
-				TRACE(1, "util - bufSize is %u", bufSize);
-
-				if (!reallyQuiet) {
-					for (unsigned line = 0; line < (unsigned)(ceil((bufSize - 8) / 16)); ++line)
-					{
-						cout << "0x" << hex << setw(5) << setfill('0') << line << "0: ";
-						//for (unsigned byte = 0; byte < 16; ++byte)
-						for (unsigned byte = 0; byte < 8; ++byte)
-						{
-							if ((line * 16) + (2 * byte) < (bufSize - 8u)) {
-								uint16_t thisWord = (((uint16_t*)buffer)[4 + (line * 8) + byte]);
-								//uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
-								cout << setw(4) << (int)thisWord << " ";
-							}
-						}
-						cout << endl;
-					}
-				}
-			}
-			if (!reallyQuiet) cout << endl << endl;
-			device.read_release(DTC_DMA_Engine_DAQ, 1);
-			if (delay > 0) usleep(delay);
-		}
-	}
-	else if (op == "read_dcs")
-	{
-		cout << "Operation \"read_dcs\"" << endl;
-		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-		auto data = thisDTC->ReadROCRegister(DTC_Ring_0, DTC_ROC_0, 2);
-		if (!reallyQuiet) cout << data << '\n';
-	}
-        else if (op == "reset_roc")
-        {
-                cout << "Operation \"reset_roc\"" << endl;
-		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-                thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 8, 1, 0x11);
-                thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 9, 1, 0x11);
-                thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 10, 1, 0x11);
-                thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 11, 1, 0x11);
-                thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 12, 1, 0x11);
-        }
-        else if (op == "write_roc")
-	{
-		cout <<"Operation \"write_roc\"" << endl;
-		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-		thisDTC->WriteROCRegister(DTC_Ring_0, DTC_ROC_0, number, packetCount);
-	}
-        else if (op == "write_rocext")
-        {
-                cout << "Operation \"write_rocext\"" << endl;
-                DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-                thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 10, 2, packetCount);
-        }
-	else if (op == "test_dcs")
-	{
-		cout << "Operation \"test_dcs\"" << endl;
-		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now
-
-		mu2edev device = thisDTC->GetDevice();
-		thisDTC->SendDCSRequestPacket(DTC_Ring_0, DTC_ROC_0, DTC_DCSOperationType_Read, 0x2);
-
-		for (unsigned ii = 0; ii < number; ++ii)
-		{
-			if (!reallyQuiet) cout << "Buffer Read " << ii << endl;
-			mu2e_databuff_t* buffer;
-			int tmo_ms = 1500;
-			int sts = device.read_data(DTC_DMA_Engine_DCS, (void**)&buffer, tmo_ms);
-
-			TRACE(1, "util - read for DCS - ii=%u sts=%d %p", ii, sts, (void*)buffer);
 			if (sts > 0)
 			{
 				void* readPtr = &(buffer[0]);
@@ -350,7 +271,7 @@ main(int	argc
 				}
 			}
 			if (!reallyQuiet) cout << endl << endl;
-			device.read_release(DTC_DMA_Engine_DCS, 1);
+			device.read_release(DTC_DMA_Engine_DAQ, 1);
 			if (delay > 0) usleep(delay);
 		}
 	}
