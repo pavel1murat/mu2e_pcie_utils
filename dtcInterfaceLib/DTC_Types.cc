@@ -279,7 +279,7 @@ DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID 
 	: DTC_DMAPacket(DTC_PacketType_DCSRequest, ring, roc)
 	, type_(type)
 	, address_(address & 0x1F)
-	, data_(data & 0x7FFF)
+	, data_(data)
 {}
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in) : DTC_DMAPacket(in)

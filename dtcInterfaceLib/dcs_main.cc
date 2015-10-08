@@ -170,11 +170,11 @@ main(int	argc
 	{
 		cout << "Operation \"reset_roc\"" << endl;
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-		thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 8, 1, 0x11);
-		thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 9, 1, 0x11);
-		thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 10, 1, 0x11);
-		thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 11, 1, 0x11);
 		thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 12, 1, 0x11);
+		thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 11, 1, 0x11);
+		thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 10, 1, 0x11);
+		thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 9, 1, 0x11);
+		thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 8, 1, 0x11);
 	}
 	else if (op == "write_register")
 	{

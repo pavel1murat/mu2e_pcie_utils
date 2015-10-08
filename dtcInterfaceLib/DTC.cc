@@ -295,7 +295,7 @@ uint16_t DTCLib::DTC::ReadExtROCRegister(const DTC_Ring_ID& ring, const DTC_ROC_
   uint16_t addressT =  address & 0x7FFF;
   WriteROCRegister(ring, roc, 12, block);
   WriteROCRegister(ring, roc, 13, addressT);
-  WriteROCRegister(ring, roc, 13, addressT + 0x8000);
+  WriteROCRegister(ring, roc, 13, addressT | 0x8000);
   return ReadROCRegister(ring, roc, 22);
 }
 
@@ -304,7 +304,7 @@ void DTCLib::DTC::WriteExtROCRegister(const DTC_Ring_ID& ring, const DTC_ROC_ID&
   uint16_t dataT = data & 0x7FFF;
   WriteROCRegister(ring, roc, 12, block + (address << 8));
   WriteROCRegister(ring, roc, 13, dataT);
-  WriteROCRegister(ring, roc, 13, dataT + 0x8000);
+  WriteROCRegister(ring, roc, 13, dataT | 0x8000);
 }
 
 std::string DTCLib::DTC::ROCRegDump(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc)
