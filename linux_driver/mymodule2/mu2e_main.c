@@ -642,9 +642,22 @@ static int __init init_mu2e(void)
     // fs interface, pci, memory, events(i.e polling)
 
     ret = mu2e_fs_up();
+    if(ret != 0) {
+	  ret=-2;
+        goto out_fs;
+    }
     ret = mu2e_pci_up();
+    if(ret != 0) {
+      ret=-5;
+	  goto out_pci;
+	}
 
     mu2e_pci_dev = pci_get_device( XILINX_VENDOR_ID, XILINX_DEVICE_ID, NULL );
+    if(mu2e_pci_dev == NULL) 
+	  {
+		ret = -6;
+		goto out_pci;
+	  }
 
     /* Use "Dma_" routines to init FPGA "user" application ("DTC") registers.
        NOTE: a few more after dma engine setup (below).
@@ -819,11 +832,16 @@ static int __init init_mu2e(void)
     return (ret);
 
  out:
+    ret=-1;
     TRACE( 0, "Error - freeing memory" );
     free_mem();
+ out_pci:
+    TRACE(0, "Error - destroying pci device");
     mu2e_pci_down();
+ out_fs:
+    TRACE(0, "Error - destroying filesystem entry" );
     mu2e_fs_down();
-    return (-1);
+    return (ret);
 }   // init_mu2e
 
 

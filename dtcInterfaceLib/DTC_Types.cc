@@ -275,12 +275,11 @@ DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID 
 	: DTC_DMAPacket(DTC_PacketType_DCSRequest, ring, roc)
 {}
 
-DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_DCSOperationType type, uint8_t address, uint16_t data, bool enabled)
+DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_DCSOperationType type, uint8_t address, uint16_t data)
 	: DTC_DMAPacket(DTC_PacketType_DCSRequest, ring, roc)
 	, type_(type)
 	, address_(address & 0x1F)
-	, data_(data & 0x7FFF)
-	, writeEnable_(enabled)
+	, data_(data)
 {}
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
@@ -288,8 +287,7 @@ DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in) : DTC_DMAP
 	if (packetType_ != DTC_PacketType_DCSRequest) { throw DTC_WrongPacketTypeException(); }
 	type_ = (DTC_DCSOperationType)in.GetData()[4];
 	address_ = in.GetData()[6] & 0x1F;
-	data_ = in.GetData()[10] + ((in.GetData()[11] & 0x7F) << 8);
-	writeEnable_ = (in.GetData()[11] & 0x80) == 0x80;
+	data_ = in.GetData()[10] + (in.GetData()[11] << 8);
 }
 
 std::string DTCLib::DTC_DCSRequestPacket::toJSON()
@@ -300,7 +298,6 @@ std::string DTCLib::DTC_DCSRequestPacket::toJSON()
 	ss << "\"Operation Type\":" << DTC_DCSOperationTypeConverter(type_) << ", ";
 	ss << "\"Address\": " << (int)address_ << ", ";
 	ss << "\"Data\": " << (int)data_ << ", ";
-	ss << "\"Write Enabled\": " << (writeEnable_ ? "true" : "false");
 	ss << "}";
 	return ss.str();
 }
@@ -312,7 +309,7 @@ std::string DTCLib::DTC_DCSRequestPacket::toPacketFormat()
 	ss << "        \t" << std::setw(8) << (int)type_ << std::endl;
 	ss << "        \t    " << std::setw(4) << (int)address_ << std::endl;
 	ss << "        \t        " << std::endl;
-	ss << (writeEnable_ ? "1" : "0") << std::setw(7) << ((data_ & 0x7F00) >> 8) << "\t" << (data_ & 0xFF) << std::endl;
+	ss << std::setw(8) << ((data_ & 0xFF00) >> 8) << "\t" << (data_ & 0xFF) << std::endl;
 	ss << "        \t        " << std::endl;
 	ss << "        \t        " << std::endl;
 	return ss.str();
@@ -324,7 +321,7 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSRequestPacket::ConvertToDataPacket() const
 	output.SetWord(4, (uint8_t)type_);
 	output.SetWord(6, (uint8_t)address_);
 	output.SetWord(10, static_cast<uint8_t>(data_ & 0xFF));
-	output.SetWord(11, static_cast<uint8_t>((writeEnable_ ? 0x80 : 0x00) + ((data_ & 0x7F00) >> 8)));
+	output.SetWord(11, static_cast<uint8_t>(((data_ & 0xFF00) >> 8)));
 	return output;
 }
 
