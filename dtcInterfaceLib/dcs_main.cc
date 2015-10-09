@@ -78,7 +78,7 @@ std::string getOptionString(int *index, char **argv[])
 
 void printHelpMsg()
 {
-	cout << "Usage: rocUtil [options] [read_dcs,reset_roc,write_register,write_extregister,test_read,read_release,toggle_serdes]" << endl;
+	cout << "Usage: rocUtil [options] [read_register,reset_roc,write_register,write_extregister,test_read,read_release,toggle_serdes]" << endl;
 	cout << "Options are:" << endl
 		<< "    -h: This message." << endl
 		<< "    -n: Number of times to repeat test. (Default: 1)" << endl
@@ -161,7 +161,7 @@ main(int	argc
 
 	if (op == "read_register")
 	{
-		cout << "Operation \"read_dcs\"" << endl;
+		cout << "Operation \"read_register\"" << endl;
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		auto data = thisDTC->ReadROCRegister(DTC_Ring_0, DTC_ROC_0, address);
 		if (!reallyQuiet) cout << data << '\n';
@@ -178,19 +178,19 @@ main(int	argc
 	}
 	else if (op == "write_register")
 	{
-		cout << "Operation \"write_roc\"" << endl;
+		cout << "Operation \"write_register\"" << endl;
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		thisDTC->WriteROCRegister(DTC_Ring_0, DTC_ROC_0, address, data);
 	}
 	else if (op == "write_extregister")
 	{
-		cout << "Operation \"write_rocext\"" << endl;
+		cout << "Operation \"write_extregister\"" << endl;
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, block, address, data);
 	}
 	else if (op == "test_read")
 	{
-		cout << "Operation \"test_dcs\"" << endl;
+		cout << "Operation \"test_read\"" << endl;
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now
 
@@ -238,9 +238,12 @@ main(int	argc
 	}
 	else if (op == "toggle_serdes")
 	{
-		cout << "Swapping SERDES Oscillator Clock" << endl;
+		cout << "Setting SERDES Oscillator Clock to 2.5 Gbps" << endl;
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-		thisDTC->ToggleSERDESOscillatorClock();
+                if(!thisDTC->ReadSERDESOscillatorClock()) 
+		{
+		  thisDTC->ToggleSERDESOscillatorClock();
+                }
 	}
 	else if (op == "read_release")
 	{
