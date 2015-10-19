@@ -9,7 +9,7 @@
                 "mu2edev.cc",
                 "mu2esim.cc"
             ],
-            "include_dirs": [ "/${INCLUDE_DIR}", "/${TRACE_INC}" ],
+            "include_dirs": [ "/${INCLUDE_DIR}", "/${TRACE_DIR}/include" ],
             "cflags": [
                 "-std=c++11",
                 "-fexceptions"
@@ -30,7 +30,7 @@
                 "mu2edev.cc",
                 "mu2esim.cc"
             ],
-            "include_dirs": [ "/${INCLUDE_DIR}", "/${TRACE_INC}" ],
+            "include_dirs": [ "/${INCLUDE_DIR}", "/${TRACE_DIR}/include" ],
             "cflags": [
                 "-std=c++11",
                 "-fexceptions"
