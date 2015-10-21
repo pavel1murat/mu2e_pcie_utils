@@ -25,10 +25,10 @@ if true;then
   mrbsetenv                                    # add (most) BUILDDIR dirs to PATHs. Overrrides UPS_OVERRIDE.
   #setup gcc v4_9_1
   LD_LIBRARY_PATH=$MRB_BUILDDIR/lib:$LD_LIBRARY_PATH  # mrb bug? fix
-  lsmod | grep mu2e  -q || insmod $MRB_BUILDDIR/pcie_linux_kernel_module/bin/mu2e.ko
+  lsmod | grep mu2e  -q || insmod $MRB_BUILDDIR/pcie_linux_kernel_module/drivers/`uname -r`/mu2e.ko
 else
   setup pcie_linux_kernel_module -q e7:debug
-  lsmod | grep mu2e -q || insmod $PCIE_LINUX_KERNEL_MODULE_FQ_DIR/bin/mu2e.ko
+  lsmod | grep mu2e -q || insmod $PCIE_LINUX_KERNEL_MODULE_FQ_DIR/drivers/`uname -r`/mu2e.ko
 fi
 
 echo "Doing \"Super\" Reset Chants"
