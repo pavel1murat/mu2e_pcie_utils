@@ -173,7 +173,7 @@ main(int	argc
 				if (val < (int)DTCLib::DTC_DebugType_Invalid)
 				{
 					stickyDebugType = true;
-					debugType = (DTCLib::DTC_DebugType)val;
+					debugType = static_cast<DTCLib::DTC_DebugType>(val);
 					break;
 				}
 				cout << "Invalid Debug Type passed to -T!" << endl;
