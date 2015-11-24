@@ -521,6 +521,7 @@ main(int	argc
 		unsigned ii = 0;
 		int retries = 4;
 		uint64_t expectedTS = timestampOffset;
+                int packetsProcessed = 0;
 		auto startRT = std::chrono::high_resolution_clock::now();
 
 		for (; ii < number; ++ii)
@@ -553,6 +554,7 @@ main(int	argc
 
 				TRACE(19, "util_main %llu packets returned", (unsigned long long)data.size());
 				if (!reallyQuiet) cout << data.size() << " packets returned\n";
+                                packetsProcessed += data.size();
 				for (size_t i = 0; i < data.size(); ++i)
 				{
 					TRACE(19, "util_main constructing DataPacket:");
@@ -563,6 +565,9 @@ main(int	argc
 					if (expectedTS != h2.GetTimestamp().GetTimestamp(true))
 					{
 						cout << dec << h2.GetTimestamp().GetTimestamp(true) << " does not match expected timestamp of " << expectedTS << "!!!" << endl;
+                                                if(incrementTimestamp && h2.GetTimestamp().GetTimestamp(true) <= timestampOffset + number) {
+                                                    ii += h2.GetTimestamp().GetTimestamp(true) - expectedTS;
+                                                }
 						expectedTS = h2.GetTimestamp().GetTimestamp(true) + (incrementTimestamp ? 1 : 0);
 					}
 					else
@@ -584,7 +589,7 @@ main(int	argc
 					for (int jj = 0; jj < h2.GetPacketCount(); ++jj)
 					{
 						DTC_DataPacket packet = DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16));
-						if (!reallyQuiet) cout << "\t" << packet.toJSON() << endl;
+						if (!quiet) cout << "\t" << packet.toJSON() << endl;
 						if (rawOutput)
 						{
 							outputStream << packet;
@@ -657,7 +662,7 @@ main(int	argc
 		double aveTotalRate = totalSize / totalTime / 1024;
 		double rtTime = totalRTTime / (rtCount > 0 ? rtCount : 1);
 
-		std::cout << "STATS, " << ii << " DataBlocks processed:" << std::endl
+		std::cout << "STATS, " << packetsProcessed << " DataBlocks processed:" << std::endl
 			<< "Total Elapsed Time: " << totalTime << " s." << std::endl
 			<< "DTC::GetData Time: " << totalIncTime << " s." << std::endl
 			<< "Total Data Size: " << totalSize / 1024 << " KB." << std::endl
