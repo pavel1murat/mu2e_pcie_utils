@@ -44,5 +44,6 @@ add_custom_command(
 add_custom_target(mymodule2 ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/../../drivers/${KVERS}/mu2e.ko)
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../../drivers DESTINATION ${${product}_inc_dir}/../drivers)
 
-install_source()
 install_headers()
+install_source()
+
