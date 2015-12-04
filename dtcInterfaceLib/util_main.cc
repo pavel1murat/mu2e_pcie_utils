@@ -173,7 +173,7 @@ main(int	argc
 				if (val < (int)DTCLib::DTC_DebugType_Invalid)
 				{
 					stickyDebugType = true;
-					debugType = (DTCLib::DTC_DebugType)val;
+					debugType = static_cast<DTCLib::DTC_DebugType>(val);
 					break;
 				}
 				cout << "Invalid Debug Type passed to -T!" << endl;
@@ -194,31 +194,7 @@ main(int	argc
 		}
 	}
 
-	string incrementStr = incrementTimestamp ? "true" : "false";
-	string quietStr = quiet ? "true" : "false";
-	string reallyQuietStr = reallyQuiet ? "true" : "false";
-	string syncStr = syncRequests ? "true" : "false";
-	string cfoStr = useCFOEmulator ? "true" : "false";
-	string serdesStr = checkSERDES ? "true" : "false";
-	string typeString = "Special Sequence";
-	switch (debugType)
-	{
-	case DTC_DebugType_SpecialSequence:
-		break;
-	case DTC_DebugType_ExternalSerial:
-		typeString = "External Serial";
-		break;
-	case DTC_DebugType_ExternalSerialWithReset:
-		typeString = "External Serial w/ FIFO Reset";
-		if (!stickyDebugType) typeString += ", will change to External Serial after first Request";
-		break;
-        case DTC_DebugType_RAMTest:
-                typeString = "RAM Test";
-                break;
-        case DTC_DebugType_Invalid:
-                typeString = "INVALID!!! YOU DID SOMETHING WRONG!!!";
-                break;
-	}
+	cout.setf(std::ios_base::boolalpha);
 	cout << "Options are: "
 		<< "Operation: " << string(op)
 		<< ", Num: " << number
@@ -226,13 +202,13 @@ main(int	argc
 		<< ", TS Offset: " << timestampOffset
 		<< ", PacketCount: " << packetCount
 		<< ", Requests Ahead of Reads: " << requestsAhead
-		<< ", Synchronous Request Mode: " << syncStr
-		<< ", Use DTC CFO Emulator: " << cfoStr
-		<< ", Increment TS: " << incrementStr
-		<< ", Quiet Mode: " << quietStr
-		<< ", Really Quiet Mode: " << reallyQuietStr
-		<< ", Check SERDES Error Status: " << serdesStr
-		<< ", Debug Type: " << typeString
+		<< ", Synchronous Request Mode: " << syncRequests
+		<< ", Use DTC CFO Emulator: " << useCFOEmulator
+		<< ", Increment TS: " << incrementTimestamp
+		<< ", Quiet Mode: " << quiet
+		<< ", Really Quiet Mode: " << reallyQuiet
+		<< ", Check SERDES Error Status: " << checkSERDES
+		<< ", Debug Type: " << DTCLib::DTC_DebugTypeConverter(debugType).toString()
 		<< endl;
 
 	if (op == "read")
@@ -268,20 +244,23 @@ main(int	argc
 			int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
 
 			TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, (void*)buffer);
-			if (sts > 0) {
+			if (sts > 0)
+			{
 				void* readPtr = &(buffer[0]);
 				uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)readPtr));
 				readPtr = (uint8_t*)readPtr + 8;
 				TRACE(1, "util - bufSize is %u", bufSize);
 
-				if (!reallyQuiet) {
+				if (!reallyQuiet)
+				{
 					for (unsigned line = 0; line < (unsigned)(ceil((bufSize - 8) / 16)); ++line)
 					{
 						cout << "0x" << hex << setw(5) << setfill('0') << line << "0: ";
 						//for (unsigned byte = 0; byte < 16; ++byte)
 						for (unsigned byte = 0; byte < 8; ++byte)
 						{
-							if ((line * 16) + (2 * byte) < (bufSize - 8u)) {
+							if ((line * 16) + (2 * byte) < (bufSize - 8u))
+							{
 								uint16_t thisWord = (((uint16_t*)buffer)[4 + (line * 8) + byte]);
 								//uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
 								cout << setw(4) << (int)thisWord << " ";
@@ -542,6 +521,7 @@ main(int	argc
 		unsigned ii = 0;
 		int retries = 4;
 		uint64_t expectedTS = timestampOffset;
+                int packetsProcessed = 0;
 		auto startRT = std::chrono::high_resolution_clock::now();
 
 		for (; ii < number; ++ii)
@@ -574,6 +554,7 @@ main(int	argc
 
 				TRACE(19, "util_main %llu packets returned", (unsigned long long)data.size());
 				if (!reallyQuiet) cout << data.size() << " packets returned\n";
+                                packetsProcessed += data.size();
 				for (size_t i = 0; i < data.size(); ++i)
 				{
 					TRACE(19, "util_main constructing DataPacket:");
@@ -584,6 +565,9 @@ main(int	argc
 					if (expectedTS != h2.GetTimestamp().GetTimestamp(true))
 					{
 						cout << dec << h2.GetTimestamp().GetTimestamp(true) << " does not match expected timestamp of " << expectedTS << "!!!" << endl;
+                                                if(incrementTimestamp && h2.GetTimestamp().GetTimestamp(true) <= timestampOffset + number) {
+                                                    ii += h2.GetTimestamp().GetTimestamp(true) - expectedTS;
+                                                }
 						expectedTS = h2.GetTimestamp().GetTimestamp(true) + (incrementTimestamp ? 1 : 0);
 					}
 					else
@@ -605,7 +589,7 @@ main(int	argc
 					for (int jj = 0; jj < h2.GetPacketCount(); ++jj)
 					{
 						DTC_DataPacket packet = DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16));
-						if (!reallyQuiet) cout << "\t" << packet.toJSON() << endl;
+						if (!quiet) cout << "\t" << packet.toJSON() << endl;
 						if (rawOutput)
 						{
 							outputStream << packet;
@@ -678,7 +662,7 @@ main(int	argc
 		double aveTotalRate = totalSize / totalTime / 1024;
 		double rtTime = totalRTTime / (rtCount > 0 ? rtCount : 1);
 
-		std::cout << "STATS, " << ii << " DataBlocks processed:" << std::endl
+		std::cout << "STATS, " << packetsProcessed << " DataBlocks processed:" << std::endl
 			<< "Total Elapsed Time: " << totalTime << " s." << std::endl
 			<< "DTC::GetData Time: " << totalIncTime << " s." << std::endl
 			<< "Total Data Size: " << totalSize / 1024 << " KB." << std::endl

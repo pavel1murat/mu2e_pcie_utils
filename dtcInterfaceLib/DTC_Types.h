@@ -453,8 +453,9 @@ enum DTC_DebugType
 	DTC_DebugType_SpecialSequence = 0,
 	DTC_DebugType_ExternalSerial = 1,
 	DTC_DebugType_ExternalSerialWithReset = 2,
-        DTC_DebugType_RAMTest = 3,
-        DTC_DebugType_Invalid = 4,
+	DTC_DebugType_RAMTest = 3,
+	DTC_DebugType_DDRTest = 4,
+	DTC_DebugType_Invalid = 5,
 };
 struct DTC_DebugTypeConverter
 {
@@ -471,10 +472,12 @@ public:
 			return "External Serial";
 		case DTC_DebugType_ExternalSerialWithReset:
 			return "External Serial with FIFO Reset";
-                case DTC_DebugType_RAMTest:
-                        return "RAM Error Checking";
-                case DTC_DebugType_Invalid:
-                        return "INVALID!!!";
+		case DTC_DebugType_RAMTest:
+			return "FPGA SRAM Error Checking";
+		case DTC_DebugType_DDRTest:
+			return "DDR3 Memory Error Checking";
+		case DTC_DebugType_Invalid:
+			return "INVALID!!!";
 		}
 		return "Unknown";
 	}
@@ -491,13 +494,16 @@ public:
 		case DTC_DebugType_ExternalSerialWithReset:
 			stream << "\"External Serial with FIFO Reset\"";
 			break;
-                case DTC_DebugType_RAMTest:
-                        stream << "\"RAM Error Checking\"";
-                        break;
-                case DTC_DebugType_Invalid:
-                        stream << "\"\"";
-                        break;
-                }
+		case DTC_DebugType_RAMTest:
+			stream << "\"FPGA SRAM Error Checking\"";
+			break;
+		case DTC_DebugType_DDRTest:
+			stream << "\"DDR3 Memory Error Checking\"";
+			break;
+		case DTC_DebugType_Invalid:
+			stream << "\"\"";
+			break;
+		}
 		return stream;
 	}
 };
@@ -627,6 +633,51 @@ public:
 			stream << "\"Loopback\":0,";
 			stream << "\"Performance\":1}";
 			break;
+		}
+		return stream;
+	}
+};
+
+enum DTC_DCSOperationType : uint8_t
+{
+	DTC_DCSOperationType_Read = 0,
+	DTC_DCSOperationType_Write = 1,
+	DTC_DCSOperationType_WriteWithAck = 2,
+	DTC_DCSOperationType_Unknown = 255
+};
+struct DTC_DCSOperationTypeConverter
+{
+public:
+	DTC_DCSOperationType type_;
+	DTC_DCSOperationTypeConverter(DTC_DCSOperationType type) : type_(type) {}
+	std::string toString()
+	{
+		switch (type_)
+		{
+		case DTC_DCSOperationType_Read:
+			return "Read";
+		case DTC_DCSOperationType_Write:
+			return "Write";
+		case DTC_DCSOperationType_WriteWithAck:
+			return "WriteWithAck";
+		case DTC_DCSOperationType_Unknown:
+		default:
+			return "Unknown";
+		}
+	}
+	friend std::ostream& operator<<(std::ostream& stream, const DTC_DCSOperationTypeConverter& type)
+	{
+		switch (type.type_)
+		{
+		case DTC_DCSOperationType_Read:
+			stream << "\"Read\"";
+		case DTC_DCSOperationType_Write:
+			stream << "\"Write\"";
+		case DTC_DCSOperationType_WriteWithAck:
+			stream << "\"WriteWithAck\"";
+		case DTC_DCSOperationType_Unknown:
+		default:
+			stream << "\"Unknown\"";
 		}
 		return stream;
 	}
@@ -778,11 +829,13 @@ public:
 class DTC_DCSRequestPacket : public DTC_DMAPacket
 {
 private:
-	uint8_t data_[12];
+	DTC_DCSOperationType type_;
+	uint8_t address_ : 5;
+	uint16_t data_;
 public:
 	DTC_DCSRequestPacket();
 	DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc);
-	DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t* data);
+	DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_DCSOperationType type, uint8_t address, uint16_t data);
 	DTC_DCSRequestPacket(const DTC_DCSRequestPacket&) = default;
 	DTC_DCSRequestPacket(DTC_DCSRequestPacket&&) = default;
 	DTC_DCSRequestPacket(DTC_DataPacket in);
@@ -792,7 +845,12 @@ public:
 
 	virtual ~DTC_DCSRequestPacket() = default;
 
-	uint8_t* GetData() { return data_; }
+	uint16_t GetData() { return data_; }
+	void SetData(uint16_t data) { data_ = data; }
+	uint8_t GetAddress() { return address_; }
+	void SetAddress(uint8_t address) { address_ = address & 0x1F; }
+	DTC_DCSOperationType GetType() { return type_; }
+	void SetType(DTC_DCSOperationType type) { type_ = type; }
 	DTC_DataPacket ConvertToDataPacket() const;
 	std::string toJSON();
 	std::string toPacketFormat();
@@ -849,15 +907,27 @@ public:
 class DTC_DCSReplyPacket : public DTC_DMAPacket
 {
 private:
-	uint8_t data_[12];
+	uint8_t requestCounter_;
+	DTC_DCSOperationType type_;
+	bool dcsReceiveFIFOEmpty_;
+	uint8_t address_ : 5;
+	uint16_t data_;
 public:
 	DTC_DCSReplyPacket(DTC_Ring_ID ring);
-	DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t* data);
+	DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t counter, DTC_DCSOperationType type, uint8_t address, uint16_t data, bool fifoEmpty);
 	DTC_DCSReplyPacket(const DTC_DCSReplyPacket&) = default;
 	DTC_DCSReplyPacket(DTC_DCSReplyPacket&&) = default;
 	DTC_DCSReplyPacket(DTC_DataPacket in);
 
-	uint8_t* GetData() { return data_; }
+	uint8_t GetRequestCounter() { return requestCounter_; }
+	void SetRequestCounter(uint8_t counter) { requestCounter_ = counter; }
+	uint16_t GetData() { return data_; }
+	void SetData(uint16_t data) { data_ = data; }
+	uint8_t GetAddress() { return address_; }
+	void SetAddress(uint8_t address) { address_ = address & 0x1F; }
+	DTC_DCSOperationType GetType() { return type_; }
+	void SetType(DTC_DCSOperationType type) { type_ = type; }
+	bool DCSReceiveFIFOEmpty() { return dcsReceiveFIFOEmpty_; }
 	DTC_DataPacket ConvertToDataPacket() const;
 	std::string toJSON();
 	std::string toPacketFormat();

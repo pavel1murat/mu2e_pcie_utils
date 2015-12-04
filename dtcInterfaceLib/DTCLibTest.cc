@@ -422,7 +422,8 @@ void DTCLib::DTCLibTest::doDCSTest()
 			}
 			std::cout << std::endl;
 		}
-		thisDTC_->DCSRequestReply(DTC_Ring_0, DTC_ROC_0, testData);
+		std::cout << "TEST DISABLED FOR NOW!!!" << std::endl;
+		//thisDTC_->DCSRequestReply(DTC_Ring_0, DTC_ROC_0, testData);
 		if (printMessages_)
 		{
 			std::cout << "Data out: ";

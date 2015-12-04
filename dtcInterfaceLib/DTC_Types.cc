@@ -247,9 +247,9 @@ std::string DTCLib::DTC_DMAPacket::headerPacketFormat()
 {
 	std::stringstream ss;
 	ss << std::setfill('0') << std::hex;
-	ss << "0x" << std::setw(6) << ((byteCount_ & 0xFF00) >> 8) << "\t" << "0x" << std::setw(6) << (byteCount_ & 0xFF) << "\n";
+	ss << "0x" << std::setw(6) << ((byteCount_ & 0xFF00) >> 8) << "\t" << "0x" << std::setw(6) << (byteCount_ & 0xFF) << std::endl;
 	ss << std::setw(1) << (int)valid_ << "   " << "0x" << std::setw(2) << ringID_ << "\t";
-	ss << "0x" << std::setw(2) << packetType_ << "0x" << std::setw(2) << rocID_ << "\n";
+	ss << "0x" << std::setw(2) << packetType_ << "0x" << std::setw(2) << rocID_ << std::endl;
 	return ss.str();
 }
 
@@ -275,41 +275,29 @@ DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID 
 	: DTC_DMAPacket(DTC_PacketType_DCSRequest, ring, roc)
 {}
 
-DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, uint8_t* data)
+DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_DCSOperationType type, uint8_t address, uint16_t data)
 	: DTC_DMAPacket(DTC_PacketType_DCSRequest, ring, roc)
-{
-	for (int i = 0; i < 12; ++i)
-	{
-		data_[i] = data[i];
-	}
-}
+	, type_(type)
+	, address_(address & 0x1F)
+	, data_(data)
+{}
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
 {
 	if (packetType_ != DTC_PacketType_DCSRequest) { throw DTC_WrongPacketTypeException(); }
-	for (int i = 0; i < 12; ++i)
-	{
-		data_[i] = in.GetData()[i + 4];
-	}
+	type_ = (DTC_DCSOperationType)in.GetData()[4];
+	address_ = in.GetData()[6] & 0x1F;
+	data_ = in.GetData()[10] + (in.GetData()[11] << 8);
 }
 
 std::string DTCLib::DTC_DCSRequestPacket::toJSON()
 {
 	std::stringstream ss;
 	ss << "\"DCSRequestPacket\": {";
-	ss << headerJSON() << ",";
-	ss << "\"data\": [" << std::hex << "0x" << (int)data_[0] << ",";
-	ss << std::hex << "0x" << (int)data_[1] << ",";
-	ss << std::hex << "0x" << (int)data_[2] << ",";
-	ss << std::hex << "0x" << (int)data_[3] << ",";
-	ss << std::hex << "0x" << (int)data_[4] << ",";
-	ss << std::hex << "0x" << (int)data_[5] << ",";
-	ss << std::hex << "0x" << (int)data_[6] << ",";
-	ss << std::hex << "0x" << (int)data_[7] << ",";
-	ss << std::hex << "0x" << (int)data_[8] << ",";
-	ss << std::hex << "0x" << (int)data_[9] << ",";
-	ss << std::hex << "0x" << (int)data_[10] << ",";
-	ss << std::hex << "0x" << (int)data_[11] << "]";
+	ss << headerJSON() << ", ";
+	ss << "\"Operation Type\":" << DTC_DCSOperationTypeConverter(type_) << ", ";
+	ss << "\"Address\": " << (int)address_ << ", ";
+	ss << "\"Data\": " << (int)data_ << ", ";
 	ss << "}";
 	return ss.str();
 }
@@ -318,21 +306,22 @@ std::string DTCLib::DTC_DCSRequestPacket::toPacketFormat()
 {
 	std::stringstream ss;
 	ss << headerPacketFormat() << std::hex << std::setfill('0');
-	for (int ii = 0; ii <= 10; ii += 2)
-	{
-		ss << "0x" << std::setw(6) << (int)data_[ii + 1] << "\t";
-		ss << "0x" << std::setw(6) << (int)data_[ii] << "\n";
-	}
+	ss << "        \t" << std::setw(8) << (int)type_ << std::endl;
+	ss << "        \t    " << std::setw(4) << (int)address_ << std::endl;
+	ss << "        \t        " << std::endl;
+	ss << std::setw(8) << ((data_ & 0xFF00) >> 8) << "\t" << (data_ & 0xFF) << std::endl;
+	ss << "        \t        " << std::endl;
+	ss << "        \t        " << std::endl;
 	return ss.str();
 }
 
 DTCLib::DTC_DataPacket DTCLib::DTC_DCSRequestPacket::ConvertToDataPacket() const
 {
 	DTC_DataPacket output = DTC_DMAPacket::ConvertToDataPacket();
-	for (uint16_t i = 0; i < 12; ++i)
-	{
-		output.SetWord(i + 4, data_[i]);
-	}
+	output.SetWord(4, (uint8_t)type_);
+	output.SetWord(6, (uint8_t)address_);
+	output.SetWord(10, static_cast<uint8_t>(data_ & 0xFF));
+	output.SetWord(11, static_cast<uint8_t>(((data_ & 0xFF00) >> 8)));
 	return output;
 }
 
@@ -465,42 +454,37 @@ DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring)
 	: DTC_DMAPacket(DTC_PacketType_DCSReply, ring, DTC_ROC_Unused)
 {}
 
-DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t* data)
+DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t counter, DTC_DCSOperationType type, uint8_t address, uint16_t data, bool fifoEmpty)
 	: DTC_DMAPacket(DTC_PacketType_DCSReply, ring, DTC_ROC_Unused)
-{
-	for (int i = 0; i < 12; ++i)
-	{
-		data_[i] = data[i];
-	}
-}
+	, requestCounter_(counter)
+	, type_(type)
+	, dcsReceiveFIFOEmpty_(fifoEmpty)
+	, address_(address & 0x1F)
+	, data_(data)
+{}
 
 DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
 {
 	TRACE(20, "DTC_DCSReplyPacket::DTC_DCSReplyPacket Before packetType test");
 	if (packetType_ != DTC_PacketType_DCSReply) { throw DTC_WrongPacketTypeException(); }
-	for (int i = 0; i < 12; ++i)
-	{
-		data_[i] = in.GetData()[i + 4];
-	}
+
+	type_ = (DTC_DCSOperationType)in.GetData()[4];
+	requestCounter_ = in.GetData()[5];
+	address_ = in.GetData()[6] & 0x1F;
+	dcsReceiveFIFOEmpty_ = (in.GetData()[7] & 0x8) == 0x8;
+	data_ = in.GetData()[10] + (in.GetData()[11] << 8);
 }
 
 std::string DTCLib::DTC_DCSReplyPacket::toJSON()
 {
 	std::stringstream ss;
-	ss << "\"DCSReplyPacket\": {";
+	ss << "\"DCSRequestPacket\": {";
 	ss << headerJSON() << ",";
-	ss << "\"data\": [" << std::hex << "0x" << (int)data_[0] << ",";
-	ss << std::hex << "0x" << (int)data_[1] << ",";
-	ss << std::hex << "0x" << (int)data_[2] << ",";
-	ss << std::hex << "0x" << (int)data_[3] << ",";
-	ss << std::hex << "0x" << (int)data_[4] << ",";
-	ss << std::hex << "0x" << (int)data_[5] << ",";
-	ss << std::hex << "0x" << (int)data_[6] << ",";
-	ss << std::hex << "0x" << (int)data_[7] << ",";
-	ss << std::hex << "0x" << (int)data_[8] << ",";
-	ss << std::hex << "0x" << (int)data_[9] << ",";
-	ss << std::hex << "0x" << (int)data_[10] << ",";
-	ss << std::hex << "0x" << (int)data_[11] << "]";
+	ss << "\"Operation Type\":" << DTC_DCSOperationTypeConverter(type_) << ",";
+	ss << "\"Address\": " << (int)address_ << ",";
+	ss << "\"Data\": " << (int)data_;
+	ss << "\"Request Counter\": " << (int)requestCounter_ << ",";
+	ss << "\"DCS Request FIFO Empty\": " << (dcsReceiveFIFOEmpty_ ? "\"true\"" : "\"false\"");
 	ss << "}";
 	return ss.str();
 }
@@ -509,21 +493,24 @@ std::string DTCLib::DTC_DCSReplyPacket::toPacketFormat()
 {
 	std::stringstream ss;
 	ss << headerPacketFormat() << std::hex << std::setfill('0');
-	for (int ii = 0; ii <= 10; ii += 2)
-	{
-		ss << "0x" << std::setw(6) << (int)data_[ii + 1] << "\t";
-		ss << "0x" << std::setw(6) << (int)data_[ii] << "\n";
-	}
+	ss << std::setw(8) << (int)requestCounter_ << "\t" << std::setw(8) << (int)type_ << std::endl;
+	ss << (dcsReceiveFIFOEmpty_ ? "    E   " : "        ") << "\t    " << std::setw(4) << (int)address_ << std::endl;
+	ss << "        \t        " << std::endl;
+	ss << std::setw(8) << ((data_ & 0xFF00) >> 8) << "\t" << (data_ & 0xFF) << std::endl;
+	ss << "        \t        " << std::endl;
+	ss << "        \t        " << std::endl;
 	return ss.str();
 }
 
 DTCLib::DTC_DataPacket DTCLib::DTC_DCSReplyPacket::ConvertToDataPacket() const
 {
 	DTC_DataPacket output = DTC_DMAPacket::ConvertToDataPacket();
-	for (uint16_t i = 0; i < 12; ++i)
-	{
-		output.SetWord(i + 4, data_[i]);
-	}
+	output.SetWord(4, (uint8_t)type_);
+	output.SetWord(5, requestCounter_);
+	output.SetWord(6, (uint8_t)address_);
+	output.SetWord(7, output.GetWord(7) & (dcsReceiveFIFOEmpty_ ? 0xFF : 0xF7));
+	output.SetWord(10, static_cast<uint8_t>(data_ & 0xFF));
+	output.SetWord(11, static_cast<uint8_t>((data_ & 0xFF00) >> 8));
 	return output;
 }
 
