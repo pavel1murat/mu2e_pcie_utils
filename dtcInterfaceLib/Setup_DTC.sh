@@ -1,5 +1,5 @@
 test `whoami` == root || { echo 'You are not root and must be; script returning.'; return; }
-[ "$0" = "$BASH_SOURCE" ] && {echo 'You must source this script; script returning.'; return; }
+test "$0" == "$BASH_SOURCE" && { echo 'You must source this script; script exiting'; exit; }
 
 echo "Cleaning up kernel modules..."
 killall node         2>/dev/null
