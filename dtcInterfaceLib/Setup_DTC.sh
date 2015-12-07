@@ -1,35 +1,17 @@
 test `whoami` == root || { echo 'You are not root and must be; script returning.'; return; }
+[ "$0" = "$BASH_SOURCE" ] && {echo 'You must source this script; script returning.'; return; }
 
-echo First, cleanup...
+echo "Cleaning up kernel modules..."
 killall node         2>/dev/null
 rmmod pci_devel_main 2>/dev/null
 rmmod mu2e           2>/dev/null
 rmmod TRACE          2>/dev/null
-. /mu2e/ups/setup
-unsetup_all           >/dev/null
 
-echo -e '\nNow, (re)setup...'
-. ~ron/.profile >/dev/null 2>&1
-
-#setup -j TRACE -qe6 v3_05_00
-setup gcc v4_9_2
-setup TRACE -qe7 v3_05_00 # with -j, the mrbsetenv then does not setup gcc
+echo "Reinserting kernel modules..."
 lsmod | grep TRACE -q || insmod $TRACE_DIR/module/`uname -r`/TRACE.ko trace_allow_printk=1
 export TRACE_FILE=/proc/trace/buffer;tonM -nKERNEL 0-19  # poll noise is on lvls 22-23
 tonSg 0
-
-if true;then
-  Base=/home/ron/work/mu2ePrj/mrb              # this is the development directory
-  setup mrb                                    # $MRB_DIR used in next setup script
-  . $Base/local*/setup                         # "base" variable used by this script and is unset; MRB_BUILDDIR, etc set.
-  mrbsetenv                                    # add (most) BUILDDIR dirs to PATHs. Overrrides UPS_OVERRIDE.
-  #setup gcc v4_9_1
-  LD_LIBRARY_PATH=$MRB_BUILDDIR/lib:$LD_LIBRARY_PATH  # mrb bug? fix
-  lsmod | grep mu2e  -q || insmod $MRB_BUILDDIR/pcie_linux_kernel_module/drivers/`uname -r`/mu2e.ko
-else
-  setup pcie_linux_kernel_module -q e7:debug
-  lsmod | grep mu2e -q || insmod $PCIE_LINUX_KERNEL_MODULE_FQ_DIR/drivers/`uname -r`/mu2e.ko
-fi
+lsmod | grep mu2e -q || insmod $PCIE_LINUX_KERNEL_MODULE_DIR/drivers/`uname -r`/mu2e.ko
 
 echo "Doing \"Super\" Reset Chants"
 my_cntl write 0x9100 0xa0000000  >/dev/null # reset DTC  reset serdes osc
