@@ -625,7 +625,12 @@ int  mu2esim::write_register(uint16_t address, int tmo_ms, uint32_t data)
 			cancelCFO_ = true;
 			if (cfoEmulatorThread_.joinable()) cfoEmulatorThread_.join();
 			cancelCFO_ = false;
-			cfoEmulatorThread_ = std::thread(&mu2esim::CFOEmulator_, this);
+			if (registers_[0x91AC] > 1) {
+				cfoEmulatorThread_ = std::thread(&mu2esim::CFOEmulator_, this);
+			} else
+			{
+				CFOEmulator_();
+			}
 		}
 	}
 	return 0;

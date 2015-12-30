@@ -518,6 +518,7 @@ enum DTC_SimMode
 	DTC_SimMode_ROCEmulator = 5,
 	DTC_SimMode_Loopback = 6,
 	DTC_SimMode_Performance = 7,
+        DTC_SimMode_Invalid,
 };
 struct DTC_SimModeConverter
 {

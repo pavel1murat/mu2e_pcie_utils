@@ -16,7 +16,8 @@ DTCLib::DTC_SimMode DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::string m
 	if (modeName.find("mulator") != std::string::npos) { return DTC_SimMode_ROCEmulator; }
 	if (modeName.find("erformance") != std::string::npos) { return DTC_SimMode_Performance; }
 
-	return DTC_SimMode_Disabled;
+        DTC_SimMode modeInt = static_cast<DTC_SimMode>(stoi(modeName, nullptr,10));
+        return modeInt != DTC_SimMode_Invalid ? modeInt : DTC_SimMode_Disabled;
 }
 
 DTCLib::DTC_Timestamp::DTC_Timestamp()
