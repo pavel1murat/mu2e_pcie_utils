@@ -159,37 +159,40 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 				return static_cast<int>(*(uint64_t*)buffer[0]);
 			}
 			std::set<uint64_t> activeTimestamps;
-			rrMutex_.lock();
-			for (unsigned ring = 0; ring <= DTCLib::DTC_Ring_5; ++ring)
-			{
-				//TRACE(21, "mu2esim::read_data ring=%u RR list size=%llu p=%p this=%p", ring, (unsigned long long)readoutRequestReceived_[ring].size(), (void*)&readoutRequestReceived_, (void*)this);
-				if (readoutRequestReceived_[ring].size() > 0)
-				{
-					bool active = true;
-					auto ii = readoutRequestReceived_[ring].begin();
-					while (active && ii != readoutRequestReceived_[ring].end())
-					{
-						bool found = false;
-						uint64_t ts = *ii;
-						//TRACE(21, "mu2esim::read_data checking if there are DataRequests for ts=%llu", (unsigned long long)ts);
-						for (auto roc : DTCLib::DTC_ROCS)
-						{
-							drMutex_.lock();
-							if (dataRequestReceived_[ring][roc].count(ts))
-							{
+			do
+			  {
+				rrMutex_.lock();
+				for (unsigned ring = 0; ring <= DTCLib::DTC_Ring_5; ++ring)
+				  {
+					//TRACE(21, "mu2esim::read_data ring=%u RR list size=%llu p=%p this=%p", ring, (unsigned long long)readoutRequestReceived_[ring].size(), (void*)&readoutRequestReceived_, (void*)this);
+					if (readoutRequestReceived_[ring].size() > 0)
+					  {
+						bool active = true;
+						auto ii = readoutRequestReceived_[ring].begin();
+						while (active && ii != readoutRequestReceived_[ring].end())
+						  {
+							bool found = false;
+							uint64_t ts = *ii;
+							//TRACE(21, "mu2esim::read_data checking if there are DataRequests for ts=%llu", (unsigned long long)ts);
+							for (auto roc : DTCLib::DTC_ROCS)
+							  {
+								drMutex_.lock();
+								if (dataRequestReceived_[ring][roc].count(ts))
+								  {
+									drMutex_.unlock();
+									activeTimestamps.insert(ts);
+									found = true;
+									break;
+								  }
 								drMutex_.unlock();
-								activeTimestamps.insert(ts);
-								found = true;
-								break;
-							}
-							drMutex_.unlock();
-						}
-						if (!found) active = false;
-						++ii;
-					}
-				}
-			}
-			rrMutex_.unlock();
+							  }
+							if (!found) active = false;
+							++ii;
+						  }
+					  }
+				  }
+				rrMutex_.unlock();
+			  }while(activeTimestamps.empty() && std::bitset<32>(registers_[0x9100])[30] == 1);
 
 			bool exitLoop = false;
 			for (auto ts : activeTimestamps)
@@ -688,6 +691,9 @@ void mu2esim::CFOEmulator_()
 		usleep(ticksToWait);
 		sentCount++;
 	}
+	std::bitset<32> ctrlReg(registers_[0x9100]);
+	ctrlReg[30] = 0;
+	registers_[0x9100] = ctrlReg.to_ulong();
 }
 
 unsigned mu2esim::delta_(int chn, int dir)
