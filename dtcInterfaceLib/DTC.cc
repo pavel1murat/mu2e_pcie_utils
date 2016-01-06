@@ -167,7 +167,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
 			packet = ReadNextDAQPacket(first_read_ ? 10000 : 1);
 			TRACE(19, "DTC::GetData after  ReadDMADAQPacket");
 			tries++;
-			if (packet == nullptr) usleep(1000);
+			if (packet == nullptr) usleep(5000);
 		}
 		if (packet == nullptr)
 		{
