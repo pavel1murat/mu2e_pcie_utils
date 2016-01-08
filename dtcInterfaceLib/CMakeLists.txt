@@ -19,6 +19,8 @@ cet_make_Exec(requestSender SOURCE requestSender.cc LIBRARIES DTCInterface)
 
 cet_make_exec(DTCRegDump SOURCE dtcRegDump.cc LIBRARIES DTCInterface)
 
+cet_make_exec(tester SOURCE tester.cc LIBRARIES DTCInterface)
+
 # Install_headers MUST BE FIRST...for some reason
 install_headers()
 install_source()

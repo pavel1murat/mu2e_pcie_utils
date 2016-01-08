@@ -518,7 +518,7 @@ main(int	argc
 		std::ofstream outputStream;
 		if (rawOutput) outputStream.open(rawOutputFile, std::ios::out | std::ios::app | std::ios::binary);
 
-		unsigned ii = 0;
+		uint64_t ii = 0;
 		int retries = 4;
 		uint64_t expectedTS = timestampOffset;
                 int packetsProcessed = 0;
@@ -554,7 +554,7 @@ main(int	argc
 
 				TRACE(19, "util_main %llu packets returned", (unsigned long long)data.size());
 				if (!reallyQuiet) cout << data.size() << " packets returned\n";
-                                packetsProcessed += data.size();
+                                packetsProcessed += static_cast<int>(data.size());
 				for (size_t i = 0; i < data.size(); ++i)
 				{
 					TRACE(19, "util_main constructing DataPacket:");

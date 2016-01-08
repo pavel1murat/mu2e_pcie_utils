@@ -1697,6 +1697,7 @@ void DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
 		deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
 			(std::chrono::high_resolution_clock::now() - start).count();
 		retry--;
+		if (errorCode == 0) usleep(1000);
 	} while (retry > 0 && errorCode == 0);
 	if (errorCode == 0) // timeout
 		throw DTC_TimeoutOccurredException();
@@ -1715,7 +1716,7 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataP
 		DTC_DataPacket thisPacket(packet);
 		thisPacket.Resize(dmaSize_);
 		int retry = 3;
-		int errorCode = 0;
+		int errorCode;
 		do
 		{
 			auto start = std::chrono::high_resolution_clock::now();
@@ -1734,7 +1735,7 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataP
 	else
 	{
 		int retry = 3;
-		int errorCode = 0;
+		int errorCode;
 		do
 		{
 			auto start = std::chrono::high_resolution_clock::now();
@@ -1777,7 +1778,7 @@ void DTCLib::DTC::WriteRegister(uint32_t data, const DTC_Register& address)
 uint32_t DTCLib::DTC::ReadRegister(const DTC_Register& address)
 {
 	int retry = 3;
-	int errorCode = 0;
+	int errorCode;
 	uint32_t data;
 	do
 	{

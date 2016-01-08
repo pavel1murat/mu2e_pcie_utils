@@ -8,32 +8,55 @@
 
 DTCLib::DTC_SimMode DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::string modeName)
 {
-	if (modeName.find("racker") != std::string::npos) { return DTC_SimMode_Tracker; }
-	if (modeName.find("alorimeter") != std::string::npos) { return DTC_SimMode_Calorimeter; }
-	if (modeName.find("osmic") != std::string::npos) { return DTC_SimMode_CosmicVeto; }
-	if (modeName.find("oopback") != std::string::npos) { return DTC_SimMode_Loopback; }
-	if (modeName.find("CFO") != std::string::npos || modeName.find("cfo") != std::string::npos) { return DTC_SimMode_NoCFO; }
-	if (modeName.find("mulator") != std::string::npos) { return DTC_SimMode_ROCEmulator; }
-	if (modeName.find("erformance") != std::string::npos) { return DTC_SimMode_Performance; }
+	if (modeName.find("racker") != std::string::npos)
+	{
+		return DTC_SimMode_Tracker;
+	}
+	if (modeName.find("alorimeter") != std::string::npos)
+	{
+		return DTC_SimMode_Calorimeter;
+	}
+	if (modeName.find("osmic") != std::string::npos)
+	{
+		return DTC_SimMode_CosmicVeto;
+	}
+	if (modeName.find("oopback") != std::string::npos)
+	{
+		return DTC_SimMode_Loopback;
+	}
+	if (modeName.find("CFO") != std::string::npos || modeName.find("cfo") != std::string::npos)
+	{
+		return DTC_SimMode_NoCFO;
+	}
+	if (modeName.find("mulator") != std::string::npos)
+	{
+		return DTC_SimMode_ROCEmulator;
+	}
+	if (modeName.find("erformance") != std::string::npos)
+	{
+		return DTC_SimMode_Performance;
+	}
 
-        DTC_SimMode modeInt = static_cast<DTC_SimMode>(stoi(modeName, nullptr,10));
-        return modeInt != DTC_SimMode_Invalid ? modeInt : DTC_SimMode_Disabled;
+	DTC_SimMode modeInt = static_cast<DTC_SimMode>(stoi(modeName, nullptr, 10));
+	return modeInt != DTC_SimMode_Invalid ? modeInt : DTC_SimMode_Disabled;
 }
 
 DTCLib::DTC_Timestamp::DTC_Timestamp()
 	: timestamp_(0)
-{}
+{
+}
 
 DTCLib::DTC_Timestamp::DTC_Timestamp(uint64_t timestamp)
 	: timestamp_(timestamp)
-{}
+{
+}
 
 DTCLib::DTC_Timestamp::DTC_Timestamp(uint32_t timestampLow, uint16_t timestampHigh)
 {
 	SetTimestamp(timestampLow, timestampHigh);
 }
 
-DTCLib::DTC_Timestamp::DTC_Timestamp(uint8_t *timeArr, int offset)
+DTCLib::DTC_Timestamp::DTC_Timestamp(uint8_t* timeArr, int offset)
 {
 	uint64_t* arr = (uint64_t*)(timeArr + offset);
 	timestamp_ = *arr;
@@ -41,7 +64,8 @@ DTCLib::DTC_Timestamp::DTC_Timestamp(uint8_t *timeArr, int offset)
 
 DTCLib::DTC_Timestamp::DTC_Timestamp(std::bitset<48> timestamp)
 	: timestamp_(timestamp.to_ullong())
-{}
+{
+}
 
 void DTCLib::DTC_Timestamp::SetTimestamp(uint32_t timestampLow, uint16_t timestampHigh)
 {
@@ -92,7 +116,8 @@ std::string DTCLib::DTC_Timestamp::toPacketFormat()
 DTCLib::DTC_DataPacket::DTC_DataPacket()
 {
 	memPacket_ = false;
-	dataPtr_ = new uint8_t[16]; // current min. dma length is 64 bytes
+	vals_ = std::vector<uint8_t>(16);
+	dataPtr_ = &vals_[0];
 	dataSize_ = 16;
 }
 
@@ -102,7 +127,8 @@ DTCLib::DTC_DataPacket::DTC_DataPacket(const DTC_DataPacket& in)
 	memPacket_ = in.IsMemoryPacket();
 	if (!memPacket_)
 	{
-		dataPtr_ = new uint8_t[dataSize_];
+		vals_ = std::vector<uint8_t>(dataSize_);
+		dataPtr_ = &vals_[0];
 		memcpy(dataPtr_, in.GetData(), in.GetSize() * sizeof(uint8_t));
 	}
 	else
@@ -115,7 +141,6 @@ DTCLib::DTC_DataPacket::~DTC_DataPacket()
 {
 	if (!memPacket_ && dataPtr_ != nullptr)
 	{
-		delete[] dataPtr_;
 		dataPtr_ = nullptr;
 	}
 }
@@ -138,11 +163,8 @@ bool DTCLib::DTC_DataPacket::Resize(const uint16_t dmaSize)
 {
 	if (!memPacket_ && dmaSize > dataSize_)
 	{
-		uint8_t *data = new uint8_t[dmaSize];
-		memset(data, 0, dmaSize * sizeof(uint8_t));
-		memcpy(data, dataPtr_, dataSize_ * sizeof(uint8_t));
-		delete[] dataPtr_;
-		dataPtr_ = data;
+		vals_.resize(dmaSize);
+		dataPtr_ = &vals_[0];
 		dataSize_ = dmaSize;
 		return true;
 	}
@@ -196,7 +218,8 @@ bool DTCLib::DTC_DataPacket::Equals(const DTC_DataPacket& other)
 
 DTCLib::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t byteCount, bool valid)
 	: valid_(valid), byteCount_(byteCount < 64 ? 64 : byteCount), ringID_(ring), packetType_(type), rocID_(roc)
-{}
+{
+}
 
 DTCLib::DTC_DataPacket DTCLib::DTC_DMAPacket::ConvertToDataPacket() const
 {
@@ -270,22 +293,28 @@ std::string DTCLib::DTC_DMAPacket::toPacketFormat()
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket()
 	: DTC_DMAPacket(DTC_PacketType_DCSRequest, DTC_Ring_Unused, DTC_ROC_Unused)
-{}
+{
+}
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc)
 	: DTC_DMAPacket(DTC_PacketType_DCSRequest, ring, roc)
-{}
+{
+}
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_DCSOperationType type, uint8_t address, uint16_t data)
 	: DTC_DMAPacket(DTC_PacketType_DCSRequest, ring, roc)
-	, type_(type)
-	, address_(address & 0x1F)
-	, data_(data)
-{}
+	  , type_(type)
+	  , address_(address & 0x1F)
+	  , data_(data)
+{
+}
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
 {
-	if (packetType_ != DTC_PacketType_DCSRequest) { throw DTC_WrongPacketTypeException(); }
+	if (packetType_ != DTC_PacketType_DCSRequest)
+	{
+		throw DTC_WrongPacketTypeException();
+	}
 	type_ = (DTC_DCSOperationType)in.GetData()[4];
 	address_ = in.GetData()[6] & 0x1F;
 	data_ = in.GetData()[10] + (in.GetData()[11] << 8);
@@ -349,7 +378,10 @@ DTCLib::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC
 
 DTCLib::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
 {
-	if (packetType_ != DTC_PacketType_ReadoutRequest) { throw DTC_WrongPacketTypeException(); }
+	if (packetType_ != DTC_PacketType_ReadoutRequest)
+	{
+		throw DTC_WrongPacketTypeException();
+	}
 	uint8_t* arr = in.GetData();
 	request_[0] = arr[4];
 	request_[1] = arr[5];
@@ -395,15 +427,20 @@ DTCLib::DTC_DataPacket DTCLib::DTC_ReadoutRequestPacket::ConvertToDataPacket() c
 
 DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, bool debug, uint16_t debugPacketCount, DTC_DebugType type)
 	: DTC_DMAPacket(DTC_PacketType_DataRequest, ring, roc), timestamp_(), debug_(debug), debugPacketCount_(debugPacketCount), type_(type)
-{}
+{
+}
 
 DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp timestamp, bool debug, uint16_t debugPacketCount, DTC_DebugType type)
 	: DTC_DMAPacket(DTC_PacketType_DataRequest, ring, roc), timestamp_(timestamp), debug_(debug), debugPacketCount_(debugPacketCount), type_(type)
-{}
+{
+}
 
 DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
 {
-	if (packetType_ != DTC_PacketType_DataRequest) { throw DTC_WrongPacketTypeException(); }
+	if (packetType_ != DTC_PacketType_DataRequest)
+	{
+		throw DTC_WrongPacketTypeException();
+	}
 	timestamp_ = DTC_Timestamp(in.GetData(), 6);
 	debug_ = (in.GetData()[12] & 0x1) == 1;
 	type_ = DTC_DebugType((in.GetData()[12] & 0xF0) >> 4);
@@ -446,28 +483,39 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DataRequestPacket::ConvertToDataPacket() cons
 
 void DTCLib::DTC_DataRequestPacket::SetDebugPacketCount(uint16_t count)
 {
-	if (count > 0) { debug_ = true; }
-	else { debug_ = false; }
+	if (count > 0)
+	{
+		debug_ = true;
+	}
+	else
+	{
+		debug_ = false;
+	}
 	debugPacketCount_ = count;
 }
 
 DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring)
 	: DTC_DMAPacket(DTC_PacketType_DCSReply, ring, DTC_ROC_Unused)
-{}
+{
+}
 
 DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t counter, DTC_DCSOperationType type, uint8_t address, uint16_t data, bool fifoEmpty)
 	: DTC_DMAPacket(DTC_PacketType_DCSReply, ring, DTC_ROC_Unused)
-	, requestCounter_(counter)
-	, type_(type)
-	, dcsReceiveFIFOEmpty_(fifoEmpty)
-	, address_(address & 0x1F)
-	, data_(data)
-{}
+	  , requestCounter_(counter)
+	  , type_(type)
+	  , dcsReceiveFIFOEmpty_(fifoEmpty)
+	  , address_(address & 0x1F)
+	  , data_(data)
+{
+}
 
 DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
 {
 	TRACE(20, "DTC_DCSReplyPacket::DTC_DCSReplyPacket Before packetType test");
-	if (packetType_ != DTC_PacketType_DCSReply) { throw DTC_WrongPacketTypeException(); }
+	if (packetType_ != DTC_PacketType_DCSReply)
+	{
+		throw DTC_WrongPacketTypeException();
+	}
 
 	type_ = (DTC_DCSOperationType)in.GetData()[4];
 	requestCounter_ = in.GetData()[5];
@@ -517,7 +565,8 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSReplyPacket::ConvertToDataPacket() const
 
 DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status)
 	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, (1 + packetCount) * 16), packetCount_(packetCount), timestamp_(), status_(status)
-{}
+{
+}
 
 DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp)
 	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, (1 + packetCount) * 16), packetCount_(packetCount), timestamp_(timestamp), status_(status)
@@ -597,9 +646,13 @@ bool DTCLib::DTC_DataHeaderPacket::Equals(const DTC_DataHeaderPacket& other)
 	return ConvertToDataPacket() == other.ConvertToDataPacket();
 }
 
-DTCLib::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError() : data_(0) {}
+DTCLib::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError() : data_(0)
+{
+}
 
-DTCLib::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError(std::bitset<2> data) : data_(data) {}
+DTCLib::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError(std::bitset<2> data) : data_(data)
+{
+}
 
 DTCLib::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError(uint32_t data, DTC_Ring_ID ring)
 {
@@ -609,9 +662,13 @@ DTCLib::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError(uint32_t data, DT
 	data_[1] = dataSet[ringBase + 1];
 }
 
-DTCLib::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError() : data_(0) {}
+DTCLib::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError() : data_(0)
+{
+}
 
-DTCLib::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError(std::bitset<2> data) : data_(data) {}
+DTCLib::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError(std::bitset<2> data) : data_(data)
+{
+}
 
 DTCLib::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError(uint32_t data, DTC_Ring_ID ring)
 {
@@ -620,3 +677,4 @@ DTCLib::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError(uint32_t data
 	data_[0] = dataSet[ringBase];
 	data_[1] = dataSet[ringBase + 1];
 }
+

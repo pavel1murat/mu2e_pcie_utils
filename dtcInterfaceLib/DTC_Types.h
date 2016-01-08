@@ -163,22 +163,16 @@ public:
 		case DTC_RXBufferStatus_Unknown:
 		default:
 			return "Unknown";
-			break;
 		case DTC_RXBufferStatus_Nominal:
 			return "Nominal";
-			break;
 		case DTC_RXBufferStatus_BufferEmpty:
 			return "BufferEmpty";
-			break;
 		case DTC_RXBufferStatus_BufferFull:
 			return "BufferFull";
-			break;
 		case DTC_RXBufferStatus_Overflow:
 			return "Overflow";
-			break;
 		case DTC_RXBufferStatus_Underflow:
 			return "Underflow";
-			break;
 		}
 	}
 	friend std::ostream& operator<<(std::ostream& stream, const DTC_RXBufferStatusConverter& status)
@@ -755,6 +749,7 @@ private:
 	uint8_t* dataPtr_;
 	uint16_t dataSize_;
 	bool memPacket_;
+	std::vector<uint8_t> vals_;
 
 public:
 	DTC_DataPacket();

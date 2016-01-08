@@ -16,6 +16,7 @@
 #include <mutex>
 #include <set>
 #include <map>
+#include <atomic>
 #include <thread>
 #include <queue>
 #include "DTC_Types.h"
@@ -38,6 +39,16 @@ private:
 	void clearBuffer_(int chn, bool increment = true);
 	void CFOEmulator_();
 
+	uint16_t GetDRCount(DTCLib::DTC_Ring_ID ring, DTCLib::DTC_ROC_ID roc, uint64_t timestamp);
+	void SetDRCount(DTCLib::DTC_Ring_ID ring, DTCLib::DTC_ROC_ID roc, uint64_t timestamp, uint16_t count);
+	bool GetDRExists(DTCLib::DTC_Ring_ID ring, DTCLib::DTC_ROC_ID roc, uint64_t timestamp);
+	void PutRR(DTCLib::DTC_Ring_ID ring, uint64_t timestamp);
+	bool GetRRExists(DTCLib::DTC_Ring_ID ring, uint64_t timestamp);
+	void DeleteTimestamp(uint64_t timestamp);
+
+	typedef bool readoutRequestData[6];
+	typedef std::pair<bool,uint16_t> dataRequestData[6][6];
+
 	//const DTCLib::DTC_Timestamp NULL_TIMESTAMP = DTCLib::DTC_Timestamp(0xffffffffffffffff);
 	std::unordered_map<uint16_t, uint32_t> registers_;
 	unsigned hwIdx_[MU2E_MAX_CHANNELS];
@@ -50,12 +61,17 @@ private:
 	DTCLib::DTC_SimMode mode_;
 	uint16_t simIndex_[6][6];
 	bool dcsRequestReceived_[6][6];
-	std::set<uint64_t> readoutRequestReceived_[6];
+	std::unordered_map<uint64_t, readoutRequestData> readoutRequestReceived_;
 	std::mutex rrMutex_;
-	std::map<uint64_t, uint16_t> dataRequestReceived_[6][6];
+	std::unordered_map<uint64_t, dataRequestData> dataRequestReceived_;
 	std::mutex drMutex_;
+	std::set<uint64_t> activeTimestamps_;
+	std::mutex atMutex_;
+	bool readoutRequestSeen_[6];
+	bool dataRequestSeen_[6][6];
 	DTCLib::DTC_DCSRequestPacket dcsRequest_[6][6];
 	std::thread cfoEmulatorThread_;
+	std::atomic<bool> cfoEmulatorAhead_;
 	bool cancelCFO_;
 };
 
