@@ -31,6 +31,8 @@
 #include <algorithm>
 #include <cmath>
 
+#define THREADED_CFO_EMULATOR 0
+
 mu2esim::mu2esim()
 	: hwIdx_()
 	, swIdx_()
@@ -153,62 +155,31 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 			{
 				memcpy((char*)dmaData_[chn][swIdx_[chn]], loopbackData_.front(), sizeof(mu2e_databuff_t) - sizeof(uint64_t));
 				*buffer = dmaData_[chn][swIdx_[chn]];
-				delete loopbackData_.front();
+				delete[] loopbackData_.front();
 				loopbackData_.pop();
 				swIdx_[chn] = (swIdx_[chn] + 1) % SIM_BUFFCOUNT;
 				return static_cast<int>(*(uint64_t*)buffer[0]);
 			}
 			std::set<uint64_t> activeTimestamps;
 			do
-			  {
-				rrMutex_.lock();
-				for (unsigned ring = 0; ring <= DTCLib::DTC_Ring_5; ++ring)
-				  {
-					//TRACE(21, "mu2esim::read_data ring=%u RR list size=%llu p=%p this=%p", ring, (unsigned long long)readoutRequestReceived_[ring].size(), (void*)&readoutRequestReceived_, (void*)this);
-					if (readoutRequestReceived_[ring].size() > 0)
-					  {
-						bool active = true;
-						auto ii = readoutRequestReceived_[ring].begin();
-						while (active && ii != readoutRequestReceived_[ring].end())
-						  {
-							bool found = false;
-							uint64_t ts = *ii;
-							//TRACE(21, "mu2esim::read_data checking if there are DataRequests for ts=%llu", (unsigned long long)ts);
-							for (auto roc : DTCLib::DTC_ROCS)
-							  {
-								drMutex_.lock();
-								if (dataRequestReceived_[ring][roc].count(ts))
-								  {
-									drMutex_.unlock();
-									activeTimestamps.insert(ts);
-									found = true;
-									break;
-								  }
-								drMutex_.unlock();
-							  }
-							if (!found) active = false;
-							++ii;
-						  }
-					  }
-				  }
-				rrMutex_.unlock();
-			  }while(activeTimestamps.empty() && std::bitset<32>(registers_[0x9100])[30] == 1);
+			{
+				std::lock_guard<std::mutex> lock(atMutex_);
+				activeTimestamps = activeTimestamps_;
+			} while (activeTimestamps.empty() && (registers_[0x9100] & 0x40000000) == 0x40000000);
 
 			bool exitLoop = false;
 			for (auto ts : activeTimestamps)
 			{
 				TRACE(17, "mu2esim::read_data, checking timestamp %llu", (unsigned long long)ts);
 				if (exitLoop) break;
-				for (int ring = 0; ring <= DTCLib::DTC_Ring_5; ++ring)
+				for (uint8_t ring = 0; ring <= DTCLib::DTC_Ring_5; ++ring)
 				{
 					if (exitLoop) break;
-					rrMutex_.lock();
-					if (readoutRequestReceived_[ring].count(ts) > 0 && currentOffset < sizeof(mu2e_databuff_t))
+					if (GetRRExists((DTCLib::DTC_Ring_ID)ring, ts) && currentOffset < sizeof(mu2e_databuff_t))
 					{
-						for (int roc = 0; roc <= DTCLib::DTC_ROC_5; ++roc)
+						for (uint8_t roc = 0; roc <= DTCLib::DTC_ROC_5; ++roc)
 						{
-							drMutex_.lock();
-							if (dataRequestReceived_[ring][roc].count(ts) > 0 && currentOffset < sizeof(mu2e_databuff_t))
+							if (GetDRExists((DTCLib::DTC_Ring_ID)ring, (DTCLib::DTC_ROC_ID)roc, ts) && currentOffset < sizeof(mu2e_databuff_t))
 							{
 								TRACE(17, "mu2esim::read_data, DAQ Channel w/Requests recieved");
 								uint8_t packet[16];
@@ -222,7 +193,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 								}
 								else if (mode_ == DTCLib::DTC_SimMode_Performance)
 								{
-									nPackets = dataRequestReceived_[ring][roc][ts];
+									nPackets = GetDRCount((DTCLib::DTC_Ring_ID)ring, (DTCLib::DTC_ROC_ID)roc, ts);
 									// Safety Check
 									if ((uint32_t)((nPackets + 1) * 16) >= sizeof(mu2e_databuff_t))
 									{
@@ -232,7 +203,6 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 								if ((currentOffset + (nPackets + 1) * 16) > sizeof(mu2e_databuff_t))
 								{
 									exitLoop = true;
-									drMutex_.unlock();
 									break;
 								}
 
@@ -255,7 +225,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 								packet[15] = 0;
 
 								TRACE(17, "mu2esim::read_data Copying Data Header packet into buffer, chn=%i, idx=%u, buf=%p, packet=%p, off=%llu"
-									  , chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)packet, (unsigned long long)currentOffset);
+									, chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)packet, (unsigned long long)currentOffset);
 								memcpy((char*)dmaData_[chn][hwIdx_[chn]] + currentOffset, &packet[0], sizeof(packet));
 								currentOffset += sizeof(packet);
 								buffSize_[chn][hwIdx_[chn]] = currentOffset;
@@ -284,7 +254,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 									packet[15] = 0;
 
 									TRACE(17, "mu2esim::read_data Copying Data packet into buffer, chn=%i, idx=%u, buf=%p, packet=%p, off=%llu"
-										  , chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)packet, (unsigned long long)currentOffset);
+										, chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)packet, (unsigned long long)currentOffset);
 									memcpy((char*)dmaData_[chn][hwIdx_[chn]] + currentOffset, &packet, sizeof(packet));
 									currentOffset += sizeof(packet);
 									buffSize_[chn][hwIdx_[chn]] = currentOffset;
@@ -311,7 +281,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 									packet[15] = 4;
 
 									TRACE(17, "mu2esim::read_data Copying Data packet into buffer, chn=%i, idx=%u, buf=%p, packet=%p, off=%llu"
-										  , chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)packet, (unsigned long long)currentOffset);
+										, chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)packet, (unsigned long long)currentOffset);
 									memcpy((char*)dmaData_[chn][hwIdx_[chn]] + currentOffset, &packet, sizeof(packet));
 									currentOffset += sizeof(packet);
 									buffSize_[chn][hwIdx_[chn]] = currentOffset;
@@ -338,7 +308,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 
 										samplesProcessed += 8;
 										TRACE(17, "mu2esim::read_data Copying Data packet into buffer, chn=%i, idx=%u, buf=%p, packet=%p, off=%llu"
-											  , chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)packet, (unsigned long long)currentOffset);
+											, chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)packet, (unsigned long long)currentOffset);
 										memcpy((char*)dmaData_[chn][hwIdx_[chn]] + currentOffset, &packet, sizeof(packet));
 										currentOffset += sizeof(packet);
 										buffSize_[chn][hwIdx_[chn]] = currentOffset;
@@ -376,7 +346,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 									packet[15] = static_cast<uint8_t>((pattern7 >> 2));
 
 									TRACE(17, "mu2esim::read_data Copying Data packet into buffer, chn=%i, idx=%u, buf=%p, packet=%p, off=%llu"
-										  , chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)packet, (unsigned long long)currentOffset);
+										, chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)packet, (unsigned long long)currentOffset);
 									memcpy((char*)dmaData_[chn][hwIdx_[chn]] + currentOffset, &packet, sizeof(packet));
 									currentOffset += sizeof(packet);
 									buffSize_[chn][hwIdx_[chn]] = currentOffset;
@@ -403,7 +373,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 										packet[15] = 0xff;
 
 										TRACE(17, "mu2esim::read_data Copying Data packet into buffer, chn=%i, idx=%u, buf=%p, packet=%p, off=%llu"
-											  , chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)packet, (unsigned long long)currentOffset);
+											, chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)packet, (unsigned long long)currentOffset);
 										memcpy((char*)dmaData_[chn][hwIdx_[chn]] + currentOffset, &packet, sizeof(packet));
 										currentOffset += sizeof(packet);
 										buffSize_[chn][hwIdx_[chn]] = currentOffset;
@@ -415,19 +385,15 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 								}
 								simIndex_[ring][roc] = (simIndex_[ring][roc] + 1) % 0x3FF;
 								TRACE(17, "mu2esim::read_data: Erasing DTC_Timestamp %llu from DataRequestReceived list", (unsigned long long)ts);
-								dataRequestReceived_[ring][roc].erase(ts);
 							}
-							drMutex_.unlock();
 						}
 						if (exitLoop)
 						{
-							rrMutex_.unlock();
 							break;
 						}
 						TRACE(17, "mu2esim::read_data: Erasing DTC_Timestamp %llu from ReadoutRequestReceived list", (unsigned long long)ts);
-						readoutRequestReceived_[ring].erase(ts);
+						DeleteTimestamp(ts);
 					}
-					rrMutex_.unlock();
 				}
 			}
 		}
@@ -466,7 +432,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 						}
 
 						TRACE(17, "mu2esim::read_data Copying DCS Reply packet into buffer, chn=%i, idx=%u, buf=%p, packet=%p, off=%llu"
-							  , chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)replyPacket, (unsigned long long)currentOffset);
+							, chn, hwIdx_[chn], (void*)dmaData_[chn][hwIdx_[chn]], (void*)replyPacket, (unsigned long long)currentOffset);
 						memcpy((char*)dmaData_[chn][hwIdx_[chn]] + currentOffset, &replyPacket, sizeof(replyPacket));
 						currentOffset += sizeof(replyPacket);
 						buffSize_[chn][hwIdx_[chn]] = currentOffset;
@@ -522,9 +488,7 @@ int mu2esim::write_data(int chn, void *buffer, size_t bytes)
 		if ((word & 0x8010) == 0x8010)
 		{
 			TRACE(17, "mu2esim::write_data: Readout Request: activeDAQRing=%u, ts=%llu", activeDAQRing, (unsigned long long)ts.GetTimestamp(true));
-			rrMutex_.lock();
-			readoutRequestReceived_[activeDAQRing].insert(ts.GetTimestamp(true));
-			rrMutex_.unlock();
+			PutRR(activeDAQRing, ts.GetTimestamp(true));
 		}
 		else if ((word & 0x8020) == 0x8020)
 		{
@@ -532,19 +496,21 @@ int mu2esim::write_data(int chn, void *buffer, size_t bytes)
 			TRACE(17, "mu2esim::write_data: Data Request: activeDAQRing=%u, activeROC=%u, ts=%llu", activeDAQRing, activeROC, (unsigned long long)ts.GetTimestamp(true));
 			if (activeDAQRing != DTCLib::DTC_Ring_Unused)
 			{
-				rrMutex_.lock();
-				if (readoutRequestReceived_[activeDAQRing].count(ts.GetTimestamp(true)) == 0)
+				if (!GetRRExists(activeDAQRing, ts.GetTimestamp(true)))
 				{
 					TRACE(17, "mu2esim::write_data: Data Request Received but missing Readout Request!");
 				}
-				rrMutex_.unlock();
-				drMutex_.lock();
+				else
+				{
+					std::lock_guard<std::mutex> lock(atMutex_);
+					activeTimestamps_.insert(ts.GetTimestamp(true));
+				}
+
 				if (activeROC < DTCLib::DTC_ROC_Unused)
 				{
 					uint16_t packetCount = *((uint16_t*)buffer + 7);
-					dataRequestReceived_[activeDAQRing][activeROC][ts.GetTimestamp(true)] = packetCount;
+					SetDRCount(activeDAQRing, activeROC, ts.GetTimestamp(true), packetCount);
 				}
-				drMutex_.unlock();
 			}
 		}
 		break;
@@ -628,12 +594,19 @@ int  mu2esim::write_register(uint16_t address, int tmo_ms, uint32_t data)
 			cancelCFO_ = true;
 			if (cfoEmulatorThread_.joinable()) cfoEmulatorThread_.join();
 			cancelCFO_ = false;
-			if (registers_[0x91AC] > 1) {
+#if THREADED_CFO_EMULATOR
+			if (registers_[0x91AC] > 10) {
+				cfoEmulatorAhead_ = false;
 				cfoEmulatorThread_ = std::thread(&mu2esim::CFOEmulator_, this);
-			} else
-			{
-				CFOEmulator_();
+				while (!cfoEmulatorAhead_) { usleep(500); }
 			}
+			else
+			{
+#endif
+				CFOEmulator_();
+#if THREADED_CFO_EMULATOR
+			}
+#endif
 		}
 	}
 	return 0;
@@ -682,7 +655,7 @@ void mu2esim::CFOEmulator_()
 				{
 					TRACE(21, "mu2esim::CFOEmulator_ writing DTC_DataRequestPacket to ring=%u, roc=%u, for timestamp=%llu", ring, roc, (unsigned long long)(start + sentCount).GetTimestamp(true));
 					DTCLib::DTC_DataRequestPacket req(ring, (DTCLib::DTC_ROC_ID)roc, start + sentCount, true,
-													  (uint16_t)debugCount);
+						(uint16_t)debugCount);
 					DTCLib::DTC_DataPacket thisPacket = req.ConvertToDataPacket();
 					write_data(0, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
 				}
@@ -690,6 +663,7 @@ void mu2esim::CFOEmulator_()
 		}
 		usleep(ticksToWait);
 		sentCount++;
+		if (sentCount > 10) { cfoEmulatorAhead_ = true; }
 	}
 	std::bitset<32> ctrlReg(registers_[0x9100]);
 	ctrlReg[30] = 0;
@@ -701,15 +675,15 @@ unsigned mu2esim::delta_(int chn, int dir)
 	unsigned hw = hwIdx_[chn];
 	unsigned sw = swIdx_[chn];
 	TRACE(21, "mu2esim::delta_ chn=%i dir=%i hw=%u sw=%u num_buffs=%u"
-		  , chn, dir, hw, sw, SIM_BUFFCOUNT);
+		, chn, dir, hw, sw, SIM_BUFFCOUNT);
 	if (dir == C2S)
 		return ((hw >= sw)
-				? hw - sw
-				: SIM_BUFFCOUNT + hw - sw);
+			? hw - sw
+			: SIM_BUFFCOUNT + hw - sw);
 	else
 		return ((sw >= hw)
-				? SIM_BUFFCOUNT - (sw - hw)
-				: hw - sw);
+			? SIM_BUFFCOUNT - (sw - hw)
+			: hw - sw);
 }
 
 void mu2esim::clearBuffer_(int chn, bool increment)
@@ -721,4 +695,61 @@ void mu2esim::clearBuffer_(int chn, bool increment)
 		hwIdx_[chn] = (hwIdx_[chn] + 1) % SIM_BUFFCOUNT;
 	}
 	memset(dmaData_[chn][hwIdx_[chn]], 0, sizeof(mu2e_databuff_t));
+}
+
+uint16_t mu2esim::GetDRCount(DTCLib::DTC_Ring_ID ring, DTCLib::DTC_ROC_ID roc, uint64_t timestamp)
+{
+	std::lock_guard<std::mutex> lock(drMutex_);
+	if (!dataRequestSeen_[ring][roc]) { return 0xff; }
+	auto it = dataRequestReceived_.find(timestamp);
+	if (it == dataRequestReceived_.end() || !(*it).first) return 0xff;
+	return (*it).second[ring][roc].second;
+}
+
+void mu2esim::SetDRCount(DTCLib::DTC_Ring_ID ring, DTCLib::DTC_ROC_ID roc, uint64_t timestamp, uint16_t count)
+{
+	std::lock_guard<std::mutex> lock(drMutex_);
+	dataRequestSeen_[ring][roc] = true;
+	dataRequestReceived_[timestamp][ring][roc] = std::pair<bool, uint16_t>(true, count);
+}
+
+bool mu2esim::GetDRExists(DTCLib::DTC_Ring_ID ring, DTCLib::DTC_ROC_ID roc, uint64_t timestamp)
+{
+	std::lock_guard<std::mutex> lock(drMutex_);
+	if (!dataRequestSeen_[ring][roc]) { return false; }
+	auto it = dataRequestReceived_.find(timestamp);
+	if (it == dataRequestReceived_.end()) return false;
+	return (*it).second[ring][roc].first;
+}
+
+void mu2esim::PutRR(DTCLib::DTC_Ring_ID ring, uint64_t timestamp)
+{
+	std::lock_guard<std::mutex> lock(rrMutex_);
+	readoutRequestSeen_[ring] = true;
+	readoutRequestReceived_[timestamp][ring] = true;
+}
+
+bool mu2esim::GetRRExists(DTCLib::DTC_Ring_ID ring, uint64_t timestamp)
+{
+	std::lock_guard<std::mutex> lock(rrMutex_);
+	if (!readoutRequestSeen_[ring]) { return false; }
+	auto it = readoutRequestReceived_.find(timestamp);
+	if (it == readoutRequestReceived_.end()) return false;
+	return (*it).second[ring];
+}
+
+void mu2esim::DeleteTimestamp(uint64_t timestamp)
+{
+	{
+		std::lock_guard<std::mutex> lock(rrMutex_);
+		readoutRequestReceived_.erase(timestamp);
+	}
+	{
+		std::lock_guard<std::mutex> lock(drMutex_);
+		dataRequestReceived_.erase(timestamp);
+	}
+	{
+		std::lock_guard<std::mutex> lock(atMutex_);
+		activeTimestamps_.erase(timestamp);
+	}
 }
