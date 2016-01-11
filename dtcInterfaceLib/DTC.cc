@@ -7,7 +7,6 @@
 # include "trace.h"
 #else
 #endif
-#include <inttypes.h>
 #define TRACE_NAME "MU2EDEV"
 
 DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode) : device_(),
@@ -155,11 +154,11 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
 	TRACE(19, "DTC::GetData: Releasing %i buffers", buffers_used_);
 	device_.read_release(DTC_DMA_Engine_DAQ, buffers_used_);
 	buffers_used_ = 0;
+	DTC_DataHeaderPacket* packet = nullptr;
 
 	try
 	{
 		// Read the header packet
-		DTC_DataHeaderPacket* packet = nullptr;
 		int tries = 0;
 		while (packet == nullptr && tries < 3)
 		{
@@ -179,6 +178,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
 		{
 			TRACE(0, "DTC::GetData: Error: Lead packet has wrong timestamp! 0x%llX(expected) != 0x%llX"
 				  , (unsigned long long)when.GetTimestamp(true), (unsigned long long)packet->GetTimestamp().GetTimestamp(true));
+			delete packet;
 			return output;
 		}
 		else
@@ -186,6 +186,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
 			when = packet->GetTimestamp();
 		}
 		delete packet;
+		packet = nullptr;
 
 		TRACE(19, "DTC::GetData: Adding pointer %p to the list", (void*)lastReadPtr_);
 		output.push_back(lastReadPtr_);
@@ -195,28 +196,29 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
 		{
 			try
 			{
-				DTC_DataHeaderPacket* thispacket = ReadNextDAQPacket();
-				if (thispacket == nullptr)  // End of Data
+				packet = ReadNextDAQPacket();
+				if (packet == nullptr)  // End of Data
 				{
 					done = true;
 					nextReadPtr_ = nullptr;
-					break;
 				}
-				if (thispacket->GetTimestamp() != when)
+				else if (packet->GetTimestamp() != when)
 				{
 					done = true;
 					nextReadPtr_ = lastReadPtr_;
-					break;
 				}
-				delete thispacket;
+				delete packet;
+				packet = nullptr;
 
 				TRACE(19, "DTC::GetData: Adding pointer %p to the list", (void*)lastReadPtr_);
-				output.push_back(lastReadPtr_);
+				if(!done) output.push_back(lastReadPtr_);
 			}
 			catch (DTC_TimeoutOccurredException ex)
 			{
 				TRACE(19, "DTC::GetData: Timeout occurred!");
 				done = true;
+				delete packet;
+				packet = nullptr;
 			}
 		}
 	}
@@ -242,6 +244,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
 	}
 
 	TRACE(19, "DTC::GetData RETURN");
+	delete packet;
 	return output;
 }   // GetData
 

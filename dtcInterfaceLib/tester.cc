@@ -1,3 +1,21 @@
+#if defined _WIN32
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+#endif
+
+#ifdef _WIN32
+# include <thread>
+# define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
+#  include <stdio.h>
+#  define TRACE(...)
+# define TRACE_CNTL(...)
+#else
+# include "trace.h"
+# include <unistd.h>		// usleep
+#endif
+#define TRACE_NAME "MU2EDEV"
+
 #include <cstdio>		// printf
 #include <cstdlib>		// strtoul
 #include <iostream>
@@ -6,19 +24,6 @@
 #include "DTCSoftwareCFO.h"
 #include "fragmentTester.h"
 
-#ifdef _WIN32
-# include <thread>
-# define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
-# ifndef TRACE
-#  include <stdio.h>
-#  define TRACE(...)
-# endif
-# define TRACE_CNTL(...)
-#else
-# include "trace.h"
-# include <unistd.h>		// usleep
-#endif
-#define TRACE_NAME "MU2EDEV"
 
 using namespace DTCLib;
 int main(int argc, char* argv[])
@@ -86,7 +91,7 @@ int main(int argc, char* argv[])
 			}
 
 			auto dataSize = packetCount * sizeof(packet_t);
-			int64_t diff = dataSize + newfrag.dataSize() - newfrag.fragSize();
+			size_t diff = dataSize + newfrag.dataSize() - newfrag.fragSize();
 			if (diff > 0) {
 				TRACE(1, "mu2eReceiver::getNext: %lu + %lu > %lu, allocating space for 1%% BLOCK_COUNT_MAX more packets", dataSize, newfrag.dataSize(), newfrag.fragSize());
 				newfrag.addSpace(diff + (BLOCK_COUNT_MAX / 100) * sizeof(packet_t));
@@ -116,6 +121,10 @@ int main(int argc, char* argv[])
 		std::cout << "Event: " << loopCounter << ": " << newfrag.hdr_block_count() << " timestamps. (" << count << " total)" << std::endl;
 	}
 
+
+#if defined _WIN32
+	_CrtDumpMemoryLeaks();
+#endif
 
 	return 0;
 }
