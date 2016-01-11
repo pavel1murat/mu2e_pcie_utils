@@ -34,11 +34,22 @@
 #define THREADED_CFO_EMULATOR 0
 
 mu2esim::mu2esim()
-	: hwIdx_()
+        : registers_()
+        , hwIdx_()
 	, swIdx_()
+        , buffSize_()
 	, dmaData_()
 	, loopbackData_()
 	, mode_(DTCLib::DTC_SimMode_Disabled)
+        , simIndex_()
+        , dcsRequestReceived_()
+        , readoutRequestReceived_()
+        , dataRequestReceived_()
+        , activeTimestamps_()
+        , readoutRequestSeen_()
+        , dataRequestSeen_()
+        , dcsRequest_()
+        , cfoEmulatorAhead_(false)
 	, cancelCFO_(true)
 {
 #ifndef _WIN32
@@ -164,7 +175,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 			do
 			{
 				std::lock_guard<std::mutex> lock(atMutex_);
-				activeTimestamps = activeTimestamps_;
+				if(!activeTimestamps_.empty()) activeTimestamps = std::set<uint64_t>(activeTimestamps_);
 			} while (activeTimestamps.empty() && (registers_[0x9100] & 0x40000000) == 0x40000000);
 
 			bool exitLoop = false;

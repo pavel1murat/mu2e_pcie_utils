@@ -23,13 +23,19 @@
 using namespace DTCLib;
 int main(int argc, char* argv[])
 {
+  int loops = 1000;
+  if(argc > 1) 
+  { 
+    int tmp = atoi( argv[1] );
+    if(tmp > 0) loops = tmp;
+      }
 	DTC *thisDTC = new DTC(DTC_SimMode_Tracker);
 	DTCSoftwareCFO *theCFO = new DTCSoftwareCFO(thisDTC, true);
 	long loopCounter = 0;
 	long count = 0;
 	typedef uint8_t packet_t[16];
 
-	while (loopCounter < 1000)
+	while (loopCounter < loops)
 	{
 		TRACE(1, "mu2eReceiver::getNext: Starting CFO thread");
 		uint64_t z = 0;
