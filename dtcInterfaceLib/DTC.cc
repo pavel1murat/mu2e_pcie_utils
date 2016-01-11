@@ -67,6 +67,16 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr), deviceTime_(
 	SetSimMode(simMode_);
 }
 
+DTCLib::DTC::~DTC() 
+{
+  device_.close();
+  daqbuffer_ = nullptr;
+  dcsbuffer_ = nullptr;
+  lastReadPtr_ = nullptr;
+  nextReadPtr_ = nullptr;
+  dcsReadPtr_ = nullptr;
+}
+
 DTCLib::DTC_SimMode DTCLib::DTC::SetSimMode(DTC_SimMode mode)
 {
 	simMode_ = mode;

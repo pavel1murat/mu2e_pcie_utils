@@ -12,7 +12,7 @@ class DTC
 {
 public:
 	DTC(DTC_SimMode mode = DTC_SimMode_Disabled);
-	virtual ~DTC() = default;
+	virtual ~DTC();
 
 	DTC_SimMode ReadSimMode() { return simMode_; }
 	DTC_SimMode SetSimMode(DTC_SimMode mode);

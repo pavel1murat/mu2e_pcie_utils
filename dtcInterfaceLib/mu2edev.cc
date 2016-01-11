@@ -460,6 +460,14 @@ int mu2edev::release_all(int chn)
 	}
 }
 
+void mu2edev::close()
+{
+  if(simulator_ != nullptr) {
+    delete simulator_;
+    simulator_ = nullptr;
+  }
+}
+
 #if 0
 unsigned mu2edev::delta_(int chn, int dir)
 {

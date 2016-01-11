@@ -121,10 +121,8 @@ int main(int argc, char* argv[])
 		std::cout << "Event: " << loopCounter << ": " << newfrag.hdr_block_count() << " timestamps. (" << count << " total)" << std::endl;
 	}
 
-
-#if defined _WIN32
-	_CrtDumpMemoryLeaks();
-#endif
+        delete theCFO;
+        delete thisDTC;
 
 	return 0;
 }
