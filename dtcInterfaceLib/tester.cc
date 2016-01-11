@@ -26,15 +26,33 @@
 
 
 using namespace DTCLib;
+void usage() {
+  std::cout << "Usage: tester [loops = 1000] [simMode = 1]" << std::endl;
+  exit(1);
+}
+
 int main(int argc, char* argv[])
 {
   int loops = 1000;
+  int modeint = 1;
+  bool badarg = false;
   if(argc > 1) 
-  { 
-    int tmp = atoi( argv[1] );
-    if(tmp > 0) loops = tmp;
-      }
-	DTC *thisDTC = new DTC(DTC_SimMode_Tracker);
+    { 
+      int tmp = atoi( argv[1] );
+      if(tmp > 0) loops = tmp;
+      else badarg = true;
+    }
+  if(argc > 2) {
+    int tmp = atoi( argv[2] );
+    if(tmp > 0) modeint = tmp;
+    else badarg = true;
+  }
+  if(argc > 3) badarg = true;
+  if(badarg) usage(); // Exits.
+
+  DTC_SimMode mode = DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::to_string(modeint));
+  DTC *thisDTC = new DTC(mode);
+  TRACE(1, "thisDTC->ReadSimMode: %i", thisDTC->ReadSimMode());
 	DTCSoftwareCFO *theCFO = new DTCSoftwareCFO(thisDTC, true);
 	long loopCounter = 0;
 	long count = 0;
@@ -91,10 +109,11 @@ int main(int argc, char* argv[])
 			}
 
 			auto dataSize = packetCount * sizeof(packet_t);
-			size_t diff = dataSize + newfrag.dataSize() - newfrag.fragSize();
+			int64_t diff = dataSize + newfrag.dataSize() - newfrag.fragSize();
 			if (diff > 0) {
-				TRACE(1, "mu2eReceiver::getNext: %lu + %lu > %lu, allocating space for 1%% BLOCK_COUNT_MAX more packets", dataSize, newfrag.dataSize(), newfrag.fragSize());
-				newfrag.addSpace(diff + (BLOCK_COUNT_MAX / 100) * sizeof(packet_t));
+			  size_t newSize = newfrag.fragSize() * 1 - ((newfrag.hdr_block_count() - 1) / BLOCK_COUNT_MAX);
+				TRACE(1, "mu2eReceiver::getNext: %lu + %lu > %lu, allocating space for %lu more bytes", dataSize, newfrag.dataSize(), newfrag.fragSize(), newSize + diff);
+				newfrag.addSpace(diff + newSize);
 			}
 
 			TRACE(3, "Copying DTC packets into Mu2eFragment");
