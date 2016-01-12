@@ -16,6 +16,8 @@
 #endif
 #define TRACE_NAME "MU2EDEV"
 #ifdef NOTRACE
+# undef TRACE
+# undef TRACE_CNTL
 # define TRACE(...)
 # define TRACE_CNTL(...)
 #endif
