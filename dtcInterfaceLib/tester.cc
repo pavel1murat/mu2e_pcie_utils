@@ -1,3 +1,21 @@
+#if defined _WIN32
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+#endif
+
+#ifdef _WIN32
+# include <thread>
+# define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
+#  include <stdio.h>
+#  define TRACE(...)
+# define TRACE_CNTL(...)
+#else
+# include "trace.h"
+# include <unistd.h>		// usleep
+#endif
+#define TRACE_NAME "MU2EDEV"
+
 #include <cstdio>		// printf
 #include <cstdlib>		// strtoul
 #include <iostream>
@@ -6,30 +24,41 @@
 #include "DTCSoftwareCFO.h"
 #include "fragmentTester.h"
 
-#ifdef _WIN32
-# include <thread>
-# define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
-# ifndef TRACE
-#  include <stdio.h>
-#  define TRACE(...)
-# endif
-# define TRACE_CNTL(...)
-#else
-# include "trace.h"
-# include <unistd.h>		// usleep
-#endif
-#define TRACE_NAME "MU2EDEV"
 
 using namespace DTCLib;
+void usage() {
+  std::cout << "Usage: tester [loops = 1000] [simMode = 1]" << std::endl;
+  exit(1);
+}
+
 int main(int argc, char* argv[])
 {
-	DTC *thisDTC = new DTC(DTC_SimMode_Tracker);
+  int loops = 1000;
+  int modeint = 1;
+  bool badarg = false;
+  if(argc > 1) 
+    { 
+      int tmp = atoi( argv[1] );
+      if(tmp > 0) loops = tmp;
+      else badarg = true;
+    }
+  if(argc > 2) {
+    int tmp = atoi( argv[2] );
+    if(tmp > 0) modeint = tmp;
+    else badarg = true;
+  }
+  if(argc > 3) badarg = true;
+  if(badarg) usage(); // Exits.
+
+  DTC_SimMode mode = DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::to_string(modeint));
+  DTC *thisDTC = new DTC(mode);
+  TRACE(1, "thisDTC->ReadSimMode: %i", thisDTC->ReadSimMode());
 	DTCSoftwareCFO *theCFO = new DTCSoftwareCFO(thisDTC, true);
 	long loopCounter = 0;
 	long count = 0;
 	typedef uint8_t packet_t[16];
 
-	while (loopCounter < 1000)
+	while (loopCounter < loops)
 	{
 		TRACE(1, "mu2eReceiver::getNext: Starting CFO thread");
 		uint64_t z = 0;
@@ -43,17 +72,16 @@ int main(int argc, char* argv[])
 		TRACE(1, "mu2eReceiver::getNext: Starting DTCFragment Loop");
 		while (newfrag.hdr_block_count() < BLOCK_COUNT_MAX)
 		{
-
-			TRACE(1, "Getting DTC Data");
+			//TRACE(1, "Getting DTC Data");
 			std::vector<void*> data;
 			int retryCount = 5;
 			while (data.size() == 0 && retryCount >= 0)
 			{
 				try
 				{
-					TRACE(4, "Calling theInterface->GetData(zero)");
+					//TRACE(4, "Calling theInterface->GetData(zero)");
 					data = thisDTC->GetData(zero);
-					TRACE(4, "Done calling theInterface->GetData(zero)");
+					//TRACE(4, "Done calling theInterface->GetData(zero)");
 				}
 				catch (std::exception ex)
 				{
@@ -82,8 +110,11 @@ int main(int argc, char* argv[])
 			auto dataSize = packetCount * sizeof(packet_t);
 			int64_t diff = dataSize + newfrag.dataSize() - newfrag.fragSize();
 			if (diff > 0) {
-				TRACE(1, "mu2eReceiver::getNext: %lu + %lu > %lu, allocating space for 1%% BLOCK_COUNT_MAX more packets", dataSize, newfrag.dataSize(), newfrag.fragSize());
-				newfrag.addSpace(diff + (BLOCK_COUNT_MAX / 100) * sizeof(packet_t));
+		double currSize = newfrag.fragSize() / (double)sizeof(packet_t);
+		double remaining = 1 - (newfrag.hdr_block_count() / (double)BLOCK_COUNT_MAX);
+		size_t newSize = static_cast<size_t>(currSize * remaining) * sizeof(packet_t);
+				TRACE(1, "mu2eReceiver::getNext: %lu + %lu > %lu, allocating space for %lu more bytes", dataSize, newfrag.dataSize(), newfrag.fragSize(), newSize + diff);
+				newfrag.addSpace(diff + newSize);
 			}
 
 			TRACE(3, "Copying DTC packets into Mu2eFragment");
@@ -110,6 +141,8 @@ int main(int argc, char* argv[])
 		std::cout << "Event: " << loopCounter << ": " << newfrag.hdr_block_count() << " timestamps. (" << count << " total)" << std::endl;
 	}
 
+        delete theCFO;
+        delete thisDTC;
 
 	return 0;
 }

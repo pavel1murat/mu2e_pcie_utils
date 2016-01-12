@@ -100,7 +100,7 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode)
 				{
 					uint16_t addr = DTC_Register_Engine_Control(chn, dir);
 					TRACE(17, "mu2edev::init write Engine_Control reg 0x%x", addr);
-					write_register(DTC_Register_Engine_Control(chn, dir), 0, 0x100);//bit 8 enable=1
+					write_register(addr, 0, 0x100);//bit 8 enable=1
 				}
 			}
 #endif
@@ -458,6 +458,14 @@ int mu2edev::release_all(int chn)
 		if (has_recv_data) read_release(chn, has_recv_data);
 		return retsts;
 	}
+}
+
+void mu2edev::close()
+{
+  if(simulator_ != nullptr) {
+    delete simulator_;
+    simulator_ = nullptr;
+  }
 }
 
 #if 0
