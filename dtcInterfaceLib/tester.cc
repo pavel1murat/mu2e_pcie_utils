@@ -15,6 +15,10 @@
 # include <unistd.h>		// usleep
 #endif
 #define TRACE_NAME "MU2EDEV"
+#ifdef NOTRACE
+# define TRACE(...)
+# define TRACE_CNTL(...)
+#endif
 
 #include <cstdio>		// printf
 #include <cstdlib>		// strtoul
@@ -34,7 +38,7 @@ void usage() {
 int main(int argc, char* argv[])
 {
   int loops = 1000;
-  int modeint = 1;
+  int modeint = 2;
   bool badarg = false;
   if(argc > 1) 
     { 
@@ -72,17 +76,16 @@ int main(int argc, char* argv[])
 		TRACE(1, "mu2eReceiver::getNext: Starting DTCFragment Loop");
 		while (newfrag.hdr_block_count() < BLOCK_COUNT_MAX)
 		{
-
-			TRACE(1, "Getting DTC Data");
+			//TRACE(1, "Getting DTC Data");
 			std::vector<void*> data;
 			int retryCount = 5;
 			while (data.size() == 0 && retryCount >= 0)
 			{
 				try
 				{
-					TRACE(4, "Calling theInterface->GetData(zero)");
+					//TRACE(4, "Calling theInterface->GetData(zero)");
 					data = thisDTC->GetData(zero);
-					TRACE(4, "Done calling theInterface->GetData(zero)");
+					//TRACE(4, "Done calling theInterface->GetData(zero)");
 				}
 				catch (std::exception ex)
 				{
@@ -111,7 +114,9 @@ int main(int argc, char* argv[])
 			auto dataSize = packetCount * sizeof(packet_t);
 			int64_t diff = dataSize + newfrag.dataSize() - newfrag.fragSize();
 			if (diff > 0) {
-			  size_t newSize = newfrag.fragSize() * 1 - ((newfrag.hdr_block_count() - 1) / BLOCK_COUNT_MAX);
+		double currSize = newfrag.fragSize() / (double)sizeof(packet_t);
+		double remaining = 1 - (newfrag.hdr_block_count() / (double)BLOCK_COUNT_MAX);
+		size_t newSize = static_cast<size_t>(currSize * remaining) * sizeof(packet_t);
 				TRACE(1, "mu2eReceiver::getNext: %lu + %lu > %lu, allocating space for %lu more bytes", dataSize, newfrag.dataSize(), newfrag.fragSize(), newSize + diff);
 				newfrag.addSpace(diff + newSize);
 			}

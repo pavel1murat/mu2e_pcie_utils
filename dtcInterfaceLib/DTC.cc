@@ -198,7 +198,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
 		delete packet;
 		packet = nullptr;
 
-		TRACE(19, "DTC::GetData: Adding pointer %p to the list", (void*)lastReadPtr_);
+		TRACE(19, "DTC::GetData: Adding pointer %p to the list (first)", (void*)lastReadPtr_);
 		output.push_back(lastReadPtr_);
 
 		bool done = false;
@@ -295,7 +295,10 @@ uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Ring_ID& ring, const DTC_ROC_ID&
 {
 	SendDCSRequestPacket(ring, roc, DTC_DCSOperationType_Read, address);
 	auto reply = ReadNextDCSPacket();
+	if(reply != nullptr) {
 	return reply->GetData();
+	}
+	return 0;
 }
 
 void DTCLib::DTC::WriteROCRegister(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const uint8_t address, const uint16_t data)
@@ -393,7 +396,11 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 		}
 		TRACE(19, "DTC::ReadNextDAQPacket Obtaining new DAQ Buffer");
 		void* oldBufferPtr = &(daqbuffer_[0]);
-		ReadBuffer(DTC_DMA_Engine_DAQ, tmo_ms); // does return val of type DTCLib::DTC_DataPacket
+		int sts = ReadBuffer(DTC_DMA_Engine_DAQ, tmo_ms); // does return code
+		if(sts <= 0) {
+		  TRACE(19, "DTC::ReadNextDAQPacket: ReadBuffer returned %i, returning nullptr", sts);
+		  return nullptr;
+		}
 		// MUST BE ABLE TO HANDLE daqbuffer_==nullptr OR retry forever?
 		nextReadPtr_ = &(daqbuffer_[0]);
 		TRACE(19, "DTC::ReadNextDAQPacket nextReadPtr_=%p *nextReadPtr_=0x%08x lastReadPtr_=%p"
@@ -453,9 +460,14 @@ DTCLib::DTC_DCSReplyPacket* DTCLib::DTC::ReadNextDCSPacket()
 	if (dcsReadPtr_ == nullptr || dcsReadPtr_ >= (uint8_t*)dcsbuffer_ + sizeof(mu2e_databuff_t) || (*((uint16_t*)dcsReadPtr_)) == 0)
 	{
 		TRACE(19, "DTC::ReadNextDCSPacket Obtaining new DCS Buffer");
-		ReadBuffer(DTC_DMA_Engine_DCS);
+		int retsts = ReadBuffer(DTC_DMA_Engine_DCS);
+		if(retsts > 0) {
 		dcsReadPtr_ = &(dcsbuffer_[0]);
 		TRACE(19, "DTC::ReadNextDCSPacket dcsReadPtr_=%p dcsBuffer_=%p", (void*)dcsReadPtr_, (void*)dcsbuffer_);
+		} else {
+		  TRACE(19, "DTC::ReadNextDCSPacket ReadBuffer returned %i", retsts);
+		  return nullptr;
+		}
 	}
 
 	//Read the next packet
@@ -1697,7 +1709,7 @@ bool DTCLib::DTC::ReadFPGACoreAccessFIFOEmpty()
 //
 // Private Functions.
 //
-void DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
+int DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
 {
 	mu2e_databuff_t* buffer;
 	int retry = 2;
@@ -1712,15 +1724,16 @@ void DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
 		retry--;
 		if (errorCode == 0) usleep(1000);
 	} while (retry > 0 && errorCode == 0);
-	if (errorCode == 0) // timeout
-		throw DTC_TimeoutOccurredException();
-	else if (errorCode < 0)
-		throw DTC_IOErrorException();
+	// if (errorCode == 0) // timeout
+	// 	throw DTC_TimeoutOccurredException();
+	if (errorCode < 0)
+	 	throw DTC_IOErrorException();
 	TRACE(16, "DTC::ReadDataPacket buffer_=%p errorCode=%d *buffer_=0x%08x"
 		  , (void*)buffer, errorCode, *(unsigned*)buffer);
-	if (channel == DTC_DMA_Engine_DAQ) { daqbuffer_ = buffer; }
-	else if (channel == DTC_DMA_Engine_DCS) { dcsbuffer_ = buffer; }
+	if (errorCode > 0 && channel == DTC_DMA_Engine_DAQ) { daqbuffer_ = buffer; }
+	else if (errorCode > 0 && channel == DTC_DMA_Engine_DCS) { dcsbuffer_ = buffer; }
 	//return DTC_DataPacket(buffer);
+    return errorCode;
 }
 void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPacket& packet)
 {

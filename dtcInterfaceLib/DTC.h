@@ -185,7 +185,7 @@ public:
 	bool ReadFPGACoreAccessFIFOEmpty();
 
 private:
-	void ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms = 0);
+	int ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms = 0);
 	void WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPacket& packet);
 	void WriteDMAPacket(const DTC_DMA_Engine& channel, const DTC_DMAPacket& packet);
 
