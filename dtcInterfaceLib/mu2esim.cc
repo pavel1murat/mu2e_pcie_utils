@@ -31,7 +31,7 @@
 #include <algorithm>
 #include <cmath>
 
-#define THREADED_CFO_EMULATOR 0
+#define THREADED_CFO_EMULATOR 1
 
 mu2esim::mu2esim()
         : registers_()
@@ -86,7 +86,7 @@ mu2esim::~mu2esim()
 	{
 		for (unsigned jj = 0; jj < SIM_BUFFCOUNT; ++jj)
 		{
-			delete[] dmaData_[ii][jj];
+			delete dmaData_[ii][jj];
 		}
 	}
 }

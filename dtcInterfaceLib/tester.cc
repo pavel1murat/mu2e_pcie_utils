@@ -15,12 +15,6 @@
 # include <unistd.h>		// usleep
 #endif
 #define TRACE_NAME "MU2EDEV"
-#ifdef NOTRACE
-# undef TRACE
-# undef TRACE_CNTL
-# define TRACE(...)
-# define TRACE_CNTL(...)
-#endif
 
 #include <cstdio>		// printf
 #include <cstdlib>		// strtoul
@@ -40,7 +34,7 @@ void usage() {
 int main(int argc, char* argv[])
 {
   int loops = 1000;
-  int modeint = 2;
+  int modeint = 1;
   bool badarg = false;
   if(argc > 1) 
     { 
