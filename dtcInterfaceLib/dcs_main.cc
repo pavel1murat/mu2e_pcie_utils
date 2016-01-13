@@ -194,7 +194,7 @@ main(int	argc
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now
 
-		mu2edev device = thisDTC->GetDevice();
+		mu2edev* device = thisDTC->GetDevice();
 		thisDTC->SendDCSRequestPacket(DTC_Ring_0, DTC_ROC_0, DTC_DCSOperationType_Read,address, quiet);
 
 		for (unsigned ii = 0; ii < number; ++ii)
@@ -202,7 +202,7 @@ main(int	argc
 			if (!reallyQuiet) cout << "Buffer Read " << ii << endl;
 			mu2e_databuff_t* buffer;
 			int tmo_ms = 1500;
-			int sts = device.read_data(DTC_DMA_Engine_DCS, (void**)&buffer, tmo_ms);
+			int sts = device->read_data(DTC_DMA_Engine_DCS, (void**)&buffer, tmo_ms);
 
 			TRACE(1, "util - read for DCS - ii=%u sts=%d %p", ii, sts, (void*)buffer);
 			if (sts > 0)
@@ -232,7 +232,7 @@ main(int	argc
 				}
 			}
 			if (!reallyQuiet) cout << endl << endl;
-			device.read_release(DTC_DMA_Engine_DCS, 1);
+			device->read_release(DTC_DMA_Engine_DCS, 1);
 			if (delay > 0) usleep(delay);
 		}
 	}

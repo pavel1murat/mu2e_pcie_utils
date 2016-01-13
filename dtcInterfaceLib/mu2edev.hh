@@ -13,9 +13,14 @@
 #include <cstdint>
 #include "mu2esim.hh"
 
-struct mu2edev
+class mu2edev
 {
+public:
 	mu2edev();
+
+	double GetDeviceTime() const { return deviceTime_ / 1000000000.0; }
+	void ResetDeviceTime() { deviceTime_ = 0; }
+
 	int  init(DTCLib::DTC_SimMode simMode = DTCLib::DTC_SimMode_Disabled);
 	int  read_data(int chn, void **buffer, int tmo_ms); // return bytes read; error if negative
 	int  read_release(int chn, unsigned num);
@@ -24,7 +29,7 @@ struct mu2edev
 	int  write_register(uint16_t address, int tmo_ms, uint32_t data);
 	void meta_dump(int chn, int dir);
 	int  write_data(int chn, void *buffer, size_t bytes);
-        void close();
+	void close();
 	//int  read_pcie_state(m_ioc_pcistate_t *output);
 	//int  read_dma_state(int chn, int dir, m_ioc_engstate_t *output);
 	//int  read_dma_stats(m_ioc_engstats_t *output);
@@ -40,4 +45,5 @@ private:
 	m_ioc_get_info_t mu2e_channel_info_[MU2E_MAX_CHANNELS][2];
 	unsigned         buffers_held_;
 	mu2esim*          simulator_;
+	std::atomic<long long> deviceTime_;
 };

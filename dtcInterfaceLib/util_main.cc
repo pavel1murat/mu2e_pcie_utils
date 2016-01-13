@@ -294,7 +294,7 @@ main(int	argc
 		int rtCount = 0;
 		auto startTime = std::chrono::high_resolution_clock::now();
 		DTC *thisDTC = new DTC(DTC_SimMode_Loopback);
-		mu2edev device = thisDTC->GetDevice();
+		mu2edev* device = thisDTC->GetDevice();
 
 		thisDTC->SetSERDESLoopbackMode(DTC_Ring_0, DTC_SERDESLoopbackMode_NearPCS);
 
@@ -311,7 +311,7 @@ main(int	argc
 				thisPacket.CramIn(packet, 16 * (jj + 1));
 			}
 			auto startDTC = std::chrono::high_resolution_clock::now();
-			device.write_data(0, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
+			device->write_data(0, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
 			auto endDTC = std::chrono::high_resolution_clock::now();
 			totalWriteTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
 				(endDTC - startDTC).count();
@@ -322,8 +322,8 @@ main(int	argc
 				mu2e_databuff_t* buffer;
 				int tmo_ms = 0x150;
 				auto startDTCRead = std::chrono::high_resolution_clock::now();
-				device.read_release(DTC_DMA_Engine_DAQ, 1);
-				int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
+				device->read_release(DTC_DMA_Engine_DAQ, 1);
+				int sts = device->read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
 				auto endDTCRead = std::chrono::high_resolution_clock::now();
 				totalReadTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
 					(endDTCRead - startDTCRead).count();
@@ -396,7 +396,7 @@ main(int	argc
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now
 
-		mu2edev device = thisDTC->GetDevice();
+		mu2edev* device = thisDTC->GetDevice();
 		DTCSoftwareCFO *cfo = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet, false);
 
 		if(genDMABlocks)
@@ -422,7 +422,7 @@ main(int	argc
 				}
 
 				auto startDTC = std::chrono::high_resolution_clock::now();
-				device.write_data(0, buf, sizeof(buf));
+				device->write_data(0, buf, sizeof(buf));
 				auto endDTC = std::chrono::high_resolution_clock::now();
 				totalWriteTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
 					(endDTC - startDTC).count();
@@ -461,7 +461,7 @@ main(int	argc
 			mu2e_databuff_t* buffer;
 			int tmo_ms = 1500;
 			auto startDTC = std::chrono::high_resolution_clock::now();
-			int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
+			int sts = device->read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
 			auto endDTC = std::chrono::high_resolution_clock::now();
 			totalIncTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
 				(endDTC - startDTC).count();
@@ -500,7 +500,7 @@ main(int	argc
 				}
 			}
 			if (!reallyQuiet) cout << endl << endl;
-			device.read_release(DTC_DMA_Engine_DAQ, 1);
+			device->read_release(DTC_DMA_Engine_DAQ, 1);
 			if (delay > 0) usleep(delay);
 		}
 		if (rawOutput) outputStream.close();

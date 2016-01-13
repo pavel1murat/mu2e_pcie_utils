@@ -10,6 +10,8 @@
 #include "linux_driver/mymodule2/mu2e_mmap_ioctl.h"
 
 #include "DTC_Types.h"
+#include "DTC_Packets.h"
+#include "DTC_Registers.h"
 #include "DTC.h"
 using namespace DTCLib;
 %}
@@ -20,5 +22,7 @@ using namespace DTCLib;
 %include "../linux_driver/mymodule2/mu2e_mmap_ioctl.h"
 
 %include "DTC_Types.h"
+%include "DTC_Packets.h"
+%include "DTC_Registers.h"
 %include "DTC.h"
 

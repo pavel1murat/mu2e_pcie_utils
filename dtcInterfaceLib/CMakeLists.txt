@@ -2,6 +2,8 @@ cet_make_library(LIBRARY_NAME DTCInterface SOURCE
             DTC.cc
             DTCLibTest.cc
             DTCSoftwareCFO.cc
+			DTC_Registers.cc
+			DTC_Packets.cc
             DTC_Types.cc
             mu2edev.cc
 	    mu2esim.cc
@@ -27,22 +29,21 @@ install_source()
 
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/bin/web/modules/DTC/server/DTC.node 
-           ${CMAKE_CURRENT_BINARY_DIR}/bin/web/modules/DTC/server/DTCLibTest.node
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMAND V=1 ${CMAKE_CURRENT_SOURCE_DIR}/build.sh ${CMAKE_CURRENT_SOURCE_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/web/ ${CMAKE_CURRENT_BINARY_DIR}/bin/web/
     COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_BINARY_DIR}/DTC.node ${CMAKE_CURRENT_BINARY_DIR}/bin/web/modules/DTC/server/DTC.node
-    COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_BINARY_DIR}/DTCLibTest.node  ${CMAKE_CURRENT_BINARY_DIR}/bin/web/modules/DTC/server/DTCLibTest.node
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/DTC.cc 
             ${CMAKE_CURRENT_SOURCE_DIR}/DTCLibTest.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/DTCSoftwareCFO.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/DTC_Types.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/DTC_Registers.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/DTC_Packets.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/mu2edev.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/mu2esim.cc
 )
 add_custom_target(DTCJSInterface ALL 
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/bin/web/modules/DTC/server/DTC.node 
-            ${CMAKE_CURRENT_BINARY_DIR}/bin/web/modules/DTC/server/DTCLibTest.node
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/bin/web/modules/DTC/server/DTC.node
 )
 add_dependencies(DTCJSInterface DTCInterface)
 

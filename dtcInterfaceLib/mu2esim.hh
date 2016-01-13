@@ -20,11 +20,13 @@
 #include <thread>
 #include <queue>
 #include "DTC_Types.h"
+#include "DTC_Packets.h"
 
 #define SIM_BUFFCOUNT 4U
 
-struct mu2esim
+class mu2esim
 {
+public:
 	mu2esim();
 	~mu2esim();
 	int init(DTCLib::DTC_SimMode mode = DTCLib::DTC_SimMode_Tracker);

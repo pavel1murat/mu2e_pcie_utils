@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
@@ -198,14 +198,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="..\..\ups\product_deps" />
-    <None Include="..\binding.gyp" />
-    <None Include="..\DTC.i" />
-    <None Include="..\DTCLibTest.i" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\DTC.cc" />
     <ClCompile Include="..\DTCSoftwareCFO.cc" />
+    <ClCompile Include="..\DTC_Packets.cc" />
+    <ClCompile Include="..\DTC_Registers.cc" />
     <ClCompile Include="..\DTC_Types.cc" />
     <ClCompile Include="..\mu2edev.cc" />
     <ClCompile Include="..\mu2esim.cc" />
@@ -213,12 +209,11 @@
   <ItemGroup>
     <ClInclude Include="..\DTC.h" />
     <ClInclude Include="..\DTCSoftwareCFO.h" />
+    <ClInclude Include="..\DTC_Packets.h" />
+    <ClInclude Include="..\DTC_Registers.h" />
     <ClInclude Include="..\DTC_Types.h" />
     <ClInclude Include="..\mu2edev.hh" />
     <ClInclude Include="..\mu2esim.hh" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\CMakeLists.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
