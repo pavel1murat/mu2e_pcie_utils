@@ -654,8 +654,8 @@ void mu2esim::CFOEmulator_()
 		{
 			if (numROCS[ring] != DTCLib::DTC_ROC_Unused)
 			{
-				TRACE(21, "mu2esim::CFOEmulator_ writing DTC_ReadoutRequestPacket to ring=%u for timestamp=%llu", ring, (unsigned long long)(start + sentCount).GetTimestamp(true));
-				DTCLib::DTC_ReadoutRequestPacket packet(ring, start + sentCount, numROCS[ring], true);
+				TRACE(21, "mu2esim::CFOEmulator_ writing DTC_HeartbeatPacket to ring=%u for timestamp=%llu", ring, (unsigned long long)(start + sentCount).GetTimestamp(true));
+				DTCLib::DTC_HeartbeatPacket packet(ring, start + sentCount, numROCS[ring], true);
 				DTCLib::DTC_DataPacket thisPacket = packet.ConvertToDataPacket();
 				write_data(0, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
 			}

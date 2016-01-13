@@ -238,11 +238,11 @@ std::string DTCLib::DTC::ROCRegDump(const DTC_Ring_ID& ring, const DTC_ROC_ID& r
 
 void DTCLib::DTC::SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Timestamp& when, bool quiet)
 {
-	DTC_ReadoutRequestPacket req(ring, when, ReadRingROCCount((DTC_Ring_ID)ring));
-	TRACE(19, "DTC::SendReadoutRequestPacket before WriteDMADAQPacket - DTC_ReadoutRequestPacket");
+	DTC_HeartbeatPacket req(ring, when, ReadRingROCCount((DTC_Ring_ID)ring));
+	TRACE(19, "DTC::SendReadoutRequestPacket before WriteDMADAQPacket - DTC_HeartbeatPacket");
 	if (!quiet) std::cout << req.toJSON() << std::endl;
 	WriteDMADAQPacket(req);
-	TRACE(19, "DTC::SendReadoutRequestPacket after  WriteDMADAQPacket - DTC_ReadoutRequestPacket");
+	TRACE(19, "DTC::SendReadoutRequestPacket after  WriteDMADAQPacket - DTC_HeartbeatPacket");
 }
 
 void DTCLib::DTC::SendDCSRequestPacket(const DTC_Ring_ID& ring, const DTC_ROC_ID& roc, const DTC_DCSOperationType type, const uint8_t address, const uint16_t data, bool quiet)

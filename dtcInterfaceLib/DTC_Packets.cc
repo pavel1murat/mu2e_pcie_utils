@@ -110,7 +110,7 @@ bool DTCLib::DTC_DataPacket::Equals(const DTC_DataPacket& other)
 }
 
 DTCLib::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t byteCount, bool valid)
-	: valid_(valid), byteCount_(byteCount < 64 ? 64 : byteCount), ringID_(ring), packetType_(type), rocID_(roc)
+	: byteCount_(byteCount < 64 ? 64 : byteCount), valid_(valid), ringID_(ring), packetType_(type), rocID_(roc)
 {
 }
 
@@ -196,9 +196,9 @@ DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID 
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_DCSOperationType type, uint8_t address, uint16_t data)
 	: DTC_DMAPacket(DTC_PacketType_DCSRequest, ring, roc)
-	  , type_(type)
-	  , address_(address & 0x1F)
-	  , data_(data)
+	, type_(type)
+	, address_(address & 0x1F)
+	, data_(data)
 {
 }
 
@@ -248,8 +248,8 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSRequestPacket::ConvertToDataPacket() const
 	return output;
 }
 
-DTCLib::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC, bool debug)
-	: DTC_DMAPacket(DTC_PacketType_ReadoutRequest, ring, maxROC), timestamp_(), debug_(debug), request_()
+DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC, bool debug)
+	: DTC_DMAPacket(DTC_PacketType_Heartbeat, ring, maxROC), timestamp_(), debug_(debug), request_()
 {
 	request_[0] = 0;
 	request_[1] = 0;
@@ -257,8 +257,8 @@ DTCLib::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC
 	request_[3] = 0;
 }
 
-DTCLib::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC, bool debug, uint8_t* request)
-	: DTC_DMAPacket(DTC_PacketType_ReadoutRequest, ring, maxROC), timestamp_(timestamp), debug_(debug), request_()
+DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC, bool debug, uint8_t* request)
+	: DTC_DMAPacket(DTC_PacketType_Heartbeat, ring, maxROC), timestamp_(timestamp), debug_(debug), request_()
 {
 	if (request != nullptr)
 	{
@@ -269,9 +269,9 @@ DTCLib::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC
 	}
 }
 
-DTCLib::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
+DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
 {
-	if (packetType_ != DTC_PacketType_ReadoutRequest)
+	if (packetType_ != DTC_PacketType_Heartbeat)
 	{
 		throw DTC_WrongPacketTypeException();
 	}
@@ -284,7 +284,7 @@ DTCLib::DTC_ReadoutRequestPacket::DTC_ReadoutRequestPacket(DTC_DataPacket in) : 
 	debug_ = (arr[12] & 0x1) == 0x1;
 }
 
-std::string DTCLib::DTC_ReadoutRequestPacket::toJSON()
+std::string DTCLib::DTC_HeartbeatPacket::toJSON()
 {
 	std::stringstream ss;
 	ss << "\"ReadoutRequestPacket\": {";
@@ -299,7 +299,7 @@ std::string DTCLib::DTC_ReadoutRequestPacket::toJSON()
 	return ss.str();
 }
 
-std::string DTCLib::DTC_ReadoutRequestPacket::toPacketFormat()
+std::string DTCLib::DTC_HeartbeatPacket::toPacketFormat()
 {
 	std::stringstream ss;
 	ss << headerPacketFormat() << std::setfill('0') << std::hex;
@@ -310,7 +310,7 @@ std::string DTCLib::DTC_ReadoutRequestPacket::toPacketFormat()
 	return ss.str();
 }
 
-DTCLib::DTC_DataPacket DTCLib::DTC_ReadoutRequestPacket::ConvertToDataPacket() const
+DTCLib::DTC_DataPacket DTCLib::DTC_HeartbeatPacket::ConvertToDataPacket() const
 {
 	DTC_DataPacket output = DTC_DMAPacket::ConvertToDataPacket();
 	timestamp_.GetTimestamp(output.GetData(), 6);
@@ -394,11 +394,11 @@ DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring)
 
 DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t counter, DTC_DCSOperationType type, uint8_t address, uint16_t data, bool fifoEmpty)
 	: DTC_DMAPacket(DTC_PacketType_DCSReply, ring, DTC_ROC_Unused)
-	  , requestCounter_(counter)
-	  , type_(type)
-	  , dcsReceiveFIFOEmpty_(fifoEmpty)
-	  , address_(address & 0x1F)
-	  , data_(data)
+	, requestCounter_(counter)
+	, type_(type)
+	, dcsReceiveFIFOEmpty_(fifoEmpty)
+	, address_(address & 0x1F)
+	, data_(data)
 {
 }
 

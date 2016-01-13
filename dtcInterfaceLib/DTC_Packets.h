@@ -22,7 +22,7 @@ namespace DTCLib
 	enum DTC_PacketType : uint8_t
 	{
 		DTC_PacketType_DCSRequest = 0,
-		DTC_PacketType_ReadoutRequest = 1,
+		DTC_PacketType_Heartbeat = 1,
 		DTC_PacketType_DataRequest = 2,
 		DTC_PacketType_DCSReply = 4,
 		DTC_PacketType_DataHeader = 5,
@@ -165,14 +165,14 @@ namespace DTCLib
 	class DTC_DMAPacket
 	{
 	protected:
-		bool valid_;
 		uint16_t byteCount_;
+		bool valid_;
 		DTC_Ring_ID ringID_;
 		DTC_PacketType packetType_;
 		DTC_ROC_ID rocID_;
 
 	public:
-		DTC_DMAPacket() : valid_(false), byteCount_(0), ringID_(DTC_Ring_Unused), packetType_(DTC_PacketType_Invalid), rocID_(DTC_ROC_Unused)
+		DTC_DMAPacket() : byteCount_(0), valid_(false), ringID_(DTC_Ring_Unused), packetType_(DTC_PacketType_Invalid), rocID_(DTC_ROC_Unused)
 		{
 		}
 
@@ -189,7 +189,7 @@ namespace DTCLib
 
 		virtual DTC_DataPacket ConvertToDataPacket() const;
 
-		DTC_PacketType GetPacketType()
+		DTC_PacketType GetPacketType() const
 		{
 			return packetType_;
 		}
@@ -197,12 +197,12 @@ namespace DTCLib
 		std::string headerJSON();
 		std::string headerPacketFormat();
 
-		uint16_t GetByteCount()
+		uint16_t GetByteCount() const
 		{
 			return byteCount_;
 		}
 
-		DTC_Ring_ID GetRingID()
+		DTC_Ring_ID GetRingID() const
 		{
 			return ringID_;
 		}
@@ -271,20 +271,20 @@ namespace DTCLib
 		std::string toPacketFormat();
 	};
 
-	class DTC_ReadoutRequestPacket : public DTC_DMAPacket
+	class DTC_HeartbeatPacket : public DTC_DMAPacket
 	{
 	private:
 		DTC_Timestamp timestamp_;
 		bool debug_;
 		uint8_t request_[4];
 	public:
-		DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC = DTC_ROC_5, bool debug = true);
-		DTC_ReadoutRequestPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC = DTC_ROC_5, bool debug = true, uint8_t* request = nullptr);
-		DTC_ReadoutRequestPacket(const DTC_ReadoutRequestPacket& right) = default;
-		DTC_ReadoutRequestPacket(DTC_ReadoutRequestPacket&& right) = default;
-		DTC_ReadoutRequestPacket(DTC_DataPacket in);
+		DTC_HeartbeatPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC = DTC_ROC_5, bool debug = true);
+		DTC_HeartbeatPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC = DTC_ROC_5, bool debug = true, uint8_t* request = nullptr);
+		DTC_HeartbeatPacket(const DTC_HeartbeatPacket& right) = default;
+		DTC_HeartbeatPacket(DTC_HeartbeatPacket&& right) = default;
+		DTC_HeartbeatPacket(DTC_DataPacket in);
 
-		virtual ~DTC_ReadoutRequestPacket() = default;
+		virtual ~DTC_HeartbeatPacket() = default;
 
 		bool GetDebug()
 		{

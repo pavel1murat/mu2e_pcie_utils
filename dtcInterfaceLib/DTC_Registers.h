@@ -110,19 +110,6 @@ namespace DTCLib
 		DTC_Register_Invalid,
 	};
 
-	static const std::vector<DTC_Register> DTC_Performance_Registers = {
-		DTC_Register_PerfMonTXByteCount ,
-		DTC_Register_PerfMonRXByteCount,
-		DTC_Register_PerfMonTXPayloadCount,
-		DTC_Register_PerfMonRXPayloadCount ,
-		DTC_Register_PerfMonInitCDC ,
-		DTC_Register_PerfMonInitCHC ,
-		DTC_Register_PerfMonInitNPDC ,
-		DTC_Register_PerfMonInitNPHC ,
-		DTC_Register_PerfMonInitPDC ,
-		DTC_Register_PerfMonInitPHC
-	};
-
 	static const std::vector<DTC_Register> DTC_Readable_Registers = {
 		DTC_Register_DesignVersion ,
 		DTC_Register_DesignDate ,
@@ -249,6 +236,25 @@ namespace DTCLib
 		std::string ReadDesignDate();
 		std::string ReadDesignVersionNumber();
 
+		// Collect PCIE Performance Metrics
+		DTC_PerfMonCounters ReadPCIEPerformanceMonitor()
+		{
+			DTC_PerfMonCounters output;
+			output.DesignStatus = ReadRegister(DTC_Register_DesignStatus);
+			output.TXPCIEByteCount = ReadRegister(DTC_Register_PerfMonTXByteCount);
+			output.RXPCIEByteCount = (DTC_Register_PerfMonRXByteCount);
+			output.TXPCIEPayloadCount = ReadRegister(DTC_Register_PerfMonTXPayloadCount);
+			output.RXPCIEPayloadCount = ReadRegister(DTC_Register_PerfMonRXPayloadCount);
+			output.InitialCompletionDataCredits = ReadRegister(DTC_Register_PerfMonInitCDC);
+			output.InitialCompletionHeaderCredits = ReadRegister(DTC_Register_PerfMonInitCHC);
+			output.InitialNPDCredits = ReadRegister(DTC_Register_PerfMonInitNPDC);
+			output.InitialNPHCredits = ReadRegister(DTC_Register_PerfMonInitNPHC);
+			output.InitialPDCredits = ReadRegister(DTC_Register_PerfMonInitPDC);
+			output.InitialPHCredits = ReadRegister(DTC_Register_PerfMonInitPHC);
+
+			return output;
+		}
+
 		// DTC Control Register
 		void ResetDTC();
 		bool ReadResetDTC();
@@ -345,7 +351,7 @@ namespace DTCLib
 		// ROC Timeout Error Register
 		bool ReadROCTimeoutError(const DTC_Ring_ID& ring);
 		bool ClearROCTimeoutError(const DTC_Ring_ID& ring);
-		
+
 		// Ring Packet Length Register
 		int SetPacketSize(uint16_t packetSize);
 		uint16_t ReadPacketSize();
