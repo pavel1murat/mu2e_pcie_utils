@@ -50,7 +50,6 @@ include(CetTest)
 add_subdirectory(linux_driver)
 add_subdirectory(mcs)
 add_subdirectory(dtcInterfaceLib)
-add_subdirectory(cfoInterfaceLib)
 
 # ups - table and config files
 add_subdirectory(ups)
