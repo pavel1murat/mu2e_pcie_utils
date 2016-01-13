@@ -23,7 +23,7 @@
 # endif
 # pragma warning(disable: 4351 6385 6386)
 #endif
-#include "mu2esim.hh"
+#include "mu2esim.h"
 #include <ctime>
 #include <vector>
 #include <forward_list>

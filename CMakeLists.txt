@@ -21,9 +21,10 @@ ENDIF()
 set(CMAKE_MODULE_PATH 
         $ENV{ART_DIR}/Modules
         $ENV{CETBUILDTOOLS_DIR}/Modules
+		${CMAKE_CURRENT_SOURCE_DIR}/Modules
         ${CMAKE_MODULE_PATH})
 
-
+include(NodeJSAddon)
 include(CetCMakeEnv)
 cet_cmake_env()
 

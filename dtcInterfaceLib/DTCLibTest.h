@@ -36,7 +36,7 @@ private:
 	void doDCSTest();
 	void doDAQTest();
 
-	bool DataPacketIntegrityCheck(DTC_DataPacket*);
+	static bool DataPacketIntegrityCheck(DTC_DataPacket*);
 
 	//Test Status
 	std::atomic<bool> running_;

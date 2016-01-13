@@ -266,9 +266,9 @@ namespace DTCLib
 			type_ = type;
 		}
 
-		DTC_DataPacket ConvertToDataPacket() const;
-		std::string toJSON();
-		std::string toPacketFormat();
+		DTC_DataPacket ConvertToDataPacket() const override;
+		std::string toJSON() override;
+		std::string toPacketFormat() override;
 	};
 
 	class DTC_HeartbeatPacket : public DTC_DMAPacket

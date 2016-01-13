@@ -11,7 +11,7 @@
 #include "../linux_driver/mymodule2/mu2e_mmap_ioctl.h"
 #endif
 #include <cstdint>
-#include "mu2esim.hh"
+#include "mu2esim.h"
 
 class mu2edev
 {

@@ -11,7 +11,7 @@
 
 
 #include "DTC_Types.h"
-#include "mu2edev.hh"
+#include "mu2edev.h"
 
 namespace DTCLib
 {

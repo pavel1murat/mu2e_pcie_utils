@@ -24,7 +24,7 @@
 # pragma warning(disable: 4351)
 #endif
 #include <chrono>
-#include "mu2edev.hh"
+#include "mu2edev.h"
 
 mu2edev::mu2edev() : devfd_(0), buffers_held_(0), simulator_(nullptr), deviceTime_(0LL)
 {

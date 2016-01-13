@@ -84,7 +84,7 @@ function GetAJAXValues(strOption, address, value, fnCallback) {
             });
         },
         // An error handler for the request.
-        error: function (xhr, textStatus, errorCode) {
+        error: function () {
             //alert("An error occurred:\n" + textStatus + "\n" + errorCode);
             setPixel(document.getElementById("FormAjaxLED"), 1, "ERR");
         },
@@ -103,8 +103,6 @@ function UpdateFormFields() {
     var jAddr = $("#address");
     var jVal = $("#value");
     var jBase = $('input[name=base]:checked');
-    var jAJAX = $("#ajax");
-    var objData = null;
     // Check to see if we are using AJAX or static data
     // to re-populate the form.
     
@@ -503,7 +501,7 @@ function GetRegDumpAjax(fnCallback) {
             });
         },
         // An error handler for the request.
-        error: function (xhr, textStatus, errorCode) {
+        error: function () {
             setPixel(document.getElementById("RegDumpAjaxLED"), 0, "ERR");
             //alert("An error occurred:\n" + textStatus + "\n" + errorCode);
         },
@@ -516,20 +514,17 @@ function GetRegDumpAjax(fnCallback) {
 }
 
 function GetRegDump() {
-    var objData = null;
     GetRegDumpAjax(function (regDump) {
         PopulateLEDS(regDump.Value1);
     });
 }
 
 function LEDAction(url, ring, id) {
-    var objData = null;
     AjaxPost(url, ring, function (output) {
         setPixel(document.getElementById(id), output.Value1, "RW");
     });
 }
 function LEDExtAction(url, ring, val, id) {
-    var objData = null;
     var post = {};
     post.ring = ring;
     post.val = val;
@@ -538,14 +533,12 @@ function LEDExtAction(url, ring, val, id) {
     });
 }
 function LEDObjAction(url, ring, idlo, idhi) {
-    var objData = null;
     AjaxPost(url, ring, function (output) {
         setPixel(document.getElementById(idlo), output.Value1.Low, "RW");
         setPixel(document.getElementById(idhi), output.Value1.High, "RW");
     });
 }
 function SetFIFOFlags(ring, id) {
-    var objData = null;
     var post = {};
     post.ring = ring;
     post.id = id;
@@ -562,7 +555,6 @@ function SetFIFOFlags(ring, id) {
     });
 }
 function SetSimMode(id) {
-    var objData = null;
     var post = {};
     post.id = id;
     AjaxPost("/DTC/SetSimMode", post, function (output) {
@@ -575,7 +567,6 @@ function SetSimMode(id) {
 }
 
 function SetNumericValue(id, url) {
-    var objData = null;
     var value = $(id).val();
     AjaxPost(url, value, function (returnValue) {
         $(id).val(returnValue.Value1);
@@ -583,7 +574,6 @@ function SetNumericValue(id, url) {
 }
 
 function PostLogMessage() {
-    var objData = null;
     var message = $("#logMessage").val();
     AjaxPost('/DTC/WriteLog', message, function (returnValue) {
         $("#log").val(returnValue.Value1);
@@ -591,14 +581,12 @@ function PostLogMessage() {
 }
 
 function ReadLog() {
-    var objData = null;
     AjaxPost('/DTC/ReadLog', null, function (returnValue) {
         $("#log").val(returnValue.Value1);
     });
 }
 
 function RunScript() {
-    var objData = null;
     AjaxPost('/DTC/RunScript', $("#script").val(), function (returnValue) {
         $("#script").val(returnValue);
     });

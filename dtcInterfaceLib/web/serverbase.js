@@ -149,6 +149,7 @@ if (cluster.isMaster) {
             
             req.on('end', function () {
                 // Get the content of the POST request 
+                // ReSharper disable once InconsistentNaming
                 var POST = qs.parse(body);
                 POST.who = username;
                 
@@ -184,10 +185,10 @@ if (cluster.isMaster) {
                                 //console.log("Sending Message!");
                                 process.send(workerData);
                             }
-                        } catch (err) {
+                        } catch (err2) {
                             console.log("Error caught; text:");
-                            console.log(err);
-                            if (err instanceof TypeError) {
+                            console.log(err2);
+                            if (err2 instanceof TypeError) {
                                 //RW_ version not available, try read-only version:
                                 var data = module_holder[moduleName]["RO_" + functionName](POST, workerData[moduleName]);
                                 if (data != null) {
@@ -298,7 +299,9 @@ if (cluster.isMaster) {
         if (req.client.authorized) {
             username = clientCertificate.subject.CN[0];
             var useremail = clientCertificate.subject.CN[1].substr(4);
+            // ReSharper disable once InconsistentNaming
             var userFNAL = useremail + "@FNAL.GOV";
+            // ReSharper disable once InconsistentNaming
             var userWIN = useremail + "@FERMI.WIN.FNAL.GOV";
             if (k5login.search(userFNAL) >= 0 || k5login.search(userWIN) >= 0) {
                 readOnly = false;

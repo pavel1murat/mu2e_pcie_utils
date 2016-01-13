@@ -42,7 +42,7 @@ unsigned getOptionValue(int *index, char **argv[])
 	if (arg[2] == '\0')
 	{
 		(*index)++;
-		return strtoul((*argv)[*index], NULL, 0);
+		return strtoul((*argv)[*index], nullptr, 0);
 	}
 	else
 	{
@@ -52,7 +52,7 @@ unsigned getOptionValue(int *index, char **argv[])
 			offset = 3;
 		}
 
-		return strtoul(&(arg[offset]), NULL, 0);
+		return strtoul(&(arg[offset]), nullptr, 0);
 	}
 }
 
@@ -163,8 +163,8 @@ main(int	argc
 	{
 		cout << "Operation \"read_register\"" << endl;
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-		auto data = thisDTC->ReadROCRegister(DTC_Ring_0, DTC_ROC_0, address);
-		if (!reallyQuiet) cout << data << '\n';
+		auto rocdata = thisDTC->ReadROCRegister(DTC_Ring_0, DTC_ROC_0, address);
+		if (!reallyQuiet) cout << rocdata << '\n';
 	}
 	else if (op == "reset_roc")
 	{
