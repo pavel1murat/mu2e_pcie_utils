@@ -432,6 +432,7 @@ main(int	argc
 				delete buf;
 			}
 
+			std::cout << "Total bytes written: " << total_size << std::endl;
 			thisDTC->EnableDetectorEmulator();
 		}
 
