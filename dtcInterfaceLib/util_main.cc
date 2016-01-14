@@ -432,7 +432,7 @@ main(int	argc
 				delete buf;
 			}
 
-
+			thisDTC->EnableDetectorEmulator();
 		}
 
 		if (thisDTC->ReadSimMode() != DTC_SimMode_Loopback && !syncRequests)
