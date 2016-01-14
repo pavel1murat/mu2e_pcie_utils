@@ -44,10 +44,10 @@ function(create_nodejs_addon NODEJS_ADDON_NAME NODEJS_ADDON_INCLUDES NODEJS_ADDO
 
     install (FILES ${LIBRARY_OUTPUT_PATH}/${NODEJS_ADDON_NAME}.node DESTINATION ${flavorqual_dir}/lib/node_modules/${NODEJS_ADDON_NAME})
     
-    add_custom_command(TARGET ${NODEJS_ADDON_NAME} POST_BUILD 
-      COMMAND echo "**** Exports for ${LIBRARY_OUTPUT_PATH}/${NODEJS_ADDON_NAME}.node"
-      COMMAND echo "**** BEGIN"
-      COMMAND /usr/bin/nm ${LIBRARY_OUTPUT_PATH}/${NODEJS_ADDON_NAME}.node | /bin/egrep -e \"^[a-f0-9]{1,16} [T]\" | /usr/bin/c++filt  
-      COMMAND echo "**** END" )
+    #add_custom_command(TARGET ${NODEJS_ADDON_NAME} POST_BUILD 
+    #  COMMAND echo "**** Exports for ${LIBRARY_OUTPUT_PATH}/${NODEJS_ADDON_NAME}.node"
+    #  COMMAND echo "**** BEGIN"
+    #  COMMAND /usr/bin/nm ${LIBRARY_OUTPUT_PATH}/${NODEJS_ADDON_NAME}.node | /bin/egrep -e \"^[a-f0-9]{1,16} [T]\" | /usr/bin/c++filt  
+    #  COMMAND echo "**** END" )
 
 endfunction()
