@@ -439,7 +439,7 @@ main(int	argc
 			uint64_t ts = timestampOffset;
 			DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)0, DTC_DataStatus_Valid, DTC_Timestamp(ts));
 			std::cout << "Request: " << header.toJSON() << std::endl;
-			thisDTC->WriteDMADAQPacket(header);
+			thisDTC->WriteDMAPacket(header);
 		}
 		double readoutRequestTime = thisDTC->GetDeviceTime();
 

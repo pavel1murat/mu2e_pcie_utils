@@ -55,7 +55,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTCLib::DTC_Timestamp ts)
 						}
 						TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp before WriteDMADAQPacket - DTC_DataRequestPacket");
 						if (!quiet_) std::cout << req.toJSON() << std::endl;
-						theDTC_->WriteDMADAQPacket(req);
+						theDTC_->WriteDMAPacket(req);
 						TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp after  WriteDMADAQPacket - DTC_DataRequestPacket");
 					}
 				}
@@ -185,7 +185,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync(DTCLib::DTC_Timestamp
 							}
 							TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImpl before WriteDMADAQPacket - DTC_DataRequestPacket");
 							if (!quiet_) std::cout << req.toJSON() << std::endl;
-							theDTC_->WriteDMADAQPacket(req);
+							theDTC_->WriteDMAPacket(req);
 							TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImpl after  WriteDMADAQPacket - DTC_DataRequestPacket");
 							if (abort_) return;
 						}

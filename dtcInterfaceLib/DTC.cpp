@@ -11,7 +11,7 @@
 #define TRACE_NAME "MU2EDEV"
 
 DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode) : DTC_Registers(mode),
-daqbuffer_(nullptr), buffers_used_(0), dcsbuffer_(nullptr), 
+daqbuffer_(nullptr), buffers_used_(0), dcsbuffer_(nullptr),
 bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
 lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 {
@@ -241,7 +241,7 @@ void DTCLib::DTC::SendReadoutRequestPacket(const DTC_Ring_ID& ring, const DTC_Ti
 	DTC_HeartbeatPacket req(ring, when, ReadRingROCCount((DTC_Ring_ID)ring));
 	TRACE(19, "DTC::SendReadoutRequestPacket before WriteDMADAQPacket - DTC_HeartbeatPacket");
 	if (!quiet) std::cout << req.toJSON() << std::endl;
-	WriteDMADAQPacket(req);
+	WriteDMAPacket(req);
 	TRACE(19, "DTC::SendReadoutRequestPacket after  WriteDMADAQPacket - DTC_HeartbeatPacket");
 }
 
@@ -250,17 +250,8 @@ void DTCLib::DTC::SendDCSRequestPacket(const DTC_Ring_ID& ring, const DTC_ROC_ID
 	DTC_DCSRequestPacket req(ring, roc, type, address, data);
 	TRACE(19, "DTC::SendDCSRequestPacket before WriteDMADCSPacket - DTC_DCSRequestPacket");
 	if (!quiet) std::cout << req.toJSON() << std::endl;
-	WriteDMADCSPacket(req);
+	WriteDMAPacket(req);
 	TRACE(19, "DTC::SendDCSRequestPacket after  WriteDMADCSPacket - DTC_DCSRequestPacket");
-}
-
-void DTCLib::DTC::WriteDMADAQPacket(const DTC_DMAPacket& packet)
-{
-	return WriteDMAPacket(DTC_DMA_Engine_DAQ, packet);
-}
-void DTCLib::DTC::WriteDMADCSPacket(const DTC_DMAPacket& packet)
-{
-	return WriteDMAPacket(DTC_DMA_Engine_DCS, packet);
 }
 
 DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
@@ -378,6 +369,27 @@ DTCLib::DTC_DCSReplyPacket* DTCLib::DTC::ReadNextDCSPacket()
 	return output;
 }
 
+void DTCLib::DTC::WriteDetectorEmulatorData(mu2e_databuff_t* buf, size_t sz)
+{
+	if (sz < dmaSize_)
+	{
+		sz = dmaSize_;
+	}
+
+	int retry = 3;
+	int errorCode;
+	do
+	{
+		TRACE(21, "DTC::WriteDetectorEmulatorData: Writing buffer of size %lu", sz);
+		errorCode = device_.write_data(DTC_DMA_Engine_DAQ, buf, sz);
+		retry--;
+	} while (retry > 0 && errorCode != 0);
+	if (errorCode != 0)
+	{
+		throw DTC_IOErrorException();
+	}
+}
+
 //
 // Private Functions.
 //
@@ -404,7 +416,7 @@ int DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
 	//return DTC_DataPacket(buffer);
 	return errorCode;
 }
-void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPacket& packet)
+void DTCLib::DTC::WriteDataPacket(const DTC_DataPacket& packet)
 {
 	if (packet.GetSize() < dmaSize_)
 	{
@@ -416,7 +428,7 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataP
 		{
 			std::string output = "DTC::WriteDataPacket: Writing packet: " + packet.toJSON();
 			TRACE(21, output.c_str());
-			errorCode = device_.write_data(channel, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
+			errorCode = device_.write_data(DTC_DMA_Engine_DCS, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
 			retry--;
 		} while (retry > 0 && errorCode != 0);
 		if (errorCode != 0)
@@ -432,7 +444,7 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataP
 		{
 			std::string output = "DTC::WriteDataPacket: Writing packet: " + packet.toJSON();
 			TRACE(21, output.c_str());
-			errorCode = device_.write_data(channel, packet.GetData(), packet.GetSize() * sizeof(uint8_t));
+			errorCode = device_.write_data(DTC_DMA_Engine_DCS, packet.GetData(), packet.GetSize() * sizeof(uint8_t));
 			retry--;
 		} while (retry > 0 && errorCode != 0);
 		if (errorCode != 0)
@@ -441,9 +453,9 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataP
 		}
 	}
 }
-void DTCLib::DTC::WriteDMAPacket(const DTC_DMA_Engine& channel, const DTC_DMAPacket& packet)
+
+void DTCLib::DTC::WriteDMAPacket(const DTC_DMAPacket& packet)
 {
-	DTC_DataPacket dp = packet.ConvertToDataPacket();
-	WriteDataPacket(channel, dp);
+	WriteDataPacket(packet.ConvertToDataPacket());
 }
 

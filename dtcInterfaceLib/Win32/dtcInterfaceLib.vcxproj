@@ -198,22 +198,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\DTC.cc" />
-    <ClCompile Include="..\DTCSoftwareCFO.cc" />
-    <ClCompile Include="..\DTC_Packets.cc" />
-    <ClCompile Include="..\DTC_Registers.cc" />
-    <ClCompile Include="..\DTC_Types.cc" />
-    <ClCompile Include="..\mu2edev.cc" />
-    <ClCompile Include="..\mu2esim.cc" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="..\DTC.h" />
     <ClInclude Include="..\DTCSoftwareCFO.h" />
     <ClInclude Include="..\DTC_Packets.h" />
     <ClInclude Include="..\DTC_Registers.h" />
     <ClInclude Include="..\DTC_Types.h" />
-    <ClInclude Include="..\mu2edev.hh" />
-    <ClInclude Include="..\mu2esim.hh" />
+    <ClInclude Include="..\mu2edev.h" />
+    <ClInclude Include="..\mu2esim.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\DTC.cpp" />
+    <ClCompile Include="..\DTCSoftwareCFO.cpp" />
+    <ClCompile Include="..\DTC_Packets.cpp" />
+    <ClCompile Include="..\DTC_Registers.cpp" />
+    <ClCompile Include="..\DTC_Types.cpp" />
+    <ClCompile Include="..\mu2edev.cpp" />
+    <ClCompile Include="..\mu2esim.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

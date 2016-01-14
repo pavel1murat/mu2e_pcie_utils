@@ -41,8 +41,8 @@ namespace DTCLib
 			first_read_ = read;
 		}
 
-		void WriteDMADAQPacket(const DTC_DMAPacket& packet);
-		void WriteDMADCSPacket(const DTC_DMAPacket& packet);
+		void WriteDMAPacket(const DTC_DMAPacket& packet);
+		void WriteDetectorEmulatorData(mu2e_databuff_t* buf, size_t sz);
 		DTC_DataHeaderPacket* ReadNextDAQPacket(int tmo_ms = 0);
 		DTC_DCSReplyPacket* ReadNextDCSPacket();
 
@@ -53,9 +53,7 @@ namespace DTCLib
 
 	private:
 		int ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms = 0);
-		void WriteDataPacket(const DTC_DMA_Engine& channel, const DTC_DataPacket& packet);
-		void WriteDMAPacket(const DTC_DMA_Engine& channel, const DTC_DMAPacket& packet);
-
+		void WriteDataPacket(const DTC_DataPacket& packet);
 
 	private:
 		mu2e_databuff_t* daqbuffer_;
