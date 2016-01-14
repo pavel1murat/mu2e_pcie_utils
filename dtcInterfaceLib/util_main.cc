@@ -402,6 +402,8 @@ main(int	argc
 		if(genDMABlocks)
 		{
 			std::cout << "Sending data to DTC" << std::endl;
+			thisDTC->ResetDDRWriteAddress();
+			size_t total_size = 0;
 			unsigned ii = 0;
 			for (; ii < number; ++ii)
 			{
@@ -422,12 +424,15 @@ main(int	argc
 				}
 
 				auto startDTC = std::chrono::high_resolution_clock::now();
-				device->write_data(0, buf, sizeof(buf));
+				device->write_data(0, buf, byteCount);
+				totalSize += byteCount;
 				auto endDTC = std::chrono::high_resolution_clock::now();
 				totalWriteTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
 					(endDTC - startDTC).count();
 				delete buf;
 			}
+
+
 		}
 
 		if (thisDTC->ReadSimMode() != DTC_SimMode_Loopback && !syncRequests)
