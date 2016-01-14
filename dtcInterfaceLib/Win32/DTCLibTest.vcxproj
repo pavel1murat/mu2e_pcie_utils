@@ -136,7 +136,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\DTCLibTest.cc" />
+    <ClCompile Include="..\DTCLibTest.cpp" />
     <ClCompile Include="..\main.cc" />
   </ItemGroup>
   <ItemGroup>

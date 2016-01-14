@@ -18,7 +18,7 @@ public:
 		if (block_count == 0) { return 0; }
 		return blocks[block_count - 1];
 	}
-	size_t fragSize() { return vals_.size(); }
+	size_t fragSize() const { return vals_.size(); }
 	void addSpace(size_t bytes)
 	{
 		vals_.resize(vals_.size() + bytes);
@@ -42,7 +42,7 @@ public:
 		block_count++;
 	}
 
-	size_t hdr_block_count() { return block_count; }
+	size_t hdr_block_count() const { return block_count; }
 private:
 	std::vector<uint8_t> vals_;
 	size_t blocks[BLOCK_COUNT_MAX];

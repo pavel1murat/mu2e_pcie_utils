@@ -21,9 +21,10 @@ ENDIF()
 set(CMAKE_MODULE_PATH 
         $ENV{ART_DIR}/Modules
         $ENV{CETBUILDTOOLS_DIR}/Modules
+		${CMAKE_CURRENT_SOURCE_DIR}/Modules
         ${CMAKE_MODULE_PATH})
 
-
+include(NodeJSAddon)
 include(CetCMakeEnv)
 cet_cmake_env()
 
@@ -50,7 +51,6 @@ include(CetTest)
 add_subdirectory(linux_driver)
 add_subdirectory(mcs)
 add_subdirectory(dtcInterfaceLib)
-add_subdirectory(cfoInterfaceLib)
 
 # ups - table and config files
 add_subdirectory(ups)

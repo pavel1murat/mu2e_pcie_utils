@@ -8,9 +8,9 @@
 
 // Node.js "includes"
 var fs = require('fs');
-var emitter = require('events').EventEmitter;
+var Emitter = require('events').EventEmitter;
 
-var base = new emitter();
+var base = new Emitter();
 
 base.MasterInitFunction = function () {
 
@@ -24,6 +24,6 @@ base.GET_ReadLog = function () {
     });
 }
 
-module.exports = function (module_holder) {
-    module_holder["base"] = base;
+module.exports = function (moduleHolder) {
+    moduleHolder["base"] = base;
 };

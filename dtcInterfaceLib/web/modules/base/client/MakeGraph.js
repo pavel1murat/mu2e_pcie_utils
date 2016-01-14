@@ -32,45 +32,58 @@ function tick(paths, line, axes, x, y, ids, tag) {
     var transition = d3.select(tag).transition()
                 .duration(duration)
                 .ease("linear");
-    transition = transition.each(function () {
+    transition.each(function () {
         
         // update the domains
-        now = new Date();
+        var now = new Date();
         x.domain([now - (n - 1) * duration, now]);
         
         var extent = [0x1000000, 0];
-        for (var name in ids) {
-            var group = ids[name];
-            var thisExtent = d3.extent(group.data, function (d) { return d.value; });
-            if (thisExtent[0] < extent[0]) { extent[0] = thisExtent[0]; }
-            if (thisExtent[1] > extent[1]) { extent[1] = thisExtent[1]; }
+        var name;
+        for (name in ids) {
+            if (ids.hasOwnProperty(name)) {
+                var group = ids[name];
+                var thisExtent = d3.extent(group.data, function(d) { return d.value; });
+                if (thisExtent[0] < extent[0]) {
+                    extent[0] = thisExtent[0];
+                }
+                if (thisExtent[1] > extent[1]) {
+                    extent[1] = thisExtent[1];
+                }
+            }
         }
         y.domain([extent[0] * 98 / 100, extent[1] * 102 / 100]);
         
-        for (var name in ids) {
-            d3.json(ids[name].jsonPath, function (json) {
-                ids[json.name].data.push({ value: json.value, time: new Date(json.time) });
-            });
-            
-            // redraw the line
-            ids[name].path.attr("d", line).attr("transform", null);
+        for (name in ids) {
+            if (ids.hasOwnProperty(name)) {
+                d3.json(ids[name].jsonPath, function(json) {
+                    ids[json.name].data.push({ value: json.value, time: new Date(json.time) });
+                });
+
+                // redraw the line
+                ids[name].path.attr("d", line).attr("transform", null);
+            }
         }
-        
+
         // slide the x-axis left
         axes[0].call(x.axis);
         axes[1].call(y.axis);
         
-        for (var name in ids) {
-            ids[name].path
-            .transition()
-            .duration(duration)
-            .ease("linear")
-            .attr("transform", "translate(" + x(now - n * duration) + ")");
+        for (name in ids) {
+            if (ids.hasOwnProperty(name)) {
+                ids[name].path
+                    .transition()
+                    .duration(duration)
+                    .ease("linear")
+                    .attr("transform", "translate(" + x(now - n * duration) + ")");
+            }
         }
-        
-        for (var name in ids) {
-            while (ids[name].data.length > 0 && ids[name].data[0].time < now - n * duration) {
-                ids[name].data.shift();
+
+        for (name in ids) {
+            if (ids.hasOwnProperty(name)) {
+                while (ids[name].data.length > 0 && ids[name].data[0].time < now - n * duration) {
+                    ids[name].data.shift();
+                }
             }
         }
 
@@ -79,7 +92,7 @@ function tick(paths, line, axes, x, y, ids, tag) {
 
 function makeGraph(tag, ids) {
     n = 120;
-    var now = new Date(Date.now() - duration);
+    //var now = new Date(Date.now() - duration);
     
     var margin = { top: 6, right: 20, bottom: 20, left: 60 },
         width = $(tag).width() - margin.right - margin.left,
@@ -127,11 +140,13 @@ function makeGraph(tag, ids) {
                 .attr("clip-path", "url(#clip" + tag.replace('#', "") + ")");
     
     for (var name in ids) {
-        ids[name].path = paths.append('path')
+        if (ids.hasOwnProperty(name)) {
+            ids[name].path = paths.append('path')
                 .data([ids[name].data])
                 .attr('class', 'line')
                 .style('stroke', ids[name].color);
+        }
     }
-    
+
     tick(paths, line, [xaxis, yaxis], x, y, ids, tag);
 }

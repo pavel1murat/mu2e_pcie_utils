@@ -4,14 +4,14 @@
 
 #include <iostream>
 #ifndef _WIN32
-# include "dtcInterfaceLib/DTC.h"
+# include "dtcInterfaceLib/DTC_Registers.h"
 #else
-# include "DTC.h"
+# include "DTC_Registers.h"
 #endif
 
 int main(int argc, char** argv)
 {
-	DTCLib::DTC* thisDTC = new DTCLib::DTC();
+	DTCLib::DTC_Registers* thisDTC = new DTCLib::DTC_Registers();
 
 	if (argc > 1)
 	{
