@@ -311,7 +311,7 @@ main(int	argc
 				thisPacket.CramIn(packet, 16 * (jj + 1));
 			}
 			auto startDTC = std::chrono::high_resolution_clock::now();
-			device->write_data(0, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
+			device->write_data(1, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
 			auto endDTC = std::chrono::high_resolution_clock::now();
 			totalWriteTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
 				(endDTC - startDTC).count();
