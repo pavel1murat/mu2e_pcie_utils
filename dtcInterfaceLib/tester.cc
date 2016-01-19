@@ -27,32 +27,32 @@
 
 using namespace DTCLib;
 void usage() {
-  std::cout << "Usage: tester [loops = 1000] [simMode = 1]" << std::endl;
-  exit(1);
+	std::cout << "Usage: tester [loops = 1000] [simMode = 1]" << std::endl;
+	exit(1);
 }
 
 int main(int argc, char* argv[])
 {
-  int loops = 1000;
-  int modeint = 1;
-  bool badarg = false;
-  if(argc > 1) 
-    { 
-      int tmp = atoi( argv[1] );
-      if(tmp > 0) loops = tmp;
-      else badarg = true;
-    }
-  if(argc > 2) {
-    int tmp = atoi( argv[2] );
-    if(tmp > 0) modeint = tmp;
-    else badarg = true;
-  }
-  if(argc > 3) badarg = true;
-  if(badarg) usage(); // Exits.
+	int loops = 1000;
+	int modeint = 1;
+	bool badarg = false;
+	if (argc > 1)
+	{
+		int tmp = atoi(argv[1]);
+		if (tmp > 0) loops = tmp;
+		else badarg = true;
+	}
+	if (argc > 2) {
+		int tmp = atoi(argv[2]);
+		if (tmp > 0) modeint = tmp;
+		else badarg = true;
+	}
+	if (argc > 3) badarg = true;
+	if (badarg) usage(); // Exits.
 
-  DTC_SimMode mode = DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::to_string(modeint));
-  DTC *thisDTC = new DTC(mode);
-  TRACE(1, "thisDTC->ReadSimMode: %i", thisDTC->ReadSimMode());
+	DTC_SimMode mode = DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::to_string(modeint));
+	DTC *thisDTC = new DTC(mode);
+	TRACE(1, "thisDTC->ReadSimMode: %i", thisDTC->ReadSimMode());
 	DTCSoftwareCFO *theCFO = new DTCSoftwareCFO(thisDTC, true);
 	long loopCounter = 0;
 	long count = 0;
@@ -88,7 +88,7 @@ int main(int argc, char* argv[])
 					std::cerr << ex.what() << std::endl;
 				}
 				retryCount--;
-				if (data.size() == 0) { usleep(10000); }
+				//if (data.size() == 0) { usleep(10000); }
 			}
 			if (retryCount < 0 && data.size() == 0) {
 				TRACE(1, "Retry count exceeded. Something is very wrong indeed");
@@ -110,9 +110,9 @@ int main(int argc, char* argv[])
 			auto dataSize = packetCount * sizeof(packet_t);
 			int64_t diff = dataSize + newfrag.dataSize() - newfrag.fragSize();
 			if (diff > 0) {
-		double currSize = newfrag.fragSize() / (double)sizeof(packet_t);
-		double remaining = 1 - (newfrag.hdr_block_count() / (double)BLOCK_COUNT_MAX);
-		size_t newSize = static_cast<size_t>(currSize * remaining) * sizeof(packet_t);
+				double currSize = newfrag.fragSize() / (double)sizeof(packet_t);
+				double remaining = 1 - (newfrag.hdr_block_count() / (double)BLOCK_COUNT_MAX);
+				size_t newSize = static_cast<size_t>(currSize * remaining) * sizeof(packet_t);
 				TRACE(1, "mu2eReceiver::getNext: %lu + %lu > %lu, allocating space for %lu more bytes", dataSize, newfrag.dataSize(), newfrag.fragSize(), newSize + diff);
 				newfrag.addSpace(diff + newSize);
 			}
@@ -124,8 +124,8 @@ int main(int argc, char* argv[])
 			{
 				TRACE(3, "Creating packet object to determine data block size: i=%lu, data=%p", i, data[i]);
 				auto packet = DTCLib::DTC_DataHeaderPacket(DTCLib::DTC_DataPacket(data[i]));
-				TRACE(3, "Copying packet %lu. src=%p, dst=%p, sz=%lu off=%p processed=%lu", i, data[i], 
-					(void*)(offset + packetsProcessed), (1 + packet.GetPacketCount())*sizeof(packet_t), 
+				TRACE(3, "Copying packet %lu. src=%p, dst=%p, sz=%lu off=%p processed=%lu", i, data[i],
+					(void*)(offset + packetsProcessed), (1 + packet.GetPacketCount())*sizeof(packet_t),
 					(void*)offset, packetsProcessed);
 				memcpy((void*)(offset + packetsProcessed), data[i], (1 + packet.GetPacketCount())*sizeof(packet_t));
 				TRACE(3, "Incrementing packet counter");
@@ -141,8 +141,8 @@ int main(int argc, char* argv[])
 		std::cout << "Event: " << loopCounter << ": " << newfrag.hdr_block_count() << " timestamps. (" << count << " total)" << std::endl;
 	}
 
-        delete theCFO;
-        delete thisDTC;
+	delete theCFO;
+	delete thisDTC;
 
 	return 0;
 }
