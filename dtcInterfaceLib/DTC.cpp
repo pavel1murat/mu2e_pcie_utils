@@ -63,7 +63,6 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
 						TRACE(19, "DTC::GetData after  WriteDMADAQPacket - DTC_DataRequestPacket");
 					}
 				}
-				//usleep(2000);
 			}
 		}
 	}
@@ -84,7 +83,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
 			packet = ReadNextDAQPacket(first_read_ ? 10000 : 1);
 			TRACE(19, "DTC::GetData after  ReadDMADAQPacket");
 			tries++;
-			if (packet == nullptr) usleep(5000);
+			//if (packet == nullptr) usleep(5000);
 		}
 		if (packet == nullptr)
 		{
@@ -403,17 +402,20 @@ int DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
 		TRACE(19, "DTC::ReadBuffer before device_.read_data");
 		errorCode = device_.read_data(channel, (void**)&buffer, tmo_ms);
 		retry--;
-		if (errorCode == 0) usleep(1000);
+		//if (errorCode == 0) usleep(1000);
 	} while (retry > 0 && errorCode == 0);
-	// if (errorCode == 0) // timeout
-	// 	throw DTC_TimeoutOccurredException();
-	if (errorCode < 0)
+	if (errorCode == 0)
+	{
+		TRACE(16, "DTC::ReadBuffer: Device timeout occurred! ec=%i, rt=%i", errorCode, retry);
+	}
+	else if (errorCode < 0)
 		throw DTC_IOErrorException();
-	TRACE(16, "DTC::ReadDataPacket buffer_=%p errorCode=%d *buffer_=0x%08x"
-		, (void*)buffer, errorCode, *(unsigned*)buffer);
-	if (errorCode > 0 && channel == DTC_DMA_Engine_DAQ) { daqbuffer_ = buffer; }
-	else if (errorCode > 0 && channel == DTC_DMA_Engine_DCS) { dcsbuffer_ = buffer; }
-	//return DTC_DataPacket(buffer);
+	else {
+		TRACE(16, "DTC::ReadDataPacket buffer_=%p errorCode=%d *buffer_=0x%08x"
+			, (void*)buffer, errorCode, *(unsigned*)buffer);
+		if (channel == DTC_DMA_Engine_DAQ) { daqbuffer_ = buffer; }
+		else if (channel == DTC_DMA_Engine_DCS) { dcsbuffer_ = buffer; }
+	}
 	return errorCode;
 }
 void DTCLib::DTC::WriteDataPacket(const DTC_DataPacket& packet)

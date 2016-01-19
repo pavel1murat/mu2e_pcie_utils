@@ -798,7 +798,7 @@ void DTCLib::DTC_Registers::ResetSERDESOscillator()
 	std::bitset<32> data = ReadRegister(DTC_Register_DTCControl);
 	data[29] = 1; //SERDES Oscillator Reset bit
 	WriteRegister(data.to_ulong(), DTC_Register_DTCControl);
-	usleep(2);
+	usleep(1000);
 	data[29] = 0;
 	WriteRegister(data.to_ulong(), DTC_Register_DTCControl);
 	while (!ReadSERDESOscillatorInitializationComplete())

@@ -112,7 +112,6 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTCLib::DTC_Timesta
 			}
 		}
 		theDTC_->SetCFOEmulationNumRequests(count);
-		if (delayBetweenDataRequests <= 0) { delayBetweenDataRequests = 1; }
 		theDTC_->SetCFOEmulationRequestInterval(delayBetweenDataRequests);
 		TRACE(19, "DTCSoftwareCFO::SendRequestsForRange enabling DTC CFO Emulator");
 		theDTC_->EnableCFOEmulation();
