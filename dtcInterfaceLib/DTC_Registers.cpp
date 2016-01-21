@@ -21,7 +21,8 @@ DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode) : device_(), simMode_(mod
 
 #ifdef _WIN32
 	simMode_ = DTCLib::DTC_SimMode_Tracker;
-#else
+#pragma warning(disable: 4996)
+#endif
 	char* sim = getenv("DTCLIB_SIM_ENABLE");
 	if (sim != NULL)
 	{
@@ -68,7 +69,6 @@ DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode) : device_(), simMode_(mod
 			break;
 		}
 	}
-#endif
 	SetSimMode(simMode_);
 }
 

@@ -1,6 +1,7 @@
 #include "DTC.h"
 #include <sstream> // Convert uint to hex string
 #include <iostream>
+#include <fstream>
 #include <iomanip> // std::setw, std::setfill
 #include <chrono>
 #ifndef _WIN32
@@ -15,6 +16,24 @@ daqbuffer_(nullptr), buffers_used_(0), dcsbuffer_(nullptr),
 bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
 lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 {
+#ifdef _WIN32
+#pragma warning(disable: 4996)
+#endif
+	char* sim = getenv("DTCLIB_SIM_FILE_NAME");
+	if (sim != NULL)
+	{
+		std::ifstream is(sim, std::ifstream::binary);
+		while(is)
+		{
+			uint64_t sz;
+			is.read((char*)&sz, sizeof(uint64_t));
+			is.seekg(-1 * (int)sizeof(uint64_t), std::ios_base::cur);
+			mu2e_databuff_t buf;
+			is.read((char*)buf, sz);
+			WriteDetectorEmulatorData(&buf, sz);
+		}
+		is.close();
+	}
 }
 
 DTCLib::DTC::~DTC()
