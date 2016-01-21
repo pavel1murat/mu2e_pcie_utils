@@ -419,6 +419,7 @@ main(int	argc
 				for (unsigned jj = 0; jj < packetCount; ++jj)
 				{
 					if (currentOffset + 16 > sizeof(mu2e_databuff_t)) { break; }
+					packet.SetWord(14, (jj + 1) & 0xFF);
 					memcpy((uint8_t*)buf + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
 					currentOffset += 16;
 				}
