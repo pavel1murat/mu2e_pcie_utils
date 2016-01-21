@@ -71,27 +71,13 @@ mu2esim::mu2esim()
 
 mu2esim::~mu2esim()
 {
+	delete[] currentBuffer_;
 	for (unsigned ii = 0; ii < MU2E_MAX_CHANNELS; ++ii)
 	{
 		for (unsigned jj = 0; jj < SIM_BUFFCOUNT; ++jj)
 		{
-			delete dmaData_[ii][jj];
+			delete[] (dmaData_[ii][jj]);
 		}
-	}
-	while(!ddrSim_.empty())
-	{
-		delete[] ddrSim_.front();
-		ddrSim_.pop();
-	}
-	while(!dcsResponses_.empty())
-	{
-		delete[] dcsResponses_.front();
-		dcsResponses_.pop();
-	}
-	while(!spareBuffers_.empty())
-	{
-		delete[] spareBuffers_.front();
-		spareBuffers_.pop();
 	}
 }
 
@@ -220,9 +206,8 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 			if (ddrSim_.empty()) return 0;
 			TRACE(17, "mu2esim::read_data: Done waiting for data (there is data) buf=%p", (void*)ddrSim_.front());
 
-			auto* buf = ddrSim_.front();
+			auto buf = ddrSim_.pop();
 			auto disposeOfBuffer = true;
-			ddrSim_.pop();
 
 			TRACE(17, "mu2esim::read_data: Checking conditions for putting this buffer back on the queue");
 			if ((registers_[DTCLib::DTC_Register_DTCControl] & 0x4000000) == 0x4000000 && (registers_[DTCLib::DTC_Register_DetEmulationDMACount] == 0 || registers_[DTCLib::DTC_Register_DetEmulationDMACount] >= detSimLoopCount_))
@@ -257,8 +242,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 			if (dcsResponses_.empty()) return 0;
 			TRACE(17, "mu2esim::read_data: Done waiting. There is data: buf=%p", (void*)dcsResponses_.front());
 
-			auto* buf = dcsResponses_.front();
-			dcsResponses_.pop();
+			auto* buf = dcsResponses_.pop();
 			bytesReturned = *(reinterpret_cast<uint64_t*>(*buf));
 			memcpy(dmaData_[chn][swIdx_[chn]], buf, bytesReturned);
 
@@ -466,7 +450,9 @@ void mu2esim::CFOEmulator_()
 				}
 			}
 		}
-		usleep(ticksToWait);
+		if (ticksToWait > 100) {
+			usleep(ticksToWait);
+		}
 		sentCount++;
 	}
 	closeBuffer_(false, start + sentCount);
@@ -724,8 +710,7 @@ void mu2esim::closeBuffer_(bool drop, DTCLib::DTC_Timestamp ts)
 	}
 	else
 	{
-		currentBuffer_ = spareBuffers_.front();
-		spareBuffers_.pop();
+		currentBuffer_ = spareBuffers_.pop();
 	}
 	currentOffset_ = 8;
 	currentTimestamp_ = ts;

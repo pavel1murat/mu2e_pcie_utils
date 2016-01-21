@@ -24,6 +24,41 @@
 
 #define SIM_BUFFCOUNT 4U
 
+class LockingBufferQueue
+{
+public:
+	LockingBufferQueue() : mutex_(), queue_() {}
+	mu2e_databuff_t* pop()
+	{
+		std::lock_guard<std::mutex> lock(mutex_);
+		auto out = queue_.front();
+		queue_.pop();
+		return out;
+	}
+	void push(mu2e_databuff_t* buf)
+	{
+		std::lock_guard<std::mutex> lock(mutex_);
+		queue_.push(buf);
+	}
+	bool empty()
+	{
+		std::lock_guard<std::mutex> lock(mutex_);
+		return queue_.empty();
+	}
+	virtual ~LockingBufferQueue()
+	{
+		std::lock_guard<std::mutex> lock(mutex_);
+		while(!queue_.empty())
+		{
+			delete[] queue_.front();
+			queue_.pop();
+		}
+	}
+private:
+	std::mutex mutex_;
+	std::queue<mu2e_databuff_t*> queue_;
+};
+
 class mu2esim
 {
 public:
@@ -58,9 +93,9 @@ private:
 	typedef bool readoutRequestData[6];
 	std::map<uint64_t, readoutRequestData> readoutRequestReceived_;
 
-	std::queue<mu2e_databuff_t*> ddrSim_;
-	std::queue<mu2e_databuff_t*> dcsResponses_;
-	std::queue<mu2e_databuff_t*> spareBuffers_;
+	LockingBufferQueue ddrSim_;
+	LockingBufferQueue dcsResponses_;
+	LockingBufferQueue spareBuffers_;
 
 	uint64_t currentOffset_;
 	DTCLib::DTC_Timestamp currentTimestamp_;

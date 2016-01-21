@@ -33,7 +33,7 @@ void usage() {
 
 int main(int argc, char* argv[])
 {
-	int loops = 1000;
+	int loops = 10;
 	int modeint = 1;
 	bool badarg = false;
 	if (argc > 1)
