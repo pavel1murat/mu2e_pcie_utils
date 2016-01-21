@@ -79,6 +79,8 @@ mu2esim::~mu2esim()
 			delete[] (dmaData_[ii][jj]);
 		}
 	}
+	cancelCFO_ = true;
+	if (cfoEmulatorThread_.joinable()) cfoEmulatorThread_.join();
 }
 
 int mu2esim::init(DTCLib::DTC_SimMode mode)
@@ -204,9 +206,9 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 				usleep(1000);
 			}
 			if (ddrSim_.empty()) return 0;
-			TRACE(17, "mu2esim::read_data: Done waiting for data (there is data) buf=%p", (void*)ddrSim_.front());
 
 			auto buf = ddrSim_.pop();
+			TRACE(17, "mu2esim::read_data: Done waiting for data (there is data) buf=%p", (void*)buf);
 			auto disposeOfBuffer = true;
 
 			TRACE(17, "mu2esim::read_data: Checking conditions for putting this buffer back on the queue");
@@ -240,9 +242,9 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 				usleep(1000);
 			}
 			if (dcsResponses_.empty()) return 0;
-			TRACE(17, "mu2esim::read_data: Done waiting. There is data: buf=%p", (void*)dcsResponses_.front());
 
-			auto* buf = dcsResponses_.pop();
+			auto buf = dcsResponses_.pop();
+			TRACE(17, "mu2esim::read_data: Done waiting. There is data: buf=%p", (void*)buf);
 			bytesReturned = *(reinterpret_cast<uint64_t*>(*buf));
 			memcpy(dmaData_[chn][swIdx_[chn]], buf, bytesReturned);
 
