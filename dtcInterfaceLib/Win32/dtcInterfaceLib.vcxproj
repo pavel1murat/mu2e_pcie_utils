@@ -215,6 +215,9 @@
     <ClCompile Include="..\mu2edev.cpp" />
     <ClCompile Include="..\mu2esim.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\test\testdata.bin" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
