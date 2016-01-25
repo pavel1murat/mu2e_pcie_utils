@@ -464,6 +464,7 @@ namespace DTCLib
 		DTC_SimMode_ROCEmulator = 5,
 		DTC_SimMode_Loopback = 6,
 		DTC_SimMode_Performance = 7,
+		DTC_SimMode_DetectorEmulator = 8,
 		DTC_SimMode_Invalid,
 	};
 
@@ -496,6 +497,8 @@ namespace DTCLib
 				return "Loopback";
 			case DTC_SimMode_Performance:
 				return "Performance";
+			case DTC_SimMode_DetectorEmulator:
+				return "DetectorEmulator";
 			case DTC_SimMode_Disabled:
 			default:
 				return "Disabled";
@@ -515,7 +518,8 @@ namespace DTCLib
 				stream << "\"NoCFO\":0,";
 				stream << "\"ROCEmulator\":0,";
 				stream << "\"Loopback\":0,";
-				stream << "\"Performance\":0}";
+				stream << "\"Performance\":0,";
+				stream << "\"DetectorEmulator\":0}";
 				break;
 			case DTC_SimMode_Tracker:
 				stream << "{\"Disabled\":0,";
@@ -525,7 +529,8 @@ namespace DTCLib
 				stream << "\"NoCFO\":0,";
 				stream << "\"ROCEmulator\":0,";
 				stream << "\"Loopback\":0,";
-				stream << "\"Performance\":0}";
+				stream << "\"Performance\":0,";
+				stream << "\"DetectorEmulator\":0}";
 				break;
 			case DTC_SimMode_Calorimeter:
 				stream << "{\"Disabled\":0,";
@@ -535,7 +540,8 @@ namespace DTCLib
 				stream << "\"NoCFO\":0,";
 				stream << "\"ROCEmulator\":0,";
 				stream << "\"Loopback\":0,";
-				stream << "\"Performance\":0}";
+				stream << "\"Performance\":0,";
+				stream << "\"DetectorEmulator\":0}";
 				break;
 			case DTC_SimMode_CosmicVeto:
 				stream << "{\"Disabled\":0,";
@@ -545,7 +551,8 @@ namespace DTCLib
 				stream << "\"NoCFO\":0,";
 				stream << "\"ROCEmulator\":0,";
 				stream << "\"Loopback\":0,";
-				stream << "\"Performance\":0}";
+				stream << "\"Performance\":0,";
+				stream << "\"DetectorEmulator\":0}";
 				break;
 			case DTC_SimMode_NoCFO:
 				stream << "{\"Disabled\":0,";
@@ -555,7 +562,8 @@ namespace DTCLib
 				stream << "\"NoCFO\":1,";
 				stream << "\"ROCEmulator\":0,";
 				stream << "\"Loopback\":0,";
-				stream << "\"Performance\":0}";
+				stream << "\"Performance\":0,";
+				stream << "\"DetectorEmulator\":0}";
 				break;
 			case DTC_SimMode_ROCEmulator:
 				stream << "{\"Disabled\":0,";
@@ -565,7 +573,8 @@ namespace DTCLib
 				stream << "\"NoCFO\":0,";
 				stream << "\"ROCEmulator\":1,";
 				stream << "\"Loopback\":0,";
-				stream << "\"Performance\":0}";
+				stream << "\"Performance\":0,";
+				stream << "\"DetectorEmulator\":0}";
 				break;
 			case DTC_SimMode_Loopback:
 				stream << "{\"Disabled\":0,";
@@ -575,7 +584,8 @@ namespace DTCLib
 				stream << "\"NoCFO\":0,";
 				stream << "\"ROCEmulator\":0,";
 				stream << "\"Loopback\":1,";
-				stream << "\"Performance\":0}";
+				stream << "\"Performance\":0,";
+				stream << "\"DetectorEmulator\":0}";
 				break;
 			case DTC_SimMode_Performance:
 				stream << "{\"Disabled\":0,";
@@ -585,7 +595,19 @@ namespace DTCLib
 				stream << "\"NoCFO\":0,";
 				stream << "\"ROCEmulator\":0,";
 				stream << "\"Loopback\":0,";
-				stream << "\"Performance\":1}";
+				stream << "\"Performance\":1,";
+				stream << "\"DetectorEmulator\":0}";
+				break;
+			case DTC_SimMode_DetectorEmulator:
+				stream << "{\"Disabled\":0,";
+				stream << "\"Tracker\":0,";
+				stream << "\"Calorimeter\":0,";
+				stream << "\"CosmicVeto\":0,";
+				stream << "\"NoCFO\":0,";
+				stream << "\"ROCEmulator\":0,";
+				stream << "\"Loopback\":0,";
+				stream << "\"Performance\":0,";
+				stream << "\"DetectorEmulator\":1}";
 				break;
 			}
 			return stream;

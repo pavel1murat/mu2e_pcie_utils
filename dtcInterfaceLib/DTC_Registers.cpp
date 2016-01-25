@@ -69,6 +69,12 @@ DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode) : device_(), simMode_(mod
 			break;
 		}
 	}
+
+	char* file = getenv("DTCLIB_SIM_FILE");
+	if (file != NULL) {
+		simMode_ = DTCLib::DTC_SimMode_DetectorEmulator;
+	}
+
 	SetSimMode(simMode_);
 }
 
@@ -104,6 +110,12 @@ DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode)
 		}
 		SetInternalSystemClock();
 		DisableTiming();
+	}
+	if (simMode_ == DTCLib::DTC_SimMode_DetectorEmulator)
+	{
+		EnableDetectorEmulator();
+		SetDetectorEmulationDMACount(0);
+		SetDetectorEmulationDMADelayCount(0);
 	}
 	ReadMinDMATransferLength();
 

@@ -212,7 +212,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 			auto disposeOfBuffer = true;
 
 			TRACE(17, "mu2esim::read_data: Checking conditions for putting this buffer back on the queue");
-			if ((registers_[DTCLib::DTC_Register_DTCControl] & 0x4000000) == 0x4000000 && (registers_[DTCLib::DTC_Register_DetEmulationDMACount] == 0 || registers_[DTCLib::DTC_Register_DetEmulationDMACount] >= detSimLoopCount_))
+			if ((registers_[DTCLib::DTC_Register_DTCControl] & 0x4000000) == 0x4000000 && (registers_[DTCLib::DTC_Register_DetEmulationDMACount] == 0 || registers_[DTCLib::DTC_Register_DetEmulationDMACount] > detSimLoopCount_))
 			{
 				TRACE(17, "mu2esim::read_data: Conditions met. Putting the buffer back on the queue");
 				registers_[DTCLib::DTC_Register_DDRLocalStartAddress]++;

@@ -19,7 +19,7 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 #ifdef _WIN32
 #pragma warning(disable: 4996)
 #endif
-	char* sim = getenv("DTCLIB_SIM_FILE_NAME");
+	char* sim = getenv("DTCLIB_SIM_FILE");
 	if (sim != NULL)
 	{
 		std::ifstream is(sim, std::ifstream::binary);
