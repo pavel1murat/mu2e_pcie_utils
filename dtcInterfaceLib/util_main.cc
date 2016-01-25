@@ -484,18 +484,19 @@ main(int	argc
 				uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)readPtr));
 				totalSize += bufSize;
 				readPtr = (uint8_t*)readPtr + 8;
+                                std::cout << "Buffer reports DMA size of " << std::dec << bufSize << " bytes. Device driver reports read of " << sts << " bytes," << std::endl;
 				TRACE(1, "util - bufSize is %u", bufSize);
 				if (rawOutput) outputStream.write((char*)readPtr, bufSize - 8);
 
 				if (!reallyQuiet)
 				{
-					for (unsigned line = 0; line < (unsigned)(ceil((bufSize - 8) / 16)); ++line)
+					for (unsigned line = 0; line < (unsigned)(ceil((sts - 8) / 16)); ++line)
 					{
 						cout << "0x" << hex << setw(5) << setfill('0') << line << "0: ";
 						//for (unsigned byte = 0; byte < 16; ++byte)
 						for (unsigned byte = 0; byte < 8; ++byte)
 						{
-							if ((line * 16) + (2 * byte) < (bufSize - 8u))
+							if ((line * 16) + (2 * byte) < (sts - 8u))
 							{
 								uint16_t thisWord = (((uint16_t*)buffer)[4 + (line * 8) + byte]);
 								//uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
