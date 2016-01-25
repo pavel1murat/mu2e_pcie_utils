@@ -28,9 +28,9 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 			uint64_t sz;
 			is.read((char*)&sz, sizeof(uint64_t));
 			is.seekg(-1 * (int)sizeof(uint64_t), std::ios_base::cur);
-			mu2e_databuff_t buf;
+			mu2e_databuff_t* buf = (mu2e_databuff_t*)new mu2e_databuff_t();
 			is.read((char*)buf, sz);
-			WriteDetectorEmulatorData(&buf, sz);
+			WriteDetectorEmulatorData(buf, sz);
 		}
 		is.close();
 	}

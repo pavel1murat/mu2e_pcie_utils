@@ -265,12 +265,10 @@ int mu2esim::write_data(int chn, void *buffer, size_t bytes)
 	if (chn == 0)
 	{
 		TRACE(17, "mu2esim::write_data: adding buffer to simulated DDR memory");
-		if (bytes <= sizeof(mu2e_databuff_t) - sizeof(uint64_t))
+		if (bytes <= sizeof(mu2e_databuff_t))
 		{
-			uint64_t bufSize = bytes + 8;
 			auto* lpBuf = reinterpret_cast<mu2e_databuff_t*>(new mu2e_databuff_t());
-			memcpy(*lpBuf, &bufSize, sizeof(uint64_t));
-			memcpy(static_cast<unsigned char*>(*lpBuf) + 8, buffer, bytes*sizeof(uint8_t));
+			memcpy(*lpBuf, buffer, bytes*sizeof(uint8_t));
 			ddrSim_.push(lpBuf);
 			registers_[DTCLib::DTC_Register_DDRLocalEndAddress]++;
 			return 0;
