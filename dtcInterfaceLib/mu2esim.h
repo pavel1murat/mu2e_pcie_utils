@@ -24,6 +24,41 @@
 
 #define SIM_BUFFCOUNT 4U
 
+class LockingBufferQueue
+{
+public:
+	LockingBufferQueue() : mutex_(), queue_() {}
+	mu2e_databuff_t* pop()
+	{
+		std::lock_guard<std::mutex> lock(mutex_);
+		auto out = queue_.front();
+		queue_.pop();
+		return out;
+	}
+	void push(mu2e_databuff_t* buf)
+	{
+		std::lock_guard<std::mutex> lock(mutex_);
+		queue_.push(buf);
+	}
+	bool empty()
+	{
+		std::lock_guard<std::mutex> lock(mutex_);
+		return queue_.empty();
+	}
+	virtual ~LockingBufferQueue()
+	{
+		std::lock_guard<std::mutex> lock(mutex_);
+		while(!queue_.empty())
+		{
+			delete[] queue_.front();
+			queue_.pop();
+		}
+	}
+private:
+	std::mutex mutex_;
+	std::queue<mu2e_databuff_t*> queue_;
+};
+
 class mu2esim
 {
 public:
@@ -40,41 +75,31 @@ private:
 	unsigned delta_(int chn, int dir);
 	void clearBuffer_(int chn, bool increment = true);
 	void CFOEmulator_();
+	void packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID ring, DTCLib::DTC_ROC_ID roc, uint16_t packetCount); 
+	void closeBuffer_(bool drop, DTCLib::DTC_Timestamp ts);
+	void dcsPacketSimulator_(DTCLib::DTC_DCSRequestPacket in);
 
-	uint16_t GetDRCount(DTCLib::DTC_Ring_ID ring, DTCLib::DTC_ROC_ID roc, uint64_t timestamp);
-	void SetDRCount(DTCLib::DTC_Ring_ID ring, DTCLib::DTC_ROC_ID roc, uint64_t timestamp, uint16_t count);
-	bool GetDRExists(DTCLib::DTC_Ring_ID ring, DTCLib::DTC_ROC_ID roc, uint64_t timestamp);
-	void PutRR(DTCLib::DTC_Ring_ID ring, uint64_t timestamp);
-	bool GetRRExists(DTCLib::DTC_Ring_ID ring, uint64_t timestamp);
-	void DeleteTimestamp(uint64_t timestamp);
-
-	typedef bool readoutRequestData[6];
-	typedef std::pair<bool,uint16_t> dataRequestData[6][6];
-
-	//const DTCLib::DTC_Timestamp NULL_TIMESTAMP = DTCLib::DTC_Timestamp(0xffffffffffffffff);
+private:
 	std::unordered_map<uint16_t, uint32_t> registers_;
 	unsigned hwIdx_[MU2E_MAX_CHANNELS];
 	unsigned swIdx_[MU2E_MAX_CHANNELS];
-	uint64_t buffSize_[MU2E_MAX_CHANNELS][SIM_BUFFCOUNT];
+	uint32_t detSimLoopCount_;
 	mu2e_databuff_t* dmaData_[MU2E_MAX_CHANNELS][SIM_BUFFCOUNT];
-	std::queue<mu2e_databuff_t*> loopbackData_;
-	//mu2e_databuff_t* dmaDAQData_[SIM_BUFFCOUNT];
-	//mu2e_databuff_t* dmaDCSData_[SIM_BUFFCOUNT];
 	DTCLib::DTC_SimMode mode_;
 	uint16_t simIndex_[6][6];
-	bool dcsRequestReceived_[6][6];
-	std::unordered_map<uint64_t, readoutRequestData> readoutRequestReceived_;
-	std::mutex rrMutex_;
-	std::unordered_map<uint64_t, dataRequestData> dataRequestReceived_;
-	std::mutex drMutex_;
-	std::set<uint64_t> activeTimestamps_;
-	std::mutex atMutex_;
-	bool readoutRequestSeen_[6];
-	bool dataRequestSeen_[6][6];
-	DTCLib::DTC_DCSRequestPacket dcsRequest_[6][6];
 	std::thread cfoEmulatorThread_;
-	std::atomic<bool> cfoEmulatorAhead_;
 	bool cancelCFO_;
+
+	typedef bool readoutRequestData[6];
+	std::map<uint64_t, readoutRequestData> readoutRequestReceived_;
+
+	LockingBufferQueue ddrSim_;
+	LockingBufferQueue dcsResponses_;
+	LockingBufferQueue spareBuffers_;
+
+	uint64_t currentOffset_;
+	DTCLib::DTC_Timestamp currentTimestamp_;
+	mu2e_databuff_t* currentBuffer_;
 };
 
 #endif

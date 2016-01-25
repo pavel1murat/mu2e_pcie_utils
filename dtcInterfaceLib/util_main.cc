@@ -311,7 +311,7 @@ main(int	argc
 				thisPacket.CramIn(packet, 16 * (jj + 1));
 			}
 			auto startDTC = std::chrono::high_resolution_clock::now();
-			device->write_data(0, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
+			device->write_data(1, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
 			auto endDTC = std::chrono::high_resolution_clock::now();
 			totalWriteTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
 				(endDTC - startDTC).count();
@@ -402,6 +402,8 @@ main(int	argc
 		if(genDMABlocks)
 		{
 			std::cout << "Sending data to DTC" << std::endl;
+			thisDTC->ResetDDRWriteAddress();
+			size_t total_size = 0;
 			unsigned ii = 0;
 			for (; ii < number; ++ii)
 			{
@@ -417,17 +419,22 @@ main(int	argc
 				for (unsigned jj = 0; jj < packetCount; ++jj)
 				{
 					if (currentOffset + 16 > sizeof(mu2e_databuff_t)) { break; }
+					packet.SetWord(14, (jj + 1) & 0xFF);
 					memcpy((uint8_t*)buf + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
 					currentOffset += 16;
 				}
 
 				auto startDTC = std::chrono::high_resolution_clock::now();
-				device->write_data(0, buf, sizeof(buf));
+				device->write_data(0, buf, byteCount);
+				totalSize += byteCount;
 				auto endDTC = std::chrono::high_resolution_clock::now();
 				totalWriteTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
 					(endDTC - startDTC).count();
 				delete buf;
 			}
+
+			std::cout << "Total bytes written: " << total_size << std::endl;
+			thisDTC->EnableDetectorEmulator();
 		}
 
 		if (thisDTC->ReadSimMode() != DTC_SimMode_Loopback && !syncRequests)

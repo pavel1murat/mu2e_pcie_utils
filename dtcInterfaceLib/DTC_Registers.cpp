@@ -21,7 +21,8 @@ DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode) : device_(), simMode_(mod
 
 #ifdef _WIN32
 	simMode_ = DTCLib::DTC_SimMode_Tracker;
-#else
+#pragma warning(disable: 4996)
+#endif
 	char* sim = getenv("DTCLIB_SIM_ENABLE");
 	if (sim != NULL)
 	{
@@ -68,7 +69,6 @@ DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode) : device_(), simMode_(mod
 			break;
 		}
 	}
-#endif
 	SetSimMode(simMode_);
 }
 
@@ -798,7 +798,7 @@ void DTCLib::DTC_Registers::ResetSERDESOscillator()
 	std::bitset<32> data = ReadRegister(DTC_Register_DTCControl);
 	data[29] = 1; //SERDES Oscillator Reset bit
 	WriteRegister(data.to_ulong(), DTC_Register_DTCControl);
-	usleep(2);
+	usleep(1000);
 	data[29] = 0;
 	WriteRegister(data.to_ulong(), DTC_Register_DTCControl);
 	while (!ReadSERDESOscillatorInitializationComplete())
