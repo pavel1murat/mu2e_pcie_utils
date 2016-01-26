@@ -23,14 +23,15 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 	if (sim != NULL)
 	{
 		std::ifstream is(sim, std::ifstream::binary);
-		while(is)
+		while(is && is.good())
 		{
-			uint64_t sz;
-			is.read((char*)&sz, sizeof(uint64_t));
-			is.seekg(-1 * (int)sizeof(uint64_t), std::ios_base::cur);
 			mu2e_databuff_t* buf = (mu2e_databuff_t*)new mu2e_databuff_t();
-			is.read((char*)buf, sz);
+			is.read((char*)buf, sizeof(uint64_t));
+                        uint64_t sz = *((uint64_t*)*buf);
+			is.read((char*)buf + 8, sz - sizeof(uint64_t));
+                        if(sz > 0) {
 			WriteDetectorEmulatorData(buf, sz);
+                        }
 		}
 		is.close();
 	}

@@ -374,7 +374,7 @@ int  mu2esim::write_register(uint16_t address, int tmo_ms, uint32_t data)
 	if (address == 0x9100) // DTC Control
 	{
 		std::bitset<32> dataBS(data);
-		if (dataBS[30] == 1)
+		if (dataBS[30] == 1 && dataBS[26] == 0)
 		{
 			TRACE(19, "mu2esim::write_register: CFO Emulator Enable Detected!");
 			cancelCFO_ = true;
@@ -390,6 +390,10 @@ int  mu2esim::write_register(uint16_t address, int tmo_ms, uint32_t data)
 				CFOEmulator_();
 			}
 		}
+                else if(dataBS[26] == 1 && dataBS[30] == 1)
+		  {
+		    TRACE(19, "mu2esim::write_register: IGNORING CFO Emulator Enable because we're in Detector Simulator mode!");
+		  }
 	}
 	return 0;
 }
