@@ -405,6 +405,7 @@ namespace DTCLib
 		// Detector Emulation DMA Count Register
 		void SetDetectorEmulationDMACount(uint32_t count);
 		uint32_t ReadDetectorEmulationDMACount();
+		void IncrementDetectorEmulationDMACount();
 
 		// Detector Emulation DMA Delay Count Register
 		void SetDetectorEmulationDMADelayCount(uint32_t count);
