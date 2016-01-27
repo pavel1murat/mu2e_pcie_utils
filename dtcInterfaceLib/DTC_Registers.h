@@ -215,7 +215,7 @@ namespace DTCLib
 			return simMode_;
 		}
 
-		DTC_SimMode SetSimMode(DTC_SimMode mode);
+		DTC_SimMode SetSimMode(DTC_SimMode mode, bool setupDetectorEmulator = false);
 
 		//
 		// DTC Register Dumps
@@ -405,10 +405,16 @@ namespace DTCLib
 		// Detector Emulation DMA Count Register
 		void SetDetectorEmulationDMACount(uint32_t count);
 		uint32_t ReadDetectorEmulationDMACount();
+		void IncrementDetectorEmulationDMACount();
 
 		// Detector Emulation DMA Delay Count Register
 		void SetDetectorEmulationDMADelayCount(uint32_t count);
 		uint32_t ReadDetectorEmulationDMADelayCount();
+
+		// DDR Local End Address Register
+		void SetDDRLocalEndAddress(uint32_t address);
+		uint32_t ReadDDRLocalEndAddress();
+		void IncrementDDRLocalEndAddress(size_t sz);
 
 		// FPGA PROM Program Status Register
 		bool ReadFPGAPROMProgramFIFOFull();

@@ -69,10 +69,17 @@ DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode) : device_(), simMode_(mod
 			break;
 		}
 	}
-	SetSimMode(simMode_);
+
+	bool setupDetectorEmulator = false;
+	char* file = getenv("DTCLIB_SIM_FILE");
+	if (file != NULL) {
+		setupDetectorEmulator = true;
+	}
+
+	SetSimMode(simMode_, setupDetectorEmulator);
 }
 
-DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode)
+DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode, bool setupDetectorEmulator)
 {
 	simMode_ = mode;
 	device_.init(simMode_);
@@ -104,6 +111,13 @@ DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode)
 		}
 		SetInternalSystemClock();
 		DisableTiming();
+	}
+	if (setupDetectorEmulator)
+	{
+		ResetDDRWriteAddress();
+		SetDDRLocalEndAddress(1);
+		SetDetectorEmulationDMACount(0);
+		SetDetectorEmulationDMADelayCount(0);
 	}
 	ReadMinDMATransferLength();
 
@@ -1547,6 +1561,10 @@ uint32_t DTCLib::DTC_Registers::ReadDetectorEmulationDMACount()
 	return ReadRegister(DTC_Register_DetEmulationDMACount);
 }
 
+void DTCLib::DTC_Registers::IncrementDetectorEmulationDMACount()
+{
+	SetDetectorEmulationDMACount(ReadDetectorEmulationDMACount() + 1);
+}
 
 // Detector Emulator DMA Delay Counter Register
 void DTCLib::DTC_Registers::SetDetectorEmulationDMADelayCount(uint32_t count)
@@ -1559,6 +1577,22 @@ uint32_t DTCLib::DTC_Registers::ReadDetectorEmulationDMADelayCount()
 	return ReadRegister(DTC_Register_DetEmulationDelayCount);
 }
 
+// DDR Local End Address Register
+void DTCLib::DTC_Registers::SetDDRLocalEndAddress(uint32_t address)
+{
+	WriteRegister(address, DTC_Register_DDRLocalEndAddress);
+}
+
+uint32_t DTCLib::DTC_Registers::ReadDDRLocalEndAddress()
+{
+	return ReadRegister(DTC_Register_DDRLocalEndAddress);
+}
+
+void DTCLib::DTC_Registers::IncrementDDRLocalEndAddress(size_t sz)
+{
+	uint32_t cur = ReadDDRLocalEndAddress();
+	SetDDRLocalEndAddress(static_cast<uint32_t>(cur + sz));
+}
 
 //
 // FPGA Registers

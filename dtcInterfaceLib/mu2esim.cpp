@@ -212,7 +212,7 @@ int mu2esim::read_data(int chn, void **buffer, int tmo_ms)
 			auto disposeOfBuffer = true;
 
 			TRACE(17, "mu2esim::read_data: Checking conditions for putting this buffer back on the queue");
-			if ((registers_[DTCLib::DTC_Register_DTCControl] & 0x4000000) == 0x4000000 && (registers_[DTCLib::DTC_Register_DetEmulationDMACount] == 0 || registers_[DTCLib::DTC_Register_DetEmulationDMACount] >= detSimLoopCount_))
+			if ((registers_[DTCLib::DTC_Register_DTCControl] & 0x4000000) == 0x4000000 && (registers_[DTCLib::DTC_Register_DetEmulationDMACount] == 0 || registers_[DTCLib::DTC_Register_DetEmulationDMACount] > detSimLoopCount_))
 			{
 				TRACE(17, "mu2esim::read_data: Conditions met. Putting the buffer back on the queue");
 				registers_[DTCLib::DTC_Register_DDRLocalStartAddress]++;
@@ -265,12 +265,10 @@ int mu2esim::write_data(int chn, void *buffer, size_t bytes)
 	if (chn == 0)
 	{
 		TRACE(17, "mu2esim::write_data: adding buffer to simulated DDR memory");
-		if (bytes <= sizeof(mu2e_databuff_t) - sizeof(uint64_t))
+		if (bytes <= sizeof(mu2e_databuff_t))
 		{
-			uint64_t bufSize = bytes + 8;
 			auto* lpBuf = reinterpret_cast<mu2e_databuff_t*>(new mu2e_databuff_t());
-			memcpy(*lpBuf, &bufSize, sizeof(uint64_t));
-			memcpy(static_cast<unsigned char*>(*lpBuf) + 8, buffer, bytes*sizeof(uint8_t));
+			memcpy(*lpBuf, buffer, bytes*sizeof(uint8_t));
 			ddrSim_.push(lpBuf);
 			registers_[DTCLib::DTC_Register_DDRLocalEndAddress]++;
 			return 0;
@@ -376,7 +374,7 @@ int  mu2esim::write_register(uint16_t address, int tmo_ms, uint32_t data)
 	if (address == 0x9100) // DTC Control
 	{
 		std::bitset<32> dataBS(data);
-		if (dataBS[30] == 1)
+		if (dataBS[30] == 1 && dataBS[26] == 0)
 		{
 			TRACE(19, "mu2esim::write_register: CFO Emulator Enable Detected!");
 			cancelCFO_ = true;
@@ -392,6 +390,10 @@ int  mu2esim::write_register(uint16_t address, int tmo_ms, uint32_t data)
 				CFOEmulator_();
 			}
 		}
+                else if(dataBS[26] == 1 && dataBS[30] == 1)
+		  {
+		    TRACE(19, "mu2esim::write_register: IGNORING CFO Emulator Enable because we're in Detector Simulator mode!");
+		  }
 	}
 	return 0;
 }

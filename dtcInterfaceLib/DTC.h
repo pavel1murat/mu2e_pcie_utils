@@ -66,6 +66,7 @@ namespace DTCLib
 		void* lastReadPtr_;
 		void* nextReadPtr_;
 		void* dcsReadPtr_;
+		bool goForever_;
 	};
 }
 #endif

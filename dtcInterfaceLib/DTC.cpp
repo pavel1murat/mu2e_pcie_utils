@@ -14,25 +14,29 @@
 DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode) : DTC_Registers(mode),
 daqbuffer_(nullptr), buffers_used_(0), dcsbuffer_(nullptr),
 bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
-lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
+lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr), goForever_(false)
 {
 #ifdef _WIN32
 #pragma warning(disable: 4996)
 #endif
-	char* sim = getenv("DTCLIB_SIM_FILE_NAME");
+	char* sim = getenv("DTCLIB_SIM_FILE");
 	if (sim != NULL)
 	{
 		std::ifstream is(sim, std::ifstream::binary);
-		while(is)
+		while (is && is.good())
 		{
-			uint64_t sz;
-			is.read((char*)&sz, sizeof(uint64_t));
-			is.seekg(-1 * (int)sizeof(uint64_t), std::ios_base::cur);
-			mu2e_databuff_t buf;
-			is.read((char*)buf, sz);
-			WriteDetectorEmulatorData(&buf, sz);
+			TRACE(4, "Reading a DMA from file...");
+			mu2e_databuff_t* buf = (mu2e_databuff_t*)new mu2e_databuff_t();
+			is.read((char*)buf, sizeof(uint64_t));
+			uint64_t sz = *((uint64_t*)*buf);
+			TRACE(4, "Size is %llu, writing to device", (long long unsigned)sz);
+			is.read((char*)buf + 8, sz - sizeof(uint64_t));
+			if (sz > 0) {
+				WriteDetectorEmulatorData(buf, sz);
+			}
 		}
 		is.close();
+		EnableDetectorEmulator();
 	}
 }
 
@@ -393,7 +397,8 @@ void DTCLib::DTC::WriteDetectorEmulatorData(mu2e_databuff_t* buf, size_t sz)
 	{
 		sz = dmaSize_;
 	}
-
+	uint32_t oldWritePointer = ReadDDRLocalEndAddress();
+	SetDDRLocalEndAddress(0xFFFFFFFF);
 	int retry = 3;
 	int errorCode;
 	do
@@ -402,6 +407,17 @@ void DTCLib::DTC::WriteDetectorEmulatorData(mu2e_databuff_t* buf, size_t sz)
 		errorCode = device_.write_data(DTC_DMA_Engine_DAQ, buf, sz);
 		retry--;
 	} while (retry > 0 && errorCode != 0);
+	SetDDRLocalEndAddress(oldWritePointer);
+	IncrementDDRLocalEndAddress(sz);
+	if (!goForever_)
+	{
+		TRACE(10, "DTC::WriteDetectorEmulatorData: Incrementing DMACount to %lu", (long unsigned)ReadDetectorEmulationDMACount());
+		IncrementDetectorEmulationDMACount();
+	}
+	else
+	{
+		TRACE(10, "DTC::WriteDetectorEmulatorData: NOT Incrementing DMACount because we want to go forever!");
+	}
 	if (errorCode != 0)
 	{
 		throw DTC_IOErrorException();
