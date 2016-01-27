@@ -38,3 +38,5 @@ FILE(COPY web DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin/web DESTINATION ${${product}_bin_dir})
 
 cet_script(updateMu2e.sh Setup_DTC.sh)
+
+add_subdirectory(test)
