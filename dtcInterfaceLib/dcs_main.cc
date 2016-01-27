@@ -34,7 +34,6 @@
 #define TRACE_NAME "MU2EDEV"
 
 using namespace DTCLib;
-using namespace std;
 
 unsigned getOptionValue(int *index, char **argv[])
 {
@@ -78,16 +77,16 @@ std::string getOptionString(int *index, char **argv[])
 
 void printHelpMsg()
 {
-	cout << "Usage: rocUtil [options] [read_register,reset_roc,write_register,write_extregister,test_read,read_release,toggle_serdes]" << endl;
-	cout << "Options are:" << endl
-		<< "    -h: This message." << endl
-		<< "    -n: Number of times to repeat test. (Default: 1)" << endl
-		<< "    -d: Delay between tests, in us (Default: 0)." << endl
-		<< "    -w: Data to write to address" << endl
-		<< "    -a: Address to write" << endl
-		<< "    -b: Block address (for write_rocext)" << endl
-		<< "    -q: Quiet mode (Don't print requests)" << endl
-		<< "    -Q: Really Quiet mode (Try not to print anything)" << endl;
+	std::cout << "Usage: rocUtil [options] [read_register,reset_roc,write_register,write_extregister,test_read,read_release,toggle_serdes]" << std::endl;
+	std::cout << "Options are:" << std::endl
+		<< "    -h: This message." << std::endl
+		<< "    -n: Number of times to repeat test. (Default: 1)" << std::endl
+		<< "    -d: Delay between tests, in us (Default: 0)." << std::endl
+		<< "    -w: Data to write to address" << std::endl
+		<< "    -a: Address to write" << std::endl
+		<< "    -b: Block address (for write_rocext)" << std::endl
+		<< "    -q: Quiet mode (Don't print requests)" << std::endl
+		<< "    -Q: Really Quiet mode (Try not to print anything)" << std::endl;
 	exit(0);
 }
 
@@ -102,7 +101,7 @@ main(int	argc
 	unsigned address = 0;
 	unsigned data = 0;
 	unsigned block = 0;
-	string op = "";
+	std::string op = "";
 
 	for (int optind = 1; optind < argc; ++optind)
 	{
@@ -133,7 +132,7 @@ main(int	argc
 				reallyQuiet = true;
 				break;
 			default:
-				cout << "Unknown option: " << argv[optind] << endl;
+				std::cout << "Unknown option: " << argv[optind] << std::endl;
 				printHelpMsg();
 				break;
 			case 'h':
@@ -143,13 +142,13 @@ main(int	argc
 		}
 		else
 		{
-			op = string(argv[optind]);
+			op = std::string(argv[optind]);
 		}
 	}
 
-	cout.setf(std::ios_base::boolalpha);
-	cout << "Options are: "
-		<< "Operation: " << string(op)
+	std::cout.setf(std::ios_base::boolalpha);
+	std::cout << "Options are: "
+		<< "Operation: " << std::string(op)
 		<< ", Num: " << number
 		<< ", Delay: " << delay
 		<< ", Address: " << address
@@ -157,18 +156,18 @@ main(int	argc
 		<< ", Block: " << block
 		<< ", Quiet Mode: " << quiet
 		<< ", Really Quiet Mode: " << reallyQuiet
-		<< endl;
+		<< std::endl;
 
 	if (op == "read_register")
 	{
-		cout << "Operation \"read_register\"" << endl;
+		std::cout << "Operation \"read_register\"" << std::endl;
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		auto rocdata = thisDTC->ReadROCRegister(DTC_Ring_0, DTC_ROC_0, address);
-		if (!reallyQuiet) cout << rocdata << '\n';
+		if (!reallyQuiet) std::cout << rocdata << '\n';
 	}
 	else if (op == "reset_roc")
 	{
-		cout << "Operation \"reset_roc\"" << endl;
+		std::cout << "Operation \"reset_roc\"" << std::endl;
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 12, 1, 0x11);
 		thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 11, 1, 0x11);
@@ -178,19 +177,19 @@ main(int	argc
 	}
 	else if (op == "write_register")
 	{
-		cout << "Operation \"write_register\"" << endl;
+		std::cout << "Operation \"write_register\"" << std::endl;
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		thisDTC->WriteROCRegister(DTC_Ring_0, DTC_ROC_0, address, data);
 	}
 	else if (op == "write_extregister")
 	{
-		cout << "Operation \"write_extregister\"" << endl;
+		std::cout << "Operation \"write_extregister\"" << std::endl;
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, block, address, data);
 	}
 	else if (op == "test_read")
 	{
-		cout << "Operation \"test_read\"" << endl;
+		std::cout << "Operation \"test_read\"" << std::endl;
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now
 
@@ -199,7 +198,7 @@ main(int	argc
 
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
-			if (!reallyQuiet) cout << "Buffer Read " << ii << endl;
+			if (!reallyQuiet) std::cout << "Buffer Read " << ii << std::endl;
 			mu2e_databuff_t* buffer;
 			int tmo_ms = 1500;
 			int sts = device->read_data(DTC_DMA_Engine_DCS, (void**)&buffer, tmo_ms);
@@ -216,7 +215,7 @@ main(int	argc
 				{
 					for (unsigned line = 0; line < (unsigned)(ceil((bufSize - 8) / 16)); ++line)
 					{
-						cout << "0x" << hex << setw(5) << setfill('0') << line << "0: ";
+						std::cout << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
 						//for (unsigned byte = 0; byte < 16; ++byte)
 						for (unsigned byte = 0; byte < 8; ++byte)
 						{
@@ -224,21 +223,21 @@ main(int	argc
 							{
 								uint16_t thisWord = (((uint16_t*)buffer)[4 + (line * 8) + byte]);
 								//uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
-								cout << setw(4) << (int)thisWord << " ";
+								std::cout << std::setw(4) << (int)thisWord << " ";
 							}
 						}
-						cout << endl;
+						std::cout << std::endl;
 					}
 				}
 			}
-			if (!reallyQuiet) cout << endl << endl;
+			if (!reallyQuiet) std::cout << std::endl << std::endl;
 			device->read_release(DTC_DMA_Engine_DCS, 1);
 			if (delay > 0) usleep(delay);
 		}
 	}
 	else if (op == "toggle_serdes")
 	{
-		cout << "Setting SERDES Oscillator Clock to 2.5 Gbps" << endl;
+		std::cout << "Setting SERDES Oscillator Clock to 2.5 Gbps" << std::endl;
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
                 if(!thisDTC->ReadSERDESOscillatorClock()) 
 		{
