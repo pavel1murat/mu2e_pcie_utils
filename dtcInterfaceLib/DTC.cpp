@@ -36,6 +36,7 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr), goForever_(f
 			}
 		}
 		is.close();
+		EnableDetectorEmulator();
 	}
 }
 

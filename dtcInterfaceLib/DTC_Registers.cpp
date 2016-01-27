@@ -118,7 +118,6 @@ DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode, bool set
 		SetDDRLocalEndAddress(1);
 		SetDetectorEmulationDMACount(0);
 		SetDetectorEmulationDMADelayCount(0);
-		EnableDetectorEmulator();
 	}
 	ReadMinDMATransferLength();
 
