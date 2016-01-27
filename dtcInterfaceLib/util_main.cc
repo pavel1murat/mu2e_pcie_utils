@@ -407,7 +407,8 @@ main(int	argc
 			unsigned ii = 0;
 			for (; ii < number; ++ii)
 			{
-				uint64_t byteCount = (1 + packetCount) * 16 * sizeof(uint8_t);
+				uint64_t byteCount = (1 + packetCount) * 16 * sizeof(uint8_t) + 8;
+				total_size += byteCount;
 				mu2e_databuff_t* buf = (mu2e_databuff_t*)new mu2e_databuff_t();
 				memcpy(buf, &byteCount, sizeof(byteCount));
 				uint64_t currentOffset = 8;
