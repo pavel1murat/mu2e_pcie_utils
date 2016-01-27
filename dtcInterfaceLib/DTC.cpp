@@ -408,7 +408,15 @@ void DTCLib::DTC::WriteDetectorEmulatorData(mu2e_databuff_t* buf, size_t sz)
 	} while (retry > 0 && errorCode != 0);
 	SetDDRLocalEndAddress(oldWritePointer);
 	IncrementDDRLocalEndAddress(sz);
-	if (!goForever_) { IncrementDetectorEmulationDMACount(); }
+	if (!goForever_)
+	{
+		TRACE(10, "DTC::WriteDetectorEmulatorData: Incrementing DMACount to %lu", (long unsigned)ReadDetectorEmulationDMACount());
+		IncrementDetectorEmulationDMACount();
+	}
+	else
+	{
+		TRACE(10, "DTC::WriteDetectorEmulatorData: NOT Incrementing DMACount because we want to go forever!");
+	}
 	if (errorCode != 0)
 	{
 		throw DTC_IOErrorException();
