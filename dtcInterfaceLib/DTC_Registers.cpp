@@ -113,9 +113,10 @@ DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode)
 	}
 	if (simMode_ == DTCLib::DTC_SimMode_DetectorEmulator)
 	{
-		EnableDetectorEmulator();
+		ResetDDRWriteAddress();
 		SetDetectorEmulationDMACount(0);
 		SetDetectorEmulationDMADelayCount(0);
+		EnableDetectorEmulator();
 	}
 	ReadMinDMATransferLength();
 
@@ -1571,6 +1572,22 @@ uint32_t DTCLib::DTC_Registers::ReadDetectorEmulationDMADelayCount()
 	return ReadRegister(DTC_Register_DetEmulationDelayCount);
 }
 
+// DDR Local End Address Register
+void DTCLib::DTC_Registers::SetDDRLocalEndAddress(uint32_t address)
+{
+	WriteRegister(address, DTC_Register_DDRLocalEndAddress);
+}
+
+uint32_t DTCLib::DTC_Registers::ReadDDRLocalEndAddress()
+{
+	return ReadRegister(DTC_Register_DDRLocalEndAddress);
+}
+
+void DTCLib::DTC_Registers::IncrementDDRLocalEndAddress(size_t sz)
+{
+	uint32_t cur = ReadDDRLocalEndAddress();
+	SetDDRLocalEndAddress(static_cast<uint32_t>(cur + sz));
+}
 
 //
 // FPGA Registers

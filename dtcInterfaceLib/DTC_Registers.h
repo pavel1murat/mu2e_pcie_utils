@@ -410,6 +410,11 @@ namespace DTCLib
 		void SetDetectorEmulationDMADelayCount(uint32_t count);
 		uint32_t ReadDetectorEmulationDMADelayCount();
 
+		// DDR Local End Address Register
+		void SetDDRLocalEndAddress(uint32_t address);
+		uint32_t ReadDDRLocalEndAddress();
+		void IncrementDDRLocalEndAddress(size_t sz);
+
 		// FPGA PROM Program Status Register
 		bool ReadFPGAPROMProgramFIFOFull();
 		bool ReadFPGAPROMReady();
