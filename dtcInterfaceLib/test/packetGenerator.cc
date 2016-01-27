@@ -75,6 +75,7 @@ void printHelpMsg()
 		<< "    -n <number>: Number of timestamps to generate. (Default: 200000)" << std::endl
 		<< "    -o <number>: Starting Timestamp offest. (Default: 1)." << std::endl
 		<< "    -v: Verbose mode" << std::endl
+		<< "    -V: Ridiculously verbose mode" << std::endl
 		<< "    -f <path>: Filename for output" << std::endl
 		<< "    -F: Do not output a file" << std::endl
 		<< "    -t: Generate Tracker packets (this is the default, default file name is TRK_packets.bin)" << std::endl
@@ -85,6 +86,7 @@ void printHelpMsg()
 int main(int argc, char** argv)
 {
 	bool verbose = false;
+	bool veryverbose = false;
 	bool save_adc_values = true;
 	double nevents = 200000; // Number of hits to generate
 	
@@ -112,6 +114,10 @@ int main(int argc, char** argv)
 				break;
 			case 'v':
 				verbose = true;
+				break;
+			case 'V':
+				verbose = true;
+				veryverbose = true;
 				break;
 			case 'f':
 				save_adc_values = true;
@@ -280,22 +286,16 @@ int main(int argc, char** argv)
 			std::bitset<16> curRingID = Ring_distribution(generator); // 3 bit ring ID
 			curRingID <<= 8; // Shift left by 8
 			std::bitset<16> secondEntry = (curROCID | headerPacketType | curRingID);
+			secondEntry[15] = 1; // valid bit
 			curDataBlock.push_back((adc_t)secondEntry.to_ulong());
 			// Third 16 bits of header (place-holder for number of packets in datablock)
 			curDataBlock.push_back(null_adc);
 			// Fourth through sixth 16 bits of header (timestamp)
-			std::bitset<48> timestamp = eventNum + starting_timestamp;
-			std::bitset<16> timestamp0 = 0;
-			std::bitset<16> timestamp1 = 0;
-			std::bitset<16> timestamp2 = 0;
-			for (int i = 0; i < 16; i++) {
-				timestamp0[i] = timestamp[i + 16 * 0];
-				timestamp1[i] = timestamp[i + 16 * 1];
-				timestamp2[i] = timestamp[i + 16 * 2];
-			}
-			curDataBlock.push_back((adc_t)timestamp0.to_ulong());
-			curDataBlock.push_back((adc_t)timestamp1.to_ulong());
-			curDataBlock.push_back((adc_t)timestamp2.to_ulong());
+			uint64_t timestamp = eventNum + starting_timestamp;
+			curDataBlock.push_back(static_cast<adc_t>(timestamp & 0xFFFF));
+			curDataBlock.push_back(static_cast<adc_t>((timestamp >> 16) & 0xFFFF));
+			curDataBlock.push_back(static_cast<adc_t>((timestamp >> 32) & 0xFFFF));
+
 			// Seventh 16 bits of header (data packet format version and status)
 			adc_t status = 0; // 0 Corresponds to "Timestamp has valid data"
 			adc_t formatVersion = (5 << 8); // Using 5 for now
@@ -430,6 +430,10 @@ int main(int argc, char** argv)
 			adc_t numDataPackets = packetVector.size() / 8;
 			curDataBlock[2] = numDataPackets;
 
+			// Fill in the byte count field of the header packet
+			adc_t numBytes = (numDataPackets + 1) * 16;
+			curDataBlock[0] = numBytes;
+
 			// Append the data packets after the header packet in the DataBlock
 			curDataBlock.insert(curDataBlock.end(), packetVector.begin(), packetVector.end());
 			curDataBlockVector.push_back(curDataBlock);
@@ -479,14 +483,14 @@ int main(int argc, char** argv)
 		for (size_t j = 0, curDMABlockSize = 0, numDataBlocksInCurDMABlock = 0; j<timeStampVector[i].size(); j++) {
 			numDataBlocksInCurDMABlock++; // Increment number of DataBlocks in the current DMA block
 			curDMABlockSize += timeStampVector[i][j].size() * 2; // Size of current data block in 8bit words
-			assert(curDMABlockSize <= max_DMA_block_size);
+			assert(curDMABlockSize <= max_DMA_block_size - 8);
 			if (j == timeStampVector[i].size() - 1) {
 				dataBlockPartition.push_back(numDataBlocksInCurDMABlock);
-				dataBlockPartitionSizes.push_back(curDMABlockSize);
+				dataBlockPartitionSizes.push_back(curDMABlockSize + 8);
 			}
-			else if (curDMABlockSize + (2 * timeStampVector[i][j + 1].size()) > max_DMA_block_size) {
+			else if (curDMABlockSize + (2 * timeStampVector[i][j + 1].size()) > max_DMA_block_size - 8) {
 				dataBlockPartition.push_back(numDataBlocksInCurDMABlock);
-				dataBlockPartitionSizes.push_back(curDMABlockSize);
+				dataBlockPartitionSizes.push_back(curDMABlockSize + 8);
 				curDMABlockSize = 0;
 				numDataBlocksInCurDMABlock = 0;
 			}
@@ -527,7 +531,7 @@ int main(int argc, char** argv)
 	std::cout << std::endl << "Length of final adc_t array: " << masterVector.size() << std::endl;
 
 	// Print contents of final adc_t array:
-	if (verbose) {
+	if (veryverbose) {
 		std::cout << "Contents of final adc_t array: " << std::endl;
 		for (size_t i = 0; i < masterVector.size(); i++) {
 			std::bitset<16> curEntry = masterVector[i];
@@ -539,6 +543,7 @@ int main(int argc, char** argv)
 	}
 
 	// Save contents of final adc_t array to binary file
+	std::cout << "Writing generated data to file " << outputFile << std::endl;
 	if (save_adc_values) {
 		for (size_t i = 0; i < masterVector.size(); i++) {
 			binFile.write(reinterpret_cast<const char *>(&(masterVector[i])), sizeof(adc_t));

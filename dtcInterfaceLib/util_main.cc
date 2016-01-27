@@ -600,8 +600,8 @@ main(int	argc
 				rtCount++;
 				startRT = endDTC;
 
-				TRACE(19, "util_main %llu packets returned", (unsigned long long)data.size());
-				if (!reallyQuiet) std::cout << data.size() << " packets returned\n";
+				TRACE(19, "util_main %llu DataBlocks returned", (unsigned long long)data.size());
+				if (!reallyQuiet) std::cout << data.size() << " DataBlocks returned\n";
 				packetsProcessed += static_cast<int>(data.size());
 				for (size_t i = 0; i < data.size(); ++i)
 				{
@@ -616,9 +616,9 @@ main(int	argc
 						if (incrementTimestamp && h2.GetTimestamp().GetTimestamp(true) <= timestampOffset + number) {
 							ii += h2.GetTimestamp().GetTimestamp(true) - expectedTS;
 						}
-						expectedTS = h2.GetTimestamp().GetTimestamp(true) + (incrementTimestamp ? 1 : 0);
+						expectedTS = h2.GetTimestamp().GetTimestamp(true);
 					}
-					else
+					else if(i == data.size() - 1)
 					{
 						expectedTS += (incrementTimestamp ? 1 : 0);
 					}
