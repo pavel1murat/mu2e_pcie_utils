@@ -396,7 +396,8 @@ void DTCLib::DTC::WriteDetectorEmulatorData(mu2e_databuff_t* buf, size_t sz)
 	{
 		sz = dmaSize_;
 	}
-
+	uint32_t oldWritePointer = ReadDDRLocalEndAddress();
+	SetDDRLocalEndAddress(0xFFFFFFFF);
 	int retry = 3;
 	int errorCode;
 	do
@@ -405,6 +406,7 @@ void DTCLib::DTC::WriteDetectorEmulatorData(mu2e_databuff_t* buf, size_t sz)
 		errorCode = device_.write_data(DTC_DMA_Engine_DAQ, buf, sz);
 		retry--;
 	} while (retry > 0 && errorCode != 0);
+	SetDDRLocalEndAddress(oldWritePointer);
 	IncrementDDRLocalEndAddress(sz);
 	if (errorCode != 0)
 	{

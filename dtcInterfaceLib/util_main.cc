@@ -403,6 +403,7 @@ main(int	argc
 			std::cout << "Sending data to DTC" << std::endl;
 			thisDTC->ResetDDRWriteAddress();
 			thisDTC->SetDetectorEmulationDMACount(1);
+			thisDTC->SetDDRLocalEndAddress(0xFFFFFFFF);
 			size_t total_size = 0;
 			unsigned ii = 0;
 			for (; ii < number; ++ii)
