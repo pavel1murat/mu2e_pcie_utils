@@ -70,15 +70,16 @@ DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode) : device_(), simMode_(mod
 		}
 	}
 
+	bool setupDetectorEmulator = false;
 	char* file = getenv("DTCLIB_SIM_FILE");
 	if (file != NULL) {
-		simMode_ = DTCLib::DTC_SimMode_DetectorEmulator;
+		setupDetectorEmulator = true;
 	}
 
-	SetSimMode(simMode_);
+	SetSimMode(simMode_, setupDetectorEmulator);
 }
 
-DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode)
+DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode, bool setupDetectorEmulator)
 {
 	simMode_ = mode;
 	device_.init(simMode_);
@@ -111,7 +112,7 @@ DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode)
 		SetInternalSystemClock();
 		DisableTiming();
 	}
-	if (simMode_ == DTCLib::DTC_SimMode_DetectorEmulator)
+	if (setupDetectorEmulator)
 	{
 		ResetDDRWriteAddress();
 		SetDDRLocalEndAddress(1);

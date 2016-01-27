@@ -215,7 +215,7 @@ namespace DTCLib
 			return simMode_;
 		}
 
-		DTC_SimMode SetSimMode(DTC_SimMode mode);
+		DTC_SimMode SetSimMode(DTC_SimMode mode, bool setupDetectorEmulator = false);
 
 		//
 		// DTC Register Dumps
