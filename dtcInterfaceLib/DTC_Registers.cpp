@@ -116,7 +116,7 @@ DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode, bool set
 	{
 		ResetDDRWriteAddress();
 		SetDDRLocalEndAddress(1);
-		SetDetectorEmulationDMACount(0);
+		SetDetectorEmulationDMACount(1);
 		SetDetectorEmulationDMADelayCount(0);
 		EnableDetectorEmulator();
 	}

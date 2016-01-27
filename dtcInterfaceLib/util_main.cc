@@ -433,6 +433,7 @@ main(int	argc
 			}
 
 			std::cout << "Total bytes written: " << total_size << std::endl;
+			thisDTC->SetDDRLocalEndAddress(total_size + 1);
 			thisDTC->EnableDetectorEmulator();
 		}
 
