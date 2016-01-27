@@ -26,30 +26,129 @@ enum PacketType
 	PacketType_CAL = 2,
 };
 
-int main() {
 
+unsigned getOptionValue(int *index, char **argv[])
+{
+	char* arg = (*argv)[*index];
+	if (arg[2] == '\0')
+	{
+		(*index)++;
+		return strtoul((*argv)[*index], NULL, 0);
+	}
+	else
+	{
+		int offset = 2;
+		if (arg[2] == '=')
+		{
+			offset = 3;
+		}
+
+		return strtoul(&(arg[offset]), NULL, 0);
+	}
+}
+
+std::string getOptionString(int *index, char **argv[])
+{
+	char* arg = (*argv)[*index];
+	if (arg[2] == '\0')
+	{
+		(*index)++;
+		return std::string((*argv)[*index]);
+	}
+	else
+	{
+		int offset = 2;
+		if (arg[2] == '=')
+		{
+			offset = 3;
+		}
+
+		return std::string(&(arg[offset]));
+	}
+}
+
+void printHelpMsg()
+{
+	std::cout << "Usage: packetGenerator [options]" << std::endl;
+	std::cout << "Options are:" << std::endl
+		<< "    -h: This message." << std::endl
+		<< "    -n <number>: Number of timestamps to generate. (Default: 200000)" << std::endl
+		<< "    -o <number>: Starting Timestamp offest. (Default: 1)." << std::endl
+		<< "    -v: Verbose mode" << std::endl
+		<< "    -f <path>: Filename for output" << std::endl
+		<< "    -F: Do not output a file" << std::endl
+		<< "    -t: Generate Tracker packets (this is the default, default file name is TRK_packets.bin)" << std::endl
+		<< "    -c: Generate Calorimeter packets (default file name is CAL_packets.bin)" << std::endl;
+	exit(0);
+}
+
+int main(int argc, char** argv)
+{
 	bool verbose = false;
 	bool save_adc_values = true;
 	double nevents = 200000; // Number of hits to generate
-
+	
 	// Packet type to generate
 	PacketType packetType = PacketType_TRK;
 
+	std::string outputFile = "";
 	size_t numADCSamples = 8;
 
 	// The timestamp count will be offset by the following amount:
-	size_t starting_timestamp = 0;
+	size_t starting_timestamp = 1;
+
+
+	for (int optind = 1; optind < argc; ++optind)
+	{
+		if (argv[optind][0] == '-')
+		{
+			switch (argv[optind][1])
+			{
+			case 'n':
+				nevents = getOptionValue(&optind, &argv);
+				break;
+			case 'o':
+				starting_timestamp = getOptionValue(&optind, &argv);
+				break;
+			case 'v':
+				verbose = true;
+				break;
+			case 'f':
+				save_adc_values = true;
+				outputFile = getOptionString(&optind, &argv);
+				break;
+			case 'F':
+				save_adc_values = false;
+				break;
+			case 't':
+				packetType = PacketType_TRK;
+				break;
+			case 'c':
+				packetType = PacketType_CAL;
+				break;
+			default:
+				std::cout << "Unknown option: " << argv[optind] << std::endl;
+				printHelpMsg();
+				break;
+			case 'h':
+				printHelpMsg();
+				break;
+			}
+		}
+	}
+
 
 	size_t max_DMA_block_size = 64000; // Maximum size in bytes of a DMA block
 	// Normally a DMA block begins when a new timestamp begins, however
 	// if the size of the DMA block will exceed the limit within the current
 	// timestamp, a new block is created
 
-	std::string outputFile = "TRK_packets.bin";
-	if (packetType == PacketType_CAL) {
+	if (outputFile == "" && packetType == PacketType_TRK) {
+		outputFile = "TRK_packets.bin";
+	}
+	else if (outputFile == "" && packetType == PacketType_CAL) {
 		outputFile = "CAL_packets.bin";
 	}
-
 	std::ofstream binFile;
 	if (save_adc_values) {
 		binFile.open(outputFile, std::ios::out | std::ios::app | std::ios::binary);
@@ -229,6 +328,7 @@ int main() {
 
 			switch (packetType) {
 			case PacketType_TRK:
+			{
 				// Generate TRK data packets
 
 				for (double curTime = minTime; curTime < maxTime && !exitWindow; curTime += stepSize) {
@@ -275,8 +375,10 @@ int main() {
 						packetVector.push_back((adc_t)0);
 					}
 				}
+			}
 				break;
 			case PacketType_CAL:
+			{
 				for (double curTime = minTime; curTime < maxTime && !exitWindow; curTime += stepSize) {
 					curVal = logn(curTime, cur_eta, cur_sigma, cur_Epeak, cur_norm);
 					if (!inWindow && curVal > threshold) {
@@ -317,6 +419,7 @@ int main() {
 						packetVector.push_back((adc_t)0);
 					}
 				}
+			}
 				break;
 			default:
 				break;
