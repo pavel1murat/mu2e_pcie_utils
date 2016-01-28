@@ -144,7 +144,7 @@ int main(int argc, char** argv)
 	}
 
 
-	size_t max_DMA_block_size = 64000; // Maximum size in bytes of a DMA block
+	size_t max_DMA_block_size = 32000; // Maximum size in bytes of a DMA block
 	// Normally a DMA block begins when a new timestamp begins, however
 	// if the size of the DMA block will exceed the limit within the current
 	// timestamp, a new block is created

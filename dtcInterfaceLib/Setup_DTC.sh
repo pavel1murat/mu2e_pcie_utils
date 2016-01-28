@@ -11,7 +11,11 @@ echo "Reinserting kernel modules..."
 lsmod | grep TRACE -q || insmod $TRACE_DIR/module/`uname -r`/TRACE.ko trace_allow_printk=1
 export TRACE_FILE=/proc/trace/buffer;tonM -nKERNEL 0-19  # poll noise is on lvls 22-23
 tonSg 0
+if [ -z $MRB_BUILDDIR ]; then
 lsmod | grep mu2e -q || insmod $PCIE_LINUX_KERNEL_MODULE_DIR/drivers/`uname -r`/mu2e.ko
+else
+lsmod | grep mu2e -q || insmod $MRB_BUILDDIR/pcie_linux_kernel_module/drivers/`uname -r`/mu2e.ko
+fi
 
 echo "Doing \"Super\" Reset Chants"
 my_cntl write 0x9100 0xa0000000  >/dev/null # reset DTC  reset serdes osc
