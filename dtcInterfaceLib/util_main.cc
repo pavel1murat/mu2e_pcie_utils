@@ -402,7 +402,7 @@ main(int	argc
 		{
 			std::cout << "Sending data to DTC" << std::endl;
 			thisDTC->ResetDDRWriteAddress();
-			thisDTC->SetDetectorEmulationDMACount(1);
+			thisDTC->SetDetectorEmulationDMACount(number);
 			thisDTC->SetDDRLocalEndAddress(0xFFFFFFFF);
 			size_t total_size = 0;
 			unsigned ii = 0;
@@ -467,7 +467,7 @@ main(int	argc
 				readoutRequestTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(endRequest - startRequest).count();
 				startRT = endRequest;
 			}
-			if (!reallyQuiet) std::cout << "Buffer Read " << ii << std::endl;
+			if (!reallyQuiet) std::cout << "Buffer Read " << std::dec << ii << std::endl;
 			mu2e_databuff_t* buffer;
 			int tmo_ms = 1500;
 			auto startDTC = std::chrono::high_resolution_clock::now();
