@@ -241,7 +241,9 @@ int main(int argc, char** argv)
 	}
 
 	// PRNG initialization
-	std::default_random_engine generator;
+    // Seed with a real random value, if available
+    std::random_device r;
+	std::default_random_engine generator(r());
 
 	std::normal_distribution<double> tau_distribution(nominal_tau, sigma_tau);
 	std::normal_distribution<double> sigma_distribution(nominal_sigma, sigma_sigma);

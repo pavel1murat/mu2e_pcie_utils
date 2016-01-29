@@ -14,7 +14,7 @@
 DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode) : DTC_Registers(mode),
 daqbuffer_(nullptr), buffers_used_(0), dcsbuffer_(nullptr),
 bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
-lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr), goForever_(false)
+lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 {
 #ifdef _WIN32
 #pragma warning(disable: 4996)
@@ -409,15 +409,8 @@ void DTCLib::DTC::WriteDetectorEmulatorData(mu2e_databuff_t* buf, size_t sz)
 	} while (retry > 0 && errorCode != 0);
 	SetDDRLocalEndAddress(oldWritePointer);
 	IncrementDDRLocalEndAddress(sz);
-	if (!goForever_)
-	{
-		TRACE(10, "DTC::WriteDetectorEmulatorData: Incrementing DMACount to %lu", (long unsigned)ReadDetectorEmulationDMACount());
-		IncrementDetectorEmulationDMACount();
-	}
-	else
-	{
-		TRACE(10, "DTC::WriteDetectorEmulatorData: NOT Incrementing DMACount because we want to go forever!");
-	}
+	TRACE(10, "DTC::WriteDetectorEmulatorData: Incrementing DMACount from %lu", (long unsigned)ReadDetectorEmulationDMACount());
+	IncrementDetectorEmulationDMACount();
 	if (errorCode != 0)
 	{
 		throw DTC_IOErrorException();
