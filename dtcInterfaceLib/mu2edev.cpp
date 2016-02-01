@@ -190,7 +190,7 @@ int mu2edev::read_release(int chn, unsigned num)
 		{
 			arg = (chn << 24) | (C2S << 16) | (num & 0xffff);// THIS OBIVOUSLY SHOULD BE A MACRO
 			retsts = ioctl(devfd_, M_IOC_BUF_GIVE, arg);
-			if (retsts != 0) { perror("M_IOC_BUF_GIVE"); exit(1); }
+			if (retsts != 0) { perror("M_IOC_BUF_GIVE"); }//exit(1); } // Don't exit for now
 
 			// increment our cached info
 			mu2e_channel_info_[chn][C2S].swIdx

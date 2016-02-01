@@ -20,9 +20,10 @@ fi
 echo "Doing \"Super\" Reset Chants"
 my_cntl write 0x9100 0xa0000000  >/dev/null # reset DTC  reset serdes osc
 my_cntl write 0x9100 0x00000000  >/dev/null  # clear reset
-rocUtil toggle_serdes
-rocUtil reset_roc
-rocUtil write_register -a 14 -w 0x010
+# v3.0 firmware doesn't have SERDES...doing this results in error!
+#rocUtil toggle_serdes
+#rocUtil reset_roc
+#rocUtil write_register -a 14 -w 0x010
 
 TRACE_NAME=MU2EDEV tonM -nMU2EDEV 0-31; tonM 0-31
 
