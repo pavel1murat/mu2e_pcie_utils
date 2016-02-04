@@ -309,7 +309,7 @@ int mu2edev::write_data(int chn, void *buffer, size_t bytes)
 			memcpy(data, buffer, bytes);
 			unsigned long arg = (chn << 24) | (bytes & 0xffffff);// THIS OBIVOUSLY SHOULD BE A MACRO
 			retsts = ioctl(devfd_, M_IOC_BUF_XMIT, arg);
-			if (retsts != 0) { perror("M_IOC_BUF_GIVE"); exit(1); }
+			if (retsts != 0) { perror("M_IOC_BUF_XMIT");} // exit(1); } // Take out the exit call for now
 			// increment our cached info
 			mu2e_channel_info_[chn][dir].swIdx
 				= idx_add(mu2e_channel_info_[chn][dir].swIdx, 1, chn, dir);
