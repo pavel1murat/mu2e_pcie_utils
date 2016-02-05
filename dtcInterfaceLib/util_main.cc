@@ -94,7 +94,7 @@ void printHelpMsg()
 		<< "    -t: Use DebugType flag (1st request gets ExternalDataWithFIFOReset, the rest get ExternalData)" << std::endl
 		<< "    -T: Set DebugType flag for ALL requests (0, 1, or 2)" << std::endl
 		<< "    -f: RAW Output file path" << std::endl
-		<< "    -g: Generate (and send) DMA blocks for testing the Detector Emulator" << std::endl;
+		<< "    -g: Generate (and send) N DMA blocks for testing the Detector Emulator (Default: 0)" << std::endl;
 	exit(0);
 }
 
@@ -109,7 +109,7 @@ main(int	argc
 	bool reallyQuiet = false;
 	bool rawOutput = false;
 	bool useCFOEmulator = false;
-	bool genDMABlocks = false;
+	unsigned genDMABlocks = 0;
 	std::string rawOutputFile = "/tmp/mu2eUtil.raw";
 	unsigned delay = 0;
 	unsigned number = 1;
@@ -152,7 +152,7 @@ main(int	argc
 				quiet = true;
 				break;
 			case 'g':
-				genDMABlocks = true;
+				genDMABlocks = getOptionValue(&optind, &argv);
 				break;
 			case 'Q':
 				quiet = true;
@@ -398,15 +398,15 @@ main(int	argc
 		mu2edev* device = thisDTC->GetDevice();
 		DTCSoftwareCFO *cfo = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet, false);
 
-		if (genDMABlocks)
+		if (genDMABlocks > 0)
 		{
 			std::cout << "Sending data to DTC" << std::endl;
 			thisDTC->ResetDDRWriteAddress();
-			thisDTC->SetDetectorEmulationDMACount(1);
+			thisDTC->SetDetectorEmulationDMACount(number);
 			thisDTC->SetDDRLocalEndAddress(0xFFFFFFFF);
 			size_t total_size = 0;
 			unsigned ii = 0;
-			for (; ii < number; ++ii)
+			for (; ii < genDMABlocks; ++ii)
 			{
 				uint64_t byteCount = (1 + packetCount) * 16 * sizeof(uint8_t) + 8;
 				total_size += byteCount;
@@ -467,7 +467,7 @@ main(int	argc
 				readoutRequestTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(endRequest - startRequest).count();
 				startRT = endRequest;
 			}
-			if (!reallyQuiet) std::cout << "Buffer Read " << ii << std::endl;
+			if (!reallyQuiet) std::cout << "Buffer Read " << std::dec << ii << std::endl;
 			mu2e_databuff_t* buffer;
 			int tmo_ms = 1500;
 			auto startDTC = std::chrono::high_resolution_clock::now();
@@ -554,9 +554,48 @@ main(int	argc
 		auto *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now
 
-		double totalIncTime = 0, totalSize = 0, totalDevTime = 0, totalRTTime = 0;
+		double totalIncTime = 0, totalSize = 0, totalDevTime = 0, totalRTTime = 0, totalWriteTime = 0;
 		int rtCount = 0;
 		auto startTime = std::chrono::high_resolution_clock::now();
+
+		if (genDMABlocks > 0)
+		{
+			std::cout << "Sending data to DTC" << std::endl;
+			thisDTC->ResetDDRWriteAddress();
+			size_t total_size = 0;
+			unsigned ii = 0;
+			for (; ii < genDMABlocks; ++ii)
+			{
+				uint64_t byteCount = (1 + packetCount) * 16 * sizeof(uint8_t) + 8;
+				total_size += byteCount;
+				mu2e_databuff_t* buf = (mu2e_databuff_t*)new mu2e_databuff_t();
+				memcpy(buf, &byteCount, sizeof(byteCount));
+				uint64_t currentOffset = 8;
+				uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
+				DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)0, DTC_DataStatus_Valid, DTC_Timestamp(ts));
+				DTC_DataPacket packet = header.ConvertToDataPacket();
+				memcpy((uint8_t*)buf + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
+				currentOffset += 16;
+				for (unsigned jj = 0; jj < packetCount; ++jj)
+				{
+					if (currentOffset + 16 > sizeof(mu2e_databuff_t)) { break; }
+					packet.SetWord(14, (jj + 1) & 0xFF);
+					memcpy((uint8_t*)buf + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
+					currentOffset += 16;
+				}
+
+				thisDTC->WriteDetectorEmulatorData(buf, byteCount);
+				totalSize += byteCount;
+				totalWriteTime += thisDTC->GetDeviceTime();
+				thisDTC->ResetDeviceTime();
+				delete buf;
+			}
+
+			std::cout << "Total bytes written: " << total_size << std::endl;
+			thisDTC->SetDetectorEmulationDMACount(number);
+			thisDTC->EnableDetectorEmulator();
+		}
+
 
 		DTCSoftwareCFO *theCFO = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet);
 		double readoutRequestTime = 0;
@@ -723,6 +762,10 @@ main(int	argc
 			<< "Readout Request Time: " << readoutRequestTime << " s." << std::endl
 			<< "Total Device Time: " << totalDevTime << " s." << std::endl
 			<< "Average Round-Trip time: " << rtTime << " s." << std::endl;
+		if (genDMABlocks)
+		{
+			std::cout << "DMA Writing Time: " << totalWriteTime << " s." << std::endl;
+		}
 	}
 	else
 	{

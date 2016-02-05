@@ -14,8 +14,8 @@ file=$1; shift
 fdir= DEVMOD=
 if   [ -d "${CETPKG_BUILD-}" ];then
     fdir="${CETPKG_BUILD-}"
-elif [ -d "${PCIE_LINUX_KERNEL_DRIVER_FQ_DIR-}" ];then
-    fdir="${PCIE_LINUX_KERNEL_DRIVER_FQ_DIR-}"
+elif [ -d "${PCIE_LINUX_KERNEL_MODULE_DIR-}" ];then
+    fdir="${PCIE_LINUX_KERNEL_MODULE_DIR-}"
 fi
 test -n "$fdir" && DEVMOD=`find $fdir -name pci_devel_main.ko | head -1`
 if [ -z "$DEVMOD" ];then

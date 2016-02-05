@@ -11,29 +11,31 @@
 #endif
 #define TRACE_NAME "MU2EDEV"
 
-DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode) : DTC_Registers(mode),
+DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode, std::string simFile) : DTC_Registers(mode),
 daqbuffer_(nullptr), buffers_used_(0), dcsbuffer_(nullptr),
 bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
-lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr), goForever_(false)
+lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 {
 #ifdef _WIN32
 #pragma warning(disable: 4996)
 #endif
 	char* sim = getenv("DTCLIB_SIM_FILE");
-	if (sim != NULL)
+	if (sim != NULL || simFile.size() > 0)
 	{
-		std::ifstream is(sim, std::ifstream::binary);
+		if (sim != NULL) { simFile = std::string(sim); }
+		std::ifstream is(simFile, std::ifstream::binary);
 		while (is && is.good())
 		{
-			TRACE(4, "Reading a DMA from file...");
-			mu2e_databuff_t* buf = (mu2e_databuff_t*)new mu2e_databuff_t();
+			TRACE(4, "Reading a DMA from file...%s", simFile.c_str());
+			mu2e_databuff_t* buf = reinterpret_cast<mu2e_databuff_t*>(new mu2e_databuff_t());
 			is.read((char*)buf, sizeof(uint64_t));
-			uint64_t sz = *((uint64_t*)*buf);
+			uint64_t sz = *((uint64_t*)buf);
 			TRACE(4, "Size is %llu, writing to device", (long long unsigned)sz);
 			is.read((char*)buf + 8, sz - sizeof(uint64_t));
 			if (sz > 0) {
 				WriteDetectorEmulatorData(buf, sz);
 			}
+			delete[] buf;
 		}
 		is.close();
 		EnableDetectorEmulator();
@@ -409,15 +411,8 @@ void DTCLib::DTC::WriteDetectorEmulatorData(mu2e_databuff_t* buf, size_t sz)
 	} while (retry > 0 && errorCode != 0);
 	SetDDRLocalEndAddress(oldWritePointer);
 	IncrementDDRLocalEndAddress(sz);
-	if (!goForever_)
-	{
-		TRACE(10, "DTC::WriteDetectorEmulatorData: Incrementing DMACount to %lu", (long unsigned)ReadDetectorEmulationDMACount());
-		IncrementDetectorEmulationDMACount();
-	}
-	else
-	{
-		TRACE(10, "DTC::WriteDetectorEmulatorData: NOT Incrementing DMACount because we want to go forever!");
-	}
+	TRACE(10, "DTC::WriteDetectorEmulatorData: Incrementing DMACount from %lu", (long unsigned)ReadDetectorEmulationDMACount());
+	IncrementDetectorEmulationDMACount();
 	if (errorCode != 0)
 	{
 		throw DTC_IOErrorException();

@@ -195,7 +195,7 @@ namespace DTCLib
 	class DTC_Registers
 	{
 	public:
-		DTC_Registers(DTC_SimMode mode = DTC_SimMode_Disabled);
+		DTC_Registers(DTC_SimMode mode = DTC_SimMode_Disabled, bool useDetectorEmulator = false);
 
 		//
 		// Device Access
