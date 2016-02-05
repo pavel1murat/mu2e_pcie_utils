@@ -25,7 +25,6 @@
 #endif
 #include "mu2esim.h"
 #include <vector>
-#include <forward_list>
 #include <cmath>
 #include "DTC_Registers.h"
 
@@ -388,6 +387,13 @@ int  mu2esim::write_register(uint16_t address, int tmo_ms, uint32_t data)
 
 void mu2esim::CFOEmulator_()
 {
+	if (cancelCFO_)
+	{
+		std::bitset<32> ctrlReg(registers_[0x9100]);
+		ctrlReg[30] = 0;
+		registers_[0x9100] = ctrlReg.to_ulong(); 
+		return;
+	}
 	DTCLib::DTC_Timestamp start(registers_[DTCLib::DTC_Register_CFOEmulationTimestampLow], static_cast<uint16_t>(registers_[DTCLib::DTC_Register_CFOEmulationTimestampHigh]));
 	if (currentTimestamp_.GetTimestamp(true) == 0 && start.GetTimestamp(true) != 0 && start.GetTimestamp(true) != 1) { closeBuffer_(true, start); }
 	auto count = registers_[DTCLib::DTC_Register_CFOEmulationNumRequests];
@@ -697,7 +703,7 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 
 void mu2esim::closeBuffer_(bool drop, DTCLib::DTC_Timestamp ts)
 {
-	memcpy(currentBuffer_.get(), &currentOffset_, sizeof(uint64_t));
+	memcpy(currentBuffer_.get()->data(), &currentOffset_, sizeof(uint64_t));
 	if (!drop) {
 		ddrSim_.push(currentBuffer_);
 	}
