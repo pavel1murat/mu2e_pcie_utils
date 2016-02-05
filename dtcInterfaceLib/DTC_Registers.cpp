@@ -12,7 +12,7 @@
 #endif
 #define TRACE_NAME "MU2EDEV"
 
-DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode) : device_(), simMode_(mode), dmaSize_(16)
+DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, bool useDetectorEmulator) : device_(), simMode_(mode), dmaSize_(16)
 {
 	for (int ii = 0; ii < 6; ++ii)
 	{
@@ -70,13 +70,7 @@ DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode) : device_(), simMode_(mod
 		}
 	}
 
-	bool setupDetectorEmulator = false;
-	char* file = getenv("DTCLIB_SIM_FILE");
-	if (file != NULL) {
-		setupDetectorEmulator = true;
-	}
-
-	SetSimMode(simMode_, setupDetectorEmulator);
+	SetSimMode(simMode_, useDetectorEmulator);
 }
 
 DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode, bool setupDetectorEmulator)

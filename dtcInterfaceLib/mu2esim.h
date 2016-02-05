@@ -6,7 +6,6 @@
 #ifndef MU2ESIM_HH
 #define MU2ESIM_HH 1
 
-#include <cstdint>
 #ifndef _WIN32
 #include "linux_driver/mymodule2/mu2e_mmap_ioctl.h" //
 #else
@@ -14,28 +13,28 @@
 #endif
 #include <unordered_map>
 #include <mutex>
-#include <set>
 #include <map>
-#include <atomic>
 #include <thread>
+#include <memory>
 #include <queue>
 #include "DTC_Types.h"
 #include "DTC_Packets.h"
 
 #define SIM_BUFFCOUNT 4U
 
-class LockingBufferQueue
+class DDRSimulator
 {
 public:
-	LockingBufferQueue() : mutex_(), queue_() {}
-	mu2e_databuff_t* pop()
+	DDRSimulator() : mutex_(), queue_() {}
+	virtual ~DDRSimulator()
 	{
-		std::lock_guard<std::mutex> lock(mutex_);
-		auto out = queue_.front();
-		queue_.pop();
-		return out;
+			std::lock_guard<std::mutex> lock(mutex_);
+			while (!queue_.empty())
+			{
+				queue_.pop();
+			}
 	}
-	void push(mu2e_databuff_t* buf)
+	void push(std::shared_ptr<std::vector<uint8_t>> buf)
 	{
 		std::lock_guard<std::mutex> lock(mutex_);
 		queue_.push(buf);
@@ -45,18 +44,17 @@ public:
 		std::lock_guard<std::mutex> lock(mutex_);
 		return queue_.empty();
 	}
-	virtual ~LockingBufferQueue()
+	std::shared_ptr<std::vector<uint8_t>> pop(bool recycle)
 	{
 		std::lock_guard<std::mutex> lock(mutex_);
-		while(!queue_.empty())
-		{
-			delete[] queue_.front();
-			queue_.pop();
-		}
+		auto vec = queue_.front();
+		queue_.pop();
+		if (recycle) queue_.push(vec);
+		return vec;
 	}
 private:
 	std::mutex mutex_;
-	std::queue<mu2e_databuff_t*> queue_;
+	std::queue<std::shared_ptr<std::vector<uint8_t>>> queue_;
 };
 
 class mu2esim
@@ -93,13 +91,12 @@ private:
 	typedef bool readoutRequestData[6];
 	std::map<uint64_t, readoutRequestData> readoutRequestReceived_;
 
-	LockingBufferQueue ddrSim_;
-	LockingBufferQueue dcsResponses_;
-	LockingBufferQueue spareBuffers_;
+	DDRSimulator ddrSim_;
+	DDRSimulator dcsResponses_;
 
 	uint64_t currentOffset_;
 	DTCLib::DTC_Timestamp currentTimestamp_;
-	mu2e_databuff_t* currentBuffer_;
+	std::shared_ptr<std::vector<uint8_t>> currentBuffer_;
 };
 
 #endif

@@ -27,14 +27,15 @@
 
 using namespace DTCLib;
 void usage() {
-	std::cout << "Usage: tester [loops = 1000] [simMode = 1]" << std::endl;
+	std::cout << "Usage: tester [loops = 1000] [simMode = 1] [simFile = \"\"]" << std::endl;
 	exit(1);
 }
 
 int main(int argc, char* argv[])
 {
-	int loops = 10;
+	int loops = 1000;
 	int modeint = 1;
+	std::string simFile = "";
 	bool badarg = false;
 	if (argc > 1)
 	{
@@ -47,11 +48,16 @@ int main(int argc, char* argv[])
 		if (tmp > 0) modeint = tmp;
 		else badarg = true;
 	}
-	if (argc > 3) badarg = true;
+	if(argc > 3)
+	{
+		simFile = std::string(argv[3]);
+	}
+	if (argc > 4) badarg = true;
 	if (badarg) usage(); // Exits.
 
+	TRACE(1, "simFile is %s", simFile.c_str());
 	DTC_SimMode mode = DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::to_string(modeint));
-	DTC *thisDTC = new DTC(mode);
+	DTC *thisDTC = new DTC(mode, simFile);
 	TRACE(1, "thisDTC->ReadSimMode: %i", thisDTC->ReadSimMode());
 	DTCSoftwareCFO *theCFO = new DTCSoftwareCFO(thisDTC, true);
 	long loopCounter = 0;
