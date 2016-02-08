@@ -11,7 +11,7 @@
 #endif
 #define TRACE_NAME "MU2EDEV"
 
-DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode, std::string simFile) : DTC_Registers(mode),
+DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode, std::string simFile, bool loadFile) : DTC_Registers(mode),
 daqbuffer_(nullptr), buffers_used_(0), dcsbuffer_(nullptr),
 bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
 lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
@@ -19,9 +19,15 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 #ifdef _WIN32
 #pragma warning(disable: 4996)
 #endif
+  if(loadFile) {
 	char* sim = getenv("DTCLIB_SIM_FILE");
 	if (sim != NULL || simFile.size() > 0)
 	{
+		ResetDDRWriteAddress();
+		SetDDRLocalEndAddress(1);
+		SetDetectorEmulationDMACount(0);
+		SetDetectorEmulationDMADelayCount(0);
+	
 		if (sim != NULL) { simFile = std::string(sim); }
 		std::ifstream is(simFile, std::ifstream::binary);
 		while (is && is.good())
@@ -40,6 +46,7 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 		is.close();
 		EnableDetectorEmulator();
 	}
+}
 }
 
 DTCLib::DTC::~DTC()

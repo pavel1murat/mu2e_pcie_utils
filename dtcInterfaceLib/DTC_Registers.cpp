@@ -12,7 +12,7 @@
 #endif
 #define TRACE_NAME "MU2EDEV"
 
-DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, bool useDetectorEmulator) : device_(), simMode_(mode), dmaSize_(16)
+DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode) : device_(), simMode_(mode), dmaSize_(16)
 {
 	for (int ii = 0; ii < 6; ++ii)
 	{
@@ -70,10 +70,10 @@ DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, bool useDetectorEmulator)
 		}
 	}
 
-	SetSimMode(simMode_, useDetectorEmulator);
+	SetSimMode(simMode_);
 }
 
-DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode, bool setupDetectorEmulator)
+DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode)
 {
 	simMode_ = mode;
 	device_.init(simMode_);
@@ -105,13 +105,6 @@ DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode, bool set
 		}
 		SetInternalSystemClock();
 		DisableTiming();
-	}
-	if (setupDetectorEmulator)
-	{
-		ResetDDRWriteAddress();
-		SetDDRLocalEndAddress(1);
-		SetDetectorEmulationDMACount(0);
-		SetDetectorEmulationDMADelayCount(0);
 	}
 	ReadMinDMATransferLength();
 
