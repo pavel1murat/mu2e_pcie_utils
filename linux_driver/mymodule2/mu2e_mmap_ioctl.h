@@ -262,8 +262,7 @@ typedef struct
 
 //------------------------------------------
 
-typedef unsigned char filemu2e_databuff_t[0x10000];
-
+typedef unsigned char mu2e_databuff_t[0x10000];
 
 
 typedef enum {
