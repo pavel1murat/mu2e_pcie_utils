@@ -22,6 +22,7 @@ namespace DTCLib
 		// Data read-out
 		std::vector<void*> GetData(DTC_Timestamp when = DTC_Timestamp());
 		std::string GetJSONData(DTC_Timestamp when = DTC_Timestamp());
+		void WriteSimFileToDTC(std::string file);
 
 
 		// DCS Register R/W

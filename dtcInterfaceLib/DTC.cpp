@@ -24,28 +24,9 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 	if (sim != NULL || simFile.size() > 0)
 	{
 		EnableDetectorEmulatorMode();
-		ResetDDRWriteAddress();
-		SetDDRLocalEndAddress(1);
-		SetDetectorEmulationDMACount(0);
-		SetDetectorEmulationDMADelayCount(0);
 	
 		if (sim != NULL) { simFile = std::string(sim); }
-		std::ifstream is(simFile, std::ifstream::binary);
-		while (is && is.good())
-		{
-			TRACE(4, "Reading a DMA from file...%s", simFile.c_str());
-			mu2e_databuff_t* buf = reinterpret_cast<mu2e_databuff_t*>(new mu2e_databuff_t());
-			is.read((char*)buf, sizeof(uint64_t));
-			uint64_t sz = *((uint64_t*)buf);
-			TRACE(4, "Size is %llu, writing to device", (long long unsigned)sz);
-			is.read((char*)buf + 8, sz - sizeof(uint64_t));
-			if (sz > 0) {
-				WriteDetectorEmulatorData(buf, sz);
-			}
-			delete[] buf;
-		}
-		is.close();
-		EnableDetectorEmulator();
+		WriteSimFileToDTC(simFile);
 	}
 }
 }
@@ -213,6 +194,36 @@ std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when)
 
 	TRACE(19, "DTC::GetJSONData RETURN");
 	return ss.str();
+}
+
+void DTCLib::DTC::WriteSimFileToDTC(std::string file)
+{
+	EnableDetectorEmulatorMode();
+	ResetDDRWriteAddress();
+	SetDDRLocalEndAddress(1);
+	SetDetectorEmulationDMACount(0);
+	SetDetectorEmulationDMADelayCount(0);
+
+	std::ifstream is(file, std::ifstream::binary);
+	while (is && is.good())
+	{
+		TRACE(4, "Reading a DMA from file...%s", file.c_str());
+		mu2e_databuff_t* buf = reinterpret_cast<mu2e_databuff_t*>(new mu2e_databuff_t());
+		is.read((char*)buf, sizeof(uint64_t));
+		uint64_t* sz = (uint64_t*)buf;
+		if(*sz < 64)
+		{
+			*sz = 64;
+		}
+		TRACE(4, "Size is %llu, writing to device", (long long unsigned)sz);
+		is.read((char*)buf + 8, *sz - sizeof(uint64_t));
+		if (sz > 0) {
+			WriteDetectorEmulatorData(buf, *sz);
+		}
+		delete[] buf;
+	}
+	is.close();
+	EnableDetectorEmulator();
 }
 
 // ROC Register Functions
