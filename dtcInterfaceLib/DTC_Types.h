@@ -878,20 +878,6 @@ namespace DTCLib
 		}
 	};
 
-	struct DTC_PerfMonCounters
-	{
-		uint32_t TXPCIEByteCount;
-		uint32_t RXPCIEByteCount;
-		uint32_t TXPCIEPayloadCount;
-		uint32_t RXPCIEPayloadCount;
-		uint32_t InitialCompletionDataCredits;
-		uint32_t InitialCompletionHeaderCredits;
-		uint32_t InitialNPDCredits;
-		uint32_t InitialNPHCredits;
-		uint32_t InitialPDCredits;
-		uint32_t InitialPHCredits;
-	};
-
 	struct DTC_RegisterFormatter
 	{
 		DTC_RegisterFormatter() : address(0), value(0), description(""), vals() {}

@@ -23,6 +23,7 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 	char* sim = getenv("DTCLIB_SIM_FILE");
 	if (sim != NULL || simFile.size() > 0)
 	{
+		EnableDetectorEmulatorMode();
 		ResetDDRWriteAddress();
 		SetDDRLocalEndAddress(1);
 		SetDetectorEmulationDMACount(0);

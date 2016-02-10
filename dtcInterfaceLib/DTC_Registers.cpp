@@ -2,7 +2,9 @@
 
 #include <sstream> // Convert uint to hex string
 
+
 #include <iomanip> // std::setw, std::setfill
+
 
 #include <chrono>
 #ifndef _WIN32
@@ -153,6 +155,8 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDTCControl()
 	form.vals.push_back(std::string("SERDES Oscillator Clock Select: [") + (ReadSERDESOscillatorClock() ? " 2.5Gbs" : "3.125Gbs") + "]");
 	form.vals.push_back(std::string("System Clock Select:            [") + (ReadSystemClock() ? "Ext" : "Int") + "]");
 	form.vals.push_back(std::string("Timing Enable:                  [") + (ReadTimingEnable() ? "x" : " ") + "]");
+	form.vals.push_back(std::string("Detector Emulation Enable:      [") + (ReadDetectorEmulatorEnable() ? "x" : " ") + "]");
+	form.vals.push_back(std::string("Detector Emulation Mode Enable: [") + (ReadDetectorEmulatorMode() ? "x" : " ") + "]");
 	return form;
 }
 
@@ -210,9 +214,9 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatRingEnable()
 	{
 		auto re = ReadRingEnabled(r);
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": ["
-			+ (re.TransmitEnable ? "x" : " ") + ","
-			+ (re.ReceiveEnable ? "x" : " ") + ","
-			+ (re.TimingEnable ? "x" : " ") + "]");
+			    + (re.TransmitEnable ? "x" : " ") + ","
+			    + (re.ReceiveEnable ? "x" : " ") + ","
+			    + (re.TimingEnable ? "x" : " ") + "]");
 	}
 	{
 		auto ce = ReadRingEnabled(DTC_Ring_CFO);
@@ -295,12 +299,12 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESTXBufferStatus(
 	for (auto r : DTC_Rings)
 	{
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": ["
-			+ (ReadSERDESOverflowOrUnderflow(r) ? "x" : " ") + ","
-			+ (ReadSERDESBufferFIFOHalfFull(r) ? "x" : " ") + "]");
+			    + (ReadSERDESOverflowOrUnderflow(r) ? "x" : " ") + ","
+			    + (ReadSERDESBufferFIFOHalfFull(r) ? "x" : " ") + "]");
 	}
 	form.vals.push_back(std::string("CFO:    [")
-		+ (ReadSERDESOverflowOrUnderflow(DTC_Ring_CFO) ? "x" : " ") + ","
-		+ (ReadSERDESBufferFIFOHalfFull(DTC_Ring_CFO) ? "x" : " ") + "]");
+		    + (ReadSERDESOverflowOrUnderflow(DTC_Ring_CFO) ? "x" : " ") + ","
+		    + (ReadSERDESBufferFIFOHalfFull(DTC_Ring_CFO) ? "x" : " ") + "]");
 	return form;
 }
 
@@ -369,7 +373,6 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESRXCDRLock()
 	}
 	form.vals.push_back(std::string("CFO:    [") + (ReadSERDESRXCDRLock(DTC_Ring_CFO) ? "x" : " ") + "]");
 	return form;
-
 }
 
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDMATimeoutPreset()
@@ -411,16 +414,16 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatReceivePacketError()
 	for (auto r : DTC_Rings)
 	{
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": ["
-			+ (ReadPacketCRCError(r) ? "x" : " ") + ","
-			+ (ReadPacketError(r) ? "x" : " ") + ","
-			+ (ReadRXElasticBufferOverrun(r) ? "x" : " ") + ","
-			+ (ReadRXElasticBufferUnderrun(r) ? "x" : " ") + "]");
+			    + (ReadPacketCRCError(r) ? "x" : " ") + ","
+			    + (ReadPacketError(r) ? "x" : " ") + ","
+			    + (ReadRXElasticBufferOverrun(r) ? "x" : " ") + ","
+			    + (ReadRXElasticBufferUnderrun(r) ? "x" : " ") + "]");
 	}
 	form.vals.push_back(std::string("CFO:    [")
-		+ (ReadPacketCRCError(DTC_Ring_CFO) ? "x" : " ") + ","
-		+ (ReadPacketError(DTC_Ring_CFO) ? "x" : " ") + ","
-		+ (ReadRXElasticBufferOverrun(DTC_Ring_CFO) ? "x" : " ") + ","
-		+ (ReadRXElasticBufferUnderrun(DTC_Ring_CFO) ? "x" : " ") + "]");
+		    + (ReadPacketCRCError(DTC_Ring_CFO) ? "x" : " ") + ","
+		    + (ReadPacketError(DTC_Ring_CFO) ? "x" : " ") + ","
+		    + (ReadRXElasticBufferOverrun(DTC_Ring_CFO) ? "x" : " ") + ","
+		    + (ReadRXElasticBufferUnderrun(DTC_Ring_CFO) ? "x" : " ") + "]");
 	return form;
 }
 
@@ -474,10 +477,10 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatFIFOFullErrorFlag0()
 	{
 		auto re = ReadFIFOFullErrorFlags(r);
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": ["
-			+ (re.DataRequestOutput ? "x" : " ") + ","
-			+ (re.ReadoutRequestOutput ? "x" : " ") + ","
-			+ (re.CFOLinkInput ? "x" : " ") + ","
-			+ (re.OutputData ? "x" : " ") + "]");
+			    + (re.DataRequestOutput ? "x" : " ") + ","
+			    + (re.ReadoutRequestOutput ? "x" : " ") + ","
+			    + (re.CFOLinkInput ? "x" : " ") + ","
+			    + (re.OutputData ? "x" : " ") + "]");
 	}
 	return form;
 }
@@ -491,18 +494,18 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatFIFOFullErrorFlag1()
 	{
 		auto re = ReadFIFOFullErrorFlags(r);
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": ["
-			+ (re.DataInput ? "x" : " ") + ","
-			+ (re.OutputDCSStage2 ? "x" : " ") + ","
-			+ (re.OutputDCS ? "x" : " ") + ","
-			+ (re.OtherOutput ? "x" : " ") + "]");
+			    + (re.DataInput ? "x" : " ") + ","
+			    + (re.OutputDCSStage2 ? "x" : " ") + ","
+			    + (re.OutputDCS ? "x" : " ") + ","
+			    + (re.OtherOutput ? "x" : " ") + "]");
 	}
 	{
 		auto ce = ReadFIFOFullErrorFlags(DTC_Ring_CFO);
 		form.vals.push_back(std::string("CFO:    [") +
-			+(ce.DataInput ? "x" : " ") + ","
-			+ (ce.OutputDCSStage2 ? "x" : " ") + ","
-			+ (ce.OutputDCS ? "x" : " ") + ","
-			+ (ce.OtherOutput ? "x" : " ") + "]");
+			    +(ce.DataInput ? "x" : " ") + ","
+			    + (ce.OutputDCSStage2 ? "x" : " ") + ","
+			    + (ce.OutputDCS ? "x" : " ") + ","
+			    + (ce.OtherOutput ? "x" : " ") + "]");
 	}
 	return form;
 }
@@ -786,18 +789,39 @@ bool DTCLib::DTC_Registers::ReadResetDDRWriteAddress()
 void DTCLib::DTC_Registers::EnableDetectorEmulator()
 {
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
-	data[26] = 1;
+	data[25] = 1;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
 }
 
 void DTCLib::DTC_Registers::DisableDetectorEmulator()
 {
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
-	data[26] = 0;
+	data[25] = 0;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
 }
 
 bool DTCLib::DTC_Registers::ReadDetectorEmulatorEnable()
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
+	return data[25];
+}
+
+void DTCLib::DTC_Registers::EnableDetectorEmulatorMode()
+{
+
+	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
+	data[26] = 1;
+	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
+}
+
+void DTCLib::DTC_Registers::DisableDetectorEmulatorMode()
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
+	data[26] = 0;
+	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
+}
+
+bool DTCLib::DTC_Registers::ReadDetectorEmulatorMode()
 {
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	return data[26];
@@ -1494,7 +1518,6 @@ bool DTCLib::DTC_Registers::ReadFPGACoreAccessFIFOEmpty()
 }
 
 
-
 // Private Functions
 void DTCLib::DTC_Registers::WriteRegister_(uint32_t data, const DTC_Register& address)
 {
@@ -1504,7 +1527,8 @@ void DTCLib::DTC_Registers::WriteRegister_(uint32_t data, const DTC_Register& ad
 	{
 		errorCode = device_.write_register(address, 100, data);
 		--retry;
-	} while (retry > 0 && errorCode != 0);
+	}
+	while (retry > 0 && errorCode != 0);
 	if (errorCode != 0)
 	{
 		throw DTC_IOErrorException();
@@ -1520,7 +1544,8 @@ uint32_t DTCLib::DTC_Registers::ReadRegister_(const DTC_Register& address)
 	{
 		errorCode = device_.read_register(address, 100, &data);
 		--retry;
-	} while (retry > 0 && errorCode != 0);
+	}
+	while (retry > 0 && errorCode != 0);
 	if (errorCode != 0)
 	{
 		throw DTC_IOErrorException();
@@ -1528,3 +1553,4 @@ uint32_t DTCLib::DTC_Registers::ReadRegister_(const DTC_Register& address)
 
 	return data;
 }
+

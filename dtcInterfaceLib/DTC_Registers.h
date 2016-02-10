@@ -137,6 +137,7 @@ namespace DTCLib
 		// DTC Register Dumps
 		//
 		std::string FormattedRegDump() const;
+		std::string PerformanceMonitorRegDump() const;
 		DTC_RegisterFormatter CreateFormatter(const DTC_Register& address)
 		{
 			DTC_RegisterFormatter form;
@@ -156,23 +157,27 @@ namespace DTCLib
 		DTC_RegisterFormatter FormatDesignDate();
 		std::string ReadDesignVersionNumber();
 
-		// Collect PCIE Performance Metrics
-		DTC_PerfMonCounters ReadPCIEPerformanceMonitor()
-		{
-			DTC_PerfMonCounters output;
-			output.TXPCIEByteCount = ReadRegister_(DTC_Register_PerfMonTXByteCount);
-			output.RXPCIEByteCount = ReadRegister_(DTC_Register_PerfMonRXByteCount);
-			output.TXPCIEPayloadCount = ReadRegister_(DTC_Register_PerfMonTXPayloadCount);
-			output.RXPCIEPayloadCount = ReadRegister_(DTC_Register_PerfMonRXPayloadCount);
-			output.InitialCompletionDataCredits = ReadRegister_(DTC_Register_PerfMonInitCDC);
-			output.InitialCompletionHeaderCredits = ReadRegister_(DTC_Register_PerfMonInitCHC);
-			output.InitialNPDCredits = ReadRegister_(DTC_Register_PerfMonInitNPDC);
-			output.InitialNPHCredits = ReadRegister_(DTC_Register_PerfMonInitNPHC);
-			output.InitialPDCredits = ReadRegister_(DTC_Register_PerfMonInitPDC);
-			output.InitialPHCredits = ReadRegister_(DTC_Register_PerfMonInitPHC);
-
-			return output;
-		}
+		// PCIE Performance Monitor Registers
+		uint32_t ReadPerfMonTXByteCount();
+		DTC_RegisterFormatter FormatPerfMonTXByteCount();
+		uint32_t ReadPerfMonRXByteCount();
+		DTC_RegisterFormatter FormatPerfMonRXByteCount();
+		uint32_t ReadPerfMonTXPayloadCount();
+		DTC_RegisterFormatter FormatPerfMonTXPayloadCount();
+		uint32_t ReadPerfMonRXPayloadCount();
+		DTC_RegisterFormatter FormatPerfMonRXPayloadCount();
+		uint16_t ReadPerfMonInitCDC();
+		DTC_RegisterFormatter FormatPerfMonInitCDC();
+		uint8_t ReadPerfMonInitCHC();
+		DTC_RegisterFormatter FormatPerfMonInitCHC();
+		uint16_t ReadPerfMonInitNPDC();
+		DTC_RegisterFormatter FormatPerfMonInitNPDC();
+		uint8_t ReadPerfMonInitNPHC();
+		DTC_RegisterFormatter FormatPerfMonInitNPHC();
+		uint16_t ReadPerfMonInitPDC();
+		DTC_RegisterFormatter FormatPerfMonInitPDC();
+		uint8_t ReadPerfMonInitPHC();
+		DTC_RegisterFormatter FormatPerfMonInitPHC();
 
 		// DTC Control Register
 		void ResetDTC();
@@ -190,6 +195,9 @@ namespace DTCLib
 		void EnableDetectorEmulator();
 		void DisableDetectorEmulator();
 		bool ReadDetectorEmulatorEnable();
+		void EnableDetectorEmulatorMode();
+		void DisableDetectorEmulatorMode();
+		bool ReadDetectorEmulatorMode();
 		void SetExternalSystemClock();
 		void SetInternalSystemClock();
 		bool ReadSystemClock();
@@ -219,78 +227,102 @@ namespace DTCLib
 		void EnableROCEmulator(const DTC_Ring_ID& ring);
 		void DisableROCEmulator(const DTC_Ring_ID& ring);
 		bool ReadROCEmulator(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatROCEmulationEnable();
 
 		// Ring Enable Register
 		void EnableRing(const DTC_Ring_ID& ring, const DTC_RingEnableMode& mode = DTC_RingEnableMode(), const DTC_ROC_ID& lastRoc = DTC_ROC_Unused);
 		void DisableRing(const DTC_Ring_ID& ring, const DTC_RingEnableMode& mode = DTC_RingEnableMode());
 		DTC_RingEnableMode ReadRingEnabled(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatRingEnable();
 
 		// SERDES Reset Register
 		void ResetSERDES(const DTC_Ring_ID& ring, int interval = 100);
 		bool ReadResetSERDES(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatSERDESReset();
 
 		// SERDES RX Disparity Error Register
 		DTC_SERDESRXDisparityError ReadSERDESRXDisparityError(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatSERDESRXDisparityError();
 
 		// SERDES Character Not In Table Error Register
 		DTC_CharacterNotInTableError ReadSERDESRXCharacterNotInTableError(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatSERDESRXCharacterNotInTableError();
 
 		// SERDES Unlock Error Register
 		bool ReadSERDESUnlockError(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatSERDESUnlockError();
 
 		// SERDES PLL Locked Register
 		bool ReadSERDESPLLLocked(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatSERDESPLLLocked();
 
 		// SERDES TX Buffer Status Register
 		bool ReadSERDESOverflowOrUnderflow(const DTC_Ring_ID& ring);
 		bool ReadSERDESBufferFIFOHalfFull(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatSERDESTXBufferStatus();
 
 		// SERDES RX Buffer Status Register
 		DTC_RXBufferStatus ReadSERDESRXBufferStatus(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatSERDESRXBufferStatus();
 
 		// SERDES RX Status Register
 		DTC_RXStatus ReadSERDESRXStatus(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatSERDESRXStatus();
 
 		// SERDES Reset Done Register
 		bool ReadResetSERDESDone(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatSERDESResetDone();
 
 		// Eyescan Data Error Register
 		bool ReadSERDESEyescanError(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatSERDESEyescanData();
 
 		// SERDES RX CDR Lock Register
 		bool ReadSERDESRXCDRLock(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatSERDESRXCDRLock();
 
 		// DMA Timeout Preset Regsiter
 		void SetDMATimeoutPreset(uint32_t preset);
 		uint32_t ReadDMATimeoutPreset();
+		DTC_RegisterFormatter FormatDMATimeoutPreset();
 
 		// ROC Timeout (Header Packet to All Packets Received) Preset Register
 		void SetROCTimeoutPreset(uint32_t preset);
 		uint32_t ReadROCTimeoutPreset();
+		DTC_RegisterFormatter FormatROCReplyTimeout();
 
 		// ROC Timeout Error Register
 		void ClearROCTimeoutError(const DTC_Ring_ID& ring);
 		bool ReadROCTimeoutError(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatROCReplyTimeoutError();
 
 		// Ring Packet Length Register
 		void SetPacketSize(uint16_t packetSize);
 		uint16_t ReadPacketSize();
+		DTC_RegisterFormatter FormatRingPacketLength();
 
 		// Timestamp Preset Registers
 		void SetTimestampPreset(const DTC_Timestamp& preset);
 		DTC_Timestamp ReadTimestampPreset();
+		DTC_RegisterFormatter FormatTimestampPreset0();
+		DTC_RegisterFormatter FormatTimestampPreset1();
 
 		// Data Pending Timer Register
 		void SetDataPendingTimer(uint32_t timer);
 		uint32_t ReadDataPendingTimer();
+		DTC_RegisterFormatter FormatDataPendingTimer();
 
 		// NUMROCs Register
 		void SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc);
 		DTC_ROC_ID ReadRingROCCount(const DTC_Ring_ID& ring, bool local = true);
+		DTC_RegisterFormatter FormatNUMROCs();
 
 		// FIFO Full Error Flags Registers
 		void ClearFIFOFullErrorFlags(const DTC_Ring_ID& ring);
 		DTC_FIFOFullErrorFlags ReadFIFOFullErrorFlags(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatFIFOFullErrorFlag0();
+		DTC_RegisterFormatter FormatFIFOFullErrorFlag1();
+		DTC_RegisterFormatter FormatFIFOFullErrorFlag2();
 
 		// Receive Packet Error Register
 		void ClearRXElasticBufferUnderrun(const DTC_Ring_ID& ring);
@@ -301,22 +333,33 @@ namespace DTCLib
 		bool ReadPacketError(const DTC_Ring_ID& ring);
 		void ClearPacketCRCError(const DTC_Ring_ID& ring);
 		bool ReadPacketCRCError(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatReceivePacketError();
 
 		// CFO Emulation Timestamp Registers 
 		void SetCFOEmulationTimestamp(const DTC_Timestamp& ts);
 		DTC_Timestamp ReadCFOEmulationTimestamp();
+		DTC_RegisterFormatter FormatCFOEmulationTimestampLow();
+		DTC_RegisterFormatter FormatCFOEmulationTimestampHigh();
 
 		// CFO Emulation Request Interval Regsister
 		void SetCFOEmulationRequestInterval(uint32_t interval);
 		uint32_t ReadCFOEmulationRequestInterval();
+		DTC_RegisterFormatter FormatCFOEmulationRequestInterval();
 
 		// CFO Emulation Number of Requests Register
 		void SetCFOEmulationNumRequests(uint32_t numRequests);
 		uint32_t ReadCFOEmulationNumRequests();
+		DTC_RegisterFormatter FormatCFOEmulationNumRequests();
 
 		// CFO Emulation Number of Packets Registers
 		void SetCFOEmulationNumPackets(const DTC_Ring_ID& ring, uint16_t numPackets);
 		uint16_t ReadCFOEmulationNumPackets(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing0();
+		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing1();
+		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing2();
+		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing3();
+		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing4();
+		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing5();
 
 		// CFO Emulation Debug Packet Type Register
 		void SetCFOEmulationDebugType(DTC_DebugType type);
@@ -331,8 +374,7 @@ namespace DTCLib
 		void SetDetectorEmulationDMADelayCount(uint32_t count);
 		uint32_t ReadDetectorEmulationDMADelayCount();
 
-		// SERDES Counters
-		/*
+		// SERDES Counter Registers
 		void ClearReceiveByteCount(const DTC_Ring_ID& ring);
 		uint32_t ReadReceiveByteCount(const DTC_Ring_ID& ring);
 		void ClearReceivePacketCount(const DTC_Ring_ID& ring);
@@ -341,58 +383,29 @@ namespace DTCLib
 		uint32_t ReadTransmitByteCount(const DTC_Ring_ID& ring);
 		void ClearTransmitPacketCount(const DTC_Ring_ID& ring);
 		uint32_t ReadTransmitPacketCount(const DTC_Ring_ID& ring);
-		*/
+
+		// DDR Local Start Address Register
 
 		// DDR Local End Address Register
 		void SetDDRLocalEndAddress(uint32_t address);
 		void IncrementDDRLocalEndAddress(size_t sz);
 		uint32_t ReadDDRLocalEndAddress();
 
+		// DDR Write Burst Size Register
+
+		// DDR Read Burst Size Register
+
+		// FPGA PROM Program Data Register
+
 		// FPGA PROM Program Status Register
 		bool ReadFPGAPROMProgramFIFOFull();
 		bool ReadFPGAPROMReady();
+		DTC_RegisterFormatter FormatFPGAPROMProgramStatus();
 
 		// FPGA Core Access Register
 		void ReloadFPGAFirmware();
 		bool ReadFPGACoreAccessFIFOFull();
 		bool ReadFPGACoreAccessFIFOEmpty();
-
-		DTC_RegisterFormatter FormatROCEmulationEnable();
-		DTC_RegisterFormatter FormatRingEnable();
-		DTC_RegisterFormatter FormatSERDESReset();
-		DTC_RegisterFormatter FormatSERDESRXDisparityError();
-		DTC_RegisterFormatter FormatSERDESRXCharacterNotInTableError();
-		DTC_RegisterFormatter FormatSERDESUnlockError();
-		DTC_RegisterFormatter FormatSERDESPLLLocked();
-		DTC_RegisterFormatter FormatSERDESTXBufferStatus();
-		DTC_RegisterFormatter FormatSERDESRXBufferStatus();
-		DTC_RegisterFormatter FormatSERDESRXStatus();
-		DTC_RegisterFormatter FormatSERDESResetDone();
-		DTC_RegisterFormatter FormatSERDESEyescanData();
-		DTC_RegisterFormatter FormatSERDESRXCDRLock();
-		DTC_RegisterFormatter FormatDMATimeoutPreset();
-		DTC_RegisterFormatter FormatROCReplyTimeout();
-		DTC_RegisterFormatter FormatROCReplyTimeoutError();
-		DTC_RegisterFormatter FormatReceivePacketError();
-		DTC_RegisterFormatter FormatTimestampPreset0();
-		DTC_RegisterFormatter FormatTimestampPreset1();
-		DTC_RegisterFormatter FormatDataPendingTimer();
-		DTC_RegisterFormatter FormatNUMROCs();
-		DTC_RegisterFormatter FormatFIFOFullErrorFlag0();
-		DTC_RegisterFormatter FormatFIFOFullErrorFlag1();
-		DTC_RegisterFormatter FormatFIFOFullErrorFlag2();
-		DTC_RegisterFormatter FormatCFOEmulationTimestampLow();
-		DTC_RegisterFormatter FormatCFOEmulationTimestampHigh();
-		DTC_RegisterFormatter FormatCFOEmulationRequestInterval();
-		DTC_RegisterFormatter FormatCFOEmulationNumRequests();
-		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing0();
-		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing1();
-		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing2();
-		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing3();
-		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing4();
-		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing5();
-		DTC_RegisterFormatter FormatRingPacketLength();
-		DTC_RegisterFormatter FormatFPGAPROMProgramStatus();
 		DTC_RegisterFormatter FormatFPGACoreAccess();
 
 
