@@ -4,7 +4,8 @@
 #include <bitset> // std::bitset
 #include <cstdint> // uint8_t, uint16_t
 #include <vector> // std::vector
-#include <iostream>
+#include <sstream>
+#include <iomanip>
 
 namespace DTCLib
 {
@@ -22,8 +23,8 @@ namespace DTCLib
 		DTC_Ring_Unused,
 	};
 
-	static const std::vector<DTC_Ring_ID> DTC_Rings = {DTC_Ring_0, DTC_Ring_1, DTC_Ring_2, DTC_Ring_3, DTC_Ring_4, DTC_Ring_5};
-	
+	static const std::vector<DTC_Ring_ID> DTC_Rings = { DTC_Ring_0, DTC_Ring_1, DTC_Ring_2, DTC_Ring_3, DTC_Ring_4, DTC_Ring_5 };
+
 	enum DTC_ROC_ID : uint8_t
 	{
 		DTC_ROC_0 = 0,
@@ -35,7 +36,7 @@ namespace DTCLib
 		DTC_ROC_Unused,
 	};
 
-	static const std::vector<DTC_ROC_ID> DTC_ROCS = {DTC_ROC_Unused, DTC_ROC_0, DTC_ROC_1, DTC_ROC_2, DTC_ROC_3, DTC_ROC_4, DTC_ROC_5};
+	static const std::vector<DTC_ROC_ID> DTC_ROCS = { DTC_ROC_Unused, DTC_ROC_0, DTC_ROC_1, DTC_ROC_2, DTC_ROC_3, DTC_ROC_4, DTC_ROC_5 };
 
 	struct DTC_ROCIDConverter
 	{
@@ -46,6 +47,27 @@ namespace DTCLib
 		{
 		}
 
+		std::string toString() const
+		{
+			switch (roc_)
+			{
+			case DTC_ROC_0:
+				return "ROC_0";
+			case DTC_ROC_1:
+				return "ROC_1";
+			case DTC_ROC_2:
+				return "ROC_2";
+			case DTC_ROC_3:
+				return "ROC_3";
+			case DTC_ROC_4:
+				return "ROC_4";
+			case DTC_ROC_5:
+				return "ROC_5";
+			case DTC_ROC_Unused:
+			default:
+				return "No ROCs";
+			}
+		}
 		friend std::ostream& operator<<(std::ostream& stream, const DTC_ROCIDConverter& roc)
 		{
 			switch (roc.roc_)
@@ -591,7 +613,7 @@ namespace DTCLib
 			return stream;
 		}
 	};
-	
+
 	class DTC_WrongPacketTypeException : public std::exception
 	{
 	public:
@@ -813,28 +835,28 @@ namespace DTCLib
 
 		DTC_FIFOFullErrorFlags()
 			: OutputData(false)
-			  , CFOLinkInput(false)
-			  , ReadoutRequestOutput(false)
-			  , DataRequestOutput(false)
-			  , OtherOutput(false)
-			  , OutputDCS(false)
-			  , OutputDCSStage2(false)
-			  , DataInput(false)
-			  , DCSStatusInput(false)
+			, CFOLinkInput(false)
+			, ReadoutRequestOutput(false)
+			, DataRequestOutput(false)
+			, OtherOutput(false)
+			, OutputDCS(false)
+			, OutputDCSStage2(false)
+			, DataInput(false)
+			, DCSStatusInput(false)
 		{
 		}
 
 		DTC_FIFOFullErrorFlags(bool outputData, bool cfoLinkInput, bool readoutRequest, bool dataRequest,
-		                       bool otherOutput, bool outputDCS, bool outputDCS2, bool dataInput, bool dcsInput)
+			bool otherOutput, bool outputDCS, bool outputDCS2, bool dataInput, bool dcsInput)
 			: OutputData(outputData)
-			  , CFOLinkInput(cfoLinkInput)
-			  , ReadoutRequestOutput(readoutRequest)
-			  , DataRequestOutput(dataRequest)
-			  , OtherOutput(otherOutput)
-			  , OutputDCS(outputDCS)
-			  , OutputDCSStage2(outputDCS2)
-			  , DataInput(dataInput)
-			  , DCSStatusInput(dcsInput)
+			, CFOLinkInput(cfoLinkInput)
+			, ReadoutRequestOutput(readoutRequest)
+			, DataRequestOutput(dataRequest)
+			, OtherOutput(otherOutput)
+			, OutputDCS(outputDCS)
+			, OutputDCSStage2(outputDCS2)
+			, DataInput(dataInput)
+			, DCSStatusInput(dcsInput)
 		{
 		}
 
@@ -858,7 +880,6 @@ namespace DTCLib
 
 	struct DTC_PerfMonCounters
 	{
-		uint32_t DesignStatus;
 		uint32_t TXPCIEByteCount;
 		uint32_t RXPCIEByteCount;
 		uint32_t TXPCIEPayloadCount;
@@ -869,6 +890,44 @@ namespace DTCLib
 		uint32_t InitialNPHCredits;
 		uint32_t InitialPDCredits;
 		uint32_t InitialPHCredits;
+	};
+
+	struct DTC_RegisterFormatter
+	{
+		DTC_RegisterFormatter() : address(0), value(0), description(""), vals() {}
+		DTC_RegisterFormatter(const DTC_RegisterFormatter& r) = default;
+		DTC_RegisterFormatter(DTC_RegisterFormatter&& r) = default;
+		uint16_t address;
+		uint32_t value;
+		static const size_t MAX_DESC = 28;
+		std::string description;
+		std::vector<std::string> vals;
+
+		DTC_RegisterFormatter& operator=(const DTC_RegisterFormatter& r) = default;
+
+		friend std::ostream& operator<<(std::ostream& stream, const DTC_RegisterFormatter& reg)
+		{
+			stream << std::hex << std::setfill('0');
+			stream << "    0x" << std::setw(4) << static_cast<int>(reg.address) << "  | 0x" << std::setw(8) << static_cast<int>(reg.value) << " | ";
+			auto tmp = reg.description;
+			tmp.resize(MAX_DESC, ' ');
+			stream << tmp << " | ";
+
+			auto first = true;
+			for (auto i : reg.vals)
+			{
+				if (!first)
+				{
+					std::string placeholder = "";
+					placeholder.resize(MAX_DESC, ' ');
+					stream << "                           " << placeholder << " | ";
+				}
+				stream << i << std::endl;
+				first = false;
+			}
+
+			return stream;
+		}
 	};
 }
 

@@ -284,7 +284,14 @@ main(int	argc
 	{
 		std::cout << "Swapping SERDES Oscillator Clock" << std::endl;
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-		thisDTC->ToggleSERDESOscillatorClock();
+		if(thisDTC->ReadSERDESOscillatorClock())
+		{
+			thisDTC->SetSERDESOscillatorClock_25Gbps();
+		}
+		else
+		{
+			thisDTC->SetSERDESOscillatorClock_3125Gbps();
+		}
 	}
 	else if (op == "loopback")
 	{
@@ -393,7 +400,7 @@ main(int	argc
 		int rtCount = 0;
 		auto startTime = std::chrono::high_resolution_clock::now();
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now
+		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->SetSERDESOscillatorClock_25Gbps(); } // We're going to 2.5Gbps for now
 
 		mu2edev* device = thisDTC->GetDevice();
 		DTCSoftwareCFO *cfo = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet, false);
@@ -552,7 +559,7 @@ main(int	argc
 	else if (op == "DTC")
 	{
 		auto *thisDTC = new DTC(DTC_SimMode_NoCFO);
-		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now
+		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->SetSERDESOscillatorClock_25Gbps(); } // We're going to 2.5Gbps for now
 
 		double totalIncTime = 0, totalSize = 0, totalDevTime = 0, totalRTTime = 0, totalWriteTime = 0;
 		int rtCount = 0;

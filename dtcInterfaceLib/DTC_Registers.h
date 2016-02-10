@@ -5,8 +5,7 @@
 
 
 #include <cstdint> // uint8_t, uint16_t
-
-
+#include <functional> // std::bind, std::function
 #include <vector> // std::vector
 
 
@@ -19,7 +18,6 @@ namespace DTCLib
 	{
 		DTC_Register_DesignVersion = 0x9000,
 		DTC_Register_DesignDate = 0x9004,
-		DTC_Register_DesignStatus = 0x9008,
 		DTC_Register_PerfMonTXByteCount = 0x900C,
 		DTC_Register_PerfMonRXByteCount = 0x9010,
 		DTC_Register_PerfMonTXPayloadCount = 0x9014,
@@ -110,92 +108,10 @@ namespace DTCLib
 		DTC_Register_Invalid,
 	};
 
-	static const std::vector<DTC_Register> DTC_Readable_Registers = {
-		DTC_Register_DesignVersion ,
-		DTC_Register_DesignDate ,
-		DTC_Register_DesignStatus ,
-		DTC_Register_DTCControl ,
-		DTC_Register_DMATransferLength ,
-		DTC_Register_SERDESLoopbackEnable ,
-		DTC_Register_SERDESOscillatorStatus ,
-		DTC_Register_ROCEmulationEnable ,
-		DTC_Register_RingEnable ,
-		DTC_Register_SERDESReset ,
-		DTC_Register_SERDESRXDisparityError,
-		DTC_Register_SERDESRXCharacterNotInTableError,
-		DTC_Register_SERDESUnlockError,
-		DTC_Register_SERDESPLLLocked,
-		DTC_Register_SERDESTXBufferStatus,
-		DTC_Register_SERDESRXBufferStatus,
-		DTC_Register_SERDESRXStatus,
-		DTC_Register_SERDESResetDone,
-		DTC_Register_SERDESEyescanData,
-		DTC_Register_SERDESRXCDRLock,
-		DTC_Register_DMATimeoutPreset,
-		DTC_Register_ROCReplyTimeout,
-		DTC_Register_ROCReplyTimeoutError,
-		DTC_Register_RingPacketLength,
-		DTC_Register_TimestampPreset0,
-		DTC_Register_TimestampPreset1,
-		DTC_Register_DataPendingTimer,
-		DTC_Register_NUMROCs,
-		DTC_Register_FIFOFullErrorFlag0,
-		DTC_Register_FIFOFullErrorFlag1,
-		DTC_Register_FIFOFullErrorFlag2,
-		DTC_Register_ReceivePacketError,
-		DTC_Register_CFOEmulationTimestampLow,
-		DTC_Register_CFOEmulationTimestampHigh,
-		DTC_Register_CFOEmulationRequestInterval,
-		DTC_Register_CFOEmulationNumRequests,
-		DTC_Register_CFOEmulationNumPacketsRing0,
-		DTC_Register_CFOEmulationNumPacketsRing1,
-		DTC_Register_CFOEmulationNumPacketsRing2,
-		DTC_Register_CFOEmulationNumPacketsRing3,
-		DTC_Register_CFOEmulationNumPacketsRing4,
-		DTC_Register_CFOEmulationNumPacketsRing5,
-		DTC_Register_CFOEmulationDebugPacketType,
-		DTC_Register_DetEmulationDMACount,
-		DTC_Register_DetEmulationDelayCount,
-		DTC_Register_ReceiveByteCountDataRing0,
-		DTC_Register_ReceiveByteCountDataRing1,
-		DTC_Register_ReceiveByteCountDataRing2,
-		DTC_Register_ReceiveByteCountDataRing3,
-		DTC_Register_ReceiveByteCountDataRing4,
-		DTC_Register_ReceiveByteCountDataRing5,
-		DTC_Register_ReceiveByteCountDataCFO,
-		DTC_Register_ReceivePacketCountDataRing0,
-		DTC_Register_ReceivePacketCountDataRing1,
-		DTC_Register_ReceivePacketCountDataRing2,
-		DTC_Register_ReceivePacketCountDataRing3,
-		DTC_Register_ReceivePacketCountDataRing4,
-		DTC_Register_ReceivePacketCountDataRing5,
-		DTC_Register_ReceivePacketCountDataCFO,
-		DTC_Register_TransmitByteCountDataRing0,
-		DTC_Register_TransmitByteCountDataRing1,
-		DTC_Register_TransmitByteCountDataRing2,
-		DTC_Register_TransmitByteCountDataRing3,
-		DTC_Register_TransmitByteCountDataRing4,
-		DTC_Register_TransmitByteCountDataRing5,
-		DTC_Register_TransmitByteCountDataCFO,
-		DTC_Register_TransmitPacketCountDataRing0,
-		DTC_Register_TransmitPacketCountDataRing1,
-		DTC_Register_TransmitPacketCountDataRing2,
-		DTC_Register_TransmitPacketCountDataRing3,
-		DTC_Register_TransmitPacketCountDataRing4,
-		DTC_Register_TransmitPacketCountDataRing5,
-		DTC_Register_TransmitPacketCountDataCFO,
-		DTC_Register_DDRLocalStartAddress,
-		DTC_Register_DDRLocalEndAddress,
-		DTC_Regsiter_DDRWriteBurstSize,
-		DTC_Register_DDRReadBurstSize,
-		DTC_Register_FPGAPROMProgramStatus,
-		DTC_Register_FPGACoreAccess
-	};
-
 	class DTC_Registers
 	{
 	public:
-		DTC_Registers(DTC_SimMode mode = DTC_SimMode_Disabled);
+		explicit DTC_Registers(DTC_SimMode mode = DTC_SimMode_Disabled);
 
 		//
 		// Device Access
@@ -220,12 +136,14 @@ namespace DTCLib
 		//
 		// DTC Register Dumps
 		//
-		std::string RegDump();
-		std::string RingRegDump(const DTC_Ring_ID& ring, std::string id);
-		std::string CFORegDump();
-		std::string ConsoleFormatRegDump();
-		std::string FormatRegister(const DTC_Register& address);
-		std::string RegisterRead(const DTC_Register& address);
+		std::string FormattedRegDump() const;
+		DTC_RegisterFormatter CreateFormatter(const DTC_Register& address)
+		{
+			DTC_RegisterFormatter form;
+			form.address = address;
+			form.value = ReadRegister_(address);
+			return form;
+		}
 
 		//
 		// Register IO Functions
@@ -233,24 +151,25 @@ namespace DTCLib
 
 		// Desgin Version/Date Registers
 		std::string ReadDesignVersion();
+		DTC_RegisterFormatter FormatDesignVersion();
 		std::string ReadDesignDate();
+		DTC_RegisterFormatter FormatDesignDate();
 		std::string ReadDesignVersionNumber();
 
 		// Collect PCIE Performance Metrics
 		DTC_PerfMonCounters ReadPCIEPerformanceMonitor()
 		{
 			DTC_PerfMonCounters output;
-			output.DesignStatus = ReadRegister(DTC_Register_DesignStatus);
-			output.TXPCIEByteCount = ReadRegister(DTC_Register_PerfMonTXByteCount);
-			output.RXPCIEByteCount = (DTC_Register_PerfMonRXByteCount);
-			output.TXPCIEPayloadCount = ReadRegister(DTC_Register_PerfMonTXPayloadCount);
-			output.RXPCIEPayloadCount = ReadRegister(DTC_Register_PerfMonRXPayloadCount);
-			output.InitialCompletionDataCredits = ReadRegister(DTC_Register_PerfMonInitCDC);
-			output.InitialCompletionHeaderCredits = ReadRegister(DTC_Register_PerfMonInitCHC);
-			output.InitialNPDCredits = ReadRegister(DTC_Register_PerfMonInitNPDC);
-			output.InitialNPHCredits = ReadRegister(DTC_Register_PerfMonInitNPHC);
-			output.InitialPDCredits = ReadRegister(DTC_Register_PerfMonInitPDC);
-			output.InitialPHCredits = ReadRegister(DTC_Register_PerfMonInitPHC);
+			output.TXPCIEByteCount = ReadRegister_(DTC_Register_PerfMonTXByteCount);
+			output.RXPCIEByteCount = ReadRegister_(DTC_Register_PerfMonRXByteCount);
+			output.TXPCIEPayloadCount = ReadRegister_(DTC_Register_PerfMonTXPayloadCount);
+			output.RXPCIEPayloadCount = ReadRegister_(DTC_Register_PerfMonRXPayloadCount);
+			output.InitialCompletionDataCredits = ReadRegister_(DTC_Register_PerfMonInitCDC);
+			output.InitialCompletionHeaderCredits = ReadRegister_(DTC_Register_PerfMonInitCHC);
+			output.InitialNPDCredits = ReadRegister_(DTC_Register_PerfMonInitNPDC);
+			output.InitialNPHCredits = ReadRegister_(DTC_Register_PerfMonInitNPHC);
+			output.InitialPDCredits = ReadRegister_(DTC_Register_PerfMonInitPDC);
+			output.InitialPHCredits = ReadRegister_(DTC_Register_PerfMonInitPHC);
 
 			return output;
 		}
@@ -263,50 +182,51 @@ namespace DTCLib
 		bool ReadCFOEmulation();
 		void ResetSERDESOscillator();
 		bool ReadResetSERDESOscillator();
-		void ToggleSERDESOscillatorClock();
+		void SetSERDESOscillatorClock_25Gbps();
+		void SetSERDESOscillatorClock_3125Gbps();
 		bool ReadSERDESOscillatorClock();
 		void ResetDDRWriteAddress();
 		bool ReadResetDDRWriteAddress();
-		bool EnableDetectorEmulator();
-		bool DisableDetectorEmulator();
+		void EnableDetectorEmulator();
+		void DisableDetectorEmulator();
 		bool ReadDetectorEmulatorEnable();
-		bool SetExternalSystemClock();
-		bool SetInternalSystemClock();
-		bool ToggleSystemClockEnable();
+		void SetExternalSystemClock();
+		void SetInternalSystemClock();
 		bool ReadSystemClock();
-		bool EnableTiming();
-		bool DisableTiming();
-		bool ToggleTimingEnable();
+		void EnableTiming();
+		void DisableTiming();
 		bool ReadTimingEnable();
+		DTC_RegisterFormatter FormatDTCControl();
 
 		// DMA Transfer Length Register
-		int SetTriggerDMATransferLength(uint16_t length);
+		void SetTriggerDMATransferLength(uint16_t length);
 		uint16_t ReadTriggerDMATransferLength();
-		int SetMinDMATransferLength(uint16_t length);
+		void SetMinDMATransferLength(uint16_t length);
 		uint16_t ReadMinDMATransferLength();
+		DTC_RegisterFormatter FormatDMATransferLength();
 
 		// SERDES Loopback Enable Register
-		DTC_SERDESLoopbackMode SetSERDESLoopbackMode(const DTC_Ring_ID& ring, const DTC_SERDESLoopbackMode& mode);
+		void SetSERDESLoopbackMode(const DTC_Ring_ID& ring, const DTC_SERDESLoopbackMode& mode);
 		DTC_SERDESLoopbackMode ReadSERDESLoopback(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatSERDESLoopbackEnable();
 
 		// SERDES Status Register
 		bool ReadSERDESOscillatorIICError();
 		bool ReadSERDESOscillatorInitializationComplete();
+		DTC_RegisterFormatter FormatSERDESOscillatorStatus();
 
 		// ROC Emulation Enable Register
-		bool EnableROCEmulator(const DTC_Ring_ID& ring);
-		bool DisableROCEmulator(const DTC_Ring_ID& ring);
-		bool ToggleROCEmulator(const DTC_Ring_ID& ring);
+		void EnableROCEmulator(const DTC_Ring_ID& ring);
+		void DisableROCEmulator(const DTC_Ring_ID& ring);
 		bool ReadROCEmulator(const DTC_Ring_ID& ring);
 
 		// Ring Enable Register
-		DTC_RingEnableMode EnableRing(const DTC_Ring_ID& ring, const DTC_RingEnableMode& mode = DTC_RingEnableMode(), const DTC_ROC_ID& lastRoc = DTC_ROC_Unused);
-		DTC_RingEnableMode DisableRing(const DTC_Ring_ID& ring, const DTC_RingEnableMode& mode = DTC_RingEnableMode());
-		DTC_RingEnableMode ToggleRingEnabled(const DTC_Ring_ID& ring, const DTC_RingEnableMode& mode = DTC_RingEnableMode());
+		void EnableRing(const DTC_Ring_ID& ring, const DTC_RingEnableMode& mode = DTC_RingEnableMode(), const DTC_ROC_ID& lastRoc = DTC_ROC_Unused);
+		void DisableRing(const DTC_Ring_ID& ring, const DTC_RingEnableMode& mode = DTC_RingEnableMode());
 		DTC_RingEnableMode ReadRingEnabled(const DTC_Ring_ID& ring);
 
 		// SERDES Reset Register
-		bool ResetSERDES(const DTC_Ring_ID& ring, int interval = 100);
+		void ResetSERDES(const DTC_Ring_ID& ring, int interval = 100);
 		bool ReadResetSERDES(const DTC_Ring_ID& ring);
 
 		// SERDES RX Disparity Error Register
@@ -341,47 +261,46 @@ namespace DTCLib
 		bool ReadSERDESRXCDRLock(const DTC_Ring_ID& ring);
 
 		// DMA Timeout Preset Regsiter
-		int WriteDMATimeoutPreset(uint32_t preset);
+		void SetDMATimeoutPreset(uint32_t preset);
 		uint32_t ReadDMATimeoutPreset();
 
 		// ROC Timeout (Header Packet to All Packets Received) Preset Register
+		void SetROCTimeoutPreset(uint32_t preset);
 		uint32_t ReadROCTimeoutPreset();
-		int WriteROCTimeoutPreset(uint32_t preset);
 
 		// ROC Timeout Error Register
+		void ClearROCTimeoutError(const DTC_Ring_ID& ring);
 		bool ReadROCTimeoutError(const DTC_Ring_ID& ring);
-		bool ClearROCTimeoutError(const DTC_Ring_ID& ring);
 
 		// Ring Packet Length Register
-		int SetPacketSize(uint16_t packetSize);
+		void SetPacketSize(uint16_t packetSize);
 		uint16_t ReadPacketSize();
 
 		// Timestamp Preset Registers
-		DTC_Timestamp WriteTimestampPreset(const DTC_Timestamp& preset);
+		void SetTimestampPreset(const DTC_Timestamp& preset);
 		DTC_Timestamp ReadTimestampPreset();
 
 		// Data Pending Timer Register
-		int WriteDataPendingTimer(uint32_t timer);
+		void SetDataPendingTimer(uint32_t timer);
 		uint32_t ReadDataPendingTimer();
 
 		// NUMROCs Register
-		DTC_ROC_ID SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc);
+		void SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc);
 		DTC_ROC_ID ReadRingROCCount(const DTC_Ring_ID& ring, bool local = true);
 
 		// FIFO Full Error Flags Registers
-		DTC_FIFOFullErrorFlags WriteFIFOFullErrorFlags(const DTC_Ring_ID& ring, const DTC_FIFOFullErrorFlags& flags);
-		DTC_FIFOFullErrorFlags ToggleFIFOFullErrorFlags(const DTC_Ring_ID& ring, const DTC_FIFOFullErrorFlags& flags);
+		void ClearFIFOFullErrorFlags(const DTC_Ring_ID& ring);
 		DTC_FIFOFullErrorFlags ReadFIFOFullErrorFlags(const DTC_Ring_ID& ring);
 
 		// Receive Packet Error Register
+		void ClearRXElasticBufferUnderrun(const DTC_Ring_ID& ring);
 		bool ReadRXElasticBufferUnderrun(const DTC_Ring_ID& ring);
-		bool ClearRXElasticBufferUnderrun(const DTC_Ring_ID& ring);
+		void ClearRXElasticBufferOverrun(const DTC_Ring_ID& ring);
 		bool ReadRXElasticBufferOverrun(const DTC_Ring_ID& ring);
-		bool ClearRXElasticBufferOverrun(const DTC_Ring_ID& ring);
+		void ClearPacketError(const DTC_Ring_ID& ring);
 		bool ReadPacketError(const DTC_Ring_ID& ring);
-		bool ClearPacketError(const DTC_Ring_ID& ring);
+		void ClearPacketCRCError(const DTC_Ring_ID& ring);
 		bool ReadPacketCRCError(const DTC_Ring_ID& ring);
-		bool ClearPacketCRCError(const DTC_Ring_ID& ring);
 
 		// CFO Emulation Timestamp Registers 
 		void SetCFOEmulationTimestamp(const DTC_Timestamp& ts);
@@ -402,19 +321,32 @@ namespace DTCLib
 		// CFO Emulation Debug Packet Type Register
 		void SetCFOEmulationDebugType(DTC_DebugType type);
 		DTC_DebugType ReadCFOEmulationDebugType();
+
 		// Detector Emulation DMA Count Register
 		void SetDetectorEmulationDMACount(uint32_t count);
-		uint32_t ReadDetectorEmulationDMACount();
 		void IncrementDetectorEmulationDMACount();
+		uint32_t ReadDetectorEmulationDMACount();
 
 		// Detector Emulation DMA Delay Count Register
 		void SetDetectorEmulationDMADelayCount(uint32_t count);
 		uint32_t ReadDetectorEmulationDMADelayCount();
 
+		// SERDES Counters
+		/*
+		void ClearReceiveByteCount(const DTC_Ring_ID& ring);
+		uint32_t ReadReceiveByteCount(const DTC_Ring_ID& ring);
+		void ClearReceivePacketCount(const DTC_Ring_ID& ring);
+		uint32_t ReadReceivePacketCount(const DTC_Ring_ID& ring);
+		void ClearTransmitByteCount(const DTC_Ring_ID& ring);
+		uint32_t ReadTransmitByteCount(const DTC_Ring_ID& ring);
+		void ClearTransmitPacketCount(const DTC_Ring_ID& ring);
+		uint32_t ReadTransmitPacketCount(const DTC_Ring_ID& ring);
+		*/
+
 		// DDR Local End Address Register
 		void SetDDRLocalEndAddress(uint32_t address);
-		uint32_t ReadDDRLocalEndAddress();
 		void IncrementDDRLocalEndAddress(size_t sz);
+		uint32_t ReadDDRLocalEndAddress();
 
 		// FPGA PROM Program Status Register
 		bool ReadFPGAPROMProgramFIFOFull();
@@ -425,15 +357,100 @@ namespace DTCLib
 		bool ReadFPGACoreAccessFIFOFull();
 		bool ReadFPGACoreAccessFIFOEmpty();
 
+		DTC_RegisterFormatter FormatROCEmulationEnable();
+		DTC_RegisterFormatter FormatRingEnable();
+		DTC_RegisterFormatter FormatSERDESReset();
+		DTC_RegisterFormatter FormatSERDESRXDisparityError();
+		DTC_RegisterFormatter FormatSERDESRXCharacterNotInTableError();
+		DTC_RegisterFormatter FormatSERDESUnlockError();
+		DTC_RegisterFormatter FormatSERDESPLLLocked();
+		DTC_RegisterFormatter FormatSERDESTXBufferStatus();
+		DTC_RegisterFormatter FormatSERDESRXBufferStatus();
+		DTC_RegisterFormatter FormatSERDESRXStatus();
+		DTC_RegisterFormatter FormatSERDESResetDone();
+		DTC_RegisterFormatter FormatSERDESEyescanData();
+		DTC_RegisterFormatter FormatSERDESRXCDRLock();
+		DTC_RegisterFormatter FormatDMATimeoutPreset();
+		DTC_RegisterFormatter FormatROCReplyTimeout();
+		DTC_RegisterFormatter FormatROCReplyTimeoutError();
+		DTC_RegisterFormatter FormatReceivePacketError();
+		DTC_RegisterFormatter FormatTimestampPreset0();
+		DTC_RegisterFormatter FormatTimestampPreset1();
+		DTC_RegisterFormatter FormatDataPendingTimer();
+		DTC_RegisterFormatter FormatNUMROCs();
+		DTC_RegisterFormatter FormatFIFOFullErrorFlag0();
+		DTC_RegisterFormatter FormatFIFOFullErrorFlag1();
+		DTC_RegisterFormatter FormatFIFOFullErrorFlag2();
+		DTC_RegisterFormatter FormatCFOEmulationTimestampLow();
+		DTC_RegisterFormatter FormatCFOEmulationTimestampHigh();
+		DTC_RegisterFormatter FormatCFOEmulationRequestInterval();
+		DTC_RegisterFormatter FormatCFOEmulationNumRequests();
+		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing0();
+		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing1();
+		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing2();
+		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing3();
+		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing4();
+		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing5();
+		DTC_RegisterFormatter FormatRingPacketLength();
+		DTC_RegisterFormatter FormatFPGAPROMProgramStatus();
+		DTC_RegisterFormatter FormatFPGACoreAccess();
+
+
 	private:
-		void WriteRegister(uint32_t data, const DTC_Register& address);
-		uint32_t ReadRegister(const DTC_Register& address);
+		void WriteRegister_(uint32_t data, const DTC_Register& address);
+		uint32_t ReadRegister_(const DTC_Register& address);
 
 	protected:
 		mu2edev device_;
 		DTC_SimMode simMode_;
 		DTC_ROC_ID maxROCs_[6];
 		uint16_t dmaSize_;
+
+		const std::vector<std::function<DTC_RegisterFormatter()>> formattedDumpFunctions_{
+			[this]() {return this->FormatDesignVersion(); },
+			[this]() {return this->FormatDesignDate(); },
+			[this]() {return this->FormatDTCControl(); },
+			[this]() {return this->FormatDMATransferLength(); },
+			[this]() {return this->FormatSERDESLoopbackEnable(); },
+			[this]() {return this->FormatSERDESOscillatorStatus(); },
+			[this]() {return this->FormatROCEmulationEnable(); },
+			[this]() {return this->FormatRingEnable(); },
+			[this]() {return this->FormatSERDESReset(); },
+			[this]() {return this->FormatSERDESRXDisparityError(); },
+			[this]() {return this->FormatSERDESRXCharacterNotInTableError(); },
+			[this]() {return this->FormatSERDESUnlockError(); },
+			[this]() {return this->FormatSERDESPLLLocked(); },
+			[this]() {return this->FormatSERDESTXBufferStatus(); },
+			[this]() {return this->FormatSERDESRXBufferStatus(); },
+			[this]() {return this->FormatSERDESRXStatus(); },
+			[this]() {return this->FormatSERDESResetDone(); },
+			[this]() {return this->FormatSERDESEyescanData(); },
+			[this]() {return this->FormatSERDESRXCDRLock(); },
+			[this]() {return this->FormatDMATimeoutPreset(); },
+			[this]() {return this->FormatROCReplyTimeout(); },
+			[this]() {return this->FormatROCReplyTimeoutError(); },
+			[this]() {return this->FormatReceivePacketError(); },
+			[this]() {return this->FormatTimestampPreset0(); },
+			[this]() {return this->FormatTimestampPreset1(); },
+			[this]() {return this->FormatDataPendingTimer(); },
+			[this]() {return this->FormatNUMROCs(); },
+			[this]() {return this->FormatFIFOFullErrorFlag0(); },
+			[this]() {return this->FormatFIFOFullErrorFlag1(); },
+			[this]() {return this->FormatFIFOFullErrorFlag2(); },
+			[this]() {return this->FormatCFOEmulationTimestampLow(); },
+			[this]() {return this->FormatCFOEmulationTimestampHigh(); },
+			[this]() {return this->FormatCFOEmulationRequestInterval(); },
+			[this]() {return this->FormatCFOEmulationNumRequests(); },
+			[this]() {return this->FormatCFOEmulationNumPacketsRing0(); },
+			[this]() {return this->FormatCFOEmulationNumPacketsRing1(); },
+			[this]() {return this->FormatCFOEmulationNumPacketsRing2(); },
+			[this]() {return this->FormatCFOEmulationNumPacketsRing3(); },
+			[this]() {return this->FormatCFOEmulationNumPacketsRing4(); },
+			[this]() {return this->FormatCFOEmulationNumPacketsRing5(); },
+			[this]() {return this->FormatRingPacketLength(); },
+			[this]() {return this->FormatFPGAPROMProgramStatus(); },
+			[this]() {return this->FormatFPGACoreAccess(); }
+		};
 	};
 }
 

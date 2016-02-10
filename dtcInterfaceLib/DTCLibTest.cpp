@@ -355,14 +355,16 @@ void DTCLib::DTCLibTest::doRegTest()
 		{
 			std::cout << "Reading Design Version: " << designVersion << std::endl;
 			std::cout << "If simulated, result will be v99.99_2053-49-53-44 (SIMD in ASCII)" << std::endl;
-			std::cout << "Attempting to Toggle Ring 0." << std::endl;
+			std::cout << "Attempting to Disable Ring 0." << std::endl;
 		}
 		DTC_RingEnableMode ring0Value = thisDTC_->ReadRingEnabled(DTC_Ring_0);
 		if (printMessages_)
 		{
 			std::cout << "Value before: " << ring0Value << std::endl;
 		}
-		DTC_RingEnableMode ring0New = thisDTC_->ToggleRingEnabled(DTC_Ring_0);
+		thisDTC_->DisableRing(DTC_Ring_0);
+		DTC_RingEnableMode ring0New = thisDTC_->ReadRingEnabled(DTC_Ring_0);
+
 		if (printMessages_)
 		{
 			std::cout << "Value after: " << ring0New << std::endl;
@@ -462,7 +464,7 @@ void DTCLib::DTCLibTest::doDAQTest()
 		thisDTC_->SetInternalSystemClock();
 		thisDTC_->DisableTiming();
 		thisDTC_->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
-		if (!thisDTC_->ReadSERDESOscillatorClock()) { thisDTC_->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now
+		if (!thisDTC_->ReadSERDESOscillatorClock()) { thisDTC_->SetSERDESOscillatorClock_25Gbps(); } // We're going to 2.5Gbps for now
 
 		DTCSoftwareCFO theCFO(thisDTC_, true, 0, DTC_DebugType_SpecialSequence, true, !printMessages_);
 		theCFO.SendRequestForTimestamp();

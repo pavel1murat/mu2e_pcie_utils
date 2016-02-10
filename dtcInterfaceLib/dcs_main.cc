@@ -191,7 +191,7 @@ main(int	argc
 	{
 		std::cout << "Operation \"test_read\"" << std::endl;
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now
+		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->SetSERDESOscillatorClock_25Gbps(); } // We're going to 2.5Gbps for now
 
 		mu2edev* device = thisDTC->GetDevice();
 		thisDTC->SendDCSRequestPacket(DTC_Ring_0, DTC_ROC_0, DTC_DCSOperationType_Read,address, quiet);
@@ -241,7 +241,7 @@ main(int	argc
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
                 if(!thisDTC->ReadSERDESOscillatorClock()) 
 		{
-		  thisDTC->ToggleSERDESOscillatorClock();
+		  thisDTC->SetSERDESOscillatorClock_25Gbps();
                 }
 	}
 	else if (op == "read_release")

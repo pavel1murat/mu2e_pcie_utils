@@ -87,7 +87,6 @@ int mu2esim::init(DTCLib::DTC_SimMode mode)
 	// Set initial register values...
 	registers_[DTCLib::DTC_Register_DesignVersion] = 0x00006363; // v99.99
 	registers_[DTCLib::DTC_Register_DesignDate] = 0x53494D44; // SIMD in ASCII
-	registers_[DTCLib::DTC_Register_DesignStatus] = 0x9008;
 	registers_[DTCLib::DTC_Register_PerfMonTXByteCount] = 0x00000010; // Send
 	registers_[DTCLib::DTC_Register_PerfMonRXByteCount] = 0x00000040; // Recieve
 	registers_[DTCLib::DTC_Register_PerfMonTXPayloadCount] = 0x00000100; // SPayload
