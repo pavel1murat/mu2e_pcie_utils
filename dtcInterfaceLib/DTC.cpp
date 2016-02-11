@@ -210,15 +210,18 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever)
 		TRACE(4, "Reading a DMA from file...%s", file.c_str());
 		mu2e_databuff_t* buf = reinterpret_cast<mu2e_databuff_t*>(new mu2e_databuff_t());
 		is.read((char*)buf, sizeof(uint64_t));
-		uint64_t* sz = (uint64_t*)buf;
-		if(*sz < 64 && *sz > 0)
+		uint64_t sz = *((uint64_t*)buf);
+		TRACE(4, "Size is %llu, writing to device", (long long unsigned)sz);
+		is.read((char*)buf + 8, sz - sizeof(uint64_t));
+		if(sz < 64 && sz > 0)
 		{
-			*sz = 64;
+			sz = 64;
+			memcpy(buf, &sz, sizeof(uint64_t));
 		}
 		TRACE(4, "Size is %llu, writing to device", (long long unsigned)sz);
-		is.read((char*)buf + 8, *sz - sizeof(uint64_t));
-		if (*sz > 0) {
-			WriteDetectorEmulatorData(buf, *sz);
+		//is.read((char*)buf + 8, sz - sizeof(uint64_t));
+		if (sz > 0) {
+			WriteDetectorEmulatorData(buf, sz);
                         IncrementDetectorEmulationDMACount();
 		}
 		delete[] buf;
