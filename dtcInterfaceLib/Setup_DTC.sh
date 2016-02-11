@@ -4,7 +4,7 @@ test "$0" == "$BASH_SOURCE" && { echo 'You must source this script; script exiti
 ROOT_MODE=0
 if [[ `whoami` == root ]]; then
    ROOT_MODE=1
-done
+fi
 
 if [ $ROOT_MODE -eq 1 ]; then
   echo "Cleaning up kernel modules..."
