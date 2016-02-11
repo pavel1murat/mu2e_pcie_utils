@@ -756,6 +756,7 @@ void DTCLib::DTC_Registers::SetSERDESOscillatorClock_3125Gbps()
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	data[28] = 1;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
+        ResetSERDESOscillator();
 }
 
 void DTCLib::DTC_Registers::SetSERDESOscillatorClock_25Gbps()
@@ -763,6 +764,7 @@ void DTCLib::DTC_Registers::SetSERDESOscillatorClock_25Gbps()
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	data[28] = 0;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
+        ResetSERDESOscillator();
 }
 
 bool DTCLib::DTC_Registers::ReadSERDESOscillatorClock()
