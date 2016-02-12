@@ -33,6 +33,7 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 
 DTCLib::DTC::~DTC()
 {
+  DisableDetectorEmulator();
 	device_.close();
 	daqbuffer_ = nullptr;
 	dcsbuffer_ = nullptr;
