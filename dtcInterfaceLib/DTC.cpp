@@ -11,7 +11,7 @@
 #endif
 #define TRACE_NAME "MU2EDEV"
 
-DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode, std::string simFile) : DTC_Registers(mode),
+DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode, std::string simFile, bool loadFile) : DTC_Registers(mode),
 daqbuffer_(nullptr), buffers_used_(0), dcsbuffer_(nullptr),
 bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
 lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
@@ -19,31 +19,21 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 #ifdef _WIN32
 #pragma warning(disable: 4996)
 #endif
+  if(loadFile) {
 	char* sim = getenv("DTCLIB_SIM_FILE");
 	if (sim != NULL || simFile.size() > 0)
 	{
+		EnableDetectorEmulatorMode();
+	
 		if (sim != NULL) { simFile = std::string(sim); }
-		std::ifstream is(simFile, std::ifstream::binary);
-		while (is && is.good())
-		{
-			TRACE(4, "Reading a DMA from file...%s", simFile.c_str());
-			mu2e_databuff_t* buf = reinterpret_cast<mu2e_databuff_t*>(new mu2e_databuff_t());
-			is.read((char*)buf, sizeof(uint64_t));
-			uint64_t sz = *((uint64_t*)buf);
-			TRACE(4, "Size is %llu, writing to device", (long long unsigned)sz);
-			is.read((char*)buf + 8, sz - sizeof(uint64_t));
-			if (sz > 0) {
-				WriteDetectorEmulatorData(buf, sz);
-			}
-			delete[] buf;
-		}
-		is.close();
-		EnableDetectorEmulator();
+		WriteSimFileToDTC(simFile);
 	}
+}
 }
 
 DTCLib::DTC::~DTC()
 {
+  DisableDetectorEmulator();
 	device_.close();
 	daqbuffer_ = nullptr;
 	dcsbuffer_ = nullptr;
@@ -205,6 +195,41 @@ std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when)
 
 	TRACE(19, "DTC::GetJSONData RETURN");
 	return ss.str();
+}
+
+void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever)
+{
+	EnableDetectorEmulatorMode();
+	ResetDDRWriteAddress();
+	SetDDRLocalEndAddress(1);
+	SetDetectorEmulationDMACount(0);
+	SetDetectorEmulationDMADelayCount(0);
+
+	std::ifstream is(file, std::ifstream::binary);
+	while (is && is.good())
+	{
+		TRACE(4, "Reading a DMA from file...%s", file.c_str());
+		mu2e_databuff_t* buf = reinterpret_cast<mu2e_databuff_t*>(new mu2e_databuff_t());
+		is.read((char*)buf, sizeof(uint64_t));
+		uint64_t sz = *((uint64_t*)buf);
+		TRACE(4, "Size is %llu, writing to device", (long long unsigned)sz);
+		is.read((char*)buf + 8, sz - sizeof(uint64_t));
+		if(sz < 64 && sz > 0)
+		{
+			sz = 64;
+			memcpy(buf, &sz, sizeof(uint64_t));
+		}
+		TRACE(4, "Size is %llu, writing to device", (long long unsigned)sz);
+		//is.read((char*)buf + 8, sz - sizeof(uint64_t));
+		if (sz > 0) {
+			WriteDetectorEmulatorData(buf, sz);
+						IncrementDetectorEmulationDMACount();
+		}
+		delete[] buf;
+	}
+	is.close();
+		if(goForever) SetDetectorEmulationDMACount(0);
+	EnableDetectorEmulator();
 }
 
 // ROC Register Functions

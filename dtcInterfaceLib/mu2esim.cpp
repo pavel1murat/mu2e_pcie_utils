@@ -32,7 +32,6 @@
 
 mu2esim::mu2esim()
 	: registers_()
-	, hwIdx_()
 	, swIdx_()
 	, detSimLoopCount_(0)
 	, dmaData_()
@@ -46,8 +45,6 @@ mu2esim::mu2esim()
 	, currentBuffer_(new std::vector<uint8_t>(8, 0))
 {
 	TRACE(17, "mu2esim::mu2esim BEGIN");
-	hwIdx_[0] = 0;
-	hwIdx_[1] = 0;
 	swIdx_[0] = 0;
 	swIdx_[1] = 0;
 	for (unsigned ii = 0; ii < SIM_BUFFCOUNT; ++ii)
@@ -87,7 +84,6 @@ int mu2esim::init(DTCLib::DTC_SimMode mode)
 	// Set initial register values...
 	registers_[DTCLib::DTC_Register_DesignVersion] = 0x00006363; // v99.99
 	registers_[DTCLib::DTC_Register_DesignDate] = 0x53494D44; // SIMD in ASCII
-	registers_[DTCLib::DTC_Register_DesignStatus] = 0x9008;
 	registers_[DTCLib::DTC_Register_PerfMonTXByteCount] = 0x00000010; // Send
 	registers_[DTCLib::DTC_Register_PerfMonRXByteCount] = 0x00000040; // Recieve
 	registers_[DTCLib::DTC_Register_PerfMonTXPayloadCount] = 0x00000100; // SPayload
@@ -330,7 +326,6 @@ int mu2esim::read_release(int chn, unsigned num)
 int mu2esim::release_all(int chn)
 {
 	read_release(chn, SIM_BUFFCOUNT);
-	hwIdx_[chn] = 0;
 	swIdx_[chn] = 0;
 	return 0;
 }
@@ -461,6 +456,7 @@ void mu2esim::CFOEmulator_()
 
 unsigned mu2esim::delta_(int chn, int dir)
 {
+	/*
 	unsigned hw = hwIdx_[chn];
 	unsigned sw = swIdx_[chn];
 	TRACE(21, "mu2esim::delta_ chn=%i dir=%i hw=%u sw=%u num_buffs=%u"
@@ -473,10 +469,13 @@ unsigned mu2esim::delta_(int chn, int dir)
 		return ((sw >= hw)
 			? SIM_BUFFCOUNT - (sw - hw)
 			: hw - sw);
+			*/
+	return 0;
 }
 
 void mu2esim::clearBuffer_(int chn, bool increment)
 {
+	/*
 	// Clear the buffer:
 	TRACE(17, "mu2esim::clearBuffer_: Clearing output buffer");
 	if (increment)
@@ -484,6 +483,8 @@ void mu2esim::clearBuffer_(int chn, bool increment)
 		hwIdx_[chn] = (hwIdx_[chn] + 1) % SIM_BUFFCOUNT;
 	}
 	//memset(dmaData_[chn][hwIdx_[chn]], 0, sizeof(mu2e_databuff_t));
+	*/
+	TRACE(17, "mu2esim::clearBuffer_: NOP");
 }
 
 void mu2esim::dcsPacketSimulator_(DTCLib::DTC_DCSRequestPacket in)
@@ -540,8 +541,8 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 	packet[14] = 0;
 	packet[15] = 0;
 
-	TRACE(17, "mu2esim::packetSimulator_ Copying Data Header packet into buffer, chn=%i, idx=%u, buf=%p, packet=%p, off=%llu"
-		, 0, hwIdx_[0], (void*)currentBuffer_.get(), (void*)packet, (unsigned long long)currentOffset_);
+	TRACE(17, "mu2esim::packetSimulator_ Copying Data Header packet into buffer, chn=%i, buf=%p, packet=%p, off=%llu"
+		, 0, (void*)currentBuffer_.get(), (void*)packet, (unsigned long long)currentOffset_);
 	if (currentBuffer_.get()->size() < currentOffset_ + sizeof(packet)) { currentBuffer_.get()->resize(currentOffset_ + sizeof(packet)); }
 	memcpy(currentBuffer_.get()->data() + currentOffset_, &packet, sizeof(packet));
 	currentOffset_ += sizeof(packet);
@@ -568,8 +569,8 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 		packet[14] = 0;
 		packet[15] = 0;
 
-		TRACE(17, "mu2esim::packetSimulator_ Copying Data packet into buffer, chn=%i, idx=%u, buf=%p, packet=%p, off=%llu"
-			, 0, hwIdx_[0], (void*)(currentBuffer_.get()), (void*)packet, (unsigned long long)currentOffset_);
+		TRACE(17, "mu2esim::packetSimulator_ Copying Data packet into buffer, chn=%i, buf=%p, packet=%p, off=%llu"
+			, 0, (void*)(currentBuffer_.get()), (void*)packet, (unsigned long long)currentOffset_);
 		if (currentBuffer_.get()->size() < currentOffset_ + sizeof(packet)) { currentBuffer_.get()->resize(currentOffset_ + sizeof(packet)); }
 		memcpy(currentBuffer_.get()->data() + currentOffset_, &packet, sizeof(packet));
 	}
@@ -593,8 +594,8 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 		packet[14] = 4;
 		packet[15] = 4;
 
-		TRACE(17, "mu2esim::packetSimulator_ Copying Data packet into buffer, chn=%i, idx=%u, buf=%p, packet=%p, off=%llu"
-			, 0, hwIdx_[0], (void*)(currentBuffer_.get()), (void*)packet, (unsigned long long)currentOffset_);
+		TRACE(17, "mu2esim::packetSimulator_ Copying Data packet into buffer, chn=%i, buf=%p, packet=%p, off=%llu"
+			, 0, (void*)(currentBuffer_.get()), (void*)packet, (unsigned long long)currentOffset_);
 		if (currentBuffer_.get()->size() < currentOffset_ + sizeof(packet)) { currentBuffer_.get()->resize(currentOffset_ + sizeof(packet)); }
 		memcpy(currentBuffer_.get()->data() + currentOffset_, &packet, sizeof(packet));
 		currentOffset_ += sizeof(packet);
@@ -620,8 +621,8 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 			packet[15] = static_cast<uint8_t>(samplesProcessed + 7);
 
 			samplesProcessed += 8;
-			TRACE(17, "mu2esim::packetSimulator_ Copying Data packet into buffer, chn=%i, idx=%u, buf=%p, packet=%p, off=%llu"
-				, 0, hwIdx_[0], (void*)(currentBuffer_.get()), (void*)packet, (unsigned long long)currentOffset_);
+			TRACE(17, "mu2esim::packetSimulator_ Copying Data packet into buffer, chn=%i, buf=%p, packet=%p, off=%llu"
+				, 0, (void*)(currentBuffer_.get()), (void*)packet, (unsigned long long)currentOffset_);
 			if (currentBuffer_.get()->size() < currentOffset_ + sizeof(packet)) { currentBuffer_.get()->resize(currentOffset_ + sizeof(packet)); }
 			memcpy(currentBuffer_.get()->data() + currentOffset_, &packet, sizeof(packet));
 			currentOffset_ += sizeof(packet);
@@ -658,8 +659,8 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 		packet[14] = static_cast<uint8_t>((pattern6 >> 4) + (pattern7 << 6));
 		packet[15] = static_cast<uint8_t>((pattern7 >> 2));
 
-		TRACE(17, "mu2esim::packetSimulator_ Copying Data packet into buffer, chn=%i, idx=%u, buf=%p, packet=%p, off=%llu"
-			, 0, hwIdx_[0], (void*)(currentBuffer_.get()), (void*)packet, (unsigned long long)currentOffset_);
+		TRACE(17, "mu2esim::packetSimulator_ Copying Data packet into buffer, chn=%i, buf=%p, packet=%p, off=%llu"
+			, 0, (void*)(currentBuffer_.get()), (void*)packet, (unsigned long long)currentOffset_);
 		if (currentBuffer_.get()->size() < currentOffset_ + sizeof(packet)) { currentBuffer_.get()->resize(currentOffset_ + sizeof(packet)); }
 		memcpy(currentBuffer_.get()->data() + currentOffset_, &packet, sizeof(packet));
 		currentOffset_ += sizeof(packet);
@@ -686,8 +687,8 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 			packet[14] = 0xee;
 			packet[15] = 0xff;
 
-			TRACE(17, "mu2esim::packetSimulator_ Copying Data packet into buffer, chn=%i, idx=%u, buf=%p, packet=%p, off=%llu"
-				, 0, hwIdx_[0], (void*)(currentBuffer_.get()), (void*)packet, (unsigned long long)currentOffset_);
+			TRACE(17, "mu2esim::packetSimulator_ Copying Data packet into buffer, chn=%i, buf=%p, packet=%p, off=%llu"
+				, 0, (void*)(currentBuffer_.get()), (void*)packet, (unsigned long long)currentOffset_);
 			if (currentBuffer_.get()->size() < currentOffset_ + sizeof(packet)) { currentBuffer_.get()->resize(currentOffset_ + sizeof(packet)); }
 			memcpy(currentBuffer_.get()->data() + currentOffset_, &packet, sizeof(packet));
 			currentOffset_ += sizeof(packet);

@@ -284,7 +284,14 @@ main(int	argc
 	{
 		std::cout << "Swapping SERDES Oscillator Clock" << std::endl;
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-		thisDTC->ToggleSERDESOscillatorClock();
+		if(thisDTC->ReadSERDESOscillatorClock())
+		{
+			thisDTC->SetSERDESOscillatorClock_25Gbps();
+		}
+		else
+		{
+			thisDTC->SetSERDESOscillatorClock_3125Gbps();
+		}
 	}
 	else if (op == "loopback")
 	{
@@ -393,7 +400,7 @@ main(int	argc
 		int rtCount = 0;
 		auto startTime = std::chrono::high_resolution_clock::now();
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now
+		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->SetSERDESOscillatorClock_25Gbps(); } // We're going to 2.5Gbps for now
 
 		mu2edev* device = thisDTC->GetDevice();
 		DTCSoftwareCFO *cfo = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet, false);
@@ -470,13 +477,14 @@ main(int	argc
 			if (!reallyQuiet) std::cout << "Buffer Read " << std::dec << ii << std::endl;
 			mu2e_databuff_t* buffer;
 			int tmo_ms = 1500;
+			TRACE(1, "util - before read for DAQ - ii=%u", ii);
 			auto startDTC = std::chrono::high_resolution_clock::now();
 			int sts = device->read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
 			auto endDTC = std::chrono::high_resolution_clock::now();
 			totalIncTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
 				(endDTC - startDTC).count();
 
-			TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, (void*)buffer);
+			TRACE(1, "util - after read for DAQ - ii=%u sts=%d %p", ii, sts, (void*)buffer);
 			if (sts > 0)
 			{
 				totalRTTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
@@ -552,7 +560,7 @@ main(int	argc
 	else if (op == "DTC")
 	{
 		auto *thisDTC = new DTC(DTC_SimMode_NoCFO);
-		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->ToggleSERDESOscillatorClock(); } // We're going to 2.5Gbps for now
+		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->SetSERDESOscillatorClock_25Gbps(); } // We're going to 2.5Gbps for now
 
 		double totalIncTime = 0, totalSize = 0, totalDevTime = 0, totalRTTime = 0, totalWriteTime = 0;
 		int rtCount = 0;

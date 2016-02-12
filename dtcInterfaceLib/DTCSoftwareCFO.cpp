@@ -77,6 +77,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTCLib::DTC_Timestamp ts)
 		}
 		theDTC_->SetCFOEmulationNumRequests(1);
 		theDTC_->SetCFOEmulationRequestInterval(0);
+		theDTC_->SetCFOEmulationDebugType(debugType_);
 		TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp enabling DTC CFO Emulator");
 		theDTC_->EnableCFOEmulation();
 		TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp done");
@@ -86,6 +87,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTCLib::DTC_Timestamp ts)
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTCLib::DTC_Timestamp start, bool increment, uint32_t delayBetweenDataRequests, int requestsAhead)
 {
+  if(delayBetweenDataRequests < 100) { delayBetweenDataRequests = 100; }
 	if (!useCFOEmulator_)
 	{
 		requestsSent_ = false;
@@ -112,6 +114,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTCLib::DTC_Timesta
 			}
 		}
 		theDTC_->SetCFOEmulationNumRequests(count);
+		theDTC_->SetCFOEmulationDebugType(debugType_);
 		theDTC_->SetCFOEmulationRequestInterval(delayBetweenDataRequests);
 		TRACE(19, "DTCSoftwareCFO::SendRequestsForRange enabling DTC CFO Emulator");
 		theDTC_->EnableCFOEmulation();

@@ -13,12 +13,7 @@ int main(int argc, char** argv)
 {
 	DTCLib::DTC_Registers* thisDTC = new DTCLib::DTC_Registers();
 
-	if (argc > 1)
-	{
-		std::cout << thisDTC->RegDump() << std::endl;
-		std::cout << std::endl << std::endl;
-	}
-	std::cout << thisDTC->ConsoleFormatRegDump() << std::endl;
+	std::cout << thisDTC->FormattedRegDump() << std::endl;
 
 	return 0;
 }
