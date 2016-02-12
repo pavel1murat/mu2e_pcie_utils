@@ -222,12 +222,12 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever)
 		//is.read((char*)buf + 8, sz - sizeof(uint64_t));
 		if (sz > 0) {
 			WriteDetectorEmulatorData(buf, sz);
-                        IncrementDetectorEmulationDMACount();
+						IncrementDetectorEmulationDMACount();
 		}
 		delete[] buf;
 	}
 	is.close();
-        if(goForever) SetDetectorEmulationDMACount(0);
+		if(goForever) SetDetectorEmulationDMACount(0);
 	EnableDetectorEmulator();
 }
 

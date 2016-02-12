@@ -477,13 +477,14 @@ main(int	argc
 			if (!reallyQuiet) std::cout << "Buffer Read " << std::dec << ii << std::endl;
 			mu2e_databuff_t* buffer;
 			int tmo_ms = 1500;
+			TRACE(1, "util - before read for DAQ - ii=%u", ii);
 			auto startDTC = std::chrono::high_resolution_clock::now();
 			int sts = device->read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
 			auto endDTC = std::chrono::high_resolution_clock::now();
 			totalIncTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
 				(endDTC - startDTC).count();
 
-			TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, (void*)buffer);
+			TRACE(1, "util - after read for DAQ - ii=%u sts=%d %p", ii, sts, (void*)buffer);
 			if (sts > 0)
 			{
 				totalRTTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
