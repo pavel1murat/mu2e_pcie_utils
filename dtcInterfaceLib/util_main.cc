@@ -284,7 +284,7 @@ main(int	argc
 	{
 		std::cout << "Swapping SERDES Oscillator Clock" << std::endl;
 		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-		if(thisDTC->ReadSERDESOscillatorClock())
+		if (thisDTC->ReadSERDESOscillatorClock())
 		{
 			thisDTC->SetSERDESOscillatorClock_25Gbps();
 		}
@@ -669,7 +669,7 @@ main(int	argc
 						}
 						expectedTS = h2.GetTimestamp().GetTimestamp(true);
 					}
-					else if(i == data.size() - 1)
+					else if (i == data.size() - 1)
 					{
 						expectedTS += (incrementTimestamp ? 1 : 0);
 					}

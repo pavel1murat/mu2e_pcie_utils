@@ -8,13 +8,11 @@
 #include <cstdio>		// printf
 #include <cstdlib>		// strtoul
 #include <iostream>
-#include <fstream>
 #include <iomanip>
 #include <string>
 #include <chrono>
 #include <cmath>
 #include "DTC.h"
-#include "DTCSoftwareCFO.h"
 #ifdef _WIN32
 # include <thread>
 # define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
@@ -92,7 +90,7 @@ void printHelpMsg()
 
 int
 main(int	argc
-	 , char	*argv[])
+	, char	*argv[])
 {
 	bool quiet = false;
 	bool reallyQuiet = false;
@@ -158,17 +156,19 @@ main(int	argc
 		<< ", Really Quiet Mode: " << reallyQuiet
 		<< std::endl;
 
+
+	auto thisDTC = new DTC(DTC_SimMode_NoCFO);
+	auto device = thisDTC->GetDevice();
+
 	if (op == "read_register")
 	{
 		std::cout << "Operation \"read_register\"" << std::endl;
-		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		auto rocdata = thisDTC->ReadROCRegister(DTC_Ring_0, DTC_ROC_0, address);
 		if (!reallyQuiet) std::cout << rocdata << '\n';
 	}
 	else if (op == "reset_roc")
 	{
 		std::cout << "Operation \"reset_roc\"" << std::endl;
-		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 12, 1, 0x11);
 		thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 11, 1, 0x11);
 		thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, 10, 1, 0x11);
@@ -178,42 +178,36 @@ main(int	argc
 	else if (op == "write_register")
 	{
 		std::cout << "Operation \"write_register\"" << std::endl;
-		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		thisDTC->WriteROCRegister(DTC_Ring_0, DTC_ROC_0, address, data);
 	}
 	else if (op == "write_extregister")
 	{
 		std::cout << "Operation \"write_extregister\"" << std::endl;
-		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		thisDTC->WriteExtROCRegister(DTC_Ring_0, DTC_ROC_0, block, address, data);
 	}
 	else if (op == "test_read")
 	{
 		std::cout << "Operation \"test_read\"" << std::endl;
-		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
 		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->SetSERDESOscillatorClock_25Gbps(); } // We're going to 2.5Gbps for now
 
-		mu2edev* device = thisDTC->GetDevice();
-		thisDTC->SendDCSRequestPacket(DTC_Ring_0, DTC_ROC_0, DTC_DCSOperationType_Read,address, quiet);
+		thisDTC->SendDCSRequestPacket(DTC_Ring_0, DTC_ROC_0, DTC_DCSOperationType_Read, address, quiet);
 
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
 			if (!reallyQuiet) std::cout << "Buffer Read " << ii << std::endl;
 			mu2e_databuff_t* buffer;
 			int tmo_ms = 1500;
-			int sts = device->read_data(DTC_DMA_Engine_DCS, (void**)&buffer, tmo_ms);
+			int sts = device->read_data(DTC_DMA_Engine_DCS, reinterpret_cast<void**>(&buffer), tmo_ms);
 
 			TRACE(1, "util - read for DCS - ii=%u sts=%d %p", ii, sts, (void*)buffer);
 			if (sts > 0)
 			{
-				void* readPtr = &(buffer[0]);
-				uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)readPtr));
-				readPtr = (uint8_t*)readPtr + 8;
-				TRACE(1, "util - bufSize is %u", bufSize);
+				auto bufSize = *reinterpret_cast<uint64_t*>(&(buffer[0]));
+				TRACE(1, "util - bufSize is %llu", static_cast<unsigned long long>(bufSize));
 
 				if (!reallyQuiet)
 				{
-					for (unsigned line = 0; line < (unsigned)(ceil((bufSize - 8) / 16)); ++line)
+					for (unsigned line = 0; line < static_cast<unsigned>(ceil((bufSize - 8) / 16)); ++line)
 					{
 						std::cout << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
 						//for (unsigned byte = 0; byte < 16; ++byte)
@@ -221,9 +215,9 @@ main(int	argc
 						{
 							if ((line * 16) + (2 * byte) < (bufSize - 8u))
 							{
-								uint16_t thisWord = (((uint16_t*)buffer)[4 + (line * 8) + byte]);
+								auto thisWord = (reinterpret_cast<uint16_t*>(buffer)[4 + (line * 8) + byte]);
 								//uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
-								std::cout << std::setw(4) << (int)thisWord << " ";
+								std::cout << std::setw(4) << static_cast<int>(thisWord) << " ";
 							}
 						}
 						std::cout << std::endl;
@@ -237,23 +231,25 @@ main(int	argc
 	}
 	else if (op == "toggle_serdes")
 	{
-		std::cout << "Setting SERDES Oscillator Clock to 2.5 Gbps" << std::endl;
-		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-                if(!thisDTC->ReadSERDESOscillatorClock()) 
+		if (!thisDTC->ReadSERDESOscillatorClock())
 		{
-		  thisDTC->SetSERDESOscillatorClock_25Gbps();
-                }
+			std::cout << "Setting SERDES Oscillator Clock to 2.5 Gbps" << std::endl;
+			thisDTC->SetSERDESOscillatorClock_25Gbps();
+		}
+		else
+		{
+			std::cout << "Setting SERDES Oscillator Clock to 3.125 Gbps" << std::endl;
+			thisDTC->SetSERDESOscillatorClock_3125Gbps();
+		}
 	}
 	else if (op == "read_release")
 	{
-		mu2edev device;
-		device.init();
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
 			void *buffer;
 			int tmo_ms = 0;
-			int stsRD = device.read_data(DTC_DMA_Engine_DCS, &buffer, tmo_ms);
-			int stsRL = device.read_release(DTC_DMA_Engine_DCS, 1);
+			int stsRD = device->read_data(DTC_DMA_Engine_DCS, &buffer, tmo_ms);
+			int stsRL = device->read_release(DTC_DMA_Engine_DCS, 1);
 			TRACE(12, "dcs - release/read for DCS ii=%u stsRD=%d stsRL=%d %p", ii, stsRD, stsRL, buffer);
 			if (delay > 0) usleep(delay);
 		}
@@ -263,5 +259,7 @@ main(int	argc
 		std::cout << "Unrecognized operation: " << op << std::endl;
 		printHelpMsg();
 	}
+
+	delete thisDTC;
 	return (0);
 }   // main
