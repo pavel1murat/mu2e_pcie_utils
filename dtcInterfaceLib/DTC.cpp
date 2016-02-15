@@ -213,7 +213,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever)
 	//DTC_Reset();
 	EnableDetectorEmulatorMode();
 	ResetDDRWriteAddress();
-	SetDDRLocalEndAddress(1);
+	SetDDRLocalEndAddress(0);
 	SetDetectorEmulationDMACount(0);
 	SetDetectorEmulationDMADelayCount(0);
 
