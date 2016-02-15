@@ -3,9 +3,12 @@
 
 #include <bitset> // std::bitset
 
+
 #include <cstdint> // uint8_t, uint16_t
 
+
 #include <vector> // std::vector
+
 #include <iostream>
 
 #include "DTC_Types.h"
@@ -35,7 +38,7 @@ namespace DTCLib
 		DTC_DataStatus_NoValid = 1,
 		DTC_DataStatus_Invalid = 2,
 	};
-	
+
 	enum DTC_DCSOperationType : uint8_t
 	{
 		DTC_DCSOperationType_Read = 0,
@@ -49,9 +52,7 @@ namespace DTCLib
 	public:
 		DTC_DCSOperationType type_;
 
-		DTC_DCSOperationTypeConverter(DTC_DCSOperationType type) : type_(type)
-		{
-		}
+		DTC_DCSOperationTypeConverter(DTC_DCSOperationType type) : type_(type) { }
 
 		std::string toString() const
 		{
@@ -98,17 +99,11 @@ namespace DTCLib
 	public:
 		DTC_DataPacket();
 
-		DTC_DataPacket(mu2e_databuff_t* data) : dataPtr_(*data), dataSize_(16), memPacket_(true)
-		{
-		}
+		DTC_DataPacket(mu2e_databuff_t* data) : dataPtr_(*data), dataSize_(16), memPacket_(true) { }
 
-		DTC_DataPacket(void* data) : dataPtr_((uint8_t*)data), dataSize_(16), memPacket_(true)
-		{
-		}
+		DTC_DataPacket(void* data) : dataPtr_((uint8_t*)data), dataSize_(16), memPacket_(true) { }
 
-		DTC_DataPacket(uint8_t* data) : dataPtr_(data), dataSize_(16), memPacket_(true)
-		{
-		}
+		DTC_DataPacket(uint8_t* data) : dataPtr_(data), dataSize_(16), memPacket_(true) { }
 
 		DTC_DataPacket(const DTC_DataPacket&);
 		DTC_DataPacket(DTC_DataPacket&&) = default;
@@ -172,9 +167,7 @@ namespace DTCLib
 		DTC_ROC_ID rocID_;
 
 	public:
-		DTC_DMAPacket() : byteCount_(0), valid_(false), ringID_(DTC_Ring_Unused), packetType_(DTC_PacketType_Invalid), rocID_(DTC_ROC_Unused)
-		{
-		}
+		DTC_DMAPacket() : byteCount_(0), valid_(false), ringID_(DTC_Ring_Unused), packetType_(DTC_PacketType_Invalid), rocID_(DTC_ROC_Unused) { }
 
 		DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t byteCount = 64, bool valid = true);
 

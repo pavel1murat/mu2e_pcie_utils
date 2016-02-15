@@ -1,5 +1,7 @@
-#include <cstdio>		// printf
-#include <cstdlib>		// strtoul
+#include <cstdio> // printf
+
+#include <cstdlib> // strtoul
+
 #include <iostream>
 #include <string>
 #include "DTCSoftwareCFO.h"
@@ -22,7 +24,7 @@
 # include <unistd.h>		// usleep
 #endif
 
-unsigned getOptionValue(int *index, char **argv[])
+unsigned getOptionValue(int* index, char** argv[])
 {
 	char* arg = (*argv)[*index];
 	if (arg[2] == '\0')
@@ -126,3 +128,4 @@ int main(int argc, char* argv[])
 		theEmulator.SendRequestForTimestamp(DTCLib::DTC_Timestamp(timestampOffset));
 	}
 }
+

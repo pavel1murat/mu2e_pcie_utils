@@ -11,23 +11,22 @@ function setPixel(led, bit, modestring) {
         if (bit) {
             ctx.fillStyle = "lightgreen";
         } else {
-            ctx.fillStyle = 'black';
+            ctx.fillStyle = "black";
         }
-    }
-    else if (modestring === "RW") {
+    } else if (modestring === "RW") {
         ctx.strokeStyle = "darkblue";
         if (bit) {
             ctx.fillStyle = "lightblue";
         } else {
-            ctx.fillStyle = 'black';
+            ctx.fillStyle = "black";
         }
     } else {
         ctx.strokeStyle = "darkred";
         if (bit) {
-        ctx.fillStyle = "red";
-    } else {
-        ctx.fillStyle = 'black';
-    }
+            ctx.fillStyle = "red";
+        } else {
+            ctx.fillStyle = "black";
+        }
     }
     ctx.beginPath();
     ctx.moveTo(led.width / 4, ctx.lineWidth); //Create a starting point
@@ -45,6 +44,7 @@ function setPixel(led, bit, modestring) {
 }
 
 var oldbase = 16;
+
 // Define a method that handles nothing but the actual
 // form population. This helps us decouple the data
 // insertion from the data retrieval.
@@ -102,7 +102,7 @@ function UpdateFormFields() {
     var jSelect = $("#mode");
     var jAddr = $("#address");
     var jVal = $("#value");
-    var jBase = $('input[name=base]:checked');
+    var jBase = $("input[name=base]:checked");
     // Check to see if we are using AJAX or static data
     // to re-populate the form.
     
@@ -113,13 +113,13 @@ function UpdateFormFields() {
     // fields method.
     GetAJAXValues(
         jSelect.val(),
-  jAddr.val(),
-  jVal.val(),
-  // Callback method for results.
-  function (objRemoteData) {
+        jAddr.val(),
+        jVal.val(),
+        // Callback method for results.
+        function (objRemoteData) {
             PopulateValueBox(
                 objRemoteData.Value1,
-    jBase.val()
+                jBase.val()
             );
         }
     );
@@ -304,37 +304,37 @@ function PopulateLEDS(dtcregdump) {
     setPixel(document.getElementById("SERDESTXFIFOHFRing5LED"), dtcregdump.Ring5.FIFOHalfFull, "RO");
     setPixel(document.getElementById("SERDESTXUOFlowCFOLED"), dtcregdump.CFO.OverflowOrUnderflow, "ERR");
     setPixel(document.getElementById("SERDESTXFIFOHFCFOLED"), dtcregdump.CFO.FIFOHalfFull, "RO");
-    setPixel(document.getElementById("SERDESRXBufferNominalRing0LED"), dtcregdump.Ring0.RXBufferStatus.Nominal , "RO");
+    setPixel(document.getElementById("SERDESRXBufferNominalRing0LED"), dtcregdump.Ring0.RXBufferStatus.Nominal, "RO");
     setPixel(document.getElementById("SERDESRXBufferEmptyRing0LED"), dtcregdump.Ring0.RXBufferStatus.Empty, "RO");
     setPixel(document.getElementById("SERDESRXBufferFullRing0LED"), dtcregdump.Ring0.RXBufferStatus.Full, "RO");
     setPixel(document.getElementById("SERDESRXBufferUFRing0LED"), dtcregdump.Ring0.RXBufferStatus.Underflow, "ERR");
     setPixel(document.getElementById("SERDESRXBufferOFRing0LED"), dtcregdump.Ring0.RXBufferStatus.Overflow, "ERR");
-    setPixel(document.getElementById("SERDESRXBufferNominalRing1LED"), dtcregdump.Ring1.RXBufferStatus.Nominal , "RO");
+    setPixel(document.getElementById("SERDESRXBufferNominalRing1LED"), dtcregdump.Ring1.RXBufferStatus.Nominal, "RO");
     setPixel(document.getElementById("SERDESRXBufferEmptyRing1LED"), dtcregdump.Ring1.RXBufferStatus.Empty, "RO");
     setPixel(document.getElementById("SERDESRXBufferFullRing1LED"), dtcregdump.Ring1.RXBufferStatus.Full, "RO");
     setPixel(document.getElementById("SERDESRXBufferUFRing1LED"), dtcregdump.Ring1.RXBufferStatus.Underflow, "ERR");
     setPixel(document.getElementById("SERDESRXBufferOFRing1LED"), dtcregdump.Ring1.RXBufferStatus.Overflow, "ERR");
-    setPixel(document.getElementById("SERDESRXBufferNominalRing2LED"), dtcregdump.Ring2.RXBufferStatus.Nominal , "RO");
+    setPixel(document.getElementById("SERDESRXBufferNominalRing2LED"), dtcregdump.Ring2.RXBufferStatus.Nominal, "RO");
     setPixel(document.getElementById("SERDESRXBufferEmptyRing2LED"), dtcregdump.Ring2.RXBufferStatus.Empty, "RO");
     setPixel(document.getElementById("SERDESRXBufferFullRing2LED"), dtcregdump.Ring2.RXBufferStatus.Full, "RO");
     setPixel(document.getElementById("SERDESRXBufferUFRing2LED"), dtcregdump.Ring2.RXBufferStatus.Underflow, "ERR");
     setPixel(document.getElementById("SERDESRXBufferOFRing2LED"), dtcregdump.Ring2.RXBufferStatus.Overflow, "ERR");
-    setPixel(document.getElementById("SERDESRXBufferNominalRing3LED"), dtcregdump.Ring3.RXBufferStatus.Nominal , "RO");
+    setPixel(document.getElementById("SERDESRXBufferNominalRing3LED"), dtcregdump.Ring3.RXBufferStatus.Nominal, "RO");
     setPixel(document.getElementById("SERDESRXBufferEmptyRing3LED"), dtcregdump.Ring3.RXBufferStatus.Empty, "RO");
     setPixel(document.getElementById("SERDESRXBufferFullRing3LED"), dtcregdump.Ring3.RXBufferStatus.Full, "RO");
     setPixel(document.getElementById("SERDESRXBufferUFRing3LED"), dtcregdump.Ring3.RXBufferStatus.Underflow, "ERR");
     setPixel(document.getElementById("SERDESRXBufferOFRing3LED"), dtcregdump.Ring3.RXBufferStatus.Overflow, "ERR");
-    setPixel(document.getElementById("SERDESRXBufferNominalRing4LED"), dtcregdump.Ring4.RXBufferStatus.Nominal , "RO");
+    setPixel(document.getElementById("SERDESRXBufferNominalRing4LED"), dtcregdump.Ring4.RXBufferStatus.Nominal, "RO");
     setPixel(document.getElementById("SERDESRXBufferEmptyRing4LED"), dtcregdump.Ring4.RXBufferStatus.Empty, "RO");
     setPixel(document.getElementById("SERDESRXBufferFullRing4LED"), dtcregdump.Ring4.RXBufferStatus.Full, "RO");
     setPixel(document.getElementById("SERDESRXBufferUFRing4LED"), dtcregdump.Ring4.RXBufferStatus.Underflow, "ERR");
     setPixel(document.getElementById("SERDESRXBufferOFRing4LED"), dtcregdump.Ring4.RXBufferStatus.Overflow, "ERR");
-    setPixel(document.getElementById("SERDESRXBufferNominalRing5LED"), dtcregdump.Ring5.RXBufferStatus.Nominal , "RO");
+    setPixel(document.getElementById("SERDESRXBufferNominalRing5LED"), dtcregdump.Ring5.RXBufferStatus.Nominal, "RO");
     setPixel(document.getElementById("SERDESRXBufferEmptyRing5LED"), dtcregdump.Ring5.RXBufferStatus.Empty, "RO");
     setPixel(document.getElementById("SERDESRXBufferFullRing5LED"), dtcregdump.Ring5.RXBufferStatus.Full, "RO");
     setPixel(document.getElementById("SERDESRXBufferUFRing5LED"), dtcregdump.Ring5.RXBufferStatus.Underflow, "ERR");
     setPixel(document.getElementById("SERDESRXBufferOFRing5LED"), dtcregdump.Ring5.RXBufferStatus.Overflow, "ERR");
-    setPixel(document.getElementById("SERDESRXBufferNominalCFOLED"), dtcregdump.CFO.RXBufferStatus.Nominal , "RO");
+    setPixel(document.getElementById("SERDESRXBufferNominalCFOLED"), dtcregdump.CFO.RXBufferStatus.Nominal, "RO");
     setPixel(document.getElementById("SERDESRXBufferEmptyCFOLED"), dtcregdump.CFO.RXBufferStatus.Empty, "RO");
     setPixel(document.getElementById("SERDESRXBufferFullCFOLED"), dtcregdump.CFO.RXBufferStatus.Full, "RO");
     setPixel(document.getElementById("SERDESRXBufferUFCFOLED"), dtcregdump.CFO.RXBufferStatus.Underflow, "ERR");
@@ -472,7 +472,7 @@ function PopulateLEDS(dtcregdump) {
     setPixel(document.getElementById("fpgapromfifofullLED"), dtcregdump.PROMFIFOFull, "RO");
     setPixel(document.getElementById("fpgapromreadyLED"), dtcregdump.PROMReady, "RO");
     setPixel(document.getElementById("fpgaCoreFIFOFullLED"), dtcregdump.FPGACoreFIFOFull, "RO");
-    
+
 }
 
 function GetRegDumpAjax(fnCallback) {
@@ -524,6 +524,7 @@ function LEDAction(url, ring, id) {
         setPixel(document.getElementById(id), output.Value1, "RW");
     });
 }
+
 function LEDExtAction(url, ring, val, id) {
     var post = {};
     post.ring = ring;
@@ -532,12 +533,14 @@ function LEDExtAction(url, ring, val, id) {
         setPixel(document.getElementById(id), output.Value1, "RW");
     });
 }
+
 function LEDObjAction(url, ring, idlo, idhi) {
     AjaxPost(url, ring, function (output) {
         setPixel(document.getElementById(idlo), output.Value1.Low, "RW");
         setPixel(document.getElementById(idhi), output.Value1.High, "RW");
     });
 }
+
 function SetFIFOFlags(ring, id) {
     var post = {};
     post.ring = ring;
@@ -554,6 +557,7 @@ function SetFIFOFlags(ring, id) {
         setPixel(document.getElementById("DCSInputFIFOFullRing" + ring + "LED"), output.Value1.DCSInput, "RW");
     });
 }
+
 function SetSimMode(id) {
     var post = {};
     post.id = id;
@@ -563,7 +567,7 @@ function SetSimMode(id) {
         setPixel(document.getElementById("simModeCalorimeterLED"), output.Value1.Calorimeter, "RW");
         setPixel(document.getElementById("simModeCRVLED"), output.Value1.CosmicVeto, "RW");
         setPixel(document.getElementById("simModeHardwareLED"), output.Value1.Hardware, "RW");
-    })
+    });
 }
 
 function SetNumericValue(id, url) {
@@ -575,23 +579,22 @@ function SetNumericValue(id, url) {
 
 function PostLogMessage() {
     var message = $("#logMessage").val();
-    AjaxPost('/DTC/WriteLog', message, function (returnValue) {
+    AjaxPost("/DTC/WriteLog", message, function (returnValue) {
         $("#log").val(returnValue.Value1);
     });
 }
 
 function ReadLog() {
-    AjaxPost('/DTC/ReadLog', null, function (returnValue) {
+    AjaxPost("/DTC/ReadLog", null, function (returnValue) {
         $("#log").val(returnValue.Value1);
     });
 }
 
 function RunScript() {
-    AjaxPost('/DTC/RunScript', $("#script").val(), function (returnValue) {
+    AjaxPost("/DTC/RunScript", $("#script").val(), function (returnValue) {
         $("#script").val(returnValue);
     });
 }
-
 
 
 // When the DOM is ready to be interacted with, init.
@@ -604,53 +607,51 @@ $(function () {
     $("#post").click(function () {
         UpdateFormFields();
     });
-    $('input[name=base]').change(function () {
+    $("input[name=base]").change(function () {
         var jVal = $("#value");
-        var jBase = $('input[name=base]:checked').val();
+        var jBase = $("input[name=base]:checked").val();
         var oldval = parseInt(jVal.val(), oldbase);
         jVal.val(oldval.toString(jBase));
         oldbase = jBase;
     });
     $("#logInterval").change(function () {
-        if ($("#updateLog").is(':checked')) {
+        if ($("#updateLog").is(":checked")) {
             var newVal = parseInt($("#logInterval").val() * 1000, 10);
             clearInterval(logIntervalHandle);
             logIntervalHandle = setInterval(function () { ReadLog(); }, newVal);
         }
     });
     $("#regInterval").change(function () {
-        if ($("#updateReg").is(':checked')) {
+        if ($("#updateReg").is(":checked")) {
             var newVal = parseInt($("#regInterval").val() * 1000, 10);
             clearInterval(regIntervalHandle);
             regIntervalHandle = setInterval(function () { GetRegDump(); }, newVal);
         }
     });
     $("#updateLog").change(function () {
-        if ($("#updateLog").is(':checked')) {
+        if ($("#updateLog").is(":checked")) {
             logIntervalHandle = setInterval(function () { ReadLog(); }, parseInt($("#logInterval").val() * 1000, 10));
-        }
-        else {
+        } else {
             clearInterval(logIntervalHandle);
         }
     });
     logIntervalHandle = setInterval(function () { ReadLog(); }, parseInt($("#logInterval").val() * 1000, 10));
     $("#updateReg").change(function () {
-        if ($("#updateReg").is(':checked')) {
+        if ($("#updateReg").is(":checked")) {
             regIntervalHandle = setInterval(function () { GetRegDump(); }, parseInt($("#regInterval").val() * 1000, 10));
-        }
-        else {
+        } else {
             clearInterval(regIntervalHandle);
         }
     });
     
     var sendIds = {
-        send: { data: [{ time: 0, value: 0 }], color: 'black', jsonPath: "/DTC/Send" },
-        spayload: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/SPayload" },
+        send: { data: [{ time: 0, value: 0 }], color: "black", jsonPath: "/DTC/Send" },
+        spayload: { data: [{ time: 0, value: 0 }], color: "red", jsonPath: "/DTC/SPayload" },
     };
     makeGraph("#send", sendIds);
     var recIds = {
-        receive: { data: [{ time: 0, value: 0 }], color: 'black', jsonPath: "/DTC/Receive" },
-        rpayload: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/RPayload" },
+        receive: { data: [{ time: 0, value: 0 }], color: "black", jsonPath: "/DTC/Receive" },
+        rpayload: { data: [{ time: 0, value: 0 }], color: "red", jsonPath: "/DTC/RPayload" },
     };
     makeGraph("#receive", recIds);
     

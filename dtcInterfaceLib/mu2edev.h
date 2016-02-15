@@ -19,17 +19,24 @@ class mu2edev
 public:
 	mu2edev();
 
-	double GetDeviceTime() const { return deviceTime_ / 1000000000.0; }
-	void ResetDeviceTime() { deviceTime_ = 0; }
+	double GetDeviceTime() const
+	{
+		return deviceTime_ / 1000000000.0;
+	}
 
-	int  init(DTCLib::DTC_SimMode simMode = DTCLib::DTC_SimMode_Disabled);
-	int  read_data(int chn, void **buffer, int tmo_ms); // return bytes read; error if negative
-	int  read_release(int chn, unsigned num);
-	int  release_all(int chn);
-	int  read_register(uint16_t address, int tmo_ms, uint32_t *output);
-	int  write_register(uint16_t address, int tmo_ms, uint32_t data);
+	void ResetDeviceTime()
+	{
+		deviceTime_ = 0;
+	}
+
+	int init(DTCLib::DTC_SimMode simMode = DTCLib::DTC_SimMode_Disabled);
+	int read_data(int chn, void** buffer, int tmo_ms); // return bytes read; error if negative
+	int read_release(int chn, unsigned num);
+	int release_all(int chn);
+	int read_register(uint16_t address, int tmo_ms, uint32_t* output);
+	int write_register(uint16_t address, int tmo_ms, uint32_t data);
 	void meta_dump(int chn, int dir);
-	int  write_data(int chn, void *buffer, size_t bytes);
+	int write_data(int chn, void* buffer, size_t bytes);
 	void close();
 	//int  read_pcie_state(m_ioc_pcistate_t *output);
 	//int  read_dma_state(int chn, int dir, m_ioc_engstate_t *output);
@@ -39,12 +46,13 @@ public:
 	//int  write_test_command(m_ioc_cmd_t input, bool start);
 
 private:
-	unsigned         delta_(int chn, int dir);
+	unsigned delta_(int chn, int dir);
 
-	int	             devfd_;
-	volatile void *  mu2e_mmap_ptrs_[MU2E_MAX_CHANNELS][2][2];
+	int devfd_;
+	volatile void* mu2e_mmap_ptrs_[MU2E_MAX_CHANNELS][2][2];
 	m_ioc_get_info_t mu2e_channel_info_[MU2E_MAX_CHANNELS][2];
-	unsigned         buffers_held_;
-	mu2esim*          simulator_;
+	unsigned buffers_held_;
+	mu2esim* simulator_;
 	std::atomic<long long> deviceTime_;
 };
+

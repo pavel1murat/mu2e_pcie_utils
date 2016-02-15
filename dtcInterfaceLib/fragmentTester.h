@@ -6,25 +6,31 @@
 class fragmentTester
 {
 public:
-	fragmentTester(size_t bytes) 
-		: vals_(bytes)
-	    , block_count(0)
-	{
-	}
+	fragmentTester(size_t bytes) : vals_(bytes), block_count(0) { }
+
 	~fragmentTester() = default;
 
 	size_t dataSize()
 	{
-		if (block_count == 0) { return 0; }
+		if (block_count == 0)
+		{
+			return 0;
+		}
 		return blocks[block_count - 1];
 	}
-	size_t fragSize() const { return vals_.size(); }
+
+	size_t fragSize() const
+	{
+		return vals_.size();
+	}
+
 	void addSpace(size_t bytes)
 	{
 		vals_.resize(vals_.size() + bytes);
 	}
 
 	typedef uint8_t packet_t[16];
+
 	packet_t* dataBegin()
 	{
 		return reinterpret_cast<packet_t*>(&(vals_[0]));
@@ -32,7 +38,8 @@ public:
 
 	void endSubEvt(size_t bytes)
 	{
-		if (block_count > 0) {
+		if (block_count > 0)
+		{
 			blocks[block_count] = blocks[block_count - 1] + bytes;
 		}
 		else
@@ -42,7 +49,11 @@ public:
 		block_count++;
 	}
 
-	size_t hdr_block_count() const { return block_count; }
+	size_t hdr_block_count() const
+	{
+		return block_count;
+	}
+
 private:
 	std::vector<uint8_t> vals_;
 	size_t blocks[BLOCK_COUNT_MAX];

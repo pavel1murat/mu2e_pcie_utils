@@ -4,9 +4,13 @@
 #include <bitset> // std::bitset
 
 
+
 #include <cstdint> // uint8_t, uint16_t
+
 #include <functional> // std::bind, std::function
+
 #include <vector> // std::vector
+
 
 
 #include "DTC_Types.h"
@@ -120,8 +124,16 @@ namespace DTCLib
 		{
 			return &device_;
 		}
-		double GetDeviceTime() const { return device_.GetDeviceTime(); }
-		void ResetDeviceTime() { device_.ResetDeviceTime(); }
+
+		double GetDeviceTime() const
+		{
+			return device_.GetDeviceTime();
+		}
+
+		void ResetDeviceTime()
+		{
+			device_.ResetDeviceTime();
+		}
 
 		//
 		// DTC Sim Mode Virtual Register
@@ -138,6 +150,7 @@ namespace DTCLib
 		//
 		std::string FormattedRegDump() const;
 		std::string PerformanceMonitorRegDump() const;
+
 		DTC_RegisterFormatter CreateFormatter(const DTC_Register& address)
 		{
 			DTC_RegisterFormatter form;
@@ -421,49 +434,178 @@ namespace DTCLib
 		uint16_t dmaSize_;
 
 		const std::vector<std::function<DTC_RegisterFormatter()>> formattedDumpFunctions_{
-			[this]() {return this->FormatDesignVersion(); },
-			[this]() {return this->FormatDesignDate(); },
-			[this]() {return this->FormatDTCControl(); },
-			[this]() {return this->FormatDMATransferLength(); },
-			[this]() {return this->FormatSERDESLoopbackEnable(); },
-			[this]() {return this->FormatSERDESOscillatorStatus(); },
-			[this]() {return this->FormatROCEmulationEnable(); },
-			[this]() {return this->FormatRingEnable(); },
-			[this]() {return this->FormatSERDESReset(); },
-			[this]() {return this->FormatSERDESRXDisparityError(); },
-			[this]() {return this->FormatSERDESRXCharacterNotInTableError(); },
-			[this]() {return this->FormatSERDESUnlockError(); },
-			[this]() {return this->FormatSERDESPLLLocked(); },
-			[this]() {return this->FormatSERDESTXBufferStatus(); },
-			[this]() {return this->FormatSERDESRXBufferStatus(); },
-			[this]() {return this->FormatSERDESRXStatus(); },
-			[this]() {return this->FormatSERDESResetDone(); },
-			[this]() {return this->FormatSERDESEyescanData(); },
-			[this]() {return this->FormatSERDESRXCDRLock(); },
-			[this]() {return this->FormatDMATimeoutPreset(); },
-			[this]() {return this->FormatROCReplyTimeout(); },
-			[this]() {return this->FormatROCReplyTimeoutError(); },
-			[this]() {return this->FormatReceivePacketError(); },
-			[this]() {return this->FormatTimestampPreset0(); },
-			[this]() {return this->FormatTimestampPreset1(); },
-			[this]() {return this->FormatDataPendingTimer(); },
-			[this]() {return this->FormatNUMROCs(); },
-			[this]() {return this->FormatFIFOFullErrorFlag0(); },
-			[this]() {return this->FormatFIFOFullErrorFlag1(); },
-			[this]() {return this->FormatFIFOFullErrorFlag2(); },
-			[this]() {return this->FormatCFOEmulationTimestampLow(); },
-			[this]() {return this->FormatCFOEmulationTimestampHigh(); },
-			[this]() {return this->FormatCFOEmulationRequestInterval(); },
-			[this]() {return this->FormatCFOEmulationNumRequests(); },
-			[this]() {return this->FormatCFOEmulationNumPacketsRing0(); },
-			[this]() {return this->FormatCFOEmulationNumPacketsRing1(); },
-			[this]() {return this->FormatCFOEmulationNumPacketsRing2(); },
-			[this]() {return this->FormatCFOEmulationNumPacketsRing3(); },
-			[this]() {return this->FormatCFOEmulationNumPacketsRing4(); },
-			[this]() {return this->FormatCFOEmulationNumPacketsRing5(); },
-			[this]() {return this->FormatRingPacketLength(); },
-			[this]() {return this->FormatFPGAPROMProgramStatus(); },
-			[this]() {return this->FormatFPGACoreAccess(); }
+			[this]()
+			{
+				return this->FormatDesignVersion();
+			},
+			[this]()
+			{
+				return this->FormatDesignDate();
+			},
+			[this]()
+			{
+				return this->FormatDTCControl();
+			},
+			[this]()
+			{
+				return this->FormatDMATransferLength();
+			},
+			[this]()
+			{
+				return this->FormatSERDESLoopbackEnable();
+			},
+			[this]()
+			{
+				return this->FormatSERDESOscillatorStatus();
+			},
+			[this]()
+			{
+				return this->FormatROCEmulationEnable();
+			},
+			[this]()
+			{
+				return this->FormatRingEnable();
+			},
+			[this]()
+			{
+				return this->FormatSERDESReset();
+			},
+			[this]()
+			{
+				return this->FormatSERDESRXDisparityError();
+			},
+			[this]()
+			{
+				return this->FormatSERDESRXCharacterNotInTableError();
+			},
+			[this]()
+			{
+				return this->FormatSERDESUnlockError();
+			},
+			[this]()
+			{
+				return this->FormatSERDESPLLLocked();
+			},
+			[this]()
+			{
+				return this->FormatSERDESTXBufferStatus();
+			},
+			[this]()
+			{
+				return this->FormatSERDESRXBufferStatus();
+			},
+			[this]()
+			{
+				return this->FormatSERDESRXStatus();
+			},
+			[this]()
+			{
+				return this->FormatSERDESResetDone();
+			},
+			[this]()
+			{
+				return this->FormatSERDESEyescanData();
+			},
+			[this]()
+			{
+				return this->FormatSERDESRXCDRLock();
+			},
+			[this]()
+			{
+				return this->FormatDMATimeoutPreset();
+			},
+			[this]()
+			{
+				return this->FormatROCReplyTimeout();
+			},
+			[this]()
+			{
+				return this->FormatROCReplyTimeoutError();
+			},
+			[this]()
+			{
+				return this->FormatReceivePacketError();
+			},
+			[this]()
+			{
+				return this->FormatTimestampPreset0();
+			},
+			[this]()
+			{
+				return this->FormatTimestampPreset1();
+			},
+			[this]()
+			{
+				return this->FormatDataPendingTimer();
+			},
+			[this]()
+			{
+				return this->FormatNUMROCs();
+			},
+			[this]()
+			{
+				return this->FormatFIFOFullErrorFlag0();
+			},
+			[this]()
+			{
+				return this->FormatFIFOFullErrorFlag1();
+			},
+			[this]()
+			{
+				return this->FormatFIFOFullErrorFlag2();
+			},
+			[this]()
+			{
+				return this->FormatCFOEmulationTimestampLow();
+			},
+			[this]()
+			{
+				return this->FormatCFOEmulationTimestampHigh();
+			},
+			[this]()
+			{
+				return this->FormatCFOEmulationRequestInterval();
+			},
+			[this]()
+			{
+				return this->FormatCFOEmulationNumRequests();
+			},
+			[this]()
+			{
+				return this->FormatCFOEmulationNumPacketsRing0();
+			},
+			[this]()
+			{
+				return this->FormatCFOEmulationNumPacketsRing1();
+			},
+			[this]()
+			{
+				return this->FormatCFOEmulationNumPacketsRing2();
+			},
+			[this]()
+			{
+				return this->FormatCFOEmulationNumPacketsRing3();
+			},
+			[this]()
+			{
+				return this->FormatCFOEmulationNumPacketsRing4();
+			},
+			[this]()
+			{
+				return this->FormatCFOEmulationNumPacketsRing5();
+			},
+			[this]()
+			{
+				return this->FormatRingPacketLength();
+			},
+			[this]()
+			{
+				return this->FormatFPGAPROMProgramStatus();
+			},
+			[this]()
+			{
+				return this->FormatFPGACoreAccess();
+			}
 		};
 	};
 }

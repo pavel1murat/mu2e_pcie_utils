@@ -1,8 +1,10 @@
 #include "DTC.h"
 #include <sstream> // Convert uint to hex string
+
 #include <iostream>
 #include <fstream>
 #include <iomanip> // std::setw, std::setfill
+
 #include <chrono>
 #ifndef _WIN32
 # include <unistd.h>
@@ -19,21 +21,25 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 #ifdef _WIN32
 #pragma warning(disable: 4996)
 #endif
-  if(loadFile) {
-	char* sim = getenv("DTCLIB_SIM_FILE");
-	if (sim != NULL || simFile.size() > 0)
+	if (loadFile)
 	{
-		EnableDetectorEmulatorMode();
-	
-		if (sim != NULL) { simFile = std::string(sim); }
-		WriteSimFileToDTC(simFile);
+		char* sim = getenv("DTCLIB_SIM_FILE");
+		if (sim != NULL || simFile.size() > 0)
+		{
+			EnableDetectorEmulatorMode();
+
+			if (sim != NULL)
+			{
+				simFile = std::string(sim);
+			}
+			WriteSimFileToDTC(simFile);
+		}
 	}
-}
 }
 
 DTCLib::DTC::~DTC()
 {
-  DisableDetectorEmulator();
+	DisableDetectorEmulator();
 	device_.close();
 	daqbuffer_ = nullptr;
 	dcsbuffer_ = nullptr;
@@ -127,7 +133,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
 		while (!done)
 		{
 			packet = ReadNextDAQPacket();
-			if (packet == nullptr)  // End of Data
+			if (packet == nullptr) // End of Data
 			{
 				done = true;
 				nextReadPtr_ = nullptr;
@@ -163,7 +169,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
 	TRACE(19, "DTC::GetData RETURN");
 	delete packet;
 	return output;
-}   // GetData
+} // GetData
 
 std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when)
 {
@@ -190,7 +196,10 @@ std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when)
 		}
 		ss << "]";
 		ss << "}";
-		if (i + 1 < data.size()) { ss << ","; }
+		if (i + 1 < data.size())
+		{
+			ss << ",";
+		}
 	}
 
 	TRACE(19, "DTC::GetJSONData RETURN");
@@ -217,21 +226,22 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever)
 		uint64_t sz = *((uint64_t*)buf);
 		TRACE(4, "Size is %llu, writing to device", (long long unsigned)sz);
 		is.read((char*)buf + 8, sz - sizeof(uint64_t));
-		if(sz < 64 && sz > 0)
+		if (sz < 64 && sz > 0)
 		{
 			sz = 64;
 			memcpy(buf, &sz, sizeof(uint64_t));
 		}
 		TRACE(4, "Size is %llu, writing to device", (long long unsigned)sz);
 		//is.read((char*)buf + 8, sz - sizeof(uint64_t));
-		if (sz > 0) {
+		if (sz > 0)
+		{
 			WriteDetectorEmulatorData(buf, sz);
-						IncrementDetectorEmulationDMACount();
+			IncrementDetectorEmulationDMACount();
 		}
 		delete[] buf;
 	}
 	is.close();
-		if(goForever) SetDetectorEmulationDMACount(0);
+	if (goForever) SetDetectorEmulationDMACount(0);
 	EnableDetectorEmulator();
 }
 
@@ -240,7 +250,8 @@ uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Ring_ID& ring, const DTC_ROC_ID&
 {
 	SendDCSRequestPacket(ring, roc, DTC_DCSOperationType_Read, address);
 	auto reply = ReadNextDCSPacket();
-	if (reply != nullptr) {
+	if (reply != nullptr)
+	{
 		return reply->GetData();
 	}
 	return 0;
@@ -333,7 +344,8 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 		TRACE(19, "DTC::ReadNextDAQPacket Obtaining new DAQ Buffer");
 		void* oldBufferPtr = &(daqbuffer_[0]);
 		int sts = ReadBuffer(DTC_DMA_Engine_DAQ, tmo_ms); // does return code
-		if (sts <= 0) {
+		if (sts <= 0)
+		{
 			TRACE(19, "DTC::ReadNextDAQPacket: ReadBuffer returned %i, returning nullptr", sts);
 			return nullptr;
 		}
@@ -390,6 +402,7 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 	TRACE(19, "DTC::ReadNextDAQPacket RETURN");
 	return output;
 }
+
 DTCLib::DTC_DCSReplyPacket* DTCLib::DTC::ReadNextDCSPacket()
 {
 	TRACE(19, "DTC::ReadNextDCSPacket BEGIN");
@@ -397,11 +410,13 @@ DTCLib::DTC_DCSReplyPacket* DTCLib::DTC::ReadNextDCSPacket()
 	{
 		TRACE(19, "DTC::ReadNextDCSPacket Obtaining new DCS Buffer");
 		int retsts = ReadBuffer(DTC_DMA_Engine_DCS);
-		if (retsts > 0) {
+		if (retsts > 0)
+		{
 			dcsReadPtr_ = &(dcsbuffer_[0]);
 			TRACE(19, "DTC::ReadNextDCSPacket dcsReadPtr_=%p dcsBuffer_=%p", (void*)dcsReadPtr_, (void*)dcsbuffer_);
 		}
-		else {
+		else
+		{
 			TRACE(19, "DTC::ReadNextDCSPacket ReadBuffer returned %i", retsts);
 			return nullptr;
 		}
@@ -466,16 +481,23 @@ int DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
 	{
 		TRACE(16, "DTC::ReadBuffer: Device timeout occurred! ec=%i, rt=%i", errorCode, retry);
 	}
-	else if (errorCode < 0)
-		throw DTC_IOErrorException();
-	else {
+	else if (errorCode < 0) throw DTC_IOErrorException();
+	else
+	{
 		TRACE(16, "DTC::ReadDataPacket buffer_=%p errorCode=%d *buffer_=0x%08x"
 			, (void*)buffer, errorCode, *(unsigned*)buffer);
-		if (channel == DTC_DMA_Engine_DAQ) { daqbuffer_ = buffer; }
-		else if (channel == DTC_DMA_Engine_DCS) { dcsbuffer_ = buffer; }
+		if (channel == DTC_DMA_Engine_DAQ)
+		{
+			daqbuffer_ = buffer;
+		}
+		else if (channel == DTC_DMA_Engine_DCS)
+		{
+			dcsbuffer_ = buffer;
+		}
 	}
 	return errorCode;
 }
+
 void DTCLib::DTC::WriteDataPacket(const DTC_DataPacket& packet)
 {
 	if (packet.GetSize() < dmaSize_)

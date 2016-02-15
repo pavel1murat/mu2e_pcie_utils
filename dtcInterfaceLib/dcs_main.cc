@@ -5,8 +5,8 @@
 // $RCSfile: .emacs.gnu,v $
 // rev="$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
 
-#include <cstdio>		// printf
-#include <cstdlib>		// strtoul
+#include <cstdio> // printf
+#include <cstdlib> // strtoul
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -33,7 +33,7 @@
 
 using namespace DTCLib;
 
-unsigned getOptionValue(int *index, char **argv[])
+unsigned getOptionValue(int* index, char** argv[])
 {
 	char* arg = (*argv)[*index];
 	if (arg[2] == '\0')
@@ -53,7 +53,7 @@ unsigned getOptionValue(int *index, char **argv[])
 	}
 }
 
-std::string getOptionString(int *index, char **argv[])
+std::string getOptionString(int* index, char** argv[])
 {
 	char* arg = (*argv)[*index];
 	if (arg[2] == '\0')
@@ -88,9 +88,7 @@ void printHelpMsg()
 	exit(0);
 }
 
-int
-main(int	argc
-	, char	*argv[])
+int main(int argc, char* argv[])
 {
 	bool quiet = false;
 	bool reallyQuiet = false;
@@ -188,7 +186,7 @@ main(int	argc
 	else if (op == "test_read")
 	{
 		std::cout << "Operation \"test_read\"" << std::endl;
-		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->SetSERDESOscillatorClock_25Gbps(); } // We're going to 2.5Gbps for now
+		if (!thisDTC->ReadSERDESOscillatorClock()) thisDTC->SetSERDESOscillatorClock_25Gbps(); // We're going to 2.5Gbps for now
 
 		thisDTC->SendDCSRequestPacket(DTC_Ring_0, DTC_ROC_0, DTC_DCSOperationType_Read, address, quiet);
 
@@ -246,7 +244,7 @@ main(int	argc
 	{
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
-			void *buffer;
+			void* buffer;
 			int tmo_ms = 0;
 			int stsRD = device->read_data(DTC_DMA_Engine_DCS, &buffer, tmo_ms);
 			int stsRL = device->read_release(DTC_DMA_Engine_DCS, 1);
@@ -262,4 +260,6 @@ main(int	argc
 
 	delete thisDTC;
 	return (0);
-}   // main
+} // main
+
+

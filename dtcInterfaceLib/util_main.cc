@@ -5,8 +5,10 @@
 // $RCSfile: .emacs.gnu,v $
 // rev="$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
 
-#include <cstdio>		// printf
-#include <cstdlib>		// strtoul
+#include <cstdio> // printf
+
+#include <cstdlib> // strtoul
+
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -35,7 +37,7 @@
 
 using namespace DTCLib;
 
-unsigned getOptionValue(int *index, char **argv[])
+unsigned getOptionValue(int* index, char** argv[])
 {
 	char* arg = (*argv)[*index];
 	if (arg[2] == '\0')
@@ -55,7 +57,7 @@ unsigned getOptionValue(int *index, char **argv[])
 	}
 }
 
-std::string getOptionString(int *index, char **argv[])
+std::string getOptionString(int* index, char** argv[])
 {
 	char* arg = (*argv)[*index];
 	if (arg[2] == '\0')
@@ -99,8 +101,8 @@ void printHelpMsg()
 }
 
 int
-main(int	argc
-	, char	*argv[])
+main(int argc
+	, char* argv[])
 {
 	bool incrementTimestamp = true;
 	bool syncRequests = false;
@@ -219,7 +221,7 @@ main(int	argc
 	if (op == "read")
 	{
 		std::cout << "Operation \"read\"" << std::endl;
-		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
+		DTC* thisDTC = new DTC(DTC_SimMode_NoCFO);
 		DTC_DataHeaderPacket* packet = thisDTC->ReadNextDAQPacket();
 		if (!reallyQuiet) std::cout << packet->toJSON() << '\n';
 		if (rawOutput)
@@ -277,13 +279,13 @@ main(int	argc
 			}
 			if (!reallyQuiet) std::cout << std::endl << std::endl;
 			device.read_release(DTC_DMA_Engine_DAQ, 1);
-			if (delay > 0) usleep(delay);
+			if (delay > 0)	usleep(delay);
 		}
 	}
 	else if (op == "toggle_serdes")
 	{
 		std::cout << "Swapping SERDES Oscillator Clock" << std::endl;
-		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
+		DTC* thisDTC = new DTC(DTC_SimMode_NoCFO);
 		if (thisDTC->ReadSERDESOscillatorClock())
 		{
 			thisDTC->SetSERDESOscillatorClock_25Gbps();
@@ -299,7 +301,7 @@ main(int	argc
 		double totalReadTime = 0, totalWriteTime = 0, totalSize = 0, totalRTTime = 0;
 		int rtCount = 0;
 		auto startTime = std::chrono::high_resolution_clock::now();
-		DTC *thisDTC = new DTC(DTC_SimMode_Loopback);
+		DTC* thisDTC = new DTC(DTC_SimMode_Loopback);
 		mu2edev* device = thisDTC->GetDevice();
 
 		thisDTC->SetSERDESLoopbackMode(DTC_Ring_0, DTC_SERDESLoopbackMode_NearPCS);
@@ -319,7 +321,7 @@ main(int	argc
 			auto startDTC = std::chrono::high_resolution_clock::now();
 			device->write_data(1, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
 			auto endDTC = std::chrono::high_resolution_clock::now();
-			totalWriteTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
+			totalWriteTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>
 				(endDTC - startDTC).count();
 			unsigned returned = 0;
 			int count = 5;
@@ -331,12 +333,12 @@ main(int	argc
 				device->read_release(DTC_DMA_Engine_DAQ, 1);
 				int sts = device->read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
 				auto endDTCRead = std::chrono::high_resolution_clock::now();
-				totalReadTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
+				totalReadTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>
 					(endDTCRead - startDTCRead).count();
 				count--;
 				if (sts > 0)
 				{
-					totalRTTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>(endDTCRead - startDTC).count();
+					totalRTTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(endDTCRead - startDTC).count();
 					rtCount++;
 					void* readPtr = &(buffer[0]);
 					uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)readPtr));
@@ -373,16 +375,19 @@ main(int	argc
 						}
 					}
 				}
-				if (delay > 0) usleep(delay);
+				if (delay > 0)	usleep(delay);
 			}
-			if (returned < packetCount + 1) { break; }
-			if (delay > 0) usleep(delay);
+			if (returned < packetCount + 1)
+			{
+				break;
+			}
+			if (delay > 0)		usleep(delay);
 		}
 
 		double aveRate = totalSize / totalReadTime / 1024;
 		double rtTime = totalRTTime / (rtCount > 0 ? rtCount : 1);
 
-		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
+		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>
 			(std::chrono::high_resolution_clock::now() - startTime).count();
 		std::cout << "STATS, " << std::dec << ii << " DataHeaders looped back "
 			<< "(Out of " << number << " requested):" << std::endl
@@ -399,11 +404,14 @@ main(int	argc
 		double totalIncTime = 0, totalSize = 0, totalRTTime = 0, totalWriteTime = 0;
 		int rtCount = 0;
 		auto startTime = std::chrono::high_resolution_clock::now();
-		DTC *thisDTC = new DTC(DTC_SimMode_NoCFO);
-		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->SetSERDESOscillatorClock_25Gbps(); } // We're going to 2.5Gbps for now
+		DTC* thisDTC = new DTC(DTC_SimMode_NoCFO);
+		if (!thisDTC->ReadSERDESOscillatorClock())
+		{
+			thisDTC->SetSERDESOscillatorClock_25Gbps();
+		} // We're going to 2.5Gbps for now
 
 		mu2edev* device = thisDTC->GetDevice();
-		DTCSoftwareCFO *cfo = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet, false);
+		DTCSoftwareCFO* cfo = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet, false);
 
 		if (genDMABlocks > 0)
 		{
@@ -427,7 +435,10 @@ main(int	argc
 				currentOffset += 16;
 				for (unsigned jj = 0; jj < packetCount; ++jj)
 				{
-					if (currentOffset + 16 > sizeof(mu2e_databuff_t)) { break; }
+					if (currentOffset + 16 > sizeof(mu2e_databuff_t))
+					{
+						break;
+					}
 					packet.SetWord(14, (jj + 1) & 0xFF);
 					memcpy((uint8_t*)buf + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
 					currentOffset += 16;
@@ -437,7 +448,7 @@ main(int	argc
 				device->write_data(0, buf, byteCount);
 				totalSize += byteCount;
 				auto endDTC = std::chrono::high_resolution_clock::now();
-				totalWriteTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
+				totalWriteTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>
 					(endDTC - startDTC).count();
 				delete buf;
 			}
@@ -481,13 +492,13 @@ main(int	argc
 			auto startDTC = std::chrono::high_resolution_clock::now();
 			int sts = device->read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
 			auto endDTC = std::chrono::high_resolution_clock::now();
-			totalIncTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
+			totalIncTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>
 				(endDTC - startDTC).count();
 
 			TRACE(1, "util - after read for DAQ - ii=%u sts=%d %p", ii, sts, (void*)buffer);
 			if (sts > 0)
 			{
-				totalRTTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
+				totalRTTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>
 					(endDTC - startRT).count();
 				rtCount++;
 				startRT = endDTC;
@@ -525,7 +536,7 @@ main(int	argc
 		if (rawOutput) outputStream.close();
 
 		double aveRate = totalSize / totalIncTime / 1024;
-		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
+		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>
 			(std::chrono::high_resolution_clock::now() - startTime).count();
 		double aveTotalRate = totalSize / totalTime / 1024;
 		double rtTime = totalRTTime / (rtCount > 0 ? rtCount : 1);
@@ -549,7 +560,7 @@ main(int	argc
 		device.init();
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
-			void *buffer;
+			void* buffer;
 			int tmo_ms = 0;
 			int stsRD = device.read_data(DTC_DMA_Engine_DAQ, &buffer, tmo_ms);
 			int stsRL = device.read_release(DTC_DMA_Engine_DAQ, 1);
@@ -559,8 +570,11 @@ main(int	argc
 	}
 	else if (op == "DTC")
 	{
-		auto *thisDTC = new DTC(DTC_SimMode_NoCFO);
-		if (!thisDTC->ReadSERDESOscillatorClock()) { thisDTC->SetSERDESOscillatorClock_25Gbps(); } // We're going to 2.5Gbps for now
+		auto* thisDTC = new DTC(DTC_SimMode_NoCFO);
+		if (!thisDTC->ReadSERDESOscillatorClock())
+		{
+			thisDTC->SetSERDESOscillatorClock_25Gbps();
+		} // We're going to 2.5Gbps for now
 
 		double totalIncTime = 0, totalSize = 0, totalDevTime = 0, totalRTTime = 0, totalWriteTime = 0;
 		int rtCount = 0;
@@ -586,7 +600,10 @@ main(int	argc
 				currentOffset += 16;
 				for (unsigned jj = 0; jj < packetCount; ++jj)
 				{
-					if (currentOffset + 16 > sizeof(mu2e_databuff_t)) { break; }
+					if (currentOffset + 16 > sizeof(mu2e_databuff_t))
+					{
+						break;
+					}
 					packet.SetWord(14, (jj + 1) & 0xFF);
 					memcpy((uint8_t*)buf + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
 					currentOffset += 16;
@@ -605,7 +622,7 @@ main(int	argc
 		}
 
 
-		DTCSoftwareCFO *theCFO = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet);
+		DTCSoftwareCFO* theCFO = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet);
 		double readoutRequestTime = 0;
 		if (!syncRequests)
 		{
@@ -638,7 +655,7 @@ main(int	argc
 			auto startDTC = std::chrono::high_resolution_clock::now();
 			std::vector<void*> data = thisDTC->GetData(); //DTC_Timestamp(ts));
 			auto endDTC = std::chrono::high_resolution_clock::now();
-			totalIncTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
+			totalIncTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>
 				(endDTC - startDTC).count();
 
 			totalDevTime += thisDTC->GetDeviceTime();
@@ -646,7 +663,7 @@ main(int	argc
 
 			if (data.size() > 0)
 			{
-				totalRTTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
+				totalRTTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>
 					(endDTC - startRT).count();
 				rtCount++;
 				startRT = endDTC;
@@ -657,14 +674,15 @@ main(int	argc
 				for (size_t i = 0; i < data.size(); ++i)
 				{
 					TRACE(19, "util_main constructing DataPacket:");
-					DTC_DataPacket     test = DTC_DataPacket(data[i]);
+					DTC_DataPacket test = DTC_DataPacket(data[i]);
 					//TRACE(19, test.toJSON().c_str());
 					//if (!reallyQuiet) cout << test.toJSON() << '\n'; // dumps whole databuff_t
 					DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
 					if (expectedTS != h2.GetTimestamp().GetTimestamp(true))
 					{
 						std::cout << std::dec << h2.GetTimestamp().GetTimestamp(true) << " does not match expected timestamp of " << expectedTS << "!!!" << std::endl;
-						if (incrementTimestamp && h2.GetTimestamp().GetTimestamp(true) <= timestampOffset + number) {
+						if (incrementTimestamp && h2.GetTimestamp().GetTimestamp(true) <= timestampOffset + number)
+						{
 							ii += h2.GetTimestamp().GetTimestamp(true) - expectedTS;
 						}
 						expectedTS = h2.GetTimestamp().GetTimestamp(true);
@@ -674,7 +692,10 @@ main(int	argc
 						expectedTS += (incrementTimestamp ? 1 : 0);
 					}
 					TRACE(19, h2.toJSON().c_str());
-					if (!reallyQuiet) { std::cout << h2.toJSON() << '\n'; }
+					if (!reallyQuiet)
+					{
+						std::cout << h2.toJSON() << '\n';
+					}
 					if (rawOutput)
 					{
 						DTC_DataPacket rawPacket = h2.ConvertToDataPacket();
@@ -751,12 +772,12 @@ main(int	argc
 					break;
 				}
 			}
-			if (delay > 0) usleep(delay);
+			if (delay > 0)	usleep(delay);
 		}
 
 		if (rawOutput) outputStream.close();
 		double aveRate = totalSize / totalIncTime / 1024;
-		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1> >>
+		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>
 			(std::chrono::high_resolution_clock::now() - startTime).count();
 		double aveTotalRate = totalSize / totalTime / 1024;
 		double rtTime = totalRTTime / (rtCount > 0 ? rtCount : 1);
@@ -781,4 +802,4 @@ main(int	argc
 		printHelpMsg();
 	}
 	return (0);
-}   // main
+} // main

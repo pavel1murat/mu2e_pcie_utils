@@ -13,9 +13,9 @@ namespace DTCLib
 	class DTC : public DTC_Registers
 	{
 	public:
-	  DTC(DTC_SimMode mode = DTC_SimMode_Disabled, std::string simFile = "", bool loadFile = true);
+		DTC(DTC_SimMode mode = DTC_SimMode_Disabled, std::string simFile = "", bool loadFile = true);
 		virtual ~DTC();
-		
+
 		//
 		// DMA Functions
 		//

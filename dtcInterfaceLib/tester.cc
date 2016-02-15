@@ -4,10 +4,10 @@
 #include <crtdbg.h>
 #endif
 
+#include <chrono>
 #ifdef _WIN32
 # include <thread>
 # define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
-#  include <stdio.h>
 #  define TRACE(...)
 # define TRACE_CNTL(...)
 #else
@@ -16,17 +16,16 @@
 #endif
 #define TRACE_NAME "MU2EDEV"
 
-#include <cstdio>		// printf
-#include <cstdlib>		// strtoul
 #include <iostream>
-#include <chrono>
 #include "DTC.h"
 #include "DTCSoftwareCFO.h"
 #include "fragmentTester.h"
 
 
 using namespace DTCLib;
-void usage() {
+
+void usage()
+{
 	std::cout << "Usage: tester [loops = 1000] [simMode = 1] [simFile = \"\"]" << std::endl;
 	exit(1);
 }
@@ -43,12 +42,13 @@ int main(int argc, char* argv[])
 		if (tmp > 0) loops = tmp;
 		else badarg = true;
 	}
-	if (argc > 2) {
+	if (argc > 2)
+	{
 		int tmp = atoi(argv[2]);
 		if (tmp > 0) modeint = tmp;
 		else badarg = true;
 	}
-	if(argc > 3)
+	if (argc > 3)
 	{
 		simFile = std::string(argv[3]);
 	}
@@ -57,9 +57,9 @@ int main(int argc, char* argv[])
 
 	TRACE(1, "simFile is %s", simFile.c_str());
 	DTC_SimMode mode = DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::to_string(modeint));
-	DTC *thisDTC = new DTC(mode, simFile);
+	DTC* thisDTC = new DTC(mode, simFile);
 	TRACE(1, "thisDTC->ReadSimMode: %i", thisDTC->ReadSimMode());
-	DTCSoftwareCFO *theCFO = new DTCSoftwareCFO(thisDTC, true);
+	DTCSoftwareCFO* theCFO = new DTCSoftwareCFO(thisDTC, true);
 	long loopCounter = 0;
 	long count = 0;
 	typedef uint8_t packet_t[16];
@@ -96,7 +96,8 @@ int main(int argc, char* argv[])
 				retryCount--;
 				//if (data.size() == 0) { usleep(10000); }
 			}
-			if (retryCount < 0 && data.size() == 0) {
+			if (retryCount < 0 && data.size() == 0)
+			{
 				TRACE(1, "Retry count exceeded. Something is very wrong indeed");
 				std::cout << "Had an error with block " << newfrag.hdr_block_count() << " of event " << loopCounter << std::endl;
 				break;
@@ -115,7 +116,8 @@ int main(int argc, char* argv[])
 
 			auto dataSize = packetCount * sizeof(packet_t);
 			int64_t diff = dataSize + newfrag.dataSize() - newfrag.fragSize();
-			if (diff > 0) {
+			if (diff > 0)
+			{
 				double currSize = newfrag.fragSize() / (double)sizeof(packet_t);
 				double remaining = 1 - (newfrag.hdr_block_count() / (double)BLOCK_COUNT_MAX);
 				size_t newSize = static_cast<size_t>(currSize * remaining) * sizeof(packet_t);
@@ -133,7 +135,7 @@ int main(int argc, char* argv[])
 				TRACE(3, "Copying packet %lu. src=%p, dst=%p, sz=%lu off=%p processed=%lu", i, data[i],
 					(void*)(offset + packetsProcessed), (1 + packet.GetPacketCount())*sizeof(packet_t),
 					(void*)offset, packetsProcessed);
-				memcpy((void*)(offset + packetsProcessed), data[i], (1 + packet.GetPacketCount())*sizeof(packet_t));
+				memcpy((void*)(offset + packetsProcessed), data[i], (1 + packet.GetPacketCount()) * sizeof(packet_t));
 				TRACE(3, "Incrementing packet counter");
 				packetsProcessed += 1 + packet.GetPacketCount();
 			}
@@ -152,3 +154,4 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
+

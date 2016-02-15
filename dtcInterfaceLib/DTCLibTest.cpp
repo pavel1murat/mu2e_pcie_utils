@@ -43,7 +43,7 @@ DTCLib::DTCLibTest::~DTCLibTest()
 
 // Test Control
 void DTCLib::DTCLibTest::startTest(bool classEnabled, bool regIOEnabled,
-								   bool daqEnabled, bool dcsEnabled, int nTests, bool printMessages)
+	bool daqEnabled, bool dcsEnabled, int nTests, bool printMessages)
 {
 	runClassTest_ = classEnabled;
 	runRegTest_ = regIOEnabled;
@@ -211,33 +211,39 @@ void DTCLib::DTCLibTest::doClassTest()
 		err = err || defaultTS.GetTimestamp(true) != 0;
 
 		auto tsSixtyFour = DTC_Timestamp((uint64_t)0xFFFFBEEFDEADBEEF);
-		if (printMessages_) std::cout << "uint64_t Constructor, TS should be 0xBEEFDEADBEEF: "
+		if (printMessages_)
+			std::cout << "uint64_t Constructor, TS should be 0xBEEFDEADBEEF: "
 			<< std::hex << std::showbase << tsSixtyFour.GetTimestamp(true) << std::endl;
 		err = err || tsSixtyFour.GetTimestamp(true) != 0xBEEFDEADBEEF;
 
 		auto tsSixteenThirtyTwo = DTC_Timestamp((uint32_t)0xDEADBEEF, (uint16_t)0xDEAD);
-		if (printMessages_) std::cout << "uint32_t/uint16_t Constructor, TS should be 0xDEADDEADBEEF: "
+		if (printMessages_)
+			std::cout << "uint32_t/uint16_t Constructor, TS should be 0xDEADDEADBEEF: "
 			<< tsSixteenThirtyTwo.GetTimestamp(true) << std::endl;
 		err = err || tsSixteenThirtyTwo.GetTimestamp(true) != 0xDEADDEADBEEF;
 
 		uint8_t arr[6] = { 0xAD, 0xDE, 0xAD, 0xDE, 0xEF, 0xBE };
 		auto tsArray = DTC_Timestamp(arr);
-		if (printMessages_) std::cout << "Array Constructor, TS should be 0xBEEFDEADDEAD: "
+		if (printMessages_)
+			std::cout << "Array Constructor, TS should be 0xBEEFDEADDEAD: "
 			<< tsArray.GetTimestamp(true) << std::endl;
 		err = err || tsArray.GetTimestamp(true) != 0xBEEFDEADDEAD;
 
 		auto tsCopy = new DTC_Timestamp(defaultTS);
-		if (printMessages_) std::cout << "Copy Constructor, TS should be 0: "
+		if (printMessages_)
+			std::cout << "Copy Constructor, TS should be 0: "
 			<< tsCopy->GetTimestamp(true) << std::endl;
 		err = err || tsCopy->GetTimestamp(true) != 0;
 
 		tsCopy->SetTimestamp(0xBEEFDEAD, 0xBEEF);
-		if (printMessages_) std::cout << "SetTimestamp 32/16 Method, TS should be 0xBEEFBEEFDEAD: "
+		if (printMessages_)
+			std::cout << "SetTimestamp 32/16 Method, TS should be 0xBEEFBEEFDEAD: "
 			<< tsCopy->GetTimestamp(true) << std::endl;
 		err = err || tsCopy->GetTimestamp().to_ullong() != 0xBEEFBEEFDEAD;
 
 		tsCopy->SetTimestamp(0xDEADDEADBEEFBEEF);
-		if (printMessages_) std::cout << "SetTimestamp 64 Method, TS should be 0xDEADBEEFBEEF: "
+		if (printMessages_)
+			std::cout << "SetTimestamp 64 Method, TS should be 0xDEADBEEFBEEF: "
 			<< tsCopy->GetTimestamp(true) << std::endl;
 		err = err || tsCopy->GetTimestamp().to_ullong() != 0xDEADBEEFBEEF;
 
@@ -252,14 +258,16 @@ void DTCLib::DTCLibTest::doClassTest()
 
 		if (printMessages_) std::cout << "Testing DTC_DataPacket Class..." << std::endl;
 		auto defaultDP = new DTC_DataPacket();
-		if (printMessages_) std::cout << "Default Constructor, Size should be 64: " << std::dec
+		if (printMessages_)
+			std::cout << "Default Constructor, Size should be 64: " << std::dec
 			<< (int)defaultDP->GetSize() << ", and IsMemoryPacket should be false: "
 			<< (defaultDP->IsMemoryPacket() ? "true" : "false") << std::endl;
 		err = defaultDP->GetSize() != 64;
 		err = err || defaultDP->IsMemoryPacket();
 
 		defaultDP->Resize(128);
-		if (printMessages_) std::cout << "Resize(128), Size should be 128: "
+		if (printMessages_)
+			std::cout << "Resize(128), Size should be 128: "
 			<< (int)defaultDP->GetSize() << std::endl;
 		err = err || defaultDP->GetSize() != 128;
 
@@ -267,7 +275,8 @@ void DTCLib::DTCLibTest::doClassTest()
 		err = err || !DataPacketIntegrityCheck(defaultDP);
 
 		auto memCopyDP = DTC_DataPacket(*defaultDP);
-		if (printMessages_) std::cout << "Copy Constructor, MemoryPacket, data[64] should be 64: "
+		if (printMessages_)
+			std::cout << "Copy Constructor, MemoryPacket, data[64] should be 64: "
 			<< (int)memCopyDP.GetWord(64) << std::endl;
 		err = err || memCopyDP.GetWord(64) != 64;
 
@@ -276,7 +285,8 @@ void DTCLib::DTCLibTest::doClassTest()
 
 		mu2e_databuff_t* buf = (mu2e_databuff_t*)new mu2e_databuff_t();
 		auto dataBufPtrfDP = new DTC_DataPacket(buf);
-		if (printMessages_) std::cout << "Databuff Pointer Constructor, Size should be 16: "
+		if (printMessages_)
+			std::cout << "Databuff Pointer Constructor, Size should be 16: "
 			<< (int)dataBufPtrfDP->GetSize() << ", and IsMemoryPacket should be true: "
 			<< (dataBufPtrfDP->IsMemoryPacket() ? "true" : "false") << std::endl;
 		err = dataBufPtrfDP->GetSize() != 16;
@@ -284,7 +294,8 @@ void DTCLib::DTCLibTest::doClassTest()
 
 		auto nonmemCopyDP = DTC_DataPacket(*dataBufPtrfDP);
 		(*buf)[0] = 0x8F;
-		if (printMessages_) std::cout
+		if (printMessages_)
+			std::cout
 			<< "DataPacket Memory Packet Copy Constructor: Modifications to original buffer should modify both packets: "
 			<< std::hex
 			<< "COPY[0]: " << (int)nonmemCopyDP.GetWord(0) << ", ORIGINAL[0]: " << (int)dataBufPtrfDP->GetWord(0) << std::endl;
@@ -296,13 +307,15 @@ void DTCLib::DTCLibTest::doClassTest()
 
 		uint8_t buff2[16] = { 0xf, 0xe, 0xd, 0xc, 0xb, 0xa, 0x9, 0x8, 0x7, 0x6, 0x5, 0x4, 0x3, 0x2, 0x1, 0x0 };
 		auto uintBufDP = new DTC_DataPacket(buff2);
-		if (printMessages_) std::cout << "Integer Array Constructor, IsMemoryPacket should be true: "
+		if (printMessages_)
+			std::cout << "Integer Array Constructor, IsMemoryPacket should be true: "
 			<< (uintBufDP->IsMemoryPacket() ? "true" : "false") << ", and data[0] should be 0xf: "
 			<< (int)uintBufDP->GetWord(0) << std::endl;
 		err = err || !uintBufDP->IsMemoryPacket() || uintBufDP->GetWord(0) != 0xf;
 
 		uintBufDP->Resize(128);
-		if (printMessages_) std::cout << "Resizing a memory packet should not work, size should be 16: "
+		if (printMessages_)
+			std::cout << "Resizing a memory packet should not work, size should be 16: "
 			<< std::dec << (int)uintBufDP->GetSize() << std::endl;
 		err = err || uintBufDP->GetSize() != 16;
 
@@ -464,7 +477,10 @@ void DTCLib::DTCLibTest::doDAQTest()
 		thisDTC_->SetInternalSystemClock();
 		thisDTC_->DisableTiming();
 		thisDTC_->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
-		if (!thisDTC_->ReadSERDESOscillatorClock()) { thisDTC_->SetSERDESOscillatorClock_25Gbps(); } // We're going to 2.5Gbps for now
+		if (!thisDTC_->ReadSERDESOscillatorClock())
+		{
+			thisDTC_->SetSERDESOscillatorClock_25Gbps();
+		} // We're going to 2.5Gbps for now
 
 		DTCSoftwareCFO theCFO(thisDTC_, true, 0, DTC_DebugType_SpecialSequence, true, !printMessages_);
 		theCFO.SendRequestForTimestamp();
@@ -475,7 +491,7 @@ void DTCLib::DTCLibTest::doDAQTest()
 			for (size_t i = 0; i < data.size(); ++i)
 			{
 				TRACE(19, "DTC::GetJSONData constructing DataPacket:");
-				DTC_DataPacket     test = DTC_DataPacket(data[i]);
+				DTC_DataPacket test = DTC_DataPacket(data[i]);
 				if (printMessages_) std::cout << test.toJSON() << '\n'; // dumps whole databuff_t
 				DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
 				if (printMessages_)
@@ -565,3 +581,4 @@ bool DTCLib::DTCLibTest::DataPacketIntegrityCheck(DTC_DataPacket* packet)
 
 	return retCode;
 }
+

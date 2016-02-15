@@ -1,11 +1,6 @@
 #include "DTC_Registers.h"
-
 #include <sstream> // Convert uint to hex string
-
-
 #include <iomanip> // std::setw, std::setfill
-
-
 #include <chrono>
 #ifndef _WIN32
 # include <unistd.h>
@@ -165,7 +160,6 @@ void DTCLib::DTC_Registers::DTC_Reset()
 	ResetDTC();
 	ResetSERDESOscillator();
 	ResetDDRWriteAddress();
-
 }
 
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDMATransferLength()
@@ -764,7 +758,7 @@ void DTCLib::DTC_Registers::SetSERDESOscillatorClock_3125Gbps()
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	data[28] = 1;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
-        ResetSERDESOscillator();
+	ResetSERDESOscillator();
 }
 
 void DTCLib::DTC_Registers::SetSERDESOscillatorClock_25Gbps()
@@ -772,7 +766,7 @@ void DTCLib::DTC_Registers::SetSERDESOscillatorClock_25Gbps()
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	data[28] = 0;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
-        ResetSERDESOscillator();
+	ResetSERDESOscillator();
 }
 
 bool DTCLib::DTC_Registers::ReadSERDESOscillatorClock()
@@ -818,7 +812,6 @@ bool DTCLib::DTC_Registers::ReadDetectorEmulatorEnable()
 
 void DTCLib::DTC_Registers::EnableDetectorEmulatorMode()
 {
-
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	data[26] = 1;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
@@ -1537,8 +1530,7 @@ void DTCLib::DTC_Registers::WriteRegister_(uint32_t data, const DTC_Register& ad
 	{
 		errorCode = device_.write_register(address, 100, data);
 		--retry;
-	}
-	while (retry > 0 && errorCode != 0);
+	} while (retry > 0 && errorCode != 0);
 	if (errorCode != 0)
 	{
 		throw DTC_IOErrorException();
@@ -1554,8 +1546,7 @@ uint32_t DTCLib::DTC_Registers::ReadRegister_(const DTC_Register& address)
 	{
 		errorCode = device_.read_register(address, 100, &data);
 		--retry;
-	}
-	while (retry > 0 && errorCode != 0);
+	} while (retry > 0 && errorCode != 0);
 	if (errorCode != 0)
 	{
 		throw DTC_IOErrorException();
