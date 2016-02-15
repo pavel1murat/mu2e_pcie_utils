@@ -452,7 +452,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatTimestampPreset1()
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDataPendingTimer()
 {
 	auto form = CreateFormatter(DTC_Register_DataPendingTimer);
-	form.description = " DMA Data Pending Timer";
+	form.description = "DMA Data Pending Timer";
 	std::stringstream o;
 	o << "0x" << std::hex << ReadDataPendingTimer();
 	form.vals.push_back(o.str());

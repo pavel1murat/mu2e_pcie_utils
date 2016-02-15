@@ -22,7 +22,7 @@ if [ $ROOT_MODE -eq 1 ]; then
   fi
   chmod 666 /dev/mu2e
 fi
-test -e /dev/mu2e || { echo 'DTC device file not found. Please re-run this script as root!'; exit; }
+test -e /dev/mu2e || { echo 'DTC device file not found. Please re-run this script as root!'; return; }
 
 echo "Setting up TRACE module"
 export TRACE_FILE=/proc/trace/buffer;tonM -nKERNEL 0-19  # poll noise is on lvls 22-23
