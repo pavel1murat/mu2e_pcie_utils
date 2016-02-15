@@ -205,6 +205,7 @@ namespace DTCLib
 		void DisableTiming();
 		bool ReadTimingEnable();
 		DTC_RegisterFormatter FormatDTCControl();
+		void DTC_Reset();
 
 		// DMA Transfer Length Register
 		void SetTriggerDMATransferLength(uint16_t length);

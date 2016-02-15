@@ -160,6 +160,14 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDTCControl()
 	return form;
 }
 
+void DTCLib::DTC_Registers::DTC_Reset()
+{
+	ResetDTC();
+	ResetSERDESOscillator();
+	ResetDDRWriteAddress();
+
+}
+
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDMATransferLength()
 {
 	auto form = CreateFormatter(DTC_Register_DMATransferLength);

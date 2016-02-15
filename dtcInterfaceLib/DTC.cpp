@@ -199,6 +199,9 @@ std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when)
 
 void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever)
 {
+	DisableDetectorEmulator();
+	DisableDetectorEmulatorMode();
+	DTC_Reset();
 	EnableDetectorEmulatorMode();
 	ResetDDRWriteAddress();
 	SetDDRLocalEndAddress(1);
