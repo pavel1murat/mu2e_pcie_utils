@@ -74,6 +74,7 @@ DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode)
 {
 	simMode_ = mode;
 	device_.init(simMode_);
+	DTC_Reset();
 
 	for (auto ring : DTC_Rings)
 	{
