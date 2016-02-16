@@ -216,7 +216,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever)
 	SetDDRLocalEndAddress(0xFFFFFFFF);
 	SetDetectorEmulationDMACount(0);
 	SetDetectorEmulationDMADelayCount(0);
-        auto totalSize = 0;
+	auto totalSize = 0;
 
 	std::ifstream is(file, std::ifstream::binary);
 	while (is && is.good())
@@ -236,15 +236,14 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever)
 		//is.read((char*)buf + 8, sz - sizeof(uint64_t));
 		if (sz > 0)
 		{
-                        totalSize += sz;
+			totalSize += sz;
 			TRACE(10, "DTC::WriteSimFileToDTC: totalSize is now %lu", static_cast<unsigned long>(totalSize));
 			WriteDetectorEmulatorData(buf, sz);
-			IncrementDetectorEmulationDMACount();
 		}
 		delete[] buf;
 	}
 	is.close();
-        SetDDRLocalEndAddress(totalSize);
+	SetDDRLocalEndAddress(totalSize);
 	if (goForever) SetDetectorEmulationDMACount(0);
 	EnableDetectorEmulator();
 }
@@ -458,9 +457,10 @@ void DTCLib::DTC::WriteDetectorEmulatorData(mu2e_databuff_t* buf, size_t sz)
 	} while (retry > 0 && errorCode != 0);
 	//SetDDRLocalEndAddress(oldWritePointer);
 	//IncrementDDRLocalEndAddress(sz);
-        //TRACE(10, "DTC::WriteDetectorEmulatorData: DDR Local End Address is now %lu", (long unsigned)ReadDDRLocalEndAddress());
+		//TRACE(10, "DTC::WriteDetectorEmulatorData: DDR Local End Address is now %lu", (long unsigned)ReadDDRLocalEndAddress());
 	TRACE(10, "DTC::WriteDetectorEmulatorData: Incrementing DMACount from %lu", (long unsigned)ReadDetectorEmulationDMACount());
 	IncrementDetectorEmulationDMACount();
+	TRACE(10, "DTC::WriteDetectorEmulatorData: DMACount is now %lu", (long unsigned)ReadDetectorEmulationDMACount());
 	if (errorCode != 0)
 	{
 		throw DTC_IOErrorException();
