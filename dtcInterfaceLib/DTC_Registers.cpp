@@ -74,7 +74,7 @@ DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode)
 {
 	simMode_ = mode;
 	device_.init(simMode_);
-	DTC_Reset();
+	//DTC_Reset();
 
 	for (auto ring : DTC_Rings)
 	{
@@ -1571,10 +1571,10 @@ uint32_t DTCLib::DTC_Registers::ReadDetectorEmulationDMACount()
 }
 
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDetectorEmulationDMACount() {
-	auto form = CreateFormatter(DTC_Register_RingPacketLength);
-	form.description = "DMA Ring Packet Length";
+	auto form = CreateFormatter(DTC_Register_DetEmulationDMACount);
+	form.description = "DetEmu DMA Count";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadPacketSize();
+	o << "0x" << std::hex << ReadDetectorEmulationDMACount();
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -1592,29 +1592,35 @@ uint32_t DTCLib::DTC_Registers::ReadDetectorEmulationDMADelayCount()
 }
 
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDetectorEmulationDMADelayCount() {
-	auto form = CreateFormatter(DTC_Register_RingPacketLength);
-	form.description = "DMA Ring Packet Length";
+	auto form = CreateFormatter(DTC_Register_DetEmulationDelayCount);
+	form.description = "DetEmu DMA Delay Count";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadPacketSize();
+	o << "0x" << std::hex << ReadDetectorEmulationDMADelayCount();
 	form.vals.push_back(o.str());
 	return form;
 }
 
 // DDR Local End Address Register
+uint32_t DTCLib::DTC_Registers::ReadDDRLocalEndAddress()
+{
+	return ReadRegister_(DTC_Register_DDRLocalEndAddress);
+}
+
 void DTCLib::DTC_Registers::SetDDRLocalEndAddress(uint32_t address)
 {
 	WriteRegister_(address, DTC_Register_DDRLocalEndAddress);
 }
 
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDRLocalEndAddress() {
-	auto form = CreateFormatter(DTC_Register_RingPacketLength);
-	form.description = "DMA Ring Packet Length";
+	auto form = CreateFormatter(DTC_Register_DDRLocalEndAddress);
+	form.description = "DDR Local End Address";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadPacketSize();
+	o << "0x" << std::hex << ReadDDRLocalEndAddress();
 	form.vals.push_back(o.str());
 	return form;
 }
 
+// DDR Local Start Address Register
 uint32_t DTCLib::DTC_Registers::ReadDDRLocalStartAddress()
 {
 	return ReadRegister_(DTC_Register_DDRLocalStartAddress);
@@ -1632,11 +1638,6 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDRLocalStartAddress(
 	o << "0x" << std::hex << ReadDDRLocalStartAddress();
 	form.vals.push_back(o.str());
 	return form;
-}
-
-uint32_t DTCLib::DTC_Registers::ReadDDRLocalEndAddress()
-{
-	return ReadRegister_(DTC_Register_DDRLocalEndAddress);
 }
 
 //
