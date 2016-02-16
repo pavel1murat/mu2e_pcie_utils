@@ -217,6 +217,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever)
 	SetDetectorEmulationDMACount(0);
 	SetDetectorEmulationDMADelayCount(0);
 	auto totalSize = 0;
+	auto n = 0;
 
 	std::ifstream is(file, std::ifstream::binary);
 	while (is && is.good())
@@ -232,10 +233,10 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever)
 			sz = 64;
 			memcpy(buf, &sz, sizeof(uint64_t));
 		}
-		TRACE(4, "Size is %llu, writing to device", (long long unsigned)sz);
 		//is.read((char*)buf + 8, sz - sizeof(uint64_t));
 		if (sz > 0)
 		{
+			TRACE(4, "Size is %llu, writing to device", (long long unsigned)sz);
 			totalSize += sz;
 			TRACE(10, "DTC::WriteSimFileToDTC: totalSize is now %lu", static_cast<unsigned long>(totalSize));
 			WriteDetectorEmulatorData(buf, sz);
@@ -244,7 +245,13 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever)
 	}
 	is.close();
 	SetDDRLocalEndAddress(totalSize);
-	if (goForever) SetDetectorEmulationDMACount(0);
+	if (!goForever) {
+		SetDetectorEmulationDMACount(n);
+	}
+	else
+	{
+		SetDetectorEmulationDMACount(0);
+	}
 	EnableDetectorEmulator();
 }
 
@@ -445,8 +452,6 @@ void DTCLib::DTC::WriteDetectorEmulatorData(mu2e_databuff_t* buf, size_t sz)
 	{
 		sz = dmaSize_;
 	}
-	//uint32_t oldWritePointer = ReadDDRLocalEndAddress();
-	//SetDDRLocalEndAddress(0xFFFFFFFF);
 	int retry = 3;
 	int errorCode;
 	do
@@ -455,12 +460,6 @@ void DTCLib::DTC::WriteDetectorEmulatorData(mu2e_databuff_t* buf, size_t sz)
 		errorCode = device_.write_data(DTC_DMA_Engine_DAQ, buf, sz);
 		retry--;
 	} while (retry > 0 && errorCode != 0);
-	//SetDDRLocalEndAddress(oldWritePointer);
-	//IncrementDDRLocalEndAddress(sz);
-		//TRACE(10, "DTC::WriteDetectorEmulatorData: DDR Local End Address is now %lu", (long unsigned)ReadDDRLocalEndAddress());
-	TRACE(10, "DTC::WriteDetectorEmulatorData: Incrementing DMACount from %lu", (long unsigned)ReadDetectorEmulationDMACount());
-	IncrementDetectorEmulationDMACount();
-	TRACE(10, "DTC::WriteDetectorEmulatorData: DMACount is now %lu", (long unsigned)ReadDetectorEmulationDMACount());
 	if (errorCode != 0)
 	{
 		throw DTC_IOErrorException();

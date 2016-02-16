@@ -7,7 +7,9 @@
 
 #include <cstdint> // uint8_t, uint16_t
 
+
 #include <functional> // std::bind, std::function
+
 
 #include <vector> // std::vector
 
@@ -378,17 +380,20 @@ namespace DTCLib
 		// CFO Emulation Debug Packet Type Register
 		void SetCFOEmulationDebugType(DTC_DebugType type);
 		DTC_DebugType ReadCFOEmulationDebugType();
+		DTC_RegisterFormatter FormatCFOEmulationDebugPacketType();
 
 		// Detector Emulation DMA Count Register
 		void SetDetectorEmulationDMACount(uint32_t count);
-		void IncrementDetectorEmulationDMACount();
 		uint32_t ReadDetectorEmulationDMACount();
+		DTC_RegisterFormatter FormatDetectorEmulationDMACount();
 
 		// Detector Emulation DMA Delay Count Register
 		void SetDetectorEmulationDMADelayCount(uint32_t count);
 		uint32_t ReadDetectorEmulationDMADelayCount();
+		DTC_RegisterFormatter FormatDetectorEmulationDMADelayCount();
 
 		// SERDES Counter Registers
+		/*
 		void ClearReceiveByteCount(const DTC_Ring_ID& ring);
 		uint32_t ReadReceiveByteCount(const DTC_Ring_ID& ring);
 		void ClearReceivePacketCount(const DTC_Ring_ID& ring);
@@ -397,13 +402,46 @@ namespace DTCLib
 		uint32_t ReadTransmitByteCount(const DTC_Ring_ID& ring);
 		void ClearTransmitPacketCount(const DTC_Ring_ID& ring);
 		uint32_t ReadTransmitPacketCount(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatReceiveByteCountRing0();
+		DTC_RegisterFormatter FormatReceiveByteCountRing1();
+		DTC_RegisterFormatter FormatReceiveByteCountRing2();
+		DTC_RegisterFormatter FormatReceiveByteCountRing3();
+		DTC_RegisterFormatter FormatReceiveByteCountRing4();
+		DTC_RegisterFormatter FormatReceiveByteCountRing5();
+		DTC_RegisterFormatter FormatReceiveByteCountCFO();
+		DTC_RegisterFormatter FromatReceivePacketCountRing0();
+		DTC_RegisterFormatter FromatReceivePacketCountRing1();
+		DTC_RegisterFormatter FromatReceivePacketCountRing2();
+		DTC_RegisterFormatter FromatReceivePacketCountRing3();
+		DTC_RegisterFormatter FromatReceivePacketCountRing4();
+		DTC_RegisterFormatter FromatReceivePacketCountRing5();
+		DTC_RegisterFormatter FromatReceivePacketCountCFO();
+		DTC_RegisterFormatter FormatTramsitByteCountRing0();
+		DTC_RegisterFormatter FormatTramsitByteCountRing1();
+		DTC_RegisterFormatter FormatTramsitByteCountRing2();
+		DTC_RegisterFormatter FormatTramsitByteCountRing3();
+		DTC_RegisterFormatter FormatTramsitByteCountRing4();
+		DTC_RegisterFormatter FormatTramsitByteCountRing5();
+		DTC_RegisterFormatter FormatTramsitByteCountCFO();
+		DTC_RegisterFormatter FormatTransmitPacketCountRing0();
+		DTC_RegisterFormatter FormatTransmitPacketCountRing1();
+		DTC_RegisterFormatter FormatTransmitPacketCountRing2();
+		DTC_RegisterFormatter FormatTransmitPacketCountRing3();
+		DTC_RegisterFormatter FormatTransmitPacketCountRing4();
+		DTC_RegisterFormatter FormatTransmitPacketCountRing5();
+		DTC_RegisterFormatter FormatTransmitPacketCountCFO);
+		*/
 
 		// DDR Local Start Address Register
+		uint32_t ReadDDRLocalStartAddress();
+		void SetDDRLocalStartAddress(uint32_t address);
+		DTC_RegisterFormatter FormatDDRLocalStartAddress();
+
 
 		// DDR Local End Address Register
-		void SetDDRLocalEndAddress(uint32_t address);
-		void IncrementDDRLocalEndAddress(size_t sz);
 		uint32_t ReadDDRLocalEndAddress();
+		void SetDDRLocalEndAddress(uint32_t address);
+		DTC_RegisterFormatter FormatDDRLocalEndAddress();
 
 		// DDR Write Burst Size Register
 
@@ -594,6 +632,29 @@ namespace DTCLib
 			{
 				return this->FormatCFOEmulationNumPacketsRing5();
 			},
+
+			[this]()
+			{
+				return this->FormatCFOEmulationDebugPacketType();
+			},
+
+			[this]()
+			{
+				return this->FormatDetectorEmulationDMACount();
+			},
+
+			[this]()
+			{
+				return this->FormatDetectorEmulationDMADelayCount();
+			},
+			[this]()
+			{
+				return this->FormatDDRLocalStartAddress();
+			},
+			[this]()
+			{
+				return this->FormatDDRLocalEndAddress();
+			},
 			[this]()
 			{
 				return this->FormatRingPacketLength();
@@ -605,6 +666,49 @@ namespace DTCLib
 			[this]()
 			{
 				return this->FormatFPGACoreAccess();
+			}
+		};
+
+		const std::vector<std::function<DTC_RegisterFormatter()>> formattedPerfMonFunctions_{
+			[this]()
+			{
+				return this->FormatPerfMonTXByteCount();
+			},
+			[this]()
+			{
+				return this->FormatPerfMonRXByteCount();
+			},
+			[this]()
+			{
+				return this->FormatPerfMonTXPayloadCount();
+			},
+			[this]()
+			{
+				return this->FormatPerfMonRXPayloadCount();
+			},
+			[this]()
+			{
+				return this->FormatPerfMonInitCDC();
+			},
+			[this]()
+			{
+				return this->FormatPerfMonInitCHC();
+			},
+			[this]()
+			{
+				return this->FormatPerfMonInitNPDC();
+			},
+			[this]()
+			{
+				return this->FormatPerfMonInitNPHC();
+			},
+			[this]()
+			{
+				return this->FormatPerfMonInitPDC();
+			},
+			[this]()
+			{
+				return this->FormatPerfMonInitPHC();
 			}
 		};
 	};
