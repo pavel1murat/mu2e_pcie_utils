@@ -29,6 +29,26 @@ public:
 		deviceTime_ = 0;
 	}
 
+	size_t GetWriteSize() const
+	{
+		return writeSize_;
+	}
+
+	void ResetWriteSize()
+	{
+		writeSize_ = 0;
+	}
+
+	size_t GetReadSize() const
+	{
+		return readSize_;
+	}
+
+	void ResetReadSize()
+	{
+		readSize_ = 0;
+	}
+
 	int init(DTCLib::DTC_SimMode simMode = DTCLib::DTC_SimMode_Disabled);
 	int read_data(int chn, void** buffer, int tmo_ms); // return bytes read; error if negative
 	int read_release(int chn, unsigned num);
@@ -54,5 +74,7 @@ private:
 	unsigned buffers_held_;
 	mu2esim* simulator_;
 	std::atomic<long long> deviceTime_;
+	std::atomic<size_t> writeSize_;
+	std::atomic<size_t> readSize_;
 };
 

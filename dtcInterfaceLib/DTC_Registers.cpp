@@ -74,7 +74,6 @@ DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode)
 {
 	simMode_ = mode;
 	device_.init(simMode_);
-	//DTC_Reset();
 
 	for (auto ring : DTC_Rings)
 	{
@@ -168,13 +167,6 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDTCControl()
 	form.vals.push_back(std::string("Detector Emulation Enable:      [") + (ReadDetectorEmulatorEnable() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("Detector Emulation Mode Enable: [") + (ReadDetectorEmulatorMode() ? "x" : " ") + "]");
 	return form;
-}
-
-void DTCLib::DTC_Registers::DTC_Reset()
-{
-	ResetDTC();
-	ResetSERDESOscillator();
-	ResetDDRWriteAddress();
 }
 
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDMATransferLength()

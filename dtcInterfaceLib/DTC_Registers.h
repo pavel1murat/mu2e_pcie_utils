@@ -127,16 +127,6 @@ namespace DTCLib
 			return &device_;
 		}
 
-		double GetDeviceTime() const
-		{
-			return device_.GetDeviceTime();
-		}
-
-		void ResetDeviceTime()
-		{
-			device_.ResetDeviceTime();
-		}
-
 		//
 		// DTC Sim Mode Virtual Register
 		//
@@ -220,7 +210,6 @@ namespace DTCLib
 		void DisableTiming();
 		bool ReadTimingEnable();
 		DTC_RegisterFormatter FormatDTCControl();
-		void DTC_Reset();
 
 		// DMA Transfer Length Register
 		void SetTriggerDMATransferLength(uint16_t length);

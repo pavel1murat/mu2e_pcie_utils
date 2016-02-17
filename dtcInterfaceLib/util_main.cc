@@ -401,8 +401,6 @@ main(int argc
 	else if (op == "buffer_test")
 	{
 		std::cout << "Operation \"buffer_test\"" << std::endl;
-		double totalIncTime = 0, totalSize = 0, totalRTTime = 0, totalWriteTime = 0;
-		int rtCount = 0;
 		auto startTime = std::chrono::high_resolution_clock::now();
 		DTC* thisDTC = new DTC(DTC_SimMode_NoCFO);
 		if (!thisDTC->ReadSERDESOscillatorClock())
@@ -411,6 +409,11 @@ main(int argc
 		} // We're going to 2.5Gbps for now
 
 		mu2edev* device = thisDTC->GetDevice();
+
+		auto initTime = device->GetDeviceTime();
+		device->ResetDeviceTime();
+		auto afterInit = std::chrono::high_resolution_clock::now();
+
 		DTCSoftwareCFO* cfo = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet, false);
 
 		if (genDMABlocks > 0)
@@ -444,12 +447,7 @@ main(int argc
 					currentOffset += 16;
 				}
 
-				auto startDTC = std::chrono::high_resolution_clock::now();
 				device->write_data(0, buf, byteCount);
-				totalSize += byteCount;
-				auto endDTC = std::chrono::high_resolution_clock::now();
-				totalWriteTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>
-					(endDTC - startDTC).count();
 				delete buf;
 			}
 
@@ -469,11 +467,13 @@ main(int argc
 			std::cout << "Request: " << header.toJSON() << std::endl;
 			thisDTC->WriteDMAPacket(header);
 		}
-		double readoutRequestTime = thisDTC->GetDeviceTime();
+
+		auto readoutRequestTime = device->GetDeviceTime();
+		device->ResetDeviceTime();
+		auto afterRequests = std::chrono::high_resolution_clock::now();
 
 		std::ofstream outputStream;
 		if (rawOutput) outputStream.open(rawOutputFile, std::ios::out | std::ios::app | std::ios::binary);
-		auto startRT = std::chrono::high_resolution_clock::now();
 
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
@@ -483,28 +483,18 @@ main(int argc
 				cfo->SendRequestForTimestamp(DTC_Timestamp(timestampOffset + (incrementTimestamp ? ii : 0)));
 				auto endRequest = std::chrono::high_resolution_clock::now();
 				readoutRequestTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(endRequest - startRequest).count();
-				startRT = endRequest;
 			}
 			if (!reallyQuiet) std::cout << "Buffer Read " << std::dec << ii << std::endl;
 			mu2e_databuff_t* buffer;
 			int tmo_ms = 1500;
 			TRACE(1, "util - before read for DAQ - ii=%u", ii);
-			auto startDTC = std::chrono::high_resolution_clock::now();
 			int sts = device->read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
-			auto endDTC = std::chrono::high_resolution_clock::now();
-			totalIncTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>
-				(endDTC - startDTC).count();
 
 			TRACE(1, "util - after read for DAQ - ii=%u sts=%d %p", ii, sts, (void*)buffer);
 			if (sts > 0)
 			{
-				totalRTTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>
-					(endDTC - startRT).count();
-				rtCount++;
-				startRT = endDTC;
 				void* readPtr = &(buffer[0]);
 				uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)readPtr));
-				totalSize += bufSize;
 				readPtr = (uint8_t*)readPtr + 8;
 				std::cout << "Buffer reports DMA size of " << std::dec << bufSize << " bytes. Device driver reports read of " << sts << " bytes," << std::endl;
 				TRACE(1, "util - bufSize is %u", bufSize);
@@ -535,24 +525,28 @@ main(int argc
 		}
 		if (rawOutput) outputStream.close();
 
-		double aveRate = totalSize / totalIncTime / 1024;
-		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>
-			(std::chrono::high_resolution_clock::now() - startTime).count();
-		double aveTotalRate = totalSize / totalTime / 1024;
-		double rtTime = totalRTTime / (rtCount > 0 ? rtCount : 1);
+		auto readDevTime = device->GetDeviceTime();
+		auto doneTime = std::chrono::high_resolution_clock::now();
+		auto totalBytesRead = device->GetReadSize();
+		auto totalBytesWritten = device->GetWriteSize();
+		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(doneTime - startTime).count();
+		auto totalInitTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(afterInit - startTime).count();
+		auto totalRequestTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(afterRequests - afterInit).count();
+		auto totalReadTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(doneTime - afterRequests).count();
 
 		std::cout << "STATS, "
 			<< "Total Elapsed Time: " << totalTime << " s." << std::endl
-			<< "Device Time: " << totalIncTime << " s." << std::endl
-			<< "Total Data Size: " << totalSize / 1024 << " KB." << std::endl
-			<< "Average Data Rate (device): " << aveRate << " KB/s." << std::endl
-			<< "Average Data Rate (Total): " << aveTotalRate << " KB/s" << std::endl
-			<< "Readout Request Time: " << readoutRequestTime << " s." << std::endl
-			<< "Average Round-Trip time: " << rtTime << " s." << std::endl;
-		if (genDMABlocks)
-		{
-			std::cout << "DMA Writing Time: " << totalWriteTime << " s." << std::endl;
-		}
+			<< "Total Init Time: " << totalInitTime << " s." << std::endl
+			<< "Total Readout Request Time: " << totalRequestTime << " s." << std::endl
+			<< "Total Read Time: " << totalReadTime << " s." << std::endl
+			<< "Device Init Time: " << initTime << " s." << std::endl
+			<< "Device Request Time: " << readoutRequestTime << " s." << std::endl
+			<< "Device Read Time: " << readDevTime << " s." << std::endl
+			<< "Total Bytes Written: " << totalBytesWritten / 1024 << " KB." << std::endl
+			<< "Total Bytes Read: " << totalBytesRead / 1024 << " KB." << std::endl
+			<< "Total PCIe Rate: " << (totalBytesWritten + totalBytesRead) / (1024 * totalTime) << " KB/s." << std::endl
+			<< "Read Rate: " << totalBytesRead / (1024 * totalReadTime) << " KB/s." << std::endl
+			<< "Device Read Rate: " << totalBytesRead / (1024 * readDevTime) << " KB/s." << std::endl;
 	}
 	else if (op == "read_release")
 	{
@@ -570,15 +564,16 @@ main(int argc
 	}
 	else if (op == "DTC")
 	{
+		auto startTime = std::chrono::high_resolution_clock::now();
 		auto* thisDTC = new DTC(DTC_SimMode_NoCFO);
 		if (!thisDTC->ReadSERDESOscillatorClock())
 		{
 			thisDTC->SetSERDESOscillatorClock_25Gbps();
 		} // We're going to 2.5Gbps for now
 
-		double totalIncTime = 0, totalSize = 0, totalDevTime = 0, totalRTTime = 0, totalWriteTime = 0;
-		int rtCount = 0;
-		auto startTime = std::chrono::high_resolution_clock::now();
+		auto initTime = thisDTC->GetDevice()->GetDeviceTime();
+		thisDTC->GetDevice()->ResetDeviceTime();
+		auto afterInit = std::chrono::high_resolution_clock::now();
 
 		if (genDMABlocks > 0)
 		{
@@ -610,9 +605,7 @@ main(int argc
 				}
 
 				thisDTC->WriteDetectorEmulatorData(buf, byteCount);
-				totalSize += byteCount;
-				totalWriteTime += thisDTC->GetDeviceTime();
-				thisDTC->ResetDeviceTime();
+				thisDTC->GetDevice()->ResetDeviceTime();
 				delete buf;
 			}
 
@@ -623,12 +616,9 @@ main(int argc
 
 
 		DTCSoftwareCFO* theCFO = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet);
-		double readoutRequestTime = 0;
 		if (!syncRequests)
 		{
 			theCFO->SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
-			readoutRequestTime += thisDTC->GetDeviceTime();
-			thisDTC->ResetDeviceTime();
 		}
 
 		std::ofstream outputStream;
@@ -638,7 +628,10 @@ main(int argc
 		int retries = 4;
 		uint64_t expectedTS = timestampOffset;
 		int packetsProcessed = 0;
-		auto startRT = std::chrono::high_resolution_clock::now();
+
+		auto afterRequests = std::chrono::high_resolution_clock::now();
+		auto readoutRequestTime = thisDTC->GetDevice()->GetDeviceTime();
+		thisDTC->GetDevice()->ResetDeviceTime();
 
 		for (; ii < number; ++ii)
 		{
@@ -649,25 +642,12 @@ main(int argc
 				theCFO->SendRequestForTimestamp(DTC_Timestamp(ts));
 				auto endRequest = std::chrono::high_resolution_clock::now();
 				readoutRequestTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(endRequest - startRequest).count();
-				startRT = endRequest;
 			}
 
-			auto startDTC = std::chrono::high_resolution_clock::now();
 			std::vector<void*> data = thisDTC->GetData(); //DTC_Timestamp(ts));
-			auto endDTC = std::chrono::high_resolution_clock::now();
-			totalIncTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>
-				(endDTC - startDTC).count();
-
-			totalDevTime += thisDTC->GetDeviceTime();
-			thisDTC->ResetDeviceTime();
 
 			if (data.size() > 0)
 			{
-				totalRTTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>
-					(endDTC - startRT).count();
-				rtCount++;
-				startRT = endDTC;
-
 				TRACE(19, "util_main %llu DataBlocks returned", (unsigned long long)data.size());
 				if (!reallyQuiet) std::cout << data.size() << " DataBlocks returned\n";
 				packetsProcessed += static_cast<int>(data.size());
@@ -720,7 +700,6 @@ main(int argc
 							}*/
 						}
 					}
-					totalSize += 16 * (1 + h2.GetPacketCount());
 				}
 			}
 			else
@@ -776,25 +755,29 @@ main(int argc
 		}
 
 		if (rawOutput) outputStream.close();
-		double aveRate = totalSize / totalIncTime / 1024;
-		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>
-			(std::chrono::high_resolution_clock::now() - startTime).count();
-		double aveTotalRate = totalSize / totalTime / 1024;
-		double rtTime = totalRTTime / (rtCount > 0 ? rtCount : 1);
 
-		std::cout << "STATS, " << packetsProcessed << " DataBlocks processed:" << std::endl
+		auto readDevTime = thisDTC->GetDevice()->GetDeviceTime();
+		auto doneTime = std::chrono::high_resolution_clock::now();
+		auto totalBytesRead = thisDTC->GetDevice()->GetReadSize();
+		auto totalBytesWritten = thisDTC->GetDevice()->GetWriteSize();
+		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(doneTime - startTime).count();
+		auto totalInitTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(afterInit - startTime).count();
+		auto totalRequestTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(afterRequests - afterInit).count();
+		auto totalReadTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(doneTime - afterRequests).count();
+
+		std::cout << "STATS, "
 			<< "Total Elapsed Time: " << totalTime << " s." << std::endl
-			<< "DTC::GetData Time: " << totalIncTime << " s." << std::endl
-			<< "Total Data Size: " << totalSize / 1024 << " KB." << std::endl
-			<< "Average Data Rate (device): " << aveRate << " KB/s." << std::endl
-			<< "Average Data Rate (total): " << aveTotalRate << " KB/s." << std::endl
-			<< "Readout Request Time: " << readoutRequestTime << " s." << std::endl
-			<< "Total Device Time: " << totalDevTime << " s." << std::endl
-			<< "Average Round-Trip time: " << rtTime << " s." << std::endl;
-		if (genDMABlocks)
-		{
-			std::cout << "DMA Writing Time: " << totalWriteTime << " s." << std::endl;
-		}
+			<< "Total Init Time: " << totalInitTime << " s." << std::endl
+			<< "Total Readout Request Time: " << totalRequestTime << " s." << std::endl
+			<< "Total Read Time: " << totalReadTime << " s." << std::endl
+			<< "Device Init Time: " << initTime << " s." << std::endl
+			<< "Device Request Time: " << readoutRequestTime << " s." << std::endl
+			<< "Device Read Time: " << readDevTime << " s." << std::endl
+			<< "Total Bytes Written: " << totalBytesWritten / 1024 << " KB." << std::endl
+			<< "Total Bytes Read: " << totalBytesRead / 1024 << " KB." << std::endl
+			<< "Total PCIe Rate: " << (totalBytesWritten + totalBytesRead) / (1024 * totalTime) << " KB/s." << std::endl
+			<< "Read Rate: " << totalBytesRead / (1024 * totalReadTime) << " KB/s." << std::endl
+			<< "Device Read Rate: " << totalBytesRead / (1024 * readDevTime) << " KB/s." << std::endl;
 	}
 	else
 	{
