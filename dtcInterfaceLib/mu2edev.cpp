@@ -26,7 +26,7 @@
 #include <chrono>
 #include "mu2edev.h"
 
-mu2edev::mu2edev() : devfd_(0), buffers_held_(0), simulator_(nullptr), deviceTime_(0LL)
+mu2edev::mu2edev() : devfd_(0), buffers_held_(0), simulator_(nullptr), deviceTime_(0LL), writeSize_(0), readSize_(0)
 {
 	//TRACE_CNTL( "lvlmskM", 0x3 );
 	//TRACE_CNTL( "lvlmskS", 0x3 );
