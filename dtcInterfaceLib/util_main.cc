@@ -37,6 +37,41 @@
 
 using namespace DTCLib;
 
+std::string FormatBytes(double bytes)
+{
+	auto kb = bytes / 1024.0;
+	auto mb = kb / 1024.0;
+	auto gb = mb / 1024.0;
+	auto tb = gb / 1024.0;
+	auto val = bytes;
+	auto unit = " bytes";
+
+	if (tb > 1)
+	{
+		val = tb;
+		unit = " TB";
+	}
+	else if (gb > 1)
+	{
+		val = gb;
+		unit = " GB";
+	}
+	else if (mb > 1)
+	{
+		val = mb;
+		unit = " MB";
+	}
+	else if (kb > 1)
+	{
+		val = kb;
+		unit = " KB";
+	}
+	std::stringstream s;
+	s << std::setprecision(5) << val << unit;
+	return s.str();
+
+}
+
 unsigned getOptionValue(int* index, char** argv[])
 {
 	char* arg = (*argv)[*index];
@@ -496,7 +531,7 @@ main(int argc
 				void* readPtr = &(buffer[0]);
 				uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)readPtr));
 				readPtr = (uint8_t*)readPtr + 8;
-				if(!reallyQuiet) std::cout << "Buffer reports DMA size of " << std::dec << bufSize << " bytes. Device driver reports read of " << sts << " bytes," << std::endl;
+				if (!reallyQuiet) std::cout << "Buffer reports DMA size of " << std::dec << bufSize << " bytes. Device driver reports read of " << sts << " bytes," << std::endl;
 				TRACE(1, "util - bufSize is %u", bufSize);
 				if (rawOutput) outputStream.write((char*)readPtr, bufSize - 8);
 
@@ -542,11 +577,11 @@ main(int argc
 			<< "Device Init Time: " << initTime << " s." << std::endl
 			<< "Device Request Time: " << readoutRequestTime << " s." << std::endl
 			<< "Device Read Time: " << readDevTime << " s." << std::endl
-			<< "Total Bytes Written: " << totalBytesWritten / 1024 << " KB." << std::endl
-			<< "Total Bytes Read: " << totalBytesRead / 1024 << " KB." << std::endl
-			<< "Total PCIe Rate: " << (totalBytesWritten + totalBytesRead) / (1024 * totalTime) << " KB/s." << std::endl
-			<< "Read Rate: " << totalBytesRead / (1024 * totalReadTime) << " KB/s." << std::endl
-			<< "Device Read Rate: " << totalBytesRead / (1024 * readDevTime) << " KB/s." << std::endl;
+			<< "Total Bytes Written: " << FormatBytes(totalBytesWritten) << "." << std::endl
+			<< "Total Bytes Read: " << FormatBytes(totalBytesRead) << "." << std::endl
+			<< "Total PCIe Rate: " << FormatBytes((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
+			<< "Read Rate: " << FormatBytes(totalBytesRead / totalReadTime) << "/s." << std::endl
+			<< "Device Read Rate: " << FormatBytes(totalBytesRead / readDevTime) << "/s." << std::endl;
 	}
 	else if (op == "read_release")
 	{
@@ -773,11 +808,11 @@ main(int argc
 			<< "Device Init Time: " << initTime << " s." << std::endl
 			<< "Device Request Time: " << readoutRequestTime << " s." << std::endl
 			<< "Device Read Time: " << readDevTime << " s." << std::endl
-			<< "Total Bytes Written: " << totalBytesWritten / 1024 << " KB." << std::endl
-			<< "Total Bytes Read: " << totalBytesRead / 1024 << " KB." << std::endl
-			<< "Total PCIe Rate: " << (totalBytesWritten + totalBytesRead) / (1024 * totalTime) << " KB/s." << std::endl
-			<< "Read Rate: " << totalBytesRead / (1024 * totalReadTime) << " KB/s." << std::endl
-			<< "Device Read Rate: " << totalBytesRead / (1024 * readDevTime) << " KB/s." << std::endl;
+			<< "Total Bytes Written: " << FormatBytes(totalBytesWritten) << "." << std::endl
+			<< "Total Bytes Read: " << FormatBytes(totalBytesRead) << "." << std::endl
+			<< "Total PCIe Rate: " << FormatBytes((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
+			<< "Read Rate: " << FormatBytes(totalBytesRead / totalReadTime) << "/s." << std::endl
+			<< "Device Read Rate: " << FormatBytes(totalBytesRead / readDevTime) << "/s." << std::endl;
 	}
 	else
 	{
