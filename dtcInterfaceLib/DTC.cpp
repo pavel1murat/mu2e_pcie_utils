@@ -223,11 +223,11 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever)
 	std::ifstream is(file, std::ifstream::binary);
 	while (is && is.good() && sizeCheck)
 	{
-		TRACE(4, "Reading a DMA from file...%s", file.c_str());
+		TRACE(5, "Reading a DMA from file...%s", file.c_str());
 		mu2e_databuff_t* buf = reinterpret_cast<mu2e_databuff_t*>(new mu2e_databuff_t());
 		is.read((char*)buf, sizeof(uint64_t));
 		uint64_t sz = *((uint64_t*)buf);
-		TRACE(4, "Size is %llu, writing to device", (long long unsigned)sz);
+		//TRACE(5, "Size is %llu, writing to device", (long long unsigned)sz);
 		is.read((char*)buf + 8, sz - sizeof(uint64_t));
 		if (sz < 64 && sz > 0)
 		{
@@ -237,10 +237,10 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever)
 		//is.read((char*)buf + 8, sz - sizeof(uint64_t));
 		if (sz > 0 && sz + totalSize < 0x7000000)
 		{
-			TRACE(4, "Size is %llu, writing to device", (long long unsigned)sz);
+			TRACE(5, "Size is %llu, writing to device", (long long unsigned)sz);
 			totalSize += sz;
 			n++;
-			TRACE(10, "DTC::WriteSimFileToDTC: totalSize is now %lu", static_cast<unsigned long>(totalSize));
+			TRACE(10, "DTC::WriteSimFileToDTC: totalSize is now %lu, n is now %lu", static_cast<unsigned long>(totalSize),static_cast<unsigned long>(n));
 			WriteDetectorEmulatorData(buf, sz);
 		}
 		else if(sz > 0)
