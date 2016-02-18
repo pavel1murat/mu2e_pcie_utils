@@ -25,7 +25,7 @@ fi
 test -e /dev/mu2e || { echo 'DTC device file not found. Please re-run this script as root!'; return; }
 
 echo "Setting up TRACE module"
-export TRACE_FILE=/proc/trace/buffer;tonM -nKERNEL 0-19  # poll noise is on lvls 22-23
+export TRACE_FILE=/proc/trace/buffer;tonM -nKERNEL 0-19;toffM -nKERNEL 4  # poll noise is on lvls 22-23
 tonSg 0
 
 echo "Doing \"Super\" Reset Chants"

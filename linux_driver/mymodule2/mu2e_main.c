@@ -497,6 +497,7 @@ volatile mu2e_buffdesc_S2C_t   *desc_S2C_p;
 	TRACE( 10, "mu2e_ioctl: unknown cmd" );
 	return (-1); // some error
 	}
+	TRACE( 11, "mu2e_ioctl: end" );
 	return (retval);
 }   // mu2e_ioctl
 
