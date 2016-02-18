@@ -614,12 +614,13 @@ main(int argc
 		{
 			std::cout << "Sending data to DTC" << std::endl;
 			thisDTC->ResetDDRWriteAddress();
+			thisDTC->SetDDRLocalStartAddress(0);
+			thisDTC->SetDDRLocalEndAddress(0x7000000);
 			size_t total_size = 0;
 			unsigned ii = 0;
 			for (; ii < genDMABlocks; ++ii)
 			{
 				uint64_t byteCount = (1 + packetCount) * 16 * sizeof(uint8_t) + 8;
-				total_size += byteCount;
 				mu2e_databuff_t* buf = (mu2e_databuff_t*)new mu2e_databuff_t();
 				memcpy(buf, &byteCount, sizeof(byteCount));
 				uint64_t currentOffset = 8;
@@ -639,12 +640,16 @@ main(int argc
 					currentOffset += 16;
 				}
 
+				if (total_size + byteCount > 0x7000000) break;
+
+				total_size += byteCount;
 				thisDTC->WriteDetectorEmulatorData(buf, byteCount);
 				thisDTC->GetDevice()->ResetDeviceTime();
 				delete buf;
 			}
 
 			std::cout << "Total bytes written: " << total_size << std::endl;
+			thisDTC->SetDDRLocalEndAddress(total_size);
 			thisDTC->SetDetectorEmulationDMACount(number);
 			thisDTC->EnableDetectorEmulator();
 		}

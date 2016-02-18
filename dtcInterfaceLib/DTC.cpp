@@ -213,14 +213,15 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever)
 	//DTC_Reset();
 	EnableDetectorEmulatorMode();
 	ResetDDRWriteAddress();
-	SetDDRLocalEndAddress(0xFFFFFFFF);
+	SetDDRLocalEndAddress(0x7000000);
 	SetDetectorEmulationDMACount(0);
 	SetDetectorEmulationDMADelayCount(0);
 	auto totalSize = 0;
 	auto n = 0;
 
+	auto sizeCheck = true;
 	std::ifstream is(file, std::ifstream::binary);
-	while (is && is.good())
+	while (is && is.good() && sizeCheck)
 	{
 		TRACE(4, "Reading a DMA from file...%s", file.c_str());
 		mu2e_databuff_t* buf = reinterpret_cast<mu2e_databuff_t*>(new mu2e_databuff_t());
@@ -234,12 +235,17 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever)
 			memcpy(buf, &sz, sizeof(uint64_t));
 		}
 		//is.read((char*)buf + 8, sz - sizeof(uint64_t));
-		if (sz > 0)
+		if (sz > 0 && sz + totalSize < 0x7000000)
 		{
 			TRACE(4, "Size is %llu, writing to device", (long long unsigned)sz);
 			totalSize += sz;
+			n++;
 			TRACE(10, "DTC::WriteSimFileToDTC: totalSize is now %lu", static_cast<unsigned long>(totalSize));
 			WriteDetectorEmulatorData(buf, sz);
+		}
+		else if(sz > 0)
+		{
+			sizeCheck = false;
 		}
 		delete[] buf;
 	}
