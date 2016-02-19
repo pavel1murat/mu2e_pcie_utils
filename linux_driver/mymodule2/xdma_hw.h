@@ -21,14 +21,14 @@ typedef unsigned long long u64;
  */
 #define XIo_In32(addr) \
 ({ u32 xx=readl((unsigned int *)(addr));\
-    TRACE( 17, "read: 0x%x=%p",xx,(void*)(addr));        \
-    xx;\
+	TRACE( 17, "read: 0x%x=%p",xx,(void*)(addr));        \
+	xx;\
  })
 
 #define XIo_Out32(addr, data) \
-    ({  TRACE( 18, "write %p=0x%x",(void*)(addr),data);\
-        writel((data), (unsigned int *)(addr));      \
-    })
+	({  TRACE( 18, "write %p=0x%x",(void*)(addr),data);\
+		writel((data), (unsigned int *)(addr));      \
+	})
 
 
 
@@ -38,63 +38,63 @@ typedef unsigned long long u64;
 /** Engine bitmask is 64-bit because there are 64 engines */
 #define DMA_ENGINE_PER_SIZE     0x100   /**< Separation between engine regs */
 #define DMA_OFFSET              0       /**< Starting register offset */
-                                        /**< Size of DMA engine reg space */
+										/**< Size of DMA engine reg space */
 #define DMA_SIZE                (MAX_DMA_ENGINES * DMA_ENGINE_PER_SIZE)
 
 
 
 typedef struct
 {   u32    ByteCount  :20;
-    u32    Rsvd       : 4;
-    u32    Complete   : 1;
-    u32    Short      : 1;
-    u32    b26        : 1;
-    u32    b27        : 1;
-    u32    Error      : 1;
-    u32    b29        : 1;
-    u32    b30        : 1;
-    u32    b31        : 1;
-    u64    UserControl;
-    u32    CardAddress;
-    u32    ByteCnt    :20;
-    u32    Rsvd_      : 4;
-    u32    IrqComplete: 1;
-    u32    IrqError   : 1;
-    u32    b26_       : 1;
-    u32    b27_       : 1;
-    u32    b28_       : 1;
-    u32    b29_       : 1;
-    u32    StartOfPkt : 1;
-    u32    EndOfPkt   : 1;
-    u64    SystemAddress;
-    u32    NextDescPtr;
+	u32    Rsvd       : 4;
+	u32    Complete   : 1;
+	u32    Short      : 1;
+	u32    b26        : 1;
+	u32    b27        : 1;
+	u32    Error      : 1;
+	u32    b29        : 1;
+	u32    b30        : 1;
+	u32    b31        : 1;
+	u64    UserControl;
+	u32    CardAddress;
+	u32    ByteCnt    :20;
+	u32    Rsvd_      : 4;
+	u32    IrqComplete: 1;
+	u32    IrqError   : 1;
+	u32    b26_       : 1;
+	u32    b27_       : 1;
+	u32    b28_       : 1;
+	u32    b29_       : 1;
+	u32    StartOfPkt : 1;
+	u32    EndOfPkt   : 1;
+	u64    SystemAddress;
+	u32    NextDescPtr;
 } __attribute__((packed)) mu2e_buffdesc_S2C_t;
 
 typedef struct
 {   u32    ByteCount  :20;
-    u32    Rsvd       : 4;
-    u32    Complete   : 1;
-    u32    Short      : 1;
-    u32    Lo0        : 1;
-    u32    Hi0        : 1;
-    u32    Error      : 1;
-    u32    b29        : 1;
-    u32    b30        : 1;
-    u32    b31        : 1;
-    u64    UserStatus;
-    u32    CardAddress;
-    u32    RsvdByteCnt:20;
-    u32    Rsvd_      : 4;
-    u32    IrqComplete: 1;
-    u32    IrqError   : 1;
-    u32    b26_       : 1;
-    u32    b27_       : 1;
-    u32    b28_       : 1;
-    u32    b29_       : 1;
-    u32    b30_       : 1;
-    u32    b31_       : 1;
-    u64    SystemAddress;
-    u32    NextDescPtr;
+	u32    Rsvd       : 4;
+	u32    Complete   : 1;
+	u32    Short      : 1;
+	u32    Lo0        : 1;
+	u32    Hi0        : 1;
+	u32    Error      : 1;
+	u32    b29        : 1;
+	u32    b30        : 1;
+	u32    b31        : 1;
+	u64    UserStatus;
+	u32    CardAddress;
+	u32    RsvdByteCnt:20;
+	u32    Rsvd_      : 4;
+	u32    IrqComplete: 1;
+	u32    IrqError   : 1;
+	u32    b26_       : 1;
+	u32    b27_       : 1;
+	u32    b28_       : 1;
+	u32    b29_       : 1;
+	u32    b30_       : 1;
+	u32    b31_       : 1;
+	u64    SystemAddress;
+	u32    NextDescPtr;
 } __attribute__ ((packed)) mu2e_buffdesc_C2S_t;
 
 
@@ -104,37 +104,37 @@ typedef struct
 static unsigned long mu2e_ch_reg_offset[2][2] ={ {0x2000,0x0}, {0x2100,0x100} };
 
 #define Dma_mReadChnReg( chn, dir, reg )		\
-    Dma_mReadReg( \
-    (unsigned long)mu2e_pcie_bar_info.baseVAddr+mu2e_ch_reg_offset[chn][dir]\
+	Dma_mReadReg( \
+	(unsigned long)mu2e_pcie_bar_info.baseVAddr+mu2e_ch_reg_offset[chn][dir]\
 		 , reg )
 
 #define Dma_mWriteChnReg( chn, dir, reg, val )	\
-    Dma_mWriteReg( \
-    (unsigned long)mu2e_pcie_bar_info.baseVAddr+mu2e_ch_reg_offset[chn][dir]\
+	Dma_mWriteReg( \
+	(unsigned long)mu2e_pcie_bar_info.baseVAddr+mu2e_ch_reg_offset[chn][dir]\
 		  , reg, val )
 #endif
 
 
 #define descDmaAdr2idx( regval, chn, dir ) \
-    (dir == C2S)					\
-    ? ( (u32)(regval-mu2e_pci_recver[chn].buffdesc_ring_dma) \
-       /(u32)sizeof(mu2e_buffdesc_C2S_t) )		\
-    : ( (u32)(regval-mu2e_pci_sender[chn].buffdesc_ring_dma) \
-       /(u32)sizeof(mu2e_buffdesc_S2C_t) )
+	(dir == C2S)					\
+	? ( (u32)(regval-mu2e_pci_recver[chn].buffdesc_ring_dma) \
+	   /(u32)sizeof(mu2e_buffdesc_C2S_t) )		\
+	: ( (u32)(regval-mu2e_pci_sender[chn].buffdesc_ring_dma) \
+	   /(u32)sizeof(mu2e_buffdesc_S2C_t) )
 
 #define idx2descDmaAdr( idx, chn, dir ) \
-    (dir == C2S)					\
-    ? ( (u32)mu2e_pci_recver[chn].buffdesc_ring_dma		\
-       +(u32)sizeof(mu2e_buffdesc_C2S_t)*idx )		\
-    : ( (u32)mu2e_pci_sender[chn].buffdesc_ring_dma		\
-       +(u32)sizeof(mu2e_buffdesc_S2C_t)*idx )
+	(dir == C2S)					\
+	? ( (u32)mu2e_pci_recver[chn].buffdesc_ring_dma		\
+	   +(u32)sizeof(mu2e_buffdesc_C2S_t)*idx )		\
+	: ( (u32)mu2e_pci_sender[chn].buffdesc_ring_dma		\
+	   +(u32)sizeof(mu2e_buffdesc_S2C_t)*idx )
 
 #define idx2descVirtAdr( idx, chn, dir ) \
-    ((dir == C2S)						\
-     ? (void*)( (ulong)mu2e_pci_recver[chn].buffdesc_ring		\
-	       +sizeof(mu2e_buffdesc_C2S_t)*idx )			\
-     : (void*)( (ulong)mu2e_pci_sender[chn].buffdesc_ring		\
-	       +sizeof(mu2e_buffdesc_S2C_t)*idx ) )
+	((dir == C2S)						\
+	 ? (void*)( (ulong)mu2e_pci_recver[chn].buffdesc_ring		\
+		   +sizeof(mu2e_buffdesc_C2S_t)*idx )			\
+	 : (void*)( (ulong)mu2e_pci_sender[chn].buffdesc_ring		\
+		   +sizeof(mu2e_buffdesc_S2C_t)*idx ) )
 
 
 /** @name Device register offset definitions. Register access is 32-bit.
@@ -271,7 +271,7 @@ static unsigned long mu2e_ch_reg_offset[2][2] ={ {0x2000,0x0}, {0x2100,0x100} };
 *
 ******************************************************************************/
 #define Dma_mReadReg(BaseAddress, RegOffset)             \
-    XIo_In32((BaseAddress) + (RegOffset))
+	XIo_In32((BaseAddress) + (RegOffset))
 
 
 /*****************************************************************************/
@@ -291,7 +291,7 @@ static unsigned long mu2e_ch_reg_offset[2][2] ={ {0x2000,0x0}, {0x2100,0x100} };
 *
 ******************************************************************************/
 #define Dma_mWriteReg(BaseAddress, RegOffset, Data)     \
-    XIo_Out32((BaseAddress) + (RegOffset), (Data))
+	XIo_Out32((BaseAddress) + (RegOffset), (Data))
 
 
 /****************************************************************************/
@@ -308,9 +308,9 @@ static unsigned long mu2e_ch_reg_offset[2][2] ={ {0x2000,0x0}, {0x2100,0x100} };
 *****************************************************************************/
 #define Dma_mIntEnable(BaseAddress)        \
 {                           \
-    u32 Reg = Dma_mReadReg(BaseAddress, REG_DMA_CTRL_STATUS);   \
-    Reg |= (DMA_INT_ENABLE | DMA_USER_INT_ENABLE);            \
-    Dma_mWriteReg(BaseAddress, REG_DMA_CTRL_STATUS, Reg);       \
+	u32 Reg = Dma_mReadReg(BaseAddress, REG_DMA_CTRL_STATUS);   \
+	Reg |= (DMA_INT_ENABLE | DMA_USER_INT_ENABLE);            \
+	Dma_mWriteReg(BaseAddress, REG_DMA_CTRL_STATUS, Reg);       \
 }
 
 
@@ -328,9 +328,9 @@ static unsigned long mu2e_ch_reg_offset[2][2] ={ {0x2000,0x0}, {0x2100,0x100} };
 *****************************************************************************/
 #define Dma_mIntDisable(BaseAddress)        \
 {                           \
-    u32 Reg = Dma_mReadReg(BaseAddress, REG_DMA_CTRL_STATUS);   \
-    Reg &= ~(DMA_INT_ENABLE | DMA_USER_INT_ENABLE);           \
-    Dma_mWriteReg(BaseAddress, REG_DMA_CTRL_STATUS, Reg);       \
+	u32 Reg = Dma_mReadReg(BaseAddress, REG_DMA_CTRL_STATUS);   \
+	Reg &= ~(DMA_INT_ENABLE | DMA_USER_INT_ENABLE);           \
+	Dma_mWriteReg(BaseAddress, REG_DMA_CTRL_STATUS, Reg);       \
 }
 
 
@@ -352,9 +352,9 @@ static unsigned long mu2e_ch_reg_offset[2][2] ={ {0x2000,0x0}, {0x2100,0x100} };
  */
 #define Dma_mIntAck(BaseAddress, Mask)  \
 {                       \
-    u32 Reg = Dma_mReadReg(BaseAddress, REG_DMA_CTRL_STATUS);   \
-    Reg |= Mask;                    \
-    Dma_mWriteReg(BaseAddress, REG_DMA_CTRL_STATUS, Reg);       \
+	u32 Reg = Dma_mReadReg(BaseAddress, REG_DMA_CTRL_STATUS);   \
+	Reg |= Mask;                    \
+	Dma_mWriteReg(BaseAddress, REG_DMA_CTRL_STATUS, Reg);       \
 }
 
 
@@ -372,9 +372,9 @@ static unsigned long mu2e_ch_reg_offset[2][2] ={ {0x2000,0x0}, {0x2100,0x100} };
 *****************************************************************************/
 #define Dma_mEnable(BaseAddress)                                  \
 {                                                         \
-    u32 val = Dma_mReadReg(BaseAddress, REG_DMA_ENG_CTRL_STATUS);       \
-    val |= DMA_ENG_ENABLE;                                              \
-    Dma_mWriteReg(BaseAddress, REG_DMA_ENG_CTRL_STATUS, val);           \
+	u32 val = Dma_mReadReg(BaseAddress, REG_DMA_ENG_CTRL_STATUS);       \
+	val |= DMA_ENG_ENABLE;                                              \
+	Dma_mWriteReg(BaseAddress, REG_DMA_ENG_CTRL_STATUS, val);           \
 }
 
 
