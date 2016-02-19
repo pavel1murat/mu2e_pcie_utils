@@ -54,8 +54,14 @@ static void poll_packets(unsigned long __opaque)
 	{   // Read the HW register and convert (Dma) addr in reg to idx.
 	u32 newCmpltIdx=descDmaAdr2idx( Dma_mReadChnReg(chn,dir,REG_HW_CMPLT_BD)
 					   ,chn,dir );
-	// check just-read-HW-val (converted to idx) against "cached" copy
+
 	u32 do_once=0;
+        
+        if(newCmpltIdx >= mu2e_channel_info_[chn][dir].hwIdx + MU2E_NUM_RECV_BUFFS)
+        { TRACE(0, "poll_packets: newCmpltIdx (%lu) is above maximum sane value!!! (%lu)", newCmpltIdx, mu2e_channel_info_[chn][dir].hwIdx + MU2E_NUM_RECV_BUFFS);
+          continue;
+        }
+	// check just-read-HW-val (converted to idx) against "cached" copy
 	while (newCmpltIdx != mu2e_channel_info_[chn][dir].hwIdx/*ie.cachedCmplt*/)
 	{   // NEED TO UPDATE Receive Byte Counts
 		int * BC_p=(int*)mu2e_mmap_ptrs[chn][dir][MU2E_MAP_META];

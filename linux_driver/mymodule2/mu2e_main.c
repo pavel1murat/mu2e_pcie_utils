@@ -817,7 +817,7 @@ static int __init init_mu2e(void)
 	Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
 		  , 0x9104, 0x80000040 ); // write max and min DMA xfer sizes
 	Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
-		  , 0x9204, 0x00000010 ); // set ring packet size
+		  , 0x9150, 0x00000010 ); // set ring packet size
 
 	ret = mu2e_event_up();
 

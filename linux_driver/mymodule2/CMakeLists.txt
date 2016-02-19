@@ -38,6 +38,12 @@ add_custom_command(
             ${CMAKE_CURRENT_SOURCE_DIR}/mu2e_fs.c
             ${CMAKE_CURRENT_SOURCE_DIR}/mu2e_main.c
             ${CMAKE_CURRENT_SOURCE_DIR}/mu2e_pci.c
+            ${CMAKE_CURRENT_SOURCE_DIR}/mu2e_event.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/mu2e_fs.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/mu2e_mmap_ioctl.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/mu2e_pci.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/mu2e_proto_globals.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/xdma_hw.h
             ${TRACE_KO}
 )
 

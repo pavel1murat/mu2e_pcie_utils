@@ -21,12 +21,12 @@ typedef unsigned long long u64;
  */
 #define XIo_In32(addr) \
 ({ u32 xx=readl((unsigned int *)(addr));\
-    TRACE( 41, "read: 0x%x=%p",xx,(void*)(addr));        \
+    TRACE( 17, "read: 0x%x=%p",xx,(void*)(addr));        \
     xx;\
  })
 
 #define XIo_Out32(addr, data) \
-    ({  TRACE( 42, "write %p=0x%x",(void*)(addr),data);\
+    ({  TRACE( 18, "write %p=0x%x",(void*)(addr),data);\
         writel((data), (unsigned int *)(addr));      \
     })
 
