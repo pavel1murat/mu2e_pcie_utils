@@ -484,14 +484,14 @@ void DTCLib::DTCLibTest::doDAQTest()
 
 		DTCSoftwareCFO theCFO(thisDTC_, true, 0, DTC_DebugType_SpecialSequence, true, !printMessages_);
 		theCFO.SendRequestForTimestamp();
-		std::vector<void*> data = thisDTC_->GetData();
+		std::vector<DTC_DataBlock> data = thisDTC_->GetData();
 		if (data.size() > 0)
 		{
 			if (printMessages_) std::cout << data.size() << " packets returned\n";
 			for (size_t i = 0; i < data.size(); ++i)
 			{
 				TRACE(19, "DTC::GetJSONData constructing DataPacket:");
-				DTC_DataPacket test = DTC_DataPacket(data[i]);
+				DTC_DataPacket test = DTC_DataPacket(data[i].blockPointer);
 				if (printMessages_) std::cout << test.toJSON() << '\n'; // dumps whole databuff_t
 				DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
 				if (printMessages_)
@@ -499,7 +499,7 @@ void DTCLib::DTCLibTest::doDAQTest()
 					std::cout << h2.toJSON() << '\n';
 					for (int jj = 0; jj < h2.GetPacketCount(); ++jj)
 					{
-						std::cout << "\t" << DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16)).toJSON() << std::endl;
+						std::cout << "\t" << DTC_DataPacket(((uint8_t*)data[i].blockPointer) + ((jj + 1) * 16)).toJSON() << std::endl;
 					}
 				}
 			}

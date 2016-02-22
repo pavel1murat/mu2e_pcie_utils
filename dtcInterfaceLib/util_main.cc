@@ -684,7 +684,7 @@ main(int argc
 				readoutRequestTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(endRequest - startRequest).count();
 			}
 
-			std::vector<void*> data = thisDTC->GetData(); //DTC_Timestamp(ts));
+			std::vector<DTC_DataBlock> data = thisDTC->GetData(); //DTC_Timestamp(ts));
 
 			if (data.size() > 0)
 			{
@@ -694,7 +694,7 @@ main(int argc
 				for (size_t i = 0; i < data.size(); ++i)
 				{
 					TRACE(19, "util_main constructing DataPacket:");
-					DTC_DataPacket test = DTC_DataPacket(data[i]);
+					DTC_DataPacket test = DTC_DataPacket(data[i].blockPointer);
 					//TRACE(19, test.toJSON().c_str());
 					//if (!reallyQuiet) cout << test.toJSON() << '\n'; // dumps whole databuff_t
 					DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
@@ -728,7 +728,7 @@ main(int argc
 					}
 					for (int jj = 0; jj < h2.GetPacketCount(); ++jj)
 					{
-						DTC_DataPacket packet = DTC_DataPacket(((uint8_t*)data[i]) + ((jj + 1) * 16));
+						DTC_DataPacket packet = DTC_DataPacket(((uint8_t*)data[i].blockPointer) + ((jj + 1) * 16));
 						if (!quiet) std::cout << "\t" << packet.toJSON() << std::endl;
 						if (rawOutput)
 						{

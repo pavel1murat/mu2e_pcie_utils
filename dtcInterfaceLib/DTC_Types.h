@@ -900,6 +900,14 @@ namespace DTCLib
 			return stream;
 		}
 	};
+
+	struct DTC_DataBlock
+	{
+		void * blockPointer;
+		size_t byteSize;
+
+		DTC_DataBlock(void* ptr, size_t sz) : blockPointer(ptr), byteSize(sz) {}
+	};
 }
 
 #endif //DTC_TYPES_H

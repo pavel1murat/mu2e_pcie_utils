@@ -51,10 +51,10 @@ DTCLib::DTC::~DTC()
 //
 // DMA Functions
 //
-std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
+std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 {
 	TRACE(19, "DTC::GetData begin");
-	std::vector<void*> output;
+	std::vector<DTC_DataBlock> output;
 #if 0
 	//This code is disabled in favor of a separate Software CFO Emulator
 	for (auto ring : DTC_Rings)
@@ -98,6 +98,7 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
 	{
 		// Read the header packet
 		int tries = 0;
+		size_t sz;
 		while (packet == nullptr && tries < 3)
 		{
 			TRACE(19, "DTC::GetData before ReadNextDAQPacket, tries=%i", tries);
@@ -118,20 +119,22 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
 				, (unsigned long long)when.GetTimestamp(true), (unsigned long long)packet->GetTimestamp().GetTimestamp(true));
 			delete packet;
 			return output;
+
 		}
-		else
-		{
-			when = packet->GetTimestamp();
-		}
+
+		sz = packet->GetByteCount();
+		when = packet->GetTimestamp();
+
 		delete packet;
 		packet = nullptr;
 
 		TRACE(19, "DTC::GetData: Adding pointer %p to the list (first)", (void*)lastReadPtr_);
-		output.push_back(lastReadPtr_);
+		output.push_back(DTC_DataBlock(lastReadPtr_,sz));
 
 		bool done = false;
 		while (!done)
 		{
+			size_t sz = 0;
 			packet = ReadNextDAQPacket();
 			if (packet == nullptr) // End of Data
 			{
@@ -143,11 +146,15 @@ std::vector<void*> DTCLib::DTC::GetData(DTC_Timestamp when)
 				done = true;
 				nextReadPtr_ = lastReadPtr_;
 			}
+			else
+			{
+				sz = packet->GetByteCount();
+			}
 			delete packet;
 			packet = nullptr;
 
 			TRACE(19, "DTC::GetData: Adding pointer %p to the list", (void*)lastReadPtr_);
-			if (!done) output.push_back(lastReadPtr_);
+			if (!done) output.push_back(DTC_DataBlock(lastReadPtr_,sz));
 		}
 	}
 	catch (DTC_WrongPacketTypeException ex)
@@ -176,13 +183,13 @@ std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when)
 	TRACE(19, "DTC::GetJSONData BEGIN");
 	std::stringstream ss;
 	TRACE(19, "DTC::GetJSONData before call to GetData");
-	std::vector<void*> data = GetData(when);
+	std::vector<DTC_DataBlock> data = GetData(when);
 	TRACE(19, "DTC::GetJSONData after call to GetData, data size %llu", (unsigned long long)data.size());
 
 	for (size_t i = 0; i < data.size(); ++i)
 	{
 		TRACE(19, "DTC::GetJSONData constructing DataPacket:");
-		DTC_DataPacket test = DTC_DataPacket(data[i]);
+		DTC_DataPacket test = DTC_DataPacket(data[i].blockPointer);
 		TRACE(19, test.toJSON().c_str());
 		TRACE(19, "DTC::GetJSONData constructing DataHeaderPacket");
 		DTC_DataHeaderPacket theHeader = DTC_DataHeaderPacket(test);
@@ -191,7 +198,7 @@ std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when)
 		ss << "DataPackets: [";
 		for (int packet = 0; packet < theHeader.GetPacketCount(); ++packet)
 		{
-			void* packetPtr = (void*)(((char*)data[i]) + 16 * (1 + packet));
+			void* packetPtr = (void*)(((char*)data[i].blockPointer) + 16 * (1 + packet));
 			ss << DTC_DataPacket(packetPtr).toJSON() << ",";
 		}
 		ss << "]";

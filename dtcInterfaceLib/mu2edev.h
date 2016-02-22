@@ -66,7 +66,7 @@ public:
 	//int  write_test_command(m_ioc_cmd_t input, bool start);
 
 private:
-	unsigned delta_(int chn, int dir);
+	//unsigned delta_(int chn, int dir);
 
 	int devfd_;
 	volatile void* mu2e_mmap_ptrs_[MU2E_MAX_CHANNELS][2][2];

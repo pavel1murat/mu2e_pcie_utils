@@ -20,7 +20,7 @@ namespace DTCLib
 		// DMA Functions
 		//
 		// Data read-out
-		std::vector<void*> GetData(DTC_Timestamp when = DTC_Timestamp());
+		std::vector<DTC_DataBlock> GetData(DTC_Timestamp when = DTC_Timestamp());
 		std::string GetJSONData(DTC_Timestamp when = DTC_Timestamp());
 		void WriteSimFileToDTC(std::string file, bool goForever = false);
 

@@ -8,7 +8,7 @@
 #ifdef _WIN32
 # include <thread>
 # define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
-#  define TRACE(...)
+#  define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
 # define TRACE_CNTL(...)
 #else
 # include "trace.h"
@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
 		while (newfrag.hdr_block_count() < BLOCK_COUNT_MAX)
 		{
 			//TRACE(1, "Getting DTC Data");
-			std::vector<void*> data;
+			std::vector<DTC_DataBlock> data;
 			int retryCount = 5;
 			while (data.size() == 0 && retryCount >= 0)
 			{
@@ -103,45 +103,45 @@ int main(int argc, char* argv[])
 				break;
 			}
 
-			auto first = DTCLib::DTC_DataHeaderPacket(DTCLib::DTC_DataPacket(data[0]));
-			DTCLib::DTC_Timestamp ts = first.GetTimestamp();
-			int packetCount = first.GetPacketCount() + 1;
-			TRACE(1, "There are %lu data blocks in timestamp %lu. Packet count of first data block: %i", data.size(), ts.GetTimestamp(true), packetCount);
+			//auto first = DTCLib::DTC_DataHeaderPacket(DTCLib::DTC_DataPacket(data[0].blockPointer));
+			//DTCLib::DTC_Timestamp ts = first.GetTimestamp();
+			//int packetCount = first.GetPacketCount() + 1;
+			//TRACE(1, "There are %lu data blocks in timestamp %lu. Packet count of first data block: %i", data.size(), ts.GetTimestamp(true), packetCount);
+
+			size_t totalSize = 0;
 
 			for (size_t i = 1; i < data.size(); ++i)
 			{
-				auto packet = DTCLib::DTC_DataHeaderPacket(DTCLib::DTC_DataPacket(data[i]));
-				packetCount += packet.GetPacketCount() + 1;
+				totalSize += data[i].byteSize;
 			}
 
-			auto dataSize = packetCount * sizeof(packet_t);
-			int64_t diff = dataSize + newfrag.dataSize() - newfrag.fragSize();
+			int64_t diff = static_cast<int64_t>(totalSize + newfrag.dataSize()) - newfrag.fragSize();
 			if (diff > 0)
 			{
-				double currSize = newfrag.fragSize() / (double)sizeof(packet_t);
-				double remaining = 1 - (newfrag.hdr_block_count() / (double)BLOCK_COUNT_MAX);
-				size_t newSize = static_cast<size_t>(currSize * remaining) * sizeof(packet_t);
-				TRACE(1, "mu2eReceiver::getNext: %lu + %lu > %lu, allocating space for %lu more bytes", dataSize, newfrag.dataSize(), newfrag.fragSize(), newSize + diff);
+				auto currSize = newfrag.fragSize();
+				auto remaining = 1 - (newfrag.hdr_block_count() / static_cast<double>(BLOCK_COUNT_MAX));
+				auto newSize = static_cast<size_t>(currSize * remaining);
+				TRACE(1, "mu2eReceiver::getNext: %lu + %lu > %lu, allocating space for %lu more bytes", totalSize, newfrag.dataSize(), newfrag.fragSize(), static_cast<unsigned long>(newSize + diff));
 				newfrag.addSpace(diff + newSize);
 			}
 
 			TRACE(3, "Copying DTC packets into Mu2eFragment");
-			size_t packetsProcessed = 0;
-			packet_t* offset = reinterpret_cast<packet_t*>((uint8_t*)newfrag.dataBegin() + newfrag.dataSize());
+			auto offset = newfrag.dataBegin() + newfrag.dataSize();
+			size_t intraBlockOffset = 0;
 			for (size_t i = 0; i < data.size(); ++i)
 			{
-				TRACE(3, "Creating packet object to determine data block size: i=%lu, data=%p", i, data[i]);
-				auto packet = DTCLib::DTC_DataHeaderPacket(DTCLib::DTC_DataPacket(data[i]));
-				TRACE(3, "Copying packet %lu. src=%p, dst=%p, sz=%lu off=%p processed=%lu", i, data[i],
-					(void*)(offset + packetsProcessed), (1 + packet.GetPacketCount())*sizeof(packet_t),
-					(void*)offset, packetsProcessed);
-				memcpy((void*)(offset + packetsProcessed), data[i], (1 + packet.GetPacketCount()) * sizeof(packet_t));
+				//TRACE(3, "Creating packet object to determine data block size: i=%lu, data=%p", i, data[i]);
+				//auto packet = DTCLib::DTC_DataHeaderPacket(DTCLib::DTC_DataPacket(data[i]));
+				//TRACE(3, "Copying packet %lu. src=%p, dst=%p, sz=%lu off=%p processed=%lu", i, data[i],
+				//	(void*)(offset + packetsProcessed), (1 + packet.GetPacketCount())*sizeof(packet_t),
+				//	(void*)offset, packetsProcessed);
+				memcpy(reinterpret_cast<void*>(offset + intraBlockOffset), data[i].blockPointer, data[i].byteSize);
 				TRACE(3, "Incrementing packet counter");
-				packetsProcessed += 1 + packet.GetPacketCount();
+				intraBlockOffset += data[i].byteSize;
 			}
 
 			TRACE(3, "Ending SubEvt");
-			newfrag.endSubEvt(packetsProcessed * sizeof(packet_t));
+			newfrag.endSubEvt(intraBlockOffset);
 		}
 
 		loopCounter++;
