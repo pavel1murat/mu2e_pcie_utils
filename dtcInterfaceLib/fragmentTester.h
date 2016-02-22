@@ -28,12 +28,10 @@ public:
 	{
 		vals_.resize(vals_.size() + bytes);
 	}
-
-	typedef uint8_t packet_t[16];
-
-	packet_t* dataBegin()
+	
+	uint8_t* dataBegin()
 	{
-		return reinterpret_cast<packet_t*>(&(vals_[0]));
+		return reinterpret_cast<uint8_t*>(&(vals_[0]));
 	}
 
 	void endSubEvt(size_t bytes)

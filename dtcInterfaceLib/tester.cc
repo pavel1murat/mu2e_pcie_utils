@@ -8,7 +8,11 @@
 #ifdef _WIN32
 # include <thread>
 # define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
+#ifdef _NDEBUG
 #  define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
+#else
+# define TRACE(...)
+#endif
 # define TRACE_CNTL(...)
 #else
 # include "trace.h"
@@ -146,6 +150,8 @@ int main(int argc, char* argv[])
 
 		loopCounter++;
 		count += newfrag.hdr_block_count();
+		//auto file = fopen((std::string("tester_") + std::to_string(loopCounter) + ".bin").c_str(),"w+");
+		//fwrite((void*)newfrag.dataBegin(), sizeof(uint8_t), newfrag.fragSize(), file);
 		std::cout << "Event: " << loopCounter << ": " << newfrag.hdr_block_count() << " timestamps. (" << count << " total)" << std::endl;
 	}
 
