@@ -15,7 +15,7 @@
 #include "mu2e_pci.h"		/* bar_info_t, extern mu2e_pci*  */
 #include "mu2e_event.h"
 
-#define PACKET_POLL_HZ 1000
+#define PACKET_POLL_HZ 200 /*1000*/
 
 struct timer_list packets_timer;
 
@@ -23,13 +23,15 @@ struct timer_list packets_timer;
 static void poll_packets(unsigned long __opaque)
 {
 	unsigned long       base;
-	int                 offset;
+	int                 offset, error = 0;
 	int			chn, dir;
 	unsigned            nxtCachedCmpltIdx;
 	mu2e_buffdesc_C2S_t *buffdesc_C2S_p;
 
+        TRACE(20, "poll_packets: begin");
 	/* DMA registers are offset from BAR0 */
 	base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
+       TRACE(21, "poll_packets: After reading BAR0=0x%lx",base);
 
 	// check channel 0 reciever
 	TRACE(22, "poll_packets: "
@@ -59,9 +61,11 @@ static void poll_packets(unsigned long __opaque)
 		if (newCmpltIdx >= MU2E_NUM_RECV_BUFFS)
 		{
 			TRACE(0, "poll_packets: newCmpltIdx (0x%x) is above maximum sane value!!! (%i) Current idx=0x%x", newCmpltIdx, MU2E_NUM_RECV_BUFFS, mu2e_channel_info_[chn][dir].hwIdx);
-			continue;
+			error = 1;
+                        //continue;
+                        break;
 		}
-		TRACE(0, "poll_packets: newCmpltIdx=0x%x MU2E_NUM_RECV_BUFFS=%i Current idx=0x%x", newCmpltIdx, MU2E_NUM_RECV_BUFFS, mu2e_channel_info_[chn][dir].hwIdx);
+		TRACE(21, "poll_packets: newCmpltIdx=0x%x MU2E_NUM_RECV_BUFFS=%i Current idx=0x%x", newCmpltIdx, MU2E_NUM_RECV_BUFFS, mu2e_channel_info_[chn][dir].hwIdx);
 		// check just-read-HW-val (converted to idx) against "cached" copy
 		while (newCmpltIdx != mu2e_channel_info_[chn][dir].hwIdx/*ie.cachedCmplt*/)
 		{   // NEED TO UPDATE Receive Byte Counts
@@ -86,9 +90,10 @@ static void poll_packets(unsigned long __opaque)
 	// S2C checked in xmit ioctl or write
 
 	// Reschedule poll routine.
-	offset = HZ / PACKET_POLL_HZ;
+	offset = HZ / PACKET_POLL_HZ + (error ? 5 * HZ : 0);
 	packets_timer.expires = jiffies + offset;
 	add_timer(&packets_timer);
+        TRACE(21, "poll_packets: After reschedule, offset=%i", offset);
 }
 
 

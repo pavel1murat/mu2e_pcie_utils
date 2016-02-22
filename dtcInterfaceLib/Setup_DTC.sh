@@ -15,11 +15,12 @@ if [ $ROOT_MODE -eq 1 ]; then
 
   echo "Reinserting kernel modules..."
   if [ -z $MRB_BUILDDIR ]; then
-  lsmod | grep TRACE -q || insmod $TRACE_DIR/module/`uname -r`/TRACE.ko trace_allow_printk=1
+    lsmod | grep TRACE -q || insmod $TRACE_DIR/module/`uname -r`/TRACE.ko trace_allow_printk=1
     lsmod | grep mu2e -q || insmod $PCIE_LINUX_KERNEL_MODULE_DIR/drivers/`uname -r`/mu2e.ko
   else
-  lsmod | grep TRACE -q || insmod $MRB_BUILDDIR/TRACE/module/`uname -r`/TRACE.ko trace_allow_printk=1
+    lsmod | grep TRACE -q || insmod $MRB_BUILDDIR/TRACE/module/`uname -r`/TRACE.ko trace_allow_printk=1
     lsmod | grep mu2e -q || insmod $MRB_BUILDDIR/pcie_linux_kernel_module/drivers/`uname -r`/mu2e.ko
+    source $TRACE_DIR/script/trace.sh.functions 
   fi
   chmod 666 /dev/mu2e
 fi
