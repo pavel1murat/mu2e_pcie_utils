@@ -58,7 +58,7 @@ static void poll_packets(unsigned long __opaque)
 
 		if (newCmpltIdx >= MU2E_NUM_RECV_BUFFS)
 		{
-			TRACE(0, "poll_packets: newCmpltIdx (%lu) is above maximum sane value!!! (%lu)", newCmpltIdx, MU2E_NUM_RECV_BUFFS);
+			TRACE(0, "poll_packets: newCmpltIdx (0x%lx) is above maximum sane value!!! (%lu) Current idx=0x%x", newCmpltIdx, MU2E_NUM_RECV_BUFFS, mu2e_channel_info_[chn][dir].hwIdx);
 			continue;
 		}
 		// check just-read-HW-val (converted to idx) against "cached" copy
