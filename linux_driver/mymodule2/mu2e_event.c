@@ -61,7 +61,7 @@ static void poll_packets(unsigned long __opaque)
 			TRACE(0, "poll_packets: newCmpltIdx (0x%lx) is above maximum sane value!!! (%lu) Current idx=0x%x", newCmpltIdx, MU2E_NUM_RECV_BUFFS, mu2e_channel_info_[chn][dir].hwIdx);
 			continue;
 		}
-		TRACE(0, "poll_packets: newCmpltIdx=0x%lx MU2E_NUM_RECV_BUFFS=%lu Current idx=0x%x", newCmpltIdx, MU2E_NUM_RECV_BUFFS, mu2e_channel_info_[chn][dir].hwIdx);
+		TRACE(20, "poll_packets: newCmpltIdx=0x%lx MU2E_NUM_RECV_BUFFS=%lu Current idx=0x%x", newCmpltIdx, MU2E_NUM_RECV_BUFFS, mu2e_channel_info_[chn][dir].hwIdx);
 		// check just-read-HW-val (converted to idx) against "cached" copy
 		while (newCmpltIdx != mu2e_channel_info_[chn][dir].hwIdx/*ie.cachedCmplt*/)
 		{   // NEED TO UPDATE Receive Byte Counts
