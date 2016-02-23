@@ -140,11 +140,11 @@ int main(int argc, char* argv[])
 				//	(void*)(offset + packetsProcessed), (1 + packet.GetPacketCount())*sizeof(packet_t),
 				//	(void*)offset, packetsProcessed);
 				memcpy(reinterpret_cast<void*>(offset + intraBlockOffset), data[i].blockPointer, data[i].byteSize);
-				TRACE(3, "Incrementing packet counter");
+				//TRACE(3, "Incrementing packet counter");
 				intraBlockOffset += data[i].byteSize;
 			}
 
-			TRACE(3, "Ending SubEvt");
+			TRACE(3, "Ending SubEvt %lu", newfrag.hdr_block_count());
 			newfrag.endSubEvt(intraBlockOffset);
 		}
 
