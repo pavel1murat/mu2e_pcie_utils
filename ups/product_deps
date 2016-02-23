@@ -20,7 +20,7 @@ fcldir      -
 product		 version	optional
 TRACE            v3_05_00a
 swig             v3_0_7 
-cetbuildtools    v4_17_02        -       only_for_build
+cetbuildtools    v4_18_02        -       only_for_build
 end_product_list
 
 # e6  - with gcc 4.9.1 and -std=c++1y

@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
 		TRACE(1, "mu2eReceiver::getNext: Starting DTCFragment Loop");
 		while (newfrag.hdr_block_count() < BLOCK_COUNT_MAX)
 		{
-			//TRACE(1, "Getting DTC Data");
+			TRACE(1, "Getting DTC Data");
 			std::vector<DTC_DataBlock> data;
 			int retryCount = 5;
 			while (data.size() == 0 && retryCount >= 0)
