@@ -23,15 +23,15 @@ struct timer_list packets_timer;
 static void poll_packets(unsigned long __opaque)
 {
 	unsigned long       base;
-	int                 offset, error = 0;
+	int                 offset, error = 0, did_work = 0;
 	int			chn, dir;
 	unsigned            nxtCachedCmpltIdx;
 	mu2e_buffdesc_C2S_t *buffdesc_C2S_p;
 
-        TRACE(20, "poll_packets: begin");
+		TRACE(20, "poll_packets: begin");
 	/* DMA registers are offset from BAR0 */
 	base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
-       TRACE(21, "poll_packets: After reading BAR0=0x%lx",base);
+	   TRACE(21, "poll_packets: After reading BAR0=0x%lx",base);
 
 	// check channel 0 reciever
 	TRACE(22, "poll_packets: "
@@ -62,8 +62,8 @@ static void poll_packets(unsigned long __opaque)
 		{
 			TRACE(0, "poll_packets: newCmpltIdx (0x%x) is above maximum sane value!!! (%i) Current idx=0x%x", newCmpltIdx, MU2E_NUM_RECV_BUFFS, mu2e_channel_info_[chn][dir].hwIdx);
 			error = 1;
-                        //continue;
-                        break;
+						//continue;
+						break;
 		}
 		TRACE(21, "poll_packets: newCmpltIdx=0x%x MU2E_NUM_RECV_BUFFS=%i Current idx=0x%x", newCmpltIdx, MU2E_NUM_RECV_BUFFS, mu2e_channel_info_[chn][dir].hwIdx);
 		// check just-read-HW-val (converted to idx) against "cached" copy
@@ -80,6 +80,7 @@ static void poll_packets(unsigned long __opaque)
 			mu2e_channel_info_[chn][dir].hwIdx = nxtCachedCmpltIdx;
 			// Now system SW can see another buffer with valid meta data
 			do_once = 1;
+			did_work = 1;
 		}
 		if (do_once)
 		{   /* and wake up the user process waiting for data */
@@ -87,13 +88,28 @@ static void poll_packets(unsigned long __opaque)
 		}
 	}
 
+#if MU2E_RECV_INTER_ENABLED == 1
+	if(did_work)
+	{
+		// Reschedule immediately
+		packets_timer.expires = jiffies;
+		add_timer(&packets_timer);
+	}
+	else
+	{
+		// Re-enable interrupts.
+		Dma_mIntEnable(base);
+	}
+#else
+
 	// S2C checked in xmit ioctl or write
 
 	// Reschedule poll routine.
 	offset = HZ / PACKET_POLL_HZ + (error ? 5 * HZ : 0);
 	packets_timer.expires = jiffies + offset;
 	add_timer(&packets_timer);
-        TRACE(21, "poll_packets: After reschedule, offset=%i", offset);
+		TRACE(21, "poll_packets: After reschedule, offset=%i", offset);
+#endif
 }
 
 
@@ -102,7 +118,11 @@ static void poll_packets(unsigned long __opaque)
 int mu2e_event_up(void)
 {
 	init_timer(&packets_timer);
-	packets_timer.expires = jiffies + (HZ / PACKET_POLL_HZ);
+	packets_timer.expires = jiffies
+#if MU2E_RECV_INTER_ENABLED == 0
+		+ (HZ / PACKET_POLL_HZ)
+#endif
+		;
 	//timer->data=(unsigned long) pdev;
 	packets_timer.function = poll_packets;
 	add_timer(&packets_timer);
