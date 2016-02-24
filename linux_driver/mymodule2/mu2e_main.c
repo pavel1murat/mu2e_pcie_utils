@@ -80,10 +80,13 @@ static irqreturn_t DmaInterrupt(int irq, void *dev_id)
 
 	base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
 	Dma_mIntDisable(base);
-	Dma_mIntAck(base, 0xFFFFFFFF);
+
 	/* Handle DMA and any user interrupts */
 	if (mu2e_sched_poll() == 0)
+	  {
+                Dma_mIntAck(base, DMA_INT_ACTIVE_MASK | DMA_INT_PENDING_MASK | DMA_USER_INT_ACTIVE_MASK);
 		return IRQ_HANDLED;
+	  }
 	else
 #endif
 		return IRQ_NONE;
@@ -845,6 +848,7 @@ static int __init init_mu2e(void)
 	Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
 		, 0x9150, 0x00000010); // set ring packet size
 
+	ret = mu2e_event_up();
 
 # if MU2E_RECV_INTER_ENABLED
 	    /* Now enable interrupts using MSI mode */
@@ -862,7 +866,6 @@ static int __init init_mu2e(void)
 	}
         Dma_mIntEnable((unsigned long)mu2e_pcie_bar_info.baseVAddr);
 # endif
-	ret = mu2e_event_up();
 
 	return (ret);
 

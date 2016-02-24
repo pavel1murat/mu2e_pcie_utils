@@ -18,6 +18,7 @@
 #define PACKET_POLL_HZ 1000
 
 struct timer_list packets_timer;
+int packets_timer_guard = 1;
 
 
 static void poll_packets(unsigned long __opaque)
@@ -95,12 +96,17 @@ static void poll_packets(unsigned long __opaque)
 	if(did_work)
 	{
 		// Reschedule immediately
+#if 0
 		packets_timer.expires = jiffies;
 		add_timer(&packets_timer);
+#else
+		poll_packets();
+#endif
 	}
 	else
 	{
 		// Re-enable interrupts.
+	  packets_timer_guard = 1;
 		Dma_mIntEnable(base);
 	}
 #else
@@ -108,6 +114,7 @@ static void poll_packets(unsigned long __opaque)
 	// S2C checked in xmit ioctl or write
 
 	// Reschedule poll routine.
+        packets_timer_guard = 1;
 	offset = HZ / PACKET_POLL_HZ + (error ? 5 * HZ : 0);
 	packets_timer.expires = jiffies + offset;
 	add_timer(&packets_timer);
@@ -127,6 +134,9 @@ int mu2e_event_up(void)
 
 int mu2e_sched_poll(void)
 {
+  if(packets_timer_guard)
+    {
+      packets_timer_guard = 0;
 	packets_timer.expires = jiffies
 #if MU2E_RECV_INTER_ENABLED == 0
 		+ (HZ / PACKET_POLL_HZ)
@@ -134,7 +144,7 @@ int mu2e_sched_poll(void)
 		;
 	//timer->data=(unsigned long) pdev;
 	add_timer(&packets_timer);
-
+    }
 	return (0);
 }
 
