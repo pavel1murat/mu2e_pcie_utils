@@ -74,7 +74,6 @@ static int ReadPCIState(struct pci_dev * pdev, m_ioc_pcistate_t * pcistate);
 
 static irqreturn_t DmaInterrupt(int irq, void *dev_id)
 {
-	struct pci_dev *dev = dev_id;
 #if MU2E_RECV_INTER_ENABLED
 	unsigned long base;
 	TRACE(20, "DmaInterrrupt Called and interrupts are enabled. Scheduling poll routine.");

@@ -20,17 +20,18 @@ typedef unsigned long long u64;
 /* NWL DMA design is little-endian, so values need not be swapped.
  */
 #define XIo_In32(addr) \
-({      TRACE(17, "read: Start of %p",(void*)(addr));\
-        u32 xx=readl((unsigned int *)(addr));\
+  ({  u32 xx; \
+      TRACE(17, "read: Start of %p",(void*)(addr)); 	\
+       xx=readl((unsigned int *)(addr));	     \
 	TRACE( 17, "read: 0x%x=%p",xx,(void*)(addr));        \
 	xx;\
  })
 
 #define XIo_Out32(addr, data) \
-	({  TRACE( 18, "write %p=0x%x",(void*)(addr),data);\
+	do {  TRACE( 18, "write %p=0x%x",(void*)(addr),data);\
 		writel((data), (unsigned int *)(addr));      \
             TRACE(18, "write done");\
-	})
+	} while(0)
 
 
 
@@ -329,11 +330,11 @@ static unsigned long mu2e_ch_reg_offset[2][2] ={ {0x2000,0x0}, {0x2100,0x100} };
 *
 *****************************************************************************/
 #define Dma_mIntDisable(BaseAddress)        \
-{                           \
-	u32 Reg = Dma_mReadReg(BaseAddress, REG_DMA_CTRL_STATUS);   \
-	Reg &= ~(DMA_INT_ENABLE | DMA_USER_INT_ENABLE);           \
-	Dma_mWriteReg(BaseAddress, REG_DMA_CTRL_STATUS, Reg);       \
-}
+do { \
+    u32 Reg = Dma_mReadReg(BaseAddress, REG_DMA_CTRL_STATUS);   \
+    Reg &= ~(DMA_INT_ENABLE | DMA_USER_INT_ENABLE);           \
+      Dma_mWriteReg(BaseAddress, REG_DMA_CTRL_STATUS, Reg);	\
+ } while(0)
 
 
 /****************************************************************************/
