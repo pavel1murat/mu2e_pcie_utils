@@ -111,9 +111,9 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode)
 
 				// Enable DMA Engines
 				{
-					uint16_t addr = DTC_Register_Engine_Control(chn, dir);
-					TRACE(17, "mu2edev::init write Engine_Control reg 0x%x", addr);
-					write_register(addr, 0, 0x100);//bit 8 enable=1
+					//uint16_t addr = DTC_Register_Engine_Control(chn, dir);
+					//TRACE(17, "mu2edev::init write Engine_Control reg 0x%x", addr);
+					//write_register(addr, 0, 0x100);//bit 8 enable=1
 				}
 }
 #endif

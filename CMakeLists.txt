@@ -32,6 +32,7 @@ cet_set_compiler_flags(DIAGS VIGILANT
  WERROR
  NO_UNDEFINED
  EXTRA_FLAGS -pedantic -Wno-unused-function -Wno-unused-parameter
+ EXTRA_C_FLAGS -std=gnu99
  )
 
 cet_report_compiler_flags()

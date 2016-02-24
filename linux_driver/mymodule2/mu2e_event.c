@@ -15,7 +15,7 @@
 #include "mu2e_pci.h"		/* bar_info_t, extern mu2e_pci*  */
 #include "mu2e_event.h"
 
-#define PACKET_POLL_HZ 200 /*1000*/
+#define PACKET_POLL_HZ 1000
 
 struct timer_list packets_timer;
 
@@ -23,10 +23,13 @@ struct timer_list packets_timer;
 static void poll_packets(unsigned long __opaque)
 {
 	unsigned long       base;
-	int                 offset, error = 0, did_work = 0;
+	int                 offset, error, did_work ;
 	int			chn, dir;
 	unsigned            nxtCachedCmpltIdx;
 	mu2e_buffdesc_C2S_t *buffdesc_C2S_p;
+
+	error = 0;
+        did_work = 0;
 
 		TRACE(20, "poll_packets: begin");
 	/* DMA registers are offset from BAR0 */
@@ -118,13 +121,18 @@ static void poll_packets(unsigned long __opaque)
 int mu2e_event_up(void)
 {
 	init_timer(&packets_timer);
+	packets_timer.function = poll_packets;
+        return mu2e_sched_poll();
+}
+
+int mu2e_sched_poll(void)
+{
 	packets_timer.expires = jiffies
 #if MU2E_RECV_INTER_ENABLED == 0
 		+ (HZ / PACKET_POLL_HZ)
 #endif
 		;
 	//timer->data=(unsigned long) pdev;
-	packets_timer.function = poll_packets;
 	add_timer(&packets_timer);
 
 	return (0);
