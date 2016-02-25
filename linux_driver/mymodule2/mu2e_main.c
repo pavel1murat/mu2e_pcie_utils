@@ -501,7 +501,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 
 		nxtIdx = idx_add(myIdx, 1, chn, dir);
 		descDmaAdr = idx2descDmaAdr(nxtIdx, chn, dir);
-		Dma_mReadReg(mu2e_pcie_bar_info.baseVAddr, 0x9108); // DEBUG read "user" reg.
+		// Dma_mReadReg(mu2e_pcie_bar_info.baseVAddr, 0x9108); // DEBUG read "user" reg.
 		TRACE(11, "mu2e_ioctl BUF_XMIT before WriteChnReg");
 		Dma_mWriteChnReg(chn, dir, REG_SW_NEXT_BD, descDmaAdr);
 		TRACE(11, "mu2e_ioctl BUF_XMIT after WriteChnReg");

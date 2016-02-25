@@ -99,15 +99,15 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode)
 				}
 
 				// Reset the DTC
-				{
-					write_register(0x9100, 0, 0xa0000000);
-					write_register(0x9118, 0, 0x0000003f);
-					write_register(0x9100, 0, 0x00000000);
-					write_register(0x9100, 0, 0x10000000);
-					write_register(0x9100, 0, 0x30000000);
-					write_register(0x9100, 0, 0x10000000);
-					write_register(0x9118, 0, 0x00000000);
-				}
+				//{
+				//	write_register(0x9100, 0, 0xa0000000);
+				//	write_register(0x9118, 0, 0x0000003f);
+				//	write_register(0x9100, 0, 0x00000000);
+				//	write_register(0x9100, 0, 0x10000000);
+				//	write_register(0x9100, 0, 0x30000000);
+				//	write_register(0x9100, 0, 0x10000000);
+				//	write_register(0x9118, 0, 0x00000000);
+				//}
 
 				// Enable DMA Engines
 				{

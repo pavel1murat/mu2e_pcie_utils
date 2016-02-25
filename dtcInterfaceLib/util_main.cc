@@ -131,7 +131,9 @@ void printHelpMsg()
 		<< "    -t: Use DebugType flag (1st request gets ExternalDataWithFIFOReset, the rest get ExternalData)" << std::endl
 		<< "    -T: Set DebugType flag for ALL requests (0, 1, or 2)" << std::endl
 		<< "    -f: RAW Output file path" << std::endl
-		<< "    -g: Generate (and send) N DMA blocks for testing the Detector Emulator (Default: 0)" << std::endl;
+		<< "    -g: Generate (and send) N DMA blocks for testing the Detector Emulator (Default: 0)" << std::endl
+		  << "    -G: Read out generated data, but don't write new. With -g, will exit after writing data" << std::endl
+;
 	exit(0);
 }
 
@@ -157,6 +159,7 @@ main(int argc
 	DTCLib::DTC_DebugType debugType = DTCLib::DTC_DebugType_SpecialSequence;
 	bool stickyDebugType = true;
 	int val = 0;
+	bool readGenerated = false;
 
 	for (int optind = 1; optind < argc; ++optind)
 	{
@@ -191,6 +194,9 @@ main(int argc
 			case 'g':
 				genDMABlocks = getOptionValue(&optind, &argv);
 				break;
+			case 'G':
+			  readGenerated = true;
+			  break;
 			case 'Q':
 				quiet = true;
 				reallyQuiet = true;
@@ -250,6 +256,7 @@ main(int argc
 		<< ", Really Quiet Mode: " << reallyQuiet
 		<< ", Check SERDES Error Status: " << checkSERDES
 		<< ", Generate DMA Blocks: " << genDMABlocks
+		  << ", Read Data from DDR: " << readGenerated
 		<< ", Debug Type: " << DTCLib::DTC_DebugTypeConverter(debugType).toString()
 		<< std::endl;
 
@@ -275,15 +282,25 @@ main(int argc
 	else if (op == "read_data")
 	{
 		std::cout << "Operation \"read_data\"" << std::endl;
-		mu2edev device;
-		device.init();
+		DTC* thisDTC = new DTC(DTC_SimMode_NoCFO);
+		if (!thisDTC->ReadSERDESOscillatorClock())
+		{
+			thisDTC->SetSERDESOscillatorClock_25Gbps();
+		} // We're going to 2.5Gbps for now
 
+		mu2edev* device = thisDTC->GetDevice();
+                if(readGenerated)
+		  {
+		    thisDTC->EnableDetectorEmulatorMode();
+		    thisDTC->SetDetectorEmulationDMACount(number);
+		    thisDTC->EnableDetectorEmulator();
+		  }
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
 			if (!reallyQuiet) std::cout << "Buffer Read " << ii << std::endl;
 			mu2e_databuff_t* buffer;
 			int tmo_ms = 1500;
-			int sts = device.read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
+			int sts = device->read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
 
 			TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, (void*)buffer);
 			if (sts > 0)
@@ -313,7 +330,7 @@ main(int argc
 				}
 			}
 			if (!reallyQuiet) std::cout << std::endl << std::endl;
-			device.read_release(DTC_DMA_Engine_DAQ, 1);
+			device->read_release(DTC_DMA_Engine_DAQ, 1);
 			if (delay > 0)	usleep(delay);
 		}
 	}
@@ -455,8 +472,8 @@ main(int argc
 		{
 			std::cout << "Sending data to DTC" << std::endl;
 			thisDTC->ResetDDRWriteAddress();
-			thisDTC->SetDetectorEmulationDMACount(number);
-			thisDTC->SetDDRLocalEndAddress(0xFFFFFFFF);
+			thisDTC->EnableDetectorEmulatorMode();
+			thisDTC->SetDDRLocalEndAddress(0x7000000);
 			size_t total_size = 0;
 			unsigned ii = 0;
 			for (; ii < genDMABlocks; ++ii)
@@ -487,9 +504,17 @@ main(int argc
 			}
 
 			std::cout << "Total bytes written: " << total_size << std::endl;
-			thisDTC->SetDDRLocalEndAddress(total_size + 1);
+			thisDTC->SetDDRLocalEndAddress(total_size);
+			if(readGenerated) exit(0);
+			thisDTC->SetDetectorEmulationDMACount(number);
 			thisDTC->EnableDetectorEmulator();
 		}
+		else if(readGenerated)
+		  {
+		    thisDTC->EnableDetectorEmulatorMode();
+		    thisDTC->SetDetectorEmulationDMACount(number);
+		    thisDTC->EnableDetectorEmulator();
+		  }
 
 		if (thisDTC->ReadSimMode() != DTC_SimMode_Loopback && !syncRequests)
 		{
