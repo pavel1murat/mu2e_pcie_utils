@@ -100,7 +100,7 @@ static void poll_packets(unsigned long __opaque)
 		packets_timer.expires = jiffies;
 		add_timer(&packets_timer);
 #else
-		poll_packets();
+		poll_packets(__opaque);
 #endif
 	}
 	else
