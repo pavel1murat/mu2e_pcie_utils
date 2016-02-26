@@ -25,6 +25,10 @@ cet_make_exec(DTCRegDump SOURCE dtcRegDump.cc LIBRARIES DTCInterface)
 
 cet_make_exec(tester SOURCE tester.cc LIBRARIES DTCInterface)
 
+cet_make_exec(my_cntl SOURCE my_cntl.cc LIBRARIES DTCInterface)
+
+cet_make_exec(sizeof_buffdesc SOURCE sizeof_buffdesc.cc LIBRARIES DTCInterface)
+
 set(NODEJS_ADDON_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} )
 set(NODEJS_ADDON_LIBS "DTCInterface")
 

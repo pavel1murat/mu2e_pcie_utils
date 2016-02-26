@@ -6,9 +6,9 @@
 // rev="$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
 
 #ifndef _WIN32
-#include "linux_driver/mymodule2/mu2e_mmap_ioctl.h" //
+#include "mu2e_driver/mu2e_mmap_ioctl.h" //
 #else
-#include "../linux_driver/mymodule2/mu2e_mmap_ioctl.h"
+#include "../mu2e_driver/mu2e_mmap_ioctl.h"
 #endif
 
 #include <atomic>
@@ -58,6 +58,7 @@ public:
 	void meta_dump(int chn, int dir);
 	int write_data(int chn, void* buffer, size_t bytes);
 	void close();
+    int get_devfd_() { return devfd_; }
 	//int  read_pcie_state(m_ioc_pcistate_t *output);
 	//int  read_dma_state(int chn, int dir, m_ioc_engstate_t *output);
 	//int  read_dma_stats(m_ioc_engstats_t *output);

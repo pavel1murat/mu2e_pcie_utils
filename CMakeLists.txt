@@ -48,7 +48,7 @@ find_library( TRACE trace PATHS $ENV{TRACE_LIB} )
 include(CetTest)
 
 # source
-add_subdirectory(linux_driver)
+add_subdirectory(mu2e_driver)
 add_subdirectory(mcs)
 add_subdirectory(dtcInterfaceLib)
 

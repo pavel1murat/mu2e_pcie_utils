@@ -7,9 +7,9 @@
 #define MU2ESIM_HH 1
 
 #ifndef _WIN32
-#include "linux_driver/mymodule2/mu2e_mmap_ioctl.h" //
+#include "mu2e_driver/mu2e_mmap_ioctl.h" //
 #else
-#include "../linux_driver/mymodule2/mu2e_mmap_ioctl.h"
+#include "../mu2e_driver/mu2e_mmap_ioctl.h"
 #endif
 #include <unordered_map>
 #include <mutex>

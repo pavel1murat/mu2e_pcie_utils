@@ -17,7 +17,7 @@ else()
 endif()
 
 add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/../../drivers/${KVERS}/mu2e.ko
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/../drivers/${KVERS}/mu2e.ko
 	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/Makefile ${CMAKE_CURRENT_BINARY_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/Kbuild ${CMAKE_CURRENT_BINARY_DIR}
 	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/mu2e_event.c ${CMAKE_CURRENT_BINARY_DIR}
@@ -31,8 +31,8 @@ add_custom_command(
 	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/mu2e_proto_globals.h ${CMAKE_CURRENT_BINARY_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/xdma_hw.h ${CMAKE_CURRENT_BINARY_DIR}
     COMMAND make CC=/usr/bin/gcc EXTRA_SYMBOLS="KBUILD_EXTRA_SYMBOLS=${ESYMS}" TRACE_INC="$ENV{TRACE_DIR}/include"
-	COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/../../drivers/${KVERS}
-    COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_BINARY_DIR}/mu2e.ko ${CMAKE_CURRENT_BINARY_DIR}/../../drivers/${KVERS}/mu2e.ko
+	COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/../drivers/${KVERS}
+    COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_BINARY_DIR}/mu2e.ko ${CMAKE_CURRENT_BINARY_DIR}/../drivers/${KVERS}/mu2e.ko
     COMMAND make clean
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/mu2e_event.c
             ${CMAKE_CURRENT_SOURCE_DIR}/mu2e_fs.c
@@ -47,8 +47,8 @@ add_custom_command(
             ${TRACE_KO}
 )
 
-add_custom_target(mymodule2 ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/../../drivers/${KVERS}/mu2e.ko)
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../../drivers DESTINATION ${${product}_inc_dir}/../)
+add_custom_target(mymodule2 ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/../drivers/${KVERS}/mu2e.ko)
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../drivers DESTINATION ${${product}_inc_dir}/../)
 
 install_headers()
 install_source()
