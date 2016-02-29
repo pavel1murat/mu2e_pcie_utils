@@ -56,6 +56,7 @@ DTCLib::DTC_DebugType debugType = DTCLib::DTC_DebugType_SpecialSequence;
 bool stickyDebugType = true;
 int val = 0;
 bool readGenerated = false;
+std::ofstream outputStream;
 
 std::string FormatBytes(double bytes)
 {
@@ -153,6 +154,7 @@ void WriteGeneratedData(DTCLib::DTC* thisDTC)
 		DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)packetCount, DTC_DataStatus_Valid, DTC_Timestamp(ts));
 		DTC_DataPacket packet = header.ConvertToDataPacket();
 		memcpy((uint8_t*)buf + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
+		if (rawOutput) outputStream << byteCount << packet;
 		currentOffset += 16;
 		for (unsigned jj = 0; jj < packetCount; ++jj)
 		{
@@ -162,6 +164,7 @@ void WriteGeneratedData(DTCLib::DTC* thisDTC)
 			}
 			packet.SetWord(14, (jj + 1) & 0xFF);
 			memcpy((uint8_t*)buf + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
+			if (rawOutput) outputStream << packet;
 			currentOffset += 16;
 		}
 
@@ -350,9 +353,7 @@ main(int argc
 			TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, (void*)buffer);
 			if (sts > 0)
 			{
-				void* readPtr = &(buffer[0]);
-				uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)readPtr));
-				readPtr = (uint8_t*)readPtr + 8;
+				uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)&(buffer[0])));
 				TRACE(1, "util - bufSize is %u", bufSize);
 
 				if (!reallyQuiet)
@@ -521,9 +522,9 @@ main(int argc
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
 			void* buffer;
-			int tmo_ms = 0;
-			int stsRD = device.read_data(DTC_DMA_Engine_DAQ, &buffer, tmo_ms);
-			int stsRL = device.read_release(DTC_DMA_Engine_DAQ, 1);
+			auto tmo_ms = 0;
+			auto stsRD = device.read_data(DTC_DMA_Engine_DAQ, &buffer, tmo_ms);
+			auto stsRL = device.read_release(DTC_DMA_Engine_DAQ, 1);
 			TRACE(12, "util - release/read for DAQ and DCS ii=%u stsRD=%d stsRL=%d %p", ii, stsRD, stsRL, buffer);
 			if (delay > 0) usleep(delay);
 		}
@@ -541,6 +542,7 @@ main(int argc
 		thisDTC->GetDevice()->ResetDeviceTime();
 		auto afterInit = std::chrono::high_resolution_clock::now();
 
+		if (rawOutput) outputStream.open(rawOutputFile, std::ios::out | std::ios::app | std::ios::binary);
 
 
 		DTCSoftwareCFO* theCFO = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet);
@@ -563,8 +565,6 @@ main(int argc
 			theCFO->SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
 		}
 
-		std::ofstream outputStream;
-		if (rawOutput) outputStream.open(rawOutputFile, std::ios::out | std::ios::app | std::ios::binary);
 
 		uint64_t ii = 0;
 		int retries = 4;
