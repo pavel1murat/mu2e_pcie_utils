@@ -55,39 +55,7 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 {
 	TRACE(19, "DTC::GetData begin");
 	std::vector<DTC_DataBlock> output;
-#if 0
-	//This code is disabled in favor of a separate Software CFO Emulator
-	for (auto ring : DTC_Rings)
-	{
-		if (!ringEnabledMode_[ring].TimingEnable)
-		{
-			if (ringEnabledMode_[ring].TransmitEnable)
-			{
-				TRACE(19, "DTC::GetData before SendReadoutRequestPacket");
-				SendReadoutRequestPacket(ring, when, quiet);
-				if (debug)
-				{
-					std::cout << "Sent ReadoutRequest. Press any key." << std::endl;
-					std::string dummy;
-					getline(std::cin, dummy);
-				}
-				int maxRoc;
-				if ((maxRoc = ReadRingROCCount(ring)) != DTC_ROC_Unused)
-				{
-					for (uint8_t roc = 0; roc <= maxRoc; ++roc)
-					{
-						TRACE(19, "DTC::GetData before DTC_DataRequestPacket req");
-						DTC_DataRequestPacket req(ring, (DTC_ROC_ID)roc, when, true, (uint16_t)debugCount);
-						TRACE(19, "DTC::GetData before WriteDMADAQPacket - DTC_DataRequestPacket");
-						if (!quiet) std::cout << req.toJSON() << std::endl;
-						WriteDMADAQPacket(req);
-						TRACE(19, "DTC::GetData after  WriteDMADAQPacket - DTC_DataRequestPacket");
-					}
-				}
-			}
-		}
-	}
-#endif
+
 	first_read_ = true;
 	TRACE(19, "DTC::GetData: Releasing %i buffers", buffers_used_);
 	device_.read_release(DTC_DMA_Engine_DAQ, buffers_used_);
@@ -145,6 +113,7 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 			{
 				done = true;
 				nextReadPtr_ = lastReadPtr_;
+				buffers_used_--;
 			}
 			else
 			{

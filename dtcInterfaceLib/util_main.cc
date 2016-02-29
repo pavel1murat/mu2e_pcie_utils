@@ -37,6 +37,26 @@
 
 using namespace DTCLib;
 
+bool incrementTimestamp = true;
+bool syncRequests = false;
+bool checkSERDES = false;
+bool quiet = false;
+bool reallyQuiet = false;
+bool rawOutput = false;
+bool useCFOEmulator = true;
+unsigned genDMABlocks = 0;
+std::string rawOutputFile = "/tmp/mu2eUtil.raw";
+unsigned delay = 0;
+unsigned number = 1;
+unsigned timestampOffset = 1;
+unsigned packetCount = 0;
+int requestsAhead = 0;
+std::string op = "";
+DTCLib::DTC_DebugType debugType = DTCLib::DTC_DebugType_SpecialSequence;
+bool stickyDebugType = true;
+int val = 0;
+bool readGenerated = false;
+
 std::string FormatBytes(double bytes)
 {
 	auto kb = bytes / 1024.0;
@@ -112,6 +132,50 @@ std::string getOptionString(int* index, char** argv[])
 	}
 }
 
+void WriteGeneratedData(DTCLib::DTC* thisDTC)
+{
+	std::cout << "Sending data to DTC" << std::endl;
+	thisDTC->DisableDetectorEmulator();
+	thisDTC->ResetDDRWriteAddress();
+	thisDTC->EnableDetectorEmulatorMode();
+	thisDTC->SetDDRLocalEndAddress(0x7000000);
+	size_t total_size = 0;
+	unsigned ii = 0;
+	for (; ii < genDMABlocks; ++ii)
+	{
+		uint16_t blockByteCount = (1 + packetCount) * 16 * sizeof(uint8_t);
+		uint64_t byteCount = blockByteCount + 8;
+		total_size += byteCount;
+		mu2e_databuff_t* buf = (mu2e_databuff_t*)new mu2e_databuff_t();
+		memcpy(buf, &byteCount, sizeof(byteCount));
+		uint64_t currentOffset = 8;
+		uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
+		DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)packetCount, DTC_DataStatus_Valid, DTC_Timestamp(ts));
+		DTC_DataPacket packet = header.ConvertToDataPacket();
+		memcpy((uint8_t*)buf + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
+		currentOffset += 16;
+		for (unsigned jj = 0; jj < packetCount; ++jj)
+		{
+			if (currentOffset + 16 > sizeof(mu2e_databuff_t))
+			{
+				break;
+			}
+			packet.SetWord(14, (jj + 1) & 0xFF);
+			memcpy((uint8_t*)buf + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
+			currentOffset += 16;
+		}
+
+		thisDTC->GetDevice()->write_data(0, buf, byteCount);
+		delete buf;
+	}
+
+	std::cout << "Total bytes written: " << total_size << std::endl;
+	thisDTC->SetDDRLocalEndAddress(total_size);
+	if (readGenerated) exit(0);
+	thisDTC->SetDetectorEmulationDMACount(number);
+	thisDTC->EnableDetectorEmulator();
+}
+
 void printHelpMsg()
 {
 	std::cout << "Usage: mu2eUtil [options] [read,read_data,toggle_serdes,loopback,buffer_test,read_release,DTC]" << std::endl;
@@ -141,25 +205,6 @@ int
 main(int argc
 	, char* argv[])
 {
-	bool incrementTimestamp = true;
-	bool syncRequests = false;
-	bool checkSERDES = false;
-	bool quiet = false;
-	bool reallyQuiet = false;
-	bool rawOutput = false;
-	bool useCFOEmulator = true;
-	unsigned genDMABlocks = 0;
-	std::string rawOutputFile = "/tmp/mu2eUtil.raw";
-	unsigned delay = 0;
-	unsigned number = 1;
-	unsigned timestampOffset = 1;
-	unsigned packetCount = 0;
-	int requestsAhead = 0;
-	std::string op = "";
-	DTCLib::DTC_DebugType debugType = DTCLib::DTC_DebugType_SpecialSequence;
-	bool stickyDebugType = true;
-	int val = 0;
-	bool readGenerated = false;
 
 	for (int optind = 1; optind < argc; ++optind)
 	{
@@ -347,109 +392,6 @@ main(int argc
 			thisDTC->SetSERDESOscillatorClock_3125Gbps();
 		}
 	}
-	else if (op == "loopback")
-	{
-		std::cout << "Operation \"loopback\" (implies -g)" << std::endl;
-		double totalReadTime = 0, totalWriteTime = 0, totalSize = 0, totalRTTime = 0;
-		int rtCount = 0;
-		auto startTime = std::chrono::high_resolution_clock::now();
-		DTC* thisDTC = new DTC(DTC_SimMode_Loopback);
-		mu2edev* device = thisDTC->GetDevice();
-
-		thisDTC->SetSERDESLoopbackMode(DTC_Ring_0, DTC_SERDESLoopbackMode_NearPCS);
-
-		unsigned ii = 0;
-		for (; ii < number; ++ii)
-		{
-			uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
-			DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)packetCount, DTC_DataStatus_Valid, DTC_Timestamp(ts));
-			DTC_DataPacket packet = header.ConvertToDataPacket();
-			DTC_DataPacket thisPacket = header.ConvertToDataPacket();
-			thisPacket.Resize(16 * (packetCount + 1));
-			for (unsigned jj = 0; jj < packetCount; ++jj)
-			{
-				thisPacket.CramIn(packet, 16 * (jj + 1));
-			}
-			auto startDTC = std::chrono::high_resolution_clock::now();
-			device->write_data(1, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
-			auto endDTC = std::chrono::high_resolution_clock::now();
-			totalWriteTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>
-				(endDTC - startDTC).count();
-			unsigned returned = 0;
-			int count = 5;
-			while (returned < packetCount + 1 && count > 0)
-			{
-				mu2e_databuff_t* buffer;
-				int tmo_ms = 0x150;
-				auto startDTCRead = std::chrono::high_resolution_clock::now();
-				device->read_release(DTC_DMA_Engine_DAQ, 1);
-				int sts = device->read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
-				auto endDTCRead = std::chrono::high_resolution_clock::now();
-				totalReadTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>
-					(endDTCRead - startDTCRead).count();
-				count--;
-				if (sts > 0)
-				{
-					totalRTTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(endDTCRead - startDTC).count();
-					rtCount++;
-					void* readPtr = &(buffer[0]);
-					uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)readPtr));
-					TRACE(19, "mu2eUtil::loopback test, bufSize is %u", bufSize);
-					totalSize += bufSize;
-					if (!reallyQuiet)
-					{
-						for (unsigned line = 0; line < (unsigned)(ceil((bufSize - 8) / 16)); ++line)
-						{
-							std::cout << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
-							//for (unsigned byte = 0; byte < 16; ++byte)
-							for (unsigned byte = 0; byte < 8; ++byte)
-							{
-								if ((line * 16) + (2 * byte) < (bufSize - 8u))
-								{
-									uint16_t thisWord = (((uint16_t*)buffer)[4 + (line * 8) + byte]);
-									//uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
-									std::cout << std::setw(4) << (int)thisWord << " ";
-								}
-							}
-							std::cout << std::endl;
-						}
-					}
-
-					for (int offset = 0; offset < (bufSize - 8) / 16; ++offset)
-					{
-						DTC_DataPacket test = DTC_DataPacket(&((uint8_t*)buffer)[8 + offset * 16]);
-						std::string output = "returned=" + std::to_string(returned) + ", test=" + test.toJSON();
-						TRACE(19, output.c_str());
-
-						if (test == packet)
-						{
-							returned++;
-						}
-					}
-				}
-				if (delay > 0)	usleep(delay);
-			}
-			if (returned < packetCount + 1)
-			{
-				break;
-			}
-			if (delay > 0)		usleep(delay);
-		}
-
-		double aveRate = totalSize / totalReadTime / 1024;
-		double rtTime = totalRTTime / (rtCount > 0 ? rtCount : 1);
-
-		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>
-			(std::chrono::high_resolution_clock::now() - startTime).count();
-		std::cout << "STATS, " << std::dec << ii << " DataHeaders looped back "
-			<< "(Out of " << number << " requested):" << std::endl
-			<< "Total Elapsed Time: " << totalTime << " s." << std::endl
-			<< "Device Read Time: " << totalReadTime << " s." << std::endl
-			<< "Device Write Time: " << totalWriteTime << " s." << std::endl
-			<< "Total Data Size: " << totalSize / 1024 << " KB." << std::endl
-			<< "Average Data Rate: " << aveRate << " KB/s." << std::endl
-			<< "Average Round-Trip time: " << rtTime << " s." << std::endl;
-	}
 	else if (op == "buffer_test")
 	{
 		std::cout << "Operation \"buffer_test\"" << std::endl;
@@ -470,54 +412,13 @@ main(int argc
 
 		if (genDMABlocks > 0)
 		{
-			std::cout << "Sending data to DTC" << std::endl;
-			thisDTC->ResetDDRWriteAddress();
-			thisDTC->EnableDetectorEmulatorMode();
-			thisDTC->SetDDRLocalEndAddress(0x7000000);
-			size_t total_size = 0;
-			unsigned ii = 0;
-			for (; ii < genDMABlocks; ++ii)
-			{
-				uint16_t blockByteCount = (1 + packetCount) * 16 * sizeof(uint8_t);
-				uint64_t byteCount = blockByteCount + 8;
-				total_size += byteCount;
-				mu2e_databuff_t* buf = (mu2e_databuff_t*)new mu2e_databuff_t();
-				memcpy(buf, &byteCount, sizeof(byteCount));
-				uint64_t currentOffset = 8;
-				uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
-				DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)packetCount, DTC_DataStatus_Valid, DTC_Timestamp(ts));
-				DTC_DataPacket packet = header.ConvertToDataPacket();
-				packet.SetWord(0, static_cast<uint8_t>(blockByteCount));
-				packet.SetWord(1, static_cast<uint8_t>(blockByteCount >> 8));
-				memcpy((uint8_t*)buf + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
-				currentOffset += 16;
-				for (unsigned jj = 0; jj < packetCount; ++jj)
-				{
-					if (currentOffset + 16 > sizeof(mu2e_databuff_t))
-					{
-						break;
-					}
-					packet.SetWord(14, (jj + 1) & 0xFF);
-					memcpy((uint8_t*)buf + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
-					currentOffset += 16;
-				}
-
-				device->write_data(0, buf, byteCount);
-				delete buf;
-			}
-
-			std::cout << "Total bytes written: " << total_size << std::endl;
-			thisDTC->SetDDRLocalEndAddress(total_size);
-			if (readGenerated) exit(0);
-			thisDTC->SetDetectorEmulationDMACount(number);
-			thisDTC->DisableDetectorEmulator();
-			thisDTC->EnableDetectorEmulator();
+			WriteGeneratedData(thisDTC);
 		}
 		else if (readGenerated)
 		{
+			thisDTC->DisableDetectorEmulator();
 			thisDTC->EnableDetectorEmulatorMode();
 			thisDTC->SetDetectorEmulationDMACount(number);
-			thisDTC->DisableDetectorEmulator();
 			thisDTC->EnableDetectorEmulator();
 		}
 
@@ -646,54 +547,13 @@ main(int argc
 
 		if (genDMABlocks > 0)
 		{
-			std::cout << "Sending data to DTC" << std::endl;
-			thisDTC->ResetDDRWriteAddress();
-			thisDTC->EnableDetectorEmulatorMode();
-			thisDTC->SetDDRLocalEndAddress(0x7000000);
-			size_t total_size = 0;
-			unsigned ii = 0;
-			for (; ii < genDMABlocks; ++ii)
-			{
-				uint16_t blockByteCount = (1 + packetCount) * 16 * sizeof(uint8_t);
-				uint64_t byteCount =  blockByteCount + 8;
-				total_size += byteCount;
-				mu2e_databuff_t* buf = (mu2e_databuff_t*)new mu2e_databuff_t();
-				memcpy(buf, &byteCount, sizeof(byteCount));
-				uint64_t currentOffset = 8;
-				uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
-				DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)packetCount, DTC_DataStatus_Valid, DTC_Timestamp(ts));
-				DTC_DataPacket packet = header.ConvertToDataPacket();
-				packet.SetWord(0, static_cast<uint8_t>(blockByteCount));
-				packet.SetWord(1, static_cast<uint8_t>(blockByteCount >> 8));
-				memcpy((uint8_t*)buf + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
-				currentOffset += 16;
-				for (unsigned jj = 0; jj < packetCount; ++jj)
-				{
-					if (currentOffset + 16 > sizeof(mu2e_databuff_t))
-					{
-						break;
-					}
-					packet.SetWord(14, (jj + 1) & 0xFF);
-					memcpy((uint8_t*)buf + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
-					currentOffset += 16;
-				}
-
-				thisDTC->GetDevice()->write_data(0, buf, byteCount);
-				delete buf;
-			}
-
-			std::cout << "Total bytes written: " << total_size << std::endl;
-			thisDTC->SetDDRLocalEndAddress(total_size);
-			if (readGenerated) exit(0);
-			thisDTC->SetDetectorEmulationDMACount(number);
-			thisDTC->DisableDetectorEmulator();
-			thisDTC->EnableDetectorEmulator();
+			WriteGeneratedData(thisDTC);
 		}
 		else if (readGenerated)
 		{
+			thisDTC->DisableDetectorEmulator();
 			thisDTC->EnableDetectorEmulatorMode();
 			thisDTC->SetDetectorEmulationDMACount(number);
-			thisDTC->DisableDetectorEmulator();
 			thisDTC->EnableDetectorEmulator();
 		}
 
