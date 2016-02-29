@@ -16,6 +16,8 @@ else()
   set(ESYMS "${CMAKE_BINARY_DIR}/TRACE/module/${KVERS}/Module.symvers")
 endif()
 
+message( "ESYMS is ${ESYMS}" )
+
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/../../drivers/${KVERS}/pci_devel_main.ko
 	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/Makefile ${CMAKE_CURRENT_BINARY_DIR}

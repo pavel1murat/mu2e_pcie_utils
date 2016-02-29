@@ -14,6 +14,8 @@ file=$1; shift
 fdir= DEVMOD=
 if   [ -d "${CETPKG_BUILD-}" ];then
     fdir="${CETPKG_BUILD-}"
+elif [ -d "${MRB_BUILDDIR-}" ]; then
+    fdir="${MRB_BUILDDIR-}"
 elif [ -d "${PCIE_LINUX_KERNEL_MODULE_DIR-}" ];then
     fdir="${PCIE_LINUX_KERNEL_MODULE_DIR-}"
 fi
@@ -37,14 +39,20 @@ sleep 1
 lsmod | grep mu2e           >/dev/null && rmmod mu2e
 lsmod | grep TRACE          >/dev/null && rmmod TRACE
 
-# (re)setup TRACE (no get functions defined in this script
-. /mu2e/ups/setup
-test -n "${SETUP_TRACE-}"\
- && { xx=$SETUP_TRACE; unsetup TRACE; eval setup $xx;}\
- || setup TRACE
+if [ -z $MRB_BUILDDIR ]; then
 
-insmod $TRACE_DIR/module/`uname -r`/TRACE.ko
-echo 1 >|/sys/module/TRACE/parameters/trace_allow_printk
+  # (re)setup TRACE (no get functions defined in this script
+  . /mu2e/ups/setup
+  test -n "${SETUP_TRACE-}"\
+   && { xx=$SETUP_TRACE; unsetup TRACE; eval setup $xx;}\
+   || setup TRACE
+
+    lsmod | grep TRACE -q || insmod $TRACE_DIR/module/`uname -r`/TRACE.ko trace_allow_printk=1
+  else
+    lsmod | grep TRACE -q || insmod $MRB_BUILDDIR/TRACE/module/`uname -r`/TRACE.ko trace_allow_printk=1
+    source $TRACE_DIR/script/trace.sh.functions 
+  fi
+
 export TRACE_FILE=/proc/trace/buffer
 tonSg 0-7; tonMg 0-15
 
