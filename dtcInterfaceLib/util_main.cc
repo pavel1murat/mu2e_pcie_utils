@@ -478,7 +478,8 @@ main(int argc
 			unsigned ii = 0;
 			for (; ii < genDMABlocks; ++ii)
 			{
-				uint64_t byteCount = (1 + packetCount) * 16 * sizeof(uint8_t) + 8;
+				uint16_t blockByteCount = (1 + packetCount) * 16 * sizeof(uint8_t);
+				uint64_t byteCount = blockByteCount + 8;
 				total_size += byteCount;
 				mu2e_databuff_t* buf = (mu2e_databuff_t*)new mu2e_databuff_t();
 				memcpy(buf, &byteCount, sizeof(byteCount));
@@ -486,6 +487,8 @@ main(int argc
 				uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
 				DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)0, DTC_DataStatus_Valid, DTC_Timestamp(ts));
 				DTC_DataPacket packet = header.ConvertToDataPacket();
+				packet.SetWord(0, static_cast<uint8_t>(blockByteCount));
+				packet.SetWord(1, static_cast<uint8_t>(blockByteCount >> 8));
 				memcpy((uint8_t*)buf + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
 				currentOffset += 16;
 				for (unsigned jj = 0; jj < packetCount; ++jj)
@@ -507,12 +510,14 @@ main(int argc
 			thisDTC->SetDDRLocalEndAddress(total_size);
 			if (readGenerated) exit(0);
 			thisDTC->SetDetectorEmulationDMACount(number);
+			thisDTC->DisableDetectorEmulator();
 			thisDTC->EnableDetectorEmulator();
 		}
 		else if (readGenerated)
 		{
 			thisDTC->EnableDetectorEmulatorMode();
 			thisDTC->SetDetectorEmulationDMACount(number);
+			thisDTC->DisableDetectorEmulator();
 			thisDTC->EnableDetectorEmulator();
 		}
 
@@ -649,7 +654,8 @@ main(int argc
 			unsigned ii = 0;
 			for (; ii < genDMABlocks; ++ii)
 			{
-				uint64_t byteCount = (1 + packetCount) * 16 * sizeof(uint8_t) + 8;
+				uint16_t blockByteCount = (1 + packetCount) * 16 * sizeof(uint8_t);
+				uint64_t byteCount =  blockByteCount + 8;
 				total_size += byteCount;
 				mu2e_databuff_t* buf = (mu2e_databuff_t*)new mu2e_databuff_t();
 				memcpy(buf, &byteCount, sizeof(byteCount));
@@ -657,6 +663,8 @@ main(int argc
 				uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
 				DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)0, DTC_DataStatus_Valid, DTC_Timestamp(ts));
 				DTC_DataPacket packet = header.ConvertToDataPacket();
+				packet.SetWord(0, static_cast<uint8_t>(blockByteCount));
+				packet.SetWord(1, static_cast<uint8_t>(blockByteCount >> 8));
 				memcpy((uint8_t*)buf + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
 				currentOffset += 16;
 				for (unsigned jj = 0; jj < packetCount; ++jj)
@@ -678,12 +686,14 @@ main(int argc
 			thisDTC->SetDDRLocalEndAddress(total_size);
 			if (readGenerated) exit(0);
 			thisDTC->SetDetectorEmulationDMACount(number);
+			thisDTC->DisableDetectorEmulator();
 			thisDTC->EnableDetectorEmulator();
 		}
 		else if (readGenerated)
 		{
 			thisDTC->EnableDetectorEmulatorMode();
 			thisDTC->SetDetectorEmulationDMACount(number);
+			thisDTC->DisableDetectorEmulator();
 			thisDTC->EnableDetectorEmulator();
 		}
 
