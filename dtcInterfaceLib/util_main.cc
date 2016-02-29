@@ -577,6 +577,7 @@ main(int argc
 
 		for (; ii < number; ++ii)
 		{
+			if(!reallyQuiet) std::cout << "util_main: DTC Read " << ii;
 			if (syncRequests)
 			{
 				auto startRequest = std::chrono::high_resolution_clock::now();
