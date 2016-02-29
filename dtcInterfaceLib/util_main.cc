@@ -577,7 +577,7 @@ main(int argc
 
 		for (; ii < number; ++ii)
 		{
-			if(!reallyQuiet) std::cout << "util_main: DTC Read " << ii;
+			if(!reallyQuiet) std::cout << "util_main: DTC Read " << ii << ": ";
 			if (syncRequests)
 			{
 				auto startRequest = std::chrono::high_resolution_clock::now();
@@ -606,7 +606,8 @@ main(int argc
 						std::cout << std::dec << h2.GetTimestamp().GetTimestamp(true) << " does not match expected timestamp of " << expectedTS << "!!!" << std::endl;
 						if (incrementTimestamp && h2.GetTimestamp().GetTimestamp(true) <= timestampOffset + number)
 						{
-							ii += h2.GetTimestamp().GetTimestamp(true) - expectedTS;
+							int diff = h2.GetTimestamp().GetTimestamp(true) - expectedTS;
+							ii += (diff > 0 ? diff : 0);
 						}
 						expectedTS = h2.GetTimestamp().GetTimestamp(true) + (incrementTimestamp ? 1 : 0);
 					}
