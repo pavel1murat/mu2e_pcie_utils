@@ -507,6 +507,8 @@ std::string DTCLib::DTC_DataHeaderPacket::toPacketFormat()
 DTCLib::DTC_DataPacket DTCLib::DTC_DataHeaderPacket::ConvertToDataPacket() const
 {
 	DTC_DataPacket output = DTC_DMAPacket::ConvertToDataPacket();
+        output.SetWord(4, static_cast<uint8_t>(packetCount_));
+        output.SetWord(5, static_cast<uint8_t>((packetCount_ & 0x0700) >> 8));
 	timestamp_.GetTimestamp(output.GetData(), 6);
 	output.SetWord(12, (uint8_t)status_);
 	for (uint16_t i = 0; i < 3; ++i)

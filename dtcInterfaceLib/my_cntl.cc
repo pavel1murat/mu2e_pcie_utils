@@ -65,7 +65,7 @@ main(  int	argc
     }    
   cmd = argv[optind++];
   printf( "cmd=%s\n", cmd );
-  printf( "opt_packets=%i", opt_packets);
+  printf( "opt_packets=%i\n", opt_packets);
 
   fd = open( "/dev/" MU2E_DEV_FILE, O_RDONLY );
   if (fd == -1) { perror("open /dev/" MU2E_DEV_FILE); return (1); }

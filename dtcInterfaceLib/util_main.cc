@@ -362,7 +362,7 @@ main(int argc
 		for (; ii < number; ++ii)
 		{
 			uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
-			DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)0, DTC_DataStatus_Valid, DTC_Timestamp(ts));
+			DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)packetCount, DTC_DataStatus_Valid, DTC_Timestamp(ts));
 			DTC_DataPacket packet = header.ConvertToDataPacket();
 			DTC_DataPacket thisPacket = header.ConvertToDataPacket();
 			thisPacket.Resize(16 * (packetCount + 1));
@@ -485,7 +485,7 @@ main(int argc
 				memcpy(buf, &byteCount, sizeof(byteCount));
 				uint64_t currentOffset = 8;
 				uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
-				DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)0, DTC_DataStatus_Valid, DTC_Timestamp(ts));
+				DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)packetCount, DTC_DataStatus_Valid, DTC_Timestamp(ts));
 				DTC_DataPacket packet = header.ConvertToDataPacket();
 				packet.SetWord(0, static_cast<uint8_t>(blockByteCount));
 				packet.SetWord(1, static_cast<uint8_t>(blockByteCount >> 8));
@@ -661,7 +661,7 @@ main(int argc
 				memcpy(buf, &byteCount, sizeof(byteCount));
 				uint64_t currentOffset = 8;
 				uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
-				DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)0, DTC_DataStatus_Valid, DTC_Timestamp(ts));
+				DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)packetCount, DTC_DataStatus_Valid, DTC_Timestamp(ts));
 				DTC_DataPacket packet = header.ConvertToDataPacket();
 				packet.SetWord(0, static_cast<uint8_t>(blockByteCount));
 				packet.SetWord(1, static_cast<uint8_t>(blockByteCount >> 8));
@@ -747,7 +747,7 @@ main(int argc
 						{
 							ii += h2.GetTimestamp().GetTimestamp(true) - expectedTS;
 						}
-						expectedTS = h2.GetTimestamp().GetTimestamp(true);
+						expectedTS = h2.GetTimestamp().GetTimestamp(true) + (incrementTimestamp ? 1 : 0);
 					}
 					else if (i == data.size() - 1)
 					{
