@@ -12,7 +12,7 @@ if(EXISTS "$ENV{TRACE_DIR}/module/${KVERS}/TRACE.ko")
 else()
   # MRB Build or TRACE not available. WILL FAIL if not available!
   #set(TRACE_KO "${CMAKE_BINARY_DIR}/TRACE/module/${KVERS}/TRACE.ko")
-  set(TRACE_KO "src_module")
+  set(TRACE_KO "$ENV{TRACE_DIR}/include/trace.h")
   set(ESYMS "${CMAKE_BINARY_DIR}/TRACE/module/${KVERS}/Module.symvers")
 endif()
 
