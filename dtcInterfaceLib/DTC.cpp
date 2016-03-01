@@ -25,7 +25,7 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 	{
 		char* sim = getenv("DTCLIB_SIM_FILE");
 		if (sim != NULL || simFile.size() > 0)
-		{
+		{       DisableDetectorEmulator();
 			EnableDetectorEmulatorMode();
 
 			if (sim != NULL)
