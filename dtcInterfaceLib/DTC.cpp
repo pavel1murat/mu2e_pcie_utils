@@ -13,7 +13,7 @@
 #endif
 #define TRACE_NAME "MU2EDEV"
 
-DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode, std::string simFile, bool loadFile) : DTC_Registers(mode),
+DTCLib::DTC::DTC(DTCLib::DTC_SimMode mode) : DTC_Registers(mode),
 daqbuffer_(nullptr), buffers_used_(0), dcsbuffer_(nullptr),
 bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
 lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
@@ -21,20 +21,6 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 #ifdef _WIN32
 #pragma warning(disable: 4996)
 #endif
-	if (loadFile)
-	{
-		char* sim = getenv("DTCLIB_SIM_FILE");
-		if (sim != NULL || simFile.size() > 0)
-		{       DisableDetectorEmulator();
-			EnableDetectorEmulatorMode();
-
-			if (sim != NULL)
-			{
-				simFile = std::string(sim);
-			}
-			WriteSimFileToDTC(simFile);
-		}
-	}
 }
 
 DTCLib::DTC::~DTC()
@@ -97,7 +83,7 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 		packet = nullptr;
 
 		TRACE(19, "DTC::GetData: Adding pointer %p to the list (first)", (void*)lastReadPtr_);
-		output.push_back(DTC_DataBlock(lastReadPtr_,sz));
+		output.push_back(DTC_DataBlock(lastReadPtr_, sz));
 
 		bool done = false;
 		while (!done)
@@ -123,7 +109,7 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 			packet = nullptr;
 
 			TRACE(19, "DTC::GetData: Adding pointer %p to the list", (void*)lastReadPtr_);
-			if (!done) output.push_back(DTC_DataBlock(lastReadPtr_,sz));
+			if (!done) output.push_back(DTC_DataBlock(lastReadPtr_, sz));
 		}
 	}
 	catch (DTC_WrongPacketTypeException ex)
@@ -182,8 +168,14 @@ std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when)
 	return ss.str();
 }
 
-void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever)
+void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever, bool overwriteEnvironment)
 {
+	char* sim = getenv("DTCLIB_SIM_FILE");
+	if (!overwriteEnvironment && sim != NULL)
+	{
+		file = std::string(sim);
+	}
+
 	DisableDetectorEmulator();
 	EnableDetectorEmulatorMode();
 	ResetDDRWriteAddress();
@@ -214,10 +206,10 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever)
 			TRACE(5, "Size is %llu, writing to device", (long long unsigned)sz);
 			totalSize += sz;
 			n++;
-			TRACE(10, "DTC::WriteSimFileToDTC: totalSize is now %lu, n is now %lu", static_cast<unsigned long>(totalSize),static_cast<unsigned long>(n));
+			TRACE(10, "DTC::WriteSimFileToDTC: totalSize is now %lu, n is now %lu", static_cast<unsigned long>(totalSize), static_cast<unsigned long>(n));
 			WriteDetectorEmulatorData(buf, sz);
 		}
-		else if(sz > 0)
+		else if (sz > 0)
 		{
 			sizeCheck = false;
 		}
