@@ -1,7 +1,7 @@
 cet_make_exec(packetGenerator SOURCE packetGenerator.cc)
 cet_make_exec(packetReader SOURCE packetReader.cc)
 
-cet_make_exec(DTCLibTest SOURCE DTCLibTest.cc LIBRARIES DTCInterface)
+cet_make_exec(dtcUnitTests SOURCE dtcUnitTests.cc LIBRARIES DTCInterface)
 
 cet_make_exec(tester SOURCE tester.cc LIBRARIES DTCInterface)
 
