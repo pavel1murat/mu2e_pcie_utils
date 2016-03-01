@@ -174,7 +174,10 @@ void WriteGeneratedData(DTCLib::DTC* thisDTC)
 
 	std::cout << "Total bytes written: " << total_size << std::endl;
 	thisDTC->SetDDRLocalEndAddress(total_size);
-	if (readGenerated) exit(0);
+	if (readGenerated) {
+		if (rawOutput) outputStream.close();
+		exit(0);
+	}
 	thisDTC->SetDetectorEmulationDMACount(number);
 	thisDTC->EnableDetectorEmulator();
 }
@@ -305,8 +308,13 @@ main(int argc
 		<< ", Check SERDES Error Status: " << checkSERDES
 		<< ", Generate DMA Blocks: " << genDMABlocks
 		<< ", Read Data from DDR: " << readGenerated
-		<< ", Debug Type: " << DTCLib::DTC_DebugTypeConverter(debugType).toString()
-		<< std::endl;
+		<< ", Debug Type: " << DTCLib::DTC_DebugTypeConverter(debugType).toString();
+	if(rawOutput)
+	{
+		std::cout << ", Raw output file: " << rawOutputFile;
+	}
+	std::cout << std::endl;
+	if (rawOutput) outputStream.open(rawOutputFile, std::ios::out | std::ios::app | std::ios::binary);
 
 	if (op == "read")
 	{
@@ -316,15 +324,12 @@ main(int argc
 		if (!reallyQuiet) std::cout << packet->toJSON() << '\n';
 		if (rawOutput)
 		{
-			std::ofstream outputStream;
-			outputStream.open(rawOutputFile, std::ios::out | std::ios::app | std::ios::binary);
 			DTC_DataPacket rawPacket = packet->ConvertToDataPacket();
 			for (int ii = 0; ii < 16; ++ii)
 			{
 				uint8_t word = rawPacket.GetWord(ii);
 				outputStream.write((char*)&word, sizeof(uint8_t));
 			}
-			outputStream.close();
 		}
 	}
 	else if (op == "read_data")
@@ -439,9 +444,6 @@ main(int argc
 		device->ResetDeviceTime();
 		auto afterRequests = std::chrono::high_resolution_clock::now();
 
-		std::ofstream outputStream;
-		if (rawOutput) outputStream.open(rawOutputFile, std::ios::out | std::ios::app | std::ios::binary);
-
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
 			if (syncRequests)
@@ -490,7 +492,6 @@ main(int argc
 			device->read_release(DTC_DMA_Engine_DAQ, 1);
 			if (delay > 0) usleep(delay);
 		}
-		if (rawOutput) outputStream.close();
 
 		auto readDevTime = device->GetDeviceTime();
 		auto doneTime = std::chrono::high_resolution_clock::now();
@@ -541,10 +542,7 @@ main(int argc
 		auto initTime = thisDTC->GetDevice()->GetDeviceTime();
 		thisDTC->GetDevice()->ResetDeviceTime();
 		auto afterInit = std::chrono::high_resolution_clock::now();
-
-		if (rawOutput) outputStream.open(rawOutputFile, std::ios::out | std::ios::app | std::ios::binary);
-
-
+		
 		DTCSoftwareCFO* theCFO = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet);
 
 		if (genDMABlocks > 0)
@@ -698,7 +696,6 @@ main(int argc
 			if (delay > 0)	usleep(delay);
 		}
 
-		if (rawOutput) outputStream.close();
 
 		auto readDevTime = thisDTC->GetDevice()->GetDeviceTime();
 		auto doneTime = std::chrono::high_resolution_clock::now();
@@ -728,5 +725,7 @@ main(int argc
 		std::cout << "Unrecognized operation: " << op << std::endl;
 		printHelpMsg();
 	}
+
+	if (rawOutput) outputStream.close();
 	return (0);
 } // main
