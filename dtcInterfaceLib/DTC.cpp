@@ -25,7 +25,7 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 	{
 		char* sim = getenv("DTCLIB_SIM_FILE");
 		if (sim != NULL || simFile.size() > 0)
-		{
+		{       DisableDetectorEmulator();
 			EnableDetectorEmulatorMode();
 
 			if (sim != NULL)
@@ -185,8 +185,6 @@ std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when)
 void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever)
 {
 	DisableDetectorEmulator();
-	DisableDetectorEmulatorMode();
-	//DTC_Reset();
 	EnableDetectorEmulatorMode();
 	ResetDDRWriteAddress();
 	SetDDRLocalEndAddress(0x7000000);
