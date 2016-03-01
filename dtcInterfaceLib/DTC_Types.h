@@ -908,6 +908,12 @@ namespace DTCLib
 
 		DTC_DataBlock(void* ptr, size_t sz) : blockPointer(ptr), byteSize(sz) {}
 	};
+
+	struct Utilities
+	{
+		static std::string FormatBytes(double bytes);
+		static std::pair<double, std::string> FormatBytes(double bytes, bool dummy);
+	};
 }
 
 #endif //DTC_TYPES_H

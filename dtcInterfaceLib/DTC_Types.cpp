@@ -127,3 +127,69 @@ DTCLib::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError(uint32_t data
 	data_[1] = dataSet[ringBase + 1];
 }
 
+
+std::string DTCLib::Utilities::FormatBytes(double bytes)
+{
+	auto kb = bytes / 1024.0;
+	auto mb = kb / 1024.0;
+	auto gb = mb / 1024.0;
+	auto tb = gb / 1024.0;
+	auto val = bytes;
+	auto unit = " bytes";
+
+	if (tb > 1)
+	{
+		val = tb;
+		unit = " TB";
+	}
+	else if (gb > 1)
+	{
+		val = gb;
+		unit = " GB";
+	}
+	else if (mb > 1)
+	{
+		val = mb;
+		unit = " MB";
+	}
+	else if (kb > 1)
+	{
+		val = kb;
+		unit = " KB";
+	}
+	std::stringstream s;
+	s << std::setprecision(5) << val << unit;
+	return s.str();
+}
+
+std::pair<double, std::string> DTCLib::Utilities::FormatBytes(double bytes, bool dummy)
+{
+	auto kb = bytes / 1024.0;
+	auto mb = kb / 1024.0;
+	auto gb = mb / 1024.0;
+	auto tb = gb / 1024.0;
+	auto val = bytes;
+	auto unit = "bytes";
+
+	if (tb > 1)
+	{
+		val = tb;
+		unit = "TB";
+	}
+	else if (gb > 1)
+	{
+		val = gb;
+		unit = "GB";
+	}
+	else if (mb > 1)
+	{
+		val = mb;
+		unit = "MB";
+	}
+	else if (kb > 1)
+	{
+		val = kb;
+		unit = "KB";
+	}
+	return std::make_pair(val, unit);
+}

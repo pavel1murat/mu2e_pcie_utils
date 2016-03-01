@@ -58,40 +58,6 @@ int val = 0;
 bool readGenerated = false;
 std::ofstream outputStream;
 
-std::string FormatBytes(double bytes)
-{
-	auto kb = bytes / 1024.0;
-	auto mb = kb / 1024.0;
-	auto gb = mb / 1024.0;
-	auto tb = gb / 1024.0;
-	auto val = bytes;
-	auto unit = " bytes";
-
-	if (tb > 1)
-	{
-		val = tb;
-		unit = " TB";
-	}
-	else if (gb > 1)
-	{
-		val = gb;
-		unit = " GB";
-	}
-	else if (mb > 1)
-	{
-		val = mb;
-		unit = " MB";
-	}
-	else if (kb > 1)
-	{
-		val = kb;
-		unit = " KB";
-	}
-	std::stringstream s;
-	s << std::setprecision(5) << val << unit;
-	return s.str();
-
-}
 
 unsigned getOptionValue(int* index, char** argv[])
 {
@@ -510,11 +476,11 @@ main(int argc
 			<< "Device Init Time: " << initTime << " s." << std::endl
 			<< "Device Request Time: " << readoutRequestTime << " s." << std::endl
 			<< "Device Read Time: " << readDevTime << " s." << std::endl
-			<< "Total Bytes Written: " << FormatBytes(totalBytesWritten) << "." << std::endl
-			<< "Total Bytes Read: " << FormatBytes(totalBytesRead) << "." << std::endl
-			<< "Total PCIe Rate: " << FormatBytes((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
-			<< "Read Rate: " << FormatBytes(totalBytesRead / totalReadTime) << "/s." << std::endl
-			<< "Device Read Rate: " << FormatBytes(totalBytesRead / readDevTime) << "/s." << std::endl;
+			<< "Total Bytes Written: " << Utilities::FormatBytes(totalBytesWritten) << "." << std::endl
+			<< "Total Bytes Read: " << Utilities::FormatBytes(totalBytesRead) << "." << std::endl
+			<< "Total PCIe Rate: " << Utilities::FormatBytes((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
+			<< "Read Rate: " << Utilities::FormatBytes(totalBytesRead / totalReadTime) << "/s." << std::endl
+			<< "Device Read Rate: " << Utilities::FormatBytes(totalBytesRead / readDevTime) << "/s." << std::endl;
 	}
 	else if (op == "read_release")
 	{
@@ -714,11 +680,11 @@ main(int argc
 			<< "Device Init Time: " << initTime << " s." << std::endl
 			<< "Device Request Time: " << readoutRequestTime << " s." << std::endl
 			<< "Device Read Time: " << readDevTime << " s." << std::endl
-			<< "Total Bytes Written: " << FormatBytes(totalBytesWritten) << "." << std::endl
-			<< "Total Bytes Read: " << FormatBytes(totalBytesRead) << "." << std::endl
-			<< "Total PCIe Rate: " << FormatBytes((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
-			<< "Read Rate: " << FormatBytes(totalBytesRead / totalReadTime) << "/s." << std::endl
-			<< "Device Read Rate: " << FormatBytes(totalBytesRead / readDevTime) << "/s." << std::endl;
+			<< "Total Bytes Written: " << Utilities::FormatBytes(totalBytesWritten) << "." << std::endl
+			<< "Total Bytes Read: " << Utilities::FormatBytes(totalBytesRead) << "." << std::endl
+			<< "Total PCIe Rate: " << Utilities::FormatBytes((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
+			<< "Read Rate: " << Utilities::FormatBytes(totalBytesRead / totalReadTime) << "/s." << std::endl
+			<< "Device Read Rate: " << Utilities::FormatBytes(totalBytesRead / readDevTime) << "/s." << std::endl;
 	}
 	else
 	{
