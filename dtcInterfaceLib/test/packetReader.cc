@@ -7,10 +7,10 @@
 
 int main()
 {
-	auto verbose = false;
+	bool verbose = false;
 
 	std::string packetType = "TRK";
-	//string packetType = "CAL";
+	//	std::string packetType = "CAL";
 
 	// Number of tracker adc samples
 	size_t numADCSamples = 8;
@@ -27,7 +27,7 @@ int main()
 	typedef uint16_t adc_t;
 
 	std::vector<adc_t> masterVector;
-	std::vector<std::vector<std::vector<adc_t>>> timeStampVector;
+	std::vector< std::vector< std::vector<adc_t> > > timeStampVector;
 	if (binFile.is_open())
 	{
 		std::streampos size = binFile.tellg();
@@ -46,7 +46,7 @@ int main()
 		bool exitLoop = false;
 		size_t curPos = 0;
 
-		std::vector<std::vector<adc_t>> dataBlockVector; // Vector of adc_t vectors containing DataBlocks
+		std::vector< std::vector<adc_t> > dataBlockVector; // Vector of adc_t vectors containing DataBlocks
 		while (!exitLoop && curPos < masterVector.size())
 		{
 			std::bitset<64> byteCount = 0;
@@ -68,9 +68,9 @@ int main()
 				std::cout << "Number of bytes in DMABlock: " << theCount << std::endl;
 			}
 
-			size_t blockStartIdx = curPos + 4;
-			size_t blockEndIdx = curPos + 4 + (theCount / 2);
-			size_t posInBlock = 0;
+			size_t blockStartIdx = curPos;
+			size_t blockEndIdx = curPos + (theCount / 2);
+			size_t posInBlock = 4;
 
 			std::vector<adc_t> curDataBlock;
 			while (posInBlock < blockEndIdx - blockStartIdx)
@@ -86,7 +86,7 @@ int main()
 			}
 			// Skip over the 4*16 bit DMABlock header and skip theCount/2 adc_t values to
 			// get to the next DMABlock
-			curPos += 4 + (theCount / 2);
+			curPos += (theCount / 2);
 		}
 
 

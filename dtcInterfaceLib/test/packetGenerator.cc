@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <string>
 
+
 typedef uint16_t adc_t;
 
 // Waveform for TRK:
@@ -78,6 +79,7 @@ void printHelpMsg()
 		<< "    -V: Ridiculously verbose mode" << std::endl
 		<< "    -f <path>: Filename for output" << std::endl
 		<< "    -F: Do not output a file" << std::endl
+		<< "    -S: <number>: PRNG seed value" << std::endl
 		<< "    -t: Generate Tracker packets (this is the default, default file name is TRK_packets.bin)" << std::endl
 		<< "    -c: Generate Calorimeter packets (default file name is CAL_packets.bin)" << std::endl;
 	exit(0);
@@ -90,6 +92,8 @@ int main(int argc, char** argv)
 	bool save_adc_values = true;
 	double nevents = 200000; // Number of hits to generate
 
+	size_t SEED = 100; // Random seed
+	
 	// Packet type to generate
 	PacketType packetType = PacketType_TRK;
 
@@ -132,6 +136,9 @@ int main(int argc, char** argv)
 			case 'c':
 				packetType = PacketType_CAL;
 				break;
+			case 'S':
+			        SEED = getOptionValue(&optind, &argv);
+				break;
 			default:
 				std::cout << "Unknown option: " << argv[optind] << std::endl;
 				printHelpMsg();
@@ -163,15 +170,9 @@ int main(int argc, char** argv)
 		binFile.open(outputFile, std::ios::out | std::ios::app | std::ios::binary);
 	}
 
-	int number_of_rings = 6; // Used for generating randomized ring IDs
-	int rocs_per_ring = 5; //Used for generating randtomized ROC IDs
-	std::uniform_int_distribution<int> Ring_distribution(0, number_of_rings - 1);
-	std::uniform_int_distribution<int> ROC_distribution(0, rocs_per_ring - 1);
-
-	int min_datablocks_per_ts = 5; // Min number of datablocks from a single timestamp
-	int max_datablocks_per_ts = 20; // Max number of datablocks from a single timestamp
-	std::uniform_int_distribution<int> NumDataBlocks_distribution(min_datablocks_per_ts, max_datablocks_per_ts);
-
+	int number_of_rings = 6;
+	int rocs_per_ring = 5;
+	
 	double peakVal = 32;
 	int noise_level = 140;
 	int sigma_noise = 10;
@@ -248,7 +249,8 @@ int main(int argc, char** argv)
 	// Seed with a real random value, if available
 	std::random_device r;
 	std::default_random_engine generator(r());
-
+	generator.seed(SEED);
+	
 	std::normal_distribution<double> tau_distribution(nominal_tau, sigma_tau);
 	std::normal_distribution<double> sigma_distribution(nominal_sigma, sigma_sigma);
 	std::normal_distribution<double> offset_distribution(nominal_offset, sigma_offset);
@@ -272,12 +274,26 @@ int main(int argc, char** argv)
 	// Each of these vectors contains all the datablocks for that timestamp
 	// Each datablock vector contains the adc_t values for the header packet
 	// and associated data packets
-	std::vector<std::vector<std::vector<adc_t>>> timeStampVector;
+	std::vector< std::vector< std::vector<adc_t> > > timeStampVector;
 
 	for (size_t eventNum = 0; eventNum < nevents; eventNum++)
 	{
-		size_t targetNumDataBlocks = NumDataBlocks_distribution(generator);
-		std::vector<std::vector<adc_t>> curDataBlockVector;
+		// Create a vector to hold all Ring ID / ROC ID combinations to simulate
+	        std::vector< std::pair<int,int> > rocRingVector;
+	        for(int curRingID = 0; curRingID<number_of_rings; curRingID++)
+		{
+	                for(int curROCID = 0; curROCID < rocs_per_ring; curROCID++)
+			{
+	                        std::pair<int,int> curPair(curRingID, curROCID);
+	                        rocRingVector.push_back( curPair );
+	                }
+	        }
+	        // Randomize the order in whic the Rings and ROCs are received
+	        std::shuffle(rocRingVector.begin(),rocRingVector.end(),generator);
+
+		size_t targetNumDataBlocks = rocRingVector.size();
+
+		std::vector< std::vector<adc_t> > curDataBlockVector;
 		for (size_t dataBlockNum = 0; dataBlockNum < targetNumDataBlocks; dataBlockNum++)
 		{
 			std::vector<adc_t> curDataBlock;
@@ -287,10 +303,10 @@ int main(int argc, char** argv)
 			// First 16 bits of header (reserved values)
 			curDataBlock.push_back(null_adc);
 			// Second 16 bits of header (ROC ID, packet type, and ring ID):
-			std::bitset<16> curROCID = ROC_distribution(generator); // 4 bit ROC ID
+			std::bitset<16> curROCID = rocRingVector[dataBlockNum].second; // 4 bit ROC ID
 			std::bitset<16> headerPacketType = 5; // 4 bit Data packet header type is 5
 			headerPacketType <<= 4; // Shift left by 4
-			std::bitset<16> curRingID = Ring_distribution(generator); // 3 bit ring ID
+			std::bitset<16> curRingID = rocRingVector[dataBlockNum].first; // 3 bit ring ID
 			curRingID <<= 8; // Shift left by 8
 			std::bitset<16> secondEntry = (curROCID | headerPacketType | curRingID);
 			secondEntry[15] = 1; // valid bit
