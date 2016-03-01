@@ -6,6 +6,7 @@
 #include <fstream>
 #include <assert.h>
 #include <string>
+#include <algorithm>
 
 
 typedef uint16_t adc_t;

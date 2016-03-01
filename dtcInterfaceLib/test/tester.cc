@@ -6,6 +6,8 @@
 
 #include <chrono>
 #ifdef _WIN32
+#include "..\DTC.h"
+#include "..\DTCSoftwareCFO.h"
 # include <thread>
 # define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
 #ifdef _NDEBUG
@@ -15,14 +17,14 @@
 #endif
 # define TRACE_CNTL(...)
 #else
+# include "dtcInterfaceLib/DTC.h"
+# include "dtcInterfaceLib/DTCSoftwareCFO.h"
 # include "trace.h"
 # include <unistd.h>		// usleep
 #endif
 #define TRACE_NAME "MU2EDEV"
 
 #include <iostream>
-#include "DTC.h"
-#include "DTCSoftwareCFO.h"
 #include "fragmentTester.h"
 
 
