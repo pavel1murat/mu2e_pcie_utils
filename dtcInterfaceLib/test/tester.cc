@@ -116,12 +116,13 @@ int main(int argc, char* argv[])
 
 			size_t totalSize = 0;
 
-			for (size_t i = 1; i < data.size(); ++i)
+			for (size_t i = 0; i < data.size(); ++i)
 			{
 				totalSize += data[i].byteSize;
 			}
 
 			int64_t diff = static_cast<int64_t>(totalSize + newfrag.dataSize()) - newfrag.fragSize();
+			TRACE(4, "diff=%lli, totalSize=%llu, dataSize=%llu, fragSize=%llu", (long long)diff, (long long unsigned)totalSize, (long long unsigned)newfrag.dataSize(), (long long unsigned)newfrag.fragSize());
 			if (diff > 0)
 			{
 				auto currSize = newfrag.fragSize();
@@ -141,6 +142,7 @@ int main(int argc, char* argv[])
 				//TRACE(3, "Copying packet %lu. src=%p, dst=%p, sz=%lu off=%p processed=%lu", i, data[i],
 				//	(void*)(offset + packetsProcessed), (1 + packet.GetPacketCount())*sizeof(packet_t),
 				//	(void*)offset, packetsProcessed);
+				TRACE(4, "Copying data from %p to %p (sz=%llu)", reinterpret_cast<void*>(data[i].blockPointer), reinterpret_cast<void*>(offset + intraBlockOffset), (unsigned long long)data[i].byteSize);
 				memcpy(reinterpret_cast<void*>(offset + intraBlockOffset), data[i].blockPointer, data[i].byteSize);
 				//TRACE(3, "Incrementing packet counter");
 				intraBlockOffset += data[i].byteSize;
