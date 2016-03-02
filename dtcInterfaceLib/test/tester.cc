@@ -138,14 +138,8 @@ int main(int argc, char* argv[])
 			size_t intraBlockOffset = 0;
 			for (size_t i = 0; i < data.size(); ++i)
 			{
-				//TRACE(3, "Creating packet object to determine data block size: i=%lu, data=%p", i, data[i]);
-				//auto packet = DTCLib::DTC_DataHeaderPacket(DTCLib::DTC_DataPacket(data[i]));
-				//TRACE(3, "Copying packet %lu. src=%p, dst=%p, sz=%lu off=%p processed=%lu", i, data[i],
-				//	(void*)(offset + packetsProcessed), (1 + packet.GetPacketCount())*sizeof(packet_t),
-				//	(void*)offset, packetsProcessed);
 				TRACE(4, "Copying data from %p to %p (sz=%llu)", reinterpret_cast<void*>(data[i].blockPointer), reinterpret_cast<void*>(offset + intraBlockOffset), (unsigned long long)data[i].byteSize);
 				memcpy(reinterpret_cast<void*>(offset + intraBlockOffset), data[i].blockPointer, data[i].byteSize);
-				//TRACE(3, "Incrementing packet counter");
 				intraBlockOffset += data[i].byteSize;
 			}
 
