@@ -81,6 +81,9 @@ int main(int argc, char* argv[])
 
 		fragmentTester newfrag(BLOCK_COUNT_MAX * sizeof(packet_t) * 2);
 
+		DTCLib::DTC_Timestamp expected_timestamp;
+		bool firstLoop = true;
+
 		//Get data from DTCReceiver
 		TRACE(1, "mu2eReceiver::getNext: Starting DTCFragment Loop");
 		while (newfrag.hdr_block_count() < BLOCK_COUNT_MAX)
@@ -110,8 +113,18 @@ int main(int argc, char* argv[])
 				break;
 			}
 
-			//auto first = DTCLib::DTC_DataHeaderPacket(DTCLib::DTC_DataPacket(data[0].blockPointer));
-			//DTCLib::DTC_Timestamp ts = first.GetTimestamp();
+			auto first = DTCLib::DTC_DataHeaderPacket(DTCLib::DTC_DataPacket(data[0].blockPointer));
+			DTCLib::DTC_Timestamp ts = first.GetTimestamp();
+			if(firstLoop)
+			{
+				expected_timestamp = ts;
+				firstLoop = false;
+			}
+			if(ts != expected_timestamp)
+			{
+				std::cerr << "WRONG TIMESTAMP DETECTED: 0x" << std::hex << ts.GetTimestamp(true) << " (expected: 0x" << expected_timestamp.GetTimestamp(true)<<")" << std::endl;
+			}
+			expected_timestamp = ts + 1;
 			//int packetCount = first.GetPacketCount() + 1;
 			//TRACE(1, "There are %lu data blocks in timestamp %lu. Packet count of first data block: %i", data.size(), ts.GetTimestamp(true), packetCount);
 
@@ -126,9 +139,9 @@ int main(int argc, char* argv[])
 			TRACE(4, "diff=%lli, totalSize=%llu, dataSize=%llu, fragSize=%llu", (long long)diff, (long long unsigned)totalSize, (long long unsigned)newfrag.dataSize(), (long long unsigned)newfrag.fragSize());
 			if (diff > 0)
 			{
-				auto currSize = newfrag.fragSize();
+				auto currSize  = newfrag.fragSize();
 				auto remaining = 1 - (newfrag.hdr_block_count() / static_cast<double>(BLOCK_COUNT_MAX));
-				auto newSize = static_cast<size_t>(currSize * remaining);
+				auto newSize   = static_cast<size_t>(currSize * remaining);
 				TRACE(1, "mu2eReceiver::getNext: %lu + %lu > %lu, allocating space for %lu more bytes", totalSize, newfrag.dataSize(), newfrag.fragSize(), static_cast<unsigned long>(newSize + diff));
 				newfrag.addSpace(diff + newSize);
 			}
