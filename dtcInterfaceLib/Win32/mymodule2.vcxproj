@@ -19,7 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{664AF0AD-6A1B-4D7E-A549-6420D9359CBF}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectGuid>{E29F22A3-7006-4C57-A083-0A40B598E7F9}</ProjectGuid>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -64,17 +66,18 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IntDir>packetReader\$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>mymodule2\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IntDir>packetReader\$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>mymodule2\$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\kernel\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IntDir>packetReader\$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>mymodule2\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IntDir>packetReader\$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>mymodule2\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -83,6 +86,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>C:\Program Files (x86)\Visual Leak Detector\include;C:\kernel\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <TargetMachine>MachineX86</TargetMachine>
@@ -100,6 +104,7 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>C:\kernel\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <TargetMachine>MachineX86</TargetMachine>
@@ -116,12 +121,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\test\packetReader.cc" />
+    <ClCompile Include="..\..\mu2e_driver\mu2e_event.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\mu2e_driver\mu2e_fs.c" />
+    <ClCompile Include="..\..\mu2e_driver\mu2e_main.c" />
+    <ClCompile Include="..\..\mu2e_driver\mu2e_pci.c" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="dtcInterfaceLib.vcxproj">
-      <Project>{b69c016d-4f3c-4892-bef9-c230238452b7}</Project>
-    </ProjectReference>
+    <ClInclude Include="..\..\mu2e_driver\mu2e_event.h" />
+    <ClInclude Include="..\..\mu2e_driver\mu2e_fs.h" />
+    <ClInclude Include="..\..\mu2e_driver\mu2e_mmap_ioctl.h" />
+    <ClInclude Include="..\..\mu2e_driver\mu2e_pci.h" />
+    <ClInclude Include="..\..\mu2e_driver\mu2e_proto_globals.h" />
+    <ClInclude Include="..\..\mu2e_driver\xdma_hw.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

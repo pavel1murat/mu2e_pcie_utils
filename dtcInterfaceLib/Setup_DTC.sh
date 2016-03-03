@@ -14,18 +14,26 @@ if [ $ROOT_MODE -eq 1 ]; then
   rmmod TRACE          2>/dev/null
 
   echo "Reinserting kernel modules..."
-  lsmod | grep TRACE -q || insmod $TRACE_DIR/module/`uname -r`/TRACE.ko trace_allow_printk=1
-  if [ -z $MRB_BUILDDIR ]; then
-    lsmod | grep mu2e -q || insmod $PCIE_LINUX_KERNEL_MODULE_DIR/drivers/`uname -r`/mu2e.ko
-  else
-    lsmod | grep mu2e -q || insmod $MRB_BUILDDIR/pcie_linux_kernel_module/drivers/`uname -r`/mu2e.ko
+  PCIE_KO_PATH=$PCIE_LINUX_KERNEL_MODULE_DIR/drivers/`uname -r`/mu2e.ko
+  TRACE_KO_PATH=$TRACE_DIR/module/`uname -r`/TRACE.ko
+
+  if [ ! -e $PCIE_KO_PATH -a ! -z $MRB_BUILDDIR ]; then
+    PCIE_KO_PATH=$MRB_BUILDDIR/pcie_linux_kernel_module/drivers/`uname -r`/mu2e.ko
   fi
+
+  if [ ! -e $TRACE_KO_PATH -a ! -z $MRB_BUILDDIR ]; then
+    TRACE_KO_PATH=$MRB_BUILDDIR/TRACE/module/`uname -r`/TRACE.ko
+  fi
+
+  lsmod | grep TRACE -q || insmod $TRACE_KO_PATH trace_allow_printk=1
+  lsmod | grep mu2e -q || insmod $PCIE_KO_PATH
+  source $TRACE_DIR/script/trace.sh.functions 
   chmod 666 /dev/mu2e
 fi
-test -e /dev/mu2e || { echo 'DTC device file not found. Please re-run this script as root!'; exit; }
+test -e /dev/mu2e || { echo 'DTC device file not found. Please re-run this script as root!'; return; }
 
 echo "Setting up TRACE module"
-export TRACE_FILE=/proc/trace/buffer;tonM -nKERNEL 0-19  # poll noise is on lvls 22-23
+export TRACE_FILE=/proc/trace/buffer;tonM -nKERNEL 0-19;toffM -nKERNEL 4  # poll noise is on lvls 22-23
 tonSg 0
 
 echo "Doing \"Super\" Reset Chants"

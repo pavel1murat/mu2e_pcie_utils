@@ -1,5 +1,6 @@
 ﻿var packets = {};
 var numPackets = 0;
+
 function addPacket(type, id, packet) {
     packets[id] = packet;
     $.get("/DTC/" + type, function (data) {
@@ -22,15 +23,14 @@ function setPixel(led, bit, modestring) {
         if (bit) {
             ctx.fillStyle = "lightgreen";
         } else {
-            ctx.fillStyle = 'black';
+            ctx.fillStyle = "black";
         }
-    }
-    else if (modestring === "RW") {
+    } else if (modestring === "RW") {
         ctx.strokeStyle = "darkblue";
         if (bit) {
             ctx.fillStyle = "lightblue";
         } else {
-            ctx.fillStyle = 'black';
+            ctx.fillStyle = "black";
         }
     } else {
         ctx.strokeStype = "darkred";
@@ -52,6 +52,7 @@ function setPixel(led, bit, modestring) {
 }
 
 var oldbase = 16;
+
 // Define a method that handles nothing but the actual
 // form population. This helps us decouple the data
 // insertion from the data retrieval.
@@ -89,7 +90,7 @@ function GetAJAXValues(strOption, address, value, fnCallback) {
             });
         },
         // An error handler for the request.
-        error: function(){// (xhr, textStatus, errorCode) {
+        error: function () { // (xhr, textStatus, errorCode) {
             //alert("An error occurred:\n" + textStatus + "\n" + errorC
         },
         // I get called no matter what.
@@ -124,7 +125,7 @@ function GetRegDumpAjax(fnCallback) {
             });
         },
         // An error handler for the request.
-        error: function (){//(xhr, textStatus, errorCode) {
+        error: function () { //(xhr, textStatus, errorCode) {
             //alert("An error occurred:\n" + textStatus + "\n" + errorCode);
         },
         // I get called no matter what.
@@ -146,6 +147,7 @@ function LEDAction(url, ring, id) {
         setPixel(document.getElementById(id), output.Value1, "RW");
     });
 }
+
 function LEDExtAction(url, ring, val, id) {
     var post = {};
     post.ring = ring;
@@ -154,6 +156,7 @@ function LEDExtAction(url, ring, val, id) {
         setPixel(document.getElementById(id), output.Value1, "RW");
     });
 }
+
 function LEDObjAction(url, ring, idlo, idhi) {
     AjaxPost(url, ring, function (output) {
         setPixel(document.getElementById(idlo), output.Value1.Low, "RW");
@@ -170,19 +173,19 @@ function SetNumericValue(id, url) {
 
 function PostLogMessage() {
     var message = $("#logMessage").val();
-    AjaxPost('/DTC/WriteLog', message, function (returnValue) {
+    AjaxPost("/DTC/WriteLog", message, function (returnValue) {
         $("#log").val(returnValue.Value1);
     });
 }
 
 function ReadLog() {
-    AjaxPost('/DTC/ReadLog', null, function (returnValue) {
+    AjaxPost("/DTC/ReadLog", null, function (returnValue) {
         $("#log").val(returnValue.Value1);
     });
 }
 
 function RunScript() {
-    AjaxPost('/DTC/RunScript', $("#script").val(), function (returnValue) {
+    AjaxPost("/DTC/RunScript", $("#script").val(), function (returnValue) {
         $("#script").val(returnValue);
     });
 }
@@ -196,11 +199,12 @@ function RunScript() {
         
         return function debounced() {
             var obj = this, args = arguments;
+            
             function delayed() {
                 if (!execAsap)
                     func.apply(obj, args);
                 timeout = null;
-            }            ;
+            };
             
             if (timeout)
                 clearTimeout(timeout);
@@ -209,11 +213,11 @@ function RunScript() {
             
             timeout = setTimeout(delayed, threshold || 100);
         };
-    }
+    };
     // smartresize 
-    jQuery.fn[sr] = function (fn) { return fn ? this.bind('resize', debounce(fn)) : this.trigger(sr); };
+    jQuery.fn[sr] = function (fn) { return fn ? this.bind("resize", debounce(fn)) : this.trigger(sr); };
 
-})(jQuery, 'smartresize');
+})(jQuery, "smartresize");
 
 
 function PopulateLEDS(dtcregdump) {
@@ -334,7 +338,7 @@ function SetSimMode(id) {
         setPixel(document.getElementById("simModeCalorimeterLED"), output.Value1.Calorimeter, "RW");
         setPixel(document.getElementById("simModeCRVLED"), output.Value1.CosmicVeto, "RW");
         setPixel(document.getElementById("simModeHardwareLED"), output.Value1.Hardware, "RW");
-    })
+    });
 }
 
 $(function () {
@@ -407,13 +411,13 @@ $(function () {
     });
     
     var dma0 = {
-        dma0TX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA0Transmit" },
-        dma0RX: { data: [{ time: 0, value: 0 }], color: 'blue', jsonPath: "/DTC/DMA0Receive" },
+        dma0TX: { data: [{ time: 0, value: 0 }], color: "red", jsonPath: "/DTC/DMA0Transmit" },
+        dma0RX: { data: [{ time: 0, value: 0 }], color: "blue", jsonPath: "/DTC/DMA0Receive" },
     };
     //makeGraph("#dma0", dma0);
     var dma1 = {
-        dma1TX: { data: [{ time: 0, value: 0 }], color: 'red', jsonPath: "/DTC/DMA1Transmit" },
-        dma1RX: { data: [{ time: 0, value: 0 }], color: 'blue', jsonPath: "/DTC/DMA1Receive" },
+        dma1TX: { data: [{ time: 0, value: 0 }], color: "red", jsonPath: "/DTC/DMA1Transmit" },
+        dma1RX: { data: [{ time: 0, value: 0 }], color: "blue", jsonPath: "/DTC/DMA1Receive" },
     };
     //makeGraph("#dma1", dma1);
     

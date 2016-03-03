@@ -1,10 +1,12 @@
-#include "DTCLibTest.h"
 
 #include <iostream>
 #ifdef _WIN32
-#include <chrono>
-#include <thread>
-#define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
+# include "..\DTCLibTest.h"
+# include <chrono>
+# include <thread>
+# define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
+#else
+# include "dtcInterfaceLib/DTCLibTest.h"
 #endif
 
 void usage()
@@ -124,3 +126,4 @@ int main(int argc, char* argv[])
 		usleep(500000);
 	}
 }
+

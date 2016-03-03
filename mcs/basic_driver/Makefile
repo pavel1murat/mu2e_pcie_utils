@@ -15,7 +15,7 @@
 KDIR ?= /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)
 EXTRA_CFLAGS=-I${TRACE_INC}
-KBUILD_EXTRA_SYMBOLS=${TRACE_DIR}/module/$(shell uname -r)/Module.symvers
+EXTRA_SYMBOLS ?= KBUILD_EXTRA_SYMBOLS=${TRACE_DIR}/module/$(shell uname -r)/Module.symvers
 
 # to allow: make trace_proc.lst    # not working?
 #           make trace_proc.o
@@ -25,7 +25,7 @@ KBUILD_EXTRA_SYMBOLS=${TRACE_DIR}/module/$(shell uname -r)/Module.symvers
 	$(MAKE) -C $(KDIR) M=$(PWD) EXTRA_CFLAGS=-I$(PWD)/../include $@
 
 all default:
-	$(MAKE) -C $(KDIR) M=$(PWD) EXTRA_CFLAGS=$(EXTRA_CFLAGS) KBUILD_EXTRA_SYMBOLS=$(KBUILD_EXTRA_SYMBOLS)
+	$(MAKE) -C $(KDIR) M=$(PWD) EXTRA_CFLAGS=$(EXTRA_CFLAGS) ${EXTRA_SYMBOLS}
 
 #.PHONY: /
 #/:

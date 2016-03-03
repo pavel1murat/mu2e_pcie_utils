@@ -11,6 +11,7 @@
 #include <linux/wait.h>		// wait_queue_head_t
 extern wait_queue_head_t get_info_wait_queue;
 
+int  mu2e_sched_poll( void );
 int  mu2e_event_up( void );
 void mu2e_event_down( void );
 

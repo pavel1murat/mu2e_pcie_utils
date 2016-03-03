@@ -7,9 +7,9 @@
 #define MU2ESIM_HH 1
 
 #ifndef _WIN32
-#include "linux_driver/mymodule2/mu2e_mmap_ioctl.h" //
+#include "mu2e_driver/mu2e_mmap_ioctl.h" //
 #else
-#include "../linux_driver/mymodule2/mu2e_mmap_ioctl.h"
+#include "../mu2e_driver/mu2e_mmap_ioctl.h"
 #endif
 #include <unordered_map>
 #include <mutex>
@@ -26,24 +26,28 @@ class DDRSimulator
 {
 public:
 	DDRSimulator() : mutex_(), queue_() {}
+
 	virtual ~DDRSimulator()
 	{
-			std::lock_guard<std::mutex> lock(mutex_);
-			while (!queue_.empty())
-			{
-				queue_.pop();
-			}
+		std::lock_guard<std::mutex> lock(mutex_);
+		while (!queue_.empty())
+		{
+			queue_.pop();
+		}
 	}
+
 	void push(std::shared_ptr<std::vector<uint8_t>> buf)
 	{
 		std::lock_guard<std::mutex> lock(mutex_);
 		queue_.push(buf);
 	}
+
 	bool empty()
 	{
 		std::lock_guard<std::mutex> lock(mutex_);
 		return queue_.empty();
 	}
+
 	std::shared_ptr<std::vector<uint8_t>> pop(bool recycle)
 	{
 		std::lock_guard<std::mutex> lock(mutex_);
@@ -52,6 +56,7 @@ public:
 		if (recycle) queue_.push(vec);
 		return vec;
 	}
+
 private:
 	std::mutex mutex_;
 	std::queue<std::shared_ptr<std::vector<uint8_t>>> queue_;
@@ -63,17 +68,17 @@ public:
 	mu2esim();
 	~mu2esim();
 	int init(DTCLib::DTC_SimMode mode = DTCLib::DTC_SimMode_Tracker);
-	int read_data(int chn, void **buffer, int tmo_ms); // return bytes read; error if negative
-	int write_data(int chn, void *buffer, size_t bytes);
+	int read_data(int chn, void** buffer, int tmo_ms); // return bytes read; error if negative
+	int write_data(int chn, void* buffer, size_t bytes);
 	int read_release(int chn, unsigned num);
 	int release_all(int chn);
-	int read_register(uint16_t address, int tmo_ms, uint32_t *output);
+	int read_register(uint16_t address, int tmo_ms, uint32_t* output);
 	int write_register(uint16_t address, int tmo_ms, uint32_t data);
 private:
 	unsigned delta_(int chn, int dir);
 	void clearBuffer_(int chn, bool increment = true);
 	void CFOEmulator_();
-	void packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID ring, DTCLib::DTC_ROC_ID roc, uint16_t packetCount); 
+	void packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID ring, DTCLib::DTC_ROC_ID roc, uint16_t packetCount);
 	void closeBuffer_(bool drop, DTCLib::DTC_Timestamp ts);
 	void dcsPacketSimulator_(DTCLib::DTC_DCSRequestPacket in);
 
@@ -99,3 +104,4 @@ private:
 };
 
 #endif
+

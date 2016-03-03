@@ -2,6 +2,7 @@
 #include <iostream>
 
 #define TRACE_NAME "MU2EDEV"
+
 DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(DTCLib::DTC* dtc, bool useCFOEmulator, uint16_t debugPacketCount,
 	DTCLib::DTC_DebugType debugType, bool stickyDebugType,
 	bool quiet, bool asyncRR)
@@ -15,7 +16,10 @@ DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(DTCLib::DTC* dtc, bool useCFOEmulator, ui
 	, abort_(false)
 {
 	theDTC_ = dtc;
-	for (auto ring : DTCLib::DTC_Rings) { ringMode_[ring] = theDTC_->ReadRingEnabled(ring); }
+	for (auto ring : DTCLib::DTC_Rings)
+	{
+		ringMode_[ring] = theDTC_->ReadRingEnabled(ring);
+	}
 }
 
 DTCLib::DTCSoftwareCFO::~DTCSoftwareCFO()
@@ -87,7 +91,10 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTCLib::DTC_Timestamp ts)
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTCLib::DTC_Timestamp start, bool increment, uint32_t delayBetweenDataRequests, int requestsAhead)
 {
-  if(delayBetweenDataRequests < 100) { delayBetweenDataRequests = 100; }
+	if (delayBetweenDataRequests < 100)
+	{
+		delayBetweenDataRequests = 100;
+	}
 	if (!useCFOEmulator_)
 	{
 		requestsSent_ = false;
@@ -131,7 +138,10 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync(DTCLib::DTC_Timestamp 
 		DTC_Timestamp ts = start + (increment ? ii : 0);
 
 		SendRequestForTimestamp(ts);
-		if (ii >= requestsAhead || ii == count - 1) { requestsSent_ = true; }
+		if (ii >= requestsAhead || ii == count - 1)
+		{
+			requestsSent_ = true;
+		}
 
 		usleep(delayBetweenDataRequests);
 		if (abort_) return;
@@ -185,7 +195,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync(DTCLib::DTC_Timestamp
 							{
 								debugType_ = DTCLib::DTC_DebugType_ExternalSerial;
 							}
-							TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImpl before WriteDMADAQPacket - DTC_DataRequestPacket");
+		  					TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImpl before WriteDMADAQPacket - DTC_DataRequestPacket");
 							if (!quiet_) std::cout << req.toJSON() << std::endl;
 							theDTC_->WriteDMAPacket(req);
 							TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImpl after  WriteDMADAQPacket - DTC_DataRequestPacket");
@@ -200,3 +210,4 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync(DTCLib::DTC_Timestamp
 		usleep(delayBetweenDataRequests);
 	}
 }
+

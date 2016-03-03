@@ -4,9 +4,15 @@
 #include <bitset> // std::bitset
 
 
+
 #include <cstdint> // uint8_t, uint16_t
+
+
 #include <functional> // std::bind, std::function
+
+
 #include <vector> // std::vector
+
 
 
 #include "DTC_Types.h"
@@ -120,8 +126,6 @@ namespace DTCLib
 		{
 			return &device_;
 		}
-		double GetDeviceTime() const { return device_.GetDeviceTime(); }
-		void ResetDeviceTime() { device_.ResetDeviceTime(); }
 
 		//
 		// DTC Sim Mode Virtual Register
@@ -138,6 +142,7 @@ namespace DTCLib
 		//
 		std::string FormattedRegDump() const;
 		std::string PerformanceMonitorRegDump() const;
+
 		DTC_RegisterFormatter CreateFormatter(const DTC_Register& address)
 		{
 			DTC_RegisterFormatter form;
@@ -364,17 +369,20 @@ namespace DTCLib
 		// CFO Emulation Debug Packet Type Register
 		void SetCFOEmulationDebugType(DTC_DebugType type);
 		DTC_DebugType ReadCFOEmulationDebugType();
+		DTC_RegisterFormatter FormatCFOEmulationDebugPacketType();
 
 		// Detector Emulation DMA Count Register
 		void SetDetectorEmulationDMACount(uint32_t count);
-		void IncrementDetectorEmulationDMACount();
 		uint32_t ReadDetectorEmulationDMACount();
+		DTC_RegisterFormatter FormatDetectorEmulationDMACount();
 
 		// Detector Emulation DMA Delay Count Register
 		void SetDetectorEmulationDMADelayCount(uint32_t count);
 		uint32_t ReadDetectorEmulationDMADelayCount();
+		DTC_RegisterFormatter FormatDetectorEmulationDMADelayCount();
 
 		// SERDES Counter Registers
+		/*
 		void ClearReceiveByteCount(const DTC_Ring_ID& ring);
 		uint32_t ReadReceiveByteCount(const DTC_Ring_ID& ring);
 		void ClearReceivePacketCount(const DTC_Ring_ID& ring);
@@ -383,13 +391,46 @@ namespace DTCLib
 		uint32_t ReadTransmitByteCount(const DTC_Ring_ID& ring);
 		void ClearTransmitPacketCount(const DTC_Ring_ID& ring);
 		uint32_t ReadTransmitPacketCount(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatReceiveByteCountRing0();
+		DTC_RegisterFormatter FormatReceiveByteCountRing1();
+		DTC_RegisterFormatter FormatReceiveByteCountRing2();
+		DTC_RegisterFormatter FormatReceiveByteCountRing3();
+		DTC_RegisterFormatter FormatReceiveByteCountRing4();
+		DTC_RegisterFormatter FormatReceiveByteCountRing5();
+		DTC_RegisterFormatter FormatReceiveByteCountCFO();
+		DTC_RegisterFormatter FromatReceivePacketCountRing0();
+		DTC_RegisterFormatter FromatReceivePacketCountRing1();
+		DTC_RegisterFormatter FromatReceivePacketCountRing2();
+		DTC_RegisterFormatter FromatReceivePacketCountRing3();
+		DTC_RegisterFormatter FromatReceivePacketCountRing4();
+		DTC_RegisterFormatter FromatReceivePacketCountRing5();
+		DTC_RegisterFormatter FromatReceivePacketCountCFO();
+		DTC_RegisterFormatter FormatTramsitByteCountRing0();
+		DTC_RegisterFormatter FormatTramsitByteCountRing1();
+		DTC_RegisterFormatter FormatTramsitByteCountRing2();
+		DTC_RegisterFormatter FormatTramsitByteCountRing3();
+		DTC_RegisterFormatter FormatTramsitByteCountRing4();
+		DTC_RegisterFormatter FormatTramsitByteCountRing5();
+		DTC_RegisterFormatter FormatTramsitByteCountCFO();
+		DTC_RegisterFormatter FormatTransmitPacketCountRing0();
+		DTC_RegisterFormatter FormatTransmitPacketCountRing1();
+		DTC_RegisterFormatter FormatTransmitPacketCountRing2();
+		DTC_RegisterFormatter FormatTransmitPacketCountRing3();
+		DTC_RegisterFormatter FormatTransmitPacketCountRing4();
+		DTC_RegisterFormatter FormatTransmitPacketCountRing5();
+		DTC_RegisterFormatter FormatTransmitPacketCountCFO);
+		*/
 
 		// DDR Local Start Address Register
+		uint32_t ReadDDRLocalStartAddress();
+		void SetDDRLocalStartAddress(uint32_t address);
+		DTC_RegisterFormatter FormatDDRLocalStartAddress();
+
 
 		// DDR Local End Address Register
-		void SetDDRLocalEndAddress(uint32_t address);
-		void IncrementDDRLocalEndAddress(size_t sz);
 		uint32_t ReadDDRLocalEndAddress();
+		void SetDDRLocalEndAddress(uint32_t address);
+		DTC_RegisterFormatter FormatDDRLocalEndAddress();
 
 		// DDR Write Burst Size Register
 
@@ -420,49 +461,244 @@ namespace DTCLib
 		uint16_t dmaSize_;
 
 		const std::vector<std::function<DTC_RegisterFormatter()>> formattedDumpFunctions_{
-			[this]() {return this->FormatDesignVersion(); },
-			[this]() {return this->FormatDesignDate(); },
-			[this]() {return this->FormatDTCControl(); },
-			[this]() {return this->FormatDMATransferLength(); },
-			[this]() {return this->FormatSERDESLoopbackEnable(); },
-			[this]() {return this->FormatSERDESOscillatorStatus(); },
-			[this]() {return this->FormatROCEmulationEnable(); },
-			[this]() {return this->FormatRingEnable(); },
-			[this]() {return this->FormatSERDESReset(); },
-			[this]() {return this->FormatSERDESRXDisparityError(); },
-			[this]() {return this->FormatSERDESRXCharacterNotInTableError(); },
-			[this]() {return this->FormatSERDESUnlockError(); },
-			[this]() {return this->FormatSERDESPLLLocked(); },
-			[this]() {return this->FormatSERDESTXBufferStatus(); },
-			[this]() {return this->FormatSERDESRXBufferStatus(); },
-			[this]() {return this->FormatSERDESRXStatus(); },
-			[this]() {return this->FormatSERDESResetDone(); },
-			[this]() {return this->FormatSERDESEyescanData(); },
-			[this]() {return this->FormatSERDESRXCDRLock(); },
-			[this]() {return this->FormatDMATimeoutPreset(); },
-			[this]() {return this->FormatROCReplyTimeout(); },
-			[this]() {return this->FormatROCReplyTimeoutError(); },
-			[this]() {return this->FormatReceivePacketError(); },
-			[this]() {return this->FormatTimestampPreset0(); },
-			[this]() {return this->FormatTimestampPreset1(); },
-			[this]() {return this->FormatDataPendingTimer(); },
-			[this]() {return this->FormatNUMROCs(); },
-			[this]() {return this->FormatFIFOFullErrorFlag0(); },
-			[this]() {return this->FormatFIFOFullErrorFlag1(); },
-			[this]() {return this->FormatFIFOFullErrorFlag2(); },
-			[this]() {return this->FormatCFOEmulationTimestampLow(); },
-			[this]() {return this->FormatCFOEmulationTimestampHigh(); },
-			[this]() {return this->FormatCFOEmulationRequestInterval(); },
-			[this]() {return this->FormatCFOEmulationNumRequests(); },
-			[this]() {return this->FormatCFOEmulationNumPacketsRing0(); },
-			[this]() {return this->FormatCFOEmulationNumPacketsRing1(); },
-			[this]() {return this->FormatCFOEmulationNumPacketsRing2(); },
-			[this]() {return this->FormatCFOEmulationNumPacketsRing3(); },
-			[this]() {return this->FormatCFOEmulationNumPacketsRing4(); },
-			[this]() {return this->FormatCFOEmulationNumPacketsRing5(); },
-			[this]() {return this->FormatRingPacketLength(); },
-			[this]() {return this->FormatFPGAPROMProgramStatus(); },
-			[this]() {return this->FormatFPGACoreAccess(); }
+			[this]()
+			{
+				return this->FormatDesignVersion();
+			},
+			[this]()
+			{
+				return this->FormatDesignDate();
+			},
+			[this]()
+			{
+				return this->FormatDTCControl();
+			},
+			[this]()
+			{
+				return this->FormatDMATransferLength();
+			},
+			[this]()
+			{
+				return this->FormatSERDESLoopbackEnable();
+			},
+			[this]()
+			{
+				return this->FormatSERDESOscillatorStatus();
+			},
+			[this]()
+			{
+				return this->FormatROCEmulationEnable();
+			},
+			[this]()
+			{
+				return this->FormatRingEnable();
+			},
+			[this]()
+			{
+				return this->FormatSERDESReset();
+			},
+			[this]()
+			{
+				return this->FormatSERDESRXDisparityError();
+			},
+			[this]()
+			{
+				return this->FormatSERDESRXCharacterNotInTableError();
+			},
+			[this]()
+			{
+				return this->FormatSERDESUnlockError();
+			},
+			[this]()
+			{
+				return this->FormatSERDESPLLLocked();
+			},
+			[this]()
+			{
+				return this->FormatSERDESTXBufferStatus();
+			},
+			[this]()
+			{
+				return this->FormatSERDESRXBufferStatus();
+			},
+			[this]()
+			{
+				return this->FormatSERDESRXStatus();
+			},
+			[this]()
+			{
+				return this->FormatSERDESResetDone();
+			},
+			[this]()
+			{
+				return this->FormatSERDESEyescanData();
+			},
+			[this]()
+			{
+				return this->FormatSERDESRXCDRLock();
+			},
+			[this]()
+			{
+				return this->FormatDMATimeoutPreset();
+			},
+			[this]()
+			{
+				return this->FormatROCReplyTimeout();
+			},
+			[this]()
+			{
+				return this->FormatROCReplyTimeoutError();
+			},
+			[this]()
+			{
+				return this->FormatReceivePacketError();
+			},
+			[this]()
+			{
+				return this->FormatTimestampPreset0();
+			},
+			[this]()
+			{
+				return this->FormatTimestampPreset1();
+			},
+			[this]()
+			{
+				return this->FormatDataPendingTimer();
+			},
+			[this]()
+			{
+				return this->FormatNUMROCs();
+			},
+			[this]()
+			{
+				return this->FormatFIFOFullErrorFlag0();
+			},
+			[this]()
+			{
+				return this->FormatFIFOFullErrorFlag1();
+			},
+			[this]()
+			{
+				return this->FormatFIFOFullErrorFlag2();
+			},
+			[this]()
+			{
+				return this->FormatCFOEmulationTimestampLow();
+			},
+			[this]()
+			{
+				return this->FormatCFOEmulationTimestampHigh();
+			},
+			[this]()
+			{
+				return this->FormatCFOEmulationRequestInterval();
+			},
+			[this]()
+			{
+				return this->FormatCFOEmulationNumRequests();
+			},
+			[this]()
+			{
+				return this->FormatCFOEmulationNumPacketsRing0();
+			},
+			[this]()
+			{
+				return this->FormatCFOEmulationNumPacketsRing1();
+			},
+			[this]()
+			{
+				return this->FormatCFOEmulationNumPacketsRing2();
+			},
+			[this]()
+			{
+				return this->FormatCFOEmulationNumPacketsRing3();
+			},
+			[this]()
+			{
+				return this->FormatCFOEmulationNumPacketsRing4();
+			},
+			[this]()
+			{
+				return this->FormatCFOEmulationNumPacketsRing5();
+			},
+
+			[this]()
+			{
+				return this->FormatCFOEmulationDebugPacketType();
+			},
+
+			[this]()
+			{
+				return this->FormatDetectorEmulationDMACount();
+			},
+
+			[this]()
+			{
+				return this->FormatDetectorEmulationDMADelayCount();
+			},
+			[this]()
+			{
+				return this->FormatDDRLocalStartAddress();
+			},
+			[this]()
+			{
+				return this->FormatDDRLocalEndAddress();
+			},
+			[this]()
+			{
+				return this->FormatRingPacketLength();
+			},
+			[this]()
+			{
+				return this->FormatFPGAPROMProgramStatus();
+			},
+			[this]()
+			{
+				return this->FormatFPGACoreAccess();
+			}
+		};
+
+		const std::vector<std::function<DTC_RegisterFormatter()>> formattedPerfMonFunctions_{
+			[this]()
+			{
+				return this->FormatPerfMonTXByteCount();
+			},
+			[this]()
+			{
+				return this->FormatPerfMonRXByteCount();
+			},
+			[this]()
+			{
+				return this->FormatPerfMonTXPayloadCount();
+			},
+			[this]()
+			{
+				return this->FormatPerfMonRXPayloadCount();
+			},
+			[this]()
+			{
+				return this->FormatPerfMonInitCDC();
+			},
+			[this]()
+			{
+				return this->FormatPerfMonInitCHC();
+			},
+			[this]()
+			{
+				return this->FormatPerfMonInitNPDC();
+			},
+			[this]()
+			{
+				return this->FormatPerfMonInitNPHC();
+			},
+			[this]()
+			{
+				return this->FormatPerfMonInitPDC();
+			},
+			[this]()
+			{
+				return this->FormatPerfMonInitPHC();
+			}
 		};
 	};
 }

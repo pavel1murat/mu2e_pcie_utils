@@ -19,7 +19,7 @@
             fnCallback(objData);
         },
         // An error handler for the request.
-        error: function () {//(xhr, textStatus, errorCode) {
+        error: function () { //(xhr, textStatus, errorCode) {
             //alert("An error occurred:\n" + textStatus + "\n" + errorCode);
         },
         // I get called no matter what.
@@ -52,7 +52,7 @@ function AjaxPost(postUrl, postData, fnCallback) {
             fnCallback(objData);
         },
         // An error handler for the request.
-        error: function() {// (xhr, textStatus, errorCode) {
+        error: function () { // (xhr, textStatus, errorCode) {
             //alert("An error occurred:\n" + textStatus + "\n" + errorCode);
         },
         // I get called no matter what.

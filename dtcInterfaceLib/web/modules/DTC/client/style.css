@@ -1,6 +1,4 @@
-svg {
-    font: 10px sans-serif;
-}
+svg { font: 10px sans-serif; }
 
 .line {
     fill: none;
@@ -10,15 +8,27 @@ svg {
 .axis path,
 .axis line {
     fill: none;
-    stroke: #000;
+    -webkit-shape-rendering: crispEdges;
+    -moz-shape-rendering: crispEdges;
+    -ms-shape-rendering: crispEdges;
+    -o-shape-rendering: crispEdges;
     shape-rendering: crispEdges;
+    stroke: #000;
 }
 
 .x.axis line {
+    -webkit-shape-rendering: auto;
+    -moz-shape-rendering: auto;
+    -ms-shape-rendering: auto;
+    -o-shape-rendering: auto;
     shape-rendering: auto;
 }
 
 .y.axis line {
+    -webkit-shape-rendering: auto;
+    -moz-shape-rendering: auto;
+    -ms-shape-rendering: auto;
+    -o-shape-rendering: auto;
     shape-rendering: auto;
 }
 
@@ -30,29 +40,27 @@ svg {
     width: 100%;
 }
 
-fieldset {
-    margin-top: 1em;
+fieldset { margin-top: 1em; }
+
+fieldset legend {
+    font-size: large;
+    font-weight: bold;
 }
 
-    fieldset legend {
-        font-weight: bold;
-        font-size: large;
-    }
-
 th {
+    font-size: medium;
+    font-weight: 600;
     padding-left: 1em;
     padding-right: 1em;
-    font-weight: 600;
-    font-size: medium;
 }
 
 td {
-    text-align: center;
     padding-left: 1em;
     padding-right: 1em;
+    text-align: center;
 }
 
 table {
-    width: 100%;
     table-layout: fixed;
+    width: 100%;
 }

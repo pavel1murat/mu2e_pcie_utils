@@ -6,6 +6,8 @@
 #include <fstream>
 #include <assert.h>
 #include <string>
+#include <algorithm>
+
 
 typedef uint16_t adc_t;
 
@@ -27,7 +29,7 @@ enum PacketType
 };
 
 
-unsigned getOptionValue(int *index, char **argv[])
+unsigned getOptionValue(int* index, char** argv[])
 {
 	char* arg = (*argv)[*index];
 	if (arg[2] == '\0')
@@ -47,7 +49,7 @@ unsigned getOptionValue(int *index, char **argv[])
 	}
 }
 
-std::string getOptionString(int *index, char **argv[])
+std::string getOptionString(int* index, char** argv[])
 {
 	char* arg = (*argv)[*index];
 	if (arg[2] == '\0')
@@ -78,6 +80,7 @@ void printHelpMsg()
 		<< "    -V: Ridiculously verbose mode" << std::endl
 		<< "    -f <path>: Filename for output" << std::endl
 		<< "    -F: Do not output a file" << std::endl
+		<< "    -S: <number>: PRNG seed value" << std::endl
 		<< "    -t: Generate Tracker packets (this is the default, default file name is TRK_packets.bin)" << std::endl
 		<< "    -c: Generate Calorimeter packets (default file name is CAL_packets.bin)" << std::endl;
 	exit(0);
@@ -89,6 +92,8 @@ int main(int argc, char** argv)
 	bool veryverbose = false;
 	bool save_adc_values = true;
 	double nevents = 200000; // Number of hits to generate
+
+	size_t SEED = 100; // Random seed
 	
 	// Packet type to generate
 	PacketType packetType = PacketType_TRK;
@@ -132,6 +137,9 @@ int main(int argc, char** argv)
 			case 'c':
 				packetType = PacketType_CAL;
 				break;
+			case 'S':
+			        SEED = getOptionValue(&optind, &argv);
+				break;
 			default:
 				std::cout << "Unknown option: " << argv[optind] << std::endl;
 				printHelpMsg();
@@ -149,26 +157,23 @@ int main(int argc, char** argv)
 	// if the size of the DMA block will exceed the limit within the current
 	// timestamp, a new block is created
 
-	if (outputFile == "" && packetType == PacketType_TRK) {
+	if (outputFile == "" && packetType == PacketType_TRK)
+	{
 		outputFile = "TRK_packets.bin";
 	}
-	else if (outputFile == "" && packetType == PacketType_CAL) {
+	else if (outputFile == "" && packetType == PacketType_CAL)
+	{
 		outputFile = "CAL_packets.bin";
 	}
 	std::ofstream binFile;
-	if (save_adc_values) {
+	if (save_adc_values)
+	{
 		binFile.open(outputFile, std::ios::out | std::ios::app | std::ios::binary);
 	}
 
-	int number_of_rings = 6; // Used for generating randomized ring IDs
-	int rocs_per_ring = 5;   //Used for generating randtomized ROC IDs
-	std::uniform_int_distribution<int> Ring_distribution(0, number_of_rings - 1);
-	std::uniform_int_distribution<int> ROC_distribution(0, rocs_per_ring - 1);
-
-	int min_datablocks_per_ts = 5; // Min number of datablocks from a single timestamp
-	int max_datablocks_per_ts = 20; // Max number of datablocks from a single timestamp
-	std::uniform_int_distribution<int> NumDataBlocks_distribution(min_datablocks_per_ts, max_datablocks_per_ts);
-
+	int number_of_rings = 6;
+	int rocs_per_ring = 5;
+	
 	double peakVal = 32;
 	int noise_level = 140;
 	int sigma_noise = 10;
@@ -189,7 +194,8 @@ int main(int argc, char** argv)
 	double maxTime = 2000;
 	double stepSize = 5;
 
-	switch (packetType) {
+	switch (packetType)
+	{
 	case PacketType_TRK:
 		// Set maximum waveform value for scaling purposes
 		peakVal = 0.02;
@@ -241,10 +247,11 @@ int main(int argc, char** argv)
 	}
 
 	// PRNG initialization
-    // Seed with a real random value, if available
-    std::random_device r;
+	// Seed with a real random value, if available
+	std::random_device r;
 	std::default_random_engine generator(r());
-
+	generator.seed(SEED);
+	
 	std::normal_distribution<double> tau_distribution(nominal_tau, sigma_tau);
 	std::normal_distribution<double> sigma_distribution(nominal_sigma, sigma_sigma);
 	std::normal_distribution<double> offset_distribution(nominal_offset, sigma_offset);
@@ -270,11 +277,26 @@ int main(int argc, char** argv)
 	// and associated data packets
 	std::vector< std::vector< std::vector<adc_t> > > timeStampVector;
 
-	for (size_t eventNum = 0; eventNum < nevents; eventNum++) {
-		size_t targetNumDataBlocks = NumDataBlocks_distribution(generator);
-		std::vector< std::vector<adc_t> > curDataBlockVector;
-		for (size_t dataBlockNum = 0; dataBlockNum < targetNumDataBlocks; dataBlockNum++) {
+	for (size_t eventNum = 0; eventNum < nevents; eventNum++)
+	{
+		// Create a vector to hold all Ring ID / ROC ID combinations to simulate
+	        std::vector< std::pair<int,int> > rocRingVector;
+	        for(int curRingID = 0; curRingID<number_of_rings; curRingID++)
+		{
+	                for(int curROCID = 0; curROCID < rocs_per_ring; curROCID++)
+			{
+	                        std::pair<int,int> curPair(curRingID, curROCID);
+	                        rocRingVector.push_back( curPair );
+	                }
+	        }
+	        // Randomize the order in whic the Rings and ROCs are received
+	        std::shuffle(rocRingVector.begin(),rocRingVector.end(),generator);
 
+		size_t targetNumDataBlocks = rocRingVector.size();
+
+		std::vector< std::vector<adc_t> > curDataBlockVector;
+		for (size_t dataBlockNum = 0; dataBlockNum < targetNumDataBlocks; dataBlockNum++)
+		{
 			std::vector<adc_t> curDataBlock;
 			// Add the header packet to the DataBlock (leaving including a placeholder for
 			// the number of packets in the DataBlock);
@@ -282,10 +304,10 @@ int main(int argc, char** argv)
 			// First 16 bits of header (reserved values)
 			curDataBlock.push_back(null_adc);
 			// Second 16 bits of header (ROC ID, packet type, and ring ID):
-			std::bitset<16> curROCID = ROC_distribution(generator); // 4 bit ROC ID
+			std::bitset<16> curROCID = rocRingVector[dataBlockNum].second; // 4 bit ROC ID
 			std::bitset<16> headerPacketType = 5; // 4 bit Data packet header type is 5
 			headerPacketType <<= 4; // Shift left by 4
-			std::bitset<16> curRingID = Ring_distribution(generator); // 3 bit ring ID
+			std::bitset<16> curRingID = rocRingVector[dataBlockNum].first; // 3 bit ring ID
 			curRingID <<= 8; // Shift left by 8
 			std::bitset<16> secondEntry = (curROCID | headerPacketType | curRingID);
 			secondEntry[15] = 1; // valid bit
@@ -328,25 +350,30 @@ int main(int argc, char** argv)
 			double curVal = 0;
 			size_t padding_slots = 0;
 
-			switch (packetType) {
+			switch (packetType)
+			{
 			case PacketType_TRK:
 			{
 				// Generate TRK data packets
 
-				for (double curTime = minTime; curTime < maxTime && !exitWindow; curTime += stepSize) {
+				for (double curTime = minTime; curTime < maxTime && !exitWindow; curTime += stepSize)
+				{
 					curVal = f(curTime, cur_tau, cur_sigma, cur_offset);
-					if (!inWindow && curVal > threshold) {
+					if (!inWindow && curVal > threshold)
+					{
 						inWindow = true;
 						curTime -= 2 * stepSize; // Save samples starting 2 steps before the threshold is reached
 						hitTime = curTime;
 						curVal = f(curTime, cur_tau, cur_sigma, cur_offset);
 					}
-					else if (curVal<threshold && inWindow && curTime>hitTime + 2 * stepSize) {
+					else if (curVal < threshold && inWindow && curTime > hitTime + 2 * stepSize)
+					{
 						inWindow = false;
 						exitWindow = true;
 					}
 
-					if (inWindow) {
+					if (inWindow)
+					{
 						digiVector.push_back(curVal);
 					}
 				}
@@ -358,13 +385,15 @@ int main(int argc, char** argv)
 				packetVector.push_back(strawIndex);
 				packetVector.push_back(TDC0);
 				packetVector.push_back(TDC1);
-				for (size_t i = 0; i < numADCSamples; i++) {
+				for (size_t i = 0; i < numADCSamples; i++)
+				{
 					adc_t scaledVal = 0;
 					// Scale the function value relative to a peak
 					// value of around 0.02 and convert to a 12 bit integer
 					// stored in a 16 bit adc_t
-					if (i < digiVector.size()) {
-						scaledVal = digiVector[i] / (1.0*peakVal) * (1 << 12);
+					if (i < digiVector.size())
+					{
+						scaledVal = digiVector[i] / (1.0 * peakVal) * (1 << 12);
 					}
 					// Add some noise
 					adc_t noise = noise_distribution(generator);
@@ -372,29 +401,35 @@ int main(int argc, char** argv)
 				}
 				// Pad any empty space in the last packet with 0s
 				padding_slots = 8 - ((numADCSamples - 5) % 8);
-				if (padding_slots < 8) {
-					for (size_t i = 0; i < padding_slots; i++) {
+				if (padding_slots < 8)
+				{
+					for (size_t i = 0; i < padding_slots; i++)
+					{
 						packetVector.push_back((adc_t)0);
 					}
 				}
 			}
-				break;
+			break;
 			case PacketType_CAL:
 			{
-				for (double curTime = minTime; curTime < maxTime && !exitWindow; curTime += stepSize) {
+				for (double curTime = minTime; curTime < maxTime && !exitWindow; curTime += stepSize)
+				{
 					curVal = logn(curTime, cur_eta, cur_sigma, cur_Epeak, cur_norm);
-					if (!inWindow && curVal > threshold) {
+					if (!inWindow && curVal > threshold)
+					{
 						inWindow = true;
 						curTime -= 5 * stepSize; // Save samples starting 5 steps before the threshold is reached
 						hitTime = curTime;
 						curVal = logn(curTime, cur_eta, cur_sigma, cur_Epeak, cur_norm);
 					}
-					else if (curVal<threshold && inWindow && curTime>hitTime + 5 * stepSize) {
+					else if (curVal < threshold && inWindow && curTime > hitTime + 5 * stepSize)
+					{
 						inWindow = false;
 						exitWindow = true;
 					}
 
-					if (inWindow) {
+					if (inWindow)
+					{
 						digiVector.push_back(curVal);
 					}
 				}
@@ -405,24 +440,27 @@ int main(int argc, char** argv)
 				packetVector.push_back(IDNum);
 				packetVector.push_back((adc_t)hitTime);
 				packetVector.push_back((adc_t)digiVector.size());
-				for (size_t i = 0; i < digiVector.size(); i++) {
+				for (size_t i = 0; i < digiVector.size(); i++)
+				{
 					// Scale the function value relative to a peak possible
 					// value of around 35 and convert to a 12 bit integer
 					// stored in a 16 bit adc_t
-					adc_t scaledVal = digiVector[i] / (1.0*peakVal) * (1 << 12);
+					adc_t scaledVal = digiVector[i] / (1.0 * peakVal) * (1 << 12);
 					// Add some noise
 					adc_t noise = noise_distribution(generator);
 					packetVector.push_back(scaledVal + noise);
 				}
 				// Pad any empty space in the last packet with 0s
 				padding_slots = 8 - ((digiVector.size() - 5) % 8);
-				if (padding_slots < 8) {
-					for (size_t i = 0; i < padding_slots; i++) {
+				if (padding_slots < 8)
+				{
+					for (size_t i = 0; i < padding_slots; i++)
+					{
 						packetVector.push_back((adc_t)0);
 					}
 				}
 			}
-				break;
+			break;
 			default:
 				break;
 			}
@@ -439,8 +477,6 @@ int main(int argc, char** argv)
 			// Append the data packets after the header packet in the DataBlock
 			curDataBlock.insert(curDataBlock.end(), packetVector.begin(), packetVector.end());
 			curDataBlockVector.push_back(curDataBlock);
-
-
 		} // Done generating DataBlocks for this timestamp
 		timeStampVector.push_back(curDataBlockVector);
 	}
@@ -448,27 +484,34 @@ int main(int argc, char** argv)
 
 	std::cout << "Size of timestamp vector: " << timeStampVector.size() << std::endl;
 
-	if (verbose) {
+	if (verbose)
+	{
 		std::cout << "\tNumber of DataBlocks for each timestamp vector: {";
-		for (size_t i = 0; i < timeStampVector.size(); i++) {
+		for (size_t i = 0; i < timeStampVector.size(); i++)
+		{
 			std::cout << timeStampVector[i].size();
-			if (i < timeStampVector.size() - 1) {
+			if (i < timeStampVector.size() - 1)
+			{
 				std::cout << ", ";
 			}
 		}
 		std::cout << "}" << std::endl;
 
 		std::cout << "\tNumber of packets in each data block: {";
-		for (size_t i = 0; i < timeStampVector.size(); i++) {
+		for (size_t i = 0; i < timeStampVector.size(); i++)
+		{
 			std::cout << "{";
-			for (size_t j = 0; j < timeStampVector[i].size(); j++) {
+			for (size_t j = 0; j < timeStampVector[i].size(); j++)
+			{
 				std::cout << (timeStampVector[i][j].size()) / 8;
-				if (j < timeStampVector[i].size() - 1) {
+				if (j < timeStampVector[i].size() - 1)
+				{
 					std::cout << ", ";
 				}
 			}
 			std::cout << "}";
-			if (i < timeStampVector.size() - 1) {
+			if (i < timeStampVector.size() - 1)
+			{
 				std::cout << ",";
 			}
 		}
@@ -477,20 +520,23 @@ int main(int argc, char** argv)
 
 
 	std::vector<adc_t> masterVector;
-	for (size_t i = 0; i < timeStampVector.size(); i++) {
-
+	for (size_t i = 0; i < timeStampVector.size(); i++)
+	{
 		// Determine how to divide DataBlocks between DMABlocks within each timestamp
 		std::vector<size_t> dataBlockPartition;
 		std::vector<size_t> dataBlockPartitionSizes;
-		for (size_t j = 0, curDMABlockSize = 0, numDataBlocksInCurDMABlock = 0; j<timeStampVector[i].size(); j++) {
+		for (size_t j = 0, curDMABlockSize = 0, numDataBlocksInCurDMABlock = 0; j < timeStampVector[i].size(); j++)
+		{
 			numDataBlocksInCurDMABlock++; // Increment number of DataBlocks in the current DMA block
 			curDMABlockSize += timeStampVector[i][j].size() * 2; // Size of current data block in 8bit words
 			assert(curDMABlockSize <= max_DMA_block_size - 8);
-			if (j == timeStampVector[i].size() - 1) {
+			if (j == timeStampVector[i].size() - 1)
+			{
 				dataBlockPartition.push_back(numDataBlocksInCurDMABlock);
 				dataBlockPartitionSizes.push_back(curDMABlockSize + 8);
 			}
-			else if (curDMABlockSize + (2 * timeStampVector[i][j + 1].size()) > max_DMA_block_size - 8) {
+			else if (curDMABlockSize + (2 * timeStampVector[i][j + 1].size()) > max_DMA_block_size - 8)
+			{
 				dataBlockPartition.push_back(numDataBlocksInCurDMABlock);
 				dataBlockPartitionSizes.push_back(curDMABlockSize + 8);
 				curDMABlockSize = 0;
@@ -499,46 +545,55 @@ int main(int argc, char** argv)
 		}
 
 		// Break the DataBlocks into DMABlocks and add DMABlock headers
-		for (size_t curDMABlockNum = 0, curDataBlockNum = 0; curDMABlockNum < dataBlockPartition.size(); curDMABlockNum++) {
+		for (size_t curDMABlockNum = 0, curDataBlockNum = 0; curDMABlockNum < dataBlockPartition.size(); curDMABlockNum++)
+		{
 			size_t numDataBlocksInCurDMABlock = dataBlockPartition[curDMABlockNum];
 			size_t curDMABlockSize = dataBlockPartitionSizes[curDMABlockNum];
 			std::vector<adc_t> header = generateDMABlockHeader(curDMABlockSize);
-			for (size_t adcNum = 0; adcNum < header.size(); adcNum++) {
+			for (size_t adcNum = 0; adcNum < header.size(); adcNum++)
+			{
 				masterVector.push_back(header[adcNum]);
 			}
 
-			for (size_t j = 0; j < numDataBlocksInCurDMABlock; j++) {
+			for (size_t j = 0; j < numDataBlocksInCurDMABlock; j++)
+			{
 				std::vector<adc_t> curDataBlock = timeStampVector[i][curDataBlockNum];
-				for (size_t adcNum = 0; adcNum < curDataBlock.size(); adcNum++) {
+				for (size_t adcNum = 0; adcNum < curDataBlock.size(); adcNum++)
+				{
 					masterVector.push_back(curDataBlock[adcNum]);
 				}
 				curDataBlockNum++;
 			}
 		}
 
-		if (verbose) {
+		if (verbose)
+		{
 			// Print out number of DataBlocks in each DMABlock
 			std::cout << "\tTimestamp " << i + starting_timestamp << " DataBlock partition: {";
-			for (size_t k = 0; k < dataBlockPartition.size(); k++) {
+			for (size_t k = 0; k < dataBlockPartition.size(); k++)
+			{
 				std::cout << dataBlockPartition[k];
-				if (k < dataBlockPartition.size() - 1) {
+				if (k < dataBlockPartition.size() - 1)
+				{
 					std::cout << ", ";
 				}
 			}
 			std::cout << "}" << std::endl;
 		}
-
 	} // Close loop over timestamps
 
 	std::cout << std::endl << "Length of final adc_t array: " << masterVector.size() << std::endl;
 
 	// Print contents of final adc_t array:
-	if (veryverbose) {
+	if (veryverbose)
+	{
 		std::cout << "Contents of final adc_t array: " << std::endl;
-		for (size_t i = 0; i < masterVector.size(); i++) {
+		for (size_t i = 0; i < masterVector.size(); i++)
+		{
 			std::bitset<16> curEntry = masterVector[i];
 			std::cout << "\t" << curEntry.to_string() << " " << curEntry.to_ulong() << std::endl;
-			if (i > 0 && (i + 1) % 4 == 0) {
+			if (i > 0 && (i + 1) % 4 == 0)
+			{
 				std::cout << std::endl;
 			}
 		}
@@ -546,8 +601,10 @@ int main(int argc, char** argv)
 
 	// Save contents of final adc_t array to binary file
 	std::cout << "Writing generated data to file " << outputFile << std::endl;
-	if (save_adc_values) {
-		for (size_t i = 0; i < masterVector.size(); i++) {
+	if (save_adc_values)
+	{
+		for (size_t i = 0; i < masterVector.size(); i++)
+		{
 			binFile.write(reinterpret_cast<const char *>(&(masterVector[i])), sizeof(adc_t));
 		}
 		binFile.close();
@@ -556,16 +613,19 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-double f(double t, double tau, double sigma, double offset) {
+double f(double t, double tau, double sigma, double offset)
+{
 	double E = 2.718281828459045;
-	double retval = (pow(E, (pow(sigma, 2) + 2 * offset*tau - 2 * t*tau) / (2.*pow(tau, 2)))*(-pow(sigma, 2) + (-offset + t)*tau)) / pow(tau, 3);
-	if (retval < 0) {
+	double retval = (pow(E, (pow(sigma, 2) + 2 * offset * tau - 2 * t * tau) / (2. * pow(tau, 2))) * (-pow(sigma, 2) + (-offset + t) * tau)) / pow(tau, 3);
+	if (retval < 0)
+	{
 		retval = 0;
 	}
 	return retval;
 }
 
-double logn(double x, double eta, double sigma, double Epeak, double norm) {
+double logn(double x, double eta, double sigma, double Epeak, double norm)
+{
 	double Aterm;
 	double logterms0, s0;
 	double logn, logterm;
@@ -575,31 +635,34 @@ double logn(double x, double eta, double sigma, double Epeak, double norm) {
 	//double f = 2.35;
 	double f = 20.0;
 
-	logterms0 = eta*f / 2 + sqrt(1 + pow((eta*f / 2), 2));
-	s0 = (2 / f)*log(logterms0);
+	logterms0 = eta * f / 2 + sqrt(1 + pow((eta * f / 2), 2));
+	s0 = (2 / f) * log(logterms0);
 
-	Aterm = eta / (sqrt(2 * pigreco)*sigma*s0);
+	Aterm = eta / (sqrt(2 * pigreco) * sigma * s0);
 
-	logterm = 1 - (eta / sigma)*(x - Epeak);
+	logterm = 1 - (eta / sigma) * (x - Epeak);
 
-	if (logterm < 0) {
+	if (logterm < 0)
+	{
 		logterm = 0.0001;
 	}
 	expterm = log(logterm) / s0;
-	expterm = -0.5*pow(expterm, 2);
+	expterm = -0.5 * pow(expterm, 2);
 
-	logn = norm*Aterm *exp(expterm);
+	logn = norm * Aterm * exp(expterm);
 	return logn;
 }
 
 
-std::vector<adc_t> generateDMABlockHeader(size_t theCount) {
+std::vector<adc_t> generateDMABlockHeader(size_t theCount)
+{
 	std::bitset<64> byteCount = theCount;
 	std::bitset<16> byteCount0 = 0;
 	std::bitset<16> byteCount1 = 0;
 	std::bitset<16> byteCount2 = 0;
 	std::bitset<16> byteCount3 = 0;
-	for (int i = 0; i < 16; i++) {
+	for (int i = 0; i < 16; i++)
+	{
 		byteCount0[i] = byteCount[i + 16 * 0];
 		byteCount1[i] = byteCount[i + 16 * 1];
 		byteCount2[i] = byteCount[i + 16 * 2];
@@ -613,3 +676,4 @@ std::vector<adc_t> generateDMABlockHeader(size_t theCount) {
 
 	return header;
 }
+

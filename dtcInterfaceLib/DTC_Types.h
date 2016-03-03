@@ -2,8 +2,11 @@
 #define DTC_TYPES_H
 
 #include <bitset> // std::bitset
+
 #include <cstdint> // uint8_t, uint16_t
+
 #include <vector> // std::vector
+
 #include <sstream>
 #include <iomanip>
 
@@ -23,7 +26,7 @@ namespace DTCLib
 		DTC_Ring_Unused,
 	};
 
-	static const std::vector<DTC_Ring_ID> DTC_Rings = { DTC_Ring_0, DTC_Ring_1, DTC_Ring_2, DTC_Ring_3, DTC_Ring_4, DTC_Ring_5 };
+	static const std::vector<DTC_Ring_ID> DTC_Rings = {DTC_Ring_0, DTC_Ring_1, DTC_Ring_2, DTC_Ring_3, DTC_Ring_4, DTC_Ring_5};
 
 	enum DTC_ROC_ID : uint8_t
 	{
@@ -36,16 +39,14 @@ namespace DTCLib
 		DTC_ROC_Unused,
 	};
 
-	static const std::vector<DTC_ROC_ID> DTC_ROCS = { DTC_ROC_Unused, DTC_ROC_0, DTC_ROC_1, DTC_ROC_2, DTC_ROC_3, DTC_ROC_4, DTC_ROC_5 };
+	static const std::vector<DTC_ROC_ID> DTC_ROCS = {DTC_ROC_Unused, DTC_ROC_0, DTC_ROC_1, DTC_ROC_2, DTC_ROC_3, DTC_ROC_4, DTC_ROC_5};
 
 	struct DTC_ROCIDConverter
 	{
 	public:
 		DTC_ROC_ID roc_;
 
-		DTC_ROCIDConverter(DTC_ROC_ID roc) : roc_(roc)
-		{
-		}
+		DTC_ROCIDConverter(DTC_ROC_ID roc) : roc_(roc) { }
 
 		std::string toString() const
 		{
@@ -68,6 +69,7 @@ namespace DTCLib
 				return "No ROCs";
 			}
 		}
+
 		friend std::ostream& operator<<(std::ostream& stream, const DTC_ROCIDConverter& roc)
 		{
 			switch (roc.roc_)
@@ -114,9 +116,7 @@ namespace DTCLib
 	public:
 		DTC_DebugType type_;
 
-		DTC_DebugTypeConverter(DTC_DebugType type) : type_(type)
-		{
-		}
+		DTC_DebugTypeConverter(DTC_DebugType type) : type_(type) { }
 
 		std::string toString() const
 		{
@@ -180,9 +180,7 @@ namespace DTCLib
 	public:
 		DTC_RXBufferStatus status_;
 
-		DTC_RXBufferStatusConverter(DTC_RXBufferStatus status) : status_(status)
-		{
-		}
+		DTC_RXBufferStatusConverter(DTC_RXBufferStatus status) : status_(status) { }
 
 		std::string toString() const
 		{
@@ -273,9 +271,7 @@ namespace DTCLib
 	public:
 		DTC_RXStatus status_;
 
-		DTC_RXStatusConverter(DTC_RXStatus status) : status_(status)
-		{
-		}
+		DTC_RXStatusConverter(DTC_RXStatus status) : status_(status) { }
 
 		std::string toString() const
 		{
@@ -414,9 +410,7 @@ namespace DTCLib
 	public:
 		DTC_SERDESLoopbackMode mode_;
 
-		DTC_SERDESLoopbackModeConverter(DTC_SERDESLoopbackMode mode) : mode_(mode)
-		{
-		}
+		DTC_SERDESLoopbackModeConverter(DTC_SERDESLoopbackMode mode) : mode_(mode) { }
 
 		std::string toString() const
 		{
@@ -494,9 +488,7 @@ namespace DTCLib
 	public:
 		DTC_SimMode mode_;
 
-		DTC_SimModeConverter(DTC_SimMode mode) : mode_(mode)
-		{
-		}
+		DTC_SimModeConverter(DTC_SimMode mode) : mode_(mode) { }
 
 		static DTC_SimMode ConvertToSimMode(std::string);
 
@@ -792,13 +784,9 @@ namespace DTCLib
 		bool ReceiveEnable;
 		bool TimingEnable;
 
-		DTC_RingEnableMode() : TransmitEnable(true), ReceiveEnable(true), TimingEnable(true)
-		{
-		}
+		DTC_RingEnableMode() : TransmitEnable(true), ReceiveEnable(true), TimingEnable(true) { }
 
-		DTC_RingEnableMode(bool transmit, bool receive, bool timing) : TransmitEnable(transmit), ReceiveEnable(receive), TimingEnable(timing)
-		{
-		}
+		DTC_RingEnableMode(bool transmit, bool receive, bool timing) : TransmitEnable(transmit), ReceiveEnable(receive), TimingEnable(timing) { }
 
 		friend std::ostream& operator<<(std::ostream& stream, const DTC_RingEnableMode& mode)
 		{
@@ -835,30 +823,26 @@ namespace DTCLib
 
 		DTC_FIFOFullErrorFlags()
 			: OutputData(false)
-			, CFOLinkInput(false)
-			, ReadoutRequestOutput(false)
-			, DataRequestOutput(false)
-			, OtherOutput(false)
-			, OutputDCS(false)
-			, OutputDCSStage2(false)
-			, DataInput(false)
-			, DCSStatusInput(false)
-		{
-		}
+			  , CFOLinkInput(false)
+			  , ReadoutRequestOutput(false)
+			  , DataRequestOutput(false)
+			  , OtherOutput(false)
+			  , OutputDCS(false)
+			  , OutputDCSStage2(false)
+			  , DataInput(false)
+			  , DCSStatusInput(false) { }
 
 		DTC_FIFOFullErrorFlags(bool outputData, bool cfoLinkInput, bool readoutRequest, bool dataRequest,
-			bool otherOutput, bool outputDCS, bool outputDCS2, bool dataInput, bool dcsInput)
+		                       bool otherOutput, bool outputDCS, bool outputDCS2, bool dataInput, bool dcsInput)
 			: OutputData(outputData)
-			, CFOLinkInput(cfoLinkInput)
-			, ReadoutRequestOutput(readoutRequest)
-			, DataRequestOutput(dataRequest)
-			, OtherOutput(otherOutput)
-			, OutputDCS(outputDCS)
-			, OutputDCSStage2(outputDCS2)
-			, DataInput(dataInput)
-			, DCSStatusInput(dcsInput)
-		{
-		}
+			  , CFOLinkInput(cfoLinkInput)
+			  , ReadoutRequestOutput(readoutRequest)
+			  , DataRequestOutput(dataRequest)
+			  , OtherOutput(otherOutput)
+			  , OutputDCS(outputDCS)
+			  , OutputDCSStage2(outputDCS2)
+			  , DataInput(dataInput)
+			  , DCSStatusInput(dcsInput) { }
 
 		friend std::ostream& operator<<(std::ostream& stream, const DTC_FIFOFullErrorFlags& flags)
 		{
@@ -881,6 +865,7 @@ namespace DTCLib
 	struct DTC_RegisterFormatter
 	{
 		DTC_RegisterFormatter() : address(0), value(0), description(""), vals() {}
+
 		DTC_RegisterFormatter(const DTC_RegisterFormatter& r) = default;
 		DTC_RegisterFormatter(DTC_RegisterFormatter&& r) = default;
 		uint16_t address;
@@ -915,6 +900,22 @@ namespace DTCLib
 			return stream;
 		}
 	};
+
+	struct DTC_DataBlock
+	{
+		void * blockPointer;
+		size_t byteSize;
+
+		DTC_DataBlock(void* ptr, size_t sz) : blockPointer(ptr), byteSize(sz) {}
+	};
+
+	struct Utilities
+	{
+		static std::string FormatBytes(double bytes);
+		static std::pair<double, std::string> FormatBytes(double bytes, bool dummy);
+	};
 }
 
 #endif //DTC_TYPES_H
+
+

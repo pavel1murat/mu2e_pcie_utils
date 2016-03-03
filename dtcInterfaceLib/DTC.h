@@ -13,16 +13,16 @@ namespace DTCLib
 	class DTC : public DTC_Registers
 	{
 	public:
-	  DTC(DTC_SimMode mode = DTC_SimMode_Disabled, std::string simFile = "", bool loadFile = true);
+		DTC(DTC_SimMode mode = DTC_SimMode_Disabled);
 		virtual ~DTC();
-		
+
 		//
 		// DMA Functions
 		//
 		// Data read-out
-		std::vector<void*> GetData(DTC_Timestamp when = DTC_Timestamp());
+		std::vector<DTC_DataBlock> GetData(DTC_Timestamp when = DTC_Timestamp());
 		std::string GetJSONData(DTC_Timestamp when = DTC_Timestamp());
-		void WriteSimFileToDTC(std::string file, bool goForever = false);
+		void WriteSimFileToDTC(std::string file, bool goForever, bool overwriteEnvrionment = false);
 
 
 		// DCS Register R/W

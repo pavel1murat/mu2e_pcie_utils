@@ -9,11 +9,12 @@
         
         return function debounced() {
             var obj = this, args = arguments;
+            
             function delayed() {
                 if (!execAsap)
                     func.apply(obj, args);
                 timeout = null;
-            }            ;
+            };
             
             if (timeout)
                 clearTimeout(timeout);
@@ -22,16 +23,16 @@
             
             timeout = setTimeout(delayed, threshold || 100);
         };
-    }
+    };
     // smartresize 
-    jQuery.fn[sr] = function (fn) { return fn ? this.bind('resize', debounce(fn)) : this.trigger(sr); };
+    jQuery.fn[sr] = function (fn) { return fn ? this.bind("resize", debounce(fn)) : this.trigger(sr); };
 
-})(jQuery, 'smartresize');
+})(jQuery, "smartresize");
 
 function tick(paths, line, axes, x, y, ids, tag) {
     var transition = d3.select(tag).transition()
-                .duration(duration)
-                .ease("linear");
+        .duration(duration)
+        .ease("linear");
     transition.each(function () {
         
         // update the domains
@@ -43,7 +44,7 @@ function tick(paths, line, axes, x, y, ids, tag) {
         for (name in ids) {
             if (ids.hasOwnProperty(name)) {
                 var group = ids[name];
-                var thisExtent = d3.extent(group.data, function(d) { return d.value; });
+                var thisExtent = d3.extent(group.data, function (d) { return d.value; });
                 if (thisExtent[0] < extent[0]) {
                     extent[0] = thisExtent[0];
                 }
@@ -56,15 +57,15 @@ function tick(paths, line, axes, x, y, ids, tag) {
         
         for (name in ids) {
             if (ids.hasOwnProperty(name)) {
-                d3.json(ids[name].jsonPath, function(json) {
+                d3.json(ids[name].jsonPath, function (json) {
                     ids[json.name].data.push({ value: json.value, time: new Date(json.time) });
                 });
-
+                
                 // redraw the line
                 ids[name].path.attr("d", line).attr("transform", null);
             }
         }
-
+        
         // slide the x-axis left
         axes[0].call(x.axis);
         axes[1].call(y.axis);
@@ -78,7 +79,7 @@ function tick(paths, line, axes, x, y, ids, tag) {
                     .attr("transform", "translate(" + x(now - n * duration) + ")");
             }
         }
-
+        
         for (name in ids) {
             if (ids.hasOwnProperty(name)) {
                 while (ids[name].data.length > 0 && ids[name].data[0].time < now - n * duration) {
@@ -99,54 +100,54 @@ function makeGraph(tag, ids) {
         height = 120 - margin.top - margin.bottom;
     
     var x = d3.time.scale()
-                .range([0, width]);
+        .range([0, width]);
     
     var y = d3.scale.linear()
-                .range([height, 0]);
+        .range([height, 0]);
     
     var line = d3.svg.line()
-                .interpolate("linear")
-                .x(function (d) { return x(d.time); })
-                .y(function (d) { return y(d.value); });
+        .interpolate("linear")
+        .x(function (d) { return x(d.time); })
+        .y(function (d) { return y(d.value); });
     
     var svg = d3.select(tag).append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .style("margin-left", -margin.right + "px")
-              .append("g")
-                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .style("margin-left", -margin.right + "px")
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
     
     svg.append("defs").append("clipPath")
-                .attr("id", "clip" + tag.replace('#', ""))
-              .append("rect")
-                .attr("width", width)
-                .attr("height", height);
+        .attr("id", "clip" + tag.replace("#", ""))
+        .append("rect")
+        .attr("width", width)
+        .attr("height", height);
     
     var xaxis = svg.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + height + ")")
-                .call(x.axis = d3.svg.axis().scale(x).orient("bottom"));
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(x.axis = d3.svg.axis().scale(x).orient("bottom"));
     
     var formatTick = function (d) {
         var prefix = d3.formatPrefix(d);
         return prefix.scale(d) + " " + prefix.symbol + "B/s";
-    }
+    };
     var yaxis = svg.append("g")
-                .attr("class", "y axis")
-                .attr("transform", "translate(0,0)")
-                .call(y.axis = d3.svg.axis().scale(y).tickFormat(formatTick).orient("left"));
+        .attr("class", "y axis")
+        .attr("transform", "translate(0,0)")
+        .call(y.axis = d3.svg.axis().scale(y).tickFormat(formatTick).orient("left"));
     
     var paths = svg.append("g")
-                .attr("clip-path", "url(#clip" + tag.replace('#', "") + ")");
+        .attr("clip-path", "url(#clip" + tag.replace("#", "") + ")");
     
     for (var name in ids) {
         if (ids.hasOwnProperty(name)) {
-            ids[name].path = paths.append('path')
+            ids[name].path = paths.append("path")
                 .data([ids[name].data])
-                .attr('class', 'line')
-                .style('stroke', ids[name].color);
+                .attr("class", "line")
+                .style("stroke", ids[name].color);
         }
     }
-
+    
     tick(paths, line, [xaxis, yaxis], x, y, ids, tag);
 }

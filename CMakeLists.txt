@@ -32,6 +32,7 @@ cet_set_compiler_flags(DIAGS VIGILANT
  WERROR
  NO_UNDEFINED
  EXTRA_FLAGS -pedantic -Wno-unused-function -Wno-unused-parameter
+# EXTRA_C_FLAGS -std=gnu99
  )
 
 cet_report_compiler_flags()
@@ -48,7 +49,7 @@ find_library( TRACE trace PATHS $ENV{TRACE_LIB} )
 include(CetTest)
 
 # source
-add_subdirectory(linux_driver)
+add_subdirectory(mu2e_driver)
 add_subdirectory(mcs)
 add_subdirectory(dtcInterfaceLib)
 
