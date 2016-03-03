@@ -114,13 +114,14 @@ void WriteGeneratedData(DTCLib::DTC* thisDTC)
 		uint64_t byteCount = blockByteCount + 8;
 		total_size += byteCount;
 		mu2e_databuff_t* buf = (mu2e_databuff_t*)new mu2e_databuff_t();
-		memcpy(buf, &byteCount, sizeof(byteCount));
+		memcpy(buf, &byteCount, sizeof(uint64_t));
 		uint64_t currentOffset = 8;
 		uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
 		DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)packetCount, DTC_DataStatus_Valid, DTC_Timestamp(ts));
 		DTC_DataPacket packet = header.ConvertToDataPacket();
 		memcpy((uint8_t*)buf + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
-		if (rawOutput) outputStream << byteCount << packet;
+		if (rawOutput) outputStream.write(reinterpret_cast<char *>(&byteCount), sizeof(uint64_t));
+		if (rawOutput) outputStream << packet;
 		currentOffset += 16;
 		for (unsigned jj = 0; jj < packetCount; ++jj)
 		{
