@@ -9,8 +9,8 @@ int main()
 {
 	bool verbose = false;
 
-	std::string packetType = "TRK";
-	//	std::string packetType = "CAL";
+	//	std::string packetType = "TRK";
+	std::string packetType = "CAL";
 
 	// Number of tracker adc samples
 	size_t numADCSamples = 8;
@@ -148,18 +148,32 @@ int main()
 				}
 				else if (packetType == "CAL")
 				{
-					std::cout << "\tNumber of waveform samples: " << packetVector[8 + 2] << std::endl;
-					std::cout << "\tscaledNoisyVector: {";
-					for (size_t i = 8U + 3U; i < 8U + 3U + packetVector[8 + 2]; i++)
-					{
-						double curVal = packetVector[i];
-						if (i > 8 + 3)
-						{
-							std::cout << ",";
-						}
-						std::cout << curVal;
+
+				  if((packetVector.size() / 8) - 1 > 0) { // At least 1 data packet following the header packet
+				                std::bitset<16> IDNum = packetVector[8];
+				                std::bitset<12> crystalID;
+				                for(int i= 11; i>=0; i--) {
+				                  crystalID[i] = IDNum[i];
+				                }
+				                std::cout << "\tCrystalID: " << crystalID.to_ulong() << std::endl;
+
+					        adc_t apdID = adc_t(packetVector[8]) >> 12;
+					        std::cout << "\tapdID: " << apdID << std::endl;
+						
+				                adc_t numSamples = packetVector[8 + 2];
+						std::cout << "\tNumber of waveform samples: " << numSamples << std::endl;
+					        std::cout << "\tscaledNoisyVector: {";
+					        for (size_t i = 8U + 3U; i < 8U + 3U + packetVector[8 + 2]; i++)
+					        {
+					        	double curVal = packetVector[i];
+					        	if (i > 8 + 3)
+					        	{
+					        		std::cout << ",";
+					        	}
+					        	std::cout << curVal;
+					        }
+					        std::cout << "}" << std::endl;
 					}
-					std::cout << "}" << std::endl;
 				}
 
 				// Print out raw datablock contents, including the header packet

@@ -6,10 +6,24 @@
 #include <fstream>
 #include <assert.h>
 #include <string>
-#include <algorithm>
 
 
 typedef uint16_t adc_t;
+
+// Struct to hold information from simulated CAL digis read in from external file
+struct hit {
+  int evt;
+  int crystalId;
+  int recoDigiId;
+  int recoDigiT0;
+  int recoDigiSamples;
+  std::vector<double> waveform;
+
+  int rocID;
+  int ringID;
+  int apdID;
+  
+};
 
 // Waveform for TRK:
 double f(double t, double tau, double sigma, double offset);
@@ -88,11 +102,21 @@ void printHelpMsg()
 
 int main(int argc, char** argv)
 {
-	bool verbose = false;
+
+        bool verbose = false;
 	bool veryverbose = false;
 	bool save_adc_values = true;
 	double nevents = 200000; // Number of hits to generate
 
+	bool read_cal_digis_from_file = true;
+	std::string inputCalDigiFile = "artdaq_cut.txt";
+	std::ifstream inputCalDigiStream;
+	std::vector<hit> calHitVector; // Vector of cal hit digi data
+	std::vector< std::vector<hit> > calEventVector; // Vector of vectors of cal hit digi data for each event
+	// For now, crystal IDs start at minCrystalID and end at minCrystalID+number_of_rings*rocs_per_ring-1
+	size_t number_of_crystals_per_roc = 10; // 20 channels, 2 APDs per crystal
+	size_t minCrystalID = 200;
+	
 	size_t SEED = 100; // Random seed
 	
 	// Packet type to generate
@@ -173,7 +197,74 @@ int main(int argc, char** argv)
 
 	int number_of_rings = 6;
 	int rocs_per_ring = 5;
+
+
+
+	if(read_cal_digis_from_file)
+	{
+	        inputCalDigiStream.open(inputCalDigiFile, std::ifstream::in);
+	        int curEvt;
+	        while(inputCalDigiStream >> curEvt)
+		{
+	                hit curHit;
+			curHit.evt = curEvt;
+			inputCalDigiStream >> curHit.crystalId;
+			inputCalDigiStream >> curHit.recoDigiId;
+			inputCalDigiStream >> curHit.recoDigiT0;
+			inputCalDigiStream >> curHit.recoDigiSamples;
+			double curSample;
+			for(size_t curSampleNum = 0; curSampleNum < curHit.recoDigiSamples; curSampleNum++)
+			{
+			        inputCalDigiStream >> curSample;
+				curHit.waveform.push_back(curSample);
+			}
+
+			curHit.ringID = int((curHit.crystalId - minCrystalID) / (rocs_per_ring * number_of_crystals_per_roc));
+			curHit.rocID = ((curHit.crystalId - minCrystalID) - (rocs_per_ring * number_of_crystals_per_roc) * curHit.ringID)/8;
+			//	    curHit.ringID = int((curHit.crystalId - minCrystalID) / rocs_per_ring);
+			//	    curHit.rocID = (curHit.crystalId - minCrystalID) - rocs_per_ring * curHit.ringID;
+			curHit.apdID = curHit.recoDigiId % 2; // Even is APD 0, Odd is APD 1
+	    
+			calHitVector.push_back(curHit);
+		}
+		inputCalDigiStream.close();
+
+		size_t firstEvtNum = calHitVector[0].evt;
+		size_t lastEvtNum = calHitVector[calHitVector.size()-1].evt;
+		
+		std::cout << "Read in " << calHitVector.size() << " calorimeter digi hits" << std::endl;
+		std::cout << "First CAL event num: " << firstEvtNum << std::endl;
+		std::cout << "Last CAL event num: " << lastEvtNum << std::endl;
+
+		if(lastEvtNum<nevents)
+		{
+		        std::cout << "WARNING: nevents is greater than number of events in CAL digi file. "
+				  << "Setting nevents to " << lastEvtNum+1 << std::endl;
+			nevents = lastEvtNum+1;
+		}
+
+		std::vector<hit> curEventVector;
+		size_t prevEvent = 0;
+		size_t curEvent = 0;
+		for(size_t curHitVecPos = 0; curHitVecPos<calHitVector.size(); curHitVecPos++)
+		{
+		        curEvent = calHitVector[curHitVecPos].evt;
+			if(curEvent != prevEvent)
+			{
+			        for(size_t i=0; i<curEvent-prevEvent; i++)
+				{
+				        calEventVector.push_back(curEventVector);
+					curEventVector.clear();
+				}
+				prevEvent = curEvent;
+			}
+			curEventVector.push_back(calHitVector[curHitVecPos]);
+		}
+	  
+		std::cout << "Length of calEventVector: " << calEventVector.size() << std::endl;
+	}
 	
+
 	double peakVal = 32;
 	int noise_level = 140;
 	int sigma_noise = 10;
@@ -289,199 +380,336 @@ int main(int argc, char** argv)
 	                        rocRingVector.push_back( curPair );
 	                }
 	        }
-	        // Randomize the order in whic the Rings and ROCs are received
-	        std::shuffle(rocRingVector.begin(),rocRingVector.end(),generator);
+	        // // Randomize the order in which the Rings and ROCs are received
+	        // std::shuffle(rocRingVector.begin(),rocRingVector.end(),generator);
 
-		size_t targetNumDataBlocks = rocRingVector.size();
-
+		// Vector to hold all the DataBlocks for this event
 		std::vector< std::vector<adc_t> > curDataBlockVector;
-		for (size_t dataBlockNum = 0; dataBlockNum < targetNumDataBlocks; dataBlockNum++)
+
+		// Loop over the ROC/ring pairs and generate datablocks for each ROC on
+		// all the rings
+		size_t targetNumROCs = rocRingVector.size();
+		for(size_t curPairNum = 0; curPairNum<targetNumROCs; curPairNum++)
 		{
-			std::vector<adc_t> curDataBlock;
-			// Add the header packet to the DataBlock (leaving including a placeholder for
-			// the number of packets in the DataBlock);
-			adc_t null_adc = 0;
-			// First 16 bits of header (reserved values)
-			curDataBlock.push_back(null_adc);
-			// Second 16 bits of header (ROC ID, packet type, and ring ID):
-			std::bitset<16> curROCID = rocRingVector[dataBlockNum].second; // 4 bit ROC ID
-			std::bitset<16> headerPacketType = 5; // 4 bit Data packet header type is 5
-			headerPacketType <<= 4; // Shift left by 4
-			std::bitset<16> curRingID = rocRingVector[dataBlockNum].first; // 3 bit ring ID
-			curRingID <<= 8; // Shift left by 8
-			std::bitset<16> secondEntry = (curROCID | headerPacketType | curRingID);
-			secondEntry[15] = 1; // valid bit
-			curDataBlock.push_back((adc_t)secondEntry.to_ulong());
-			// Third 16 bits of header (place-holder for number of packets in datablock)
-			curDataBlock.push_back(null_adc);
-			// Fourth through sixth 16 bits of header (timestamp)
-			uint64_t timestamp = eventNum + starting_timestamp;
-			curDataBlock.push_back(static_cast<adc_t>(timestamp & 0xFFFF));
-			curDataBlock.push_back(static_cast<adc_t>((timestamp >> 16) & 0xFFFF));
-			curDataBlock.push_back(static_cast<adc_t>((timestamp >> 32) & 0xFFFF));
+		        size_t ringID = rocRingVector[curPairNum].first;
+			size_t rocID = rocRingVector[curPairNum].second;
 
-			// Seventh 16 bits of header (data packet format version and status)
-			adc_t status = 0; // 0 Corresponds to "Timestamp has valid data"
-			adc_t formatVersion = (5 << 8); // Using 5 for now
-			curDataBlock.push_back(formatVersion + status);
-			// Eighth 16 bits of header (Unassigned)
-			curDataBlock.push_back(null_adc);
-
-			// Vector to hold raw digitized waveform
-			std::vector<double> digiVector;
-			double hitTime = 0.0;
-
-			// Create a vector of adc_t values corresponding to
-			// the content of TRK/CAL data packets.
-			std::vector<adc_t> packetVector;
-
-			// Sample distributions
-			double cur_tau = tau_distribution(generator);
-			double cur_sigma = sigma_distribution(generator);
-			double cur_offset = offset_distribution(generator);
-
-			double cur_eta = eta_distribution(generator);
-			double cur_Epeak = Epeak_distribution(generator);
-			double cur_norm = norm_distribution(generator);
-
-			// Control flags
-			bool inWindow = false;
-			bool exitWindow = false;
-			double curVal = 0;
-			size_t padding_slots = 0;
-
-			switch (packetType)
+			if(read_cal_digis_from_file && packetType==PacketType_CAL)
 			{
-			case PacketType_TRK:
-			{
-				// Generate TRK data packets
-
-				for (double curTime = minTime; curTime < maxTime && !exitWindow; curTime += stepSize)
+			        std::vector<hit> curHitVector;
+				// Find all hits for this event coming from the specified Ring/ROC
+				for(size_t curHitIdx=0; curHitIdx<calEventVector[eventNum].size(); curHitIdx++)
 				{
-					curVal = f(curTime, cur_tau, cur_sigma, cur_offset);
-					if (!inWindow && curVal > threshold)
+				        if(calEventVector[eventNum][curHitIdx].rocID == rocID && calEventVector[eventNum][curHitIdx].ringID == ringID)
 					{
-						inWindow = true;
-						curTime -= 2 * stepSize; // Save samples starting 2 steps before the threshold is reached
-						hitTime = curTime;
-						curVal = f(curTime, cur_tau, cur_sigma, cur_offset);
+					        curHitVector.push_back(calEventVector[eventNum][curHitIdx]);
 					}
-					else if (curVal < threshold && inWindow && curTime > hitTime + 2 * stepSize)
+				}
+		    
+				if(curHitVector.size() == 0)
+				{ 
+				        // No hits, so just fill a header packet and no data packets
+				        std::vector<adc_t> curDataBlock;
+					// Add the header packet to the DataBlock (leaving including a placeholder for
+					// the number of packets in the DataBlock);
+					adc_t null_adc = 0;
+					// First 16 bits of header (reserved values)
+					curDataBlock.push_back(null_adc);
+					// Second 16 bits of header (ROC ID, packet type, and ring ID):
+					std::bitset<16> curROCID = rocID; // 4 bit ROC ID
+					std::bitset<16> headerPacketType = 5; // 4 bit Data packet header type is 5
+					headerPacketType <<= 4; // Shift left by 4
+					std::bitset<16> curRingID = ringID; // 3 bit ring ID
+					curRingID <<= 8; // Shift left by 8
+					std::bitset<16> secondEntry = (curROCID | headerPacketType | curRingID);
+					secondEntry[15] = 1; // valid bit
+					curDataBlock.push_back((adc_t)secondEntry.to_ulong());
+					// Third 16 bits of header (number of data packets is 0)
+					curDataBlock.push_back(null_adc);
+					// Fourth through sixth 16 bits of header (timestamp)
+					uint64_t timestamp = eventNum + starting_timestamp;
+					curDataBlock.push_back(static_cast<adc_t>(timestamp & 0xFFFF));
+					curDataBlock.push_back(static_cast<adc_t>((timestamp >> 16) & 0xFFFF));
+					curDataBlock.push_back(static_cast<adc_t>((timestamp >> 32) & 0xFFFF));
+					
+					// Seventh 16 bits of header (data packet format version and status)
+					adc_t status = 0; // 0 Corresponds to "Timestamp has valid data"
+					adc_t formatVersion = (5 << 8); // Using 5 for now
+					curDataBlock.push_back(formatVersion + status);
+					// Eighth 16 bits of header (Unassigned)
+					curDataBlock.push_back(null_adc);
+					curDataBlockVector.push_back(curDataBlock);
+				} else {
+				        for(size_t curHitIdx=0; curHitIdx<curHitVector.size(); curHitIdx++)
 					{
-						inWindow = false;
-						exitWindow = true;
-					}
+					        // Generate a DataBlock for every hit on this ROC
+			
+					        hit curHit = curHitVector[curHitIdx];
+			
+						std::vector<adc_t> curDataBlock;
+						// Add the header packet to the DataBlock (leaving including a placeholder for
+						// the number of packets in the DataBlock);
+						adc_t null_adc = 0;
+						// First 16 bits of header (reserved values)
+						curDataBlock.push_back(null_adc);
+						// Second 16 bits of header (ROC ID, packet type, and ring ID):
+						std::bitset<16> curROCID = rocID; // 4 bit ROC ID
+						std::bitset<16> headerPacketType = 5; // 4 bit Data packet header type is 5
+						headerPacketType <<= 4; // Shift left by 4
+						std::bitset<16> curRingID = ringID; // 3 bit ring ID
+						curRingID <<= 8; // Shift left by 8
+						std::bitset<16> secondEntry = (curROCID | headerPacketType | curRingID);
+						secondEntry[15] = 1; // valid bit
+						curDataBlock.push_back((adc_t)secondEntry.to_ulong());
+						// Third 16 bits of header (number of data packets is 0)
+						curDataBlock.push_back(null_adc);
+						// Fourth through sixth 16 bits of header (timestamp)
+						uint64_t timestamp = eventNum + starting_timestamp;
+						curDataBlock.push_back(static_cast<adc_t>(timestamp & 0xFFFF));
+						curDataBlock.push_back(static_cast<adc_t>((timestamp >> 16) & 0xFFFF));
+						curDataBlock.push_back(static_cast<adc_t>((timestamp >> 32) & 0xFFFF));
 
-					if (inWindow)
-					{
-						digiVector.push_back(curVal);
+						// Seventh 16 bits of header (data packet format version and status)
+						adc_t status = 0; // 0 Corresponds to "Timestamp has valid data"
+						adc_t formatVersion = (5 << 8); // Using 5 for now
+						curDataBlock.push_back(formatVersion + status);
+						// Eighth 16 bits of header (Unassigned)
+						curDataBlock.push_back(null_adc);
+						
+						// Create a vector of adc_t values corresponding to
+						// the content of CAL data packets.
+						std::vector<adc_t> packetVector;
+
+						// Fill the data packets:
+						// Assume the 0th apd is always read out before the second
+						adc_t crystalID = curHit.crystalId;
+						adc_t apdID = curHit.recoDigiId%2;
+						adc_t IDNum = ((apdID << 12) | crystalID);
+			
+						packetVector.push_back(IDNum);
+						packetVector.push_back((adc_t)(curHit.recoDigiT0));
+						packetVector.push_back((adc_t)(curHit.recoDigiSamples));
+						for (size_t sampleIdx = 0; sampleIdx < curHit.recoDigiSamples; sampleIdx++)
+						{
+						        adc_t scaledVal = curHit.waveform[sampleIdx];
+							packetVector.push_back(scaledVal);
+						}
+						// Pad any empty space in the last packet with 0s
+						size_t padding_slots = 8 - ((curHit.recoDigiSamples - 5) % 8);
+						if (padding_slots < 8)
+						{
+						        for (size_t i = 0; i < padding_slots; i++)
+							{
+							        packetVector.push_back((adc_t)0);
+							}
+						}
+
+						// Fill in the number of data packets entry in the header packet
+						adc_t numDataPackets = packetVector.size() / 8;
+						curDataBlock[2] = numDataPackets;
+
+						// Fill in the byte count field of the header packet
+						adc_t numBytes = (numDataPackets + 1) * 16;
+						curDataBlock[0] = numBytes;
+
+						// Append the data packets after the header packet in the DataBlock
+						curDataBlock.insert(curDataBlock.end(), packetVector.begin(), packetVector.end());
+						curDataBlockVector.push_back(curDataBlock);			
 					}
 				}
 
-				adc_t strawIndex = strawIndex_distribution(generator);
-				adc_t TDC0 = TDC_distribution(generator);
-				adc_t TDC1 = TDC_distribution(generator);
+			} else {
+			        // Generate packet content based on approximate waveforms instead of more complete simulation
+			        std::vector<adc_t> curDataBlock;
+				// Add the header packet to the DataBlock (leaving including a placeholder for
+				// the number of packets in the DataBlock);
+				adc_t null_adc = 0;
+				// First 16 bits of header (reserved values)
+				curDataBlock.push_back(null_adc);
+				// Second 16 bits of header (ROC ID, packet type, and ring ID):
+				std::bitset<16> curROCID = rocID; // 4 bit ROC ID
+				std::bitset<16> headerPacketType = 5; // 4 bit Data packet header type is 5
+				headerPacketType <<= 4; // Shift left by 4
+				std::bitset<16> curRingID = ringID; // 3 bit ring ID
+				curRingID <<= 8; // Shift left by 8
+				std::bitset<16> secondEntry = (curROCID | headerPacketType | curRingID);
+				secondEntry[15] = 1; // valid bit
+				curDataBlock.push_back((adc_t)secondEntry.to_ulong());
+				// Third 16 bits of header (number of data packets is 0)
+				curDataBlock.push_back(null_adc);
+				// Fourth through sixth 16 bits of header (timestamp)
+				uint64_t timestamp = eventNum + starting_timestamp;
+				curDataBlock.push_back(static_cast<adc_t>(timestamp & 0xFFFF));
+				curDataBlock.push_back(static_cast<adc_t>((timestamp >> 16) & 0xFFFF));
+				curDataBlock.push_back(static_cast<adc_t>((timestamp >> 32) & 0xFFFF));
 
-				packetVector.push_back(strawIndex);
-				packetVector.push_back(TDC0);
-				packetVector.push_back(TDC1);
-				for (size_t i = 0; i < numADCSamples; i++)
+				// Seventh 16 bits of header (data packet format version and status)
+				adc_t status = 0; // 0 Corresponds to "Timestamp has valid data"
+				adc_t formatVersion = (5 << 8); // Using 5 for now
+				curDataBlock.push_back(formatVersion + status);
+				// Eighth 16 bits of header (Unassigned)
+				curDataBlock.push_back(null_adc);
+
+				// Vector to hold raw digitized waveform
+				std::vector<double> digiVector;
+				double hitTime = 0.0;
+
+				// Create a vector of adc_t values corresponding to
+				// the content of TRK/CAL data packets.
+				std::vector<adc_t> packetVector;
+
+				// Sample distributions
+				double cur_tau = tau_distribution(generator);
+				double cur_sigma = sigma_distribution(generator);
+				double cur_offset = offset_distribution(generator);
+
+				double cur_eta = eta_distribution(generator);
+				double cur_Epeak = Epeak_distribution(generator);
+				double cur_norm = norm_distribution(generator);
+
+				// Control flags
+				bool inWindow = false;
+				bool exitWindow = false;
+				double curVal = 0;
+				size_t padding_slots = 0;
+
+				switch (packetType)
 				{
-					adc_t scaledVal = 0;
-					// Scale the function value relative to a peak
-					// value of around 0.02 and convert to a 12 bit integer
-					// stored in a 16 bit adc_t
-					if (i < digiVector.size())
-					{
-						scaledVal = digiVector[i] / (1.0 * peakVal) * (1 << 12);
-					}
-					// Add some noise
-					adc_t noise = noise_distribution(generator);
-					packetVector.push_back(scaledVal + noise);
-				}
-				// Pad any empty space in the last packet with 0s
-				padding_slots = 8 - ((numADCSamples - 5) % 8);
-				if (padding_slots < 8)
+				case PacketType_TRK:
 				{
-					for (size_t i = 0; i < padding_slots; i++)
+				        // Generate TRK data packets
+
+				        for (double curTime = minTime; curTime < maxTime && !exitWindow; curTime += stepSize)
 					{
-						packetVector.push_back((adc_t)0);
-					}
-				}
-			}
-			break;
-			case PacketType_CAL:
-			{
-				for (double curTime = minTime; curTime < maxTime && !exitWindow; curTime += stepSize)
-				{
-					curVal = logn(curTime, cur_eta, cur_sigma, cur_Epeak, cur_norm);
-					if (!inWindow && curVal > threshold)
-					{
-						inWindow = true;
-						curTime -= 5 * stepSize; // Save samples starting 5 steps before the threshold is reached
-						hitTime = curTime;
-						curVal = logn(curTime, cur_eta, cur_sigma, cur_Epeak, cur_norm);
-					}
-					else if (curVal < threshold && inWindow && curTime > hitTime + 5 * stepSize)
-					{
-						inWindow = false;
-						exitWindow = true;
+					        curVal = f(curTime, cur_tau, cur_sigma, cur_offset);
+					        if (!inWindow && curVal > threshold)
+					        {
+					        	inWindow = true;
+					        	curTime -= 2 * stepSize; // Save samples starting 2 steps before the threshold is reached
+					        	hitTime = curTime;
+					        	curVal = f(curTime, cur_tau, cur_sigma, cur_offset);
+					        }
+					        else if (curVal < threshold && inWindow && curTime > hitTime + 2 * stepSize)
+					        {
+					        	inWindow = false;
+					        	exitWindow = true;
+					        }
+					        
+					        if (inWindow)
+					        {
+					        	digiVector.push_back(curVal);
+					        }
 					}
 
-					if (inWindow)
-					{
-						digiVector.push_back(curVal);
-					}
-				}
+					adc_t strawIndex = strawIndex_distribution(generator);
+					adc_t TDC0 = TDC_distribution(generator);
+					adc_t TDC1 = TDC_distribution(generator);
 
-				adc_t apdID = apdID_distribution(generator);
-				adc_t crystalID = crystalID_distribution(generator);
-				adc_t IDNum = ((apdID << 12) | crystalID);
-				packetVector.push_back(IDNum);
-				packetVector.push_back((adc_t)hitTime);
-				packetVector.push_back((adc_t)digiVector.size());
-				for (size_t i = 0; i < digiVector.size(); i++)
-				{
-					// Scale the function value relative to a peak possible
-					// value of around 35 and convert to a 12 bit integer
-					// stored in a 16 bit adc_t
-					adc_t scaledVal = digiVector[i] / (1.0 * peakVal) * (1 << 12);
-					// Add some noise
-					adc_t noise = noise_distribution(generator);
-					packetVector.push_back(scaledVal + noise);
-				}
-				// Pad any empty space in the last packet with 0s
-				padding_slots = 8 - ((digiVector.size() - 5) % 8);
-				if (padding_slots < 8)
-				{
-					for (size_t i = 0; i < padding_slots; i++)
+					packetVector.push_back(strawIndex);
+					packetVector.push_back(TDC0);
+					packetVector.push_back(TDC1);
+					for (size_t i = 0; i < numADCSamples; i++)
 					{
-						packetVector.push_back((adc_t)0);
+					        adc_t scaledVal = 0;
+					        // Scale the function value relative to a peak
+					        // value of around 0.02 and convert to a 12 bit integer
+					        // stored in a 16 bit adc_t
+					        if (i < digiVector.size())
+					        {
+					        	scaledVal = digiVector[i] / (1.0 * peakVal) * (1 << 12);
+					        }
+					        // Add some noise
+					        adc_t noise = noise_distribution(generator);
+					        packetVector.push_back(scaledVal + noise);
+					}
+					// Pad any empty space in the last packet with 0s
+					padding_slots = 8 - ((numADCSamples - 5) % 8);
+					if (padding_slots < 8)
+					{
+					        for (size_t i = 0; i < padding_slots; i++)
+						{
+						        packetVector.push_back((adc_t)0);
+						}
 					}
 				}
-			}
-			break;
-			default:
 				break;
+				case PacketType_CAL:
+				{
+				        {
+					        // Approximate CAL waveforms on the fly instead of reading them in from a file
+					        for (double curTime = minTime; curTime < maxTime && !exitWindow; curTime += stepSize)
+					        {
+					                curVal = logn(curTime, cur_eta, cur_sigma, cur_Epeak, cur_norm);
+					        	if (!inWindow && curVal > threshold)
+					        	{
+					        	        inWindow = true;
+					        		curTime -= 5 * stepSize; // Save samples starting 5 steps before the threshold is reached
+					        		hitTime = curTime;
+					        		curVal = logn(curTime, cur_eta, cur_sigma, cur_Epeak, cur_norm);
+					        	}
+					        	else if (curVal < threshold && inWindow && curTime > hitTime + 5 * stepSize)
+					        	{
+					        	        inWindow = false;
+					        		exitWindow = true;
+					        	}
+					        
+					        	if (inWindow)
+					        	{
+					        	        digiVector.push_back(curVal);
+					        	}
+					        }
+					        
+			                        adc_t apdID = apdID_distribution(generator);
+				                adc_t crystalID = crystalID_distribution(generator);
+				                adc_t IDNum = ((apdID << 12) | crystalID);
+				                packetVector.push_back(IDNum);
+				                packetVector.push_back((adc_t)hitTime);
+				                packetVector.push_back((adc_t)digiVector.size());
+				                for (size_t i = 0; i < digiVector.size(); i++)
+				                {
+				                	// Scale the function value relative to a peak possible
+				                	// value of around 35 and convert to a 12 bit integer
+				                	// stored in a 16 bit adc_t
+				                	adc_t scaledVal = digiVector[i] / (1.0 * peakVal) * (1 << 12);
+				                	// Add some noise
+				                	adc_t noise = noise_distribution(generator);
+				                	packetVector.push_back(scaledVal + noise);
+				                }
+				                // Pad any empty space in the last packet with 0s
+				                padding_slots = 8 - ((digiVector.size() - 5) % 8);
+				                if (padding_slots < 8)
+				                {
+				                	for (size_t i = 0; i < padding_slots; i++)
+				                	{
+				                		packetVector.push_back((adc_t)0);
+				                	}
+				                }
+					}
+				        }
+				        break;
+				        default:
+					        break;
+				}
+
+				// Fill in the number of data packets entry in the header packet
+				adc_t numDataPackets = packetVector.size() / 8;
+				curDataBlock[2] = numDataPackets;
+
+				// Fill in the byte count field of the header packet
+				adc_t numBytes = (numDataPackets + 1) * 16;
+				curDataBlock[0] = numBytes;
+
+				// Append the data packets after the header packet in the DataBlock
+				curDataBlock.insert(curDataBlock.end(), packetVector.begin(), packetVector.end());
+				curDataBlockVector.push_back(curDataBlock);		    
 			}
-
-
-			// Fill in the number of data packets entry in the header packet
-			adc_t numDataPackets = packetVector.size() / 8;
-			curDataBlock[2] = numDataPackets;
-
-			// Fill in the byte count field of the header packet
-			adc_t numBytes = (numDataPackets + 1) * 16;
-			curDataBlock[0] = numBytes;
-
-			// Append the data packets after the header packet in the DataBlock
-			curDataBlock.insert(curDataBlock.end(), packetVector.begin(), packetVector.end());
-			curDataBlockVector.push_back(curDataBlock);
-		} // Done generating DataBlocks for this timestamp
+		  
+		} // Done generating DataBlocks for this timestamp 
 		timeStampVector.push_back(curDataBlockVector);
-	}
-	// Done generating data for all timestamps
 
+
+	} // Done generating data for all timestamps
+	
 	std::cout << "Size of timestamp vector: " << timeStampVector.size() << std::endl;
 
 	if (verbose)
