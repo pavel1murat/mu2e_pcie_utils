@@ -4,6 +4,10 @@
 
 DTCLib::DTC_SimMode DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::string modeName)
 {
+	if(modeName.find("isabled") != std::string::npos)
+	{
+		return DTC_SimMode_Disabled;
+	}
 	if (modeName.find("racker") != std::string::npos)
 	{
 		return DTC_SimMode_Tracker;
@@ -33,8 +37,14 @@ DTCLib::DTC_SimMode DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::string m
 		return DTC_SimMode_Performance;
 	}
 
-	DTC_SimMode modeInt = static_cast<DTC_SimMode>(stoi(modeName, nullptr, 10));
-	return modeInt != DTC_SimMode_Invalid ? modeInt : DTC_SimMode_Disabled;
+	try {
+		DTC_SimMode modeInt = static_cast<DTC_SimMode>(stoi(modeName, nullptr, 10));
+		return modeInt != DTC_SimMode_Invalid ? modeInt : DTC_SimMode_Disabled;
+	}
+	catch(std::invalid_argument e)
+	{
+		return DTC_SimMode_Invalid;
+	}
 }
 
 DTCLib::DTC_Timestamp::DTC_Timestamp()
