@@ -41,7 +41,7 @@ DTCLib::DTC_SimMode DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::string m
 		DTC_SimMode modeInt = static_cast<DTC_SimMode>(stoi(modeName, nullptr, 10));
 		return modeInt != DTC_SimMode_Invalid ? modeInt : DTC_SimMode_Disabled;
 	}
-	catch(std::invalid_argument e)
+	catch(...)
 	{
 		return DTC_SimMode_Invalid;
 	}
