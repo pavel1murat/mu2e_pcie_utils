@@ -83,7 +83,7 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 		packet = nullptr;
 
 		TRACE(19, "DTC::GetData: Adding pointer %p to the list (first)", (void*)lastReadPtr_);
-		output.push_back(DTC_DataBlock(lastReadPtr_, sz));
+		output.push_back(DTC_DataBlock(reinterpret_cast<DTC_DataBlock::pointer_t*>(lastReadPtr_), sz));
 
 		bool done = false;
 		while (!done)
@@ -109,7 +109,7 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 			packet = nullptr;
 
 			TRACE(19, "DTC::GetData: Adding pointer %p to the list", (void*)lastReadPtr_);
-			if (!done) output.push_back(DTC_DataBlock(lastReadPtr_, sz));
+			if (!done) output.push_back(DTC_DataBlock(reinterpret_cast<DTC_DataBlock::pointer_t*>(lastReadPtr_), sz));
 		}
 	}
 	catch (DTC_WrongPacketTypeException ex)

@@ -903,10 +903,11 @@ namespace DTCLib
 
 	struct DTC_DataBlock
 	{
-		void * blockPointer;
+	  typedef uint64_t pointer_t;
+		pointer_t * blockPointer;
 		size_t byteSize;
 
-		DTC_DataBlock(void* ptr, size_t sz) : blockPointer(ptr), byteSize(sz) {}
+		DTC_DataBlock(pointer_t* ptr, size_t sz) : blockPointer(ptr), byteSize(sz) {}
 	};
 
 	struct Utilities
