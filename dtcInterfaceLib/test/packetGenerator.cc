@@ -580,7 +580,7 @@ int main(int argc, char** argv)
 						packetVector.push_back(IDNum);
 						packetVector.push_back((adc_t)(curHit.recoDigiT0));
 						packetVector.push_back((adc_t)(curHit.recoDigiSamples));
-						for (size_t sampleIdx = 0; sampleIdx < curHit.recoDigiSamples; sampleIdx++)
+						for (int sampleIdx = 0; sampleIdx < curHit.recoDigiSamples; sampleIdx++)
 						{
 						        adc_t scaledVal = curHit.waveform[sampleIdx];
 							packetVector.push_back(scaledVal);
