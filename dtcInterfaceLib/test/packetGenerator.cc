@@ -11,7 +11,7 @@
 typedef uint16_t adc_t;
 
 // Struct to hold information from simulated CAL digis read in from external file
-struct hit {
+struct calhit {
   int evt;
   int crystalId;
   int recoDigiId;
@@ -24,6 +24,20 @@ struct hit {
   int apdID;
   
 };
+
+// Struct to hold information from simulated TRK digis read in from external file
+struct trkhit {
+  int evt;
+  int strawIdx;
+  int recoDigiT0;
+  int recoDigiT1;
+  int recoDigiSamples;
+  std::vector<double> waveform;
+
+  int rocID;
+  int ringID;
+};
+
 
 // Waveform for TRK:
 double f(double t, double tau, double sigma, double offset);
@@ -109,13 +123,23 @@ int main(int argc, char** argv)
 	double nevents = 200000; // Number of hits to generate
 
 	bool read_cal_digis_from_file = true;
-	std::string inputCalDigiFile = "artdaq_cut.txt";
+	std::string inputCalDigiFile = "artdaq_cut_cal.txt";
 	std::ifstream inputCalDigiStream;
-	std::vector<hit> calHitVector; // Vector of cal hit digi data
-	std::vector< std::vector<hit> > calEventVector; // Vector of vectors of cal hit digi data for each event
+	std::vector<calhit> calHitVector; // Vector of cal hit digi data
+	std::vector< std::vector<calhit> > calEventVector; // Vector of vectors of cal hit digi data for each event
 	// For now, crystal IDs start at minCrystalID and end at minCrystalID+number_of_rings*rocs_per_ring-1
 	size_t number_of_crystals_per_roc = 10; // 20 channels, 2 APDs per crystal
 	size_t minCrystalID = 200;
+
+	bool read_trk_digis_from_file = true;
+	std::string inputTrkDigiFile = "artdaq_cut_trk.txt";
+	std::ifstream inputTrkDigiStream;
+	std::vector<trkhit> trkHitVector; // Vector of trk hit digi data
+	std::vector< std::vector<trkhit> > trkEventVector; // Vector of vectors of cal hit digi data for each event
+	// For now, crystal IDs start at minCrystalID and end at minCrystalID+number_of_rings*rocs_per_ring-1
+	size_t number_of_straws_per_roc = 96; // Each panel in the tracker has 96 straws
+	size_t minStrawID = 960;
+
 	
 	size_t SEED = 100; // Random seed
 	
@@ -123,7 +147,8 @@ int main(int argc, char** argv)
 	PacketType packetType = PacketType_TRK;
 
 	std::string outputFile = "";
-	size_t numADCSamples = 8;
+	//	size_t numADCSamples = 8;
+	size_t numADCSamples = 12;
 
 	// The timestamp count will be offset by the following amount:
 	size_t starting_timestamp = 1;
@@ -200,29 +225,27 @@ int main(int argc, char** argv)
 
 
 
-	if(read_cal_digis_from_file)
+	if(read_cal_digis_from_file && packetType == PacketType_CAL)
 	{
 	        inputCalDigiStream.open(inputCalDigiFile, std::ifstream::in);
 	        int curEvt;
 	        while(inputCalDigiStream >> curEvt)
 		{
-	                hit curHit;
+	                calhit curHit;
 			curHit.evt = curEvt;
 			inputCalDigiStream >> curHit.crystalId;
 			inputCalDigiStream >> curHit.recoDigiId;
 			inputCalDigiStream >> curHit.recoDigiT0;
 			inputCalDigiStream >> curHit.recoDigiSamples;
 			double curSample;
-			for(int curSampleNum = 0; curSampleNum < curHit.recoDigiSamples; curSampleNum++)
+			for(size_t curSampleNum = 0; curSampleNum < curHit.recoDigiSamples; curSampleNum++)
 			{
 			        inputCalDigiStream >> curSample;
 				curHit.waveform.push_back(curSample);
 			}
 
 			curHit.ringID = int((curHit.crystalId - minCrystalID) / (rocs_per_ring * number_of_crystals_per_roc));
-			curHit.rocID = ((curHit.crystalId - minCrystalID) - (rocs_per_ring * number_of_crystals_per_roc) * curHit.ringID)/8;
-			//	    curHit.ringID = int((curHit.crystalId - minCrystalID) / rocs_per_ring);
-			//	    curHit.rocID = (curHit.crystalId - minCrystalID) - rocs_per_ring * curHit.ringID;
+			curHit.rocID = ((curHit.crystalId - minCrystalID) - (rocs_per_ring * number_of_crystals_per_roc) * curHit.ringID)/number_of_crystals_per_roc;
 			curHit.apdID = curHit.recoDigiId % 2; // Even is APD 0, Odd is APD 1
 	    
 			calHitVector.push_back(curHit);
@@ -243,26 +266,94 @@ int main(int argc, char** argv)
 			nevents = lastEvtNum+1;
 		}
 
-		std::vector<hit> curEventVector;
-		size_t prevEvent = 0;
-		size_t curEvent = 0;
+		std::vector<calhit> curEventVector;
+		size_t prevEvent = calHitVector[0].evt;
+		size_t curEvent = calHitVector[0].evt;
 		for(size_t curHitVecPos = 0; curHitVecPos<calHitVector.size(); curHitVecPos++)
 		{
 		        curEvent = calHitVector[curHitVecPos].evt;
 			if(curEvent != prevEvent)
 			{
-			        for(size_t i=0; i<curEvent-prevEvent; i++)
-				{
-				        calEventVector.push_back(curEventVector);
-					curEventVector.clear();
-				}
-				prevEvent = curEvent;
+			  calEventVector.push_back(curEventVector);
+			  curEventVector.clear();
+			  prevEvent = curEvent;
 			}
-			curEventVector.push_back(calHitVector[curHitVecPos]);
+			curEventVector.push_back(calHitVector[curHitVecPos]);			
 		}
+		calEventVector.push_back(curEventVector);
 	  
 		std::cout << "Length of calEventVector: " << calEventVector.size() << std::endl;
 	}
+
+
+
+
+
+	if(read_trk_digis_from_file && packetType == PacketType_TRK)
+	{
+	        inputTrkDigiStream.open(inputTrkDigiFile, std::ifstream::in);
+	        int curEvt;
+	        while(inputTrkDigiStream >> curEvt)
+		{
+	                trkhit curHit;
+			curHit.evt = curEvt;
+			inputTrkDigiStream >> curHit.strawIdx;
+			inputTrkDigiStream >> curHit.recoDigiT0;
+			inputTrkDigiStream >> curHit.recoDigiT1;
+			inputTrkDigiStream >> curHit.recoDigiSamples;
+
+			// The tracker should have a fixed number of digitizer samples (12)
+			assert(numADCSamples == curHit.recoDigiSamples);
+
+			double curSample;
+			for(size_t curSampleNum = 0; curSampleNum < curHit.recoDigiSamples; curSampleNum++)
+			{
+			        inputTrkDigiStream >> curSample;
+				curHit.waveform.push_back(curSample);
+			}
+
+			curHit.ringID = int((curHit.strawIdx - minStrawID) / (rocs_per_ring * number_of_straws_per_roc));
+			curHit.rocID = ((curHit.strawIdx - minStrawID) - (rocs_per_ring * number_of_straws_per_roc) * curHit.ringID)/number_of_straws_per_roc;
+	    
+			trkHitVector.push_back(curHit);
+		}
+		inputTrkDigiStream.close();
+
+		size_t firstEvtNum = trkHitVector[0].evt;
+		size_t lastEvtNum = trkHitVector[trkHitVector.size()-1].evt;
+		
+		std::cout << "Read in " << trkHitVector.size() << " tracker digi hits" << std::endl;
+		std::cout << "First TRK event num: " << firstEvtNum << std::endl;
+		std::cout << "Last TRK event num: " << lastEvtNum << std::endl;
+
+		if(lastEvtNum<nevents)
+		{
+		        std::cout << "WARNING: nevents is greater than number of events in TRK digi file. "
+				  << "Setting nevents to " << lastEvtNum+1 << std::endl;
+			nevents = lastEvtNum+1;
+		}
+
+		std::vector<trkhit> curEventVector;
+		size_t prevEvent = trkHitVector[0].evt;
+		size_t curEvent = trkHitVector[0].evt;
+		for(size_t curHitVecPos = 0; curHitVecPos<trkHitVector.size(); curHitVecPos++)
+		{
+		        curEvent = trkHitVector[curHitVecPos].evt;
+			if(curEvent != prevEvent)
+			{
+			  trkEventVector.push_back(curEventVector);
+			  curEventVector.clear();
+			  prevEvent = curEvent;
+			}
+			curEventVector.push_back(trkHitVector[curHitVecPos]);
+		}
+		trkEventVector.push_back(curEventVector);
+	  
+		std::cout << "Length of trkEventVector: " << trkEventVector.size() << std::endl;
+	}
+
+
+
 	
 
 	double peakVal = 32;
@@ -396,11 +487,11 @@ int main(int argc, char** argv)
 
 			if(read_cal_digis_from_file && packetType==PacketType_CAL)
 			{
-			        std::vector<hit> curHitVector;
+			        std::vector<calhit> curHitVector;
 				// Find all hits for this event coming from the specified Ring/ROC
 				for(size_t curHitIdx=0; curHitIdx<calEventVector[eventNum].size(); curHitIdx++)
 				{
-				        if(calEventVector[eventNum][curHitIdx].rocID == (int)rocID && calEventVector[eventNum][curHitIdx].ringID == (int)ringID)
+				        if(calEventVector[eventNum][curHitIdx].rocID == rocID && calEventVector[eventNum][curHitIdx].ringID == ringID)
 					{
 					        curHitVector.push_back(calEventVector[eventNum][curHitIdx]);
 					}
@@ -444,7 +535,7 @@ int main(int argc, char** argv)
 					{
 					        // Generate a DataBlock for every hit on this ROC
 			
-					        hit curHit = curHitVector[curHitIdx];
+					        calhit curHit = curHitVector[curHitIdx];
 			
 						std::vector<adc_t> curDataBlock;
 						// Add the header packet to the DataBlock (leaving including a placeholder for
@@ -489,7 +580,7 @@ int main(int argc, char** argv)
 						packetVector.push_back(IDNum);
 						packetVector.push_back((adc_t)(curHit.recoDigiT0));
 						packetVector.push_back((adc_t)(curHit.recoDigiSamples));
-						for (int sampleIdx = 0; sampleIdx < curHit.recoDigiSamples; sampleIdx++)
+						for (size_t sampleIdx = 0; sampleIdx < curHit.recoDigiSamples; sampleIdx++)
 						{
 						        adc_t scaledVal = curHit.waveform[sampleIdx];
 							packetVector.push_back(scaledVal);
@@ -518,7 +609,132 @@ int main(int argc, char** argv)
 					}
 				}
 
-			} else {
+			} else if(read_trk_digis_from_file && packetType==PacketType_TRK)
+			  {
+			        std::vector<trkhit> curHitVector;
+				// Find all hits for this event coming from the specified Ring/ROC
+				for(size_t curHitIdx=0; curHitIdx<trkEventVector[eventNum].size(); curHitIdx++)
+				{
+				        if(trkEventVector[eventNum][curHitIdx].rocID == rocID && trkEventVector[eventNum][curHitIdx].ringID == ringID)
+					{
+					        curHitVector.push_back(trkEventVector[eventNum][curHitIdx]);
+					}
+				}
+		    
+				if(curHitVector.size() == 0)
+				{ 
+				        // No hits, so just fill a header packet and no data packets
+				        std::vector<adc_t> curDataBlock;
+					// Add the header packet to the DataBlock (leaving including a placeholder for
+					// the number of packets in the DataBlock);
+					adc_t null_adc = 0;
+					// First 16 bits of header (reserved values)
+					curDataBlock.push_back(null_adc);
+					// Second 16 bits of header (ROC ID, packet type, and ring ID):
+					std::bitset<16> curROCID = rocID; // 4 bit ROC ID
+					std::bitset<16> headerPacketType = 5; // 4 bit Data packet header type is 5
+					headerPacketType <<= 4; // Shift left by 4
+					std::bitset<16> curRingID = ringID; // 3 bit ring ID
+					curRingID <<= 8; // Shift left by 8
+					std::bitset<16> secondEntry = (curROCID | headerPacketType | curRingID);
+					secondEntry[15] = 1; // valid bit
+					curDataBlock.push_back((adc_t)secondEntry.to_ulong());
+					// Third 16 bits of header (number of data packets is 0)
+					curDataBlock.push_back(null_adc);
+					// Fourth through sixth 16 bits of header (timestamp)
+					uint64_t timestamp = eventNum + starting_timestamp;
+					curDataBlock.push_back(static_cast<adc_t>(timestamp & 0xFFFF));
+					curDataBlock.push_back(static_cast<adc_t>((timestamp >> 16) & 0xFFFF));
+					curDataBlock.push_back(static_cast<adc_t>((timestamp >> 32) & 0xFFFF));
+					
+					// Seventh 16 bits of header (data packet format version and status)
+					adc_t status = 0; // 0 Corresponds to "Timestamp has valid data"
+					adc_t formatVersion = (5 << 8); // Using 5 for now
+					curDataBlock.push_back(formatVersion + status);
+					// Eighth 16 bits of header (Unassigned)
+					curDataBlock.push_back(null_adc);
+					curDataBlockVector.push_back(curDataBlock);
+				} else {
+				        for(size_t curHitIdx=0; curHitIdx<curHitVector.size(); curHitIdx++)
+					{
+					        // Generate a DataBlock for every hit on this ROC
+			
+					        trkhit curHit = curHitVector[curHitIdx];
+			
+						std::vector<adc_t> curDataBlock;
+						// Add the header packet to the DataBlock (leaving including a placeholder for
+						// the number of packets in the DataBlock);
+						adc_t null_adc = 0;
+						// First 16 bits of header (reserved values)
+						curDataBlock.push_back(null_adc);
+						// Second 16 bits of header (ROC ID, packet type, and ring ID):
+						std::bitset<16> curROCID = rocID; // 4 bit ROC ID
+						std::bitset<16> headerPacketType = 5; // 4 bit Data packet header type is 5
+						headerPacketType <<= 4; // Shift left by 4
+						std::bitset<16> curRingID = ringID; // 3 bit ring ID
+						curRingID <<= 8; // Shift left by 8
+						std::bitset<16> secondEntry = (curROCID | headerPacketType | curRingID);
+						secondEntry[15] = 1; // valid bit
+						curDataBlock.push_back((adc_t)secondEntry.to_ulong());
+						// Third 16 bits of header (number of data packets is 0)
+						curDataBlock.push_back(null_adc);
+						// Fourth through sixth 16 bits of header (timestamp)
+						uint64_t timestamp = eventNum + starting_timestamp;
+						curDataBlock.push_back(static_cast<adc_t>(timestamp & 0xFFFF));
+						curDataBlock.push_back(static_cast<adc_t>((timestamp >> 16) & 0xFFFF));
+						curDataBlock.push_back(static_cast<adc_t>((timestamp >> 32) & 0xFFFF));
+
+						// Seventh 16 bits of header (data packet format version and status)
+						adc_t status = 0; // 0 Corresponds to "Timestamp has valid data"
+						adc_t formatVersion = (5 << 8); // Using 5 for now
+						curDataBlock.push_back(formatVersion + status);
+						// Eighth 16 bits of header (Unassigned)
+						curDataBlock.push_back(null_adc);
+						
+						// Create a vector of adc_t values corresponding to
+						// the content of TRK data packets.
+						std::vector<adc_t> packetVector;
+
+						// Fill the data packets:
+						// Assume the 0th apd is always read out before the second
+						adc_t strawIndex = curHit.strawIdx;
+						adc_t TDC0 = curHit.recoDigiT0;
+						adc_t TDC1 = curHit.recoDigiT1;
+
+						packetVector.push_back(strawIndex);
+						packetVector.push_back(TDC0);
+						packetVector.push_back(TDC1);
+
+						for (size_t sampleIdx = 0; sampleIdx < curHit.recoDigiSamples; sampleIdx++)
+						{
+						        adc_t scaledVal = curHit.waveform[sampleIdx];
+							packetVector.push_back(scaledVal);
+						}
+						// Pad any empty space in the last packet with 0s
+						size_t padding_slots = 8 - ((curHit.recoDigiSamples - 5) % 8);
+						if (padding_slots < 8)
+						{
+						        for (size_t i = 0; i < padding_slots; i++)
+							{
+							        packetVector.push_back((adc_t)0);
+							}
+						}
+
+						// Fill in the number of data packets entry in the header packet
+						adc_t numDataPackets = packetVector.size() / 8;
+						curDataBlock[2] = numDataPackets;
+
+						// Fill in the byte count field of the header packet
+						adc_t numBytes = (numDataPackets + 1) * 16;
+						curDataBlock[0] = numBytes;
+
+						// Append the data packets after the header packet in the DataBlock
+						curDataBlock.insert(curDataBlock.end(), packetVector.begin(), packetVector.end());
+						curDataBlockVector.push_back(curDataBlock);			
+					}
+				}
+
+			  } else {
 			        // Generate packet content based on approximate waveforms instead of more complete simulation
 			        std::vector<adc_t> curDataBlock;
 				// Add the header packet to the DataBlock (leaving including a placeholder for

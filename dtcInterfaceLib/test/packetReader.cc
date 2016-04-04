@@ -7,13 +7,14 @@
 
 int main()
 {
-	bool verbose = false;
+	bool verbose = true;
 
-	//	std::string packetType = "TRK";
-	std::string packetType = "CAL";
+	std::string packetType = "TRK";
+	//	std::string packetType = "CAL";
 
 	// Number of tracker adc samples
-	size_t numADCSamples = 8;
+	//	size_t numADCSamples = 8;
+	size_t numADCSamples = 12;
 
 	std::string inputFile = "TRK_packets.bin";
 	if (packetType == "CAL")
