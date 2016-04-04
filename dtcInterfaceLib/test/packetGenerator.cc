@@ -238,7 +238,7 @@ int main(int argc, char** argv)
 			inputCalDigiStream >> curHit.recoDigiT0;
 			inputCalDigiStream >> curHit.recoDigiSamples;
 			double curSample;
-			for(size_t curSampleNum = 0; curSampleNum < curHit.recoDigiSamples; curSampleNum++)
+			for(int curSampleNum = 0; curSampleNum < curHit.recoDigiSamples; curSampleNum++)
 			{
 			        inputCalDigiStream >> curSample;
 				curHit.waveform.push_back(curSample);
@@ -306,7 +306,7 @@ int main(int argc, char** argv)
 			assert(numADCSamples == curHit.recoDigiSamples);
 
 			double curSample;
-			for(size_t curSampleNum = 0; curSampleNum < curHit.recoDigiSamples; curSampleNum++)
+			for(int curSampleNum = 0; curSampleNum < curHit.recoDigiSamples; curSampleNum++)
 			{
 			        inputTrkDigiStream >> curSample;
 				curHit.waveform.push_back(curSample);
@@ -491,7 +491,7 @@ int main(int argc, char** argv)
 				// Find all hits for this event coming from the specified Ring/ROC
 				for(size_t curHitIdx=0; curHitIdx<calEventVector[eventNum].size(); curHitIdx++)
 				{
-				        if(calEventVector[eventNum][curHitIdx].rocID == rocID && calEventVector[eventNum][curHitIdx].ringID == ringID)
+				  if(calEventVector[eventNum][curHitIdx].rocID == (int)rocID && calEventVector[eventNum][curHitIdx].ringID == (int)ringID)
 					{
 					        curHitVector.push_back(calEventVector[eventNum][curHitIdx]);
 					}
@@ -615,7 +615,7 @@ int main(int argc, char** argv)
 				// Find all hits for this event coming from the specified Ring/ROC
 				for(size_t curHitIdx=0; curHitIdx<trkEventVector[eventNum].size(); curHitIdx++)
 				{
-				        if(trkEventVector[eventNum][curHitIdx].rocID == rocID && trkEventVector[eventNum][curHitIdx].ringID == ringID)
+				  if(trkEventVector[eventNum][curHitIdx].rocID == (int)rocID && trkEventVector[eventNum][curHitIdx].ringID == (int)ringID)
 					{
 					        curHitVector.push_back(trkEventVector[eventNum][curHitIdx]);
 					}
@@ -705,7 +705,7 @@ int main(int argc, char** argv)
 						packetVector.push_back(TDC0);
 						packetVector.push_back(TDC1);
 
-						for (size_t sampleIdx = 0; sampleIdx < curHit.recoDigiSamples; sampleIdx++)
+						for (int sampleIdx = 0; sampleIdx < curHit.recoDigiSamples; sampleIdx++)
 						{
 						        adc_t scaledVal = curHit.waveform[sampleIdx];
 							packetVector.push_back(scaledVal);
