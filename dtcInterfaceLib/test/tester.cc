@@ -64,7 +64,9 @@ int main(int argc, char* argv[])
 	TRACE(1, "simFile is %s", simFile.c_str());
 	DTC_SimMode mode = DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::to_string(modeint));
 	DTC* thisDTC = new DTC(mode);
-	thisDTC->WriteSimFileToDTC(simFile, true, true);
+	if (simFile.size() > 0) {
+		thisDTC->WriteSimFileToDTC(simFile, true, true);
+	}
 	TRACE(1, "thisDTC->ReadSimMode: %i", thisDTC->ReadSimMode());
 	DTCSoftwareCFO* theCFO = new DTCSoftwareCFO(thisDTC, true);
 	long loopCounter = 0;
