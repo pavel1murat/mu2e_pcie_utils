@@ -192,8 +192,11 @@ int mu2esim::read_data(int chn, void** buffer, int tmo_ms)
 		if (chn == 0)
 		{
 			TRACE(17, "mu2esim::read_data: Waiting for data");
-			while (ddrSim_.empty() && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() < tmo_ms)
+			auto retries = 1000;
+			auto count = 0;
+			while (ddrSim_.empty() && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() < tmo_ms && count < retries)
 			{
+				retries++;
 				usleep(1000);
 			}
 			if (ddrSim_.empty()) return 0;
