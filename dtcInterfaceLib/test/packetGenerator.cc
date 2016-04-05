@@ -303,7 +303,7 @@ int main(int argc, char** argv)
 			inputTrkDigiStream >> curHit.recoDigiSamples;
 
 			// The tracker should have a fixed number of digitizer samples (12)
-			assert(numADCSamples == curHit.recoDigiSamples);
+			assert(static_cast<int>(numADCSamples) == curHit.recoDigiSamples);
 
 			double curSample;
 			for(int curSampleNum = 0; curSampleNum < curHit.recoDigiSamples; curSampleNum++)
