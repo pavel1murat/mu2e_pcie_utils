@@ -136,10 +136,10 @@ int main()
 				{
 					std::cout << "\tNumber of ADC samples: " << numADCSamples << std::endl;
 					std::cout << "\tscaledNoisyVector: {";
-					for (size_t i = 8 + 3; i < 8 + 3 + numADCSamples; i++)
+					for (size_t i = 8 + 4; i < 8 + 4 + numADCSamples; i++)
 					{
 						double curVal = packetVector[i];
-						if (i > 8 + 3)
+						if (i > 8 + 4)
 						{
 							std::cout << ",";
 						}
