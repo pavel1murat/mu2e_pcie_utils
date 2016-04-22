@@ -234,29 +234,31 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSRequestPacket::ConvertToDataPacket() const
 {
 	DTC_DataPacket output = DTC_DMAPacket::ConvertToDataPacket();
 	output.SetWord(4, (uint8_t)type_);
-	output.SetWord(6, (uint8_t)address_);
+	output.SetWord(6, (uint8_t)address_ & 0x1F);
 	output.SetWord(10, static_cast<uint8_t>(data_ & 0xFF));
 	output.SetWord(11, static_cast<uint8_t>(((data_ & 0xFF00) >> 8)));
 	return output;
 }
 
-DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC, bool debug)
-	: DTC_DMAPacket(DTC_PacketType_Heartbeat, ring, maxROC), timestamp_(), debug_(debug), request_()
+DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC)
+	: DTC_DMAPacket(DTC_PacketType_Heartbeat, ring, maxROC), timestamp_(), eventMode_()
 {
-	request_[0] = 0;
-	request_[1] = 0;
-	request_[2] = 0;
-	request_[3] = 0;
+	eventMode_[0] = 0;
+	eventMode_[1] = 0;
+	eventMode_[2] = 0;
+	eventMode_[3] = 0;
+	eventMode_[4] = 0;
+	eventMode_[5] = 0;
 }
 
-DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC, bool debug, uint8_t* request)
-	: DTC_DMAPacket(DTC_PacketType_Heartbeat, ring, maxROC), timestamp_(timestamp), debug_(debug), request_()
+DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC, uint8_t* eventMode)
+	: DTC_DMAPacket(DTC_PacketType_Heartbeat, ring, maxROC), timestamp_(timestamp), eventMode_()
 {
-	if (request != nullptr)
+	if (eventMode != nullptr)
 	{
-		for (int i = 0; i < 4; ++i)
+		for (int i = 0; i < 6; ++i)
 		{
-			request_[i] = request[i];
+			eventMode_[i] = eventMode[i];
 		}
 	}
 }
@@ -268,12 +270,13 @@ DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(DTC_DataPacket in) : DTC_DMAPac
 		throw DTC_WrongPacketTypeException();
 	}
 	uint8_t* arr = in.GetData();
-	request_[0] = arr[4];
-	request_[1] = arr[5];
-	request_[2] = arr[14];
-	request_[3] = arr[15];
-	timestamp_ = DTC_Timestamp(arr, 6);
-	debug_ = (arr[12] & 0x1) == 0x1;
+	eventMode_[0] = arr[10];
+	eventMode_[1] = arr[11];
+	eventMode_[2] = arr[12];
+	eventMode_[3] = arr[13];
+	eventMode_[4] = arr[14];
+	eventMode_[5] = arr[15];
+	timestamp_ = DTC_Timestamp(arr, 4);
 }
 
 std::string DTCLib::DTC_HeartbeatPacket::toJSON()
@@ -282,11 +285,12 @@ std::string DTCLib::DTC_HeartbeatPacket::toJSON()
 	ss << "\"ReadoutRequestPacket\": {";
 	ss << headerJSON() << ",";
 	ss << timestamp_.toJSON() << ",";
-	ss << "\"request\": [" << std::hex << "0x" << (int)request_[0] << ",";
-	ss << std::hex << "0x" << (int)request_[1] << ",";
-	ss << std::hex << "0x" << (int)request_[2] << ",";
-	ss << std::hex << "0x" << (int)request_[3] << "],";
-	ss << "\"debug\": " << (debug_ ? "true" : "false");
+	ss << "\"request\": [" << std::hex << "0x" << (int)eventMode_[0] << ",";
+	ss << std::hex << "0x" << (int)eventMode_[1] << ",";
+	ss << std::hex << "0x" << (int)eventMode_[2] << ",";
+	ss << std::hex << "0x" << (int)eventMode_[3] << ",";
+	ss << std::hex << "0x" << (int)eventMode_[4] << ",";
+	ss << std::hex << "0x" << (int)eventMode_[5] << "],";
 	ss << "}";
 	return ss.str();
 }
@@ -295,18 +299,20 @@ std::string DTCLib::DTC_HeartbeatPacket::toPacketFormat()
 {
 	std::stringstream ss;
 	ss << headerPacketFormat() << std::setfill('0') << std::hex;
-	ss << "0x" << std::setw(6) << (int)request_[1] << "\t0x" << std::setw(6) << (int)request_[0] << "\n";
 	ss << timestamp_.toPacketFormat();
-	ss << "        \t       " << std::setw(1) << (int)debug_ << "\n";
-	ss << "0x" << std::setw(6) << (int)request_[3] << "\t0x" << std::setw(6) << (int)request_[2] << "\n";
+	ss << "0x" << std::setw(6) << (int)eventMode_[1] << "\t0x" << std::setw(6) << (int)eventMode_[0] << "\n";
+	ss << "0x" << std::setw(6) << (int)eventMode_[3] << "\t0x" << std::setw(6) << (int)eventMode_[2] << "\n";
+	ss << "0x" << std::setw(6) << (int)eventMode_[5] << "\t0x" << std::setw(6) << (int)eventMode_[4] << "\n";
 	return ss.str();
 }
 
 DTCLib::DTC_DataPacket DTCLib::DTC_HeartbeatPacket::ConvertToDataPacket() const
 {
 	DTC_DataPacket output = DTC_DMAPacket::ConvertToDataPacket();
-	timestamp_.GetTimestamp(output.GetData(), 6);
-	output.SetWord(12, debug_ ? 1 : 0);
+	timestamp_.GetTimestamp(output.GetData(), 4);
+	for (int i = 0; i < 6; ++i) {
+		output.GetData()[10 + i] = eventMode_[i];
+	}
 	return output;
 }
 
@@ -322,7 +328,7 @@ DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DataPacket in) : DTC_DM
 	{
 		throw DTC_WrongPacketTypeException();
 	}
-	timestamp_ = DTC_Timestamp(in.GetData(), 6);
+	timestamp_ = DTC_Timestamp(in.GetData(), 4);
 	debug_ = (in.GetData()[12] & 0x1) == 1;
 	type_ = DTC_DebugType((in.GetData()[12] & 0xF0) >> 4);
 	debugPacketCount_ = in.GetData()[14] + (in.GetData()[15] << 8);
@@ -345,8 +351,8 @@ std::string DTCLib::DTC_DataRequestPacket::toPacketFormat()
 {
 	std::stringstream ss;
 	ss << headerPacketFormat() << std::setfill('0') << std::hex;
-	ss << "        \t        \n";
 	ss << timestamp_.toPacketFormat();
+	ss << "        \t        \n";
 	ss << "        \t0x" << std::setw(2) << (int)type_ << "   " << std::setw(1) << (int)debug_ << "\n";
 	ss << "0x" << std::setw(6) << ((debugPacketCount_ & 0xFF00) >> 8) << "\t" << "0x" << std::setw(6) << (debugPacketCount_ & 0xFF) << "\n";
 	return ss.str();
@@ -355,7 +361,7 @@ std::string DTCLib::DTC_DataRequestPacket::toPacketFormat()
 DTCLib::DTC_DataPacket DTCLib::DTC_DataRequestPacket::ConvertToDataPacket() const
 {
 	DTC_DataPacket output = DTC_DMAPacket::ConvertToDataPacket();
-	timestamp_.GetTimestamp(output.GetData(), 6);
+	timestamp_.GetTimestamp(output.GetData(), 4);
 	output.SetWord(12, ((uint8_t)type_ << 4) + (debug_ ? 1 : 0));
 	output.SetWord(14, debugPacketCount_ & 0xFF);
 	output.SetWord(15, (debugPacketCount_ >> 8) & 0xFF);
@@ -441,25 +447,21 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSReplyPacket::ConvertToDataPacket() const
 }
 
 DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status)
-	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, (1 + packetCount) * 16), packetCount_(packetCount), timestamp_(), status_(status) {}
-
-DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp)
-	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, (1 + packetCount) * 16), packetCount_(packetCount), timestamp_(timestamp), status_(status)
-{
-	for (int i = 0; i < 3; ++i)
-	{
-		dataStart_[i] = 0;
-	}
+	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, (1 + packetCount) * 16), packetCount_(packetCount), timestamp_(), status_() {
+	status_[0] = status;
 }
 
-DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp, uint8_t* data)
-	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, (1 + packetCount) * 16), packetCount_(packetCount), timestamp_(timestamp), status_(status)
+DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp)
+	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, (1 + packetCount) * 16), packetCount_(packetCount), timestamp_(timestamp), status_()
 {
-	for (int i = 0; i < 3; ++i)
-	{
-		dataStart_[i] = data[i];
-	}
-	//delete[] data;
+	status_[0] = status;
+}
+
+DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp, uint8_t evbMode)
+	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, (1 + packetCount) * 16), packetCount_(packetCount), timestamp_(timestamp), status_()
+{
+	status_[0] = status;
+	evbMode_ = evbMode;
 }
 
 DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
@@ -471,11 +473,10 @@ DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket in) : DTC_DMAP
 	uint8_t* arr = in.GetData();
 	packetCount_ = arr[4] + (arr[5] << 8);
 	timestamp_ = DTC_Timestamp(arr, 6);
-	status_ = (DTC_DataStatus)arr[12];
-	for (int i = 0; i < 3; i++)
-	{
-		dataStart_[i] = arr[i + 13];
-	}
+	status_[0] = (DTC_DataStatus)arr[12];
+	status_[1] = (DTC_DataStatus)arr[13];
+	status_[2] = (DTC_DataStatus)arr[14];
+	evbMode_ = arr[15];
 }
 
 std::string DTCLib::DTC_DataHeaderPacket::toJSON()
@@ -485,11 +486,8 @@ std::string DTCLib::DTC_DataHeaderPacket::toJSON()
 	ss << headerJSON() << ",";
 	ss << "\"packetCount\": " << std::dec << (int)packetCount_ << ",";
 	ss << timestamp_.toJSON() << ",";
-	ss << "\"status\": " << std::dec << (int)status_ << ",";
-	ss << "\"data\": [" << std::hex << "0x" << (int)dataStart_[0] << ",";
-	ss << std::hex << "0x" << (int)dataStart_[1] << ",";
-	ss << std::hex << "0x" << (int)dataStart_[2] << "]";
-	ss << "}";
+	ss << "\"status\": " << std::dec << (int)status_[0] << ",";
+	ss << "\"evbMode\": " << std::hex << "0x" << (int)evbMode_ << "}";
 	return ss.str();
 }
 
@@ -499,22 +497,19 @@ std::string DTCLib::DTC_DataHeaderPacket::toPacketFormat()
 	ss << headerPacketFormat() << std::setfill('0') << std::hex;
 	ss << "     0x" << std::setw(1) << ((packetCount_ & 0x0700) >> 8) << "\t" << "0x" << std::setw(6) << (packetCount_ & 0xFF) << "\n";
 	ss << timestamp_.toPacketFormat();
-	ss << "0x" << std::setw(6) << (int)dataStart_[0] << "\t" << "0x" << std::setw(6) << (int)status_ << "\n";
-	ss << "0x" << std::setw(6) << (int)dataStart_[2] << "\t" << "0x" << std::setw(6) << (int)dataStart_[1] << "\n";
+	ss << "0x" << std::setw(6) << (int)status_[1] << "\t" << "0x" << std::setw(6) << (int)status_[0] << "\n";
+	ss << "0x" << std::setw(6) << (int)evbMode_ << "\t" << "0x" << std::setw(6) << (int)status_[2] << "\n";
 	return ss.str();
 }
 
 DTCLib::DTC_DataPacket DTCLib::DTC_DataHeaderPacket::ConvertToDataPacket() const
 {
 	DTC_DataPacket output = DTC_DMAPacket::ConvertToDataPacket();
-        output.SetWord(4, static_cast<uint8_t>(packetCount_));
-        output.SetWord(5, static_cast<uint8_t>((packetCount_ & 0x0700) >> 8));
+	output.SetWord(4, static_cast<uint8_t>(packetCount_));
+	output.SetWord(5, static_cast<uint8_t>((packetCount_ & 0x0700) >> 8));
 	timestamp_.GetTimestamp(output.GetData(), 6);
-	output.SetWord(12, (uint8_t)status_);
-	for (uint16_t i = 0; i < 3; ++i)
-	{
-		output.SetWord(i + 13, dataStart_[i]);
-	}
+	output.SetWord(12, (uint8_t)status_[0]);
+	output.SetWord(15, evbMode_);
 	return output;
 }
 

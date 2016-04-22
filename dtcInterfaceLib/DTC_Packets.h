@@ -268,22 +268,16 @@ namespace DTCLib
 	{
 	private:
 		DTC_Timestamp timestamp_;
-		bool debug_;
-		uint8_t request_[4];
+		uint8_t eventMode_[6];
 	public:
-		DTC_HeartbeatPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC = DTC_ROC_5, bool debug = true);
-		DTC_HeartbeatPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC = DTC_ROC_5, bool debug = true, uint8_t* request = nullptr);
+		DTC_HeartbeatPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC = DTC_ROC_5);
+		DTC_HeartbeatPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC = DTC_ROC_5, uint8_t* eventMode = nullptr);
 		DTC_HeartbeatPacket(const DTC_HeartbeatPacket& right) = default;
 		DTC_HeartbeatPacket(DTC_HeartbeatPacket&& right) = default;
 		DTC_HeartbeatPacket(DTC_DataPacket in);
 
 		virtual ~DTC_HeartbeatPacket() = default;
-
-		bool GetDebug()
-		{
-			return debug_;
-		}
-
+		
 		DTC_Timestamp GetTimestamp()
 		{
 			return timestamp_;
@@ -291,7 +285,7 @@ namespace DTCLib
 
 		virtual uint8_t* GetData()
 		{
-			return request_;
+			return eventMode_;
 		}
 
 		DTC_DataPacket ConvertToDataPacket() const;
@@ -411,22 +405,22 @@ namespace DTCLib
 	private:
 		uint16_t packetCount_;
 		DTC_Timestamp timestamp_;
-		uint8_t dataStart_[3];
-		DTC_DataStatus status_;
+		DTC_DataStatus status_[3];
+		uint8_t evbMode_;
 
 	public:
 		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status);
 		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp);
-		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp, uint8_t* data);
+		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp, uint8_t evbMode_);
 		DTC_DataHeaderPacket(const DTC_DataHeaderPacket&) = default;
 		DTC_DataHeaderPacket(DTC_DataHeaderPacket&&) = default;
 		DTC_DataHeaderPacket(DTC_DataPacket in);
 
 		DTC_DataPacket ConvertToDataPacket() const;
 
-		virtual uint8_t* GetData()
+		virtual uint8_t GetData()
 		{
-			return dataStart_;
+			return evbMode_;
 		}
 
 		uint16_t GetPacketCount()
@@ -441,7 +435,7 @@ namespace DTCLib
 
 		DTC_DataStatus GetStatus()
 		{
-			return status_;
+			return status_[0];
 		}
 
 		std::string toJSON();

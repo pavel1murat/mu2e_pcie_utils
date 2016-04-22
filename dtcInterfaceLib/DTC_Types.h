@@ -101,6 +101,11 @@ namespace DTCLib
 		}
 	};
 
+	enum DTC_SerdesClockSpeed {
+		DTC_SerdesClockSpeed_25Gbps,
+		DTC_SerdesClockSpeed_3125Gbps,
+	};
+
 	enum DTC_DebugType
 	{
 		DTC_DebugType_SpecialSequence = 0,

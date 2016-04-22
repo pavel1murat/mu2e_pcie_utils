@@ -55,6 +55,11 @@ namespace DTCLib
 		DTC_Register_ROCReplyTimeout = 0x9148,
 		DTC_Register_ROCReplyTimeoutError = 0x914C,
 		DTC_Register_RingPacketLength = 0x9150,
+
+		DTC_Register_EVBPartitionID = 0x9154,
+		DTC_Register_EVBDestCount = 0x9158,
+		DTC_Register_HeartbeatErrorFlags = 0x915c,
+
 		DTC_Register_TimestampPreset0 = 0x9180,
 		DTC_Register_TimestampPreset1 = 0x9184,
 		DTC_Register_DataPendingTimer = 0x9188,
@@ -67,12 +72,14 @@ namespace DTCLib
 		DTC_Register_CFOEmulationTimestampHigh = 0x91A4,
 		DTC_Register_CFOEmulationRequestInterval = 0x91A8,
 		DTC_Register_CFOEmulationNumRequests = 0x91AC,
-		DTC_Register_CFOEmulationNumPacketsRing0 = 0x91B0,
-		DTC_Register_CFOEmulationNumPacketsRing1 = 0x91B4,
-		DTC_Register_CFOEmulationNumPacketsRing2 = 0x91B8,
-		DTC_Register_CFOEmulationNumPacketsRing3 = 0x91BC,
-		DTC_Register_CFOEmulationNumPacketsRing4 = 0x91C0,
-		DTC_Register_CFOEmulationNumPacketsRing5 = 0x91C4,
+		
+		DTC_Register_CFOEmulationNumPacketsRings10 = 0x91B0,
+		DTC_Register_CFOEmulationNumPacketsRings32 = 0x91B4,
+		DTC_Register_CFOEmulationNumPacketsRings54 = 0x91B8,
+
+		DTC_Register_CFOEmulationEventMode1 = 0x91C0,
+		DTC_Register_CFOEmulationEventMode2 = 0x91C4,
+
 		DTC_Register_CFOEmulationDebugPacketType = 0x91C8,
 		DTC_Register_DetEmulationDMACount = 0x91D0,
 		DTC_Register_DetEmulationDelayCount = 0x91D4,
@@ -104,13 +111,23 @@ namespace DTCLib
 		DTC_Register_TransmitPacketCountDataRing4 = 0x9270,
 		DTC_Register_TransmitPacketCountDataRing5 = 0x9274,
 		DTC_Register_TransmitPacketCountDataCFO = 0x9278,
-		DTC_Register_DDRLocalStartAddress = 0x9300,
-		DTC_Register_DDRLocalEndAddress = 0x9304,
-		DTC_Regsiter_DDRWriteBurstSize = 0x9308,
-		DTC_Register_DDRReadBurstSize = 0x930C,
+
+		DTC_Register_DDRPCIStartAddress = 0x9300,
+		DTC_Register_DDRPCIEndAddress = 0x9304,
+		DTC_Regsiter_DDRPCIWriteBurstSize = 0x9308,
+		DTC_Register_DDRPCIReadBurstSize = 0x930C,
+
+		DTC_Register_DDRSERDESStartAddress = 0x9310,
+		DTC_Register_DDRSERDESEndAddress = 0x9314,
+		DTC_Register_DDRSERDESWriteBurstSize = 0x9318,
+		DTC_Register_DDRSERDESReadBurstsize = 0x931C,
+
 		DTC_Register_FPGAProgramData = 0x9400,
 		DTC_Register_FPGAPROMProgramStatus = 0x9404,
 		DTC_Register_FPGACoreAccess = 0x9408,
+
+			DTC_Register_EventModeLookupTableStart = 0x9500,
+			DTC_Register_EventModeLookupTableEnd = 0x97FC,
 		DTC_Register_Invalid,
 	};
 
@@ -192,17 +209,28 @@ namespace DTCLib
 		bool ReadCFOEmulation();
 		void ResetSERDESOscillator();
 		bool ReadResetSERDESOscillator();
-		void SetSERDESOscillatorClock_25Gbps();
-		void SetSERDESOscillatorClock_3125Gbps();
-		bool ReadSERDESOscillatorClock();
+		void SetSERDESOscillatorClock(DTC_SerdesClockSpeed speed);
+		DTC_SerdesClockSpeed ReadSERDESOscillatorClock();
 		void ResetDDRWriteAddress();
 		bool ReadResetDDRWriteAddress();
-		void EnableDetectorEmulator();
-		void DisableDetectorEmulator();
-		bool ReadDetectorEmulatorEnable();
 		void EnableDetectorEmulatorMode();
 		void DisableDetectorEmulatorMode();
 		bool ReadDetectorEmulatorMode();
+		void EnableDetectorEmulator();
+		void DisableDetectorEmulator();
+		bool ReadDetectorEmulatorEnable();
+		void EnableCFOEmulatorDRP();
+		void DisableCFOEmulatorDRP();
+		bool ReadCFOEmulatorDRP();
+		void EnableCFOAutogenDRP();
+		void DisableCFOAutogenDRP();
+		bool ReadCFOAutogenDRP();
+		void EnableSoftwareDRP();
+		void DisableSoftwareDRP();
+		bool ReadSoftwareDRP();
+		void EnableTrackerPacketExpansion();
+		void DisableTrackerPacketExpansion();
+		bool ReadTrackerPacketExpansion();
 		void SetExternalSystemClock();
 		void SetInternalSystemClock();
 		bool ReadSystemClock();
@@ -305,6 +333,13 @@ namespace DTCLib
 		void SetPacketSize(uint16_t packetSize);
 		uint16_t ReadPacketSize();
 		DTC_RegisterFormatter FormatRingPacketLength();
+
+		// Heartbeat Error Register
+		bool ReadHeartbeatTimeout(const DTC_Ring_ID& ring);
+		bool ReadHeartbeat20Mismatch(const DTC_Ring_ID& ring);
+		bool ReadHeartbeat12Mismatch(const DTC_Ring_ID& ring);
+		bool ReadHeartbeat01Mismatch(const DTC_Ring_ID& ring);
+		DTC_RegisterFormatter FormatHeartbeatError();
 
 		// Timestamp Preset Registers
 		void SetTimestampPreset(const DTC_Timestamp& preset);

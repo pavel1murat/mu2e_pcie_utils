@@ -368,7 +368,7 @@ main(int argc
 	else if (op == "buffer_test")
 	{
 		std::cout << "Operation \"buffer_test\"" << std::endl;
-		auto startTime = std::chrono::high_resolution_clock::now();
+		auto startTime = std::chrono::steady_clock::now();
 		DTC* thisDTC = new DTC(DTC_SimMode_NoCFO);
 		if (!thisDTC->ReadSERDESOscillatorClock())
 		{
@@ -379,7 +379,7 @@ main(int argc
 
 		auto initTime = device->GetDeviceTime();
 		device->ResetDeviceTime();
-		auto afterInit = std::chrono::high_resolution_clock::now();
+		auto afterInit = std::chrono::steady_clock::now();
 
 		DTCSoftwareCFO* cfo = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet, false);
 
@@ -409,15 +409,15 @@ main(int argc
 
 		auto readoutRequestTime = device->GetDeviceTime();
 		device->ResetDeviceTime();
-		auto afterRequests = std::chrono::high_resolution_clock::now();
+		auto afterRequests = std::chrono::steady_clock::now();
 
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
 			if (syncRequests)
 			{
-				auto startRequest = std::chrono::high_resolution_clock::now();
+				auto startRequest = std::chrono::steady_clock::now();
 				cfo->SendRequestForTimestamp(DTC_Timestamp(timestampOffset + (incrementTimestamp ? ii : 0)));
-				auto endRequest = std::chrono::high_resolution_clock::now();
+				auto endRequest = std::chrono::steady_clock::now();
 				readoutRequestTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(endRequest - startRequest).count();
 			}
 			if (!reallyQuiet) std::cout << "Buffer Read " << std::dec << ii << std::endl;
@@ -461,7 +461,7 @@ main(int argc
 		}
 
 		auto readDevTime = device->GetDeviceTime();
-		auto doneTime = std::chrono::high_resolution_clock::now();
+		auto doneTime = std::chrono::steady_clock::now();
 		auto totalBytesRead = device->GetReadSize();
 		auto totalBytesWritten = device->GetWriteSize();
 		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(doneTime - startTime).count();
@@ -499,7 +499,7 @@ main(int argc
 	}
 	else if (op == "DTC")
 	{
-		auto startTime = std::chrono::high_resolution_clock::now();
+		auto startTime = std::chrono::steady_clock::now();
 		auto* thisDTC = new DTC(DTC_SimMode_NoCFO);
 		if (!thisDTC->ReadSERDESOscillatorClock())
 		{
@@ -508,7 +508,7 @@ main(int argc
 
 		auto initTime = thisDTC->GetDevice()->GetDeviceTime();
 		thisDTC->GetDevice()->ResetDeviceTime();
-		auto afterInit = std::chrono::high_resolution_clock::now();
+		auto afterInit = std::chrono::steady_clock::now();
 		
 		DTCSoftwareCFO* theCFO = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet);
 
@@ -536,7 +536,7 @@ main(int argc
 		uint64_t expectedTS = timestampOffset;
 		int packetsProcessed = 0;
 
-		auto afterRequests = std::chrono::high_resolution_clock::now();
+		auto afterRequests = std::chrono::steady_clock::now();
 		auto readoutRequestTime = thisDTC->GetDevice()->GetDeviceTime();
 		thisDTC->GetDevice()->ResetDeviceTime();
 
@@ -545,10 +545,10 @@ main(int argc
 			if(!reallyQuiet) std::cout << "util_main: DTC Read " << ii << ": ";
 			if (syncRequests)
 			{
-				auto startRequest = std::chrono::high_resolution_clock::now();
+				auto startRequest = std::chrono::steady_clock::now();
 				uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
 				theCFO->SendRequestForTimestamp(DTC_Timestamp(ts));
-				auto endRequest = std::chrono::high_resolution_clock::now();
+				auto endRequest = std::chrono::steady_clock::now();
 				readoutRequestTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(endRequest - startRequest).count();
 			}
 
@@ -665,7 +665,7 @@ main(int argc
 
 
 		auto readDevTime = thisDTC->GetDevice()->GetDeviceTime();
-		auto doneTime = std::chrono::high_resolution_clock::now();
+		auto doneTime = std::chrono::steady_clock::now();
 		auto totalBytesRead = thisDTC->GetDevice()->GetReadSize();
 		auto totalBytesWritten = thisDTC->GetDevice()->GetWriteSize();
 		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(doneTime - startTime).count();

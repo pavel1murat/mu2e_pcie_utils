@@ -182,7 +182,7 @@ int mu2esim::init(DTCLib::DTC_SimMode mode)
    */
 int mu2esim::read_data(int chn, void** buffer, int tmo_ms)
 {
-	auto start = std::chrono::high_resolution_clock::now();
+	auto start = std::chrono::steady_clock::now();
 	size_t bytesReturned = 0;
 	if (delta_(chn, C2S) == 0)
 	{
@@ -194,7 +194,7 @@ int mu2esim::read_data(int chn, void** buffer, int tmo_ms)
 			TRACE(17, "mu2esim::read_data: Waiting for data");
 			auto retries = 1000;
 			auto count = 0;
-			while (ddrSim_.empty() && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() < tmo_ms && count < retries)
+			while (ddrSim_.empty() && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() < tmo_ms && count < retries)
 			{
 				retries++;
 				usleep(1000);
@@ -225,7 +225,7 @@ int mu2esim::read_data(int chn, void** buffer, int tmo_ms)
 		else if (chn == 1)
 		{
 			TRACE(17, "mu2esim::read_data: Waiting for DCS Response");
-			while (dcsResponses_.empty() && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count() < tmo_ms)
+			while (dcsResponses_.empty() && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() < tmo_ms)
 			{
 				usleep(1000);
 			}
@@ -242,7 +242,7 @@ int mu2esim::read_data(int chn, void** buffer, int tmo_ms)
 	TRACE(18, "mu2esim::read_data: *buffer (%p) should now be equal to dmaData_[%d][%d] (%p)", (void*)*buffer, chn, swIdx_[chn], (void*)dmaData_[chn][swIdx_[chn]]);
 	swIdx_[chn] = (swIdx_[chn] + 1) % SIM_BUFFCOUNT;
 
-	long long duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count();
+	long long duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
 	TRACE(18, "mu2esim::read_data took %lli milliseconds out of tmo_ms=%i", duration, tmo_ms);
 	return bytesReturned;
 }
@@ -338,7 +338,7 @@ int mu2esim::release_all(int chn)
 
 int mu2esim::read_register(uint16_t address, int tmo_ms, uint32_t* output)
 {
-	auto start = std::chrono::high_resolution_clock::now();
+	auto start = std::chrono::steady_clock::now();
 	*output = 0;
 	if (registers_.count(address) > 0)
 	{
@@ -346,18 +346,18 @@ int mu2esim::read_register(uint16_t address, int tmo_ms, uint32_t* output)
 		*output = registers_[address];
 		return 0;
 	}
-	long long duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count();
+	long long duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
 	TRACE(18, "mu2esim::read_register took %lli milliseconds out of tmo_ms=%i", duration, tmo_ms);
 	return 1;
 }
 
 int mu2esim::write_register(uint16_t address, int tmo_ms, uint32_t data)
 {
-	auto start = std::chrono::high_resolution_clock::now();
+	auto start = std::chrono::steady_clock::now();
 	// Write the register!!!
 	TRACE(17, "mu2esim::write_register: Writing value 0x%x into address 0x%x", data, address);
 	registers_[address] = data;
-	long long duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count();
+	long long duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
 	TRACE(18, "mu2esim::write_register took %lli milliseconds out of tmo_ms=%i", duration, tmo_ms);
 	if (address == 0x9100) // DTC Control
 	{
