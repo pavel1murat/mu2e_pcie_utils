@@ -529,6 +529,11 @@ int main(int argc, char** argv)
 					curDataBlock.push_back(formatVersion + status);
 					// Eighth 16 bits of header (Unassigned)
 					curDataBlock.push_back(null_adc);
+
+					// Fill in the byte count field of the header packet
+					adc_t numBytes = 16; // Just the header packet
+					curDataBlock[0] = numBytes;
+
 					curDataBlockVector.push_back(curDataBlock);
 				} else {
 				        for(size_t curHitIdx=0; curHitIdx<curHitVector.size(); curHitIdx++)
@@ -653,6 +658,11 @@ int main(int argc, char** argv)
 					curDataBlock.push_back(formatVersion + status);
 					// Eighth 16 bits of header (Unassigned)
 					curDataBlock.push_back(null_adc);
+
+					// Fill in the byte count field of the header packet
+					adc_t numBytes = 16; // Just the header packet
+					curDataBlock[0] = numBytes;
+
 					curDataBlockVector.push_back(curDataBlock);
 				} else {
 				        for(size_t curHitIdx=0; curHitIdx<curHitVector.size(); curHitIdx++)
@@ -730,6 +740,7 @@ int main(int argc, char** argv)
 						}
 
 						// Fill in the number of data packets entry in the header packet
+
 						adc_t numDataPackets = packetVector.size() / 8;
 						curDataBlock[2] = numDataPackets;
 
