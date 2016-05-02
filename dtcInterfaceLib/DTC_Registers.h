@@ -3,16 +3,11 @@
 
 #include <bitset> // std::bitset
 
-
-
 #include <cstdint> // uint8_t, uint16_t
-
 
 #include <functional> // std::bind, std::function
 
-
 #include <vector> // std::vector
-
 
 
 #include "DTC_Types.h"
@@ -55,11 +50,9 @@ namespace DTCLib
 		DTC_Register_ROCReplyTimeout = 0x9148,
 		DTC_Register_ROCReplyTimeoutError = 0x914C,
 		DTC_Register_RingPacketLength = 0x9150,
-
 		DTC_Register_EVBPartitionID = 0x9154,
 		DTC_Register_EVBDestCount = 0x9158,
 		DTC_Register_HeartbeatErrorFlags = 0x915c,
-
 		DTC_Register_TimestampPreset0 = 0x9180,
 		DTC_Register_TimestampPreset1 = 0x9184,
 		DTC_Register_DataPendingTimer = 0x9188,
@@ -72,14 +65,11 @@ namespace DTCLib
 		DTC_Register_CFOEmulationTimestampHigh = 0x91A4,
 		DTC_Register_CFOEmulationRequestInterval = 0x91A8,
 		DTC_Register_CFOEmulationNumRequests = 0x91AC,
-		
 		DTC_Register_CFOEmulationNumPacketsRings10 = 0x91B0,
 		DTC_Register_CFOEmulationNumPacketsRings32 = 0x91B4,
 		DTC_Register_CFOEmulationNumPacketsRings54 = 0x91B8,
-
 		DTC_Register_CFOEmulationEventMode1 = 0x91C0,
 		DTC_Register_CFOEmulationEventMode2 = 0x91C4,
-
 		DTC_Register_CFOEmulationDebugPacketType = 0x91C8,
 		DTC_Register_DetEmulationDMACount = 0x91D0,
 		DTC_Register_DetEmulationDelayCount = 0x91D4,
@@ -111,23 +101,19 @@ namespace DTCLib
 		DTC_Register_TransmitPacketCountDataRing4 = 0x9270,
 		DTC_Register_TransmitPacketCountDataRing5 = 0x9274,
 		DTC_Register_TransmitPacketCountDataCFO = 0x9278,
-
-		DTC_Register_DDRPCIStartAddress = 0x9300,
-		DTC_Register_DDRPCIEndAddress = 0x9304,
-		DTC_Regsiter_DDRPCIWriteBurstSize = 0x9308,
-		DTC_Register_DDRPCIReadBurstSize = 0x930C,
-
+		DTC_Register_DDRDataStartAddress = 0x9300,
+		DTC_Register_DDRDataEndAddress = 0x9304,
+		DTC_Regsiter_DDRDataWriteBurstSize = 0x9308,
+		DTC_Register_DDRDataReadBurstSize = 0x930C,
 		DTC_Register_DDRSERDESStartAddress = 0x9310,
 		DTC_Register_DDRSERDESEndAddress = 0x9314,
 		DTC_Register_DDRSERDESWriteBurstSize = 0x9318,
-		DTC_Register_DDRSERDESReadBurstsize = 0x931C,
-
+		DTC_Register_DDRSERDESReadBurstSize = 0x931C,
 		DTC_Register_FPGAProgramData = 0x9400,
 		DTC_Register_FPGAPROMProgramStatus = 0x9404,
 		DTC_Register_FPGACoreAccess = 0x9408,
-
-			DTC_Register_EventModeLookupTableStart = 0x9500,
-			DTC_Register_EventModeLookupTableEnd = 0x97FC,
+		DTC_Register_EventModeLookupTableStart = 0x9500,
+		DTC_Register_EventModeLookupTableEnd = 0x97FC,
 		DTC_Register_Invalid,
 	};
 
@@ -159,6 +145,7 @@ namespace DTCLib
 		//
 		std::string FormattedRegDump() const;
 		std::string PerformanceMonitorRegDump() const;
+		std::string RingCountersRegDump() const;
 
 		DTC_RegisterFormatter CreateFormatter(const DTC_Register& address)
 		{
@@ -334,6 +321,18 @@ namespace DTCLib
 		uint16_t ReadPacketSize();
 		DTC_RegisterFormatter FormatRingPacketLength();
 
+		// EVB Network Partition ID / EVB Network Local MAC Index Register
+		void SetEVBLocalParitionID(uint8_t id);
+		uint8_t ReadEVBLocalParitionID();
+		void SetEVBLocalMACAddress(uint8_t macByte);
+		uint8_t ReadEVBLocalMACAddress();
+		DTC_RegisterFormatter FormatEVBLocalParitionIDMACIndex();
+
+		// EVB Number of Destination Nodes Register
+		void SetEVBNumberOfDestinationNodes(uint8_t number);
+		uint8_t ReadEVBNumberOfDestinationNodes();
+		DTC_RegisterFormatter FormatEVBNumberOfDestinationNodes();
+
 		// Heartbeat Error Register
 		bool ReadHeartbeatTimeout(const DTC_Ring_ID& ring);
 		bool ReadHeartbeat20Mismatch(const DTC_Ring_ID& ring);
@@ -394,14 +393,20 @@ namespace DTCLib
 		// CFO Emulation Number of Packets Registers
 		void SetCFOEmulationNumPackets(const DTC_Ring_ID& ring, uint16_t numPackets);
 		uint16_t ReadCFOEmulationNumPackets(const DTC_Ring_ID& ring);
-		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing0();
-		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing1();
-		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing2();
-		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing3();
-		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing4();
-		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing5();
+		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing01();
+		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing23();
+		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing45();
+
+		// CFO Emulation Event Mode Bytes Registers
+		void SetCFOEmulationModeByte(const uint8_t& byteNum, uint8_t data);
+		uint8_t ReadCFOEmulationModeByte(const uint8_t& byteNum);
+		DTC_RegisterFormatter FormatCFOEmulationModeBytes03();
+		DTC_RegisterFormatter FormatCFOEmulationModeBytes45();
 
 		// CFO Emulation Debug Packet Type Register
+		void EnableDebugPacketMode();
+		void DisableDebugPacketMode();
+		bool ReadDebugPacketMode();
 		void SetCFOEmulationDebugType(DTC_DebugType type);
 		DTC_DebugType ReadCFOEmulationDebugType();
 		DTC_RegisterFormatter FormatCFOEmulationDebugPacketType();
@@ -417,7 +422,6 @@ namespace DTCLib
 		DTC_RegisterFormatter FormatDetectorEmulationDMADelayCount();
 
 		// SERDES Counter Registers
-		/*
 		void ClearReceiveByteCount(const DTC_Ring_ID& ring);
 		uint32_t ReadReceiveByteCount(const DTC_Ring_ID& ring);
 		void ClearReceivePacketCount(const DTC_Ring_ID& ring);
@@ -433,13 +437,13 @@ namespace DTCLib
 		DTC_RegisterFormatter FormatReceiveByteCountRing4();
 		DTC_RegisterFormatter FormatReceiveByteCountRing5();
 		DTC_RegisterFormatter FormatReceiveByteCountCFO();
-		DTC_RegisterFormatter FromatReceivePacketCountRing0();
-		DTC_RegisterFormatter FromatReceivePacketCountRing1();
-		DTC_RegisterFormatter FromatReceivePacketCountRing2();
-		DTC_RegisterFormatter FromatReceivePacketCountRing3();
-		DTC_RegisterFormatter FromatReceivePacketCountRing4();
-		DTC_RegisterFormatter FromatReceivePacketCountRing5();
-		DTC_RegisterFormatter FromatReceivePacketCountCFO();
+		DTC_RegisterFormatter FormatReceivePacketCountRing0();
+		DTC_RegisterFormatter FormatReceivePacketCountRing1();
+		DTC_RegisterFormatter FormatReceivePacketCountRing2();
+		DTC_RegisterFormatter FormatReceivePacketCountRing3();
+		DTC_RegisterFormatter FormatReceivePacketCountRing4();
+		DTC_RegisterFormatter FormatReceivePacketCountRing5();
+		DTC_RegisterFormatter FormatReceivePacketCountCFO();
 		DTC_RegisterFormatter FormatTramsitByteCountRing0();
 		DTC_RegisterFormatter FormatTramsitByteCountRing1();
 		DTC_RegisterFormatter FormatTramsitByteCountRing2();
@@ -453,23 +457,47 @@ namespace DTCLib
 		DTC_RegisterFormatter FormatTransmitPacketCountRing3();
 		DTC_RegisterFormatter FormatTransmitPacketCountRing4();
 		DTC_RegisterFormatter FormatTransmitPacketCountRing5();
-		DTC_RegisterFormatter FormatTransmitPacketCountCFO);
-		*/
+		DTC_RegisterFormatter FormatTransmitPacketCountCFO();
 
-		// DDR Local Start Address Register
-		uint32_t ReadDDRLocalStartAddress();
-		void SetDDRLocalStartAddress(uint32_t address);
-		DTC_RegisterFormatter FormatDDRLocalStartAddress();
+		// DDR Event Data Local Start Address Register
+		void SetDDRDataLocalStartAddress(uint32_t address);
+		uint32_t ReadDDRDataLocalStartAddress();
+		DTC_RegisterFormatter FormatDDRDataLocalStartAddress();
 
+		// DDR Event Data Local End Address Register
+		void SetDDRDataLocalEndAddress(uint32_t address);
+		uint32_t ReadDDRDataLocalEndAddress();
+		DTC_RegisterFormatter FormatDDRDataLocalEndAddress();
 
-		// DDR Local End Address Register
-		uint32_t ReadDDRLocalEndAddress();
-		void SetDDRLocalEndAddress(uint32_t address);
-		DTC_RegisterFormatter FormatDDRLocalEndAddress();
+		// DDR Event Data Write Burst Size Register
+		void SetDDRDataWriteBurstSize(uint32_t size);
+		uint32_t ReadDDRDataWriteBurstSize();
+		DTC_RegisterFormatter FormatDDRDataWriteBurstSize();
 
-		// DDR Write Burst Size Register
+		// DDR Event Data Read Burst Size Register
+		void SetDDRDataReadBurstSize(uint32_t size);
+		uint32_t ReadDDRDataReadBurstSize();
+		DTC_RegisterFormatter FormatDDRDataReadBurstSize();
 
-		// DDR Read Burst Size Register
+		// DDR SERDES Local Start Address Register
+		void SetDDRSERDESLocalStartAddress(uint32_t address);
+		uint32_t ReadDDRSERDESLocalStartAddress();
+		DTC_RegisterFormatter FormatDDRSERDESLocalStartAddress();
+
+		// DDR SERDES Local End Address Register
+		void SetDDRSERDESLocalEndAddress(uint32_t address);
+		uint32_t ReadDDRSERDESLocalEndAddress();
+		DTC_RegisterFormatter FormatDDRDERDESLocalEndAddress();
+
+		// DDR SERDES Write Burst Size Register
+		void SetDDRSERDESWriteBurstSize(uint32_t size);
+		uint32_t ReadDDRSERDESWriteBurstSize();
+		DTC_RegisterFormatter FormatDDRSERDESWriteBurstSize();
+
+		// DDR SERDES Read Burst Size Register
+		void SetDDRSERDESReadBurstSize(uint32_t size);
+		uint32_t ReadDDRSERDESReadBurstSize();
+		DTC_RegisterFormatter FormatDDRSERDESReadBurstSize();
 
 		// FPGA PROM Program Data Register
 
@@ -586,7 +614,19 @@ namespace DTCLib
 			},
 			[this]()
 			{
-				return this->FormatReceivePacketError();
+				return this->FormatRingPacketLength();
+			},
+			[this]()
+			{
+				return this->FormatEVBLocalParitionIDMACIndex();
+			},
+			[this]()
+			{
+				return this->FormatEVBNumberOfDestinationNodes();
+			},
+			[this]()
+			{
+				return this->FormatHeartbeatError();
 			},
 			[this]()
 			{
@@ -618,6 +658,10 @@ namespace DTCLib
 			},
 			[this]()
 			{
+				return this->FormatReceivePacketError();
+			},
+			[this]()
+			{
 				return this->FormatCFOEmulationTimestampLow();
 			},
 			[this]()
@@ -634,27 +678,23 @@ namespace DTCLib
 			},
 			[this]()
 			{
-				return this->FormatCFOEmulationNumPacketsRing0();
+				return this->FormatCFOEmulationNumPacketsRing01();
 			},
 			[this]()
 			{
-				return this->FormatCFOEmulationNumPacketsRing1();
+				return this->FormatCFOEmulationNumPacketsRing23();
 			},
 			[this]()
 			{
-				return this->FormatCFOEmulationNumPacketsRing2();
+				return this->FormatCFOEmulationNumPacketsRing45();
 			},
 			[this]()
 			{
-				return this->FormatCFOEmulationNumPacketsRing3();
+				return this->FormatCFOEmulationModeBytes03();
 			},
 			[this]()
 			{
-				return this->FormatCFOEmulationNumPacketsRing4();
-			},
-			[this]()
-			{
-				return this->FormatCFOEmulationNumPacketsRing5();
+				return this->FormatCFOEmulationModeBytes45();
 			},
 
 			[this]()
@@ -671,18 +711,40 @@ namespace DTCLib
 			{
 				return this->FormatDetectorEmulationDMADelayCount();
 			},
+
 			[this]()
 			{
-				return this->FormatDDRLocalStartAddress();
+				return this->FormatDDRDataLocalStartAddress();
 			},
 			[this]()
 			{
-				return this->FormatDDRLocalEndAddress();
+				return this->FormatDDRDataLocalEndAddress();
 			},
 			[this]()
 			{
-				return this->FormatRingPacketLength();
+				return this->FormatDDRDataWriteBurstSize();
 			},
+			[this]()
+			{
+				return this->FormatDDRDataReadBurstSize();
+			},
+			[this]()
+			{
+				return this->FormatDDRSERDESLocalStartAddress();
+			},
+			[this]()
+			{
+				return this->FormatDDRDERDESLocalEndAddress();
+			},
+			[this]()
+			{
+				return this->FormatDDRSERDESWriteBurstSize();
+			},
+			[this]()
+			{
+				return this->FormatDDRSERDESReadBurstSize();
+			},
+
 			[this]()
 			{
 				return this->FormatFPGAPROMProgramStatus();
@@ -733,6 +795,121 @@ namespace DTCLib
 			[this]()
 			{
 				return this->FormatPerfMonInitPHC();
+			}
+		};
+
+		const std::vector<std::function<DTC_RegisterFormatter()>> formattedCounterFunctions_{
+			[this]()
+			{
+				return this->FormatReceiveByteCountRing0();
+			},
+			[this]()
+			{
+				return this->FormatReceiveByteCountRing1();
+			},
+			[this]()
+			{
+				return this->FormatReceiveByteCountRing2();
+			},
+			[this]()
+			{
+				return this->FormatReceiveByteCountRing3();
+			},
+			[this]()
+			{
+				return this->FormatReceiveByteCountRing4();
+			},
+			[this]()
+			{
+				return this->FormatReceiveByteCountRing5();
+			},
+			[this]()
+			{
+				return this->FormatReceiveByteCountCFO();
+			},
+			[this]()
+			{
+				return this->FormatReceivePacketCountRing0();
+			},
+			[this]()
+			{
+				return this->FormatReceivePacketCountRing1();
+			},
+			[this]()
+			{
+				return this->FormatReceivePacketCountRing2();
+			},
+			[this]()
+			{
+				return this->FormatReceivePacketCountRing3();
+			},
+			[this]()
+			{
+				return this->FormatReceivePacketCountRing4();
+			},
+			[this]()
+			{
+				return this->FormatReceivePacketCountRing5();
+			},
+			[this]()
+			{
+				return this->FormatReceivePacketCountCFO();
+			},
+			[this]()
+			{
+				return this->FormatTramsitByteCountRing0();
+			},
+			[this]()
+			{
+				return this->FormatTramsitByteCountRing1();
+			},
+			[this]()
+			{
+				return this->FormatTramsitByteCountRing2();
+			},
+			[this]()
+			{
+				return this->FormatTramsitByteCountRing3();
+			},
+			[this]()
+			{
+				return this->FormatTramsitByteCountRing4();
+			},
+			[this]()
+			{
+				return this->FormatTramsitByteCountRing5();
+			},
+			[this]()
+			{
+				return this->FormatTramsitByteCountCFO();
+			},
+			[this]()
+			{
+				return this->FormatTransmitPacketCountRing0();
+			},
+			[this]()
+			{
+				return this->FormatTransmitPacketCountRing1();
+			},
+			[this]()
+			{
+				return this->FormatTransmitPacketCountRing2();
+			},
+			[this]()
+			{
+				return this->FormatTransmitPacketCountRing3();
+			},
+			[this]()
+			{
+				return this->FormatTransmitPacketCountRing4();
+			},
+			[this]()
+			{
+				return this->FormatTransmitPacketCountRing5();
+			},
+			[this]()
+			{
+				return this->FormatTransmitPacketCountCFO();
 			}
 		};
 	};
