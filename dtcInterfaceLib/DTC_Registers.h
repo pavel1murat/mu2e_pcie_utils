@@ -3,11 +3,18 @@
 
 #include <bitset> // std::bitset
 
+
+
 #include <cstdint> // uint8_t, uint16_t
+
+
 
 #include <functional> // std::bind, std::function
 
+
+
 #include <vector> // std::vector
+
 
 
 #include "DTC_Types.h"
@@ -103,7 +110,7 @@ namespace DTCLib
 		DTC_Register_TransmitPacketCountDataCFO = 0x9278,
 		DTC_Register_DDRDataStartAddress = 0x9300,
 		DTC_Register_DDRDataEndAddress = 0x9304,
-		DTC_Regsiter_DDRDataWriteBurstSize = 0x9308,
+		DTC_Register_DDRDataWriteBurstSize = 0x9308,
 		DTC_Register_DDRDataReadBurstSize = 0x930C,
 		DTC_Register_DDRSERDESStartAddress = 0x9310,
 		DTC_Register_DDRSERDESEndAddress = 0x9314,

@@ -2,7 +2,6 @@
 #define DTCLibTest_H
 
 #include "DTC.h"
-#include <bitset>
 #include <atomic>
 #include <thread>
 
@@ -16,11 +15,11 @@ namespace DTCLib
 
 		//Test Control
 		void startTest(bool classEnabled, bool regIOEnabled,
-			bool daqEnabled, bool dcsEnabled, int nTests, bool printMessages = false);
+		               bool daqEnabled, bool dcsEnabled, int nTests, bool printMessages = false);
 		void stopTests();
 
 		// Accessors
-		bool isRunning()
+		bool isRunning() const
 		{
 			return running_;
 		}

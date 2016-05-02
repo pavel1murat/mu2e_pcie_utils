@@ -1,14 +1,14 @@
 #include <cstdio> // printf
 
+
 #include <cstdlib> // strtoul
+
 
 #include <iostream>
 #include <string>
 #include "DTCSoftwareCFO.h"
 
 #ifdef _WIN32
-# include <chrono>
-# include <thread>
 # define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
 # ifndef TRACE
 #  include <stdio.h>
@@ -26,35 +26,32 @@
 
 unsigned getOptionValue(int* index, char** argv[])
 {
-	char* arg = (*argv)[*index];
+	auto arg = (*argv)[*index];
 	if (arg[2] == '\0')
 	{
 		(*index)++;
-		return strtoul((*argv)[*index], NULL, 0);
+		return strtoul((*argv)[*index], nullptr, 0);
 	}
-	else
+	auto offset = 2;
+	if (arg[2] == '=')
 	{
-		int offset = 2;
-		if (arg[2] == '=')
-		{
-			offset = 3;
-		}
-
-		return strtoul(&(arg[offset]), NULL, 0);
+		offset = 3;
 	}
+
+	return strtoul(&arg[offset], nullptr, 0);
 }
 
 void printHelpMsg()
 {
 	std::cout << "Usage: requestSender [options]" << std::endl;
 	std::cout << "Options are:" << std::endl
-		<< "    -h: This message." << std::endl
-		<< "    -n: Number of times to repeat test. (Default: 1)" << std::endl
-		<< "    -o: Starting Timestamp offest. (Default: 1)." << std::endl
-		<< "    -i: Do not increment Timestamps." << std::endl
-		<< "    -d: Delay between tests, in us (Default: 0)." << std::endl
-		<< "    -c: Number of Debug Packets to request (Default: 0)." << std::endl
-		<< "    -q: Quiet mode (Don't print)" << std::endl;
+	             << "    -h: This message." << std::endl
+	             << "    -n: Number of times to repeat test. (Default: 1)" << std::endl
+	             << "    -o: Starting Timestamp offest. (Default: 1)." << std::endl
+	             << "    -i: Do not increment Timestamps." << std::endl
+	             << "    -d: Delay between tests, in us (Default: 0)." << std::endl
+	             << "    -c: Number of Debug Packets to request (Default: 0)." << std::endl
+	             << "    -q: Quiet mode (Don't print)" << std::endl;
 	exit(0);
 }
 
@@ -63,14 +60,14 @@ int main(int argc, char* argv[])
 	DTCLib::DTC theDTC;
 	DTCLib::DTCSoftwareCFO theEmulator(&theDTC, false);
 
-	bool incrementTimestamp = true;
-	bool quiet = false;
+	auto incrementTimestamp = true;
+	auto quiet = false;
 	unsigned delay = 0;
 	unsigned number = 1;
 	unsigned timestampOffset = 1;
 	unsigned packetCount = 0;
 
-	for (int optind = 1; optind < argc; ++optind)
+	for (auto optind = 1; optind < argc; ++optind)
 	{
 		if (argv[optind][0] == '-')
 		{

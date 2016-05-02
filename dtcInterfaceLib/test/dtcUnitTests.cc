@@ -1,4 +1,3 @@
-
 #include <iostream>
 #ifdef _WIN32
 # include "..\DTCLibTest.h"
@@ -12,20 +11,20 @@
 void usage()
 {
 	std::cout << "This program runs several functionality tests of libDTCInterface." << std::endl
-		<< "If run with no options, it will run all 4 tests." << std::endl
-		<< "Otherwise, it accepts a space-delimited list of the tests to run," << std::endl
-		<< "defined either by test number {0,1,4,5}, or test name {class, reg, dcs, daq}" << std::endl
-		<< "It also accepts a -n argument indicating how many iterations of the tests it should run" << std::endl;
+	             << "If run with no options, it will run all 4 tests." << std::endl
+	             << "Otherwise, it accepts a space-delimited list of the tests to run," << std::endl
+	             << "defined either by test number {0,1,4,5}, or test name {class, reg, dcs, daq}" << std::endl
+	             << "It also accepts a -n argument indicating how many iterations of the tests it should run" << std::endl;
 }
 
 int main(int argc, char* argv[])
 {
-	int testCount = 1;
-	bool classTest = false,
+	auto testCount = 1;
+	auto classTest = false,
 		registerTest = false,
 		dcsTest = false,
 		daqTest = false;
-	bool testsSpecified = false;
+	auto testsSpecified = false;
 
 	if (argc == 1)
 	{
@@ -33,9 +32,9 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		for (int i = 1; i < argc; ++i)
+		for (auto i = 1; i < argc; ++i)
 		{
-			int firstChar = 0;
+			auto firstChar = 0;
 			if (argv[i][0] == '-')
 			{
 				firstChar = 1;
@@ -45,13 +44,13 @@ int main(int argc, char* argv[])
 					testCount = atoi(argv[i]);
 					continue;
 				}
-				else if (argv[i][1] == 'h' || argc == i + 1)
+				if (argv[i][1] == 'h' || argc == i + 1)
 				{
 					usage();
 					exit(0);
 				}
 			}
-			if (isdigit((unsigned char)argv[i][firstChar]))
+			if (isdigit(static_cast<unsigned char>(argv[i][firstChar])))
 			{
 				testsSpecified = true;
 				switch (argv[i][firstChar] - '0')
@@ -79,7 +78,7 @@ int main(int argc, char* argv[])
 					testsSpecified = true;
 					classTest = true;
 				}
-				if (arg.find("reg") != std::string::npos)
+				else if (arg.find("reg") != std::string::npos)
 				{
 					testsSpecified = true;
 					registerTest = true;
@@ -117,7 +116,7 @@ int main(int argc, char* argv[])
 		<< (daqTest ? "DAQ DMA I/O " : "")
 		<< ", " << testCount << " times." << std::endl;
 
-	DTCLib::DTCLibTest* tester = new DTCLib::DTCLibTest();
+	auto tester = new DTCLib::DTCLibTest();
 
 	tester->startTest(classTest, registerTest, daqTest, dcsTest, testCount, true);
 
@@ -125,5 +124,6 @@ int main(int argc, char* argv[])
 	{
 		usleep(500000);
 	}
+	delete tester;
 }
 

@@ -23,12 +23,12 @@ namespace DTCLib
 	{
 	public:
 		DTCSoftwareCFO(DTC* dtc, bool useCFOEmulator, uint16_t debugPacketCount = 0,
-		               DTCLib::DTC_DebugType debugType = DTCLib::DTC_DebugType_ExternalSerialWithReset, bool stickyDebugType = false,
+		               DTC_DebugType debugType = DTC_DebugType_ExternalSerialWithReset, bool stickyDebugType = false,
 		               bool quiet = false, bool asyncRR = false);
 		~DTCSoftwareCFO();
 
-		void SendRequestForTimestamp(DTC_Timestamp ts = DTC_Timestamp((uint64_t)0));
-		void SendRequestsForRange(int count, DTC_Timestamp start = DTC_Timestamp((uint64_t)0),
+		void SendRequestForTimestamp(DTC_Timestamp ts = DTC_Timestamp(static_cast<uint64_t>(0)));
+		void SendRequestsForRange(int count, DTC_Timestamp start = DTC_Timestamp(static_cast<uint64_t>(0)),
 		                          bool increment = true, uint32_t delayBetweenDataRequests = 0, int requestsAhead = 1);
 
 		void setQuiet(bool quiet)
@@ -41,9 +41,9 @@ namespace DTCLib
 			debugPacketCount_ = dbc;
 		}
 
-		void WaitForRequestsToBeSent();
+		void WaitForRequestsToBeSent() const;
 
-		DTCLib::DTC* GetDTC()
+		DTC* GetDTC() const
 		{
 			return theDTC_;
 		}
@@ -53,11 +53,10 @@ namespace DTCLib
 		                                   bool increment = true, uint32_t delayBetweenDataRequests = 0);
 		void SendRequestsForRangeImplSync(DTC_Timestamp start, int count,
 		                                  bool increment = true, uint32_t delayBetweenDataRequests = 0, int requestsAhead = 1);
-	private:
 		// Request Parameters
 		bool useCFOEmulator_;
 		uint16_t debugPacketCount_;
-		DTCLib::DTC_DebugType debugType_;
+		DTC_DebugType debugType_;
 		bool stickyDebugType_;
 		bool quiet_; // Don't print as much
 		bool asyncRR_;

@@ -5,15 +5,13 @@
 #include "DTC_Packets.h"
 #include "DTC_Registers.h"
 #include <vector>
-#include <cstdlib>
-#include <atomic>
 
 namespace DTCLib
 {
 	class DTC : public DTC_Registers
 	{
 	public:
-		DTC(DTC_SimMode mode = DTC_SimMode_Disabled);
+		explicit DTC(DTC_SimMode mode = DTC_SimMode_Disabled);
 		virtual ~DTC();
 
 		//
@@ -56,7 +54,6 @@ namespace DTCLib
 		int ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms = 0);
 		void WriteDataPacket(const DTC_DataPacket& packet);
 
-	private:
 		mu2e_databuff_t* daqbuffer_;
 		int buffers_used_;
 		mu2e_databuff_t* dcsbuffer_;

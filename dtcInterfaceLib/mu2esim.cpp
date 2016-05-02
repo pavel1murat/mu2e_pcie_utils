@@ -20,6 +20,7 @@
 #  else
 #   define TRACE(...)
 #  endif
+# define TRACE_CNTL(...)
 # endif
 # pragma warning(disable: 4351 6385 6386)
 #endif
@@ -49,8 +50,10 @@ mu2esim::mu2esim()
 	swIdx_[1] = 0;
 	for (unsigned ii = 0; ii < SIM_BUFFCOUNT; ++ii)
 	{
-		dmaData_[0][ii] = reinterpret_cast<mu2e_databuff_t*>(new mu2e_databuff_t());
-		dmaData_[1][ii] = reinterpret_cast<mu2e_databuff_t*>(new mu2e_databuff_t());
+		// ReSharper disable CppNonReclaimedResourceAcquisition
+		dmaData_[0][ii] = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
+		dmaData_[1][ii] = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
+		// ReSharper restore CppNonReclaimedResourceAcquisition
 	}
 	release_all(0);
 	release_all(1);
@@ -115,6 +118,9 @@ int mu2esim::init(DTCLib::DTC_SimMode mode)
 	registers_[DTCLib::DTC_Register_ROCReplyTimeout] = 0x200000; // ROC Timeout Preset
 	registers_[DTCLib::DTC_Register_ROCReplyTimeoutError] = 0x0; // ROC Timeout Error
 	registers_[DTCLib::DTC_Register_RingPacketLength] = 0x10;
+	registers_[DTCLib::DTC_Register_EVBPartitionID] = 0x0;
+	registers_[DTCLib::DTC_Register_EVBDestCount] = 0x0;
+	registers_[DTCLib::DTC_Register_HeartbeatErrorFlags] = 0x0;
 	registers_[DTCLib::DTC_Register_TimestampPreset0] = 0x0; // Timestamp preset to 0
 	registers_[DTCLib::DTC_Register_TimestampPreset1] = 0x0;
 	registers_[DTCLib::DTC_Register_DataPendingTimer] = 0x00002000; // Data pending timeout preset
@@ -127,12 +133,11 @@ int mu2esim::init(DTCLib::DTC_SimMode mode)
 	registers_[DTCLib::DTC_Register_CFOEmulationTimestampHigh] = 0x0;
 	registers_[DTCLib::DTC_Register_CFOEmulationRequestInterval] = 0x0;
 	registers_[DTCLib::DTC_Register_CFOEmulationNumRequests] = 0x0;
-	registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRing0] = 0x0;
-	registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRing1] = 0x0;
-	registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRing2] = 0x0;
-	registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRing3] = 0x0;
-	registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRing4] = 0x0;
-	registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRing5] = 0x0;
+	registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRings10] = 0x0;
+	registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRings32] = 0x0;
+	registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRings54] = 0x0;
+	registers_[DTCLib::DTC_Register_CFOEmulationEventMode1] = 0x0;
+	registers_[DTCLib::DTC_Register_CFOEmulationEventMode2] = 0x0;
 	registers_[DTCLib::DTC_Register_CFOEmulationDebugPacketType] = 0x0;
 	registers_[DTCLib::DTC_Register_DetEmulationDMACount] = 0x0;
 	registers_[DTCLib::DTC_Register_DetEmulationDelayCount] = 0x0;
@@ -164,16 +169,20 @@ int mu2esim::init(DTCLib::DTC_SimMode mode)
 	registers_[DTCLib::DTC_Register_TransmitPacketCountDataRing4] = 0x0;
 	registers_[DTCLib::DTC_Register_TransmitPacketCountDataRing5] = 0x0;
 	registers_[DTCLib::DTC_Register_TransmitPacketCountDataCFO] = 0x0;
-	registers_[DTCLib::DTC_Register_DDRLocalStartAddress] = 0x0;
-	registers_[DTCLib::DTC_Register_DDRLocalEndAddress] = 0x0;
-	registers_[DTCLib::DTC_Regsiter_DDRWriteBurstSize] = 0x0;
-	registers_[DTCLib::DTC_Register_DDRReadBurstSize] = 0x0;
+	registers_[DTCLib::DTC_Register_DDRDataStartAddress] = 0x0;
+	registers_[DTCLib::DTC_Register_DDRDataEndAddress] = 0x0;
+	registers_[DTCLib::DTC_Register_DDRDataWriteBurstSize] = 0x0;
+	registers_[DTCLib::DTC_Register_DDRDataReadBurstSize] = 0x0;
+	registers_[DTCLib::DTC_Register_DDRSERDESStartAddress] = 0x0;
+	registers_[DTCLib::DTC_Register_DDRSERDESEndAddress] = 0x0;
+	registers_[DTCLib::DTC_Register_DDRSERDESWriteBurstSize] = 0x0;
+	registers_[DTCLib::DTC_Register_DDRSERDESReadBurstSize] = 0x0;
 	registers_[DTCLib::DTC_Register_FPGAProgramData] = 0x0;
 	registers_[DTCLib::DTC_Register_FPGAPROMProgramStatus] = 0x1;
 	registers_[DTCLib::DTC_Register_FPGACoreAccess] = 0x0; // FPGA Core Access OK
 
 	TRACE(17, "mu2esim::init finished");
-	return (0);
+	return 0;
 }
 
 /*****************************
@@ -207,10 +216,10 @@ int mu2esim::read_data(int chn, void** buffer, int tmo_ms)
 			if ((registers_[DTCLib::DTC_Register_DTCControl] & 0x4000000) == 0x4000000 && (registers_[DTCLib::DTC_Register_DetEmulationDMACount] == 0 || registers_[DTCLib::DTC_Register_DetEmulationDMACount] > detSimLoopCount_))
 			{
 				TRACE(17, "mu2esim::read_data: Conditions met. Putting the buffer back on the queue");
-				registers_[DTCLib::DTC_Register_DDRLocalStartAddress]++;
-				if (registers_[DTCLib::DTC_Register_DDRLocalStartAddress] == registers_[DTCLib::DTC_Register_DDRLocalEndAddress])
+				registers_[DTCLib::DTC_Register_DDRDataStartAddress]++;
+				if (registers_[DTCLib::DTC_Register_DDRDataStartAddress] == registers_[DTCLib::DTC_Register_DDRDataEndAddress])
 				{
-					registers_[DTCLib::DTC_Register_DDRLocalStartAddress] = 0;
+					registers_[DTCLib::DTC_Register_DDRDataStartAddress] = 0;
 					detSimLoopCount_++;
 				}
 				disposeOfBuffer = false;
@@ -219,7 +228,7 @@ int mu2esim::read_data(int chn, void** buffer, int tmo_ms)
 			auto buf = ddrSim_.pop(!disposeOfBuffer);
 			TRACE(17, "mu2esim::read_data: Done waiting for data (there is data) buf=%p", (void*)buf.get());
 			TRACE(17, "mu2esim::read_data: Setting bytesReturned to buffer's DMA header: %llu", *(reinterpret_cast<unsigned long long*>((*buf).data())));
-			bytesReturned = *(reinterpret_cast<unsigned long long*>((*buf).data()));
+			bytesReturned = static_cast<size_t>(*reinterpret_cast<unsigned long long*>((*buf).data()));
 			memcpy(dmaData_[chn][swIdx_[chn]], buf.get()->data(), bytesReturned);
 		}
 		else if (chn == 1)
@@ -233,17 +242,17 @@ int mu2esim::read_data(int chn, void** buffer, int tmo_ms)
 
 			auto buf = dcsResponses_.pop(false);
 			TRACE(17, "mu2esim::read_data: Done waiting. There is data: buf=%p", (void*)buf.get());
-			bytesReturned = *(reinterpret_cast<uint64_t*>((*buf).data()));
+			bytesReturned = static_cast<size_t>(*reinterpret_cast<uint64_t*>((*buf).data()));
 			memcpy(dmaData_[chn][swIdx_[chn]], buf.get()->data(), bytesReturned);
 		}
 	}
 
 	*buffer = dmaData_[chn][swIdx_[chn]];
-	TRACE(18, "mu2esim::read_data: *buffer (%p) should now be equal to dmaData_[%d][%d] (%p)", (void*)*buffer, chn, swIdx_[chn], (void*)dmaData_[chn][swIdx_[chn]]);
+	TRACE(18, "mu2esim::read_data: *buffer (%p) should now be equal to dmaData_[%d][%u] (%p)", (void*)*buffer, chn, swIdx_[chn], (void*)dmaData_[chn][swIdx_[chn]]);
 	swIdx_[chn] = (swIdx_[chn] + 1) % SIM_BUFFCOUNT;
 
-	long long duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
-	TRACE(18, "mu2esim::read_data took %lli milliseconds out of tmo_ms=%i", duration, tmo_ms);
+	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+	TRACE(18, "mu2esim::read_data took %lli milliseconds out of tmo_ms=%i", static_cast<long long>(duration), tmo_ms);
 	return bytesReturned;
 }
 
@@ -256,7 +265,7 @@ int mu2esim::write_data(int chn, void* buffer, size_t bytes)
 		{
 			auto lpBuf = std::make_shared<std::vector<uint8_t>>(reinterpret_cast<uint8_t*>(buffer), reinterpret_cast<uint8_t*>(buffer) + bytes);
 			ddrSim_.push(lpBuf);
-			registers_[DTCLib::DTC_Register_DDRLocalEndAddress]++;
+			registers_[DTCLib::DTC_Register_DDRDataEndAddress]++;
 			return 0;
 		}
 		TRACE(17, "mu2esim::write_data: I was asked to write more than one buffer's worth of data. Cowardly refusing.");
@@ -265,7 +274,7 @@ int mu2esim::write_data(int chn, void* buffer, size_t bytes)
 	{
 		TRACE(17, "mu2esim::write_data start: chn=%i, buf=%p, bytes=%llu", chn, buffer, (unsigned long long)bytes);
 		uint32_t worda;
-		memcpy(&worda, buffer, sizeof(worda));
+		memcpy(&worda, buffer, sizeof worda);
 		auto word = static_cast<uint16_t>(worda >> 16);
 		TRACE(17, "mu2esim::write_data worda is 0x%x and word is 0x%x", worda, word);
 		auto activeRing = static_cast<DTCLib::DTC_Ring_ID>((word & 0x0F00) >> 8);
@@ -346,8 +355,8 @@ int mu2esim::read_register(uint16_t address, int tmo_ms, uint32_t* output)
 		*output = registers_[address];
 		return 0;
 	}
-	long long duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
-	TRACE(18, "mu2esim::read_register took %lli milliseconds out of tmo_ms=%i", duration, tmo_ms);
+	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+	TRACE(18, "mu2esim::read_register took %lli milliseconds out of tmo_ms=%i", static_cast<long long>(duration), tmo_ms);
 	return 1;
 }
 
@@ -357,8 +366,8 @@ int mu2esim::write_register(uint16_t address, int tmo_ms, uint32_t data)
 	// Write the register!!!
 	TRACE(17, "mu2esim::write_register: Writing value 0x%x into address 0x%x", data, address);
 	registers_[address] = data;
-	long long duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
-	TRACE(18, "mu2esim::write_register took %lli milliseconds out of tmo_ms=%i", duration, tmo_ms);
+	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+	TRACE(18, "mu2esim::write_register took %lli milliseconds out of tmo_ms=%i", static_cast<long long>(duration), tmo_ms);
 	if (address == 0x9100) // DTC Control
 	{
 		std::bitset<32> dataBS(data);
@@ -419,28 +428,29 @@ void mu2esim::CFOEmulator_()
 	{
 		for (auto ring : DTCLib::DTC_Rings)
 		{
-			auto packetCount = 0;
+			uint16_t packetCount;
 			switch (ring)
 			{
 			case DTCLib::DTC_Ring_0:
-				packetCount = static_cast<uint16_t>(registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRing0]);
+				packetCount = static_cast<uint16_t>(registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRings10]);
 				break;
 			case DTCLib::DTC_Ring_1:
-				packetCount = static_cast<uint16_t>(registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRing1]);
+				packetCount = static_cast<uint16_t>(registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRings10] >> 16);
 				break;
 			case DTCLib::DTC_Ring_2:
-				packetCount = static_cast<uint16_t>(registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRing2]);
+				packetCount = static_cast<uint16_t>(registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRings32]);
 				break;
 			case DTCLib::DTC_Ring_3:
-				packetCount = static_cast<uint16_t>(registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRing3]);
+				packetCount = static_cast<uint16_t>(registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRings32] >> 16);
 				break;
 			case DTCLib::DTC_Ring_4:
-				packetCount = static_cast<uint16_t>(registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRing4]);
+				packetCount = static_cast<uint16_t>(registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRings54]);
 				break;
 			case DTCLib::DTC_Ring_5:
-				packetCount = static_cast<uint16_t>(registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRing5]);
+				packetCount = static_cast<uint16_t>(registers_[DTCLib::DTC_Register_CFOEmulationNumPacketsRings54] >> 16);
 				break;
 			default:
+				packetCount = 0;
 				break;
 			}
 			if (numROCS[ring] != DTCLib::DTC_ROC_Unused)
@@ -449,7 +459,7 @@ void mu2esim::CFOEmulator_()
 				for (uint8_t roc = 0; roc <= numROCS[ring]; ++roc)
 				{
 					TRACE(21, "mu2esim::CFOEmulator_ activating packet simulator, ring=%u, roc=%u, for timestamp=%llu", ring, roc, (unsigned long long)(start + sentCount).GetTimestamp(true));
-					packetSimulator_((start + sentCount), ring, static_cast<DTCLib::DTC_ROC_ID>(roc), packetCount);
+					packetSimulator_(start + sentCount, ring, static_cast<DTCLib::DTC_ROC_ID>(roc), packetCount);
 				}
 			}
 		}
@@ -467,6 +477,7 @@ void mu2esim::CFOEmulator_()
 
 unsigned mu2esim::delta_(int chn, int dir)
 {
+	TRACE(25, "delta_ %i %i = 0", chn, dir);
 	/*
 	unsigned hw = hwIdx_[chn];
 	unsigned sw = swIdx_[chn];
@@ -495,7 +506,7 @@ void mu2esim::clearBuffer_(int chn, bool increment)
 	}
 	//memset(dmaData_[chn][hwIdx_[chn]], 0, sizeof(mu2e_databuff_t));
 	*/
-	TRACE(17, "mu2esim::clearBuffer_: NOP");
+	TRACE(17, "mu2esim::clearBuffer_(%i, %u): NOP", chn, increment);
 }
 
 void mu2esim::dcsPacketSimulator_(DTCLib::DTC_DCSRequestPacket in)
@@ -505,9 +516,9 @@ void mu2esim::dcsPacketSimulator_(DTCLib::DTC_DCSRequestPacket in)
 
 	TRACE(17, "mu2esim::dcsPacketSimulator_: copying response into new buffer");
 	auto buf = std::make_shared<std::vector<uint8_t>>(8, 0);
-	DTCLib::DTC_DataPacket dataPacket = packet.ConvertToDataPacket();
+	auto dataPacket = packet.ConvertToDataPacket();
 	size_t packetSize = dataPacket.GetSize();
-	*(reinterpret_cast<uint64_t*>((buf.get())->data())) = packetSize;
+	*reinterpret_cast<uint64_t*>(buf.get()->data()) = packetSize;
 	buf.get()->resize(8 + packetSize);
 	memcpy(buf.get()->data() + 8, dataPacket.GetData(), packetSize);
 	dcsResponses_.push(buf);
@@ -535,7 +546,7 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 	{
 		nPackets = packetCount;
 	}
-	if ((currentOffset_ + (nPackets + 1) * registers_[DTCLib::DTC_Register_RingPacketLength]) > sizeof(mu2e_databuff_t) || currentTimestamp_ != ts)
+	if (currentOffset_ + (nPackets + 1) * registers_[DTCLib::DTC_Register_RingPacketLength] > sizeof(mu2e_databuff_t) || currentTimestamp_ != ts)
 	{
 		closeBuffer_(false, ts);
 	}
@@ -560,12 +571,12 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 
 	TRACE(17, "mu2esim::packetSimulator_ Copying Data Header packet into buffer, chn=%i, buf=%p, packet=%p, off=%llu"
 		, 0, (void*)currentBuffer_.get(), (void*)packet, (unsigned long long)currentOffset_);
-	if (currentBuffer_.get()->size() < currentOffset_ + sizeof(packet))
+	if (currentBuffer_.get()->size() < currentOffset_ + sizeof packet)
 	{
-		currentBuffer_.get()->resize(currentOffset_ + sizeof(packet));
+		currentBuffer_.get()->resize(currentOffset_ + sizeof packet);
 	}
-	memcpy(currentBuffer_.get()->data() + currentOffset_, &packet, sizeof(packet));
-	currentOffset_ += sizeof(packet);
+	memcpy(currentBuffer_.get()->data() + currentOffset_, &packet, sizeof packet);
+	currentOffset_ += sizeof packet;
 
 	switch (mode_)
 	{
@@ -585,23 +596,27 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 			packet[10] = 2;
 			packet[11] = 2;
 			packet[12] = static_cast<uint8_t>(3 * simIndex_[ring][roc]);
+			// ReSharper disable CppRedundantParentheses
 			packet[13] = static_cast<uint8_t>((3 * simIndex_[ring][roc]) >> 8);
+			// ReSharper restore CppRedundantParentheses
 			packet[14] = 0;
 			packet[15] = 0;
 
 			TRACE(17, "mu2esim::packetSimulator_ Copying Data packet into buffer, chn=%i, buf=%p, packet=%p, off=%llu"
 				, 0, (void*)(currentBuffer_.get()), (void*)packet, (unsigned long long)currentOffset_);
-			if (currentBuffer_.get()->size() < currentOffset_ + sizeof(packet))
+			if (currentBuffer_.get()->size() < currentOffset_ + sizeof packet)
 			{
-				currentBuffer_.get()->resize(currentOffset_ + sizeof(packet));
+				currentBuffer_.get()->resize(currentOffset_ + sizeof packet);
 			}
-			memcpy(currentBuffer_.get()->data() + currentOffset_, &packet, sizeof(packet));
+			memcpy(currentBuffer_.get()->data() + currentOffset_, &packet, sizeof packet);
 		}
 		break;
 	case DTCLib::DTC_SimMode_Calorimeter:
 		{
 			packet[0] = static_cast<uint8_t>(simIndex_[ring][roc]);
+			// ReSharper disable CppRedundantParentheses
 			packet[1] = static_cast<uint8_t>((simIndex_[ring][roc] >> 8) & 0xF) + ((simIndex_[ring][roc] & 0xF) << 4);
+			// ReSharper restore CppRedundantParentheses
 			packet[2] = 0x0; // No TDC value!
 			packet[3] = 0x0;
 			packet[4] = static_cast<uint8_t>(nSamples);
@@ -613,48 +628,58 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 			packet[10] = 2;
 			packet[11] = 2;
 			packet[12] = static_cast<uint8_t>(3 * simIndex_[ring][roc]);
+			// ReSharper disable CppRedundantParentheses
 			packet[13] = static_cast<uint8_t>((3 * simIndex_[ring][roc]) >> 8);
+			// ReSharper restore CppRedundantParentheses
 			packet[14] = 4;
 			packet[15] = 4;
 
 			TRACE(17, "mu2esim::packetSimulator_ Copying Data packet into buffer, chn=%i, buf=%p, packet=%p, off=%llu"
 				, 0, (void*)(currentBuffer_.get()), (void*)packet, (unsigned long long)currentOffset_);
-			if (currentBuffer_.get()->size() < currentOffset_ + sizeof(packet))
+			if (currentBuffer_.get()->size() < currentOffset_ + sizeof packet)
 			{
-				currentBuffer_.get()->resize(currentOffset_ + sizeof(packet));
+				currentBuffer_.get()->resize(currentOffset_ + sizeof packet);
 			}
-			memcpy(currentBuffer_.get()->data() + currentOffset_, &packet, sizeof(packet));
-			currentOffset_ += sizeof(packet);
+			memcpy(currentBuffer_.get()->data() + currentOffset_, &packet, sizeof packet);
+			currentOffset_ += sizeof packet;
 
 			auto samplesProcessed = 5;
 			for (auto i = 1; i < nPackets; ++i)
 			{
 				packet[0] = static_cast<uint8_t>(samplesProcessed * simIndex_[ring][roc]);
+				// ReSharper disable CppRedundantParentheses
 				packet[1] = static_cast<uint8_t>((samplesProcessed * simIndex_[ring][roc]) >> 8);
+				// ReSharper restore CppRedundantParentheses
 				packet[2] = static_cast<uint8_t>(samplesProcessed + 1);
 				packet[3] = static_cast<uint8_t>(samplesProcessed + 1);
 				packet[4] = static_cast<uint8_t>((2 + samplesProcessed) * simIndex_[ring][roc]);
+				// ReSharper disable CppRedundantParentheses
 				packet[5] = static_cast<uint8_t>(((2 + samplesProcessed) * simIndex_[ring][roc]) >> 8);
+				// ReSharper restore CppRedundantParentheses
 				packet[6] = static_cast<uint8_t>(samplesProcessed + 3);
 				packet[7] = static_cast<uint8_t>(samplesProcessed + 3);
 				packet[8] = static_cast<uint8_t>((4 + samplesProcessed) * simIndex_[ring][roc]);
+				// ReSharper disable CppRedundantParentheses
 				packet[9] = static_cast<uint8_t>(((4 + samplesProcessed) * simIndex_[ring][roc]) >> 8);
+				// ReSharper restore CppRedundantParentheses
 				packet[10] = static_cast<uint8_t>(samplesProcessed + 5);
 				packet[11] = static_cast<uint8_t>(samplesProcessed + 5);
 				packet[12] = static_cast<uint8_t>((6 + samplesProcessed) * simIndex_[ring][roc]);
+				// ReSharper disable CppRedundantParentheses
 				packet[13] = static_cast<uint8_t>(((6 + samplesProcessed) * simIndex_[ring][roc]) >> 8);
+				// ReSharper restore CppRedundantParentheses
 				packet[14] = static_cast<uint8_t>(samplesProcessed + 7);
 				packet[15] = static_cast<uint8_t>(samplesProcessed + 7);
 
 				samplesProcessed += 8;
 				TRACE(17, "mu2esim::packetSimulator_ Copying Data packet into buffer, chn=%i, buf=%p, packet=%p, off=%llu"
 					, 0, (void*)(currentBuffer_.get()), (void*)packet, (unsigned long long)currentOffset_);
-				if (currentBuffer_.get()->size() < currentOffset_ + sizeof(packet))
+				if (currentBuffer_.get()->size() < currentOffset_ + sizeof packet)
 				{
-					currentBuffer_.get()->resize(currentOffset_ + sizeof(packet));
+					currentBuffer_.get()->resize(currentOffset_ + sizeof packet);
 				}
-				memcpy(currentBuffer_.get()->data() + currentOffset_, &packet, sizeof(packet));
-				currentOffset_ += sizeof(packet);
+				memcpy(currentBuffer_.get()->data() + currentOffset_, &packet, sizeof packet);
+				currentOffset_ += sizeof packet;
 			}
 		}
 		break;
@@ -669,13 +694,13 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 			packet[5] = 0x0;
 
 			uint16_t pattern0 = 0;
-			uint16_t pattern1 = simIndex_[ring][roc];
+			auto pattern1 = simIndex_[ring][roc];
 			uint16_t pattern2 = 2;
-			uint16_t pattern3 = (simIndex_[ring][roc] * 3) % 0x3FF;
+			uint16_t pattern3 = simIndex_[ring][roc] * 3 % 0x3FF;
 			uint16_t pattern4 = 4;
-			uint16_t pattern5 = (simIndex_[ring][roc] * 5) % 0x3FF;
+			uint16_t pattern5 = simIndex_[ring][roc] * 5 % 0x3FF;
 			uint16_t pattern6 = 6;
-			uint16_t pattern7 = (simIndex_[ring][roc] * 7) % 0x3FF;
+			uint16_t pattern7 = simIndex_[ring][roc] * 7 % 0x3FF;
 
 			packet[6] = static_cast<uint8_t>(pattern0);
 			packet[7] = static_cast<uint8_t>((pattern0 >> 8) + (pattern1 << 2));
@@ -690,12 +715,12 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 
 			TRACE(17, "mu2esim::packetSimulator_ Copying Data packet into buffer, chn=%i, buf=%p, packet=%p, off=%llu"
 				, 0, (void*)(currentBuffer_.get()), (void*)packet, (unsigned long long)currentOffset_);
-			if (currentBuffer_.get()->size() < currentOffset_ + sizeof(packet))
+			if (currentBuffer_.get()->size() < currentOffset_ + sizeof packet)
 			{
-				currentBuffer_.get()->resize(currentOffset_ + sizeof(packet));
+				currentBuffer_.get()->resize(currentOffset_ + sizeof packet);
 			}
-			memcpy(currentBuffer_.get()->data() + currentOffset_, &packet, sizeof(packet));
-			currentOffset_ += sizeof(packet);
+			memcpy(currentBuffer_.get()->data() + currentOffset_, &packet, sizeof packet);
+			currentOffset_ += sizeof packet;
 		}
 		break;
 	case DTCLib::DTC_SimMode_Performance:
@@ -720,12 +745,12 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 
 			TRACE(17, "mu2esim::packetSimulator_ Copying Data packet into buffer, chn=%i, buf=%p, packet=%p, off=%llu"
 				, 0, (void*)(currentBuffer_.get()), (void*)packet, (unsigned long long)currentOffset_);
-			if (currentBuffer_.get()->size() < currentOffset_ + sizeof(packet))
+			if (currentBuffer_.get()->size() < currentOffset_ + sizeof packet)
 			{
-				currentBuffer_.get()->resize(currentOffset_ + sizeof(packet));
+				currentBuffer_.get()->resize(currentOffset_ + sizeof packet);
 			}
-			memcpy(currentBuffer_.get()->data() + currentOffset_, &packet, sizeof(packet));
-			currentOffset_ += sizeof(packet);
+			memcpy(currentBuffer_.get()->data() + currentOffset_, &packet, sizeof packet);
+			currentOffset_ += sizeof packet;
 		}
 		break;
 	case DTCLib::DTC_SimMode_Disabled:

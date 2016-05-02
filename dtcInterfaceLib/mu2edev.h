@@ -18,6 +18,7 @@ class mu2edev
 {
 public:
 	mu2edev();
+	virtual ~mu2edev();
 
 	double GetDeviceTime() const
 	{
@@ -58,7 +59,12 @@ public:
 	void meta_dump(int chn, int dir);
 	int write_data(int chn, void* buffer, size_t bytes);
 	void close();
-    int get_devfd_() { return devfd_; }
+
+	int get_devfd_() const
+	{
+		return devfd_;
+	}
+
 	//int  read_pcie_state(m_ioc_pcistate_t *output);
 	//int  read_dma_state(int chn, int dir, m_ioc_engstate_t *output);
 	//int  read_dma_stats(m_ioc_engstats_t *output);

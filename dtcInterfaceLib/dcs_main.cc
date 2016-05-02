@@ -6,7 +6,9 @@
 // rev="$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
 
 #include <cstdio> // printf
+
 #include <cstdlib> // strtoul
+
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -23,8 +25,8 @@
 #  else
 #   define TRACE(...)
 #  endif
-# endif
 # define TRACE_CNTL(...)
+# endif
 #else
 # include "trace.h"
 # include <unistd.h>		// usleep
@@ -35,63 +37,57 @@ using namespace DTCLib;
 
 unsigned getOptionValue(int* index, char** argv[])
 {
-	char* arg = (*argv)[*index];
+	auto arg = (*argv)[*index];
 	if (arg[2] == '\0')
 	{
 		(*index)++;
 		return strtoul((*argv)[*index], nullptr, 0);
 	}
-	else
+	auto offset = 2;
+	if (arg[2] == '=')
 	{
-		int offset = 2;
-		if (arg[2] == '=')
-		{
-			offset = 3;
-		}
-
-		return strtoul(&(arg[offset]), nullptr, 0);
+		offset = 3;
 	}
+
+	return strtoul(&arg[offset], nullptr, 0);
 }
 
 std::string getOptionString(int* index, char** argv[])
 {
-	char* arg = (*argv)[*index];
+	auto arg = (*argv)[*index];
 	if (arg[2] == '\0')
 	{
 		(*index)++;
 		return std::string((*argv)[*index]);
 	}
-	else
+	auto offset = 2;
+	if (arg[2] == '=')
 	{
-		int offset = 2;
-		if (arg[2] == '=')
-		{
-			offset = 3;
-		}
-
-		return std::string(&(arg[offset]));
+		offset = 3;
 	}
+
+	return std::string(&arg[offset]);
 }
 
 void printHelpMsg()
 {
 	std::cout << "Usage: rocUtil [options] [read_register,reset_roc,write_register,write_extregister,test_read,read_release,toggle_serdes]" << std::endl;
 	std::cout << "Options are:" << std::endl
-		<< "    -h: This message." << std::endl
-		<< "    -n: Number of times to repeat test. (Default: 1)" << std::endl
-		<< "    -d: Delay between tests, in us (Default: 0)." << std::endl
-		<< "    -w: Data to write to address" << std::endl
-		<< "    -a: Address to write" << std::endl
-		<< "    -b: Block address (for write_rocext)" << std::endl
-		<< "    -q: Quiet mode (Don't print requests)" << std::endl
-		<< "    -Q: Really Quiet mode (Try not to print anything)" << std::endl;
+	             << "    -h: This message." << std::endl
+	             << "    -n: Number of times to repeat test. (Default: 1)" << std::endl
+	             << "    -d: Delay between tests, in us (Default: 0)." << std::endl
+	             << "    -w: Data to write to address" << std::endl
+	             << "    -a: Address to write" << std::endl
+	             << "    -b: Block address (for write_rocext)" << std::endl
+	             << "    -q: Quiet mode (Don't print requests)" << std::endl
+	             << "    -Q: Really Quiet mode (Try not to print anything)" << std::endl;
 	exit(0);
 }
 
 int main(int argc, char* argv[])
 {
-	bool quiet = false;
-	bool reallyQuiet = false;
+	auto quiet = false;
+	auto reallyQuiet = false;
 	unsigned delay = 0;
 	unsigned number = 1;
 	unsigned address = 0;
@@ -99,7 +95,7 @@ int main(int argc, char* argv[])
 	unsigned block = 0;
 	std::string op = "";
 
-	for (int optind = 1; optind < argc; ++optind)
+	for (auto optind = 1; optind < argc; ++optind)
 	{
 		if (argv[optind][0] == '-')
 		{
@@ -186,7 +182,7 @@ int main(int argc, char* argv[])
 	else if (op == "test_read")
 	{
 		std::cout << "Operation \"test_read\"" << std::endl;
-		if (!thisDTC->ReadSERDESOscillatorClock()) thisDTC->SetSERDESOscillatorClock_25Gbps(); // We're going to 2.5Gbps for now
+		thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_25Gbps); // We're going to 2.5Gbps for now
 
 		thisDTC->SendDCSRequestPacket(DTC_Ring_0, DTC_ROC_0, DTC_DCSOperationType_Read, address, quiet);
 
@@ -194,13 +190,13 @@ int main(int argc, char* argv[])
 		{
 			if (!reallyQuiet) std::cout << "Buffer Read " << ii << std::endl;
 			mu2e_databuff_t* buffer;
-			int tmo_ms = 1500;
-			int sts = device->read_data(DTC_DMA_Engine_DCS, reinterpret_cast<void**>(&buffer), tmo_ms);
+			auto tmo_ms = 1500;
+			auto sts = device->read_data(DTC_DMA_Engine_DCS, reinterpret_cast<void**>(&buffer), tmo_ms);
 
 			TRACE(1, "util - read for DCS - ii=%u sts=%d %p", ii, sts, (void*)buffer);
 			if (sts > 0)
 			{
-				auto bufSize = *reinterpret_cast<uint64_t*>(&(buffer[0]));
+				auto bufSize = *reinterpret_cast<uint64_t*>(&buffer[0]);
 				TRACE(1, "util - bufSize is %llu", static_cast<unsigned long long>(bufSize));
 
 				if (!reallyQuiet)
@@ -211,9 +207,9 @@ int main(int argc, char* argv[])
 						//for (unsigned byte = 0; byte < 16; ++byte)
 						for (unsigned byte = 0; byte < 8; ++byte)
 						{
-							if ((line * 16) + (2 * byte) < (bufSize - 8u))
+							if (line * 16 + 2 * byte < bufSize - 8u)
 							{
-								auto thisWord = (reinterpret_cast<uint16_t*>(buffer)[4 + (line * 8) + byte]);
+								auto thisWord = reinterpret_cast<uint16_t*>(buffer)[4 + line * 8 + byte];
 								//uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
 								std::cout << std::setw(4) << static_cast<int>(thisWord) << " ";
 							}
@@ -224,7 +220,8 @@ int main(int argc, char* argv[])
 			}
 			if (!reallyQuiet) std::cout << std::endl << std::endl;
 			device->read_release(DTC_DMA_Engine_DCS, 1);
-			if (delay > 0) usleep(delay);
+			if (delay > 0)
+			usleep(delay);
 		}
 	}
 	else if (op == "toggle_serdes")
@@ -232,12 +229,12 @@ int main(int argc, char* argv[])
 		if (!thisDTC->ReadSERDESOscillatorClock())
 		{
 			std::cout << "Setting SERDES Oscillator Clock to 2.5 Gbps" << std::endl;
-			thisDTC->SetSERDESOscillatorClock_25Gbps();
+			thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_25Gbps);
 		}
 		else
 		{
 			std::cout << "Setting SERDES Oscillator Clock to 3.125 Gbps" << std::endl;
-			thisDTC->SetSERDESOscillatorClock_3125Gbps();
+			thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_3125Gbps);
 		}
 	}
 	else if (op == "read_release")
@@ -245,11 +242,12 @@ int main(int argc, char* argv[])
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
 			void* buffer;
-			int tmo_ms = 0;
-			int stsRD = device->read_data(DTC_DMA_Engine_DCS, &buffer, tmo_ms);
-			int stsRL = device->read_release(DTC_DMA_Engine_DCS, 1);
+			auto tmo_ms = 0;
+			auto stsRD = device->read_data(DTC_DMA_Engine_DCS, &buffer, tmo_ms);
+			auto stsRL = device->read_release(DTC_DMA_Engine_DCS, 1);
 			TRACE(12, "dcs - release/read for DCS ii=%u stsRD=%d stsRL=%d %p", ii, stsRD, stsRL, buffer);
-			if (delay > 0) usleep(delay);
+			if (delay > 0)
+			usleep(delay);
 		}
 	}
 	else
@@ -259,7 +257,7 @@ int main(int argc, char* argv[])
 	}
 
 	delete thisDTC;
-	return (0);
+	return 0;
 } // main
 
 
