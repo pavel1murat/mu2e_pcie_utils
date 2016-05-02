@@ -529,6 +529,11 @@ int main(int argc, char** argv)
 					curDataBlock.push_back(formatVersion + status);
 					// Eighth 16 bits of header (Unassigned)
 					curDataBlock.push_back(null_adc);
+
+					// Fill in the byte count field of the header packet
+					adc_t numBytes = 16; // Just the header packet
+					curDataBlock[0] = numBytes;
+
 					curDataBlockVector.push_back(curDataBlock);
 				} else {
 				        for(size_t curHitIdx=0; curHitIdx<curHitVector.size(); curHitIdx++)
@@ -653,6 +658,11 @@ int main(int argc, char** argv)
 					curDataBlock.push_back(formatVersion + status);
 					// Eighth 16 bits of header (Unassigned)
 					curDataBlock.push_back(null_adc);
+
+					// Fill in the byte count field of the header packet
+					adc_t numBytes = 16; // Just the header packet
+					curDataBlock[0] = numBytes;
+
 					curDataBlockVector.push_back(curDataBlock);
 				} else {
 				        for(size_t curHitIdx=0; curHitIdx<curHitVector.size(); curHitIdx++)
@@ -698,12 +708,21 @@ int main(int argc, char** argv)
 						// Fill the data packets:
 						// Assume the 0th apd is always read out before the second
 						adc_t strawIndex = curHit.strawIdx;
-						adc_t TDC0 = curHit.recoDigiT0;
-						adc_t TDC1 = curHit.recoDigiT1;
+
+						uint32_t TDC0 = curHit.recoDigiT0;
+						uint32_t TDC1 = curHit.recoDigiT1;
+						
+						adc_t TDC0_low = TDC0;
+						adc_t TDC0_high = TDC0 >> 16;
+						adc_t TDC1_low = TDC1 << 8;
+						adc_t TDC1_high = TDC1 >> 8;
+
+						adc_t TDC0_high_TDC1_low = TDC0_high | TDC1_low;
 
 						packetVector.push_back(strawIndex);
-						packetVector.push_back(TDC0);
-						packetVector.push_back(TDC1);
+						packetVector.push_back(TDC0_low);
+						packetVector.push_back(TDC0_high_TDC1_low);
+						packetVector.push_back(TDC1_high);
 
 						for (int sampleIdx = 0; sampleIdx < curHit.recoDigiSamples; sampleIdx++)
 						{
@@ -711,7 +730,7 @@ int main(int argc, char** argv)
 							packetVector.push_back(scaledVal);
 						}
 						// Pad any empty space in the last packet with 0s
-						size_t padding_slots = 8 - ((curHit.recoDigiSamples - 5) % 8);
+						size_t padding_slots = 8 - ((curHit.recoDigiSamples - 4) % 8);
 						if (padding_slots < 8)
 						{
 						        for (size_t i = 0; i < padding_slots; i++)
@@ -721,6 +740,7 @@ int main(int argc, char** argv)
 						}
 
 						// Fill in the number of data packets entry in the header packet
+
 						adc_t numDataPackets = packetVector.size() / 8;
 						curDataBlock[2] = numDataPackets;
 
@@ -818,12 +838,21 @@ int main(int argc, char** argv)
 					}
 
 					adc_t strawIndex = strawIndex_distribution(generator);
-					adc_t TDC0 = TDC_distribution(generator);
-					adc_t TDC1 = TDC_distribution(generator);
+					uint32_t TDC0 = TDC_distribution(generator);
+					uint32_t TDC1 = TDC_distribution(generator);
 
+					adc_t TDC0_low = TDC0;
+					adc_t TDC0_high = TDC0 >> 16;
+					adc_t TDC1_low = TDC1 << 8;
+					adc_t TDC1_high = TDC1 >> 8;
+					
+					adc_t TDC0_high_TDC1_low = TDC0_high | TDC1_low;
+					
 					packetVector.push_back(strawIndex);
-					packetVector.push_back(TDC0);
-					packetVector.push_back(TDC1);
+					packetVector.push_back(TDC0_low);
+					packetVector.push_back(TDC0_high_TDC1_low);
+					packetVector.push_back(TDC1_high);
+
 					for (size_t i = 0; i < numADCSamples; i++)
 					{
 					        adc_t scaledVal = 0;
@@ -839,7 +868,7 @@ int main(int argc, char** argv)
 					        packetVector.push_back(scaledVal + noise);
 					}
 					// Pad any empty space in the last packet with 0s
-					padding_slots = 8 - ((numADCSamples - 5) % 8);
+					padding_slots = 8 - ((numADCSamples - 4) % 8);
 					if (padding_slots < 8)
 					{
 					        for (size_t i = 0; i < padding_slots; i++)

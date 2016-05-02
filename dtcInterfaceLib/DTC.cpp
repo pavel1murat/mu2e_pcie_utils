@@ -211,6 +211,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever, bool overw
 		}
 		else if (sz > 0)
 		{
+		  TRACE(5, "DTC memory is now full. Closing file.");
 			sizeCheck = false;
 		}
 		delete[] buf;
