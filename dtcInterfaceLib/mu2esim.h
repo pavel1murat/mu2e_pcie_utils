@@ -75,14 +75,13 @@ public:
 	int read_register(uint16_t address, int tmo_ms, uint32_t* output);
 	int write_register(uint16_t address, int tmo_ms, uint32_t data);
 private:
-	unsigned delta_(int chn, int dir);
-	void clearBuffer_(int chn, bool increment = true);
+	static unsigned delta_(int chn, int dir);
+	static void clearBuffer_(int chn, bool increment = true);
 	void CFOEmulator_();
 	void packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID ring, DTCLib::DTC_ROC_ID roc, uint16_t packetCount);
 	void closeBuffer_(bool drop, DTCLib::DTC_Timestamp ts);
 	void dcsPacketSimulator_(DTCLib::DTC_DCSRequestPacket in);
 
-private:
 	std::unordered_map<uint16_t, uint32_t> registers_;
 	unsigned swIdx_[MU2E_MAX_CHANNELS];
 	uint32_t detSimLoopCount_;
@@ -98,7 +97,7 @@ private:
 	DDRSimulator ddrSim_;
 	DDRSimulator dcsResponses_;
 
-	uint64_t currentOffset_;
+	size_t currentOffset_;
 	DTCLib::DTC_Timestamp currentTimestamp_;
 	std::shared_ptr<std::vector<uint8_t>> currentBuffer_;
 };

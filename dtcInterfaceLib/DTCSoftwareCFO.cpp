@@ -3,20 +3,20 @@
 
 #define TRACE_NAME "MU2EDEV"
 
-DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(DTCLib::DTC* dtc, bool useCFOEmulator, uint16_t debugPacketCount,
-	DTCLib::DTC_DebugType debugType, bool stickyDebugType,
-	bool quiet, bool asyncRR)
+DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(DTC* dtc, bool useCFOEmulator, uint16_t debugPacketCount,
+                                       DTC_DebugType debugType, bool stickyDebugType,
+                                       bool quiet, bool asyncRR)
 	: useCFOEmulator_(useCFOEmulator)
-	, debugPacketCount_(debugPacketCount)
-	, debugType_(debugType)
-	, stickyDebugType_(stickyDebugType)
-	, quiet_(quiet)
-	, asyncRR_(asyncRR)
-	, requestsSent_(false)
-	, abort_(false)
+	  , debugPacketCount_(debugPacketCount)
+	  , debugType_(debugType)
+	  , stickyDebugType_(stickyDebugType)
+	  , quiet_(quiet)
+	  , asyncRR_(asyncRR)
+	  , requestsSent_(false)
+	  , abort_(false)
 {
 	theDTC_ = dtc;
-	for (auto ring : DTCLib::DTC_Rings)
+	for (auto ring : DTC_Rings)
 	{
 		ringMode_[ring] = theDTC_->ReadRingEnabled(ring);
 	}
@@ -27,7 +27,7 @@ DTCLib::DTCSoftwareCFO::~DTCSoftwareCFO()
 	abort_ = true;
 }
 
-void DTCLib::DTCSoftwareCFO::WaitForRequestsToBeSent()
+void DTCLib::DTCSoftwareCFO::WaitForRequestsToBeSent() const
 {
 	while (!requestsSent_)
 	{
@@ -35,27 +35,27 @@ void DTCLib::DTCSoftwareCFO::WaitForRequestsToBeSent()
 	}
 }
 
-void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTCLib::DTC_Timestamp ts)
+void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 {
 	if (!useCFOEmulator_)
 	{
-		for (auto ring : DTCLib::DTC_Rings)
+		for (auto ring : DTC_Rings)
 		{
 			if (!ringMode_[ring].TimingEnable && ringMode_[ring].TransmitEnable)
 			{
 				TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp before SendReadoutRequestPacket");
 				theDTC_->SendReadoutRequestPacket(ring, ts, quiet_);
 				int maxRoc;
-				if ((maxRoc = theDTC_->ReadRingROCCount(ring)) != DTCLib::DTC_ROC_Unused)
+				if ((maxRoc = theDTC_->ReadRingROCCount(ring)) != DTC_ROC_Unused)
 				{
 					for (uint8_t roc = 0; roc <= maxRoc; ++roc)
 					{
 						TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp before DTC_DataRequestPacket req");
-						DTCLib::DTC_DataRequestPacket req(ring, (DTCLib::DTC_ROC_ID)roc, ts, true,
-							debugPacketCount_, debugType_);
-						if (debugType_ == DTCLib::DTC_DebugType_ExternalSerialWithReset && !stickyDebugType_)
+						DTC_DataRequestPacket req(ring, static_cast<DTC_ROC_ID>(roc), ts, true,
+						                          debugPacketCount_, debugType_);
+						if (debugType_ == DTC_DebugType_ExternalSerialWithReset && !stickyDebugType_)
 						{
-							debugType_ = DTCLib::DTC_DebugType_ExternalSerial;
+							debugType_ = DTC_DebugType_ExternalSerial;
 						}
 						TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp before WriteDMADAQPacket - DTC_DataRequestPacket");
 						if (!quiet_) std::cout << req.toJSON() << std::endl;
@@ -89,7 +89,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTCLib::DTC_Timestamp ts)
 	requestsSent_ = true;
 }
 
-void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTCLib::DTC_Timestamp start, bool increment, uint32_t delayBetweenDataRequests, int requestsAhead)
+void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start, bool increment, uint32_t delayBetweenDataRequests, int requestsAhead)
 {
 	if (delayBetweenDataRequests < 100)
 	{
@@ -100,11 +100,11 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTCLib::DTC_Timesta
 		requestsSent_ = false;
 		if (asyncRR_)
 		{
-			theThread_ = std::thread(&DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync, this, start, count, increment, delayBetweenDataRequests);
+			theThread_ = std::thread(&DTCSoftwareCFO::SendRequestsForRangeImplAsync, this, start, count, increment, delayBetweenDataRequests);
 		}
 		else
 		{
-			theThread_ = std::thread(&DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync, this, start, count, increment, delayBetweenDataRequests, requestsAhead);
+			theThread_ = std::thread(&DTCSoftwareCFO::SendRequestsForRangeImplSync, this, start, count, increment, delayBetweenDataRequests, requestsAhead);
 		}
 		WaitForRequestsToBeSent();
 	}
@@ -129,13 +129,13 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTCLib::DTC_Timesta
 	}
 }
 
-void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync(DTCLib::DTC_Timestamp start, int count,
-	bool increment, uint32_t delayBetweenDataRequests, int requestsAhead)
+void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync(DTC_Timestamp start, int count,
+                                                          bool increment, uint32_t delayBetweenDataRequests, int requestsAhead)
 {
 	TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImplSync Start");
-	for (int ii = 0; ii < count; ++ii)
+	for (auto ii = 0; ii < count; ++ii)
 	{
-		DTC_Timestamp ts = start + (increment ? ii : 0);
+		auto ts = start + (increment ? ii : 0);
 
 		SendRequestForTimestamp(ts);
 		if (ii >= requestsAhead || ii == count - 1)
@@ -148,16 +148,16 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync(DTCLib::DTC_Timestamp 
 	}
 }
 
-void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync(DTCLib::DTC_Timestamp start, int count,
-	bool increment, uint32_t delayBetweenDataRequests)
+void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync(DTC_Timestamp start, int count,
+                                                           bool increment, uint32_t delayBetweenDataRequests)
 {
 	TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImplAsync Start");
 
 	// Send Readout Requests first
-	for (int ii = 0; ii < count; ++ii)
+	for (auto ii = 0; ii < count; ++ii)
 	{
-		DTCLib::DTC_Timestamp ts = start + (increment ? ii : 0);
-		for (auto ring : DTCLib::DTC_Rings)
+		auto ts = start + (increment ? ii : 0);
+		for (auto ring : DTC_Rings)
 		{
 			if (!ringMode_[ring].TimingEnable)
 			{
@@ -174,28 +174,28 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync(DTCLib::DTC_Timestamp
 	requestsSent_ = true;
 
 	// Now do the DataRequests, sleeping for the required delay between each.
-	for (int ii = 0; ii < count; ++ii)
+	for (auto ii = 0; ii < count; ++ii)
 	{
-		DTCLib::DTC_Timestamp ts = start + (increment ? ii : 0);
-		for (auto ring : DTCLib::DTC_Rings)
+		auto ts = start + (increment ? ii : 0);
+		for (auto ring : DTC_Rings)
 		{
 			if (!ringMode_[ring].TimingEnable)
 			{
 				if (ringMode_[ring].TransmitEnable)
 				{
 					int maxRoc;
-					if ((maxRoc = theDTC_->ReadRingROCCount(ring)) != DTCLib::DTC_ROC_Unused)
+					if ((maxRoc = theDTC_->ReadRingROCCount(ring)) != DTC_ROC_Unused)
 					{
 						for (uint8_t roc = 0; roc <= maxRoc; ++roc)
 						{
 							TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImpl before DTC_DataRequestPacket req");
-							DTCLib::DTC_DataRequestPacket req(ring, (DTCLib::DTC_ROC_ID)roc, ts, true,
-								(uint16_t)debugPacketCount_, debugType_);
-							if (debugType_ == DTCLib::DTC_DebugType_ExternalSerialWithReset && !stickyDebugType_)
+							DTC_DataRequestPacket req(ring, static_cast<DTC_ROC_ID>(roc), ts, true,
+							                          static_cast<uint16_t>(debugPacketCount_), debugType_);
+							if (debugType_ == DTC_DebugType_ExternalSerialWithReset && !stickyDebugType_)
 							{
-								debugType_ = DTCLib::DTC_DebugType_ExternalSerial;
+								debugType_ = DTC_DebugType_ExternalSerial;
 							}
-		  					TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImpl before WriteDMADAQPacket - DTC_DataRequestPacket");
+							TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImpl before WriteDMADAQPacket - DTC_DataRequestPacket");
 							if (!quiet_) std::cout << req.toJSON() << std::endl;
 							theDTC_->WriteDMAPacket(req);
 							TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImpl after  WriteDMADAQPacket - DTC_DataRequestPacket");

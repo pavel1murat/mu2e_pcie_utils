@@ -6,7 +6,7 @@
 class fragmentTester
 {
 public:
-	fragmentTester(size_t bytes) : vals_(bytes), block_count(0) { }
+	explicit fragmentTester(size_t bytes) : vals_(bytes), block_count(0) { }
 
 	~fragmentTester() = default;
 
@@ -28,10 +28,10 @@ public:
 	{
 		vals_.resize(vals_.size() + bytes);
 	}
-	
+
 	uint8_t* dataBegin()
 	{
-		return reinterpret_cast<uint8_t*>(&(vals_[0]));
+		return reinterpret_cast<uint8_t*>(&vals_[0]);
 	}
 
 	void endSubEvt(size_t bytes)

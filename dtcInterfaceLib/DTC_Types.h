@@ -3,11 +3,13 @@
 
 #include <bitset> // std::bitset
 
+
 #include <cstdint> // uint8_t, uint16_t
+
 
 #include <vector> // std::vector
 
-#include <sstream>
+
 #include <iomanip>
 
 namespace DTCLib
@@ -43,10 +45,9 @@ namespace DTCLib
 
 	struct DTC_ROCIDConverter
 	{
-	public:
 		DTC_ROC_ID roc_;
 
-		DTC_ROCIDConverter(DTC_ROC_ID roc) : roc_(roc) { }
+		explicit DTC_ROCIDConverter(DTC_ROC_ID roc) : roc_(roc) { }
 
 		std::string toString() const
 		{
@@ -101,6 +102,12 @@ namespace DTCLib
 		}
 	};
 
+	enum DTC_SerdesClockSpeed
+	{
+		DTC_SerdesClockSpeed_25Gbps,
+		DTC_SerdesClockSpeed_3125Gbps,
+	};
+
 	enum DTC_DebugType
 	{
 		DTC_DebugType_SpecialSequence = 0,
@@ -113,10 +120,9 @@ namespace DTCLib
 
 	struct DTC_DebugTypeConverter
 	{
-	public:
 		DTC_DebugType type_;
 
-		DTC_DebugTypeConverter(DTC_DebugType type) : type_(type) { }
+		explicit DTC_DebugTypeConverter(DTC_DebugType type) : type_(type) { }
 
 		std::string toString() const
 		{
@@ -177,10 +183,9 @@ namespace DTCLib
 
 	struct DTC_RXBufferStatusConverter
 	{
-	public:
 		DTC_RXBufferStatus status_;
 
-		DTC_RXBufferStatusConverter(DTC_RXBufferStatus status) : status_(status) { }
+		explicit DTC_RXBufferStatusConverter(DTC_RXBufferStatus status) : status_(status) { }
 
 		std::string toString() const
 		{
@@ -268,10 +273,9 @@ namespace DTCLib
 
 	struct DTC_RXStatusConverter
 	{
-	public:
 		DTC_RXStatus status_;
 
-		DTC_RXStatusConverter(DTC_RXStatus status) : status_(status) { }
+		explicit DTC_RXStatusConverter(DTC_RXStatus status);
 
 		std::string toString() const
 		{
@@ -407,10 +411,9 @@ namespace DTCLib
 
 	struct DTC_SERDESLoopbackModeConverter
 	{
-	public:
 		DTC_SERDESLoopbackMode mode_;
 
-		DTC_SERDESLoopbackModeConverter(DTC_SERDESLoopbackMode mode) : mode_(mode) { }
+		explicit DTC_SERDESLoopbackModeConverter(DTC_SERDESLoopbackMode mode) : mode_(mode) { }
 
 		std::string toString() const
 		{
@@ -485,10 +488,9 @@ namespace DTCLib
 
 	struct DTC_SimModeConverter
 	{
-	public:
 		DTC_SimMode mode_;
 
-		DTC_SimModeConverter(DTC_SimMode mode) : mode_(mode) { }
+		explicit DTC_SimModeConverter(DTC_SimMode mode) : mode_(mode) { }
 
 		static DTC_SimMode ConvertToSimMode(std::string);
 
@@ -609,7 +611,7 @@ namespace DTCLib
 	class DTC_WrongPacketTypeException : public std::exception
 	{
 	public:
-		virtual const char* what() const throw()
+		const char* what() const throw() override
 		{
 			return "Unexpected packet type encountered!";
 		}
@@ -618,7 +620,7 @@ namespace DTCLib
 	class DTC_IOErrorException : public std::exception
 	{
 	public:
-		virtual const char* what() const throw()
+		const char* what() const throw() override
 		{
 			return "Unable to communicate with the DTC";
 		}
@@ -627,7 +629,7 @@ namespace DTCLib
 	class DTC_DataCorruptionException : public std::exception
 	{
 	public:
-		virtual const char* what() const throw()
+		const char* what() const throw() override
 		{
 			return "Corruption detected in data stream from DTC";
 		}
@@ -635,14 +637,13 @@ namespace DTCLib
 
 	class DTC_Timestamp
 	{
-	private:
 		uint64_t timestamp_ : 48;
 	public:
 		DTC_Timestamp();
-		DTC_Timestamp(uint64_t timestamp);
+		explicit DTC_Timestamp(uint64_t timestamp);
 		DTC_Timestamp(uint32_t timestampLow, uint16_t timestampHigh);
-		DTC_Timestamp(uint8_t* timeArr, int offset = 0);
-		DTC_Timestamp(std::bitset<48> timestamp);
+		explicit DTC_Timestamp(uint8_t* timeArr, int offset = 0);
+		explicit DTC_Timestamp(std::bitset<48> timestamp);
 		DTC_Timestamp(const DTC_Timestamp&) = default;
 		DTC_Timestamp(DTC_Timestamp&&) = default;
 
@@ -693,7 +694,7 @@ namespace DTCLib
 			{
 				return timestamp_;
 			}
-			else return 0;
+			return 0;
 		}
 
 		void GetTimestamp(uint8_t* timeArr, int offset = 0) const;
@@ -703,12 +704,11 @@ namespace DTCLib
 
 	class DTC_SERDESRXDisparityError
 	{
-	private:
 		std::bitset<2> data_;
 
 	public:
 		DTC_SERDESRXDisparityError();
-		DTC_SERDESRXDisparityError(std::bitset<2> data);
+		explicit DTC_SERDESRXDisparityError(std::bitset<2> data);
 		DTC_SERDESRXDisparityError(uint32_t data, DTC_Ring_ID ring);
 		DTC_SERDESRXDisparityError(const DTC_SERDESRXDisparityError&) = default;
 		DTC_SERDESRXDisparityError(DTC_SERDESRXDisparityError&&) = default;
@@ -741,12 +741,11 @@ namespace DTCLib
 
 	class DTC_CharacterNotInTableError
 	{
-	private:
 		std::bitset<2> data_;
 
 	public:
 		DTC_CharacterNotInTableError();
-		DTC_CharacterNotInTableError(std::bitset<2> data);
+		explicit DTC_CharacterNotInTableError(std::bitset<2> data);
 		DTC_CharacterNotInTableError(uint32_t data, DTC_Ring_ID ring);
 		DTC_CharacterNotInTableError(const DTC_CharacterNotInTableError&) = default;
 		DTC_CharacterNotInTableError(DTC_CharacterNotInTableError&&) = default;
@@ -779,7 +778,6 @@ namespace DTCLib
 
 	struct DTC_RingEnableMode
 	{
-	public:
 		bool TransmitEnable;
 		bool ReceiveEnable;
 		bool TimingEnable;
@@ -790,7 +788,7 @@ namespace DTCLib
 
 		friend std::ostream& operator<<(std::ostream& stream, const DTC_RingEnableMode& mode)
 		{
-			bool formatSet = (stream.flags() & std::ios_base::boolalpha) != 0;
+			auto formatSet = (stream.flags() & std::ios_base::boolalpha) != 0;
 			stream.setf(std::ios_base::boolalpha);
 			stream << "{\"TransmitEnable\":" << mode.TransmitEnable << ",\"ReceiveEnable\":" << mode.ReceiveEnable << ",\"TimingEnable\":" << mode.TimingEnable << "}";
 			if (!formatSet) stream.unsetf(std::ios_base::boolalpha);
@@ -799,7 +797,7 @@ namespace DTCLib
 
 		friend bool operator==(const DTC_RingEnableMode& left, const DTC_RingEnableMode& right)
 		{
-			return (left.TransmitEnable == right.TransmitEnable) && (left.ReceiveEnable == right.ReceiveEnable) && (left.TimingEnable == right.TimingEnable);
+			return left.TransmitEnable == right.TransmitEnable && left.ReceiveEnable == right.ReceiveEnable && left.TimingEnable == right.TimingEnable;
 		}
 
 		friend bool operator!=(const DTC_RingEnableMode& left, const DTC_RingEnableMode& right)
@@ -810,7 +808,6 @@ namespace DTCLib
 
 	struct DTC_FIFOFullErrorFlags
 	{
-	public:
 		bool OutputData;
 		bool CFOLinkInput;
 		bool ReadoutRequestOutput;
@@ -846,17 +843,17 @@ namespace DTCLib
 
 		friend std::ostream& operator<<(std::ostream& stream, const DTC_FIFOFullErrorFlags& flags)
 		{
-			bool formatSet = (stream.flags() & std::ios_base::boolalpha) != 0;
+			auto formatSet = (stream.flags() & std::ios_base::boolalpha) != 0;
 			stream.setf(std::ios_base::boolalpha);
 			stream << "{\"OutputData\":" << flags.OutputData
-				<< ",\"CFOLinkInput\":" << flags.CFOLinkInput
-				<< ",\"ReadoutRequestOutput\":" << flags.ReadoutRequestOutput
-				<< ",\"DataRequestOutput\":" << flags.DataRequestOutput
-				<< ",\"OtherOutput\":" << flags.OtherOutput
-				<< ",\"OutputDCS\":" << flags.OutputDCS
-				<< ",\"OutputDCSStage2\":" << flags.OutputDCSStage2
-				<< ",\"DataInput\":" << flags.DataInput
-				<< ",\"DCSStatusInput\":" << flags.DCSStatusInput << "}";
+			          << ",\"CFOLinkInput\":" << flags.CFOLinkInput
+			          << ",\"ReadoutRequestOutput\":" << flags.ReadoutRequestOutput
+			          << ",\"DataRequestOutput\":" << flags.DataRequestOutput
+			          << ",\"OtherOutput\":" << flags.OtherOutput
+			          << ",\"OutputDCS\":" << flags.OutputDCS
+			          << ",\"OutputDCSStage2\":" << flags.OutputDCSStage2
+			          << ",\"DataInput\":" << flags.DataInput
+			          << ",\"DCSStatusInput\":" << flags.DCSStatusInput << "}";
 			if (!formatSet) stream.unsetf(std::ios_base::boolalpha);
 			return stream;
 		}
@@ -903,8 +900,8 @@ namespace DTCLib
 
 	struct DTC_DataBlock
 	{
-	  typedef uint64_t pointer_t;
-		pointer_t * blockPointer;
+		typedef uint64_t pointer_t;
+		pointer_t* blockPointer;
 		size_t byteSize;
 
 		DTC_DataBlock(pointer_t* ptr, size_t sz) : blockPointer(ptr), byteSize(sz) {}
@@ -912,8 +909,8 @@ namespace DTCLib
 
 	struct Utilities
 	{
-		static std::string FormatBytes(double bytes);
-		static std::pair<double, std::string> FormatBytes(double bytes, bool dummy);
+		static std::string FormatByteString(double bytes);
+		static std::pair<double, std::string> FormatBytes(double bytes);
 	};
 }
 

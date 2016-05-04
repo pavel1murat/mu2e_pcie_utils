@@ -20,6 +20,7 @@
 #  else
 #   define TRACE(...)
 #  endif
+# define TRACE_CNTL(...)
 # endif
 # pragma warning(disable: 4351)
 #endif
@@ -32,12 +33,18 @@ mu2edev::mu2edev() : devfd_(0), buffers_held_(0), simulator_(nullptr), deviceTim
 	//TRACE_CNTL( "lvlmskS", 0x3 );
 }
 
+mu2edev::~mu2edev()
+{
+	delete simulator_;
+}
+
 int mu2edev::init(DTCLib::DTC_SimMode simMode)
 {
-	auto start = std::chrono::high_resolution_clock::now();
+	auto start = std::chrono::steady_clock::now();
 	if (simMode != DTCLib::DTC_SimMode_Disabled && simMode != DTCLib::DTC_SimMode_NoCFO
 		&& simMode != DTCLib::DTC_SimMode_ROCEmulator && simMode != DTCLib::DTC_SimMode_Loopback)
 	{
+		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		simulator_ = new mu2esim();
 		simulator_->init(simMode);
 	}
@@ -76,7 +83,7 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode)
 					size_t length = get_info.num_buffs * ((map == MU2E_MAP_BUFF)
 						? get_info.buff_size
 						: sizeof(int));
-					//int prot = (((dir == S2C) && (map == MU2E_MAP_BUFF))? PROT_WRITE : PROT_READ);
+		//int prot = (((dir == S2C) && (map == MU2E_MAP_BUFF))? PROT_WRITE : PROT_READ);
 					int prot = (((map == MU2E_MAP_BUFF)) ? PROT_WRITE : PROT_READ);
 					off64_t offset = chnDirMap2offset(chn, dir, map);
 					mu2e_mmap_ptrs_[chn][dir][map]
@@ -98,29 +105,29 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode)
 					release_all(chn);
 				}
 
-				// Reset the DTC
-				//{
-				//	write_register(0x9100, 0, 0xa0000000);
-				//	write_register(0x9118, 0, 0x0000003f);
-				//	write_register(0x9100, 0, 0x00000000);
-				//	write_register(0x9100, 0, 0x10000000);
-				//	write_register(0x9100, 0, 0x30000000);
-				//	write_register(0x9100, 0, 0x10000000);
-				//	write_register(0x9118, 0, 0x00000000);
-				//}
+		// Reset the DTC
+		//{
+		//	write_register(0x9100, 0, 0xa0000000);
+		//	write_register(0x9118, 0, 0x0000003f);
+		//	write_register(0x9100, 0, 0x00000000);
+		//	write_register(0x9100, 0, 0x10000000);
+		//	write_register(0x9100, 0, 0x30000000);
+		//	write_register(0x9100, 0, 0x10000000);
+		//	write_register(0x9118, 0, 0x00000000);
+		//}
 
-				// Enable DMA Engines
+		// Enable DMA Engines
 				{
-					//uint16_t addr = DTC_Register_Engine_Control(chn, dir);
-					//TRACE(17, "mu2edev::init write Engine_Control reg 0x%x", addr);
-					//write_register(addr, 0, 0x100);//bit 8 enable=1
+		//uint16_t addr = DTC_Register_Engine_Control(chn, dir);
+		//TRACE(17, "mu2edev::init write Engine_Control reg 0x%x", addr);
+		//write_register(addr, 0, 0x100);//bit 8 enable=1
 				}
 }
 #endif
 	}
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
-		(std::chrono::high_resolution_clock::now() - start).count();
-	return (simMode);
+		(std::chrono::steady_clock::now() - start).count();
+	return simMode;
 }
 
 /*****************************
@@ -129,8 +136,8 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode)
    */
 int mu2edev::read_data(int chn, void** buffer, int tmo_ms)
 {
-	auto start = std::chrono::high_resolution_clock::now();
-	int retsts = -1;
+	auto start = std::chrono::steady_clock::now();
+	auto retsts = -1;
 	if (simulator_ != nullptr)
 	{
 		retsts = simulator_->read_data(chn, buffer, tmo_ms);
@@ -175,9 +182,9 @@ int mu2edev::read_data(int chn, void** buffer, int tmo_ms)
 	}
 #endif
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
-		(std::chrono::high_resolution_clock::now() - start).count();
-	if(retsts > 0) readSize_ += retsts;
-	return (retsts);
+		(std::chrono::steady_clock::now() - start).count();
+	if (retsts > 0) readSize_ += retsts;
+	return retsts;
 } // read_data
 
 /* read_release
@@ -185,8 +192,8 @@ int mu2edev::read_data(int chn, void** buffer, int tmo_ms)
    */
 int mu2edev::read_release(int chn, unsigned num)
 {
-	auto start = std::chrono::high_resolution_clock::now();
-	int retsts = -1;
+	auto start = std::chrono::steady_clock::now();
+	auto retsts = -1;
 	if (simulator_ != nullptr)
 	{
 		retsts = simulator_->read_release(chn, num);
@@ -215,21 +222,19 @@ int mu2edev::read_release(int chn, unsigned num)
 	}
 #endif
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
-		(std::chrono::high_resolution_clock::now() - start).count();
-	return (retsts);
+		(std::chrono::steady_clock::now() - start).count();
+	return retsts;
 }
 
 int mu2edev::read_register(uint16_t address, int tmo_ms, uint32_t* output)
 {
-	auto start = std::chrono::high_resolution_clock::now();
+	auto start = std::chrono::steady_clock::now();
 	if (simulator_ != nullptr)
 	{
 		return simulator_->read_register(address, tmo_ms, output);
 	}
-	else
-	{
 #ifdef _WIN32
-		int errorCode = -1;
+	auto errorCode = -1;
 #else
 		m_ioc_reg_access_t reg;
 		reg.reg_offset = address;
@@ -237,16 +242,15 @@ int mu2edev::read_register(uint16_t address, int tmo_ms, uint32_t* output)
 		int errorCode = ioctl(devfd_, M_IOC_REG_ACCESS, &reg);
 		*output = reg.val;
 #endif
-		deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
-			(std::chrono::high_resolution_clock::now() - start).count();
-		return errorCode;
-	}
+	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
+		(std::chrono::steady_clock::now() - start).count();
+	return errorCode;
 }
 
 int mu2edev::write_register(uint16_t address, int tmo_ms, uint32_t data)
 {
-	auto start = std::chrono::high_resolution_clock::now();
-	int retsts = -1;
+	auto start = std::chrono::steady_clock::now();
+	auto retsts = -1;
 	if (simulator_ != nullptr)
 	{
 		retsts = simulator_->write_register(address, tmo_ms, data);
@@ -262,18 +266,17 @@ int mu2edev::write_register(uint16_t address, int tmo_ms, uint32_t data)
 	}
 #endif
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
-		(std::chrono::high_resolution_clock::now() - start).count();
+		(std::chrono::steady_clock::now() - start).count();
 	return retsts;
 }
 
 void mu2edev::meta_dump(int chn, int dir)
 {
-	auto start = std::chrono::high_resolution_clock::now();
+	TRACE(17, "mu2edev::meta_dump: chn=%i, dir=%i", chn, dir);
+	auto start = std::chrono::steady_clock::now();
 #ifndef _WIN32
 	if (simulator_ == nullptr)
 	{
-		TRACE(17, "mu2edev::meta_dump: chn=%i, dir=%i", chn, dir);
-
 		int retsts = 0;
 		if ((mu2e_mmap_ptrs_[0][0][0] != NULL) || ((retsts = init()) == 0))
 		{
@@ -286,14 +289,13 @@ void mu2edev::meta_dump(int chn, int dir)
 	}
 #endif
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
-		(std::chrono::high_resolution_clock::now() - start).count();
-	return;
+		(std::chrono::steady_clock::now() - start).count();
 }
 
 int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 {
-	auto start = std::chrono::high_resolution_clock::now();
-	int retsts = -1;
+	auto start = std::chrono::steady_clock::now();
+	auto retsts = -1;
 	if (simulator_ != nullptr)
 	{
 		retsts = simulator_->write_data(chn, buffer, bytes);
@@ -329,7 +331,7 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 	}
 #endif
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
-		(std::chrono::high_resolution_clock::now() - start).count();
+		(std::chrono::steady_clock::now() - start).count();
 	if (retsts >= 0) writeSize_ += bytes;
 	return retsts;
 } // write_data
@@ -337,19 +339,19 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 // applicable for recv.
 int mu2edev::release_all(int chn)
 {
-	auto start = std::chrono::high_resolution_clock::now();
-	int retsts = 0;
+	auto start = std::chrono::steady_clock::now();
+	auto retsts = 0;
 	if (simulator_ != nullptr)
 	{
 		retsts = simulator_->release_all(chn);
 	}
 	else
 	{
-		unsigned has_recv_data = mu2e_chn_info_delta_(chn, C2S, &mu2e_channel_info_);
+		auto has_recv_data = mu2e_chn_info_delta_(chn, C2S, &mu2e_channel_info_);
 		if (has_recv_data) read_release(chn, has_recv_data);
 	}
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
-		(std::chrono::high_resolution_clock::now() - start).count();
+		(std::chrono::steady_clock::now() - start).count();
 	return retsts;
 }
 

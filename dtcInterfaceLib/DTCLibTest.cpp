@@ -2,9 +2,6 @@
 #include "DTCSoftwareCFO.h"
 
 #include <iostream>
-#include <iomanip>
-#include <ctime>
-#include <sstream>
 
 #ifndef _WIN32
 # include "trace.h"
@@ -22,11 +19,11 @@
 #endif
 
 DTCLib::DTCLibTest::DTCLibTest() : running_(false), classPassed_(0), classFailed_(0),
-regPassed_(0), regFailed_(0), daqPassed_(0), daqFailed_(0), dcsPassed_(0), dcsFailed_(0),
-classPassedTemp_(0), classFailedTemp_(0), regPassedTemp_(0), regFailedTemp_(0),
-daqPassedTemp_(0), daqFailedTemp_(0), dcsPassedTemp_(0), dcsFailedTemp_(0), nTests_(0),
-runClassTest_(false), runRegTest_(false),
-runDAQTest_(false), runDCSTest_(false)
+                                   regPassed_(0), regFailed_(0), daqPassed_(0), daqFailed_(0), dcsPassed_(0), dcsFailed_(0),
+                                   classPassedTemp_(0), classFailedTemp_(0), regPassedTemp_(0), regFailedTemp_(0),
+                                   daqPassedTemp_(0), daqFailedTemp_(0), dcsPassedTemp_(0), dcsFailedTemp_(0), nTests_(0),
+                                   runClassTest_(false), runRegTest_(false),
+                                   runDAQTest_(false), runDCSTest_(false), printMessages_(false)
 {
 	thisDTC_ = new DTC();
 }
@@ -43,7 +40,7 @@ DTCLib::DTCLibTest::~DTCLibTest()
 
 // Test Control
 void DTCLib::DTCLibTest::startTest(bool classEnabled, bool regIOEnabled,
-	bool daqEnabled, bool dcsEnabled, int nTests, bool printMessages)
+                                   bool daqEnabled, bool dcsEnabled, int nTests, bool printMessages)
 {
 	runClassTest_ = classEnabled;
 	runRegTest_ = regIOEnabled;
@@ -57,7 +54,7 @@ void DTCLib::DTCLibTest::startTest(bool classEnabled, bool regIOEnabled,
 		std::cout << "Starting workerThread" << std::endl;
 	}
 
-	workerThread_ = std::thread(&DTCLib::DTCLibTest::doTests, this);
+	workerThread_ = std::thread(&DTCLibTest::doTests, this);
 	if (nTests_ >= 0)
 	{
 		workerThread_.join();
@@ -76,56 +73,56 @@ void DTCLib::DTCLibTest::stopTests()
 // Accessors
 int DTCLib::DTCLibTest::classPassed()
 {
-	int result = classPassed_ - classPassedTemp_;
+	auto result = classPassed_ - classPassedTemp_;
 	classPassedTemp_ = classPassed_;
 	return result;
 }
 
 int DTCLib::DTCLibTest::classFailed()
 {
-	int result = classFailed_ - classFailedTemp_;
+	auto result = classFailed_ - classFailedTemp_;
 	classFailedTemp_ = classFailed_;
 	return result;
 }
 
 int DTCLib::DTCLibTest::regPassed()
 {
-	int result = regPassed_ - regPassedTemp_;
+	auto result = regPassed_ - regPassedTemp_;
 	regPassedTemp_ = regPassed_;
 	return result;
 }
 
 int DTCLib::DTCLibTest::regFailed()
 {
-	int result = regFailed_ - regFailedTemp_;
+	auto result = regFailed_ - regFailedTemp_;
 	regFailedTemp_ = regFailed_;
 	return result;
 }
 
 int DTCLib::DTCLibTest::daqPassed()
 {
-	int result = daqPassed_ - daqPassedTemp_;
+	auto result = daqPassed_ - daqPassedTemp_;
 	daqPassedTemp_ = daqPassed_;
 	return result;
 }
 
 int DTCLib::DTCLibTest::daqFailed()
 {
-	int result = daqFailed_ - daqFailedTemp_;
+	auto result = daqFailed_ - daqFailedTemp_;
 	daqFailedTemp_ = daqFailed_;
 	return result;
 }
 
 int DTCLib::DTCLibTest::dcsPassed()
 {
-	int result = dcsPassed_ - dcsPassedTemp_;
+	auto result = dcsPassed_ - dcsPassedTemp_;
 	dcsPassedTemp_ = dcsPassed_;
 	return result;
 }
 
 int DTCLib::DTCLibTest::dcsFailed()
 {
-	int result = dcsFailed_ - dcsFailedTemp_;
+	auto result = dcsFailed_ - dcsFailedTemp_;
 	dcsFailedTemp_ = dcsFailed_;
 	return result;
 }
@@ -142,7 +139,7 @@ void DTCLib::DTCLibTest::doTests()
 	// Make sure that the ring is enabled before the tests.
 	thisDTC_->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
 
-	int testCount = 0;
+	auto testCount = 0;
 	while (testCount < nTests_ || nTests_ < 0)
 	{
 		++testCount;
@@ -165,32 +162,32 @@ void DTCLib::DTCLibTest::doTests()
 	}
 	running_ = false;
 
-	int totalPassed = 0;
-	int totalTests = 0;
+	auto totalPassed = 0;
+	auto totalTests = 0;
 
 	if (runClassTest_)
 	{
 		totalPassed += classPassed_;
 		totalTests += classPassed_ + classFailed_;
-		std::cout << std::dec << classPassed_ << " of " << (classPassed_ + classFailed_) << " Class Construction/Destruction Tests passed." << std::endl;
+		std::cout << std::dec << classPassed_ << " of " << classPassed_ + classFailed_ << " Class Construction/Destruction Tests passed." << std::endl;
 	}
 	if (runRegTest_)
 	{
 		totalPassed += regPassed_;
 		totalTests += regPassed_ + regFailed_;
-		std::cout << std::dec << regPassed_ << " of " << (regPassed_ + regFailed_) << " register I/O tests passed." << std::endl;
+		std::cout << std::dec << regPassed_ << " of " << regPassed_ + regFailed_ << " register I/O tests passed." << std::endl;
 	}
 	if (runDCSTest_)
 	{
 		totalPassed += dcsPassed_;
 		totalTests += dcsPassed_ + dcsFailed_;
-		std::cout << std::dec << dcsPassed_ << " of " << (dcsPassed_ + dcsFailed_) << " DCS DMA I/O tests passed." << std::endl;
+		std::cout << std::dec << dcsPassed_ << " of " << dcsPassed_ + dcsFailed_ << " DCS DMA I/O tests passed." << std::endl;
 	}
 	if (runDAQTest_)
 	{
 		totalPassed += daqPassed_;
 		totalTests += daqPassed_ + daqFailed_;
-		std::cout << std::dec << daqPassed_ << " of " << (daqPassed_ + daqFailed_) << " DAQ DMA I/O tests passed." << std::endl;
+		std::cout << std::dec << daqPassed_ << " of " << daqPassed_ + daqFailed_ << " DAQ DMA I/O tests passed." << std::endl;
 	}
 	std::cout << std::dec << totalPassed << " of " << totalTests << " tests passed." << std::endl;
 }
@@ -201,7 +198,7 @@ void DTCLib::DTCLibTest::doClassTest()
 	{
 		std::cout << std::endl << "Test 0: Class Construction/Destruction" << std::endl;
 	}
-	bool err = false;
+	auto err = false;
 	try
 	{
 		if (printMessages_) std::cout << "Testing DTC_Timestamp Class..." << std::endl;
@@ -210,41 +207,41 @@ void DTCLib::DTCLibTest::doClassTest()
 		if (printMessages_) std::cout << "Default Constructor, TS should be 0: " << defaultTS.GetTimestamp(true) << std::endl;
 		err = err || defaultTS.GetTimestamp(true) != 0;
 
-		auto tsSixtyFour = DTC_Timestamp((uint64_t)0xFFFFBEEFDEADBEEF);
+		auto tsSixtyFour = DTC_Timestamp(static_cast<uint64_t>(0xFFFFBEEFDEADBEEF));
 		if (printMessages_)
 			std::cout << "uint64_t Constructor, TS should be 0xBEEFDEADBEEF: "
-			<< std::hex << std::showbase << tsSixtyFour.GetTimestamp(true) << std::endl;
+				<< std::hex << std::showbase << tsSixtyFour.GetTimestamp(true) << std::endl;
 		err = err || tsSixtyFour.GetTimestamp(true) != 0xBEEFDEADBEEF;
 
-		auto tsSixteenThirtyTwo = DTC_Timestamp((uint32_t)0xDEADBEEF, (uint16_t)0xDEAD);
+		auto tsSixteenThirtyTwo = DTC_Timestamp(static_cast<uint32_t>(0xDEADBEEF), static_cast<uint16_t>(0xDEAD));
 		if (printMessages_)
 			std::cout << "uint32_t/uint16_t Constructor, TS should be 0xDEADDEADBEEF: "
-			<< tsSixteenThirtyTwo.GetTimestamp(true) << std::endl;
+				<< tsSixteenThirtyTwo.GetTimestamp(true) << std::endl;
 		err = err || tsSixteenThirtyTwo.GetTimestamp(true) != 0xDEADDEADBEEF;
 
-		uint8_t arr[6] = { 0xAD, 0xDE, 0xAD, 0xDE, 0xEF, 0xBE };
+		uint8_t arr[6] = {0xAD, 0xDE, 0xAD, 0xDE, 0xEF, 0xBE};
 		auto tsArray = DTC_Timestamp(arr);
 		if (printMessages_)
 			std::cout << "Array Constructor, TS should be 0xBEEFDEADDEAD: "
-			<< tsArray.GetTimestamp(true) << std::endl;
+				<< tsArray.GetTimestamp(true) << std::endl;
 		err = err || tsArray.GetTimestamp(true) != 0xBEEFDEADDEAD;
 
 		auto tsCopy = new DTC_Timestamp(defaultTS);
 		if (printMessages_)
 			std::cout << "Copy Constructor, TS should be 0: "
-			<< tsCopy->GetTimestamp(true) << std::endl;
+				<< tsCopy->GetTimestamp(true) << std::endl;
 		err = err || tsCopy->GetTimestamp(true) != 0;
 
 		tsCopy->SetTimestamp(0xBEEFDEAD, 0xBEEF);
 		if (printMessages_)
 			std::cout << "SetTimestamp 32/16 Method, TS should be 0xBEEFBEEFDEAD: "
-			<< tsCopy->GetTimestamp(true) << std::endl;
+				<< tsCopy->GetTimestamp(true) << std::endl;
 		err = err || tsCopy->GetTimestamp().to_ullong() != 0xBEEFBEEFDEAD;
 
 		tsCopy->SetTimestamp(0xDEADDEADBEEFBEEF);
 		if (printMessages_)
 			std::cout << "SetTimestamp 64 Method, TS should be 0xDEADBEEFBEEF: "
-			<< tsCopy->GetTimestamp(true) << std::endl;
+				<< tsCopy->GetTimestamp(true) << std::endl;
 		err = err || tsCopy->GetTimestamp().to_ullong() != 0xDEADBEEFBEEF;
 
 		if (printMessages_) std::cout << "Running DTC_Timestamp destructor" << std::endl;
@@ -260,15 +257,15 @@ void DTCLib::DTCLibTest::doClassTest()
 		auto defaultDP = new DTC_DataPacket();
 		if (printMessages_)
 			std::cout << "Default Constructor, Size should be 64: " << std::dec
-			<< (int)defaultDP->GetSize() << ", and IsMemoryPacket should be false: "
-			<< (defaultDP->IsMemoryPacket() ? "true" : "false") << std::endl;
+			             << static_cast<int>(defaultDP->GetSize()) << ", and IsMemoryPacket should be false: "
+			             << (defaultDP->IsMemoryPacket() ? "true" : "false") << std::endl;
 		err = defaultDP->GetSize() != 64;
 		err = err || defaultDP->IsMemoryPacket();
 
 		defaultDP->Resize(128);
 		if (printMessages_)
 			std::cout << "Resize(128), Size should be 128: "
-			<< (int)defaultDP->GetSize() << std::endl;
+				<< static_cast<int>(defaultDP->GetSize()) << std::endl;
 		err = err || defaultDP->GetSize() != 128;
 
 		if (printMessages_) std::cout << "Running Data Integrity Check" << std::endl;
@@ -277,18 +274,18 @@ void DTCLib::DTCLibTest::doClassTest()
 		auto memCopyDP = DTC_DataPacket(*defaultDP);
 		if (printMessages_)
 			std::cout << "Copy Constructor, MemoryPacket, data[64] should be 64: "
-			<< (int)memCopyDP.GetWord(64) << std::endl;
+				<< static_cast<int>(memCopyDP.GetWord(64)) << std::endl;
 		err = err || memCopyDP.GetWord(64) != 64;
 
 		if (printMessages_) std::cout << "Running DTC_DataPacket Destructor" << std::endl;
 		delete defaultDP;
 
-		mu2e_databuff_t* buf = (mu2e_databuff_t*)new mu2e_databuff_t();
+		auto buf = reinterpret_cast<mu2e_databuff_t*>(new mu2e_databuff_t());
 		auto dataBufPtrfDP = new DTC_DataPacket(buf);
 		if (printMessages_)
 			std::cout << "Databuff Pointer Constructor, Size should be 16: "
-			<< (int)dataBufPtrfDP->GetSize() << ", and IsMemoryPacket should be true: "
-			<< (dataBufPtrfDP->IsMemoryPacket() ? "true" : "false") << std::endl;
+				<< static_cast<int>(dataBufPtrfDP->GetSize()) << ", and IsMemoryPacket should be true: "
+				<< (dataBufPtrfDP->IsMemoryPacket() ? "true" : "false") << std::endl;
 		err = dataBufPtrfDP->GetSize() != 16;
 		err = err || !dataBufPtrfDP->IsMemoryPacket();
 
@@ -296,27 +293,27 @@ void DTCLib::DTCLibTest::doClassTest()
 		(*buf)[0] = 0x8F;
 		if (printMessages_)
 			std::cout
-			<< "DataPacket Memory Packet Copy Constructor: Modifications to original buffer should modify both packets: "
-			<< std::hex
-			<< "COPY[0]: " << (int)nonmemCopyDP.GetWord(0) << ", ORIGINAL[0]: " << (int)dataBufPtrfDP->GetWord(0) << std::endl;
+				<< "DataPacket Memory Packet Copy Constructor: Modifications to original buffer should modify both packets: "
+				<< std::hex
+				<< "COPY[0]: " << static_cast<int>(nonmemCopyDP.GetWord(0)) << ", ORIGINAL[0]: " << static_cast<int>(dataBufPtrfDP->GetWord(0)) << std::endl;
 		err = err || nonmemCopyDP.GetWord(0) != 0x8F || dataBufPtrfDP->GetWord(0) != 0x8F;
 
 		delete dataBufPtrfDP;
-		if (printMessages_) std::cout << "Deleting ORIGINAL should not affect COPY: " << (int)nonmemCopyDP.GetWord(0) << std::endl;
+		if (printMessages_) std::cout << "Deleting ORIGINAL should not affect COPY: " << static_cast<int>(nonmemCopyDP.GetWord(0)) << std::endl;
 		err = err || nonmemCopyDP.GetWord(0) != 0x8F;
 
-		uint8_t buff2[16] = { 0xf, 0xe, 0xd, 0xc, 0xb, 0xa, 0x9, 0x8, 0x7, 0x6, 0x5, 0x4, 0x3, 0x2, 0x1, 0x0 };
+		uint8_t buff2[16] = {0xf, 0xe, 0xd, 0xc, 0xb, 0xa, 0x9, 0x8, 0x7, 0x6, 0x5, 0x4, 0x3, 0x2, 0x1, 0x0};
 		auto uintBufDP = new DTC_DataPacket(buff2);
 		if (printMessages_)
 			std::cout << "Integer Array Constructor, IsMemoryPacket should be true: "
-			<< (uintBufDP->IsMemoryPacket() ? "true" : "false") << ", and data[0] should be 0xf: "
-			<< (int)uintBufDP->GetWord(0) << std::endl;
+				<< (uintBufDP->IsMemoryPacket() ? "true" : "false") << ", and data[0] should be 0xf: "
+				<< static_cast<int>(uintBufDP->GetWord(0)) << std::endl;
 		err = err || !uintBufDP->IsMemoryPacket() || uintBufDP->GetWord(0) != 0xf;
 
 		uintBufDP->Resize(128);
 		if (printMessages_)
 			std::cout << "Resizing a memory packet should not work, size should be 16: "
-			<< std::dec << (int)uintBufDP->GetSize() << std::endl;
+				<< std::dec << static_cast<int>(uintBufDP->GetSize()) << std::endl;
 		err = err || uintBufDP->GetSize() != 16;
 
 		if (printMessages_) std::cout << "Running DTC_DataPacket Destructor" << std::endl;
@@ -363,20 +360,20 @@ void DTCLib::DTCLibTest::doRegTest()
 	}
 	try
 	{
-		std::string designVersion = thisDTC_->ReadDesignVersion();
+		auto designVersion = thisDTC_->ReadDesignVersion();
 		if (printMessages_)
 		{
 			std::cout << "Reading Design Version: " << designVersion << std::endl;
 			std::cout << "If simulated, result will be v99.99_2053-49-53-44 (SIMD in ASCII)" << std::endl;
 			std::cout << "Attempting to Disable Ring 0." << std::endl;
 		}
-		DTC_RingEnableMode ring0Value = thisDTC_->ReadRingEnabled(DTC_Ring_0);
+		auto ring0Value = thisDTC_->ReadRingEnabled(DTC_Ring_0);
 		if (printMessages_)
 		{
 			std::cout << "Value before: " << ring0Value << std::endl;
 		}
 		thisDTC_->DisableRing(DTC_Ring_0);
-		DTC_RingEnableMode ring0New = thisDTC_->ReadRingEnabled(DTC_Ring_0);
+		auto ring0New = thisDTC_->ReadRingEnabled(DTC_Ring_0);
 
 		if (printMessages_)
 		{
@@ -427,13 +424,13 @@ void DTCLib::DTCLibTest::doDCSTest()
 		{
 			std::cout << "Running DCS Request/Reply Cycle with 0-11 sequence" << std::endl;
 		}
-		uint8_t testData[12]{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
+		uint8_t testData[12]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 		if (printMessages_)
 		{
 			std::cout << "Data in: ";
-			for (int i = 0; i < 12; i++)
+			for (auto i = 0; i < 12; i++)
 			{
-				std::cout << std::dec << (int)testData[i] << " ";
+				std::cout << std::dec << static_cast<int>(testData[i]) << " ";
 			}
 			std::cout << std::endl;
 		}
@@ -442,9 +439,9 @@ void DTCLib::DTCLibTest::doDCSTest()
 		if (printMessages_)
 		{
 			std::cout << "Data out: ";
-			for (int i = 0; i < 12; i++)
+			for (auto i = 0; i < 12; i++)
 			{
-				std::cout << std::dec << (int)testData[i] << " ";
+				std::cout << std::dec << static_cast<int>(testData[i]) << " ";
 			}
 			std::cout << std::endl;
 			std::cout << "Simulated DTC should match before/after." << std::endl;
@@ -477,29 +474,26 @@ void DTCLib::DTCLibTest::doDAQTest()
 		thisDTC_->SetInternalSystemClock();
 		thisDTC_->DisableTiming();
 		thisDTC_->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
-		if (!thisDTC_->ReadSERDESOscillatorClock())
-		{
-			thisDTC_->SetSERDESOscillatorClock_25Gbps();
-		} // We're going to 2.5Gbps for now
+		thisDTC_->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_25Gbps); // We're going to 2.5Gbps for now
 
 		DTCSoftwareCFO theCFO(thisDTC_, true, 0, DTC_DebugType_SpecialSequence, true, !printMessages_);
 		theCFO.SendRequestForTimestamp();
-		std::vector<DTC_DataBlock> data = thisDTC_->GetData();
+		auto data = thisDTC_->GetData();
 		if (data.size() > 0)
 		{
 			if (printMessages_) std::cout << data.size() << " packets returned\n";
 			for (size_t i = 0; i < data.size(); ++i)
 			{
 				TRACE(19, "DTC::GetJSONData constructing DataPacket:");
-				DTC_DataPacket test = DTC_DataPacket(data[i].blockPointer);
+				auto test = DTC_DataPacket(data[i].blockPointer);
 				if (printMessages_) std::cout << test.toJSON() << '\n'; // dumps whole databuff_t
-				DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
+				auto h2 = DTC_DataHeaderPacket(test);
 				if (printMessages_)
 				{
 					std::cout << h2.toJSON() << '\n';
-					for (int jj = 0; jj < h2.GetPacketCount(); ++jj)
+					for (auto jj = 0; jj < h2.GetPacketCount(); ++jj)
 					{
-						std::cout << "\t" << DTC_DataPacket(((uint8_t*)data[i].blockPointer) + ((jj + 1) * 16)).toJSON() << std::endl;
+						std::cout << "\t" << DTC_DataPacket(reinterpret_cast<uint8_t*>(data[i].blockPointer) + (jj + 1) * 16).toJSON() << std::endl;
 					}
 				}
 			}
@@ -515,7 +509,7 @@ void DTCLib::DTCLibTest::doDAQTest()
 		auto disparity = thisDTC_->ReadSERDESRXDisparityError(DTC_Ring_0);
 		auto cnit = thisDTC_->ReadSERDESRXCharacterNotInTableError(DTC_Ring_0);
 		auto rxBufferStatus = thisDTC_->ReadSERDESRXBufferStatus(DTC_Ring_0);
-		bool eyescan = thisDTC_->ReadSERDESEyescanError(DTC_Ring_0);
+		auto eyescan = thisDTC_->ReadSERDESEyescanError(DTC_Ring_0);
 		if (eyescan)
 		{
 			TRACE_CNTL("modeM", 0L);
@@ -523,7 +517,7 @@ void DTCLib::DTCLibTest::doDAQTest()
 			++daqFailed_;
 			return;
 		}
-		if ((int)rxBufferStatus > 2)
+		if (static_cast<int>(rxBufferStatus) > 2)
 		{
 			TRACE_CNTL("modeM", 0L);
 			std::cout << "Bad Buffer status detected: " << rxBufferStatus << std::endl;
@@ -567,13 +561,13 @@ void DTCLib::DTCLibTest::doDAQTest()
 
 bool DTCLib::DTCLibTest::DataPacketIntegrityCheck(DTC_DataPacket* packet)
 {
-	bool retCode = true;
-	for (int ii = 0; ii < packet->GetSize(); ++ii)
+	auto retCode = true;
+	for (auto ii = 0; ii < packet->GetSize(); ++ii)
 	{
 		packet->SetWord(ii, ii);
 	}
 
-	for (int ii = 0; ii < packet->GetSize(); ++ii)
+	for (auto ii = 0; ii < packet->GetSize(); ++ii)
 	{
 		retCode = packet->GetWord(ii) == ii;
 		if (!retCode) break;

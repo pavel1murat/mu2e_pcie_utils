@@ -7,7 +7,9 @@
 
 #include <cstdio> // printf
 
+
 #include <cstdlib> // strtoul
+
 
 #include <iostream>
 #include <fstream>
@@ -27,8 +29,8 @@
 #  else
 #   define TRACE(...)
 #  endif
-# endif
 # define TRACE_CNTL(...)
+# endif
 #else
 # include "trace.h"
 # include <unistd.h>		// usleep
@@ -52,7 +54,7 @@ unsigned timestampOffset = 1;
 unsigned packetCount = 0;
 int requestsAhead = 0;
 std::string op = "";
-DTCLib::DTC_DebugType debugType = DTCLib::DTC_DebugType_SpecialSequence;
+DTC_DebugType debugType = DTC_DebugType_SpecialSequence;
 bool stickyDebugType = true;
 int val = 0;
 bool readGenerated = false;
@@ -61,65 +63,60 @@ std::ofstream outputStream;
 
 unsigned getOptionValue(int* index, char** argv[])
 {
-	char* arg = (*argv)[*index];
+	auto arg = (*argv)[*index];
 	if (arg[2] == '\0')
 	{
 		(*index)++;
-		return strtoul((*argv)[*index], NULL, 0);
+		return strtoul((*argv)[*index], nullptr, 0);
 	}
-	else
+	auto offset = 2;
+	if (arg[2] == '=')
 	{
-		int offset = 2;
-		if (arg[2] == '=')
-		{
-			offset = 3;
-		}
-
-		return strtoul(&(arg[offset]), NULL, 0);
+		offset = 3;
 	}
+
+	return strtoul(&arg[offset], nullptr, 0);
 }
 
 std::string getOptionString(int* index, char** argv[])
 {
-	char* arg = (*argv)[*index];
+	auto arg = (*argv)[*index];
 	if (arg[2] == '\0')
 	{
 		(*index)++;
 		return std::string((*argv)[*index]);
 	}
-	else
+	auto offset = 2;
+	if (arg[2] == '=')
 	{
-		int offset = 2;
-		if (arg[2] == '=')
-		{
-			offset = 3;
-		}
-
-		return std::string(&(arg[offset]));
+		offset = 3;
 	}
+
+	return std::string(&arg[offset]);
 }
 
-void WriteGeneratedData(DTCLib::DTC* thisDTC)
+void WriteGeneratedData(DTC* thisDTC)
 {
 	std::cout << "Sending data to DTC" << std::endl;
 	thisDTC->DisableDetectorEmulator();
 	thisDTC->ResetDDRWriteAddress();
 	thisDTC->EnableDetectorEmulatorMode();
-	thisDTC->SetDDRLocalEndAddress(0x7000000);
-	size_t total_size = 0;
+	thisDTC->SetDDRDataLocalEndAddress(0x7000000);
+	uint64_t total_size = 0;
 	unsigned ii = 0;
 	for (; ii < genDMABlocks; ++ii)
 	{
 		uint16_t blockByteCount = (1 + packetCount) * 16 * sizeof(uint8_t);
 		uint64_t byteCount = blockByteCount + 8;
 		total_size += byteCount;
-		mu2e_databuff_t* buf = (mu2e_databuff_t*)new mu2e_databuff_t();
+		// ReSharper disable once CppNonReclaimedResourceAcquisition
+		auto buf = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
 		memcpy(buf, &byteCount, sizeof(uint64_t));
 		uint64_t currentOffset = 8;
 		uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
-		DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)packetCount, DTC_DataStatus_Valid, DTC_Timestamp(ts));
-		DTC_DataPacket packet = header.ConvertToDataPacket();
-		memcpy((uint8_t*)buf + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
+		DTC_DataHeaderPacket header(DTC_Ring_0, static_cast<uint16_t>(packetCount), DTC_DataStatus_Valid, DTC_Timestamp(ts));
+		auto packet = header.ConvertToDataPacket();
+		memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
 		if (rawOutput) outputStream.write(reinterpret_cast<char *>(&byteCount), sizeof(uint64_t));
 		if (rawOutput) outputStream << packet;
 		currentOffset += 16;
@@ -129,19 +126,22 @@ void WriteGeneratedData(DTCLib::DTC* thisDTC)
 			{
 				break;
 			}
+			// ReSharper disable CppRedundantParentheses
 			packet.SetWord(14, (jj + 1) & 0xFF);
-			memcpy((uint8_t*)buf + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
+			// ReSharper restore CppRedundantParentheses
+			memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
 			if (rawOutput) outputStream << packet;
 			currentOffset += 16;
 		}
 
-		thisDTC->GetDevice()->write_data(0, buf, byteCount);
-		delete buf;
+		thisDTC->GetDevice()->write_data(0, buf, static_cast<size_t>(byteCount));
+		delete[] buf;
 	}
 
 	std::cout << "Total bytes written: " << total_size << std::endl;
-	thisDTC->SetDDRLocalEndAddress(total_size);
-	if (readGenerated) {
+	thisDTC->SetDDRDataLocalEndAddress(static_cast<uint32_t>(total_size));
+	if (readGenerated)
+	{
 		if (rawOutput) outputStream.close();
 		exit(0);
 	}
@@ -153,33 +153,32 @@ void printHelpMsg()
 {
 	std::cout << "Usage: mu2eUtil [options] [read,read_data,toggle_serdes,loopback,buffer_test,read_release,DTC]" << std::endl;
 	std::cout << "Options are:" << std::endl
-		<< "    -h: This message." << std::endl
-		<< "    -n: Number of times to repeat test. (Default: 1)" << std::endl
-		<< "    -o: Starting Timestamp offest. (Default: 1)." << std::endl
-		<< "    -i: Do not increment Timestamps." << std::endl
-		<< "    -S: Synchronous Timestamp mode (1 RR & DR per Read operation)" << std::endl
-		<< "    -d: Delay between tests, in us (Default: 0)." << std::endl
-		<< "    -c: Number of Debug Packets to request (Default: 0)." << std::endl
-		<< "    -a: Number of Readout Request/Data Requests to send before starting to read data (Default: 0)." << std::endl
-		<< "    -q: Quiet mode (Don't print requests)" << std::endl
-		<< "    -Q: Really Quiet mode (Try not to print anything)" << std::endl
-		<< "    -s: Stop on SERDES Error." << std::endl
-		<< "    -e: Use DTCLib's SoftwareCFO instead of the DTC CFO Emulator" << std::endl
-		<< "    -t: Use DebugType flag (1st request gets ExternalDataWithFIFOReset, the rest get ExternalData)" << std::endl
-		<< "    -T: Set DebugType flag for ALL requests (0, 1, or 2)" << std::endl
-		<< "    -f: RAW Output file path" << std::endl
-		<< "    -g: Generate (and send) N DMA blocks for testing the Detector Emulator (Default: 0)" << std::endl
-		<< "    -G: Read out generated data, but don't write new. With -g, will exit after writing data" << std::endl
+	             << "    -h: This message." << std::endl
+	             << "    -n: Number of times to repeat test. (Default: 1)" << std::endl
+	             << "    -o: Starting Timestamp offest. (Default: 1)." << std::endl
+	             << "    -i: Do not increment Timestamps." << std::endl
+	             << "    -S: Synchronous Timestamp mode (1 RR & DR per Read operation)" << std::endl
+	             << "    -d: Delay between tests, in us (Default: 0)." << std::endl
+	             << "    -c: Number of Debug Packets to request (Default: 0)." << std::endl
+	             << "    -a: Number of Readout Request/Data Requests to send before starting to read data (Default: 0)." << std::endl
+	             << "    -q: Quiet mode (Don't print requests)" << std::endl
+	             << "    -Q: Really Quiet mode (Try not to print anything)" << std::endl
+	             << "    -s: Stop on SERDES Error." << std::endl
+	             << "    -e: Use DTCLib's SoftwareCFO instead of the DTC CFO Emulator" << std::endl
+	             << "    -t: Use DebugType flag (1st request gets ExternalDataWithFIFOReset, the rest get ExternalData)" << std::endl
+	             << "    -T: Set DebugType flag for ALL requests (0, 1, or 2)" << std::endl
+	             << "    -f: RAW Output file path" << std::endl
+	             << "    -g: Generate (and send) N DMA blocks for testing the Detector Emulator (Default: 0)" << std::endl
+	             << "    -G: Read out generated data, but don't write new. With -g, will exit after writing data" << std::endl
 		;
 	exit(0);
 }
 
 int
 main(int argc
-	, char* argv[])
+     , char* argv[])
 {
-
-	for (int optind = 1; optind < argc; ++optind)
+	for (auto optind = 1; optind < argc; ++optind)
 	{
 		if (argv[optind][0] == '-')
 		{
@@ -230,15 +229,15 @@ main(int argc
 				rawOutputFile = getOptionString(&optind, &argv);
 				break;
 			case 't':
-				debugType = DTCLib::DTC_DebugType_ExternalSerialWithReset;
+				debugType = DTC_DebugType_ExternalSerialWithReset;
 				stickyDebugType = false;
 				break;
 			case 'T':
 				val = getOptionValue(&optind, &argv);
-				if (val < (int)DTCLib::DTC_DebugType_Invalid)
+				if (val < static_cast<int>(DTC_DebugType_Invalid))
 				{
 					stickyDebugType = true;
-					debugType = static_cast<DTCLib::DTC_DebugType>(val);
+					debugType = static_cast<DTC_DebugType>(val);
 					break;
 				}
 				std::cout << "Invalid Debug Type passed to -T!" << std::endl;
@@ -275,8 +274,8 @@ main(int argc
 		<< ", Check SERDES Error Status: " << checkSERDES
 		<< ", Generate DMA Blocks: " << genDMABlocks
 		<< ", Read Data from DDR: " << readGenerated
-		<< ", Debug Type: " << DTCLib::DTC_DebugTypeConverter(debugType).toString();
-	if(rawOutput)
+		<< ", Debug Type: " << DTC_DebugTypeConverter(debugType).toString();
+	if (rawOutput)
 	{
 		std::cout << ", Raw output file: " << rawOutputFile;
 	}
@@ -286,29 +285,29 @@ main(int argc
 	if (op == "read")
 	{
 		std::cout << "Operation \"read\"" << std::endl;
-		DTC* thisDTC = new DTC(DTC_SimMode_NoCFO);
-		DTC_DataHeaderPacket* packet = thisDTC->ReadNextDAQPacket();
+		// ReSharper disable once CppNonReclaimedResourceAcquisition
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO);
+		auto packet = thisDTC->ReadNextDAQPacket();
 		if (!reallyQuiet) std::cout << packet->toJSON() << '\n';
 		if (rawOutput)
 		{
-			DTC_DataPacket rawPacket = packet->ConvertToDataPacket();
-			for (int ii = 0; ii < 16; ++ii)
+			auto rawPacket = packet->ConvertToDataPacket();
+			for (auto ii = 0; ii < 16; ++ii)
 			{
-				uint8_t word = rawPacket.GetWord(ii);
-				outputStream.write((char*)&word, sizeof(uint8_t));
+				auto word = rawPacket.GetWord(ii);
+				outputStream.write(reinterpret_cast<char*>(&word), sizeof(uint8_t));
 			}
 		}
+		delete thisDTC;
 	}
 	else if (op == "read_data")
 	{
 		std::cout << "Operation \"read_data\"" << std::endl;
-		DTC* thisDTC = new DTC(DTC_SimMode_NoCFO);
-		if (!thisDTC->ReadSERDESOscillatorClock())
-		{
-			thisDTC->SetSERDESOscillatorClock_25Gbps();
-		} // We're going to 2.5Gbps for now
+		// ReSharper disable once CppNonReclaimedResourceAcquisition
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO);
+		thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_25Gbps); // We're going to 2.5Gbps for now
 
-		mu2edev* device = thisDTC->GetDevice();
+		auto device = thisDTC->GetDevice();
 		if (readGenerated)
 		{
 			thisDTC->EnableDetectorEmulatorMode();
@@ -319,28 +318,28 @@ main(int argc
 		{
 			if (!reallyQuiet) std::cout << "Buffer Read " << ii << std::endl;
 			mu2e_databuff_t* buffer;
-			int tmo_ms = 1500;
-			int sts = device->read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
+			auto tmo_ms = 1500;
+			auto sts = device->read_data(DTC_DMA_Engine_DAQ, reinterpret_cast<void**>(&buffer), tmo_ms);
 
 			TRACE(1, "util - read for DAQ - ii=%u sts=%d %p", ii, sts, (void*)buffer);
 			if (sts > 0)
 			{
-				uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)&(buffer[0])));
+				auto bufSize = static_cast<uint16_t>(*reinterpret_cast<uint64_t*>(&buffer[0]));
 				TRACE(1, "util - bufSize is %u", bufSize);
 
 				if (!reallyQuiet)
 				{
-					for (unsigned line = 0; line < (unsigned)(ceil((bufSize - 8) / 16)); ++line)
+					for (unsigned line = 0; line < static_cast<unsigned>(ceil((bufSize - 8) / 16)); ++line)
 					{
 						std::cout << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
 						//for (unsigned byte = 0; byte < 16; ++byte)
 						for (unsigned byte = 0; byte < 8; ++byte)
 						{
-							if ((line * 16) + (2 * byte) < (bufSize - 8u))
+							if (line * 16 + 2 * byte < bufSize - 8u)
 							{
-								uint16_t thisWord = (((uint16_t*)buffer)[4 + (line * 8) + byte]);
+								auto thisWord = reinterpret_cast<uint16_t*>(buffer)[4 + line * 8 + byte];
 								//uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
-								std::cout << std::setw(4) << (int)thisWord << " ";
+								std::cout << std::setw(4) << static_cast<int>(thisWord) << " ";
 							}
 						}
 						std::cout << std::endl;
@@ -349,39 +348,43 @@ main(int argc
 			}
 			if (!reallyQuiet) std::cout << std::endl << std::endl;
 			device->read_release(DTC_DMA_Engine_DAQ, 1);
-			if (delay > 0)	usleep(delay);
+			if (delay > 0)
+			usleep(delay);
 		}
+		delete thisDTC;
 	}
 	else if (op == "toggle_serdes")
 	{
 		std::cout << "Swapping SERDES Oscillator Clock" << std::endl;
-		DTC* thisDTC = new DTC(DTC_SimMode_NoCFO);
-		if (thisDTC->ReadSERDESOscillatorClock())
+		// ReSharper disable once CppNonReclaimedResourceAcquisition
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO);
+		if (!thisDTC->ReadSERDESOscillatorClock())
 		{
-			thisDTC->SetSERDESOscillatorClock_25Gbps();
+			std::cout << "Setting SERDES Oscillator Clock to 2.5 Gbps" << std::endl;
+			thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_25Gbps);
 		}
 		else
 		{
-			thisDTC->SetSERDESOscillatorClock_3125Gbps();
+			std::cout << "Setting SERDES Oscillator Clock to 3.125 Gbps" << std::endl;
+			thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_3125Gbps);
 		}
+		delete thisDTC;
 	}
 	else if (op == "buffer_test")
 	{
 		std::cout << "Operation \"buffer_test\"" << std::endl;
-		auto startTime = std::chrono::high_resolution_clock::now();
-		DTC* thisDTC = new DTC(DTC_SimMode_NoCFO);
-		if (!thisDTC->ReadSERDESOscillatorClock())
-		{
-			thisDTC->SetSERDESOscillatorClock_25Gbps();
-		} // We're going to 2.5Gbps for now
+		auto startTime = std::chrono::steady_clock::now();
+		// ReSharper disable once CppNonReclaimedResourceAcquisition
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO);
+		thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_25Gbps); // We're going to 2.5Gbps for now
 
-		mu2edev* device = thisDTC->GetDevice();
+		auto device = thisDTC->GetDevice();
 
 		auto initTime = device->GetDeviceTime();
 		device->ResetDeviceTime();
-		auto afterInit = std::chrono::high_resolution_clock::now();
+		auto afterInit = std::chrono::steady_clock::now();
 
-		DTCSoftwareCFO* cfo = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet, false);
+		DTCSoftwareCFO cfo(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet, false);
 
 		if (genDMABlocks > 0)
 		{
@@ -397,58 +400,58 @@ main(int argc
 
 		if (thisDTC->ReadSimMode() != DTC_SimMode_Loopback && !syncRequests)
 		{
-			cfo->SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
+			cfo.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
 		}
 		else if (thisDTC->ReadSimMode() == DTC_SimMode_Loopback)
 		{
 			uint64_t ts = timestampOffset;
-			DTC_DataHeaderPacket header(DTC_Ring_0, (uint16_t)0, DTC_DataStatus_Valid, DTC_Timestamp(ts));
+			DTC_DataHeaderPacket header(DTC_Ring_0, static_cast<uint16_t>(0), DTC_DataStatus_Valid, DTC_Timestamp(ts));
 			std::cout << "Request: " << header.toJSON() << std::endl;
 			thisDTC->WriteDMAPacket(header);
 		}
 
 		auto readoutRequestTime = device->GetDeviceTime();
 		device->ResetDeviceTime();
-		auto afterRequests = std::chrono::high_resolution_clock::now();
+		auto afterRequests = std::chrono::steady_clock::now();
 
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
 			if (syncRequests)
 			{
-				auto startRequest = std::chrono::high_resolution_clock::now();
-				cfo->SendRequestForTimestamp(DTC_Timestamp(timestampOffset + (incrementTimestamp ? ii : 0)));
-				auto endRequest = std::chrono::high_resolution_clock::now();
+				auto startRequest = std::chrono::steady_clock::now();
+				cfo.SendRequestForTimestamp(DTC_Timestamp(timestampOffset + (incrementTimestamp ? ii : 0)));
+				auto endRequest = std::chrono::steady_clock::now();
 				readoutRequestTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(endRequest - startRequest).count();
 			}
 			if (!reallyQuiet) std::cout << "Buffer Read " << std::dec << ii << std::endl;
 			mu2e_databuff_t* buffer;
-			int tmo_ms = 1500;
+			auto tmo_ms = 1500;
 			TRACE(1, "util - before read for DAQ - ii=%u", ii);
-			int sts = device->read_data(DTC_DMA_Engine_DAQ, (void**)&buffer, tmo_ms);
+			auto sts = device->read_data(DTC_DMA_Engine_DAQ, reinterpret_cast<void**>(&buffer), tmo_ms);
 
 			TRACE(1, "util - after read for DAQ - ii=%u sts=%d %p", ii, sts, (void*)buffer);
 			if (sts > 0)
 			{
-				void* readPtr = &(buffer[0]);
-				uint16_t bufSize = static_cast<uint16_t>(*((uint64_t*)readPtr));
-				readPtr = (uint8_t*)readPtr + 8;
+				void* readPtr = &buffer[0];
+				auto bufSize = static_cast<uint16_t>(*static_cast<uint64_t*>(readPtr));
+				readPtr = static_cast<uint8_t*>(readPtr) + 8;
 				if (!reallyQuiet) std::cout << "Buffer reports DMA size of " << std::dec << bufSize << " bytes. Device driver reports read of " << sts << " bytes," << std::endl;
 				TRACE(1, "util - bufSize is %u", bufSize);
-				if (rawOutput) outputStream.write((char*)readPtr, bufSize - 8);
+				if (rawOutput) outputStream.write(static_cast<char*>(readPtr), bufSize - 8);
 
 				if (!reallyQuiet)
 				{
-					for (unsigned line = 0; line < (unsigned)(ceil((sts - 8) / 16)); ++line)
+					for (unsigned line = 0; line < static_cast<unsigned>(ceil((sts - 8) / 16)); ++line)
 					{
 						std::cout << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
 						//for (unsigned byte = 0; byte < 16; ++byte)
 						for (unsigned byte = 0; byte < 8; ++byte)
 						{
-							if ((line * 16) + (2 * byte) < (sts - 8u))
+							if (line * 16 + 2 * byte < sts - 8u)
 							{
-								uint16_t thisWord = (((uint16_t*)buffer)[4 + (line * 8) + byte]);
+								auto thisWord = reinterpret_cast<uint16_t*>(buffer)[4 + line * 8 + byte];
 								//uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
-								std::cout << std::setw(4) << (int)thisWord << " ";
+								std::cout << std::setw(4) << static_cast<int>(thisWord) << " ";
 							}
 						}
 						std::cout << std::endl;
@@ -457,11 +460,12 @@ main(int argc
 			}
 			if (!reallyQuiet) std::cout << std::endl << std::endl;
 			device->read_release(DTC_DMA_Engine_DAQ, 1);
-			if (delay > 0) usleep(delay);
+			if (delay > 0)
+			usleep(delay);
 		}
 
 		auto readDevTime = device->GetDeviceTime();
-		auto doneTime = std::chrono::high_resolution_clock::now();
+		auto doneTime = std::chrono::steady_clock::now();
 		auto totalBytesRead = device->GetReadSize();
 		auto totalBytesWritten = device->GetWriteSize();
 		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(doneTime - startTime).count();
@@ -477,11 +481,13 @@ main(int argc
 			<< "Device Init Time: " << initTime << " s." << std::endl
 			<< "Device Request Time: " << readoutRequestTime << " s." << std::endl
 			<< "Device Read Time: " << readDevTime << " s." << std::endl
-			<< "Total Bytes Written: " << Utilities::FormatBytes(totalBytesWritten) << "." << std::endl
-			<< "Total Bytes Read: " << Utilities::FormatBytes(totalBytesRead) << "." << std::endl
-			<< "Total PCIe Rate: " << Utilities::FormatBytes((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
-			<< "Read Rate: " << Utilities::FormatBytes(totalBytesRead / totalReadTime) << "/s." << std::endl
-			<< "Device Read Rate: " << Utilities::FormatBytes(totalBytesRead / readDevTime) << "/s." << std::endl;
+			<< "Total Bytes Written: " << Utilities::FormatByteString(totalBytesWritten) << "." << std::endl
+			<< "Total Bytes Read: " << Utilities::FormatByteString(totalBytesRead) << "." << std::endl
+			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
+			<< "Read Rate: " << Utilities::FormatByteString(totalBytesRead / totalReadTime) << "/s." << std::endl
+			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime) << "/s." << std::endl;
+
+		delete thisDTC;
 	}
 	else if (op == "read_release")
 	{
@@ -494,23 +500,22 @@ main(int argc
 			auto stsRD = device.read_data(DTC_DMA_Engine_DAQ, &buffer, tmo_ms);
 			auto stsRL = device.read_release(DTC_DMA_Engine_DAQ, 1);
 			TRACE(12, "util - release/read for DAQ and DCS ii=%u stsRD=%d stsRL=%d %p", ii, stsRD, stsRL, buffer);
-			if (delay > 0) usleep(delay);
+			if (delay > 0)
+			usleep(delay);
 		}
 	}
 	else if (op == "DTC")
 	{
-		auto startTime = std::chrono::high_resolution_clock::now();
-		auto* thisDTC = new DTC(DTC_SimMode_NoCFO);
-		if (!thisDTC->ReadSERDESOscillatorClock())
-		{
-			thisDTC->SetSERDESOscillatorClock_25Gbps();
-		} // We're going to 2.5Gbps for now
+		auto startTime = std::chrono::steady_clock::now();
+		// ReSharper disable once CppNonReclaimedResourceAcquisition
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO);
+		thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_25Gbps); // We're going to 2.5Gbps for now
 
 		auto initTime = thisDTC->GetDevice()->GetDeviceTime();
 		thisDTC->GetDevice()->ResetDeviceTime();
-		auto afterInit = std::chrono::high_resolution_clock::now();
-		
-		DTCSoftwareCFO* theCFO = new DTCSoftwareCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet);
+		auto afterInit = std::chrono::steady_clock::now();
+
+		DTCSoftwareCFO theCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet);
 
 		if (genDMABlocks > 0)
 		{
@@ -527,32 +532,32 @@ main(int argc
 
 		if (!syncRequests)
 		{
-			theCFO->SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
+			theCFO.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
 		}
 
 
 		uint64_t ii = 0;
-		int retries = 4;
+		auto retries = 4;
 		uint64_t expectedTS = timestampOffset;
-		int packetsProcessed = 0;
+		auto packetsProcessed = 0;
 
-		auto afterRequests = std::chrono::high_resolution_clock::now();
+		auto afterRequests = std::chrono::steady_clock::now();
 		auto readoutRequestTime = thisDTC->GetDevice()->GetDeviceTime();
 		thisDTC->GetDevice()->ResetDeviceTime();
 
 		for (; ii < number; ++ii)
 		{
-			if(!reallyQuiet) std::cout << "util_main: DTC Read " << ii << ": ";
+			if (!reallyQuiet) std::cout << "util_main: DTC Read " << ii << ": ";
 			if (syncRequests)
 			{
-				auto startRequest = std::chrono::high_resolution_clock::now();
-				uint64_t ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
-				theCFO->SendRequestForTimestamp(DTC_Timestamp(ts));
-				auto endRequest = std::chrono::high_resolution_clock::now();
+				auto startRequest = std::chrono::steady_clock::now();
+				auto ts = incrementTimestamp ? ii + timestampOffset : timestampOffset;
+				theCFO.SendRequestForTimestamp(DTC_Timestamp(ts));
+				auto endRequest = std::chrono::steady_clock::now();
 				readoutRequestTime += std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(endRequest - startRequest).count();
 			}
 
-			std::vector<DTC_DataBlock> data = thisDTC->GetData(); //DTC_Timestamp(ts));
+			auto data = thisDTC->GetData(); //DTC_Timestamp(ts));
 
 			if (data.size() > 0)
 			{
@@ -562,23 +567,23 @@ main(int argc
 				for (size_t i = 0; i < data.size(); ++i)
 				{
 					TRACE(19, "util_main constructing DataPacket:");
-					DTC_DataPacket test = DTC_DataPacket(data[i].blockPointer);
+					auto test = DTC_DataPacket(data[i].blockPointer);
 					//TRACE(19, test.toJSON().c_str());
 					//if (!reallyQuiet) cout << test.toJSON() << '\n'; // dumps whole databuff_t
-					DTC_DataHeaderPacket h2 = DTC_DataHeaderPacket(test);
+					auto h2 = DTC_DataHeaderPacket(test);
 					if (expectedTS != h2.GetTimestamp().GetTimestamp(true))
 					{
 						std::cout << std::dec << h2.GetTimestamp().GetTimestamp(true) << " does not match expected timestamp of " << expectedTS << "!!!" << std::endl;
 						if (incrementTimestamp && h2.GetTimestamp().GetTimestamp(true) <= timestampOffset + number)
 						{
-							int diff = h2.GetTimestamp().GetTimestamp(true) - expectedTS;
-							ii += (diff > 0 ? diff : 0);
+							auto diff = static_cast<int64_t>(h2.GetTimestamp().GetTimestamp(true)) - static_cast<int64_t>(expectedTS);
+							ii += diff > 0 ? diff : 0;
 						}
 						expectedTS = h2.GetTimestamp().GetTimestamp(true) + (incrementTimestamp ? 1 : 0);
 					}
 					else if (i == data.size() - 1)
 					{
-						expectedTS += (incrementTimestamp ? 1 : 0);
+						expectedTS += incrementTimestamp ? 1 : 0;
 					}
 					TRACE(19, h2.toJSON().c_str());
 					if (!reallyQuiet)
@@ -587,7 +592,7 @@ main(int argc
 					}
 					if (rawOutput)
 					{
-						DTC_DataPacket rawPacket = h2.ConvertToDataPacket();
+						auto rawPacket = h2.ConvertToDataPacket();
 						outputStream << rawPacket;
 						/*for (int ii = 0; ii < 16; ++ii)
 						{
@@ -595,9 +600,9 @@ main(int argc
 							outputStream.write((char*)&word, sizeof(uint8_t));
 						}*/
 					}
-					for (int jj = 0; jj < h2.GetPacketCount(); ++jj)
+					for (auto jj = 0; jj < h2.GetPacketCount(); ++jj)
 					{
-						DTC_DataPacket packet = DTC_DataPacket(((uint8_t*)data[i].blockPointer) + ((jj + 1) * 16));
+						auto packet = DTC_DataPacket(reinterpret_cast<uint8_t*>(data[i].blockPointer) + (jj + 1) * 16);
 						if (!quiet) std::cout << "\t" << packet.toJSON() << std::endl;
 						if (rawOutput)
 						{
@@ -630,7 +635,7 @@ main(int argc
 				auto disparity = thisDTC->ReadSERDESRXDisparityError(DTC_Ring_0);
 				auto cnit = thisDTC->ReadSERDESRXCharacterNotInTableError(DTC_Ring_0);
 				auto rxBufferStatus = thisDTC->ReadSERDESRXBufferStatus(DTC_Ring_0);
-				bool eyescan = thisDTC->ReadSERDESEyescanError(DTC_Ring_0);
+				auto eyescan = thisDTC->ReadSERDESEyescanError(DTC_Ring_0);
 				if (eyescan)
 				{
 					//TRACE_CNTL("modeM", 0L);
@@ -638,7 +643,7 @@ main(int argc
 					//return 0;
 					break;
 				}
-				if ((int)rxBufferStatus > 2)
+				if (static_cast<int>(rxBufferStatus) > 2)
 				{
 					//TRACE_CNTL("modeM", 0L);
 					std::cout << "Bad Buffer status detected: " << rxBufferStatus << std::endl;
@@ -660,12 +665,13 @@ main(int argc
 					break;
 				}
 			}
-			if (delay > 0)	usleep(delay);
+			if (delay > 0)
+			usleep(delay);
 		}
 
 
 		auto readDevTime = thisDTC->GetDevice()->GetDeviceTime();
-		auto doneTime = std::chrono::high_resolution_clock::now();
+		auto doneTime = std::chrono::steady_clock::now();
 		auto totalBytesRead = thisDTC->GetDevice()->GetReadSize();
 		auto totalBytesWritten = thisDTC->GetDevice()->GetWriteSize();
 		auto totalTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(doneTime - startTime).count();
@@ -681,11 +687,12 @@ main(int argc
 			<< "Device Init Time: " << initTime << " s." << std::endl
 			<< "Device Request Time: " << readoutRequestTime << " s." << std::endl
 			<< "Device Read Time: " << readDevTime << " s." << std::endl
-			<< "Total Bytes Written: " << Utilities::FormatBytes(totalBytesWritten) << "." << std::endl
-			<< "Total Bytes Read: " << Utilities::FormatBytes(totalBytesRead) << "." << std::endl
-			<< "Total PCIe Rate: " << Utilities::FormatBytes((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
-			<< "Read Rate: " << Utilities::FormatBytes(totalBytesRead / totalReadTime) << "/s." << std::endl
-			<< "Device Read Rate: " << Utilities::FormatBytes(totalBytesRead / readDevTime) << "/s." << std::endl;
+			<< "Total Bytes Written: " << Utilities::FormatByteString(totalBytesWritten) << "." << std::endl
+			<< "Total Bytes Read: " << Utilities::FormatByteString(totalBytesRead) << "." << std::endl
+			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
+			<< "Read Rate: " << Utilities::FormatByteString(totalBytesRead / totalReadTime) << "/s." << std::endl
+			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime) << "/s." << std::endl;
+		delete thisDTC;
 	}
 	else
 	{
@@ -694,5 +701,7 @@ main(int argc
 	}
 
 	if (rawOutput) outputStream.close();
-	return (0);
+	return 0;
 } // main
+
+

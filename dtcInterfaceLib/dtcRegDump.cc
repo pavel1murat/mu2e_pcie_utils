@@ -9,12 +9,13 @@
 # include "DTC_Registers.h"
 #endif
 
-int main(int argc, char** argv)
+int main()
 {
-	DTCLib::DTC_Registers* thisDTC = new DTCLib::DTC_Registers();
+	auto thisDTC = new DTCLib::DTC_Registers();
 
 	std::cout << thisDTC->FormattedRegDump() << std::endl;
 
+	delete thisDTC;
 	return 0;
 }
 

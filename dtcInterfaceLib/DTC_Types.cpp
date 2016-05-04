@@ -2,9 +2,11 @@
 #include <sstream>
 #include <iomanip>
 
+DTCLib::DTC_RXStatusConverter::DTC_RXStatusConverter(DTC_RXStatus status): status_(status) { }
+
 DTCLib::DTC_SimMode DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::string modeName)
 {
-	if(modeName.find("isabled") != std::string::npos)
+	if (modeName.find("isabled") != std::string::npos)
 	{
 		return DTC_SimMode_Disabled;
 	}
@@ -37,11 +39,12 @@ DTCLib::DTC_SimMode DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::string m
 		return DTC_SimMode_Performance;
 	}
 
-	try {
-		DTC_SimMode modeInt = static_cast<DTC_SimMode>(stoi(modeName, nullptr, 10));
+	try
+	{
+		auto modeInt = static_cast<DTC_SimMode>(stoi(modeName, nullptr, 10));
 		return modeInt != DTC_SimMode_Invalid ? modeInt : DTC_SimMode_Disabled;
 	}
-	catch(...)
+	catch (...)
 	{
 		return DTC_SimMode_Invalid;
 	}
@@ -60,7 +63,7 @@ DTCLib::DTC_Timestamp::DTC_Timestamp(uint32_t timestampLow, uint16_t timestampHi
 
 DTCLib::DTC_Timestamp::DTC_Timestamp(uint8_t* timeArr, int offset)
 {
-	uint64_t* arr = (uint64_t*)(timeArr + offset);
+	auto arr = reinterpret_cast<uint64_t*>(timeArr + offset);
 	timestamp_ = *arr;
 }
 
@@ -69,12 +72,12 @@ DTCLib::DTC_Timestamp::DTC_Timestamp(std::bitset<48> timestamp)
 
 void DTCLib::DTC_Timestamp::SetTimestamp(uint32_t timestampLow, uint16_t timestampHigh)
 {
-	timestamp_ = timestampLow + ((uint64_t)timestampHigh << 32);
+	timestamp_ = timestampLow + (static_cast<uint64_t>(timestampHigh) << 32);
 }
 
 void DTCLib::DTC_Timestamp::GetTimestamp(uint8_t* timeArr, int offset) const
 {
-	for (int i = 0; i < 6; i++)
+	for (auto i = 0; i < 6; i++)
 	{
 		timeArr[i + offset] = static_cast<uint8_t>(timestamp_ >> i * 8);
 	}
@@ -87,12 +90,12 @@ std::string DTCLib::DTC_Timestamp::toJSON(bool arrayMode) const
 	{
 		uint8_t ts[6];
 		GetTimestamp(ts, 0);
-		ss << "\"timestamp\": [" << (int)ts[0] << ",";
-		ss << (int)ts[1] << ",";
-		ss << (int)ts[2] << ",";
-		ss << (int)ts[3] << ",";
-		ss << (int)ts[4] << ",";
-		ss << (int)ts[5] << "]";
+		ss << "\"timestamp\": [" << static_cast<int>(ts[0]) << ",";
+		ss << static_cast<int>(ts[1]) << ",";
+		ss << static_cast<int>(ts[2]) << ",";
+		ss << static_cast<int>(ts[3]) << ",";
+		ss << static_cast<int>(ts[4]) << ",";
+		ss << static_cast<int>(ts[5]) << "]";
 	}
 	else
 	{
@@ -107,9 +110,9 @@ std::string DTCLib::DTC_Timestamp::toPacketFormat() const
 	GetTimestamp(ts, 0);
 	std::stringstream ss;
 	ss << std::setfill('0') << std::hex;
-	ss << "0x" << std::setw(6) << (int)ts[1] << "\t" << "0x" << std::setw(6) << (int)ts[0] << "\n";
-	ss << "0x" << std::setw(6) << (int)ts[3] << "\t" << "0x" << std::setw(6) << (int)ts[2] << "\n";
-	ss << "0x" << std::setw(6) << (int)ts[5] << "\t" << "0x" << std::setw(6) << (int)ts[4] << "\n";
+	ss << "0x" << std::setw(6) << static_cast<int>(ts[1]) << "\t" << "0x" << std::setw(6) << static_cast<int>(ts[0]) << "\n";
+	ss << "0x" << std::setw(6) << static_cast<int>(ts[3]) << "\t" << "0x" << std::setw(6) << static_cast<int>(ts[2]) << "\n";
+	ss << "0x" << std::setw(6) << static_cast<int>(ts[5]) << "\t" << "0x" << std::setw(6) << static_cast<int>(ts[4]) << "\n";
 	return ss.str();
 }
 
@@ -120,7 +123,7 @@ DTCLib::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError(std::bitset<2> da
 DTCLib::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError(uint32_t data, DTC_Ring_ID ring)
 {
 	std::bitset<32> dataSet = data;
-	uint32_t ringBase = (uint8_t)ring * 2;
+	uint32_t ringBase = static_cast<uint8_t>(ring) * 2;
 	data_[0] = dataSet[ringBase];
 	data_[1] = dataSet[ringBase + 1];
 }
@@ -132,47 +135,21 @@ DTCLib::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError(std::bitset<2
 DTCLib::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError(uint32_t data, DTC_Ring_ID ring)
 {
 	std::bitset<32> dataSet = data;
-	uint32_t ringBase = (uint8_t)ring * 2;
+	uint32_t ringBase = static_cast<uint8_t>(ring) * 2;
 	data_[0] = dataSet[ringBase];
 	data_[1] = dataSet[ringBase + 1];
 }
 
 
-std::string DTCLib::Utilities::FormatBytes(double bytes)
+std::string DTCLib::Utilities::FormatByteString(double bytes)
 {
-	auto kb = bytes / 1024.0;
-	auto mb = kb / 1024.0;
-	auto gb = mb / 1024.0;
-	auto tb = gb / 1024.0;
-	auto val = bytes;
-	auto unit = " bytes";
-
-	if (tb > 1)
-	{
-		val = tb;
-		unit = " TB";
-	}
-	else if (gb > 1)
-	{
-		val = gb;
-		unit = " GB";
-	}
-	else if (mb > 1)
-	{
-		val = mb;
-		unit = " MB";
-	}
-	else if (kb > 1)
-	{
-		val = kb;
-		unit = " KB";
-	}
+	auto res = FormatBytes(bytes);
 	std::stringstream s;
-	s << std::setprecision(5) << val << unit;
+	s << std::setprecision(5) << res.first << " " << res.second;
 	return s.str();
 }
 
-std::pair<double, std::string> DTCLib::Utilities::FormatBytes(double bytes, bool dummy)
+std::pair<double, std::string> DTCLib::Utilities::FormatBytes(double bytes)
 {
 	auto kb = bytes / 1024.0;
 	auto mb = kb / 1024.0;
@@ -203,3 +180,4 @@ std::pair<double, std::string> DTCLib::Utilities::FormatBytes(double bytes, bool
 	}
 	return std::make_pair(val, unit);
 }
+
