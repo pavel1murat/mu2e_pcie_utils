@@ -149,14 +149,15 @@ namespace DTCLib
 
 		//
 		// DTC Register Dumps
-		//
-		std::string FormattedRegDump() const;
-		std::string PerformanceMonitorRegDump() const;
-		std::string RingCountersRegDump() const;
+	       
+		std::string FormattedRegDump(int width);
+		std::string PerformanceMonitorRegDump(int width);
+		std::string RingCountersRegDump(int width);
 
 		DTC_RegisterFormatter CreateFormatter(const DTC_Register& address)
 		{
 			DTC_RegisterFormatter form;
+			form.descWidth = formatterWidth_;
 			form.address = address;
 			form.value = ReadRegister_(address);
 			return form;
@@ -529,6 +530,7 @@ namespace DTCLib
 		DTC_SimMode simMode_;
 		DTC_ROC_ID maxROCs_[6];
 		uint16_t dmaSize_;
+		int formatterWidth_;
 
 		const std::vector<std::function<DTC_RegisterFormatter()>> formattedDumpFunctions_{
 			[this]()

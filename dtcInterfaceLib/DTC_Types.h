@@ -611,7 +611,7 @@ namespace DTCLib
 	class DTC_WrongPacketTypeException : public std::exception
 	{
 	public:
-		const char* what() const throw() override
+		const char* what() const throw() 
 		{
 			return "Unexpected packet type encountered!";
 		}
@@ -620,7 +620,7 @@ namespace DTCLib
 	class DTC_IOErrorException : public std::exception
 	{
 	public:
-		const char* what() const throw() override
+		const char* what() const throw() 
 		{
 			return "Unable to communicate with the DTC";
 		}
@@ -629,7 +629,7 @@ namespace DTCLib
 	class DTC_DataCorruptionException : public std::exception
 	{
 	public:
-		const char* what() const throw() override
+		const char* what() const throw() 
 		{
 			return "Corruption detected in data stream from DTC";
 		}
@@ -861,13 +861,13 @@ namespace DTCLib
 
 	struct DTC_RegisterFormatter
 	{
-		DTC_RegisterFormatter() : address(0), value(0), description(""), vals() {}
+	DTC_RegisterFormatter() : address(0), value(0), descWidth(28), description(""), vals() {}
 
 		DTC_RegisterFormatter(const DTC_RegisterFormatter& r) = default;
 		DTC_RegisterFormatter(DTC_RegisterFormatter&& r) = default;
-		uint16_t address;
+	  uint16_t address;
 		uint32_t value;
-		static const size_t MAX_DESC = 28;
+	  int descWidth;
 		std::string description;
 		std::vector<std::string> vals;
 
@@ -878,7 +878,7 @@ namespace DTCLib
 			stream << std::hex << std::setfill('0');
 			stream << "    0x" << std::setw(4) << static_cast<int>(reg.address) << "  | 0x" << std::setw(8) << static_cast<int>(reg.value) << " | ";
 			auto tmp = reg.description;
-			tmp.resize(MAX_DESC, ' ');
+			tmp.resize(reg.descWidth, ' ');
 			stream << tmp << " | ";
 
 			auto first = true;
@@ -887,7 +887,7 @@ namespace DTCLib
 				if (!first)
 				{
 					std::string placeholder = "";
-					placeholder.resize(MAX_DESC, ' ');
+					placeholder.resize(reg.descWidth, ' ');
 					stream << "                           " << placeholder << " | ";
 				}
 				stream << i << std::endl;
