@@ -120,7 +120,7 @@ namespace DTCLib
 		DTC_Register_FPGAPROMProgramStatus = 0x9404,
 		DTC_Register_FPGACoreAccess = 0x9408,
 		DTC_Register_EventModeLookupTableStart = 0x9500,
-		DTC_Register_EventModeLookupTableEnd = 0x97FC,
+		DTC_Register_EventModeLookupTableEnd = 0x98FC,
 		DTC_Register_Invalid,
 	};
 
