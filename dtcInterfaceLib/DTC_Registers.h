@@ -520,6 +520,11 @@ namespace DTCLib
 		bool ReadFPGACoreAccessFIFOEmpty();
 		DTC_RegisterFormatter FormatFPGACoreAccess();
 
+		// Event Mode Lookup Table
+		void SetEventModeWord(uint8_t which, uint32_t data);
+		uint32_t ReadEventModeWord(uint8_t which);
+		void EnableAllCFODRPBits();
+
 
 	private:
 		void WriteRegister_(uint32_t data, const DTC_Register& address);

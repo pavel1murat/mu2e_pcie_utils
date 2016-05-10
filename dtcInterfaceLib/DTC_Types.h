@@ -28,7 +28,7 @@ namespace DTCLib
 		DTC_Ring_Unused,
 	};
 
-	static const std::vector<DTC_Ring_ID> DTC_Rings = {DTC_Ring_0, DTC_Ring_1, DTC_Ring_2, DTC_Ring_3, DTC_Ring_4, DTC_Ring_5};
+	static const std::vector<DTC_Ring_ID> DTC_Rings = { DTC_Ring_0, DTC_Ring_1, DTC_Ring_2, DTC_Ring_3, DTC_Ring_4, DTC_Ring_5 };
 
 	enum DTC_ROC_ID : uint8_t
 	{
@@ -41,7 +41,7 @@ namespace DTCLib
 		DTC_ROC_Unused,
 	};
 
-	static const std::vector<DTC_ROC_ID> DTC_ROCS = {DTC_ROC_Unused, DTC_ROC_0, DTC_ROC_1, DTC_ROC_2, DTC_ROC_3, DTC_ROC_4, DTC_ROC_5};
+	static const std::vector<DTC_ROC_ID> DTC_ROCS = { DTC_ROC_Unused, DTC_ROC_0, DTC_ROC_1, DTC_ROC_2, DTC_ROC_3, DTC_ROC_4, DTC_ROC_5 };
 
 	struct DTC_ROCIDConverter
 	{
@@ -611,7 +611,7 @@ namespace DTCLib
 	class DTC_WrongPacketTypeException : public std::exception
 	{
 	public:
-		const char* what() const throw() 
+		const char* what() const throw()
 		{
 			return "Unexpected packet type encountered!";
 		}
@@ -620,7 +620,7 @@ namespace DTCLib
 	class DTC_IOErrorException : public std::exception
 	{
 	public:
-		const char* what() const throw() 
+		const char* what() const throw()
 		{
 			return "Unable to communicate with the DTC";
 		}
@@ -629,7 +629,7 @@ namespace DTCLib
 	class DTC_DataCorruptionException : public std::exception
 	{
 	public:
-		const char* what() const throw() 
+		const char* what() const throw()
 		{
 			return "Corruption detected in data stream from DTC";
 		}
@@ -820,40 +820,40 @@ namespace DTCLib
 
 		DTC_FIFOFullErrorFlags()
 			: OutputData(false)
-			  , CFOLinkInput(false)
-			  , ReadoutRequestOutput(false)
-			  , DataRequestOutput(false)
-			  , OtherOutput(false)
-			  , OutputDCS(false)
-			  , OutputDCSStage2(false)
-			  , DataInput(false)
-			  , DCSStatusInput(false) { }
+			, CFOLinkInput(false)
+			, ReadoutRequestOutput(false)
+			, DataRequestOutput(false)
+			, OtherOutput(false)
+			, OutputDCS(false)
+			, OutputDCSStage2(false)
+			, DataInput(false)
+			, DCSStatusInput(false) { }
 
 		DTC_FIFOFullErrorFlags(bool outputData, bool cfoLinkInput, bool readoutRequest, bool dataRequest,
-		                       bool otherOutput, bool outputDCS, bool outputDCS2, bool dataInput, bool dcsInput)
+			bool otherOutput, bool outputDCS, bool outputDCS2, bool dataInput, bool dcsInput)
 			: OutputData(outputData)
-			  , CFOLinkInput(cfoLinkInput)
-			  , ReadoutRequestOutput(readoutRequest)
-			  , DataRequestOutput(dataRequest)
-			  , OtherOutput(otherOutput)
-			  , OutputDCS(outputDCS)
-			  , OutputDCSStage2(outputDCS2)
-			  , DataInput(dataInput)
-			  , DCSStatusInput(dcsInput) { }
+			, CFOLinkInput(cfoLinkInput)
+			, ReadoutRequestOutput(readoutRequest)
+			, DataRequestOutput(dataRequest)
+			, OtherOutput(otherOutput)
+			, OutputDCS(outputDCS)
+			, OutputDCSStage2(outputDCS2)
+			, DataInput(dataInput)
+			, DCSStatusInput(dcsInput) { }
 
 		friend std::ostream& operator<<(std::ostream& stream, const DTC_FIFOFullErrorFlags& flags)
 		{
 			auto formatSet = (stream.flags() & std::ios_base::boolalpha) != 0;
 			stream.setf(std::ios_base::boolalpha);
 			stream << "{\"OutputData\":" << flags.OutputData
-			          << ",\"CFOLinkInput\":" << flags.CFOLinkInput
-			          << ",\"ReadoutRequestOutput\":" << flags.ReadoutRequestOutput
-			          << ",\"DataRequestOutput\":" << flags.DataRequestOutput
-			          << ",\"OtherOutput\":" << flags.OtherOutput
-			          << ",\"OutputDCS\":" << flags.OutputDCS
-			          << ",\"OutputDCSStage2\":" << flags.OutputDCSStage2
-			          << ",\"DataInput\":" << flags.DataInput
-			          << ",\"DCSStatusInput\":" << flags.DCSStatusInput << "}";
+				<< ",\"CFOLinkInput\":" << flags.CFOLinkInput
+				<< ",\"ReadoutRequestOutput\":" << flags.ReadoutRequestOutput
+				<< ",\"DataRequestOutput\":" << flags.DataRequestOutput
+				<< ",\"OtherOutput\":" << flags.OtherOutput
+				<< ",\"OutputDCS\":" << flags.OutputDCS
+				<< ",\"OutputDCSStage2\":" << flags.OutputDCSStage2
+				<< ",\"DataInput\":" << flags.DataInput
+				<< ",\"DCSStatusInput\":" << flags.DCSStatusInput << "}";
 			if (!formatSet) stream.unsetf(std::ios_base::boolalpha);
 			return stream;
 		}
@@ -861,13 +861,13 @@ namespace DTCLib
 
 	struct DTC_RegisterFormatter
 	{
-	DTC_RegisterFormatter() : address(0), value(0), descWidth(28), description(""), vals() {}
+		DTC_RegisterFormatter() : address(0), value(0), descWidth(28), description(""), vals() {}
 
 		DTC_RegisterFormatter(const DTC_RegisterFormatter& r) = default;
 		DTC_RegisterFormatter(DTC_RegisterFormatter&& r) = default;
-	  uint16_t address;
+		uint16_t address;
 		uint32_t value;
-	  int descWidth;
+		int descWidth;
 		std::string description;
 		std::vector<std::string> vals;
 

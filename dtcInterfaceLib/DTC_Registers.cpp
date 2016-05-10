@@ -104,6 +104,7 @@ DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode)
 		SetInternalSystemClock();
 		DisableTiming();
 		EnableCFOAutogenDRP();
+		EnableAllCFODRPBits();
 	}
 	ReadMinDMATransferLength();
 
@@ -2755,6 +2756,55 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatFPGACoreAccess()
 	form.vals.push_back(std::string("FPGA Core Access FIFO Empty: [") + (ReadFPGACoreAccessFIFOEmpty() ? "x" : " ") + "]");
 
 	return form;
+}
+
+// Event Mode Lookup Table
+void DTCLib::DTC_Registers::SetEventModeWord(uint8_t which, uint32_t data)
+{
+	uint16_t address = DTC_Register_EventModeLookupTableStart + (which / 4);
+	if (address <= DTC_Register_EventModeLookupTableEnd) {
+		auto retry = 3;
+		int errorCode;
+		do
+		{
+			errorCode = device_.write_register(address, 100, data);
+			--retry;
+		} while (retry > 0 && errorCode != 0);
+		if (errorCode != 0)
+		{
+			throw DTC_IOErrorException();
+		}
+	}
+}
+
+uint32_t DTCLib::DTC_Registers::ReadEventModeWord(uint8_t which)
+{
+	uint16_t address = DTC_Register_EventModeLookupTableStart + (which / 4);
+	if (address <= DTC_Register_EventModeLookupTableEnd) {
+		auto retry = 3;
+		int errorCode;
+		uint32_t data;
+		do
+		{
+			errorCode = device_.read_register(address, 100, &data);
+			--retry;
+		} while (retry > 0 && errorCode != 0);
+		if (errorCode != 0)
+		{
+			throw DTC_IOErrorException();
+		}
+
+		return data;
+	}
+	return 0;
+}
+
+void DTCLib::DTC_Registers::EnableAllCFODRPBits()
+{
+	for(auto i = 0; i < 256; ++i)
+	{
+		SetEventModeWord(i, 0x1);
+	}
 }
 
 // Private Functions
