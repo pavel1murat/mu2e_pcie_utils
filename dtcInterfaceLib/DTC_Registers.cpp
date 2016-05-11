@@ -2759,7 +2759,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatFPGACoreAccess()
 // Event Mode Lookup Table
 void DTCLib::DTC_Registers::SetEventModeWord(uint8_t which, uint32_t data)
 {
-	uint16_t address = DTC_Register_EventModeLookupTableStart + (which / 4);
+	uint16_t address = DTC_Register_EventModeLookupTableStart + (which * 4);
 	if (address <= DTC_Register_EventModeLookupTableEnd) {
 		auto retry = 3;
 		int errorCode;
@@ -2777,7 +2777,7 @@ void DTCLib::DTC_Registers::SetEventModeWord(uint8_t which, uint32_t data)
 
 uint32_t DTCLib::DTC_Registers::ReadEventModeWord(uint8_t which)
 {
-	uint16_t address = DTC_Register_EventModeLookupTableStart + (which / 4);
+	uint16_t address = DTC_Register_EventModeLookupTableStart + (which * 4);
 	if (address <= DTC_Register_EventModeLookupTableEnd) {
 		auto retry = 3;
 		int errorCode;
