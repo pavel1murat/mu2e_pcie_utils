@@ -103,8 +103,6 @@ DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode)
 		}
 		SetInternalSystemClock();
 		DisableTiming();
-		EnableCFOAutogenDRP();
-		EnableAllCFODRPBits();
 	}
 	ReadMinDMATransferLength();
 
