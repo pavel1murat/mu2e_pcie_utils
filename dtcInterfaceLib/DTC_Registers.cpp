@@ -2801,7 +2801,7 @@ void DTCLib::DTC_Registers::EnableAllCFODRPBits()
 {
 	for (auto i = 0; i < 256; ++i)
 	{
-		SetEventModeWord(i, 0x1);
+		SetEventModeWord(static_cast<uint8_t>(i), 1U);
 	}
 }
 
