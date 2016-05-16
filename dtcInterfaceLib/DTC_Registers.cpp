@@ -1711,8 +1711,8 @@ void DTCLib::DTC_Registers::SetCFOEmulationNumPackets(const DTC_Ring_ID& ring, u
 	}
 
 	auto regval = ReadRegister_(reg);
-	auto upper = (regval & 0x11110000) >> 16;
-	auto lower = regval & 0x00001111;
+	auto upper = (regval & 0xFFFF0000) >> 16;
+	auto lower = regval & 0x0000FFFF;
 	if (ring == DTC_Ring_0 || ring == DTC_Ring_2 || ring == DTC_Ring_4)
 	{
 		lower = data;
@@ -1746,8 +1746,8 @@ uint16_t DTCLib::DTC_Registers::ReadCFOEmulationNumPackets(const DTC_Ring_ID& ri
 	}
 
 	auto regval = ReadRegister_(reg);
-	auto upper = (regval & 0x11110000) >> 16;
-	auto lower = regval & 0x00001111;
+	auto upper = (regval & 0xFFFF0000) >> 16;
+	auto lower = regval & 0x0000FFFF;
 	if (ring == DTC_Ring_0 || ring == DTC_Ring_2 || ring == DTC_Ring_4)
 	{
 		return static_cast<uint16_t>(lower);
