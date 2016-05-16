@@ -532,21 +532,21 @@ bool DTCLib::DTC_Registers::ReadCFOEmulatorDRP()
 	return data[24];
 }
 
-void DTCLib::DTC_Registers::EnableCFOAutogenDRP()
+void DTCLib::DTC_Registers::EnableAutogenDRP()
 {
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	data[23] = 1;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
 }
 
-void DTCLib::DTC_Registers::DisableCFOAutogenDRP()
+void DTCLib::DTC_Registers::DisableAutogenDRP()
 {
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	data[23] = 0;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
 }
 
-bool DTCLib::DTC_Registers::ReadCFOAutogenDRP()
+bool DTCLib::DTC_Registers::ReadAutogenDRP()
 {
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	return data[23];
@@ -643,7 +643,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDTCControl()
 	form.vals.push_back(std::string("Detector Emulation Mode:        [") + (ReadDetectorEmulatorMode() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("Detector Emulation Enable:      [") + (ReadDetectorEmulatorEnable() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("CFO Emulator DRP Enable:        [") + (ReadCFOEmulatorDRP() ? "x" : " ") + "]");
-	form.vals.push_back(std::string("CFO Autogenerate DRP:           [") + (ReadCFOAutogenDRP() ? "x" : " ") + "]");
+	form.vals.push_back(std::string("CFO Autogenerate DRP:           [") + (ReadAutogenDRP() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("Software DRP Enable:            [") + (ReadSoftwareDRP() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("System Clock Select:            [") + (ReadSystemClock() ? "Ext" : "Int") + "]");
 	form.vals.push_back(std::string("Timing Enable:                  [") + (ReadTimingEnable() ? "x" : " ") + "]");
@@ -2795,14 +2795,6 @@ uint32_t DTCLib::DTC_Registers::ReadEventModeWord(uint8_t which)
 		return data;
 	}
 	return 0;
-}
-
-void DTCLib::DTC_Registers::EnableAllCFODRPBits()
-{
-	for (auto i = 0; i < 256; ++i)
-	{
-		SetEventModeWord(static_cast<uint8_t>(i), 1U);
-	}
 }
 
 // Private Functions

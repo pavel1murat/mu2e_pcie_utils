@@ -217,9 +217,9 @@ namespace DTCLib
 		void EnableCFOEmulatorDRP();
 		void DisableCFOEmulatorDRP();
 		bool ReadCFOEmulatorDRP();
-		void EnableCFOAutogenDRP();
-		void DisableCFOAutogenDRP();
-		bool ReadCFOAutogenDRP();
+		void EnableAutogenDRP();
+		void DisableAutogenDRP();
+		bool ReadAutogenDRP();
 		void EnableSoftwareDRP();
 		void DisableSoftwareDRP();
 		bool ReadSoftwareDRP();
@@ -523,7 +523,6 @@ namespace DTCLib
 		// Event Mode Lookup Table
 		void SetEventModeWord(uint8_t which, uint32_t data);
 		uint32_t ReadEventModeWord(uint8_t which);
-		void EnableAllCFODRPBits();
 
 
 	private:
