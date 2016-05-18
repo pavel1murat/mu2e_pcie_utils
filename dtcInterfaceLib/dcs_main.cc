@@ -182,7 +182,6 @@ int main(int argc, char* argv[])
 	else if (op == "test_read")
 	{
 		std::cout << "Operation \"test_read\"" << std::endl;
-		thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_25Gbps); // We're going to 2.5Gbps for now
 
 		thisDTC->SendDCSRequestPacket(DTC_Ring_0, DTC_ROC_0, DTC_DCSOperationType_Read, address, quiet);
 

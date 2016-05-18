@@ -474,7 +474,6 @@ void DTCLib::DTCLibTest::doDAQTest()
 		thisDTC_->SetInternalSystemClock();
 		thisDTC_->DisableTiming();
 		thisDTC_->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
-		thisDTC_->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_25Gbps); // We're going to 2.5Gbps for now
 
 		DTCSoftwareCFO theCFO(thisDTC_, true, 0, DTC_DebugType_SpecialSequence, true, !printMessages_);
 		theCFO.SendRequestForTimestamp();

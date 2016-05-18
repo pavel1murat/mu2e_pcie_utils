@@ -21,6 +21,8 @@ DTCLib::DTC::DTC(DTC_SimMode mode) : DTC_Registers(mode),
 #ifdef _WIN32
 #pragma warning(disable: 4996)
 #endif
+	//ELF, 05/18/2016: Rick reports that 3.125 Gbp
+	//SetSERDESOscillatorClock(DTC_SerdesClockSpeed_25Gbps); // We're going to 2.5Gbps for now
 }
 
 DTCLib::DTC::~DTC()
