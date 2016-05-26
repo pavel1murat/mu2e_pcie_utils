@@ -439,7 +439,7 @@ main(int argc
 
 				if (!reallyQuiet)
 				{
-					for (unsigned line = 0; line < static_cast<unsigned>(ceil((sts - 8) / 16)); ++line)
+					for (unsigned line = 0; line < static_cast<unsigned>(ceil((sts - 8) / 16.0)); ++line)
 					{
 						std::cout << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
 						//for (unsigned byte = 0; byte < 16; ++byte)

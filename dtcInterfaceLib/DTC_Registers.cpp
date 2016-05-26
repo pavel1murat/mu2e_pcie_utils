@@ -1941,12 +1941,13 @@ bool DTCLib::DTC_Registers::ReadDebugPacketMode()
 void DTCLib::DTC_Registers::SetCFOEmulationDebugType(DTC_DebugType type)
 {
 	std::bitset<32> data = type & 0xF;
+data[16] = ReadDebugPacketMode();
 	WriteRegister_(data.to_ulong(), DTC_Register_CFOEmulationDebugPacketType);
 }
 
 DTCLib::DTC_DebugType DTCLib::DTC_Registers::ReadCFOEmulationDebugType()
 {
-	return static_cast<DTC_DebugType>(ReadRegister_(DTC_Register_CFOEmulationDebugPacketType));
+	return static_cast<DTC_DebugType>(0xFFFF & ReadRegister_(DTC_Register_CFOEmulationDebugPacketType));
 }
 
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatCFOEmulationDebugPacketType()
@@ -1955,7 +1956,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatCFOEmulationDebugPack
 	form.description = "CFO Emulation Debug Packet Type";
 	form.vals.push_back(std::string("Debug Mode: [") + (ReadDebugPacketMode() ? "x" : " ") + "]");
 	std::stringstream o;
-	o << "0x" << std::hex << ReadCFOEmulationDebugType();
+	o << "Debug Packet Type: 0x" << std::hex << ReadCFOEmulationDebugType();
 	form.vals.push_back(o.str());
 	return form;
 }

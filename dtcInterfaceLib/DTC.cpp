@@ -360,7 +360,7 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 	}
 	auto blockByteCount = *static_cast<uint16_t*>(nextReadPtr_);
 	TRACE(19, "DTC::ReadNextDAQPacket: blockByteCount=%u, daqDMAByteCount=%u, nextReadPtr_=%p, *nextReadPtr=0x%x", blockByteCount, daqDMAByteCount_, (void*)nextReadPtr_, *((uint8_t*)nextReadPtr_));
-	if (blockByteCount == 0)
+	if (blockByteCount == 0 || blockByteCount == 0xcafe)
 	{
 		TRACE(19, "DTC::ReadNextDAQPacket: blockByteCount is 0, returning NULL!");
 		return nullptr;
