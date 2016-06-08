@@ -39,7 +39,10 @@ void DTCLib::DTCSoftwareCFO::WaitForRequestsToBeSent() const
 
 void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 {
-	if (theDTC_->ReadDetectorEmulatorEnable()) return;
+	if (theDTC_->ReadDetectorEmulatorEnable()) {
+		TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp: Not Sending timestamp because we're in DetectorEmulator Mode!");
+		return;
+	}
 	if (!useCFOEmulator_)
 	{
 		for (auto ring : DTC_Rings)
@@ -95,7 +98,10 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start, bool increment, uint32_t delayBetweenDataRequests, int requestsAhead)
 {
-	if (theDTC_->ReadDetectorEmulatorEnable()) return;
+	if (theDTC_->ReadDetectorEmulatorEnable()) {
+		TRACE(19, "DTCSoftwareCFO::SendRequestsForRange: Detector Emulator is enabled, not sending requests");
+		return;
+	}
 	if (delayBetweenDataRequests < 1000)
 	{
 		delayBetweenDataRequests = 1000;
