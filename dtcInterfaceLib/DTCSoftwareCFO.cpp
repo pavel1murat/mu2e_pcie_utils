@@ -39,6 +39,7 @@ void DTCLib::DTCSoftwareCFO::WaitForRequestsToBeSent() const
 
 void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 {
+	if (theDTC_->ReadDetectorEmulatorEnable()) return;
 	if (!useCFOEmulator_)
 	{
 		for (auto ring : DTC_Rings)
@@ -94,6 +95,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start, bool increment, uint32_t delayBetweenDataRequests, int requestsAhead)
 {
+	if (theDTC_->ReadDetectorEmulatorEnable()) return;
 	if (delayBetweenDataRequests < 1000)
 	{
 		delayBetweenDataRequests = 1000;
