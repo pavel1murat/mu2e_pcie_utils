@@ -17,11 +17,11 @@ if [ $ROOT_MODE -eq 1 ]; then
   PCIE_KO_PATH=$PCIE_LINUX_KERNEL_MODULE_DIR/drivers/`uname -r`/mu2e.ko
   TRACE_KO_PATH=$TRACE_DIR/module/`uname -r`/TRACE.ko
 
-  if [ ! -e $PCIE_KO_PATH -a ! -z ${MRB_BUILDDIR-} ]; then
+  if [ ! -e $PCIE_KO_PATH -a ! -z "${MRB_BUILDDIR-}" ]; then
     PCIE_KO_PATH=$MRB_BUILDDIR/pcie_linux_kernel_module/drivers/`uname -r`/mu2e.ko
   fi
 
-  if [ ! -e $TRACE_KO_PATH -a ! -z ${MRB_BUILDDIR-} ]; then
+  if [ ! -e $TRACE_KO_PATH -a ! -z "${MRB_BUILDDIR-}" ]; then
     TRACE_KO_PATH=$MRB_BUILDDIR/TRACE/module/`uname -r`/TRACE.ko
   fi
 
