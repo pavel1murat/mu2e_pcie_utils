@@ -45,7 +45,12 @@ namespace DTCLib
 		DTC_DataHeaderPacket* ReadNextDAQPacket(int tmo_ms = 0);
 		DTC_DCSReplyPacket* ReadNextDCSPacket();
 
-		void ReleaseAllBuffers(const DTC_DMA_Engine& channel)
+		void ReleaseAllBuffers() {
+	ReleaseAllBuffers(DTC_DMA_Engine_DAQ);
+ReleaseAllBuffers(DTC_DMA_Engine_DCS);
+}
+
+                void ReleaseAllBuffers(const DTC_DMA_Engine& channel)
 		{
 			device_.release_all(channel);
 		}

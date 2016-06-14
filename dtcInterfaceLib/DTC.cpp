@@ -182,7 +182,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever, bool overw
 	ResetDDRWriteAddress();
 	SetDDRDataLocalEndAddress(0x7000000);
 	SetDetectorEmulationDMACount(0);
-	SetDetectorEmulationDMADelayCount(0);
+	SetDetectorEmulationDMADelayCount(25); // 0.1 microseconds
 	uint64_t totalSize = 0;
 	auto n = 0;
 
@@ -226,7 +226,8 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever, bool overw
 	}
 	else
 	{
-		SetDetectorEmulationDMACount(0);
+		//SetDetectorEmulationDMACount(0);
+		SetDetectorEmulationDMACount(0xFFFFFFFF);
 	}
 	EnableDetectorEmulator();
 }
@@ -344,6 +345,8 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 		{
 			nextReadPtr_ = nullptr;
 			//We didn't actually get a new buffer...this probably means there's no more data
+			//Try and see if we're merely stuck...hopefully, all the data is out of the buffers...
+	                device_.read_release(DTC_DMA_Engine_DAQ, 1);
 			return nullptr;
 		}
 		buffers_used_++;

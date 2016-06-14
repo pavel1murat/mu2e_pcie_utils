@@ -2,7 +2,7 @@
 test "$0" == "$BASH_SOURCE" && { echo 'You must source this script; script exiting'; exit; }
 
 ROOT_MODE=0
-if [[ `whoami` == root ]]; then
+if [[ `whoami` == root ]] || [[ `whoami` == ron2 ]]; then
    ROOT_MODE=1
 fi
 
