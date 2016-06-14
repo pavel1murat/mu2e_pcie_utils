@@ -1,11 +1,6 @@
 #include "DTC_Registers.h"
 #include <sstream> // Convert uint to hex string
-
-
-
 #include <iomanip> // std::setw, std::setfill
-
-
 
 #include <chrono>
 #ifndef _WIN32
@@ -117,40 +112,52 @@ DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode)
 //
 // DTC Register Dumps
 //
-std::string DTCLib::DTC_Registers::FormattedRegDump() const
+std::string DTCLib::DTC_Registers::FormattedRegDump(int width)
 {
+	std::string divider(width, '=');
+	formatterWidth_ = width - 27 - 65;
+	if (formatterWidth_ < 28) { formatterWidth_ = 28; }
+	std::string spaces(formatterWidth_ - 4, ' ');
 	std::ostringstream o;
 	o << "Memory Map: " << std::endl;
-	o << "    Address | Value      | Name                         | Translation" << std::endl;
+	o << "    Address | Value      | Name " << spaces << "| Translation" << std::endl;
 	for (auto i : formattedDumpFunctions_)
 	{
-		o << "================================================================================" << std::endl;
+		o << divider << std::endl;
 		o << i();
 	}
 	return o.str();
 }
 
-std::string DTCLib::DTC_Registers::PerformanceMonitorRegDump() const
+std::string DTCLib::DTC_Registers::PerformanceMonitorRegDump(int width)
 {
+	std::string divider(width, '=');
+	formatterWidth_ = width - 27 - 65;
+	if (formatterWidth_ < 28) { formatterWidth_ = 28; }
+	std::string spaces(formatterWidth_ - 4, ' ');
 	std::ostringstream o;
-	o << "Performance Monitor Values: " << std::endl;
-	o << "    Address | Value      | Name                         | Translation" << std::endl;
+	o << "Performance Monitor Registers: " << std::endl;
+	o << "    Address | Value      | Name " << spaces << "| Translation" << std::endl;
 	for (auto i : formattedPerfMonFunctions_)
 	{
-		o << "================================================================================" << std::endl;
+		o << divider << std::endl;
 		o << i();
 	}
 	return o.str();
 }
 
-std::string DTCLib::DTC_Registers::RingCountersRegDump() const
+std::string DTCLib::DTC_Registers::RingCountersRegDump(int width)
 {
+	std::string divider(width, '=');
+	formatterWidth_ = width - 27 - 65;
+	if (formatterWidth_ < 28) { formatterWidth_ = 28; }
+	std::string spaces(formatterWidth_ - 4, ' ');
 	std::ostringstream o;
-	o << "Ring Byte and Packet Counter Values: " << std::endl;
-	o << "    Address | Value      | Name                         | Translation" << std::endl;
+	o << "SERDES Byte/Packet Counters: " << std::endl;
+	o << "    Address | Value      | Name " << spaces << "| Translation" << std::endl;
 	for (auto i : formattedCounterFunctions_)
 	{
-		o << "================================================================================" << std::endl;
+		o << divider << std::endl;
 		o << i();
 	}
 	return o.str();
@@ -296,7 +303,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatPerfMonInitCHC()
 	auto form = CreateFormatter(DTC_Register_PerfMonInitCHC);
 	form.description = "PerfMon Init CHC";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadPerfMonInitCHC();
+	o << "0x" << std::hex << static_cast<int>(ReadPerfMonInitCHC());
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -326,7 +333,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatPerfMonInitNPHC()
 	auto form = CreateFormatter(DTC_Register_PerfMonInitNPHC);
 	form.description = "PerfMon Init NPHC";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadPerfMonInitNPHC();
+	o << "0x" << std::hex << static_cast<int>(ReadPerfMonInitNPHC());
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -356,7 +363,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatPerfMonInitPHC()
 	auto form = CreateFormatter(DTC_Register_PerfMonInitPHC);
 	form.description = "PerfMon Init PHC";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadPerfMonInitPHC();
+	o << "0x" << std::hex << static_cast<int>(ReadPerfMonInitPHC());
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -525,21 +532,21 @@ bool DTCLib::DTC_Registers::ReadCFOEmulatorDRP()
 	return data[24];
 }
 
-void DTCLib::DTC_Registers::EnableCFOAutogenDRP()
+void DTCLib::DTC_Registers::EnableAutogenDRP()
 {
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	data[23] = 1;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
 }
 
-void DTCLib::DTC_Registers::DisableCFOAutogenDRP()
+void DTCLib::DTC_Registers::DisableAutogenDRP()
 {
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	data[23] = 0;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
 }
 
-bool DTCLib::DTC_Registers::ReadCFOAutogenDRP()
+bool DTCLib::DTC_Registers::ReadAutogenDRP()
 {
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	return data[23];
@@ -636,7 +643,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDTCControl()
 	form.vals.push_back(std::string("Detector Emulation Mode:        [") + (ReadDetectorEmulatorMode() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("Detector Emulation Enable:      [") + (ReadDetectorEmulatorEnable() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("CFO Emulator DRP Enable:        [") + (ReadCFOEmulatorDRP() ? "x" : " ") + "]");
-	form.vals.push_back(std::string("CFO Autogenerate DRP:           [") + (ReadCFOAutogenDRP() ? "x" : " ") + "]");
+	form.vals.push_back(std::string("CFO Autogenerate DRP:           [") + (ReadAutogenDRP() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("Software DRP Enable:            [") + (ReadSoftwareDRP() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("System Clock Select:            [") + (ReadSystemClock() ? "Ext" : "Int") + "]");
 	form.vals.push_back(std::string("Timing Enable:                  [") + (ReadTimingEnable() ? "x" : " ") + "]");
@@ -805,9 +812,9 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatRingEnable()
 	{
 		auto re = ReadRingEnabled(r);
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": ["
-		                                           + (re.TransmitEnable ? "x" : " ") + ","
-		                                           + (re.ReceiveEnable ? "x" : " ") + ","
-		                                           + (re.TimingEnable ? "x" : " ") + "]");
+			+ (re.TransmitEnable ? "x" : " ") + ","
+			+ (re.ReceiveEnable ? "x" : " ") + ","
+			+ (re.TimingEnable ? "x" : " ") + "]");
 	}
 	{
 		auto ce = ReadRingEnabled(DTC_Ring_CFO);
@@ -959,12 +966,12 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESTXBufferStatus(
 	for (auto r : DTC_Rings)
 	{
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": ["
-		                                           + (ReadSERDESOverflowOrUnderflow(r) ? "x" : " ") + ","
-		                                           + (ReadSERDESBufferFIFOHalfFull(r) ? "x" : " ") + "]");
+			+ (ReadSERDESOverflowOrUnderflow(r) ? "x" : " ") + ","
+			+ (ReadSERDESBufferFIFOHalfFull(r) ? "x" : " ") + "]");
 	}
 	form.vals.push_back(std::string("CFO:    [")
-	                    + (ReadSERDESOverflowOrUnderflow(DTC_Ring_CFO) ? "x" : " ") + ","
-	                      + (ReadSERDESBufferFIFOHalfFull(DTC_Ring_CFO) ? "x" : " ") + "]");
+		+ (ReadSERDESOverflowOrUnderflow(DTC_Ring_CFO) ? "x" : " ") + ","
+		+ (ReadSERDESBufferFIFOHalfFull(DTC_Ring_CFO) ? "x" : " ") + "]");
 	return form;
 }
 
@@ -1190,10 +1197,11 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatEVBLocalParitionIDMAC
 	auto form = CreateFormatter(DTC_Register_EVBPartitionID);
 	form.description = "EVB Local Partition ID / MAC Index";
 	std::ostringstream o;
-	o << "EVB Local Parition ID: 0x" << std::hex << ReadEVBLocalParitionID();
+	o << "EVB Local Parition ID: 0x" << std::hex << static_cast<int>(ReadEVBLocalParitionID());
 	form.vals.push_back(o.str());
+	o.str("");
 	o.clear();
-	o << "EVB MAC Index:         0x" << std::hex << ReadEVBLocalMACAddress();
+	o << "EVB MAC Index:         0x" << std::hex << static_cast<int>(ReadEVBLocalMACAddress());
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -1214,7 +1222,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatEVBNumberOfDestinatio
 	auto form = CreateFormatter(DTC_Register_EVBDestCount);
 	form.description = "EVB Number of Destination Nodes";
 	std::stringstream o;
-	o << std::dec << ReadEVBNumberOfDestinationNodes();
+	o << std::dec << static_cast<int>(ReadEVBNumberOfDestinationNodes());
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -1316,10 +1324,10 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatHeartbeatError()
 	for (auto r : DTC_Rings)
 	{
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": ["
-		                                           + (ReadHeartbeatTimeout(r) ? "x" : " ") + ","
-		                                           + (ReadHeartbeat20Mismatch(r) ? "x" : " ") + ","
-		                                           + (ReadHeartbeat12Mismatch(r) ? "x" : " ") + ","
-		                                           + (ReadHeartbeat01Mismatch(r) ? "x" : " ") + "]");
+			+ (ReadHeartbeatTimeout(r) ? "x" : " ") + ","
+			+ (ReadHeartbeat20Mismatch(r) ? "x" : " ") + ","
+			+ (ReadHeartbeat12Mismatch(r) ? "x" : " ") + ","
+			+ (ReadHeartbeat01Mismatch(r) ? "x" : " ") + "]");
 	}
 	return form;
 }
@@ -1473,10 +1481,10 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatFIFOFullErrorFlag0()
 	{
 		auto re = ReadFIFOFullErrorFlags(r);
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": ["
-		                                           + (re.DataRequestOutput ? "x" : " ") + ","
-		                                           + (re.ReadoutRequestOutput ? "x" : " ") + ","
-		                                           + (re.CFOLinkInput ? "x" : " ") + ","
-		                                           + (re.OutputData ? "x" : " ") + "]");
+			+ (re.DataRequestOutput ? "x" : " ") + ","
+			+ (re.ReadoutRequestOutput ? "x" : " ") + ","
+			+ (re.CFOLinkInput ? "x" : " ") + ","
+			+ (re.OutputData ? "x" : " ") + "]");
 	}
 	return form;
 }
@@ -1490,18 +1498,18 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatFIFOFullErrorFlag1()
 	{
 		auto re = ReadFIFOFullErrorFlags(r);
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": ["
-		                                           + (re.DataInput ? "x" : " ") + ","
-		                                           + (re.OutputDCSStage2 ? "x" : " ") + ","
-		                                           + (re.OutputDCS ? "x" : " ") + ","
-		                                           + (re.OtherOutput ? "x" : " ") + "]");
+			+ (re.DataInput ? "x" : " ") + ","
+			+ (re.OutputDCSStage2 ? "x" : " ") + ","
+			+ (re.OutputDCS ? "x" : " ") + ","
+			+ (re.OtherOutput ? "x" : " ") + "]");
 	}
 	{
 		auto ce = ReadFIFOFullErrorFlags(DTC_Ring_CFO);
 		form.vals.push_back(std::string("CFO:    [") +
-		                    +(ce.DataInput ? "x" : " ") + ","
-		                    + (ce.OutputDCSStage2 ? "x" : " ") + ","
-		                    + (ce.OutputDCS ? "x" : " ") + ","
-		                    + (ce.OtherOutput ? "x" : " ") + "]");
+			+(ce.DataInput ? "x" : " ") + ","
+			+ (ce.OutputDCSStage2 ? "x" : " ") + ","
+			+ (ce.OutputDCS ? "x" : " ") + ","
+			+ (ce.OtherOutput ? "x" : " ") + "]");
 	}
 	return form;
 }
@@ -1584,16 +1592,16 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatReceivePacketError()
 	for (auto r : DTC_Rings)
 	{
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": ["
-		                                           + (ReadPacketCRCError(r) ? "x" : " ") + ","
-		                                           + (ReadPacketError(r) ? "x" : " ") + ","
-		                                           + (ReadRXElasticBufferOverrun(r) ? "x" : " ") + ","
-		                                           + (ReadRXElasticBufferUnderrun(r) ? "x" : " ") + "]");
+			+ (ReadPacketCRCError(r) ? "x" : " ") + ","
+			+ (ReadPacketError(r) ? "x" : " ") + ","
+			+ (ReadRXElasticBufferOverrun(r) ? "x" : " ") + ","
+			+ (ReadRXElasticBufferUnderrun(r) ? "x" : " ") + "]");
 	}
 	form.vals.push_back(std::string("CFO:    [")
-	                    + (ReadPacketCRCError(DTC_Ring_CFO) ? "x" : " ") + ","
-	                      + (ReadPacketError(DTC_Ring_CFO) ? "x" : " ") + ","
-	                      + (ReadRXElasticBufferOverrun(DTC_Ring_CFO) ? "x" : " ") + ","
-	                      + (ReadRXElasticBufferUnderrun(DTC_Ring_CFO) ? "x" : " ") + "]");
+		+ (ReadPacketCRCError(DTC_Ring_CFO) ? "x" : " ") + ","
+		+ (ReadPacketError(DTC_Ring_CFO) ? "x" : " ") + ","
+		+ (ReadRXElasticBufferOverrun(DTC_Ring_CFO) ? "x" : " ") + ","
+		+ (ReadRXElasticBufferUnderrun(DTC_Ring_CFO) ? "x" : " ") + "]");
 	return form;
 }
 
@@ -1703,8 +1711,8 @@ void DTCLib::DTC_Registers::SetCFOEmulationNumPackets(const DTC_Ring_ID& ring, u
 	}
 
 	auto regval = ReadRegister_(reg);
-	auto upper = regval & 0x11110000;
-	auto lower = regval & 0x00001111;
+	auto upper = (regval & 0xFFFF0000) >> 16;
+	auto lower = regval & 0x0000FFFF;
 	if (ring == DTC_Ring_0 || ring == DTC_Ring_2 || ring == DTC_Ring_4)
 	{
 		lower = data;
@@ -1713,7 +1721,7 @@ void DTCLib::DTC_Registers::SetCFOEmulationNumPackets(const DTC_Ring_ID& ring, u
 	{
 		upper = data;
 	}
-	WriteRegister_(upper + lower, reg);
+	WriteRegister_((upper << 16) + lower, reg);
 }
 
 uint16_t DTCLib::DTC_Registers::ReadCFOEmulationNumPackets(const DTC_Ring_ID& ring)
@@ -1738,8 +1746,8 @@ uint16_t DTCLib::DTC_Registers::ReadCFOEmulationNumPackets(const DTC_Ring_ID& ri
 	}
 
 	auto regval = ReadRegister_(reg);
-	auto upper = regval & 0x11110000;
-	auto lower = regval & 0x00001111;
+	auto upper = (regval & 0xFFFF0000) >> 16;
+	auto lower = regval & 0x0000FFFF;
 	if (ring == DTC_Ring_0 || ring == DTC_Ring_2 || ring == DTC_Ring_4)
 	{
 		return static_cast<uint16_t>(lower);
@@ -1752,10 +1760,11 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatCFOEmulationNumPacket
 	auto form = CreateFormatter(DTC_Register_CFOEmulationNumPacketsRings10);
 	form.description = "CFO Emulator Num Packets R0,1";
 	std::stringstream o;
-	o << "Ring 0:   0x" << std::hex << ReadCFOEmulationNumPackets(DTC_Ring_0);
+	o << "Ring 0: 0x" << std::hex << ReadCFOEmulationNumPackets(DTC_Ring_0);
 	form.vals.push_back(o.str());
+	o.str("");
 	o.clear();
-	o << "Ring 1:   0x" << std::hex << ReadCFOEmulationNumPackets(DTC_Ring_1);
+	o << "Ring 1: 0x" << std::hex << ReadCFOEmulationNumPackets(DTC_Ring_1);
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -1765,10 +1774,11 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatCFOEmulationNumPacket
 	auto form = CreateFormatter(DTC_Register_CFOEmulationNumPacketsRings32);
 	form.description = "CFO Emulator Num Packets R2,3";
 	std::stringstream o;
-	o << "Ring 2:   0x" << std::hex << ReadCFOEmulationNumPackets(DTC_Ring_2);
+	o << "Ring 2: 0x" << std::hex << ReadCFOEmulationNumPackets(DTC_Ring_2);
 	form.vals.push_back(o.str());
+	o.str("");
 	o.clear();
-	o << "Ring 3:   0x" << std::hex << ReadCFOEmulationNumPackets(DTC_Ring_3);
+	o << "Ring 3: 0x" << std::hex << ReadCFOEmulationNumPackets(DTC_Ring_3);
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -1778,10 +1788,11 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatCFOEmulationNumPacket
 	auto form = CreateFormatter(DTC_Register_CFOEmulationNumPacketsRings54);
 	form.description = "CFO Emulator Num Packets R4,5";
 	std::stringstream o;
-	o << "Ring 4:   0x" << std::hex << ReadCFOEmulationNumPackets(DTC_Ring_4);
+	o << "Ring 4: 0x" << std::hex << ReadCFOEmulationNumPackets(DTC_Ring_4);
 	form.vals.push_back(o.str());
+	o.str("");
 	o.clear();
-	o << "Ring 5:   0x" << std::hex << ReadCFOEmulationNumPackets(DTC_Ring_5);
+	o << "Ring 5: 0x" << std::hex << ReadCFOEmulationNumPackets(DTC_Ring_5);
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -1872,16 +1883,19 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatCFOEmulationModeBytes
 	auto form = CreateFormatter(DTC_Register_CFOEmulationEventMode1);
 	form.description = "CFO Emulation Event Mode Bytes 0-3";
 	std::ostringstream o;
-	o << "Byte 0: 0x" << std::hex << ReadCFOEmulationModeByte(0);
+	o << "Byte 0: 0x" << std::hex << static_cast<int>(ReadCFOEmulationModeByte(0));
 	form.vals.push_back(o.str());
+	o.str("");
 	o.clear();
-	o << "Byte 1: 0x" << std::hex << ReadCFOEmulationModeByte(1);
+	o << "Byte 1: 0x" << std::hex << static_cast<int>(ReadCFOEmulationModeByte(1));
 	form.vals.push_back(o.str());
+	o.str("");
 	o.clear();
-	o << "Byte 2: 0x" << std::hex << ReadCFOEmulationModeByte(2);
+	o << "Byte 2: 0x" << std::hex << static_cast<int>(ReadCFOEmulationModeByte(2));
 	form.vals.push_back(o.str());
+	o.str("");
 	o.clear();
-	o << "Byte 3: 0x" << std::hex << ReadCFOEmulationModeByte(3);
+	o << "Byte 3: 0x" << std::hex << static_cast<int>(ReadCFOEmulationModeByte(3));
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -1891,11 +1905,13 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatCFOEmulationModeBytes
 	auto form = CreateFormatter(DTC_Register_CFOEmulationEventMode2);
 	form.description = "CFO Emulation Event Mode Bytes 4-5";
 	std::ostringstream o;
-	o << "Byte 4: 0x" << std::hex << ReadCFOEmulationModeByte(4);
+	o << "Byte 4: 0x" << std::hex << static_cast<int>(ReadCFOEmulationModeByte(4));
 	form.vals.push_back(o.str());
+	o.str("");
 	o.clear();
-	o << "Byte 5: 0x" << std::hex << ReadCFOEmulationModeByte(5);
+	o << "Byte 5: 0x" << std::hex << static_cast<int>(ReadCFOEmulationModeByte(5));
 	form.vals.push_back(o.str());
+	o.str("");
 	o.clear();
 	return form;
 }
@@ -1925,12 +1941,13 @@ bool DTCLib::DTC_Registers::ReadDebugPacketMode()
 void DTCLib::DTC_Registers::SetCFOEmulationDebugType(DTC_DebugType type)
 {
 	std::bitset<32> data = type & 0xF;
+data[16] = ReadDebugPacketMode();
 	WriteRegister_(data.to_ulong(), DTC_Register_CFOEmulationDebugPacketType);
 }
 
 DTCLib::DTC_DebugType DTCLib::DTC_Registers::ReadCFOEmulationDebugType()
 {
-	return static_cast<DTC_DebugType>(ReadRegister_(DTC_Register_CFOEmulationDebugPacketType));
+	return static_cast<DTC_DebugType>(0xFFFF & ReadRegister_(DTC_Register_CFOEmulationDebugPacketType));
 }
 
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatCFOEmulationDebugPacketType()
@@ -1939,7 +1956,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatCFOEmulationDebugPack
 	form.description = "CFO Emulation Debug Packet Type";
 	form.vals.push_back(std::string("Debug Mode: [") + (ReadDebugPacketMode() ? "x" : " ") + "]");
 	std::stringstream o;
-	o << "0x" << std::hex << ReadCFOEmulationDebugType();
+	o << "Debug Packet Type: 0x" << std::hex << ReadCFOEmulationDebugType();
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -2282,7 +2299,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatReceivePacketCountRin
 	auto form = CreateFormatter(DTC_Register_ReceivePacketCountDataRing0);
 	form.description = "Receive Packet Count: Ring 0";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadReceiveByteCount(DTC_Ring_0);
+	o << "0x" << std::hex << ReadReceivePacketCount(DTC_Ring_0);
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -2292,7 +2309,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatReceivePacketCountRin
 	auto form = CreateFormatter(DTC_Register_ReceivePacketCountDataRing1);
 	form.description = "Receive Packet Count: Ring 1";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadReceiveByteCount(DTC_Ring_1);
+	o << "0x" << std::hex << ReadReceivePacketCount(DTC_Ring_1);
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -2302,7 +2319,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatReceivePacketCountRin
 	auto form = CreateFormatter(DTC_Register_ReceivePacketCountDataRing2);
 	form.description = "Receive Packet Count: Ring 2";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadReceiveByteCount(DTC_Ring_2);
+	o << "0x" << std::hex << ReadReceivePacketCount(DTC_Ring_2);
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -2312,7 +2329,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatReceivePacketCountRin
 	auto form = CreateFormatter(DTC_Register_ReceivePacketCountDataRing3);
 	form.description = "Receive Packet Count: Ring 3";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadReceiveByteCount(DTC_Ring_3);
+	o << "0x" << std::hex << ReadReceivePacketCount(DTC_Ring_3);
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -2322,7 +2339,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatReceivePacketCountRin
 	auto form = CreateFormatter(DTC_Register_ReceivePacketCountDataRing4);
 	form.description = "Receive Packet Count: Ring 4";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadReceiveByteCount(DTC_Ring_4);
+	o << "0x" << std::hex << ReadReceivePacketCount(DTC_Ring_4);
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -2332,7 +2349,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatReceivePacketCountRin
 	auto form = CreateFormatter(DTC_Register_ReceivePacketCountDataRing5);
 	form.description = "Receive Packet Count: Ring 5";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadReceiveByteCount(DTC_Ring_5);
+	o << "0x" << std::hex << ReadReceivePacketCount(DTC_Ring_5);
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -2422,7 +2439,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatTransmitPacketCountRi
 	auto form = CreateFormatter(DTC_Register_TransmitPacketCountDataRing0);
 	form.description = "Transmit Packet Count: Ring 0";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadTransmitByteCount(DTC_Ring_0);
+	o << "0x" << std::hex << ReadTransmitPacketCount(DTC_Ring_0);
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -2432,7 +2449,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatTransmitPacketCountRi
 	auto form = CreateFormatter(DTC_Register_TransmitPacketCountDataRing1);
 	form.description = "Transmit Packet Count: Ring 1";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadTransmitByteCount(DTC_Ring_1);
+	o << "0x" << std::hex << ReadTransmitPacketCount(DTC_Ring_1);
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -2442,7 +2459,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatTransmitPacketCountRi
 	auto form = CreateFormatter(DTC_Register_TransmitPacketCountDataRing2);
 	form.description = "Transmit Packet Count: Ring 2";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadTransmitByteCount(DTC_Ring_2);
+	o << "0x" << std::hex << ReadTransmitPacketCount(DTC_Ring_2);
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -2452,7 +2469,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatTransmitPacketCountRi
 	auto form = CreateFormatter(DTC_Register_TransmitPacketCountDataRing3);
 	form.description = "Transmit Packet Count: Ring 3";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadTransmitByteCount(DTC_Ring_3);
+	o << "0x" << std::hex << ReadTransmitPacketCount(DTC_Ring_3);
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -2462,7 +2479,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatTransmitPacketCountRi
 	auto form = CreateFormatter(DTC_Register_TransmitPacketCountDataRing4);
 	form.description = "Transmit Packet Count: Ring 4";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadTransmitByteCount(DTC_Ring_4);
+	o << "0x" << std::hex << ReadTransmitPacketCount(DTC_Ring_4);
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -2472,7 +2489,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatTransmitPacketCountRi
 	auto form = CreateFormatter(DTC_Register_TransmitPacketCountDataRing5);
 	form.description = "Transmit Packet Count: Ring 5";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadTransmitByteCount(DTC_Ring_5);
+	o << "0x" << std::hex << ReadTransmitPacketCount(DTC_Ring_5);
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -2738,6 +2755,64 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatFPGACoreAccess()
 	form.vals.push_back(std::string("FPGA Core Access FIFO Empty: [") + (ReadFPGACoreAccessFIFOEmpty() ? "x" : " ") + "]");
 
 	return form;
+}
+
+// Event Mode Lookup Table
+void DTCLib::DTC_Registers::SetAllEventModeWords(uint32_t data)
+{
+	for (uint16_t address = DTC_Register_EventModeLookupTableStart; address <= DTC_Register_EventModeLookupTableEnd; address += 4) {
+			auto retry = 3;
+			int errorCode;
+			do
+			{
+				errorCode = device_.write_register(address, 100, data);
+				--retry;
+			} while (retry > 0 && errorCode != 0);
+			if (errorCode != 0)
+			{
+				throw DTC_IOErrorException();
+			}
+	}
+}
+
+void DTCLib::DTC_Registers::SetEventModeWord(uint8_t which, uint32_t data)
+{
+	uint16_t address = DTC_Register_EventModeLookupTableStart + (which * 4);
+	if (address <= DTC_Register_EventModeLookupTableEnd) {
+		auto retry = 3;
+		int errorCode;
+		do
+		{
+			errorCode = device_.write_register(address, 100, data);
+			--retry;
+		} while (retry > 0 && errorCode != 0);
+		if (errorCode != 0)
+		{
+			throw DTC_IOErrorException();
+		}
+	}
+}
+
+uint32_t DTCLib::DTC_Registers::ReadEventModeWord(uint8_t which)
+{
+	uint16_t address = DTC_Register_EventModeLookupTableStart + (which * 4);
+	if (address <= DTC_Register_EventModeLookupTableEnd) {
+		auto retry = 3;
+		int errorCode;
+		uint32_t data;
+		do
+		{
+			errorCode = device_.read_register(address, 100, &data);
+			--retry;
+		} while (retry > 0 && errorCode != 0);
+		if (errorCode != 0)
+		{
+			throw DTC_IOErrorException();
+		}
+
+		return data;
+	}
+	return 0;
 }
 
 // Private Functions

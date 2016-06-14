@@ -4,8 +4,8 @@
 #define TRACE_NAME "MU2EDEV"
 
 DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(DTC* dtc, bool useCFOEmulator, uint16_t debugPacketCount,
-                                       DTC_DebugType debugType, bool stickyDebugType,
-                                       bool quiet, bool asyncRR)
+									   DTC_DebugType debugType, bool stickyDebugType,
+									   bool quiet, bool asyncRR)
 	: useCFOEmulator_(useCFOEmulator)
 	  , debugPacketCount_(debugPacketCount)
 	  , debugType_(debugType)
@@ -20,6 +20,9 @@ DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(DTC* dtc, bool useCFOEmulator, uint16_t d
 	{
 		ringMode_[ring] = theDTC_->ReadRingEnabled(ring);
 	}
+	theDTC_->EnableAutogenDRP();
+	theDTC_->SetAllEventModeWords(1U);
+	theDTC_->SetEventModeWord(0, 0U);
 }
 
 DTCLib::DTCSoftwareCFO::~DTCSoftwareCFO()
@@ -37,6 +40,10 @@ void DTCLib::DTCSoftwareCFO::WaitForRequestsToBeSent() const
 
 void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 {
+	if (theDTC_->ReadDetectorEmulatorEnable()) {
+		TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp: Not Sending timestamp because we're in DetectorEmulator Mode!");
+		return;
+	}
 	if (!useCFOEmulator_)
 	{
 		for (auto ring : DTC_Rings)
@@ -52,7 +59,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 					{
 						TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp before DTC_DataRequestPacket req");
 						DTC_DataRequestPacket req(ring, static_cast<DTC_ROC_ID>(roc), ts, true,
-						                          debugPacketCount_, debugType_);
+												  debugPacketCount_, debugType_);
 						if (debugType_ == DTC_DebugType_ExternalSerialWithReset && !stickyDebugType_)
 						{
 							debugType_ = DTC_DebugType_ExternalSerial;
@@ -80,8 +87,10 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 			}
 		}
 		theDTC_->SetCFOEmulationNumRequests(1);
-		theDTC_->SetCFOEmulationRequestInterval(0);
+		theDTC_->SetCFOEmulationRequestInterval(1000);
 		theDTC_->SetCFOEmulationDebugType(debugType_);
+		theDTC_->SetCFOEmulationModeByte(5, 1);
+		theDTC_->EnableDebugPacketMode();
 		TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp enabling DTC CFO Emulator");
 		theDTC_->EnableCFOEmulation();
 		TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp done");
@@ -91,9 +100,13 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start, bool increment, uint32_t delayBetweenDataRequests, int requestsAhead)
 {
-	if (delayBetweenDataRequests < 100)
+	if (theDTC_->ReadDetectorEmulatorEnable()) {
+		TRACE(19, "DTCSoftwareCFO::SendRequestsForRange: Detector Emulator is enabled, not sending requests");
+		return;
+	}
+	if (delayBetweenDataRequests < 1000)
 	{
-		delayBetweenDataRequests = 100;
+		delayBetweenDataRequests = 1000;
 	}
 	if (!useCFOEmulator_)
 	{
@@ -122,6 +135,8 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start
 		}
 		theDTC_->SetCFOEmulationNumRequests(count);
 		theDTC_->SetCFOEmulationDebugType(debugType_);
+		theDTC_->SetCFOEmulationModeByte(5, 1);
+		theDTC_->EnableDebugPacketMode();
 		theDTC_->SetCFOEmulationRequestInterval(delayBetweenDataRequests);
 		TRACE(19, "DTCSoftwareCFO::SendRequestsForRange enabling DTC CFO Emulator");
 		theDTC_->EnableCFOEmulation();
@@ -130,7 +145,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start
 }
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync(DTC_Timestamp start, int count,
-                                                          bool increment, uint32_t delayBetweenDataRequests, int requestsAhead)
+														  bool increment, uint32_t delayBetweenDataRequests, int requestsAhead)
 {
 	TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImplSync Start");
 	for (auto ii = 0; ii < count; ++ii)
@@ -149,7 +164,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync(DTC_Timestamp start, i
 }
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync(DTC_Timestamp start, int count,
-                                                           bool increment, uint32_t delayBetweenDataRequests)
+														   bool increment, uint32_t delayBetweenDataRequests)
 {
 	TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImplAsync Start");
 
@@ -190,7 +205,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync(DTC_Timestamp start, 
 						{
 							TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImpl before DTC_DataRequestPacket req");
 							DTC_DataRequestPacket req(ring, static_cast<DTC_ROC_ID>(roc), ts, true,
-							                          static_cast<uint16_t>(debugPacketCount_), debugType_);
+													  static_cast<uint16_t>(debugPacketCount_), debugType_);
 							if (debugType_ == DTC_DebugType_ExternalSerialWithReset && !stickyDebugType_)
 							{
 								debugType_ = DTC_DebugType_ExternalSerial;

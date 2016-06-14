@@ -241,6 +241,7 @@ int mu2edev::read_register(uint16_t address, int tmo_ms, uint32_t* output)
 		reg.access_type = 0;
 		int errorCode = ioctl(devfd_, M_IOC_REG_ACCESS, &reg);
 		*output = reg.val;
+TRACE(24, "Read value 0x%x from register 0x%x", reg.val, address);
 #endif
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
 		(std::chrono::steady_clock::now() - start).count();
@@ -262,6 +263,7 @@ int mu2edev::write_register(uint16_t address, int tmo_ms, uint32_t data)
 		reg.reg_offset = address;
 		reg.access_type = 1;
 		reg.val = data;
+	TRACE(24, "Writing value 0x%x to register 0x%x", data, address);
 		retsts = ioctl(devfd_, M_IOC_REG_ACCESS, &reg);
 	}
 #endif

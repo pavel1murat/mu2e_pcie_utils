@@ -305,7 +305,6 @@ main(int argc
 		std::cout << "Operation \"read_data\"" << std::endl;
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto thisDTC = new DTC(DTC_SimMode_NoCFO);
-		thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_25Gbps); // We're going to 2.5Gbps for now
 
 		auto device = thisDTC->GetDevice();
 		if (readGenerated)
@@ -376,7 +375,6 @@ main(int argc
 		auto startTime = std::chrono::steady_clock::now();
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto thisDTC = new DTC(DTC_SimMode_NoCFO);
-		thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_25Gbps); // We're going to 2.5Gbps for now
 
 		auto device = thisDTC->GetDevice();
 
@@ -441,7 +439,7 @@ main(int argc
 
 				if (!reallyQuiet)
 				{
-					for (unsigned line = 0; line < static_cast<unsigned>(ceil((sts - 8) / 16)); ++line)
+					for (unsigned line = 0; line < static_cast<unsigned>(ceil((sts - 8) / 16.0)); ++line)
 					{
 						std::cout << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
 						//for (unsigned byte = 0; byte < 16; ++byte)
@@ -509,7 +507,6 @@ main(int argc
 		auto startTime = std::chrono::steady_clock::now();
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto thisDTC = new DTC(DTC_SimMode_NoCFO);
-		thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_25Gbps); // We're going to 2.5Gbps for now
 
 		auto initTime = thisDTC->GetDevice()->GetDeviceTime();
 		thisDTC->GetDevice()->ResetDeviceTime();

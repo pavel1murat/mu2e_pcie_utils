@@ -39,19 +39,18 @@ sleep 1
 lsmod | grep mu2e           >/dev/null && rmmod mu2e
 lsmod | grep TRACE          >/dev/null && rmmod TRACE
 
-if [ -z $MRB_BUILDDIR ]; then
-
+if [ -e "${MRB_BUILDDIR}/TRACE/module/`uname -r`/TRACE.ko" ]; then
+    lsmod | grep TRACE -q || insmod $MRB_BUILDDIR/TRACE/module/`uname -r`/TRACE.ko trace_allow_printk=1
+    source $TRACE_DIR/script/trace.sh.functions 
+else
   # (re)setup TRACE (no get functions defined in this script
-  . /mu2e/ups/setup
-  test -n "${SETUP_TRACE-}"\
+    . /mu2e/ups/setup
+    test -n "${SETUP_TRACE-}"\
    && { xx=$SETUP_TRACE; unsetup TRACE; eval setup $xx;}\
    || setup TRACE
 
     lsmod | grep TRACE -q || insmod $TRACE_DIR/module/`uname -r`/TRACE.ko trace_allow_printk=1
-  else
-    lsmod | grep TRACE -q || insmod $MRB_BUILDDIR/TRACE/module/`uname -r`/TRACE.ko trace_allow_printk=1
-    source $TRACE_DIR/script/trace.sh.functions 
-  fi
+fi
 
 export TRACE_FILE=/proc/trace/buffer
 tonSg 0-7; tonMg 0-15

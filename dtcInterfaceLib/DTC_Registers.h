@@ -120,7 +120,7 @@ namespace DTCLib
 		DTC_Register_FPGAPROMProgramStatus = 0x9404,
 		DTC_Register_FPGACoreAccess = 0x9408,
 		DTC_Register_EventModeLookupTableStart = 0x9500,
-		DTC_Register_EventModeLookupTableEnd = 0x97FC,
+		DTC_Register_EventModeLookupTableEnd = 0x98FC,
 		DTC_Register_Invalid,
 	};
 
@@ -149,14 +149,15 @@ namespace DTCLib
 
 		//
 		// DTC Register Dumps
-		//
-		std::string FormattedRegDump() const;
-		std::string PerformanceMonitorRegDump() const;
-		std::string RingCountersRegDump() const;
+	       
+		std::string FormattedRegDump(int width);
+		std::string PerformanceMonitorRegDump(int width);
+		std::string RingCountersRegDump(int width);
 
 		DTC_RegisterFormatter CreateFormatter(const DTC_Register& address)
 		{
 			DTC_RegisterFormatter form;
+			form.descWidth = formatterWidth_;
 			form.address = address;
 			form.value = ReadRegister_(address);
 			return form;
@@ -216,9 +217,9 @@ namespace DTCLib
 		void EnableCFOEmulatorDRP();
 		void DisableCFOEmulatorDRP();
 		bool ReadCFOEmulatorDRP();
-		void EnableCFOAutogenDRP();
-		void DisableCFOAutogenDRP();
-		bool ReadCFOAutogenDRP();
+		void EnableAutogenDRP();
+		void DisableAutogenDRP();
+		bool ReadAutogenDRP();
 		void EnableSoftwareDRP();
 		void DisableSoftwareDRP();
 		bool ReadSoftwareDRP();
@@ -519,6 +520,11 @@ namespace DTCLib
 		bool ReadFPGACoreAccessFIFOEmpty();
 		DTC_RegisterFormatter FormatFPGACoreAccess();
 
+		// Event Mode Lookup Table
+		void SetAllEventModeWords(uint32_t data);
+		void SetEventModeWord(uint8_t which, uint32_t data);
+		uint32_t ReadEventModeWord(uint8_t which);
+
 
 	private:
 		void WriteRegister_(uint32_t data, const DTC_Register& address);
@@ -529,6 +535,7 @@ namespace DTCLib
 		DTC_SimMode simMode_;
 		DTC_ROC_ID maxROCs_[6];
 		uint16_t dmaSize_;
+		int formatterWidth_;
 
 		const std::vector<std::function<DTC_RegisterFormatter()>> formattedDumpFunctions_{
 			[this]()
