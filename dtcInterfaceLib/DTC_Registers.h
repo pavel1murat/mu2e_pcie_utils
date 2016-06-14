@@ -521,6 +521,7 @@ namespace DTCLib
 		DTC_RegisterFormatter FormatFPGACoreAccess();
 
 		// Event Mode Lookup Table
+		void SetAllEventModeWords(uint32_t data);
 		void SetEventModeWord(uint8_t which, uint32_t data);
 		uint32_t ReadEventModeWord(uint8_t which);
 

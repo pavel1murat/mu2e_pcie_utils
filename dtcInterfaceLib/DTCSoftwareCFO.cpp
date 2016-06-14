@@ -21,7 +21,8 @@ DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(DTC* dtc, bool useCFOEmulator, uint16_t d
 		ringMode_[ring] = theDTC_->ReadRingEnabled(ring);
 	}
 	theDTC_->EnableAutogenDRP();
-	theDTC_->SetEventModeWord(0, 1U);
+	theDTC_->SetAllEventModeWords(1U);
+	theDTC_->SetEventModeWord(0, 0U);
 }
 
 DTCLib::DTCSoftwareCFO::~DTCSoftwareCFO()
@@ -88,6 +89,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 		theDTC_->SetCFOEmulationNumRequests(1);
 		theDTC_->SetCFOEmulationRequestInterval(1000);
 		theDTC_->SetCFOEmulationDebugType(debugType_);
+		theDTC_->SetCFOEmulationModeByte(5, 1);
 		theDTC_->EnableDebugPacketMode();
 		TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp enabling DTC CFO Emulator");
 		theDTC_->EnableCFOEmulation();
@@ -133,6 +135,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start
 		}
 		theDTC_->SetCFOEmulationNumRequests(count);
 		theDTC_->SetCFOEmulationDebugType(debugType_);
+		theDTC_->SetCFOEmulationModeByte(5, 1);
 		theDTC_->EnableDebugPacketMode();
 		theDTC_->SetCFOEmulationRequestInterval(delayBetweenDataRequests);
 		TRACE(19, "DTCSoftwareCFO::SendRequestsForRange enabling DTC CFO Emulator");
