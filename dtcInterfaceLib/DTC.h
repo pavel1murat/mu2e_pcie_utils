@@ -46,11 +46,11 @@ namespace DTCLib
 		DTC_DCSReplyPacket* ReadNextDCSPacket();
 
 		void ReleaseAllBuffers() {
-	ReleaseAllBuffers(DTC_DMA_Engine_DAQ);
-ReleaseAllBuffers(DTC_DMA_Engine_DCS);
-}
+			ReleaseAllBuffers(DTC_DMA_Engine_DAQ);
+			ReleaseAllBuffers(DTC_DMA_Engine_DCS);
+		}
 
-                void ReleaseAllBuffers(const DTC_DMA_Engine& channel)
+		void ReleaseAllBuffers(const DTC_DMA_Engine& channel)
 		{
 			device_.release_all(channel);
 		}

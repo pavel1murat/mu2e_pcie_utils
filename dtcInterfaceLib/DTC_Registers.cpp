@@ -71,6 +71,15 @@ DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode) : device_(), simMode_(mod
 	SetSimMode(simMode_);
 }
 
+DTCLib::DTC_Registers::~DTC_Registers()
+{
+	DisableDetectorEmulator();
+	DisableDetectorEmulatorMode();
+	DisableCFOEmulation();
+	ResetDTC();
+	device_.close();
+}
+
 DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode)
 {
 	simMode_ = mode;

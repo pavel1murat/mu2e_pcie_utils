@@ -27,8 +27,6 @@ DTCLib::DTC::DTC(DTC_SimMode mode) : DTC_Registers(mode),
 
 DTCLib::DTC::~DTC()
 {
-	DisableDetectorEmulator();
-	device_.close();
 	daqbuffer_ = nullptr;
 	dcsbuffer_ = nullptr;
 	lastReadPtr_ = nullptr;
@@ -226,8 +224,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever, bool overw
 	}
 	else
 	{
-		//SetDetectorEmulationDMACount(0);
-		SetDetectorEmulationDMACount(0xFFFFFFFF);
+		SetDetectorEmulationDMACount(0);
 	}
 	EnableDetectorEmulator();
 }

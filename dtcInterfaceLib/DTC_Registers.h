@@ -128,6 +128,7 @@ namespace DTCLib
 	{
 	public:
 		explicit DTC_Registers(DTC_SimMode mode = DTC_SimMode_Disabled);
+		virtual ~DTC_Registers();
 
 		//
 		// Device Access
