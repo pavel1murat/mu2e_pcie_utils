@@ -56,7 +56,7 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 		while (packet == nullptr && tries < 3)
 		{
 			TRACE(19, "DTC::GetData before ReadNextDAQPacket, tries=%i", tries);
-			packet = ReadNextDAQPacket(first_read_ ? 10000 : 1);
+			packet = ReadNextDAQPacket(first_read_ ? 100 : 1);
 			TRACE(19, "DTC::GetData after  ReadDMADAQPacket");
 			tries++;
 			//if (packet == nullptr) usleep(5000);
@@ -180,7 +180,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever, bool overw
 	ResetDDRWriteAddress();
 	SetDDRDataLocalEndAddress(0x7000000);
 	SetDetectorEmulationDMACount(1);
-	SetDetectorEmulationDMADelayCount(25); // 0.1 microseconds
+	SetDetectorEmulationDMADelayCount(250); // 1 microseconds
 	uint64_t totalSize = 0;
 	auto n = 0;
 
