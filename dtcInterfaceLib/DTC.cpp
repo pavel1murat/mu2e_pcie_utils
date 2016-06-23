@@ -218,6 +218,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever, bool overw
 	}
 	is.close();
 	SetDDRDataLocalEndAddress(static_cast<uint32_t>(totalSize));
+	SetDetectorEmulatorInUse();
 	/* Instead, set the count and enable in DTCSoftwareCFO!
 	if (!goForever)
 	{

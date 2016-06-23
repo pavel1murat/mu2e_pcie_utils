@@ -521,6 +521,14 @@ bool DTCLib::DTC_Registers::ReadDetectorEmulatorEnable()
 	return data[25];
 }
 
+void DTCLib::DTC_Registers::ClearDetectorEmulatorInUse()
+{
+	DisableDetectorEmulator();
+	ResetDDRWriteAddress();
+	DisableDetectorEmulatorMode();
+	usingDetectorEmulator_ = false;
+}
+
 void DTCLib::DTC_Registers::EnableCFOEmulatorDRP()
 {
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);

@@ -215,6 +215,10 @@ namespace DTCLib
 		void EnableDetectorEmulator();
 		void DisableDetectorEmulator();
 		bool ReadDetectorEmulatorEnable();
+		bool IsDetectorEmulatorInUse() const
+		{ return usingDetectorEmulator_; }
+		void SetDetectorEmulatorInUse() { usingDetectorEmulator_ = true; }
+		void ClearDetectorEmulatorInUse();
 		void EnableCFOEmulatorDRP();
 		void DisableCFOEmulatorDRP();
 		bool ReadCFOEmulatorDRP();
@@ -535,6 +539,7 @@ namespace DTCLib
 		mu2edev device_;
 		DTC_SimMode simMode_;
 		DTC_ROC_ID maxROCs_[6];
+		bool usingDetectorEmulator_;
 		uint16_t dmaSize_;
 		int formatterWidth_;
 
