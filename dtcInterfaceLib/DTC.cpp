@@ -179,7 +179,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever, bool overw
 	EnableDetectorEmulatorMode();
 	ResetDDRWriteAddress();
 	SetDDRDataLocalEndAddress(0x7000000);
-	SetDetectorEmulationDMACount(0);
+	SetDetectorEmulationDMACount(1);
 	SetDetectorEmulationDMADelayCount(25); // 0.1 microseconds
 	uint64_t totalSize = 0;
 	auto n = 0;
@@ -218,6 +218,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever, bool overw
 	}
 	is.close();
 	SetDDRDataLocalEndAddress(static_cast<uint32_t>(totalSize));
+	/* Instead, set the count and enable in DTCSoftwareCFO!
 	if (!goForever)
 	{
 		SetDetectorEmulationDMACount(n);
@@ -226,7 +227,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever, bool overw
 	{
 		SetDetectorEmulationDMACount(0);
 	}
-	EnableDetectorEmulator();
+	EnableDetectorEmulator();*/
 }
 
 // ROC Register Functions
