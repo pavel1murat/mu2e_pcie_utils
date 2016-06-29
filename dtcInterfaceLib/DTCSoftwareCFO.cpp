@@ -42,6 +42,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 {
 	if (theDTC_->IsDetectorEmulatorInUse()) {
 		TRACE(19, "DTCSoftwareCFO: Enabling Detector Emulator for 1 DMA");
+		//theDTC_->ResetDTC();
 		theDTC_->DisableDetectorEmulator();
 		theDTC_->SetDetectorEmulationDMACount(1);
 		theDTC_->EnableDetectorEmulator();
@@ -105,6 +106,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start
 {
 	if (theDTC_->IsDetectorEmulatorInUse()) {
 		TRACE(19, "DTCSoftwareCFO: Enabling Detector Emulator for %i DMAs", count);
+		//theDTC_->ResetDTC();
 		theDTC_->DisableDetectorEmulator();
 		theDTC_->SetDetectorEmulationDMACount(count);
 		theDTC_->EnableDetectorEmulator();
