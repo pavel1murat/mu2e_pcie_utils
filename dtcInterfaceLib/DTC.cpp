@@ -14,9 +14,9 @@
 #define TRACE_NAME "MU2EDEV"
 
 DTCLib::DTC::DTC(DTC_SimMode mode) : DTC_Registers(mode),
-                                     daqbuffer_(nullptr), buffers_used_(0), dcsbuffer_(nullptr),
-                                     bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
-                                     lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
+									 daqbuffer_(nullptr), buffers_used_(0), dcsbuffer_(nullptr),
+									 bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
+									 lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 {
 #ifdef _WIN32
 #pragma warning(disable: 4996)
@@ -345,7 +345,7 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 			nextReadPtr_ = nullptr;
 			//We didn't actually get a new buffer...this probably means there's no more data
 			//Try and see if we're merely stuck...hopefully, all the data is out of the buffers...
-	                device_.read_release(DTC_DMA_Engine_DAQ, 1);
+					device_.read_release(DTC_DMA_Engine_DAQ, 1);
 			return nullptr;
 		}
 		buffers_used_++;

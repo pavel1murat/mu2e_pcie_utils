@@ -80,6 +80,8 @@ namespace DTCLib
 		DTC_Register_CFOEmulationDebugPacketType = 0x91C8,
 		DTC_Register_DetEmulationDMACount = 0x91D0,
 		DTC_Register_DetEmulationDelayCount = 0x91D4,
+		DTC_Register_DetEmulationControl0 = 0x91D8,
+		DTC_Register_DetEmulationControl1 = 0x91DC,
 		DTC_Register_ReceiveByteCountDataRing0 = 0x9200,
 		DTC_Register_ReceiveByteCountDataRing1 = 0x9204,
 		DTC_Register_ReceiveByteCountDataRing2 = 0x9208,
@@ -209,16 +211,6 @@ namespace DTCLib
 		DTC_SerdesClockSpeed ReadSERDESOscillatorClock();
 		void ResetDDRWriteAddress();
 		bool ReadResetDDRWriteAddress();
-		void EnableDetectorEmulatorMode();
-		void DisableDetectorEmulatorMode();
-		bool ReadDetectorEmulatorMode();
-		void EnableDetectorEmulator();
-		void DisableDetectorEmulator();
-		bool ReadDetectorEmulatorEnable();
-		bool IsDetectorEmulatorInUse() const
-		{ return usingDetectorEmulator_; }
-		void SetDetectorEmulatorInUse() { usingDetectorEmulator_ = true; }
-		void ClearDetectorEmulatorInUse();
 		void EnableCFOEmulatorDRP();
 		void DisableCFOEmulatorDRP();
 		bool ReadCFOEmulatorDRP();
@@ -433,6 +425,23 @@ namespace DTCLib
 		void SetDetectorEmulationDMADelayCount(uint32_t count);
 		uint32_t ReadDetectorEmulationDMADelayCount();
 		DTC_RegisterFormatter FormatDetectorEmulationDMADelayCount();
+
+		// Detector Emulation Control Registers
+		void EnableDetectorEmulatorMode();
+		void DisableDetectorEmulatorMode();
+		bool ReadDetectorEmulatorMode();
+		void EnableDetectorEmulator();
+		void DisableDetectorEmulator();
+		bool ReadDetectorEmulatorEnable();
+		bool ReadDetectorEmulatorEnableClear();
+		bool IsDetectorEmulatorInUse() const
+		{
+			return usingDetectorEmulator_;
+		}
+		void SetDetectorEmulatorInUse() { usingDetectorEmulator_ = true; }
+		void ClearDetectorEmulatorInUse();
+		DTC_RegisterFormatter FormatDetectorEmulationControl0();
+		DTC_RegisterFormatter FormatDetectorEmulationControl1();
 
 		// SERDES Counter Registers
 		void ClearReceiveByteCount(const DTC_Ring_ID& ring);
@@ -730,6 +739,14 @@ namespace DTCLib
 			[this]()
 			{
 				return this->FormatDetectorEmulationDMADelayCount();
+			},
+				[this]()
+			{
+				return this->FormatDetectorEmulationControl0();
+			},
+				[this]()
+			{
+				return this->FormatDetectorEmulationControl1();
 			},
 
 			[this]()

@@ -481,54 +481,6 @@ bool DTCLib::DTC_Registers::ReadResetDDRWriteAddress()
 	return data[27];
 }
 
-void DTCLib::DTC_Registers::EnableDetectorEmulatorMode()
-{
-	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
-	data[26] = 1;
-	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
-}
-
-void DTCLib::DTC_Registers::DisableDetectorEmulatorMode()
-{
-	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
-	data[26] = 0;
-	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
-}
-
-bool DTCLib::DTC_Registers::ReadDetectorEmulatorMode()
-{
-	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
-	return data[26];
-}
-
-void DTCLib::DTC_Registers::EnableDetectorEmulator()
-{
-	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
-	data[25] = 1;
-	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
-}
-
-void DTCLib::DTC_Registers::DisableDetectorEmulator()
-{
-	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
-	data[25] = 0;
-	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
-}
-
-bool DTCLib::DTC_Registers::ReadDetectorEmulatorEnable()
-{
-	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
-	return data[25];
-}
-
-void DTCLib::DTC_Registers::ClearDetectorEmulatorInUse()
-{
-	DisableDetectorEmulator();
-	ResetDDRWriteAddress();
-	DisableDetectorEmulatorMode();
-	usingDetectorEmulator_ = false;
-}
-
 void DTCLib::DTC_Registers::EnableCFOEmulatorDRP()
 {
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
@@ -657,8 +609,6 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDTCControl()
 	form.vals.push_back(std::string("CFO Emulation Enable:           [") + (ReadCFOEmulation() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("SERDES Oscillator Reset:        [") + (ReadResetSERDESOscillator() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("SERDES Oscillator Clock Select: [") + (ReadSERDESOscillatorClock() ? " 2.5Gbs" : "3.125Gbs") + "]");
-	form.vals.push_back(std::string("Detector Emulation Mode:        [") + (ReadDetectorEmulatorMode() ? "x" : " ") + "]");
-	form.vals.push_back(std::string("Detector Emulation Enable:      [") + (ReadDetectorEmulatorEnable() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("CFO Emulator DRP Enable:        [") + (ReadCFOEmulatorDRP() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("CFO Autogenerate DRP:           [") + (ReadAutogenDRP() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("Software DRP Enable:            [") + (ReadSoftwareDRP() ? "x" : " ") + "]");
@@ -2017,6 +1967,77 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDetectorEmulationDMAD
 	std::stringstream o;
 	o << "0x" << std::hex << ReadDetectorEmulationDMADelayCount();
 	form.vals.push_back(o.str());
+	return form;
+}
+
+void DTCLib::DTC_Registers::EnableDetectorEmulatorMode()
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DetEmulationControl0);
+	data[0] = 1;
+	WriteRegister_(data.to_ulong(), DTC_Register_DetEmulationControl0);
+}
+
+void DTCLib::DTC_Registers::DisableDetectorEmulatorMode()
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DetEmulationControl0);
+	data[0] = 0;
+	WriteRegister_(data.to_ulong(), DTC_Register_DetEmulationControl0);
+}
+
+bool DTCLib::DTC_Registers::ReadDetectorEmulatorMode()
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DetEmulationControl0);
+	return data[0];
+}
+
+void DTCLib::DTC_Registers::EnableDetectorEmulator()
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DetEmulationControl0);
+	data[1] = 1;
+	WriteRegister_(data.to_ulong(), DTC_Register_DetEmulationControl0);
+}
+
+void DTCLib::DTC_Registers::DisableDetectorEmulator()
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DetEmulationControl1);
+	data[1] = 1;
+	WriteRegister_(data.to_ulong(), DTC_Register_DetEmulationControl1);
+}
+
+bool DTCLib::DTC_Registers::ReadDetectorEmulatorEnable()
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DetEmulationControl0);
+	return data[1];
+}
+
+bool DTCLib::DTC_Registers::ReadDetectorEmulatorEnableClear()
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DetEmulationControl1);
+	return data[1];
+}
+
+void DTCLib::DTC_Registers::ClearDetectorEmulatorInUse()
+{
+	DisableDetectorEmulator();
+	ResetDDRWriteAddress();
+	DisableDetectorEmulatorMode();
+	usingDetectorEmulator_ = false;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDetectorEmulationControl0()
+{
+	auto form = CreateFormatter(DTC_Register_DetEmulationControl0);
+	form.description = "Detector Emulation Control 0";
+	form.vals.push_back(std::string("Detector Emulation Enable: [") + (ReadDetectorEmulatorEnable() ? "x" : " ") + "]");
+	form.vals.push_back(std::string("Detector Emulation Mode:   [") + (ReadDetectorEmulatorMode() ? "x" : " ") + "]");
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDetectorEmulationControl1()
+{
+	auto form = CreateFormatter(DTC_Register_DetEmulationControl1);
+	form.description = "Detector Emulation Control 1";
+	form.vals.push_back(std::string("Detector Emulation Enable Clear: [") + (ReadDetectorEmulatorEnableClear() ? "x" : " ") + "]");
 	return form;
 }
 
