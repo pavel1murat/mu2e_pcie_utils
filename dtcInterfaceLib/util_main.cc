@@ -101,6 +101,7 @@ void WriteGeneratedData(DTC* thisDTC)
 	thisDTC->DisableDetectorEmulator();
 	thisDTC->DisableDetectorEmulatorMode();
 	thisDTC->SetDDRDataLocalStartAddress(0);
+	thisDTC->ResetDDRReadAddress();
 	thisDTC->ResetDDRWriteAddress();
 	thisDTC->EnableDetectorEmulatorMode();
 	thisDTC->SetDDRDataLocalEndAddress(0x7000000);

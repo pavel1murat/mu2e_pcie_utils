@@ -211,6 +211,8 @@ namespace DTCLib
 		DTC_SerdesClockSpeed ReadSERDESOscillatorClock();
 		void ResetDDRWriteAddress();
 		bool ReadResetDDRWriteAddress();
+		void ResetDDRReadAddress();
+		bool ReadResetDDRReadAddress();
 		void EnableCFOEmulatorDRP();
 		void DisableCFOEmulatorDRP();
 		bool ReadCFOEmulatorDRP();
