@@ -99,6 +99,8 @@ void WriteGeneratedData(DTC* thisDTC)
 {
 	std::cout << "Sending data to DTC" << std::endl;
 	thisDTC->DisableDetectorEmulator();
+	thisDTC->DisableDetectorEmulatorMode();
+	thisDTC->SetDDRDataLocalStartAddress(0);
 	thisDTC->ResetDDRWriteAddress();
 	thisDTC->EnableDetectorEmulatorMode();
 	thisDTC->SetDDRDataLocalEndAddress(0x7000000);
@@ -153,30 +155,30 @@ void printHelpMsg()
 {
 	std::cout << "Usage: mu2eUtil [options] [read,read_data,toggle_serdes,loopback,buffer_test,read_release,DTC]" << std::endl;
 	std::cout << "Options are:" << std::endl
-	             << "    -h: This message." << std::endl
-	             << "    -n: Number of times to repeat test. (Default: 1)" << std::endl
-	             << "    -o: Starting Timestamp offest. (Default: 1)." << std::endl
-	             << "    -i: Do not increment Timestamps." << std::endl
-	             << "    -S: Synchronous Timestamp mode (1 RR & DR per Read operation)" << std::endl
-	             << "    -d: Delay between tests, in us (Default: 0)." << std::endl
-	             << "    -c: Number of Debug Packets to request (Default: 0)." << std::endl
-	             << "    -a: Number of Readout Request/Data Requests to send before starting to read data (Default: 0)." << std::endl
-	             << "    -q: Quiet mode (Don't print requests)" << std::endl
-	             << "    -Q: Really Quiet mode (Try not to print anything)" << std::endl
-	             << "    -s: Stop on SERDES Error." << std::endl
-	             << "    -e: Use DTCLib's SoftwareCFO instead of the DTC CFO Emulator" << std::endl
-	             << "    -t: Use DebugType flag (1st request gets ExternalDataWithFIFOReset, the rest get ExternalData)" << std::endl
-	             << "    -T: Set DebugType flag for ALL requests (0, 1, or 2)" << std::endl
-	             << "    -f: RAW Output file path" << std::endl
-	             << "    -g: Generate (and send) N DMA blocks for testing the Detector Emulator (Default: 0)" << std::endl
-	             << "    -G: Read out generated data, but don't write new. With -g, will exit after writing data" << std::endl
+				 << "    -h: This message." << std::endl
+				 << "    -n: Number of times to repeat test. (Default: 1)" << std::endl
+				 << "    -o: Starting Timestamp offest. (Default: 1)." << std::endl
+				 << "    -i: Do not increment Timestamps." << std::endl
+				 << "    -S: Synchronous Timestamp mode (1 RR & DR per Read operation)" << std::endl
+				 << "    -d: Delay between tests, in us (Default: 0)." << std::endl
+				 << "    -c: Number of Debug Packets to request (Default: 0)." << std::endl
+				 << "    -a: Number of Readout Request/Data Requests to send before starting to read data (Default: 0)." << std::endl
+				 << "    -q: Quiet mode (Don't print requests)" << std::endl
+				 << "    -Q: Really Quiet mode (Try not to print anything)" << std::endl
+				 << "    -s: Stop on SERDES Error." << std::endl
+				 << "    -e: Use DTCLib's SoftwareCFO instead of the DTC CFO Emulator" << std::endl
+				 << "    -t: Use DebugType flag (1st request gets ExternalDataWithFIFOReset, the rest get ExternalData)" << std::endl
+				 << "    -T: Set DebugType flag for ALL requests (0, 1, or 2)" << std::endl
+				 << "    -f: RAW Output file path" << std::endl
+				 << "    -g: Generate (and send) N DMA blocks for testing the Detector Emulator (Default: 0)" << std::endl
+				 << "    -G: Read out generated data, but don't write new. With -g, will exit after writing data" << std::endl
 		;
 	exit(0);
 }
 
 int
 main(int argc
-     , char* argv[])
+	 , char* argv[])
 {
 	for (auto optind = 1; optind < argc; ++optind)
 	{
