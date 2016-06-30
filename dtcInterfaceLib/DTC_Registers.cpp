@@ -472,7 +472,7 @@ void DTCLib::DTC_Registers::ResetDDRWriteAddress()
 	data[27] = 1;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
 	data = ReadRegister_(DTC_Register_DTCControl);
-        data[27] = 0;
+	data[27] = 0;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
 }
 
@@ -488,7 +488,7 @@ void DTCLib::DTC_Registers::ResetDDRReadAddress()
 	data[26] = 1;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
 	data = ReadRegister_(DTC_Register_DTCControl);
-        data[26] = 0;
+	data[26] = 0;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
 }
 
@@ -1927,7 +1927,7 @@ bool DTCLib::DTC_Registers::ReadDebugPacketMode()
 void DTCLib::DTC_Registers::SetCFOEmulationDebugType(DTC_DebugType type)
 {
 	std::bitset<32> data = type & 0xF;
-data[16] = ReadDebugPacketMode();
+	data[16] = ReadDebugPacketMode();
 	WriteRegister_(data.to_ulong(), DTC_Register_CFOEmulationDebugPacketType);
 }
 
@@ -2821,17 +2821,17 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatFPGACoreAccess()
 void DTCLib::DTC_Registers::SetAllEventModeWords(uint32_t data)
 {
 	for (uint16_t address = DTC_Register_EventModeLookupTableStart; address <= DTC_Register_EventModeLookupTableEnd; address += 4) {
-			auto retry = 3;
-			int errorCode;
-			do
-			{
-				errorCode = device_.write_register(address, 100, data);
-				--retry;
-			} while (retry > 0 && errorCode != 0);
-			if (errorCode != 0)
-			{
-				throw DTC_IOErrorException();
-			}
+		auto retry = 3;
+		int errorCode;
+		do
+		{
+			errorCode = device_.write_register(address, 100, data);
+			--retry;
+		} while (retry > 0 && errorCode != 0);
+		if (errorCode != 0)
+		{
+			throw DTC_IOErrorException();
+		}
 	}
 }
 
