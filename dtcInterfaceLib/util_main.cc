@@ -154,7 +154,7 @@ void WriteGeneratedData(DTC* thisDTC)
 
 void printHelpMsg()
 {
-	std::cout << "Usage: mu2eUtil [options] [read,read_data,toggle_serdes,loopback,buffer_test,read_release,DTC]" << std::endl;
+	std::cout << "Usage: mu2eUtil [options] [read,read_data,reset_detemu,toggle_serdes,loopback,buffer_test,read_release,DTC]" << std::endl;
 	std::cout << "Options are:" << std::endl
 				 << "    -h: This message." << std::endl
 				 << "    -n: Number of times to repeat test. (Default: 1)" << std::endl
@@ -376,9 +376,7 @@ main(int argc
 {
 std::cout << "Resetting Detector Emulator" << std::endl;
 auto thisDTC = new DTC(DTC_SimMode_NoCFO);
-thisDTC->DisableDetectorEmulator();
-thisDTC->DisableDetectorEmulatorMode();
-thisDTC->SetDDRDataLocalEndAddress(0x7000000);
+thisDTC->ClearDetectorEmulatorInUse();
 thisDTC->ResetDTC();
 }
 	else if (op == "buffer_test")

@@ -2038,8 +2038,11 @@ bool DTCLib::DTC_Registers::ReadDetectorEmulatorEnableClear()
 void DTCLib::DTC_Registers::ClearDetectorEmulatorInUse()
 {
 	DisableDetectorEmulator();
-	ResetDDRWriteAddress();
 	DisableDetectorEmulatorMode();
+	ResetDDRWriteAddress();
+	ResetDDRReadAddress();
+	SetDDRDataLocalStartAddress(0);
+	SetDDRDataLocalEndAddress(0x7000000);
 	usingDetectorEmulator_ = false;
 }
 
