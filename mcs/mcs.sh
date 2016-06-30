@@ -39,7 +39,7 @@ sleep 1
 lsmod | grep mu2e           >/dev/null && rmmod mu2e
 lsmod | grep TRACE          >/dev/null && rmmod TRACE
 
-if ![ -z "${MRB_BUILDDIR-}" ] && [ -e "${MRB_BUILDDIR}/TRACE/module/`uname -r`/TRACE.ko" ]; then
+if ! [ -z "${MRB_BUILDDIR-}" ] && [ -e "${MRB_BUILDDIR}/TRACE/module/`uname -r`/TRACE.ko" ]; then
     lsmod | grep TRACE -q || insmod $MRB_BUILDDIR/TRACE/module/`uname -r`/TRACE.ko trace_allow_printk=1
     source $TRACE_DIR/script/trace.sh.functions 
 else
