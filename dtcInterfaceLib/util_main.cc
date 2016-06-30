@@ -372,6 +372,15 @@ main(int argc
 		}
 		delete thisDTC;
 	}
+	else if (op == "reset_detemu")
+{
+std::cout << "Resetting Detector Emulator" << std::endl;
+auto thisDTC = new DTC(DTC_SimMode_NoCFO);
+thisDTC->DisableDetectorEmulator();
+thisDTC->DisableDetectorEmulatorMode();
+thisDTC->SetDDRDataLocalEndAddress(0x7000000);
+thisDTC->ResetDTC();
+}
 	else if (op == "buffer_test")
 	{
 		std::cout << "Operation \"buffer_test\"" << std::endl;
@@ -475,13 +484,13 @@ main(int argc
 		auto totalReadTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(doneTime - afterRequests).count();
 
 		std::cout << "STATS, "
-			<< "Total Elapsed Time: " << totalTime << " s." << std::endl
-			<< "Total Init Time: " << totalInitTime << " s." << std::endl
-			<< "Total Readout Request Time: " << totalRequestTime << " s." << std::endl
-			<< "Total Read Time: " << totalReadTime << " s." << std::endl
-			<< "Device Init Time: " << initTime << " s." << std::endl
-			<< "Device Request Time: " << readoutRequestTime << " s." << std::endl
-			<< "Device Read Time: " << readDevTime << " s." << std::endl
+			<< "Total Elapsed Time: " << Utilities::FormatTimeString(totalTime) << "." << std::endl
+			<< "Total Init Time: " << Utilities::FormatTimeString(totalInitTime) << "." << std::endl
+			<< "Total Readout Request Time: " << Utilities::FormatTimeString(totalRequestTime) << "." << std::endl
+			<< "Total Read Time: " << Utilities::FormatTimeString(totalReadTime) << "." << std::endl
+			<< "Device Init Time: " << Utilities::FormatTimeString(initTime) << "." << std::endl
+			<< "Device Request Time: " << Utilities::FormatTimeString(readoutRequestTime) << "." << std::endl
+			<< "Device Read Time: " << Utilities::FormatTimeString(readDevTime) << "." << std::endl
 			<< "Total Bytes Written: " << Utilities::FormatByteString(totalBytesWritten) << "." << std::endl
 			<< "Total Bytes Read: " << Utilities::FormatByteString(totalBytesRead) << "." << std::endl
 			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl

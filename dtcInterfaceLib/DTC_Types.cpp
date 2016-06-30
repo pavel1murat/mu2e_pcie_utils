@@ -181,3 +181,53 @@ std::pair<double, std::string> DTCLib::Utilities::FormatBytes(double bytes)
 	return std::make_pair(val, unit);
 }
 
+std::string DTCLib::Utilities::FormatTimeString(double seconds)
+{
+  auto res = FormatTime(seconds);
+  std::stringstream s;
+  s << std::setprecision(5) << res.first << " " << res.second;
+  return s.str();
+}
+
+std::pair<double, std::string> DTCLib::Utilities::FormatTime(double seconds)
+{
+  auto min = seconds / 60.0;
+  auto ho = min / 60.0;
+  auto day = ho / 24.0;
+  auto ms = seconds * 1000;
+  auto us = ms * 1000;
+  auto ns = us * 1000;
+
+  auto val = seconds;
+  auto unit = "s";
+
+  if(day > 1) {
+    val = day;	
+    unit = "days";
+  }
+  else if(ho > 1) {
+    val = ho;
+    unit = "hours";
+  }
+  else if(min > 1) {
+    val = min;
+    unit = "minutes";
+  }
+  else if(seconds > 1) {
+    // Initial condition
+  }
+  else if(ms > 1) {
+    val = ms;
+    unit = "ms";
+  }
+  else if(us > 1) {
+    val = us;
+    unit = "us";
+  }
+  else {
+    val = ns;
+    unit = "ns";
+  }
+
+  return std::make_pair(val, unit);
+}
