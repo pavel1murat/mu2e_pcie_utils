@@ -471,7 +471,8 @@ void DTCLib::DTC_Registers::ResetDDRWriteAddress()
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	data[27] = 1;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
-	data[27] = 0;
+	data = ReadRegister_(DTC_Register_DTCControl);
+        data[27] = 0;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
 }
 
@@ -486,7 +487,8 @@ void DTCLib::DTC_Registers::ResetDDRReadAddress()
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	data[26] = 1;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
-	data[26] = 0;
+	data = ReadRegister_(DTC_Register_DTCControl);
+        data[26] = 0;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
 }
 
