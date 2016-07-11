@@ -57,7 +57,9 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 		{
 			TRACE(19, "DTC::GetData before ReadNextDAQPacket, tries=%i", tries);
 			packet = ReadNextDAQPacket(first_read_ ? 100 : 1);
-			TRACE(19, "DTC::GetData after ReadDMADAQPacket, ts=0x%llx", (unsigned long long)packet->GetTimestamp().GetTimestamp(true));
+			if (packet != nullptr) {
+				TRACE(19, "DTC::GetData after ReadDMADAQPacket, ts=0x%llx", (unsigned long long)packet->GetTimestamp().GetTimestamp(true));
+			}
 			tries++;
 			//if (packet == nullptr) usleep(5000);
 		}
