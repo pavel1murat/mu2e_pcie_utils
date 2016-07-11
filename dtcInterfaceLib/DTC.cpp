@@ -88,21 +88,24 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 		while (!done)
 		{
 			size_t sz2 = 0;
+			TRACE(19, "DTC::GetData: Reading next DAQ Packet");
 			packet = ReadNextDAQPacket();
-			TRACE(19, "DTC::GetData: Checking next DMA buffer: ts=0x%llx", (unsigned long long)packet->GetTimestamp().GetTimestamp(true));
 			if (packet == nullptr) // End of Data
 			{
+				TRACE(19, "DTC::GetData: Next packet is nullptr; we're done");
 				done = true;
 				nextReadPtr_ = nullptr;
 			}
 			else if (packet->GetTimestamp() != when)
 			{
+				TRACE(19, "DTC::GetData: Next packet has ts=0x%llx, not 0x%llx; we're done", (unsigned long long)packet->GetTimestamp().GetTimestamp(true), (unsigned long long)when.GetTimestamp(true));
 				done = true;
 				nextReadPtr_ = lastReadPtr_;
 				buffers_used_--;
 			}
 			else
 			{
+				TRACE(19, "DTC::GetData: Next packet has same ts=0x%llx, continuing (bc=0x%llx)", (unsigned long long)packet->GetTimestamp().GetTimestamp(true), (unsigned long long)packet->GetByteCount());
 				sz2 = packet->GetByteCount();
 			}
 			delete packet;
