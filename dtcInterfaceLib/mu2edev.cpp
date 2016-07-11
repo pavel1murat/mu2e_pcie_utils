@@ -365,22 +365,3 @@ void mu2edev::close()
 		simulator_ = nullptr;
 	}
 }
-
-#if 0
-unsigned mu2edev::delta_(int chn, int dir)
-{
-	unsigned hw = mu2e_channel_info_[chn][dir].hwIdx;
-	unsigned sw = mu2e_channel_info_[chn][dir].swIdx;
-	TRACE(21, "mu2edev::delta_ chn=%d dir=%d hw=%u sw=%u num_buffs=%u"
-		, chn, dir, hw, sw, mu2e_channel_info_[chn][C2S].num_buffs);
-	if (dir == C2S)
-		return ((hw >= sw)
-			? hw - sw
-			: mu2e_channel_info_[chn][dir].num_buffs + hw - sw);
-	else
-		return ((sw >= hw)
-			? mu2e_channel_info_[chn][dir].num_buffs - (sw - hw)
-			: hw - sw);
-}
-#endif
-

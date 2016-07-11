@@ -14,9 +14,9 @@
 #define TRACE_NAME "MU2EDEV"
 
 DTCLib::DTC::DTC(DTC_SimMode mode) : DTC_Registers(mode),
-									 daqbuffer_(nullptr), buffers_used_(0), dcsbuffer_(nullptr),
-									 bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
-									 lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
+daqbuffer_(nullptr), buffers_used_(0), dcsbuffer_(nullptr),
+bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
+lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 {
 #ifdef _WIN32
 #pragma warning(disable: 4996)
@@ -57,7 +57,7 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 		{
 			TRACE(19, "DTC::GetData before ReadNextDAQPacket, tries=%i", tries);
 			packet = ReadNextDAQPacket(first_read_ ? 100 : 1);
-			TRACE(19, "DTC::GetData after  ReadDMADAQPacket");
+			TRACE(19, "DTC::GetData after ReadDMADAQPacket, ts=0x%llx", (unsigned long long)packet->GetTimestamp().GetTimestamp(true));
 			tries++;
 			//if (packet == nullptr) usleep(5000);
 		}
@@ -89,6 +89,7 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 		{
 			size_t sz2 = 0;
 			packet = ReadNextDAQPacket();
+			TRACE(19, "DTC::GetData: Checking next DMA buffer: ts=0x%llx", (unsigned long long)packet->GetTimestamp().GetTimestamp(true));
 			if (packet == nullptr) // End of Data
 			{
 				done = true;
@@ -107,8 +108,10 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 			delete packet;
 			packet = nullptr;
 
-			TRACE(19, "DTC::GetData: Adding pointer %p to the list", (void*)lastReadPtr_);
-			if (!done) output.push_back(DTC_DataBlock(reinterpret_cast<DTC_DataBlock::pointer_t*>(lastReadPtr_), sz2));
+			if (!done) {
+				TRACE(19, "DTC::GetData: Adding pointer %p to the list", (void*)lastReadPtr_);
+				output.push_back(DTC_DataBlock(reinterpret_cast<DTC_DataBlock::pointer_t*>(lastReadPtr_), sz2));
+			}
 		}
 	}
 	catch (DTC_WrongPacketTypeException ex)
@@ -348,7 +351,7 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 			nextReadPtr_ = nullptr;
 			//We didn't actually get a new buffer...this probably means there's no more data
 			//Try and see if we're merely stuck...hopefully, all the data is out of the buffers...
-					device_.read_release(DTC_DMA_Engine_DAQ, 1);
+			device_.read_release(DTC_DMA_Engine_DAQ, 1);
 			return nullptr;
 		}
 		buffers_used_++;
