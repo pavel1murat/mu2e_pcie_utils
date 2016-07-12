@@ -84,7 +84,7 @@ static irqreturn_t DmaInterrupt(int irq, void *dev_id)
 	/* Handle DMA and any user interrupts */
 	if (mu2e_sched_poll() == 0)
 	  {
-                Dma_mIntAck(base, DMA_INT_ACTIVE_MASK | DMA_INT_PENDING_MASK | DMA_USER_INT_ACTIVE_MASK);
+                Dma_mIntAck(base, DMA_ENG_ALLINT_MASK);
 		return IRQ_HANDLED;
 	  }
 	else
