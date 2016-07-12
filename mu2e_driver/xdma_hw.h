@@ -10,19 +10,19 @@ extern "C" {
 # include <linux/types.h>
 # include <asm/io.h>
 #else
-typedef unsigned char      u8;
-typedef unsigned short     u16;
-typedef unsigned int       u32;
-typedef unsigned long long u64;
+	typedef unsigned char      u8;
+	typedef unsigned short     u16;
+	typedef unsigned int       u32;
+	typedef unsigned long long u64;
 #endif
 
 
-/* NWL DMA design is little-endian, so values need not be swapped.
- */
+	/* NWL DMA design is little-endian, so values need not be swapped.
+	 */
 #define XIo_In32(addr) \
   ({  u32 xx; \
-      TRACE(17, "read: Start of %p",(void*)(addr)); 	\
-       xx=readl((unsigned int *)(addr));	     \
+	  TRACE(17, "read: Start of %p",(void*)(addr)); 	\
+	   xx=readl((unsigned int *)(addr));	     \
 	TRACE( 17, "read: 0x%x=%p",xx,(void*)(addr));        \
 	xx;\
  })
@@ -30,12 +30,12 @@ typedef unsigned long long u64;
 #define XIo_Out32(addr, data) \
 	do {  TRACE( 18, "write %p=0x%x",(void*)(addr),data);\
 		writel((data), (unsigned int *)(addr));      \
-            TRACE(18, "write done");\
+			TRACE(18, "write done");\
 	} while(0)
 
 
 
-//#define MAX_DMA_ENGINES         64      /**< Maximum number of DMA engines */
+	 //#define MAX_DMA_ENGINES         64      /**< Maximum number of DMA engines */
 #define MAX_DMA_ENGINES         64      /* FNAL DEVEL */
 
 /** Engine bitmask is 64-bit because there are 64 engines */
@@ -46,65 +46,67 @@ typedef unsigned long long u64;
 
 
 
-typedef struct
-{   u32    ByteCount  :20;
-	u32    Rsvd       : 4;
-	u32    Complete   : 1;
-	u32    Short      : 1;
-	u32    b26        : 1;
-	u32    b27        : 1;
-	u32    Error      : 1;
-	u32    b29        : 1;
-	u32    b30        : 1;
-	u32    b31        : 1;
-	u64    UserControl;
-	u32    CardAddress;
-	u32    ByteCnt    :20;
-	u32    Rsvd_      : 4;
-	u32    IrqComplete: 1;
-	u32    IrqError   : 1;
-	u32    b26_       : 1;
-	u32    b27_       : 1;
-	u32    b28_       : 1;
-	u32    b29_       : 1;
-	u32    StartOfPkt : 1;
-	u32    EndOfPkt   : 1;
-	u64    SystemAddress;
-	u32    NextDescPtr;
-} __attribute__((packed)) mu2e_buffdesc_S2C_t;
+	typedef struct
+	{
+		u32    ByteCount : 20;
+		u32    Rsvd : 4;
+		u32    Complete : 1;
+		u32    Short : 1;
+		u32    b26 : 1;
+		u32    b27 : 1;
+		u32    Error : 1;
+		u32    b29 : 1;
+		u32    b30 : 1;
+		u32    b31 : 1;
+		u64    UserControl;
+		u32    CardAddress;
+		u32    ByteCnt : 20;
+		u32    Rsvd_ : 4;
+		u32    IrqComplete : 1;
+		u32    IrqError : 1;
+		u32    b26_ : 1;
+		u32    b27_ : 1;
+		u32    b28_ : 1;
+		u32    b29_ : 1;
+		u32    StartOfPkt : 1;
+		u32    EndOfPkt : 1;
+		u64    SystemAddress;
+		u32    NextDescPtr;
+	} __attribute__((packed)) mu2e_buffdesc_S2C_t;
 
-typedef struct
-{   u32    ByteCount  :20;
-	u32    Rsvd       : 4;
-	u32    Complete   : 1;
-	u32    Short      : 1;
-	u32    Lo0        : 1;
-	u32    Hi0        : 1;
-	u32    Error      : 1;
-	u32    b29        : 1;
-	u32    b30        : 1;
-	u32    b31        : 1;
-	u64    UserStatus;
-	u32    CardAddress;
-	u32    RsvdByteCnt:20;
-	u32    Rsvd_      : 4;
-	u32    IrqComplete: 1;
-	u32    IrqError   : 1;
-	u32    b26_       : 1;
-	u32    b27_       : 1;
-	u32    b28_       : 1;
-	u32    b29_       : 1;
-	u32    b30_       : 1;
-	u32    b31_       : 1;
-	u64    SystemAddress;
-	u32    NextDescPtr;
-} __attribute__ ((packed)) mu2e_buffdesc_C2S_t;
+	typedef struct
+	{
+		u32    ByteCount : 20;
+		u32    Rsvd : 4;
+		u32    Complete : 1;
+		u32    Short : 1;
+		u32    Lo0 : 1;
+		u32    Hi0 : 1;
+		u32    Error : 1;
+		u32    b29 : 1;
+		u32    b30 : 1;
+		u32    b31 : 1;
+		u64    UserStatus;
+		u32    CardAddress;
+		u32    RsvdByteCnt : 20;
+		u32    Rsvd_ : 4;
+		u32    IrqComplete : 1;
+		u32    IrqError : 1;
+		u32    b26_ : 1;
+		u32    b27_ : 1;
+		u32    b28_ : 1;
+		u32    b29_ : 1;
+		u32    b30_ : 1;
+		u32    b31_ : 1;
+		u64    SystemAddress;
+		u32    NextDescPtr;
+	} __attribute__((packed)) mu2e_buffdesc_C2S_t;
 
 
 
 #ifdef __KERNEL__
-/*                                    [ch][dir]    */
-static unsigned long mu2e_ch_reg_offset[2][2] ={ {0x2000,0x0}, {0x2100,0x100} };
+	/*                                    [ch][dir]    */
+	static unsigned long mu2e_ch_reg_offset[2][2] = { {0x2000,0x0}, {0x2100,0x100} };
 
 #define Dma_mReadChnReg( chn, dir, reg )		\
 	Dma_mReadReg( \
@@ -140,11 +142,11 @@ static unsigned long mu2e_ch_reg_offset[2][2] ={ {0x2000,0x0}, {0x2100,0x100} };
 		   +sizeof(mu2e_buffdesc_S2C_t)*idx ) )
 
 
-/** @name Device register offset definitions. Register access is 32-bit.
- *  @{
- */
+	/** @name Device register offset definitions. Register access is 32-bit.
+	 *  @{
+	 */
 
-/* Common DMA registers */
+	 /* Common DMA registers */
 #define REG_DMA_CTRL_STATUS     0x4000      /**< DMA Common Ctrl & Status */
 
 /* These engine registers are applicable to both S2C and C2S channels.
@@ -160,18 +162,18 @@ static unsigned long mu2e_ch_reg_offset[2][2] ={ {0x2000,0x0}, {0x2100,0x100} };
 #define REG_DMA_ENG_WAIT_TIME   0x00000018  /**< DMA Engine Wait Time */
 #define REG_DMA_ENG_COMP_BYTES  0x0000001C  /**< DMA Engine Completed Bytes */
 
-/*@}*/
+ /*@}*/
 
-/* Register masks. The following constants define bit locations of various
- * control bits in the registers. For further information on the meaning of
- * the various bit masks, refer to the hardware spec.
- *
- * Masks have been written assuming HW bits 0-31 correspond to SW bits 0-31
- */
+ /* Register masks. The following constants define bit locations of various
+  * control bits in the registers. For further information on the meaning of
+  * the various bit masks, refer to the hardware spec.
+  *
+  * Masks have been written assuming HW bits 0-31 correspond to SW bits 0-31
+  */
 
-/** @name Bitmasks of REG_DMA_CTRL_STATUS register.
- * @{
- */
+  /** @name Bitmasks of REG_DMA_CTRL_STATUS register.
+   * @{
+   */
 #define DMA_INT_ENABLE              0x00000001  /**< Enable global interrupts */
 #define DMA_INT_DISABLE             0x00000000  /**< Disable interrupts */
 #define DMA_INT_ACTIVE_MASK         0x00000002  /**< Interrupt active? */
@@ -185,10 +187,10 @@ static unsigned long mu2e_ch_reg_offset[2][2] ={ {0x2000,0x0}, {0x2100,0x100} };
 #define DMA_S2C_ENG_INT_VAL         0x00FF0000  /**< IRQ value of 1st 8 S2Cs */
 #define DMA_C2S_ENG_INT_VAL         0xFF000000  /**< IRQ value of 1st 8 C2Ss */
 
-/** @name Bitmasks of REG_DMA_ENG_CAP register.
- * @{
- */
-/* DMA engine characteristics */
+   /** @name Bitmasks of REG_DMA_ENG_CAP register.
+	* @{
+	*/
+	/* DMA engine characteristics */
 #define DMA_ENG_PRESENT_MASK    0x00000001  /**< DMA engine present? */
 #define DMA_ENG_DIRECTION_MASK  0x00000002  /**< DMA engine direction */
 #define DMA_ENG_C2S             0x00000002  /**< DMA engine - C2S */
@@ -209,7 +211,7 @@ static unsigned long mu2e_ch_reg_offset[2][2] ={ {0x2000,0x0}, {0x2100,0x100} };
 /** @name Bitmasks of REG_DMA_ENG_CTRL_STATUS register.
  * @{
  */
-/* Interrupt activity and acknowledgement bits */
+ /* Interrupt activity and acknowledgement bits */
 #define DMA_ENG_INT_ENABLE          0x00000001  /**< Enable interrupts */
 #define DMA_ENG_INT_DISABLE         0x00000000  /**< Disable interrupts */
 #define DMA_ENG_INT_ACTIVE_MASK     0x00000002  /**< Interrupt active? */
@@ -248,7 +250,7 @@ static unsigned long mu2e_ch_reg_offset[2][2] ={ {0x2000,0x0}, {0x2100,0x100} };
 
 #define REG_DMA_SAMPLE_CTR_MASK     0x00000003  /**< Sync counter for regs */
 
-/* Shift constants for performance registers */
+ /* Shift constants for performance registers */
 #define REG_DMA_ENG_ACTIVE_TIME_SHIFT   2
 #define REG_DMA_ENG_WAIT_TIME_SHIFT     2
 #define REG_DMA_ENG_COMP_BYTES_SHIFT    2
@@ -331,9 +333,9 @@ static unsigned long mu2e_ch_reg_offset[2][2] ={ {0x2000,0x0}, {0x2100,0x100} };
 *****************************************************************************/
 #define Dma_mIntDisable(BaseAddress)        \
 do { \
-    u32 Reg = Dma_mReadReg(BaseAddress, REG_DMA_CTRL_STATUS);   \
-    Reg &= ~(DMA_INT_ENABLE | DMA_USER_INT_ENABLE);           \
-      Dma_mWriteReg(BaseAddress, REG_DMA_CTRL_STATUS, Reg);	\
+	u32 Reg = Dma_mReadReg(BaseAddress, REG_DMA_CTRL_STATUS);   \
+	Reg &= ~(DMA_INT_ENABLE | DMA_USER_INT_ENABLE);           \
+	  Dma_mWriteReg(BaseAddress, REG_DMA_CTRL_STATUS, Reg);	\
  } while(0)
 
 
@@ -361,18 +363,18 @@ do { \
 }
 
 
-/****************************************************************************/
-/**
-* Set DMA enable bit for an instance. This operation will read-modify-write
-* the REG_DMA_ENG_CTRL_STATUS register.
-*
-* @param  BaseAddress is the base address of the device
-*
-* @note
-* C-style signature:
-*    void Dma_mEnable(u32 BaseAddress)
-*
-*****************************************************************************/
+ /****************************************************************************/
+ /**
+ * Set DMA enable bit for an instance. This operation will read-modify-write
+ * the REG_DMA_ENG_CTRL_STATUS register.
+ *
+ * @param  BaseAddress is the base address of the device
+ *
+ * @note
+ * C-style signature:
+ *    void Dma_mEnable(u32 BaseAddress)
+ *
+ *****************************************************************************/
 #define Dma_mEnable(BaseAddress)                                  \
 {                                                         \
 	u32 val = Dma_mReadReg(BaseAddress, REG_DMA_ENG_CTRL_STATUS);       \

@@ -64,7 +64,7 @@ int dstatsNum[MAX_DMA_ENGINES], sstatsRead[MAX_DMA_ENGINES];
 int sstatsWrite[MAX_DMA_ENGINES], sstatsNum[MAX_DMA_ENGINES];
 int tstatsRead, tstatsWrite, tstatsNum;
 u32 SWrate[MAX_DMA_ENGINES];
-int MSIEnabled=0;
+int MSIEnabled = 0;
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -81,15 +81,34 @@ static irqreturn_t DmaInterrupt(int irq, void *dev_id)
 	base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
 	Dma_mIntDisable(base);
 
+	/* Check interrupt for error conditions */
+	u32 status = Dma_mReadReg(base, REG_DMA_CTRL_STATUS);
+
+	if (status & (DMA_ENG_INT_ALERR | DMA_ENG_INT_FETERR | DMA_ENG_INT_ABORTERR | DMA_ENG_INT_CHAINEND) != 0)
+	{
+		TRACE(20, "DmaInterrupt: One of the error bits set: sts=0x%llx", (unsigned long long)status);
+	}
+
+	if(status & DMA_ENG_ENABLE == 0)
+	{
+		TRACE(20, "DmaInterrupt: DMA ENGINE DISABLED! Re-enabling...");
+		Dma_mWriteReg(base, REG_DMA_CTRL_STATUS, DMA_ENG_ENABLE);
+	}
+
+	if(status & DMA_ENG_STATE_MASK != 0)
+	{
+		TRACE(20, "DmaInterrupt: DMA Engine Status: r=%d, w=%d", (status & DMA_ENG_RUNNING != 0 ? 1 : 0), (status & DMA_ENG_WAITING != 0 ? 1 : 0));
+	}
+
 	/* Handle DMA and any user interrupts */
-	if (mu2e_sched_poll() == 0)
-	  {
-                Dma_mIntAck(base, DMA_ENG_ALLINT_MASK);
-		return IRQ_HANDLED;
-	  }
-	else
+		if (mu2e_sched_poll() == 0)
+		{
+			Dma_mIntAck(base, DMA_ENG_ALLINT_MASK);
+			return IRQ_HANDLED;
+		}
+		else
 #endif
-		return IRQ_NONE;
+			return IRQ_NONE;
 }
 
 
@@ -655,7 +674,7 @@ static int __init init_mu2e(void)
 	unsigned long   databuff_sz;
 	unsigned long   buffdesc_sz;
 	u32             descDmaAdr;
-        u32             ctrlStsVal;
+	u32             ctrlStsVal;
 
 	TRACE(0, "init_mu2e");
 
@@ -756,7 +775,7 @@ static int __init init_mu2e(void)
 			mu2e_pci_recver[chn].buffdesc_ring[jj].IrqComplete = 0;
 			mu2e_pci_recver[chn].buffdesc_ring[jj].IrqError = 0;
 #endif
-		}
+	}
 
 		// now write to the HW...
 		TRACE(1, "init_mu2e write 0x%llx to 32bit reg", mu2e_pci_recver[chn].buffdesc_ring_dma);
@@ -781,7 +800,7 @@ static int __init init_mu2e(void)
 #endif
 		Dma_mWriteChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS, ctrlStsVal);
 
-	}
+}
 
 	dir = S2C;
 	for (chn = 0; chn < MU2E_NUM_SEND_CHANNELS; ++chn)
@@ -851,12 +870,12 @@ static int __init init_mu2e(void)
 	ret = mu2e_event_up();
 
 # if MU2E_RECV_INTER_ENABLED
-	    /* Now enable interrupts using MSI mode */
-    if(!pci_enable_msi(mu2e_pci_dev))
-    {
-        printk(KERN_INFO "MSI enabled\n");
-        MSIEnabled = 1;
-    }
+	/* Now enable interrupts using MSI mode */
+	if (!pci_enable_msi(mu2e_pci_dev))
+	{
+		printk(KERN_INFO "MSI enabled\n");
+		MSIEnabled = 1;
+	}
 
 	ret = request_irq(mu2e_pci_dev->irq, DmaInterrupt, IRQF_SHARED, "mu2e", mu2e_pci_dev);
 	if (ret)
@@ -864,7 +883,7 @@ static int __init init_mu2e(void)
 		printk(KERN_ERR "xdma could not allocate interrupt %d\n", mu2e_pci_dev->irq);
 		printk(KERN_ERR "Unload driver and try running with polled mode instead\n");
 	}
-        Dma_mIntEnable((unsigned long)mu2e_pcie_bar_info.baseVAddr);
+	Dma_mIntEnable((unsigned long)mu2e_pcie_bar_info.baseVAddr);
 # endif
 
 	return (ret);
@@ -887,10 +906,10 @@ static void __exit exit_mu2e(void)
 {
 	TRACE(1, "exit_mu2e() called");
 
-        
-        Dma_mIntDisable((unsigned long)mu2e_pcie_bar_info.baseVAddr);
-        free_irq(mu2e_pci_dev->irq, mu2e_pci_dev);
- if(MSIEnabled) pci_disable_msi(mu2e_pci_dev);
+
+	Dma_mIntDisable((unsigned long)mu2e_pcie_bar_info.baseVAddr);
+	free_irq(mu2e_pci_dev->irq, mu2e_pci_dev);
+	if (MSIEnabled) pci_disable_msi(mu2e_pci_dev);
 
 	// events, memory, pci, fs interface
 	mu2e_event_down();

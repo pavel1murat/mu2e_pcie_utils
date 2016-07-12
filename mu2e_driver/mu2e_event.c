@@ -24,18 +24,18 @@ int packets_timer_guard = 1;
 static void poll_packets(unsigned long __opaque)
 {
 	unsigned long       base;
-	int                 offset, error, did_work ;
+	int                 offset, error, did_work;
 	int			chn, dir;
 	unsigned            nxtCachedCmpltIdx;
 	mu2e_buffdesc_C2S_t *buffdesc_C2S_p;
 
 	error = 0;
-        did_work = 0;
+	did_work = 0;
 
-		TRACE(20, "poll_packets: begin");
+	TRACE(20, "poll_packets: begin");
 	/* DMA registers are offset from BAR0 */
 	base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
-	   TRACE(21, "poll_packets: After reading BAR0=0x%lx",base);
+	TRACE(21, "poll_packets: After reading BAR0=0x%lx", base);
 
 	// check channel 0 reciever
 	TRACE(22, "poll_packets: "
@@ -49,11 +49,11 @@ static void poll_packets(unsigned long __opaque)
 		, descDmaAdr2idx(Dma_mReadChnReg(0, C2S, REG_SW_NEXT_BD), 0, C2S)
 		, descDmaAdr2idx(Dma_mReadChnReg(0, C2S, REG_HW_CMPLT_BD), 0, C2S)
 		, Dma_mReadChnReg(0, C2S, REG_DMA_ENG_COMP_BYTES)
-		);
+	);
 	TRACE(23, "poll_packets: App0: gen=0x%x pktlen=0x%04x chk/loop=0x%x"
 		, Dma_mReadReg(base, 0x9100), Dma_mReadReg(base, 0x9104)
 		, Dma_mReadReg(base, 0x9108)
-		);
+	);
 
 	dir = C2S;
 	for (chn = 0; chn < MU2E_MAX_CHANNELS; ++chn)
@@ -66,8 +66,8 @@ static void poll_packets(unsigned long __opaque)
 		{
 			TRACE(0, "poll_packets: newCmpltIdx (0x%x) is above maximum sane value!!! (%i) Current idx=0x%x", newCmpltIdx, MU2E_NUM_RECV_BUFFS, mu2e_channel_info_[chn][dir].hwIdx);
 			error = 1;
-						//continue;
-						break;
+			//continue;
+			break;
 		}
 		TRACE(21, "poll_packets: newCmpltIdx=0x%x MU2E_NUM_RECV_BUFFS=%i Current idx=0x%x", newCmpltIdx, MU2E_NUM_RECV_BUFFS, mu2e_channel_info_[chn][dir].hwIdx);
 		// check just-read-HW-val (converted to idx) against "cached" copy
@@ -93,7 +93,7 @@ static void poll_packets(unsigned long __opaque)
 	}
 
 #if MU2E_RECV_INTER_ENABLED == 1
-	if(did_work)
+	if (did_work)
 	{
 		// Reschedule immediately
 #if 0
@@ -106,7 +106,7 @@ static void poll_packets(unsigned long __opaque)
 	else
 	{
 		// Re-enable interrupts.
-	  packets_timer_guard = 1;
+		packets_timer_guard = 1;
 		Dma_mIntEnable(base);
 	}
 #else
@@ -114,11 +114,11 @@ static void poll_packets(unsigned long __opaque)
 	// S2C checked in xmit ioctl or write
 
 	// Reschedule poll routine.
-        packets_timer_guard = 1;
+	packets_timer_guard = 1;
 	offset = HZ / PACKET_POLL_HZ + (error ? 5 * HZ : 0);
 	packets_timer.expires = jiffies + offset;
 	add_timer(&packets_timer);
-		TRACE(21, "poll_packets: After reschedule, offset=%i", offset);
+	TRACE(21, "poll_packets: After reschedule, offset=%i", offset);
 #endif
 }
 
@@ -129,22 +129,22 @@ int mu2e_event_up(void)
 {
 	init_timer(&packets_timer);
 	packets_timer.function = poll_packets;
-        return mu2e_sched_poll();
+	return mu2e_sched_poll();
 }
 
 int mu2e_sched_poll(void)
 {
-  if(packets_timer_guard)
-    {
-      packets_timer_guard = 0;
-	packets_timer.expires = jiffies
+	if (packets_timer_guard)
+	{
+		packets_timer_guard = 0;
+		packets_timer.expires = jiffies
 #if MU2E_RECV_INTER_ENABLED == 0
-		+ (HZ / PACKET_POLL_HZ)
+			+ (HZ / PACKET_POLL_HZ)
 #endif
-		;
-	//timer->data=(unsigned long) pdev;
-	add_timer(&packets_timer);
-    }
+			;
+		//timer->data=(unsigned long) pdev;
+		add_timer(&packets_timer);
+	}
 	return (0);
 }
 
