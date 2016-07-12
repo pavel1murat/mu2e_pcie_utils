@@ -76,6 +76,7 @@ static irqreturn_t DmaInterrupt(int irq, void *dev_id)
 {
 #if MU2E_RECV_INTER_ENABLED
 	unsigned long base;
+	unsigned chn, dir;
 
 	TRACE(20, "DmaInterrrupt Called and interrupts are enabled. Scheduling poll routine.");
 
@@ -83,25 +84,24 @@ static irqreturn_t DmaInterrupt(int irq, void *dev_id)
 	Dma_mIntDisable(base);
 
 	/* Check interrupt for error conditions */
-	for (unsigned eng = 0; eng < MAX_DMA_ENGINES; ++eng) {
-		if (eng >= MU2E_NUM_RECV_CHANNELS && eng >= MU2E_NUM_SEND_CHANNELS) { break; }
-		for (unsigned dir = 0; dir <= 1; ++dir) {
-			u32 status = Dma_mReadChnReg(eng, dir, REG_DMA_ENG_CTRL_STATUS);
+	for (chn = 0; chn < 2; ++chn) {
+		for (dir = 0; dir < 2; ++dir) {
+			u32 status = Dma_mReadChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS);
 
 			if ((status & (DMA_ENG_INT_ALERR | DMA_ENG_INT_FETERR | DMA_ENG_INT_ABORTERR | DMA_ENG_INT_CHAINEND)) != 0)
 			{
-				TRACE(20, "DmaInterrupt: One of the error bits set: sts=0x%llx", (unsigned long long)status);
+				TRACE(20, "DmaInterrupt: One of the error bits set: chn=%d dir=%d sts=0x%llx", chn,dir,(unsigned long long)status);
 			}
 
 			if ((status & DMA_ENG_ENABLE) == 0)
 			{
-				TRACE(20, "DmaInterrupt: DMA ENGINE DISABLED! Re-enabling...");
-				Dma_mWriteChnReg(eng, dir, REG_DMA_CTRL_STATUS, DMA_ENG_ENABLE);
+				TRACE(20, "DmaInterrupt: DMA ENGINE DISABLED! Re-enabling... chn=%d dir=%d",chn,dir);
+				Dma_mWriteChnReg(chn, dir, REG_DMA_CTRL_STATUS, DMA_ENG_ENABLE);
 			}
 
 			if ((status & DMA_ENG_STATE_MASK) != 0)
 			{
-				TRACE(20, "DmaInterrupt: DMA Engine Status: r=%d, w=%d", ((status & DMA_ENG_RUNNING) != 0 ? 1 : 0), ((status & DMA_ENG_WAITING) != 0 ? 1 : 0));
+				TRACE(20, "DmaInterrupt: DMA Engine Status: chn=%d dir=%d r=%d, w=%d",chn,dir, ((status & DMA_ENG_RUNNING) != 0 ? 1 : 0), ((status & DMA_ENG_WAITING) != 0 ? 1 : 0));
 			}
 		}
 	}
