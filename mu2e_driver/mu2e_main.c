@@ -71,6 +71,30 @@ int MSIEnabled = 0;
 /* forward decl */
 static int ReadPCIState(struct pci_dev * pdev, m_ioc_pcistate_t * pcistate);
 
+static int checkDmaEngine(unsigned chn, unsigned dir) {
+  int sts=0;
+			u32 status = Dma_mReadChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS);
+
+			if ((status & (DMA_ENG_INT_ALERR | DMA_ENG_INT_FETERR | DMA_ENG_INT_ABORTERR | DMA_ENG_INT_CHAINEND)) != 0)
+			{
+				TRACE(20, "DmaInterrupt: One of the error bits set: chn=%d dir=%d sts=0x%llx", chn,dir,(unsigned long long)status);
+				printk("DTC DMA Interrupt Error Bits Set: chn=%d dir=%d, sts=0x%llx", chn,dir,(unsigned long long)status);
+				sts = 1;
+			}
+
+			if ((status & DMA_ENG_ENABLE) == 0)
+			{
+				TRACE(20, "DmaInterrupt: DMA ENGINE DISABLED! Re-enabling... chn=%d dir=%d",chn,dir);
+				Dma_mWriteChnReg(chn, dir, REG_DMA_CTRL_STATUS, DMA_ENG_ENABLE);
+				sts = 1;
+			}
+
+			if ((status & DMA_ENG_STATE_MASK) != 0)
+			{
+				TRACE(20, "DmaInterrupt: DMA Engine Status: chn=%d dir=%d r=%d, w=%d",chn,dir, ((status & DMA_ENG_RUNNING) != 0 ? 1 : 0), ((status & DMA_ENG_WAITING) != 0 ? 1 : 0));
+			}
+			return sts;
+}
 
 static irqreturn_t DmaInterrupt(int irq, void *dev_id)
 {
@@ -86,23 +110,7 @@ static irqreturn_t DmaInterrupt(int irq, void *dev_id)
 	/* Check interrupt for error conditions */
 	for (chn = 0; chn < 2; ++chn) {
 		for (dir = 0; dir < 2; ++dir) {
-			u32 status = Dma_mReadChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS);
-
-			if ((status & (DMA_ENG_INT_ALERR | DMA_ENG_INT_FETERR | DMA_ENG_INT_ABORTERR | DMA_ENG_INT_CHAINEND)) != 0)
-			{
-				TRACE(20, "DmaInterrupt: One of the error bits set: chn=%d dir=%d sts=0x%llx", chn,dir,(unsigned long long)status);
-			}
-
-			if ((status & DMA_ENG_ENABLE) == 0)
-			{
-				TRACE(20, "DmaInterrupt: DMA ENGINE DISABLED! Re-enabling... chn=%d dir=%d",chn,dir);
-				Dma_mWriteChnReg(chn, dir, REG_DMA_CTRL_STATUS, DMA_ENG_ENABLE);
-			}
-
-			if ((status & DMA_ENG_STATE_MASK) != 0)
-			{
-				TRACE(20, "DmaInterrupt: DMA Engine Status: chn=%d dir=%d r=%d, w=%d",chn,dir, ((status & DMA_ENG_RUNNING) != 0 ? 1 : 0), ((status & DMA_ENG_WAITING) != 0 ? 1 : 0));
-			}
+		  checkDmaEngine(chn,dir);
 		}
 	}
 
@@ -397,6 +405,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		TRACE(11, "mu2e_ioctl: BUF_GIVE chn:%u dir:%u num:%u", chn, dir, num);
 		myIdx = idx_add(mu2e_channel_info_[chn][dir].swIdx, num, chn, dir);
 		Dma_mWriteChnReg(chn, dir, REG_SW_NEXT_BD, idx2descDmaAdr(myIdx, chn, dir));
+		checkDmaEngine(chn,dir);
 		mu2e_channel_info_[chn][dir].swIdx = myIdx;
 		break;
 	case M_IOC_DUMP:

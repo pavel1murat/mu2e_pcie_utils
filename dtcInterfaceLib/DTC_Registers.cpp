@@ -498,6 +498,22 @@ bool DTCLib::DTC_Registers::ReadResetDDRReadAddress()
 	return data[26];
 }
 
+void DTCLib::DTC_Registers::ResetDDR()
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
+	data[25] = 1;
+	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
+	data = ReadRegister_(DTC_Register_DTCControl);
+	data[25] = 0;
+	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
+}
+
+bool DTCLib::DTC_Registers::ReadResetDDR()
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
+	return data[25];
+}
+
 void DTCLib::DTC_Registers::EnableCFOEmulatorDRP()
 {
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
@@ -628,6 +644,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDTCControl()
 	form.vals.push_back(std::string("SERDES Oscillator Clock Select: [") + (ReadSERDESOscillatorClock() ? " 2.5Gbs" : "3.125Gbs") + "]");
 	form.vals.push_back(std::string("Reset DDR Write Address:        [") + (ReadResetDDRWriteAddress() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("Reset DDR Read Address:         [") + (ReadResetDDRReadAddress() ? "x" : " ") + "]");
+	form.vals.push_back(std::string("Reset DDR:                      [") + (ReadResetDDR() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("CFO Emulator DRP Enable:        [") + (ReadCFOEmulatorDRP() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("CFO Autogenerate DRP:           [") + (ReadAutogenDRP() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("Software DRP Enable:            [") + (ReadSoftwareDRP() ? "x" : " ") + "]");

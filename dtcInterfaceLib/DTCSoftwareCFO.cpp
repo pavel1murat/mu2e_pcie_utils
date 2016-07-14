@@ -108,7 +108,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start
 		TRACE(19, "DTCSoftwareCFO: Enabling Detector Emulator for %i DMAs", count);
 		//theDTC_->ResetDTC();
 		theDTC_->DisableDetectorEmulator();
-		theDTC_->SetDetectorEmulationDMACount(count);
+		theDTC_->SetDetectorEmulationDMACount(count + 1);
 		theDTC_->EnableDetectorEmulator();
 		return;
 	}

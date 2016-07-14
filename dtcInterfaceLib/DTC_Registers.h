@@ -213,6 +213,8 @@ namespace DTCLib
 		bool ReadResetDDRWriteAddress();
 		void ResetDDRReadAddress();
 		bool ReadResetDDRReadAddress();
+		void ResetDDR();
+		bool ReadResetDDR();
 		void EnableCFOEmulatorDRP();
 		void DisableCFOEmulatorDRP();
 		bool ReadCFOEmulatorDRP();

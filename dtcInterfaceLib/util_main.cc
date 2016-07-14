@@ -377,6 +377,7 @@ main(int argc
 		std::cout << "Resetting Detector Emulator" << std::endl;
 		auto thisDTC = new DTC(DTC_SimMode_NoCFO);
 		thisDTC->ClearDetectorEmulatorInUse();
+		thisDTC->ResetDDR();
 		thisDTC->ResetDTC();
 		delete thisDTC;
 	}
