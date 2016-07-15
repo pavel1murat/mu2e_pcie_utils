@@ -72,28 +72,36 @@ int MSIEnabled = 0;
 static int ReadPCIState(struct pci_dev * pdev, m_ioc_pcistate_t * pcistate);
 
 static int checkDmaEngine(unsigned chn, unsigned dir) {
-  int sts=0;
-			u32 status = Dma_mReadChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS);
+	int sts = 0;
+	u32 status = Dma_mReadChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS);
+	int lc = 5;
 
-			if ((status & (DMA_ENG_INT_ALERR | DMA_ENG_INT_FETERR | DMA_ENG_INT_ABORTERR | DMA_ENG_INT_CHAINEND)) != 0)
-			{
-				TRACE(20, "DmaInterrupt: One of the error bits set: chn=%d dir=%d sts=0x%llx", chn,dir,(unsigned long long)status);
-				printk("DTC DMA Interrupt Error Bits Set: chn=%d dir=%d, sts=0x%llx", chn,dir,(unsigned long long)status);
-				sts = 1;
-			}
+	if ((status & (DMA_ENG_INT_ALERR | DMA_ENG_INT_FETERR | DMA_ENG_INT_ABORTERR | DMA_ENG_INT_CHAINEND)) != 0)
+	{
+		TRACE(20, "DmaInterrupt: One of the error bits set: chn=%d dir=%d sts=0x%llx", chn, dir, (unsigned long long)status);
+		printk("DTC DMA Interrupt Error Bits Set: chn=%d dir=%d, sts=0x%llx", chn, dir, (unsigned long long)status);
+		/* Perform soft reset of DMA engine */
+		Dma_mWriteChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_USER_RESET);
+		status = Dma_mReadChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS);
+		while ((status & DMA_ENG_USER_RESET) != 0 && lc > 0) { status = Dma_mReadChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS); --lc; }
+		lc = 5;
+		Dma_mWriteChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_RESET);
+		while ((status & DMA_ENG_RESET) != 0 && lc > 0) { status = Dma_mReadChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS); --lc; }
+		sts = 1;
+	}
 
-			if ((status & DMA_ENG_ENABLE) == 0)
-			{
-				TRACE(20, "DmaInterrupt: DMA ENGINE DISABLED! Re-enabling... chn=%d dir=%d",chn,dir);
-				Dma_mWriteChnReg(chn, dir, REG_DMA_CTRL_STATUS, DMA_ENG_ENABLE);
-				sts = 1;
-			}
+	if ((status & DMA_ENG_ENABLE) == 0)
+	{
+		TRACE(20, "DmaInterrupt: DMA ENGINE DISABLED! Re-enabling... chn=%d dir=%d", chn, dir);
+		Dma_mWriteChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_ENABLE | DMA_ENG_INT_ENABLE);
+		sts = 1;
+	}
 
-			if ((status & DMA_ENG_STATE_MASK) != 0)
-			{
-				TRACE(20, "DmaInterrupt: DMA Engine Status: chn=%d dir=%d r=%d, w=%d",chn,dir, ((status & DMA_ENG_RUNNING) != 0 ? 1 : 0), ((status & DMA_ENG_WAITING) != 0 ? 1 : 0));
-			}
-			return sts;
+	if ((status & DMA_ENG_STATE_MASK) != 0)
+	{
+		TRACE(20, "DmaInterrupt: DMA Engine Status: chn=%d dir=%d r=%d, w=%d", chn, dir, ((status & DMA_ENG_RUNNING) != 0 ? 1 : 0), ((status & DMA_ENG_WAITING) != 0 ? 1 : 0));
+	}
+	return sts;
 }
 
 static irqreturn_t DmaInterrupt(int irq, void *dev_id)
@@ -110,19 +118,19 @@ static irqreturn_t DmaInterrupt(int irq, void *dev_id)
 	/* Check interrupt for error conditions */
 	for (chn = 0; chn < 2; ++chn) {
 		for (dir = 0; dir < 2; ++dir) {
-		  checkDmaEngine(chn,dir);
+			checkDmaEngine(chn, dir);
 		}
 	}
 
 	/* Handle DMA and any user interrupts */
-		if (mu2e_sched_poll() == 0)
-		{
-			Dma_mIntAck(base, DMA_ENG_ALLINT_MASK);
-			return IRQ_HANDLED;
-		}
-		else
+	if (mu2e_sched_poll() == 0)
+	{
+		Dma_mIntAck(base, DMA_ENG_ALLINT_MASK);
+		return IRQ_HANDLED;
+	}
+	else
 #endif
-			return IRQ_NONE;
+		return IRQ_NONE;
 }
 
 
@@ -405,7 +413,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		TRACE(11, "mu2e_ioctl: BUF_GIVE chn:%u dir:%u num:%u", chn, dir, num);
 		myIdx = idx_add(mu2e_channel_info_[chn][dir].swIdx, num, chn, dir);
 		Dma_mWriteChnReg(chn, dir, REG_SW_NEXT_BD, idx2descDmaAdr(myIdx, chn, dir));
-		checkDmaEngine(chn,dir);
+		checkDmaEngine(chn, dir);
 		mu2e_channel_info_[chn][dir].swIdx = myIdx;
 		break;
 	case M_IOC_DUMP:
@@ -790,7 +798,7 @@ static int __init init_mu2e(void)
 			mu2e_pci_recver[chn].buffdesc_ring[jj].IrqComplete = 0;
 			mu2e_pci_recver[chn].buffdesc_ring[jj].IrqError = 0;
 #endif
-	}
+		}
 
 		// now write to the HW...
 		TRACE(1, "init_mu2e write 0x%llx to 32bit reg", mu2e_pci_recver[chn].buffdesc_ring_dma);
@@ -815,7 +823,7 @@ static int __init init_mu2e(void)
 #endif
 		Dma_mWriteChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS, ctrlStsVal);
 
-}
+	}
 
 	dir = S2C;
 	for (chn = 0; chn < MU2E_NUM_SEND_CHANNELS; ++chn)
