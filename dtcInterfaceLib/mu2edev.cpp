@@ -150,8 +150,6 @@ int mu2edev::read_data(int chn, void** buffer, int tmo_ms)
 		TRACE(18, "mu2edev::read_data before (mu2e_mmap_ptrs_[0][0][0]!=NULL) || ((retsts=init())==0)");
 		if ((mu2e_mmap_ptrs_[0][0][0] != NULL) || ((retsts = init()) == 0))
 		{
-			if (buffers_held_ >= 2)
-				read_release(chn, buffers_held_ - 1);
 			has_recv_data = mu2e_chn_info_delta_(chn, C2S, &mu2e_channel_info_);
 			TRACE(18, "mu2edev::read_data after %u=has_recv_data = delta_( chn, C2S )", has_recv_data);
 			mu2e_channel_info_[chn][C2S].tmo_ms = tmo_ms; // in case GET_INFO is called
