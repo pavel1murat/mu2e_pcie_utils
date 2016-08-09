@@ -49,6 +49,7 @@ bool useCFOEmulator = true;
 unsigned genDMABlocks = 0;
 std::string rawOutputFile = "/tmp/mu2eUtil.raw";
 unsigned delay = 0;
+unsigned cfodelay = 1000;
 unsigned number = 1;
 unsigned timestampOffset = 1;
 unsigned packetCount = 0;
@@ -162,6 +163,7 @@ void printHelpMsg()
 		<< "    -i: Do not increment Timestamps." << std::endl
 		<< "    -S: Synchronous Timestamp mode (1 RR & DR per Read operation)" << std::endl
 		<< "    -d: Delay between tests, in us (Default: 0)." << std::endl
+		<< "    -D: CFO Request delay interval (Default: 1000 (minimum)." << std::endl
 		<< "    -c: Number of Debug Packets to request (Default: 0)." << std::endl
 		<< "    -a: Number of Readout Request/Data Requests to send before starting to read data (Default: 0)." << std::endl
 		<< "    -q: Quiet mode (Don't print requests)" << std::endl
@@ -192,6 +194,9 @@ main(int argc
 				break;
 			case 'd':
 				delay = getOptionValue(&optind, &argv);
+				break;
+			case 'D':
+				cfodelay = getOptionValue(&optind, &argv);
 				break;
 			case 'S':
 				syncRequests = true;
@@ -266,6 +271,7 @@ main(int argc
 		<< "Operation: " << std::string(op)
 		<< ", Num: " << number
 		<< ", Delay: " << delay
+		<< ", CFO Delay: " << cfodelay
 		<< ", TS Offset: " << timestampOffset
 		<< ", PacketCount: " << packetCount
 		<< ", Requests Ahead of Reads: " << requestsAhead
@@ -410,7 +416,7 @@ main(int argc
 
 		if (thisDTC->ReadSimMode() != DTC_SimMode_Loopback && !syncRequests)
 		{
-			cfo.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
+			cfo.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, cfodelay, requestsAhead);
 		}
 		else if (thisDTC->ReadSimMode() == DTC_SimMode_Loopback)
 		{
@@ -541,7 +547,7 @@ main(int argc
 
 		if (!syncRequests)
 		{
-			theCFO.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
+			theCFO.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, cfodelay, requestsAhead);
 		}
 
 
