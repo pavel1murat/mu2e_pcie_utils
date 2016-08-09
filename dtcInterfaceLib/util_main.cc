@@ -43,6 +43,7 @@ bool incrementTimestamp = true;
 bool syncRequests = false;
 bool checkSERDES = false;
 bool quiet = false;
+unsigned quietCount = 1;
 bool reallyQuiet = false;
 bool rawOutput = false;
 bool useCFOEmulator = true;
@@ -59,6 +60,8 @@ bool stickyDebugType = true;
 int val = 0;
 bool readGenerated = false;
 std::ofstream outputStream;
+unsigned rocMask = 0x1;
+unsigned rocEmulatorMask = 0x1;
 
 
 unsigned getOptionValue(int* index, char** argv[])
@@ -67,7 +70,12 @@ unsigned getOptionValue(int* index, char** argv[])
 	if (arg[2] == '\0')
 	{
 		(*index)++;
-		return strtoul((*argv)[*index], nullptr, 0);
+		unsigned ret = strtoul((*argv)[*index], nullptr, 0);
+		if(ret == 0 && (*argv)[*index][0] != '0') // No option given 
+		  {
+		    (*index)--;
+		  }
+		return ret;
 	}
 	auto offset = 2;
 	if (arg[2] == '=')
@@ -164,7 +172,7 @@ void printHelpMsg()
 		<< "    -d: Delay between tests, in us (Default: 0)." << std::endl
 		<< "    -c: Number of Debug Packets to request (Default: 0)." << std::endl
 		<< "    -a: Number of Readout Request/Data Requests to send before starting to read data (Default: 0)." << std::endl
-		<< "    -q: Quiet mode (Don't print requests)" << std::endl
+		<< "    -q: Quiet mode (Don't print requests) Additionally, for buffer_test mode, limits to N (Default 1) packets at the beginning and end of the buffer." << std::endl
 		<< "    -Q: Really Quiet mode (Try not to print anything)" << std::endl
 		<< "    -s: Stop on SERDES Error." << std::endl
 		<< "    -e: Use DTCLib's SoftwareCFO instead of the DTC CFO Emulator" << std::endl
@@ -173,6 +181,8 @@ void printHelpMsg()
 		<< "    -f: RAW Output file path" << std::endl
 		<< "    -g: Generate (and send) N DMA blocks for testing the Detector Emulator (Default: 0)" << std::endl
 		<< "    -G: Read out generated data, but don't write new. With -g, will exit after writing data" << std::endl
+	        << "    -r: # of rocs to enable. Hexadecimal, each digit corresponds to a ring. ROC_0: 1, ROC_1: 3, ROC_2: 5, ROC_3: 7, ROC_4: 9, ROC_5: B (Default 0x1, All possible: 0xBBBBBB)" << std::endl
+    	        << "    -R: Bitmask of rings to enable Roc Emulator for, when DTCLIB_SIM_ENABLE=R. (Default: 0x1 (Ring 0). All Rings: 0x3F)" << std::endl
 		;
 	exit(0);
 }
@@ -210,6 +220,8 @@ main(int argc
 				break;
 			case 'q':
 				quiet = true;
+				quietCount = getOptionValue(&optind, &argv);
+				if(quietCount == 0) quietCount = 1;
 				break;
 			case 'g':
 				genDMABlocks = getOptionValue(&optind, &argv);
@@ -246,6 +258,12 @@ main(int argc
 				std::cout << "Invalid Debug Type passed to -T!" << std::endl;
 				printHelpMsg();
 				break;
+			case 'r':
+			  rocMask = getOptionValue(&optind, &argv);
+			  break;
+			case 'R':
+			  rocEmulatorMask = getOptionValue(&optind, &argv);
+			  break;
 			default:
 				std::cout << "Unknown option: " << argv[optind] << std::endl;
 				printHelpMsg();
@@ -272,11 +290,13 @@ main(int argc
 		<< ", Synchronous Request Mode: " << syncRequests
 		<< ", Use DTC CFO Emulator: " << useCFOEmulator
 		<< ", Increment TS: " << incrementTimestamp
-		<< ", Quiet Mode: " << quiet
+		  << ", Quiet Mode: " << quiet << " ("  << quietCount << ")"
 		<< ", Really Quiet Mode: " << reallyQuiet
 		<< ", Check SERDES Error Status: " << checkSERDES
 		<< ", Generate DMA Blocks: " << genDMABlocks
 		<< ", Read Data from DDR: " << readGenerated
+		  <<", ROC Mask: " <<std::hex << rocMask
+		  <<", Ring ROC Emulator Mask: " << std::hex << rocEmulatorMask
 		<< ", Debug Type: " << DTC_DebugTypeConverter(debugType).toString();
 	if (rawOutput)
 	{
@@ -289,7 +309,7 @@ main(int argc
 	{
 		std::cout << "Operation \"read\"" << std::endl;
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask, rocEmulatorMask);
 		auto packet = thisDTC->ReadNextDAQPacket();
 		if (!reallyQuiet) std::cout << packet->toJSON() << '\n';
 		if (rawOutput)
@@ -307,7 +327,7 @@ main(int argc
 	{
 		std::cout << "Operation \"read_data\"" << std::endl;
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO,rocMask,rocEmulatorMask);
 
 		auto device = thisDTC->GetDevice();
 		if (readGenerated)
@@ -359,7 +379,7 @@ main(int argc
 	{
 		std::cout << "Swapping SERDES Oscillator Clock" << std::endl;
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO,rocMask,rocEmulatorMask);
 		if (!thisDTC->ReadSERDESOscillatorClock())
 		{
 			std::cout << "Setting SERDES Oscillator Clock to 2.5 Gbps" << std::endl;
@@ -375,7 +395,7 @@ main(int argc
 	else if (op == "reset_detemu")
 	{
 		std::cout << "Resetting Detector Emulator" << std::endl;
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO,rocMask,rocEmulatorMask);
 		thisDTC->ClearDetectorEmulatorInUse();
 		thisDTC->ResetDDR();
 		thisDTC->ResetDTC();
@@ -386,7 +406,7 @@ main(int argc
 		std::cout << "Operation \"buffer_test\"" << std::endl;
 		auto startTime = std::chrono::steady_clock::now();
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO,rocMask,rocEmulatorMask);
 
 		auto device = thisDTC->GetDevice();
 
@@ -465,6 +485,7 @@ main(int argc
 							}
 						}
 						std::cout << std::endl;
+						if(quiet && line == (quietCount - 1)) line =  static_cast<unsigned>(ceil((sts - 8) / 16.0)) - (1 + quietCount);
 					}
 				}
 			}
@@ -518,7 +539,7 @@ main(int argc
 	{
 		auto startTime = std::chrono::steady_clock::now();
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO,rocMask,rocEmulatorMask);
 
 		auto initTime = thisDTC->GetDevice()->GetDeviceTime();
 		thisDTC->GetDevice()->ResetDeviceTime();
