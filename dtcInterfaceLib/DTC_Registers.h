@@ -129,7 +129,7 @@ namespace DTCLib
 	class DTC_Registers
 	{
 	public:
-		explicit DTC_Registers(DTC_SimMode mode = DTC_SimMode_Disabled);
+	  explicit DTC_Registers(DTC_SimMode mode = DTC_SimMode_Disabled, unsigned rocMask = 0x1, unsigned rocEmulatorMask = 0x1);
 		virtual ~DTC_Registers();
 
 		//
@@ -148,7 +148,7 @@ namespace DTCLib
 			return simMode_;
 		}
 
-		DTC_SimMode SetSimMode(DTC_SimMode mode);
+		DTC_SimMode SetSimMode(DTC_SimMode mode, unsigned rocMask, unsigned rocEmulatorMask);
 
 		//
 		// DTC Register Dumps

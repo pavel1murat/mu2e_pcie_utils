@@ -13,7 +13,7 @@
 #endif
 #define TRACE_NAME "MU2EDEV"
 
-DTCLib::DTC::DTC(DTC_SimMode mode) : DTC_Registers(mode),
+DTCLib::DTC::DTC(DTC_SimMode mode, unsigned rocMask, unsigned rocEmulatorMask) : DTC_Registers(mode, rocMask, rocEmulatorMask),
 daqbuffer_(nullptr), buffers_used_(0), dcsbuffer_(nullptr),
 bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
 lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)

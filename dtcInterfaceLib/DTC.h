@@ -11,7 +11,7 @@ namespace DTCLib
 	class DTC : public DTC_Registers
 	{
 	public:
-		explicit DTC(DTC_SimMode mode = DTC_SimMode_Disabled);
+	  explicit DTC(DTC_SimMode mode = DTC_SimMode_Disabled, unsigned rocMask = 0x1, unsigned rocEmulatorMask = 0x1);
 		virtual ~DTC();
 
 		//
