@@ -43,12 +43,14 @@ bool incrementTimestamp = true;
 bool syncRequests = false;
 bool checkSERDES = false;
 bool quiet = false;
+unsigned quietCount = 1;
 bool reallyQuiet = false;
 bool rawOutput = false;
 bool useCFOEmulator = true;
 unsigned genDMABlocks = 0;
 std::string rawOutputFile = "/tmp/mu2eUtil.raw";
 unsigned delay = 0;
+unsigned cfodelay = 1000;
 unsigned number = 1;
 unsigned timestampOffset = 1;
 unsigned packetCount = 0;
@@ -59,6 +61,8 @@ bool stickyDebugType = true;
 int val = 0;
 bool readGenerated = false;
 std::ofstream outputStream;
+unsigned rocMask = 0x1;
+unsigned rocEmulatorMask = 0x1;
 
 
 unsigned getOptionValue(int* index, char** argv[])
@@ -67,7 +71,12 @@ unsigned getOptionValue(int* index, char** argv[])
 	if (arg[2] == '\0')
 	{
 		(*index)++;
-		return strtoul((*argv)[*index], nullptr, 0);
+		unsigned ret = strtoul((*argv)[*index], nullptr, 0);
+		if(ret == 0 && (*argv)[*index][0] != '0') // No option given 
+		  {
+		    (*index)--;
+		  }
+		return ret;
 	}
 	auto offset = 2;
 	if (arg[2] == '=')
@@ -99,6 +108,9 @@ void WriteGeneratedData(DTC* thisDTC)
 {
 	std::cout << "Sending data to DTC" << std::endl;
 	thisDTC->DisableDetectorEmulator();
+	thisDTC->DisableDetectorEmulatorMode();
+	thisDTC->SetDDRDataLocalStartAddress(0);
+	thisDTC->ResetDDRReadAddress();
 	thisDTC->ResetDDRWriteAddress();
 	thisDTC->EnableDetectorEmulatorMode();
 	thisDTC->SetDDRDataLocalEndAddress(0x7000000);
@@ -151,32 +163,35 @@ void WriteGeneratedData(DTC* thisDTC)
 
 void printHelpMsg()
 {
-	std::cout << "Usage: mu2eUtil [options] [read,read_data,toggle_serdes,loopback,buffer_test,read_release,DTC]" << std::endl;
+	std::cout << "Usage: mu2eUtil [options] [read,read_data,reset_detemu,toggle_serdes,loopback,buffer_test,read_release,DTC]" << std::endl;
 	std::cout << "Options are:" << std::endl
-	             << "    -h: This message." << std::endl
-	             << "    -n: Number of times to repeat test. (Default: 1)" << std::endl
-	             << "    -o: Starting Timestamp offest. (Default: 1)." << std::endl
-	             << "    -i: Do not increment Timestamps." << std::endl
-	             << "    -S: Synchronous Timestamp mode (1 RR & DR per Read operation)" << std::endl
-	             << "    -d: Delay between tests, in us (Default: 0)." << std::endl
-	             << "    -c: Number of Debug Packets to request (Default: 0)." << std::endl
-	             << "    -a: Number of Readout Request/Data Requests to send before starting to read data (Default: 0)." << std::endl
-	             << "    -q: Quiet mode (Don't print requests)" << std::endl
-	             << "    -Q: Really Quiet mode (Try not to print anything)" << std::endl
-	             << "    -s: Stop on SERDES Error." << std::endl
-	             << "    -e: Use DTCLib's SoftwareCFO instead of the DTC CFO Emulator" << std::endl
-	             << "    -t: Use DebugType flag (1st request gets ExternalDataWithFIFOReset, the rest get ExternalData)" << std::endl
-	             << "    -T: Set DebugType flag for ALL requests (0, 1, or 2)" << std::endl
-	             << "    -f: RAW Output file path" << std::endl
-	             << "    -g: Generate (and send) N DMA blocks for testing the Detector Emulator (Default: 0)" << std::endl
-	             << "    -G: Read out generated data, but don't write new. With -g, will exit after writing data" << std::endl
+		<< "    -h: This message." << std::endl
+		<< "    -n: Number of times to repeat test. (Default: 1)" << std::endl
+		<< "    -o: Starting Timestamp offest. (Default: 1)." << std::endl
+		<< "    -i: Do not increment Timestamps." << std::endl
+		<< "    -S: Synchronous Timestamp mode (1 RR & DR per Read operation)" << std::endl
+		<< "    -d: Delay between tests, in us (Default: 0)." << std::endl
+		<< "    -D: CFO Request delay interval (Default: 1000 (minimum)." << std::endl
+		<< "    -c: Number of Debug Packets to request (Default: 0)." << std::endl
+		<< "    -a: Number of Readout Request/Data Requests to send before starting to read data (Default: 0)." << std::endl
+		<< "    -q: Quiet mode (Don't print requests) Additionally, for buffer_test mode, limits to N (Default 1) packets at the beginning and end of the buffer." << std::endl
+		<< "    -Q: Really Quiet mode (Try not to print anything)" << std::endl
+		<< "    -s: Stop on SERDES Error." << std::endl
+		<< "    -e: Use DTCLib's SoftwareCFO instead of the DTC CFO Emulator" << std::endl
+		<< "    -t: Use DebugType flag (1st request gets ExternalDataWithFIFOReset, the rest get ExternalData)" << std::endl
+		<< "    -T: Set DebugType flag for ALL requests (0, 1, or 2)" << std::endl
+		<< "    -f: RAW Output file path" << std::endl
+		<< "    -g: Generate (and send) N DMA blocks for testing the Detector Emulator (Default: 0)" << std::endl
+		<< "    -G: Read out generated data, but don't write new. With -g, will exit after writing data" << std::endl
+	        << "    -r: # of rocs to enable. Hexadecimal, each digit corresponds to a ring. ROC_0: 1, ROC_1: 3, ROC_2: 5, ROC_3: 7, ROC_4: 9, ROC_5: B (Default 0x1, All possible: 0xBBBBBB)" << std::endl
+    	        << "    -R: Bitmask of rings to enable Roc Emulator for, when DTCLIB_SIM_ENABLE=R. (Default: 0x1 (Ring 0). All Rings: 0x3F)" << std::endl
 		;
 	exit(0);
 }
 
 int
 main(int argc
-     , char* argv[])
+	, char* argv[])
 {
 	for (auto optind = 1; optind < argc; ++optind)
 	{
@@ -189,6 +204,9 @@ main(int argc
 				break;
 			case 'd':
 				delay = getOptionValue(&optind, &argv);
+				break;
+			case 'D':
+				cfodelay = getOptionValue(&optind, &argv);
 				break;
 			case 'S':
 				syncRequests = true;
@@ -207,6 +225,8 @@ main(int argc
 				break;
 			case 'q':
 				quiet = true;
+				quietCount = getOptionValue(&optind, &argv);
+				if(quietCount == 0) quietCount = 1;
 				break;
 			case 'g':
 				genDMABlocks = getOptionValue(&optind, &argv);
@@ -243,6 +263,12 @@ main(int argc
 				std::cout << "Invalid Debug Type passed to -T!" << std::endl;
 				printHelpMsg();
 				break;
+			case 'r':
+			  rocMask = getOptionValue(&optind, &argv);
+			  break;
+			case 'R':
+			  rocEmulatorMask = getOptionValue(&optind, &argv);
+			  break;
 			default:
 				std::cout << "Unknown option: " << argv[optind] << std::endl;
 				printHelpMsg();
@@ -263,17 +289,20 @@ main(int argc
 		<< "Operation: " << std::string(op)
 		<< ", Num: " << number
 		<< ", Delay: " << delay
+		<< ", CFO Delay: " << cfodelay
 		<< ", TS Offset: " << timestampOffset
 		<< ", PacketCount: " << packetCount
 		<< ", Requests Ahead of Reads: " << requestsAhead
 		<< ", Synchronous Request Mode: " << syncRequests
 		<< ", Use DTC CFO Emulator: " << useCFOEmulator
 		<< ", Increment TS: " << incrementTimestamp
-		<< ", Quiet Mode: " << quiet
+		  << ", Quiet Mode: " << quiet << " ("  << quietCount << ")"
 		<< ", Really Quiet Mode: " << reallyQuiet
 		<< ", Check SERDES Error Status: " << checkSERDES
 		<< ", Generate DMA Blocks: " << genDMABlocks
 		<< ", Read Data from DDR: " << readGenerated
+		  <<", ROC Mask: " <<std::hex << rocMask
+		  <<", Ring ROC Emulator Mask: " << std::hex << rocEmulatorMask
 		<< ", Debug Type: " << DTC_DebugTypeConverter(debugType).toString();
 	if (rawOutput)
 	{
@@ -286,7 +315,7 @@ main(int argc
 	{
 		std::cout << "Operation \"read\"" << std::endl;
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask, rocEmulatorMask);
 		auto packet = thisDTC->ReadNextDAQPacket();
 		if (!reallyQuiet) std::cout << packet->toJSON() << '\n';
 		if (rawOutput)
@@ -304,7 +333,7 @@ main(int argc
 	{
 		std::cout << "Operation \"read_data\"" << std::endl;
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO,rocMask,rocEmulatorMask);
 
 		auto device = thisDTC->GetDevice();
 		if (readGenerated)
@@ -348,7 +377,7 @@ main(int argc
 			if (!reallyQuiet) std::cout << std::endl << std::endl;
 			device->read_release(DTC_DMA_Engine_DAQ, 1);
 			if (delay > 0)
-			usleep(delay);
+				usleep(delay);
 		}
 		delete thisDTC;
 	}
@@ -356,7 +385,7 @@ main(int argc
 	{
 		std::cout << "Swapping SERDES Oscillator Clock" << std::endl;
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO,rocMask,rocEmulatorMask);
 		if (!thisDTC->ReadSERDESOscillatorClock())
 		{
 			std::cout << "Setting SERDES Oscillator Clock to 2.5 Gbps" << std::endl;
@@ -369,12 +398,21 @@ main(int argc
 		}
 		delete thisDTC;
 	}
+	else if (op == "reset_detemu")
+	{
+		std::cout << "Resetting Detector Emulator" << std::endl;
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO,rocMask,rocEmulatorMask);
+		thisDTC->ClearDetectorEmulatorInUse();
+		thisDTC->ResetDDR();
+		thisDTC->ResetDTC();
+		delete thisDTC;
+	}
 	else if (op == "buffer_test")
 	{
 		std::cout << "Operation \"buffer_test\"" << std::endl;
 		auto startTime = std::chrono::steady_clock::now();
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO,rocMask,rocEmulatorMask);
 
 		auto device = thisDTC->GetDevice();
 
@@ -398,7 +436,7 @@ main(int argc
 
 		if (thisDTC->ReadSimMode() != DTC_SimMode_Loopback && !syncRequests)
 		{
-			cfo.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
+			cfo.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, cfodelay, requestsAhead);
 		}
 		else if (thisDTC->ReadSimMode() == DTC_SimMode_Loopback)
 		{
@@ -453,13 +491,14 @@ main(int argc
 							}
 						}
 						std::cout << std::endl;
+						if(quiet && line == (quietCount - 1)) line =  static_cast<unsigned>(ceil((sts - 8) / 16.0)) - (1 + quietCount);
 					}
 				}
 			}
 			if (!reallyQuiet) std::cout << std::endl << std::endl;
 			device->read_release(DTC_DMA_Engine_DAQ, 1);
 			if (delay > 0)
-			usleep(delay);
+				usleep(delay);
 		}
 
 		auto readDevTime = device->GetDeviceTime();
@@ -472,13 +511,13 @@ main(int argc
 		auto totalReadTime = std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(doneTime - afterRequests).count();
 
 		std::cout << "STATS, "
-			<< "Total Elapsed Time: " << totalTime << " s." << std::endl
-			<< "Total Init Time: " << totalInitTime << " s." << std::endl
-			<< "Total Readout Request Time: " << totalRequestTime << " s." << std::endl
-			<< "Total Read Time: " << totalReadTime << " s." << std::endl
-			<< "Device Init Time: " << initTime << " s." << std::endl
-			<< "Device Request Time: " << readoutRequestTime << " s." << std::endl
-			<< "Device Read Time: " << readDevTime << " s." << std::endl
+			<< "Total Elapsed Time: " << Utilities::FormatTimeString(totalTime) << "." << std::endl
+			<< "Total Init Time: " << Utilities::FormatTimeString(totalInitTime) << "." << std::endl
+			<< "Total Readout Request Time: " << Utilities::FormatTimeString(totalRequestTime) << "." << std::endl
+			<< "Total Read Time: " << Utilities::FormatTimeString(totalReadTime) << "." << std::endl
+			<< "Device Init Time: " << Utilities::FormatTimeString(initTime) << "." << std::endl
+			<< "Device Request Time: " << Utilities::FormatTimeString(readoutRequestTime) << "." << std::endl
+			<< "Device Read Time: " << Utilities::FormatTimeString(readDevTime) << "." << std::endl
 			<< "Total Bytes Written: " << Utilities::FormatByteString(totalBytesWritten) << "." << std::endl
 			<< "Total Bytes Read: " << Utilities::FormatByteString(totalBytesRead) << "." << std::endl
 			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
@@ -499,14 +538,14 @@ main(int argc
 			auto stsRL = device.read_release(DTC_DMA_Engine_DAQ, 1);
 			TRACE(12, "util - release/read for DAQ and DCS ii=%u stsRD=%d stsRL=%d %p", ii, stsRD, stsRL, buffer);
 			if (delay > 0)
-			usleep(delay);
+				usleep(delay);
 		}
 	}
 	else if (op == "DTC")
 	{
 		auto startTime = std::chrono::steady_clock::now();
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO,rocMask,rocEmulatorMask);
 
 		auto initTime = thisDTC->GetDevice()->GetDeviceTime();
 		thisDTC->GetDevice()->ResetDeviceTime();
@@ -529,7 +568,7 @@ main(int argc
 
 		if (!syncRequests)
 		{
-			theCFO.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, delay, requestsAhead);
+			theCFO.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, cfodelay, requestsAhead);
 		}
 
 
@@ -663,7 +702,7 @@ main(int argc
 				}
 			}
 			if (delay > 0)
-			usleep(delay);
+				usleep(delay);
 		}
 
 

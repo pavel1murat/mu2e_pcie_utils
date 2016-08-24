@@ -11,7 +11,7 @@ namespace DTCLib
 	class DTC : public DTC_Registers
 	{
 	public:
-		explicit DTC(DTC_SimMode mode = DTC_SimMode_Disabled);
+	  explicit DTC(DTC_SimMode mode = DTC_SimMode_Disabled, unsigned rocMask = 0x1, unsigned rocEmulatorMask = 0x1);
 		virtual ~DTC();
 
 		//
@@ -44,6 +44,11 @@ namespace DTCLib
 		void WriteDetectorEmulatorData(mu2e_databuff_t* buf, size_t sz);
 		DTC_DataHeaderPacket* ReadNextDAQPacket(int tmo_ms = 0);
 		DTC_DCSReplyPacket* ReadNextDCSPacket();
+
+		void ReleaseAllBuffers() {
+			ReleaseAllBuffers(DTC_DMA_Engine_DAQ);
+			ReleaseAllBuffers(DTC_DMA_Engine_DCS);
+		}
 
 		void ReleaseAllBuffers(const DTC_DMA_Engine& channel)
 		{

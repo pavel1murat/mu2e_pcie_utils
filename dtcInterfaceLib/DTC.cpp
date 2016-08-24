@@ -13,10 +13,10 @@
 #endif
 #define TRACE_NAME "MU2EDEV"
 
-DTCLib::DTC::DTC(DTC_SimMode mode) : DTC_Registers(mode),
-                                     daqbuffer_(nullptr), buffers_used_(0), dcsbuffer_(nullptr),
-                                     bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
-                                     lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
+DTCLib::DTC::DTC(DTC_SimMode mode, unsigned rocMask, unsigned rocEmulatorMask) : DTC_Registers(mode, rocMask, rocEmulatorMask),
+daqbuffer_(nullptr), buffers_used_(0), dcsbuffer_(nullptr),
+bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
+lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 {
 #ifdef _WIN32
 #pragma warning(disable: 4996)
@@ -27,8 +27,6 @@ DTCLib::DTC::DTC(DTC_SimMode mode) : DTC_Registers(mode),
 
 DTCLib::DTC::~DTC()
 {
-	DisableDetectorEmulator();
-	device_.close();
 	daqbuffer_ = nullptr;
 	dcsbuffer_ = nullptr;
 	lastReadPtr_ = nullptr;
@@ -58,8 +56,10 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 		while (packet == nullptr && tries < 3)
 		{
 			TRACE(19, "DTC::GetData before ReadNextDAQPacket, tries=%i", tries);
-			packet = ReadNextDAQPacket(first_read_ ? 10000 : 1);
-			TRACE(19, "DTC::GetData after  ReadDMADAQPacket");
+			packet = ReadNextDAQPacket(first_read_ ? 100 : 1);
+			if (packet != nullptr) {
+				TRACE(19, "DTC::GetData after ReadDMADAQPacket, ts=0x%llx", (unsigned long long)packet->GetTimestamp().GetTimestamp(true));
+			}
 			tries++;
 			//if (packet == nullptr) usleep(5000);
 		}
@@ -90,27 +90,33 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 		while (!done)
 		{
 			size_t sz2 = 0;
+			TRACE(19, "DTC::GetData: Reading next DAQ Packet");
 			packet = ReadNextDAQPacket();
 			if (packet == nullptr) // End of Data
 			{
+				TRACE(19, "DTC::GetData: Next packet is nullptr; we're done");
 				done = true;
 				nextReadPtr_ = nullptr;
 			}
 			else if (packet->GetTimestamp() != when)
 			{
+				TRACE(19, "DTC::GetData: Next packet has ts=0x%llx, not 0x%llx; we're done", (unsigned long long)packet->GetTimestamp().GetTimestamp(true), (unsigned long long)when.GetTimestamp(true));
 				done = true;
 				nextReadPtr_ = lastReadPtr_;
 				buffers_used_--;
 			}
 			else
 			{
+				TRACE(19, "DTC::GetData: Next packet has same ts=0x%llx, continuing (bc=0x%llx)", (unsigned long long)packet->GetTimestamp().GetTimestamp(true), (unsigned long long)packet->GetByteCount());
 				sz2 = packet->GetByteCount();
 			}
 			delete packet;
 			packet = nullptr;
 
-			TRACE(19, "DTC::GetData: Adding pointer %p to the list", (void*)lastReadPtr_);
-			if (!done) output.push_back(DTC_DataBlock(reinterpret_cast<DTC_DataBlock::pointer_t*>(lastReadPtr_), sz2));
+			if (!done) {
+				TRACE(19, "DTC::GetData: Adding pointer %p to the list", (void*)lastReadPtr_);
+				output.push_back(DTC_DataBlock(reinterpret_cast<DTC_DataBlock::pointer_t*>(lastReadPtr_), sz2));
+			}
 		}
 	}
 	catch (DTC_WrongPacketTypeException ex)
@@ -178,11 +184,14 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever, bool overw
 	}
 
 	DisableDetectorEmulator();
-	EnableDetectorEmulatorMode();
+	DisableDetectorEmulatorMode();
 	ResetDDRWriteAddress();
+	ResetDDRReadAddress();
+	SetDDRDataLocalStartAddress(0x0);
 	SetDDRDataLocalEndAddress(0x7000000);
-	SetDetectorEmulationDMACount(0);
-	SetDetectorEmulationDMADelayCount(0);
+	EnableDetectorEmulatorMode();
+	SetDetectorEmulationDMACount(1);
+	SetDetectorEmulationDMADelayCount(250); // 1 microseconds
 	uint64_t totalSize = 0;
 	auto n = 0;
 
@@ -220,6 +229,8 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever, bool overw
 	}
 	is.close();
 	SetDDRDataLocalEndAddress(static_cast<uint32_t>(totalSize));
+	SetDetectorEmulatorInUse();
+	/* Instead, set the count and enable in DTCSoftwareCFO!
 	if (!goForever)
 	{
 		SetDetectorEmulationDMACount(n);
@@ -228,7 +239,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever, bool overw
 	{
 		SetDetectorEmulationDMACount(0);
 	}
-	EnableDetectorEmulator();
+	EnableDetectorEmulator();*/
 }
 
 // ROC Register Functions
@@ -344,6 +355,8 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 		{
 			nextReadPtr_ = nullptr;
 			//We didn't actually get a new buffer...this probably means there's no more data
+			//Try and see if we're merely stuck...hopefully, all the data is out of the buffers...
+			device_.read_release(DTC_DMA_Engine_DAQ, 1);
 			return nullptr;
 		}
 		buffers_used_++;

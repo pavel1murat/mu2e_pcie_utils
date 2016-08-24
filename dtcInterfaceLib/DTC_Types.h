@@ -911,6 +911,8 @@ namespace DTCLib
 	{
 		static std::string FormatByteString(double bytes);
 		static std::pair<double, std::string> FormatBytes(double bytes);
+		static std::string FormatTimeString(double seconds);
+		static std::pair<double, std::string> FormatTime(double seconds);
 	};
 }
 

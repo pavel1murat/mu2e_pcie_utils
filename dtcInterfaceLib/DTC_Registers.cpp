@@ -10,7 +10,7 @@
 #endif
 #define TRACE_NAME "MU2EDEV"
 
-DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode) : device_(), simMode_(mode), dmaSize_(16)
+DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, unsigned rocMask, unsigned rocEmulatorMask) : device_(), simMode_(mode), dmaSize_(16)
 {
 	for (auto ii = 0; ii < 6; ++ii)
 	{
@@ -68,39 +68,58 @@ DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode) : device_(), simMode_(mod
 		}
 	}
 
-	SetSimMode(simMode_);
+	SetSimMode(simMode_, rocMask, rocEmulatorMask);
 }
 
-DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode)
+DTCLib::DTC_Registers::~DTC_Registers()
 {
-	simMode_ = mode;
-	device_.init(simMode_);
+	DisableDetectorEmulator();
+	//DisableDetectorEmulatorMode();
+	DisableCFOEmulation();
+	//ResetDTC();
+	device_.close();
+}
 
-	for (auto ring : DTC_Rings)
+DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode, unsigned rocMask, unsigned rocEmulatorMask)
+{
+  simMode_ = mode;
+  device_.init(simMode_);
+
+  std::bitset<6> rocEmulatorMaskBS(rocEmulatorMask);
+  bool useTiming = simMode_ == DTC_SimMode_Disabled;
+  for (auto ring : DTC_Rings)
+    {
+      bool ringEnabled = ((rocMask >> (ring * 4)) & 0x1) != 0;
+      if(!ringEnabled) { DisableRing(ring); }
+      else 
 	{
-		SetMaxROCNumber(ring, DTC_ROC_Unused);
-		DisableROCEmulator(ring);
-		SetSERDESLoopbackMode(DTC_Ring_0, DTC_SERDESLoopbackMode_Disabled);
+	  int rocCount = (((rocMask >> (ring * 4)) & 0xF) - 1) / 2;
+	  EnableRing(ring, DTC_RingEnableMode(true,true,useTiming), DTC_ROCS[rocCount+1]);
 	}
+      if(!rocEmulatorMaskBS[ring])  DisableROCEmulator(ring);
+      if(!rocEmulatorMaskBS[ring])  SetSERDESLoopbackMode(ring, DTC_SERDESLoopbackMode_Disabled);
+    }
 
-	if (simMode_ != DTC_SimMode_Disabled)
-	{
-		// Set up hardware simulation mode: Ring 0 Tx/Rx Enabled, Loopback Enabled, ROC Emulator Enabled. All other rings disabled.
-		for (auto ring : DTC_Rings)
-		{
-			DisableRing(ring);
-		}
-		EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
+  if (simMode_ != DTC_SimMode_Disabled)
+    {
+      // Set up hardware simulation mode: Ring 0 Tx/Rx Enabled, Loopback Enabled, ROC Emulator Enabled. All other rings disabled.
+      // for (auto ring : DTC_Rings)
+      // 	{
+      // 	  DisableRing(ring);
+      // 	}
+      //	EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
+      for(auto ring : DTC_Rings) {
 		if (simMode_ == DTC_SimMode_Loopback)
 		{
-			SetSERDESLoopbackMode(DTC_Ring_0, DTC_SERDESLoopbackMode_NearPCS);
-			SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
+			SetSERDESLoopbackMode(ring, DTC_SERDESLoopbackMode_NearPCS);
+			//			SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
 		}
 		else if (simMode_ == DTC_SimMode_ROCEmulator)
 		{
-			EnableROCEmulator(DTC_Ring_0);
-			SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
+			EnableROCEmulator(ring);
+			//SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
 		}
+      }
 		SetInternalSystemClock();
 		DisableTiming();
 	}
@@ -462,6 +481,7 @@ void DTCLib::DTC_Registers::ResetDDRWriteAddress()
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	data[27] = 1;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
+	data = ReadRegister_(DTC_Register_DTCControl);
 	data[27] = 0;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
 }
@@ -472,41 +492,33 @@ bool DTCLib::DTC_Registers::ReadResetDDRWriteAddress()
 	return data[27];
 }
 
-void DTCLib::DTC_Registers::EnableDetectorEmulatorMode()
+void DTCLib::DTC_Registers::ResetDDRReadAddress()
 {
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	data[26] = 1;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
-}
-
-void DTCLib::DTC_Registers::DisableDetectorEmulatorMode()
-{
-	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
+	data = ReadRegister_(DTC_Register_DTCControl);
 	data[26] = 0;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
 }
 
-bool DTCLib::DTC_Registers::ReadDetectorEmulatorMode()
+bool DTCLib::DTC_Registers::ReadResetDDRReadAddress()
 {
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	return data[26];
 }
 
-void DTCLib::DTC_Registers::EnableDetectorEmulator()
+void DTCLib::DTC_Registers::ResetDDR()
 {
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	data[25] = 1;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
-}
-
-void DTCLib::DTC_Registers::DisableDetectorEmulator()
-{
-	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
+	data = ReadRegister_(DTC_Register_DTCControl);
 	data[25] = 0;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
 }
 
-bool DTCLib::DTC_Registers::ReadDetectorEmulatorEnable()
+bool DTCLib::DTC_Registers::ReadResetDDR()
 {
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	return data[25];
@@ -640,8 +652,9 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDTCControl()
 	form.vals.push_back(std::string("CFO Emulation Enable:           [") + (ReadCFOEmulation() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("SERDES Oscillator Reset:        [") + (ReadResetSERDESOscillator() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("SERDES Oscillator Clock Select: [") + (ReadSERDESOscillatorClock() ? " 2.5Gbs" : "3.125Gbs") + "]");
-	form.vals.push_back(std::string("Detector Emulation Mode:        [") + (ReadDetectorEmulatorMode() ? "x" : " ") + "]");
-	form.vals.push_back(std::string("Detector Emulation Enable:      [") + (ReadDetectorEmulatorEnable() ? "x" : " ") + "]");
+	form.vals.push_back(std::string("Reset DDR Write Address:        [") + (ReadResetDDRWriteAddress() ? "x" : " ") + "]");
+	form.vals.push_back(std::string("Reset DDR Read Address:         [") + (ReadResetDDRReadAddress() ? "x" : " ") + "]");
+	form.vals.push_back(std::string("Reset DDR:                      [") + (ReadResetDDR() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("CFO Emulator DRP Enable:        [") + (ReadCFOEmulatorDRP() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("CFO Autogenerate DRP:           [") + (ReadAutogenDRP() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("Software DRP Enable:            [") + (ReadSoftwareDRP() ? "x" : " ") + "]");
@@ -1941,7 +1954,7 @@ bool DTCLib::DTC_Registers::ReadDebugPacketMode()
 void DTCLib::DTC_Registers::SetCFOEmulationDebugType(DTC_DebugType type)
 {
 	std::bitset<32> data = type & 0xF;
-data[16] = ReadDebugPacketMode();
+	data[16] = ReadDebugPacketMode();
 	WriteRegister_(data.to_ulong(), DTC_Register_CFOEmulationDebugPacketType);
 }
 
@@ -2000,6 +2013,80 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDetectorEmulationDMAD
 	std::stringstream o;
 	o << "0x" << std::hex << ReadDetectorEmulationDMADelayCount();
 	form.vals.push_back(o.str());
+	return form;
+}
+
+void DTCLib::DTC_Registers::EnableDetectorEmulatorMode()
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DetEmulationControl0);
+	data[0] = 1;
+	WriteRegister_(data.to_ulong(), DTC_Register_DetEmulationControl0);
+}
+
+void DTCLib::DTC_Registers::DisableDetectorEmulatorMode()
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DetEmulationControl0);
+	data[0] = 0;
+	WriteRegister_(data.to_ulong(), DTC_Register_DetEmulationControl0);
+}
+
+bool DTCLib::DTC_Registers::ReadDetectorEmulatorMode()
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DetEmulationControl0);
+	return data[0];
+}
+
+void DTCLib::DTC_Registers::EnableDetectorEmulator()
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DetEmulationControl0);
+	data[1] = 1;
+	WriteRegister_(data.to_ulong(), DTC_Register_DetEmulationControl0);
+}
+
+void DTCLib::DTC_Registers::DisableDetectorEmulator()
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DetEmulationControl1);
+	data[1] = 1;
+	WriteRegister_(data.to_ulong(), DTC_Register_DetEmulationControl1);
+}
+
+bool DTCLib::DTC_Registers::ReadDetectorEmulatorEnable()
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DetEmulationControl0);
+	return data[1];
+}
+
+bool DTCLib::DTC_Registers::ReadDetectorEmulatorEnableClear()
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DetEmulationControl1);
+	return data[1];
+}
+
+void DTCLib::DTC_Registers::ClearDetectorEmulatorInUse()
+{
+	DisableDetectorEmulator();
+	DisableDetectorEmulatorMode();
+	ResetDDRWriteAddress();
+	ResetDDRReadAddress();
+	SetDDRDataLocalStartAddress(0);
+	SetDDRDataLocalEndAddress(0x7000000);
+	usingDetectorEmulator_ = false;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDetectorEmulationControl0()
+{
+	auto form = CreateFormatter(DTC_Register_DetEmulationControl0);
+	form.description = "Detector Emulation Control 0";
+	form.vals.push_back(std::string("Detector Emulation Enable: [") + (ReadDetectorEmulatorEnable() ? "x" : " ") + "]");
+	form.vals.push_back(std::string("Detector Emulation Mode:   [") + (ReadDetectorEmulatorMode() ? "x" : " ") + "]");
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDetectorEmulationControl1()
+{
+	auto form = CreateFormatter(DTC_Register_DetEmulationControl1);
+	form.description = "Detector Emulation Control 1";
+	form.vals.push_back(std::string("Detector Emulation Enable Clear: [") + (ReadDetectorEmulatorEnableClear() ? "x" : " ") + "]");
 	return form;
 }
 
@@ -2761,17 +2848,17 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatFPGACoreAccess()
 void DTCLib::DTC_Registers::SetAllEventModeWords(uint32_t data)
 {
 	for (uint16_t address = DTC_Register_EventModeLookupTableStart; address <= DTC_Register_EventModeLookupTableEnd; address += 4) {
-			auto retry = 3;
-			int errorCode;
-			do
-			{
-				errorCode = device_.write_register(address, 100, data);
-				--retry;
-			} while (retry > 0 && errorCode != 0);
-			if (errorCode != 0)
-			{
-				throw DTC_IOErrorException();
-			}
+		auto retry = 3;
+		int errorCode;
+		do
+		{
+			errorCode = device_.write_register(address, 100, data);
+			--retry;
+		} while (retry > 0 && errorCode != 0);
+		if (errorCode != 0)
+		{
+			throw DTC_IOErrorException();
+		}
 	}
 }
 

@@ -2,7 +2,7 @@
 #include <sstream>
 #include <iomanip>
 
-DTCLib::DTC_RXStatusConverter::DTC_RXStatusConverter(DTC_RXStatus status): status_(status) { }
+DTCLib::DTC_RXStatusConverter::DTC_RXStatusConverter(DTC_RXStatus status) : status_(status) { }
 
 DTCLib::DTC_SimMode DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::string modeName)
 {
@@ -151,33 +151,109 @@ std::string DTCLib::Utilities::FormatByteString(double bytes)
 
 std::pair<double, std::string> DTCLib::Utilities::FormatBytes(double bytes)
 {
-	auto kb = bytes / 1024.0;
-	auto mb = kb / 1024.0;
-	auto gb = mb / 1024.0;
-	auto tb = gb / 1024.0;
 	auto val = bytes;
 	auto unit = "bytes";
+	auto kb = bytes / 1024.0;
 
-	if (tb > 1)
+	if (kb > 1)
 	{
-		val = tb;
-		unit = "TB";
+		auto mb = kb / 1024.0;
+		if (mb > 1)
+		{
+			auto gb = mb / 1024.0;
+			if (gb > 1)
+			{
+
+				auto tb = gb / 1024.0;
+				if (tb > 1)
+				{
+					val = tb;
+					unit = "TB";
+				}
+				else
+				{
+					val = gb;
+					unit = "GB";
+
+				}
+			}
+			else
+			{
+				val = mb;
+				unit = "MB";
+			}
+		}
+		else
+		{
+			val = kb;
+			unit = "KB";
+		}
 	}
-	else if (gb > 1)
-	{
-		val = gb;
-		unit = "GB";
-	}
-	else if (mb > 1)
-	{
-		val = mb;
-		unit = "MB";
-	}
-	else if (kb > 1)
-	{
-		val = kb;
-		unit = "KB";
-	}
+
 	return std::make_pair(val, unit);
 }
 
+std::string DTCLib::Utilities::FormatTimeString(double seconds)
+{
+	auto res = FormatTime(seconds);
+	std::stringstream s;
+	s << std::setprecision(5) << res.first << " " << res.second;
+	return s.str();
+}
+
+std::pair<double, std::string> DTCLib::Utilities::FormatTime(double seconds)
+{
+
+	auto val = seconds;
+	auto unit = "s";
+
+	if (seconds > 1)
+	{
+		auto min = seconds / 60.0;
+		if (min > 1) {
+			auto ho = min / 60.0;
+			if (ho > 1) {
+				auto day = ho / 24.0;
+				if (day > 1) {
+					val = day;
+					unit = "days";
+				}
+				else {
+					val = ho;
+					unit = "hours";
+				}
+			}
+			else
+			{
+				val = min;
+				unit = "minutes";
+			}
+		}
+	}
+	else
+	{
+		auto ms = seconds * 1000;
+		if (ms > 1)
+		{
+			val = ms;
+			unit = "ms";
+		}
+		else
+		{
+			auto us = ms * 1000;
+			if (us > 1)
+			{
+				val = us;
+				unit = "us";
+			}
+			else
+			{
+				auto ns = us * 1000;
+				val = ns;
+				unit = "ns";
+			}
+		}
+	}
+
+	return std::make_pair(val, unit);
+}
