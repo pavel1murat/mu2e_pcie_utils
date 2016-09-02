@@ -20,7 +20,7 @@
 extern mu2e_databuff_t       *mu2e_recv_databuff_rings[MU2E_NUM_RECV_CHANNELS];
 extern mu2e_buffdesc_C2S_t   *mu2e_recv_buffdesc_rings[MU2E_NUM_RECV_CHANNELS];
 
-#define MU2E_NUM_SEND_BUFFS     60 /*20*/ /*60*/
+#define MU2E_NUM_SEND_BUFFS     60 /*20*/ /*60*/ /*Maximum value: ~60*/
 #define MU2E_NUM_SEND_CHANNELS   2
 extern mu2e_databuff_t       *mu2e_send_databuff_rings[MU2E_NUM_SEND_CHANNELS];
 extern mu2e_buffdesc_S2C_t   *mu2e_send_buffdesc_rings[MU2E_NUM_SEND_CHANNELS];
@@ -36,10 +36,10 @@ typedef struct
 extern pci_sender_t mu2e_pci_sender[MU2E_NUM_SEND_CHANNELS];
 
 typedef struct
-{   mu2e_databuff_t     *databuffs;
-    dma_addr_t           databuffs_dma;
-    mu2e_buffdesc_C2S_t *buffdesc_ring;
-    dma_addr_t           buffdesc_ring_dma;
+{   mu2e_databuff_t     **databuffs;
+    dma_addr_t          *databuffs_dma;
+    mu2e_buffdesc_C2S_t **buffdesc_ring;
+    dma_addr_t          *buffdesc_ring_dma;
 } pci_recver_t;
 
 extern pci_recver_t mu2e_pci_recver[MU2E_NUM_RECV_CHANNELS];
