@@ -24,7 +24,7 @@ int packets_timer_guard = 1;
 static void poll_packets(unsigned long __opaque)
 {
 	unsigned long       base;
-	int                 offset, error, did_work;
+	int                 error, did_work;
 	int			chn, dir;
 	unsigned            nxtCachedCmpltIdx;
 	mu2e_buffdesc_C2S_t *buffdesc_C2S_p;
@@ -96,8 +96,8 @@ static void poll_packets(unsigned long __opaque)
 	if (did_work)
 	{
 		// Reschedule immediately
-#if 0
-		packets_timer.expires = jiffies;
+#if 1
+		packets_timer.expires = jiffies + 1;
 		add_timer(&packets_timer);
 #else
 		poll_packets(__opaque);

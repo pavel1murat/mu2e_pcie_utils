@@ -76,7 +76,7 @@ static int checkDmaEngine(unsigned chn, unsigned dir) {
 	u32 status = Dma_mReadChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS);
 	int lc = 5;
 
-	if ((status & (DMA_ENG_INT_ALERR | DMA_ENG_INT_FETERR | DMA_ENG_INT_ABORTERR | DMA_ENG_INT_CHAINEND)) != 0)
+	if (dir == C2S && (status & (DMA_ENG_INT_ALERR | DMA_ENG_INT_FETERR | DMA_ENG_INT_ABORTERR | DMA_ENG_INT_CHAINEND)) != 0)
 	{
 		TRACE(20, "checkDmaEngine: One of the error bits set: chn=%d dir=%d sts=0x%llx", chn, dir, (unsigned long long)status);
 		printk("DTC DMA Interrupt Error Bits Set: chn=%d dir=%d, sts=0x%llx", chn, dir, (unsigned long long)status);
@@ -93,7 +93,12 @@ static int checkDmaEngine(unsigned chn, unsigned dir) {
 	if ((status & DMA_ENG_ENABLE) == 0)
 	{
 		TRACE(20, "checkDmaEngine: DMA ENGINE DISABLED! Re-enabling... chn=%d dir=%d", chn, dir);
-		Dma_mWriteChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_ENABLE | DMA_ENG_INT_ENABLE);
+		if (dir == C2S) {
+			Dma_mWriteChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_ENABLE | DMA_ENG_INT_ENABLE);
+		}else
+		{
+			Dma_mWriteChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_ENABLE);			
+		}
 		sts = 1;
 	}
 
@@ -108,7 +113,7 @@ static irqreturn_t DmaInterrupt(int irq, void *dev_id)
 {
 #if MU2E_RECV_INTER_ENABLED
 	unsigned long base;
-	unsigned chn, dir;
+	unsigned chn;
 
 	TRACE(20, "DmaInterrrupt: start");
 
@@ -118,9 +123,7 @@ static irqreturn_t DmaInterrupt(int irq, void *dev_id)
 	TRACE(20, "DmaInterrupt: Checking DMA Engines");
 	/* Check interrupt for error conditions */
 	for (chn = 0; chn < 2; ++chn) {
-		for (dir = 0; dir < 2; ++dir) {
-			checkDmaEngine(chn, dir);
-		}
+			checkDmaEngine(chn, C2S);
 	}
 
 	TRACE(20, "DmaInterrupt: Calling poll routine");
