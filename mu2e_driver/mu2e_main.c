@@ -78,7 +78,7 @@ static int checkDmaEngine(unsigned chn, unsigned dir) {
 
 	if ((status & (DMA_ENG_INT_ALERR | DMA_ENG_INT_FETERR | DMA_ENG_INT_ABORTERR | DMA_ENG_INT_CHAINEND)) != 0)
 	{
-		TRACE(20, "DmaInterrupt: One of the error bits set: chn=%d dir=%d sts=0x%llx", chn, dir, (unsigned long long)status);
+		TRACE(20, "checkDmaEngine: One of the error bits set: chn=%d dir=%d sts=0x%llx", chn, dir, (unsigned long long)status);
 		printk("DTC DMA Interrupt Error Bits Set: chn=%d dir=%d, sts=0x%llx", chn, dir, (unsigned long long)status);
 		/* Perform soft reset of DMA engine */
 		Dma_mWriteChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_USER_RESET);
@@ -92,14 +92,14 @@ static int checkDmaEngine(unsigned chn, unsigned dir) {
 
 	if ((status & DMA_ENG_ENABLE) == 0)
 	{
-		TRACE(20, "DmaInterrupt: DMA ENGINE DISABLED! Re-enabling... chn=%d dir=%d", chn, dir);
+		TRACE(20, "checkDmaEngine: DMA ENGINE DISABLED! Re-enabling... chn=%d dir=%d", chn, dir);
 		Dma_mWriteChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_ENABLE | DMA_ENG_INT_ENABLE);
 		sts = 1;
 	}
 
 	if ((status & DMA_ENG_STATE_MASK) != 0)
 	{
-		TRACE(20, "DmaInterrupt: DMA Engine Status: chn=%d dir=%d r=%d, w=%d", chn, dir, ((status & DMA_ENG_RUNNING) != 0 ? 1 : 0), ((status & DMA_ENG_WAITING) != 0 ? 1 : 0));
+		TRACE(20, "checkDmaEngine: DMA Engine Status: chn=%d dir=%d r=%d, w=%d", chn, dir, ((status & DMA_ENG_RUNNING) != 0 ? 1 : 0), ((status & DMA_ENG_WAITING) != 0 ? 1 : 0));
 	}
 	return sts;
 }
@@ -110,11 +110,12 @@ static irqreturn_t DmaInterrupt(int irq, void *dev_id)
 	unsigned long base;
 	unsigned chn, dir;
 
-	TRACE(20, "DmaInterrrupt Called and interrupts are enabled. Scheduling poll routine.");
+	TRACE(20, "DmaInterrrupt: start");
 
 	base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
 	Dma_mIntDisable(base);
 
+	TRACE(20, "DmaInterrupt: Checking DMA Engines");
 	/* Check interrupt for error conditions */
 	for (chn = 0; chn < 2; ++chn) {
 		for (dir = 0; dir < 2; ++dir) {
@@ -122,8 +123,13 @@ static irqreturn_t DmaInterrupt(int irq, void *dev_id)
 		}
 	}
 
+	TRACE(20, "DmaInterrupt: Calling poll routine");
 	/* Handle DMA and any user interrupts */
+#if 0
 	if (mu2e_sched_poll() == 0)
+#else
+	if(mu2e_force_poll() == 0)
+#endif
 	{
 		Dma_mIntAck(base, DMA_ENG_ALLINT_MASK);
 		return IRQ_HANDLED;

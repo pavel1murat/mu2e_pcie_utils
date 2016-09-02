@@ -148,6 +148,16 @@ int mu2e_sched_poll(void)
 	return (0);
 }
 
+int mu2e_force_poll(void)
+{
+	if(packets_timer_guard)
+	{
+		packets_timer_guard = 0;
+		poll_packets(0);
+	}
+	return 0;
+}
+
 void mu2e_event_down(void)
 {
 	del_timer_sync(&packets_timer);
