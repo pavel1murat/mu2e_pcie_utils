@@ -45,9 +45,9 @@ static void poll_packets(unsigned long __opaque)
 		"H_CPLT=%u "
 		"CPBYTS=0x%08x "
 		, Dma_mReadChnReg(0, C2S, REG_DMA_ENG_CTRL_STATUS)
-		, descDmaAdr2idx(Dma_mReadChnReg(0, C2S, REG_HW_NEXT_BD), 0, C2S)
-		, descDmaAdr2idx(Dma_mReadChnReg(0, C2S, REG_SW_NEXT_BD), 0, C2S)
-		, descDmaAdr2idx(Dma_mReadChnReg(0, C2S, REG_HW_CMPLT_BD), 0, C2S)
+	      , descDmaAdr2idx(Dma_mReadChnReg(0, C2S, REG_HW_NEXT_BD), 0, C2S, mu2e_channel_info_[chn][dir].hwIdx)
+	      , descDmaAdr2idx(Dma_mReadChnReg(0, C2S, REG_SW_NEXT_BD), 0, C2S, mu2e_channel_info_[chn][dir].swIdx)
+	      , descDmaAdr2idx(Dma_mReadChnReg(0, C2S, REG_HW_CMPLT_BD), 0, C2S, mu2e_channel_info_[chn][dir].hwIdx)
 		, Dma_mReadChnReg(0, C2S, REG_DMA_ENG_COMP_BYTES)
 	);
 	TRACE(23, "poll_packets: App0: gen=0x%x pktlen=0x%04x chk/loop=0x%x"
@@ -58,13 +58,14 @@ static void poll_packets(unsigned long __opaque)
 	dir = C2S;
 	for (chn = 0; chn < MU2E_MAX_CHANNELS; ++chn)
 	{   // Read the HW register and convert (Dma) addr in reg to idx.
-		u32 newCmpltIdx = descDmaAdr2idx(Dma_mReadChnReg(chn, dir, REG_HW_CMPLT_BD), chn, dir);
+	  u32 newCmpltIdx = descDmaAdr2idx(Dma_mReadChnReg(chn, dir, REG_HW_CMPLT_BD), chn, dir, mu2e_channel_info_[chn][dir].hwIdx);
 
 		u32 do_once = 0;
 
 		if (newCmpltIdx >= MU2E_NUM_RECV_BUFFS)
 		{
-			TRACE(0, "poll_packets: newCmpltIdx (0x%x) is above maximum sane value!!! (%i) Current idx=0x%x", newCmpltIdx, MU2E_NUM_RECV_BUFFS, mu2e_channel_info_[chn][dir].hwIdx);
+			TRACE(0, "poll_packets: newCmpltIdx (0x%x) is above maximum sane value!!! (%x) Current idx=0x%x", newCmpltIdx, MU2E_NUM_RECV_BUFFS, mu2e_channel_info_[chn][dir].hwIdx);
+			TRACE_CNTL("modeM,0");
 			error = 1;
 			//continue;
 			break;

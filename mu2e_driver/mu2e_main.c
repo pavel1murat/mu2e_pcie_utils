@@ -469,14 +469,14 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 				TRACE(10, "chn=%d dir=%x (0x%08x) hw_next_idx=%u sw_next_idx=%u hw_cmplt_idx=%u"
 					, chn, dir == 0 ? 0xC25 : 0x52C
 					, hw_next
-					, descDmaAdr2idx(hw_next, chn, dir)
-					, descDmaAdr2idx(sw_next, chn, dir)
-					, descDmaAdr2idx(hw_cmplt, chn, dir));
+				      , descDmaAdr2idx(hw_next, chn, dir,0)
+				      , descDmaAdr2idx(sw_next, chn, dir,0)
+				      , descDmaAdr2idx(hw_cmplt, chn, dir,0));
 				if (dir == 0) // C25
 				{
 					u32 sw_has_recv_data;
-					u32 hw = descDmaAdr2idx(hw_next, chn, dir);
-					u32 sw = descDmaAdr2idx(sw_next, chn, dir);
+					u32 hw = descDmaAdr2idx(hw_next, chn, dir,0);
+					u32 sw = descDmaAdr2idx(sw_next, chn, dir,0);
 					u32 hw_has_recv_data = ((hw >= sw)
 						? hw - sw
 						: MU2E_NUM_RECV_BUFFS + hw - sw);
@@ -575,7 +575,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		mu2e_channel_info_[chn][dir].swIdx = nxtIdx;
 		// just update hwIdx here
 		mu2e_channel_info_[chn][dir].hwIdx = descDmaAdr2idx(Dma_mReadChnReg(chn, dir, REG_HW_NEXT_BD)
-			, chn, dir);
+								    , chn, dir,mu2e_channel_info_[chn][dir].hwIdx);
 		break;
 	default:
 		TRACE(10, "mu2e_ioctl: unknown cmd");
