@@ -122,22 +122,19 @@ extern "C" {
 
 #define descDmaAdr2idx( regval, chn, dir ) \
 	(dir == C2S)					\
-	? ( (u32)(regval-mu2e_pci_recver[chn].buffdesc_ring_dma) \
-	   /(u32)sizeof(mu2e_buffdesc_C2S_t) )		\
+	? ( {int ii = 0; do{if(regval == mu2e_pci_recver[chn].buffdesc_ring_dma[ii])break; ++ii;} while (ii < MU2E_NUM_RECV_BUFFS); ii;} )		\
 	: ( (u32)(regval-mu2e_pci_sender[chn].buffdesc_ring_dma) \
 	   /(u32)sizeof(mu2e_buffdesc_S2C_t) )
 
 #define idx2descDmaAdr( idx, chn, dir ) \
 	(dir == C2S)					\
-	? ( (u32)mu2e_pci_recver[chn].buffdesc_ring_dma		\
-	   +(u32)sizeof(mu2e_buffdesc_C2S_t)*idx )		\
+	? ( (u32)mu2e_pci_recver[chn].buffdesc_ring_dma[idx])		\
 	: ( (u32)mu2e_pci_sender[chn].buffdesc_ring_dma		\
 	   +(u32)sizeof(mu2e_buffdesc_S2C_t)*idx )
 
 #define idx2descVirtAdr( idx, chn, dir ) \
 	((dir == C2S)						\
-	 ? (void*)( (ulong)mu2e_pci_recver[chn].buffdesc_ring		\
-		   +sizeof(mu2e_buffdesc_C2S_t)*idx )			\
+	 ? (void*)( (ulong)mu2e_pci_recver[chn].buffdesc_ring[idx] )			\
 	 : (void*)( (ulong)mu2e_pci_sender[chn].buffdesc_ring		\
 		   +sizeof(mu2e_buffdesc_S2C_t)*idx ) )
 

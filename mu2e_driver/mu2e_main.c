@@ -147,8 +147,8 @@ static irqreturn_t DmaInterrupt(int irq, void *dev_id)
 int mu2e_mmap(struct file *file, struct vm_area_struct *vma)
 {
 	int	          ch, dir, map;
-	unsigned long phys_addr;
-	int           sts;
+	unsigned long phys_addr, uaddr;
+	int           sts = 0, ii;
 
 	page2chDirMap(vma->vm_pgoff, ch, dir, map);
 	TRACE(4, "mu2e_mmap: vm_pgoff:%lu ch:%d dir:%d map:%d: %p"
@@ -156,11 +156,26 @@ int mu2e_mmap(struct file *file, struct vm_area_struct *vma)
 	if (map == MU2E_MAP_META)
 		vma->vm_flags &= ~VM_WRITE;
 
-	phys_addr = virt_to_phys(mu2e_mmap_ptrs[ch][dir][map]);
-	sts = io_remap_pfn_range(vma, vma->vm_start
-		, phys_addr >> PAGE_SHIFT
-		, vma->vm_end - vma->vm_start
-		, vma->vm_page_prot);
+	if (dir == C2S && map == MU2E_MAP_BUFF) {
+		uaddr = vma->vm_start;
+		for (ii = 0; ii < MU2E_NUM_RECV_BUFFS; ++ii) {
+			phys_addr = virt_to_phys(((void**)mu2e_mmap_ptrs[ch][dir][map])[ii]);
+			sts |= io_remap_pfn_range(vma, uaddr
+				, phys_addr >> PAGE_SHIFT
+				, sizeof(mu2e_databuff_t)
+				, vma->vm_page_prot);
+			uaddr += sizeof(mu2e_databuff_t);
+		}
+	}
+	else
+	{
+		phys_addr = virt_to_phys(mu2e_mmap_ptrs[ch][dir][map]);
+		sts = io_remap_pfn_range(vma, vma->vm_start
+			, phys_addr >> PAGE_SHIFT
+			, vma->vm_end - vma->vm_start
+			, vma->vm_page_prot);
+	}
+	if (sts) return -EAGAIN;
 
 	return (0);
 }   // mu2e_mmap
@@ -479,16 +494,16 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 			TRACE(10, "%3u %2x 0x%08x", jj, 0
 				, ((u32*)&(mu2e_pci_recver[0].buffdesc_ring[jj]))[0]);
 			TRACE(10, "%3u %2x 0x%016llx", jj, 4
-				, mu2e_pci_recver[0].buffdesc_ring[jj].UserStatus);
+				, mu2e_pci_recver[0].buffdesc_ring[jj]->UserStatus);
 			TRACE(10, "%3u %2x 0x%08x", jj, 12
-				, mu2e_pci_recver[0].buffdesc_ring[jj].CardAddress);
+				, mu2e_pci_recver[0].buffdesc_ring[jj]->CardAddress);
 			TRACE(10, "%3u %2x 0x%08x IrqComplete=%u", jj, 16
 				, ((u32*)&(mu2e_pci_recver[0].buffdesc_ring[jj]))[4]
-				, mu2e_pci_recver[0].buffdesc_ring[jj].IrqComplete);
+				, mu2e_pci_recver[0].buffdesc_ring[jj]->IrqComplete);
 			TRACE(10, "%3u %2x 0x%016llx", jj, 20
-				, mu2e_pci_recver[0].buffdesc_ring[jj].SystemAddress);
+				, mu2e_pci_recver[0].buffdesc_ring[jj]->SystemAddress);
 			TRACE(10, "%3u %2x 0x%08x", jj, 28
-				, mu2e_pci_recver[0].buffdesc_ring[jj].NextDescPtr);
+				, mu2e_pci_recver[0].buffdesc_ring[jj]->NextDescPtr);
 			TRACE(10, "%3u meta@%p[%d]=%u", jj
 				, mu2e_mmap_ptrs[0][C2S][MU2E_MAP_META], jj
 				, ((u32*)(mu2e_mmap_ptrs[0][C2S][MU2E_MAP_META]))[jj]);
@@ -641,7 +656,7 @@ static int ReadPCIState(struct pci_dev * pdev, m_ioc_pcistate_t * pcistate)
 
 void free_mem(void)
 {
-	unsigned       chn, jj;
+	unsigned       chn, jj, ii;
 
 	// stop "app"
 	Dma_mWriteReg(mu2e_pcie_bar_info.baseVAddr
@@ -664,16 +679,18 @@ void free_mem(void)
 
 	for (chn = 0; chn < MU2E_NUM_RECV_CHANNELS; ++chn)
 	{
-		if (mu2e_pci_recver[chn].databuffs)
-			dma_free_coherent(&mu2e_pci_dev->dev
-				, sizeof(mu2e_databuff_t)*MU2E_NUM_RECV_BUFFS
-				, mu2e_pci_recver[chn].databuffs
-				, mu2e_pci_recver[chn].databuffs_dma);
-		if (mu2e_pci_recver[chn].buffdesc_ring)
-			dma_free_coherent(&mu2e_pci_dev->dev
-				, sizeof(mu2e_buffdesc_C2S_t)*MU2E_NUM_RECV_BUFFS
-				, mu2e_pci_recver[chn].buffdesc_ring
-				, mu2e_pci_recver[chn].buffdesc_ring_dma);
+		for (ii = 0; ii < MU2E_NUM_RECV_BUFFS; ++ii) {
+			if (mu2e_pci_recver[chn].databuffs[ii])
+				dma_free_coherent(&mu2e_pci_dev->dev
+					, sizeof(mu2e_databuff_t)
+					, mu2e_pci_recver[chn].databuffs[ii]
+					, mu2e_pci_recver[chn].databuffs_dma[ii]);
+			if (mu2e_pci_recver[chn].buffdesc_ring[ii])
+				dma_free_coherent(&mu2e_pci_dev->dev
+					, sizeof(mu2e_buffdesc_C2S_t)
+					, mu2e_pci_recver[chn].buffdesc_ring[ii]
+					, mu2e_pci_recver[chn].buffdesc_ring_dma[ii]);
+		}
 		free_pages((unsigned long)mu2e_mmap_ptrs[chn][C2S][MU2E_MAP_META], 0);
 	}
 	for (chn = 0; chn < MU2E_NUM_SEND_CHANNELS; ++chn)
@@ -775,21 +792,25 @@ static int __init init_mu2e(void)
 		mu2e_pci_recver[chn].buffdesc_ring_dma = vb;
 
 		for (ii = 0; ii < MU2E_NUM_RECV_BUFFS; ++ii) {
-			mu2e_pci_recver[chn].databuffs[ii] = 
+			mu2e_pci_recver[chn].databuffs[ii] =
 				dma_alloc_coherent(&mu2e_pci_dev->dev, sizeof(mu2e_databuff_t), &(mu2e_pci_recver[chn].databuffs_dma[ii]), GFP_KERNEL);
-			mu2e_pci_recver[chn].buffdesc_ring[ii] = 
+			mu2e_pci_recver[chn].buffdesc_ring[ii] =
 				dma_alloc_coherent(&mu2e_pci_dev->dev, sizeof(mu2e_buffdesc_C2S_t), &(mu2e_pci_recver[chn].buffdesc_ring_dma[ii]), GFP_KERNEL);
+			TRACE(1, "init_mu2e mu2e_pci_recver[%u].databuffs=%p databuffs_dma=0x%llx "
+				"buffdesc_ring=%p buffdesc_ring_dma=0x%llx"
+				, chn
+				, mu2e_pci_recver[chn].databuffs[ii]
+				, mu2e_pci_recver[chn].databuffs_dma[ii]
+					, mu2e_pci_recver[chn].buffdesc_ring[ii]
+				, mu2e_pci_recver[chn].buffdesc_ring_dma[ii]);
 		}
 
-		mu2e_mmap_ptrs[chn][dir][MU2E_MAP_BUFF] = va;
+		mu2e_mmap_ptrs[chn][dir][MU2E_MAP_BUFF] = mu2e_pci_recver[chn].databuffs;
+		//mu2e_mmap_ptrs[chn][dir][MU2E_MAP_META] = mu2e_pci_recver[chn].buffdesc_ring;
 		mu2e_mmap_ptrs[chn][dir][MU2E_MAP_META] = (void*)__get_free_pages(GFP_KERNEL, 0);
 
-		TRACE(1, "init_mu2e mu2e_pci_recver[%u].databuffs=%p databuffs_dma=0x%llx "
-			"buffdesc_ring_dma=0x%llx meta@%p"
+		TRACE(1, "init_mu2e mu2e_pci_recver[%u].meta@%p"
 			, chn
-			, mu2e_pci_recver[chn].databuffs
-			, mu2e_pci_recver[chn].databuffs_dma
-			, mu2e_pci_recver[chn].buffdesc_ring_dma
 			, mu2e_mmap_ptrs[chn][dir][MU2E_MAP_META]);
 
 		mu2e_channel_info_[chn][dir].chn = chn;
@@ -799,22 +820,22 @@ static int __init init_mu2e(void)
 
 		for (jj = 0; jj < MU2E_NUM_RECV_BUFFS; ++jj)
 		{   /* ring -> link to next (and last to 1st via modulus) */
-			(*mu2e_pci_recver[chn].buffdesc_ring[jj]).NextDescPtr = mu2e_pci_recver[chn].buffdesc_ring_dma[(jj + 1) % MU2E_NUM_RECV_BUFFS];
+			mu2e_pci_recver[chn].buffdesc_ring[jj]->NextDescPtr = mu2e_pci_recver[chn].buffdesc_ring_dma[(jj + 1) % MU2E_NUM_RECV_BUFFS];
 			/* put the _buffer_ address in the descriptor */
-			mu2e_pci_recver[chn].buffdesc_ring[jj].SystemAddress = mu2e_pci_recver[chn].databuffs_dma[jj];
+			mu2e_pci_recver[chn].buffdesc_ring[jj]->SystemAddress = mu2e_pci_recver[chn].databuffs_dma[jj];
 			/* and the size of the buffer also */
-			mu2e_pci_recver[chn].buffdesc_ring[jj].RsvdByteCnt = sizeof(mu2e_databuff_t);
+			mu2e_pci_recver[chn].buffdesc_ring[jj]->RsvdByteCnt = sizeof(mu2e_databuff_t);
 #if MU2E_RECV_INTER_ENABLED
-			mu2e_pci_recver[chn].buffdesc_ring[jj].IrqComplete = 1;
-			mu2e_pci_recver[chn].buffdesc_ring[jj].IrqError = 1;
+			mu2e_pci_recver[chn].buffdesc_ring[jj]->IrqComplete = 1;
+			mu2e_pci_recver[chn].buffdesc_ring[jj]->IrqError = 1;
 #else
-			mu2e_pci_recver[chn].buffdesc_ring[jj].IrqComplete = 0;
-			mu2e_pci_recver[chn].buffdesc_ring[jj].IrqError = 0;
+			mu2e_pci_recver[chn].buffdesc_ring[jj]->IrqComplete = 0;
+			mu2e_pci_recver[chn].buffdesc_ring[jj]->IrqError = 0;
 #endif
 		}
 
 		// now write to the HW...
-		TRACE(1, "init_mu2e write 0x%llx to 32bit reg", mu2e_pci_recver[chn].buffdesc_ring_dma);
+		TRACE(1, "init_mu2e write 0x%llx to 32bit reg", mu2e_pci_recver[chn].buffdesc_ring_dma[0]);
 		Dma_mWriteChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_RESET);
 		msleep(20);
 		Dma_mWriteChnReg(chn, dir, REG_HW_NEXT_BD
@@ -856,8 +877,8 @@ static int __init init_mu2e(void)
 			, GFP_KERNEL);
 		if (va == NULL) goto out;
 		mu2e_pci_sender[chn].buffdesc_ring = va;
-		mu2e_mmap_ptrs[chn][dir][MU2E_MAP_META]
-			= (void*)__get_free_pages(GFP_KERNEL, 0);
+		mu2e_mmap_ptrs[chn][dir][MU2E_MAP_META] = (void*)__get_free_pages(GFP_KERNEL, 0);
+
 		TRACE(1, "init_mu2e mu2e_pci_sender[%u].databuffs=%p databuffs_dma=0x%llx "
 			"buffdesc_ring_dma=0x%llx meta@%p"
 			, chn
