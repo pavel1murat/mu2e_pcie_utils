@@ -45,9 +45,9 @@ static void poll_packets(unsigned long __opaque)
 		"H_CPLT=%u "
 		"CPBYTS=0x%08x "
 		, Dma_mReadChnReg(0, C2S, REG_DMA_ENG_CTRL_STATUS)
-	      , descDmaAdr2idx(Dma_mReadChnReg(0, C2S, REG_HW_NEXT_BD), 0, C2S, mu2e_channel_info_[chn][dir].hwIdx)
-	      , descDmaAdr2idx(Dma_mReadChnReg(0, C2S, REG_SW_NEXT_BD), 0, C2S, mu2e_channel_info_[chn][dir].swIdx)
-	      , descDmaAdr2idx(Dma_mReadChnReg(0, C2S, REG_HW_CMPLT_BD), 0, C2S, mu2e_channel_info_[chn][dir].hwIdx)
+	      , descDmaAdr2idx(Dma_mReadChnReg(0, C2S, REG_HW_NEXT_BD), 0, C2S, mu2e_channel_info_[0][C2S].hwIdx)
+	      , descDmaAdr2idx(Dma_mReadChnReg(0, C2S, REG_SW_NEXT_BD), 0, C2S, mu2e_channel_info_[0][C2S].swIdx)
+	      , descDmaAdr2idx(Dma_mReadChnReg(0, C2S, REG_HW_CMPLT_BD), 0, C2S, mu2e_channel_info_[0][C2S].hwIdx)
 		, Dma_mReadChnReg(0, C2S, REG_DMA_ENG_COMP_BYTES)
 	);
 	TRACE(23, "poll_packets: App0: gen=0x%x pktlen=0x%04x chk/loop=0x%x"
