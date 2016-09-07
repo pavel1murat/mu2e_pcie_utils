@@ -691,6 +691,10 @@ void free_mem(void)
 					, mu2e_pci_recver[chn].buffdesc_ring[ii]
 					, mu2e_pci_recver[chn].buffdesc_ring_dma[ii]);
 		}
+		kfree(mu2e_pci_recver[chn].databuffs);
+		kfree(mu2e_pci_recver[chn].buffdesc_ring);
+		kfree(mu2e_pci_recver[chn].databuffs_dma);
+		kfree(mu2e_pci_recver[chn].buffdesc_ring_dma);
 		free_pages((unsigned long)mu2e_mmap_ptrs[chn][C2S][MU2E_MAP_META], 0);
 	}
 	for (chn = 0; chn < MU2E_NUM_SEND_CHANNELS; ++chn)
