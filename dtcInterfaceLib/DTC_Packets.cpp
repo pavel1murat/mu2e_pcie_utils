@@ -449,26 +449,59 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSReplyPacket::ConvertToDataPacket() const
 	return output;
 }
 
-DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status)
-	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, (1 + packetCount) * 16), packetCount_(packetCount), timestamp_(), status_(), evbMode_(0)
+DTCLib::DTC_HeaderPacket::DTC_HeaderPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_Timestamp timestamp, uint16_t byteCount)
+	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, byteCount), timestamp_(timestamp)
+{}
+
+DTCLib::DTC_HeaderPacket::DTC_HeaderPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
 {
-	status_[0] = status;
+	if (packetType_ != DTC_PacketType_DataHeader && packetType_ != DTC_PacketType_DTCHeader)
+	{
+		throw DTC_WrongPacketTypeException();
+	}
+	auto arr = in.GetData();
+	timestamp_ = DTC_Timestamp(arr, 6);
 }
 
-DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp)
-	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, (1 + packetCount) * 16), packetCount_(packetCount), timestamp_(timestamp), status_(), evbMode_(0)
+std::string DTCLib::DTC_HeaderPacket::toJSON()
 {
-	status_[0] = status;
+	std::stringstream ss;
+	ss << "\"DataHeaderPacket\": {";
+	ss << headerJSON() << ",";
+	ss << timestamp_.toJSON() << "}";
+	return ss.str();
+}
+
+std::string DTCLib::DTC_HeaderPacket::toPacketFormat()
+{
+	std::stringstream ss;
+	ss << headerPacketFormat() << std::setfill('0') << std::hex;
+	ss << "        \t        " << std::endl;
+	ss << timestamp_.toPacketFormat();
+	ss << "        \t        " << std::endl;
+	ss << "        \t        " << std::endl;
+	return ss.str();
+}
+
+DTCLib::DTC_DataPacket DTCLib::DTC_HeaderPacket::ConvertToDataPacket() const
+{
+	auto output = DTC_DMAPacket::ConvertToDataPacket();
+	timestamp_.GetTimestamp(output.GetData(), 6);
+	return output;
+}
+
+bool DTCLib::DTC_HeaderPacket::Equals(const DTC_HeaderPacket& other) const
+{
+	return ConvertToDataPacket() == other.ConvertToDataPacket();
 }
 
 DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp, uint8_t evbMode)
-	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, (1 + packetCount) * 16), packetCount_(packetCount), timestamp_(timestamp), status_()
+	: DTC_HeaderPacket(DTC_PacketType_DataHeader, ring,timestamp, (1 + packetCount) * 16), packetCount_(packetCount), status_(), evbMode_(evbMode)
 {
 	status_[0] = status;
-	evbMode_ = evbMode;
 }
 
-DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
+DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket in) : DTC_HeaderPacket(in)
 {
 	if (packetType_ != DTC_PacketType_DataHeader)
 	{
@@ -476,7 +509,6 @@ DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket in) : DTC_DMAP
 	}
 	auto arr = in.GetData();
 	packetCount_ = arr[4] + (arr[5] << 8);
-	timestamp_ = DTC_Timestamp(arr, 6);
 	status_[0] = static_cast<DTC_DataStatus>(arr[12]);
 	status_[1] = static_cast<DTC_DataStatus>(arr[13]);
 	status_[2] = static_cast<DTC_DataStatus>(arr[14]);
@@ -522,3 +554,53 @@ bool DTCLib::DTC_DataHeaderPacket::Equals(const DTC_DataHeaderPacket& other) con
 	return ConvertToDataPacket() == other.ConvertToDataPacket();
 }
 
+DTCLib::DTC_DTCHeaderPacket::DTC_DTCHeaderPacket(DTC_DTC_ID dtc, uint8_t blockCount, DTC_Timestamp timestamp)
+	: DTC_HeaderPacket(DTC_PacketType_DTCHeader, DTC_Ring_Unused, timestamp,16), blockCount_(blockCount), dtcId_(dtc)
+{}
+
+DTCLib::DTC_DTCHeaderPacket::DTC_DTCHeaderPacket(DTC_DataPacket in) : DTC_HeaderPacket(in)
+{
+	if (packetType_ != DTC_PacketType_DTCHeader)
+	{
+		throw DTC_WrongPacketTypeException();
+	}
+	auto arr = in.GetData();
+	blockCount_ = arr[4];
+	dtcId_ = arr[5];
+}
+
+std::string DTCLib::DTC_DTCHeaderPacket::toJSON()
+{
+	std::stringstream ss;
+	ss << "\"DTCHeaderPacket\": {";
+	ss << headerJSON() << ",";
+	ss << "\"blockCount\": " << std::dec << static_cast<int>(blockCount_) << ",";
+	ss << "\"DTC_ID\": " << std::dec << static_cast<int>(dtcId_) << ",";
+	ss << timestamp_.toJSON() << "}";
+	return ss.str();
+}
+
+std::string DTCLib::DTC_DTCHeaderPacket::toPacketFormat()
+{
+	std::stringstream ss;
+	ss << headerPacketFormat() << std::setfill('0') << std::hex;
+	ss << "0x" << std::setw(6) << static_cast<int>(dtcId_) << "\t" << "0x" << std::setw(6) << static_cast<int>(blockCount_) << "\n";
+	ss << timestamp_.toPacketFormat();
+	ss << "        \t        " << std::endl;
+	ss << "        \t        " << std::endl;
+	return ss.str();
+}
+
+DTCLib::DTC_DataPacket DTCLib::DTC_DTCHeaderPacket::ConvertToDataPacket() const
+{
+	auto output = DTC_DMAPacket::ConvertToDataPacket();
+	output.SetWord(4, blockCount_);
+	output.SetWord(5, dtcId_);
+	timestamp_.GetTimestamp(output.GetData(), 6);
+	return output;
+}
+
+bool DTCLib::DTC_DTCHeaderPacket::Equals(const DTC_DTCHeaderPacket& other) const
+{
+	return ConvertToDataPacket() == other.ConvertToDataPacket();
+}

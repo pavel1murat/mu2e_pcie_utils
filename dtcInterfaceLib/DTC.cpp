@@ -46,7 +46,7 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 	TRACE(19, "DTC::GetData: Releasing %i buffers", buffers_used_);
 	device_.read_release(DTC_DMA_Engine_DAQ, buffers_used_);
 	buffers_used_ = 0;
-	DTC_DataHeaderPacket* packet = nullptr;
+	DTC_HeaderPacket* packet = nullptr;
 
 	try
 	{
@@ -314,7 +314,7 @@ void DTCLib::DTC::SendDCSRequestPacket(const DTC_Ring_ID& ring, const DTC_ROC_ID
 	TRACE(19, "DTC::SendDCSRequestPacket after  WriteDMADCSPacket - DTC_DCSRequestPacket");
 }
 
-DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
+DTCLib::DTC_HeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 {
 	TRACE(19, "DTC::ReadNextDAQPacket BEGIN");
 	if (nextReadPtr_ != nullptr)
@@ -380,14 +380,18 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 	}
 	auto test = DTC_DataPacket(nextReadPtr_);
 	TRACE(19, test.toJSON().c_str());
-	auto output = new DTC_DataHeaderPacket(test);
-	TRACE(19, output->toJSON().c_str());
-	if (static_cast<uint16_t>((1 + output->GetPacketCount()) * 16) != blockByteCount)
-	{
-		TRACE(19, "Data Error Detected: PacketCount: %u, ExpectedByteCount: %u, BlockByteCount: %u", output->GetPacketCount(), (1u + output->GetPacketCount()) * 16u, blockByteCount);
-		delete output;
-		throw DTC_DataCorruptionException();
+	try {
+		auto test2 = DTC_DataHeaderPacket(test);
+		TRACE(19, test2.toJSON().c_str());
+		if (static_cast<uint16_t>((1 + test2.GetPacketCount()) * 16) != blockByteCount)
+		{
+			TRACE(19, "Data Error Detected: PacketCount: %u, ExpectedByteCount: %u, BlockByteCount: %u", test2.GetPacketCount(), (1u + test2.GetPacketCount()) * 16u, blockByteCount);
+			throw DTC_DataCorruptionException();
+		}
 	}
+	catch (DTC_WrongPacketTypeException)
+	{ }
+	auto output = new DTC_HeaderPacket(test);
 	first_read_ = false;
 
 	// Update the packet pointers

@@ -42,7 +42,7 @@ namespace DTCLib
 
 		void WriteDMAPacket(const DTC_DMAPacket& packet);
 		void WriteDetectorEmulatorData(mu2e_databuff_t* buf, size_t sz);
-		DTC_DataHeaderPacket* ReadNextDAQPacket(int tmo_ms = 0);
+		DTC_HeaderPacket* ReadNextDAQPacket(int tmo_ms = 0);
 		DTC_DCSReplyPacket* ReadNextDCSPacket();
 
 		void ReleaseAllBuffers() {

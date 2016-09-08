@@ -29,6 +29,7 @@ namespace DTCLib
 		DTC_PacketType_DataRequest = 2,
 		DTC_PacketType_DCSReply = 4,
 		DTC_PacketType_DataHeader = 5,
+			DTC_PacketType_DTCHeader = 7,
 		DTC_PacketType_Invalid = 0x10,
 	};
 
@@ -399,12 +400,43 @@ namespace DTCLib
 		uint16_t data_;
 	};
 
-	class DTC_DataHeaderPacket : public DTC_DMAPacket
+	class DTC_HeaderPacket : public DTC_DMAPacket
 	{
 	public:
-		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status);
-		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp);
-		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp, uint8_t evbMode_);
+		DTC_HeaderPacket(DTC_PacketType type, DTC_Ring_ID ring = DTC_Ring_Unused, DTC_Timestamp timestamp = DTC_Timestamp(), uint16_t byteCount = 16);
+		DTC_HeaderPacket(const DTC_HeaderPacket&) = default;
+		DTC_HeaderPacket(DTC_HeaderPacket&&) = default;
+		explicit DTC_HeaderPacket(DTC_DataPacket in);
+
+		DTC_DataPacket ConvertToDataPacket() const override;
+
+		DTC_Timestamp GetTimestamp() const
+		{
+			return timestamp_;
+		}
+
+		std::string toJSON() override;
+		std::string toPacketFormat() override;
+
+		bool operator==(const DTC_HeaderPacket& other) const
+		{
+			return Equals(other);
+		}
+
+		bool operator!=(const DTC_HeaderPacket& other) const
+		{
+			return !Equals(other);
+		}
+
+		bool Equals(const DTC_HeaderPacket& other) const;
+	protected:
+		DTC_Timestamp timestamp_;
+	};
+
+	class DTC_DataHeaderPacket : public DTC_HeaderPacket
+	{
+	public:
+		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp = DTC_Timestamp(), uint8_t evbMode_ = 0);
 		DTC_DataHeaderPacket(const DTC_DataHeaderPacket&) = default;
 		DTC_DataHeaderPacket(DTC_DataHeaderPacket&&) = default;
 		explicit DTC_DataHeaderPacket(DTC_DataPacket in);
@@ -420,12 +452,7 @@ namespace DTCLib
 		{
 			return packetCount_;
 		}
-
-		DTC_Timestamp GetTimestamp() const
-		{
-			return timestamp_;
-		}
-
+		
 		DTC_DataStatus GetStatus()
 		{
 			return status_[0];
@@ -447,9 +474,53 @@ namespace DTCLib
 		bool Equals(const DTC_DataHeaderPacket& other) const;
 	private:
 		uint16_t packetCount_;
-		DTC_Timestamp timestamp_;
 		DTC_DataStatus status_[3];
 		uint8_t evbMode_;
+	};
+
+	class DTC_DTCHeaderPacket : public DTC_HeaderPacket
+	{
+	public:
+		DTC_DTCHeaderPacket(DTC_DTC_ID dtc, uint8_t blockCount, DTC_Timestamp timestamp = DTC_Timestamp());
+		DTC_DTCHeaderPacket(const DTC_DTCHeaderPacket&) = default;
+		DTC_DTCHeaderPacket(DTC_DTCHeaderPacket&&) = default;
+		explicit DTC_DTCHeaderPacket(DTC_DataPacket in);
+
+		DTC_DataPacket ConvertToDataPacket() const override;
+		
+		uint8_t GetBlockCount() const
+		{
+			return blockCount_;
+		}
+
+
+		DTC_DTC_ID GetDTCID() const
+		{
+			return dtcId_;
+		}
+
+		void AddBlockByteCount(uint16_t byteCount)
+		{
+			byteCount_ += byteCount;
+		}
+
+		std::string toJSON() override;
+		std::string toPacketFormat() override;
+
+		bool operator==(const DTC_DTCHeaderPacket& other) const
+		{
+			return Equals(other);
+		}
+
+		bool operator!=(const DTC_DTCHeaderPacket& other) const
+		{
+			return !Equals(other);
+		}
+
+		bool Equals(const DTC_DTCHeaderPacket& other) const;
+	private:
+		uint8_t blockCount_;
+		DTC_DTC_ID dtcId_;
 	};
 }
 
