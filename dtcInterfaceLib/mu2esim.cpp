@@ -179,6 +179,7 @@ int mu2esim::init(DTCLib::DTC_SimMode mode)
 	registers_[DTCLib::DTC_Register_DDRSERDESEndAddress] = 0x0;
 	registers_[DTCLib::DTC_Register_DDRSERDESWriteBurstSize] = 0x0;
 	registers_[DTCLib::DTC_Register_DDRSERDESReadBurstSize] = 0x0;
+	registers_[DTCLib::DTC_Register_DDRGasGuage] = 0x0;
 	registers_[DTCLib::DTC_Register_FPGAProgramData] = 0x0;
 	registers_[DTCLib::DTC_Register_FPGAPROMProgramStatus] = 0x1;
 	registers_[DTCLib::DTC_Register_FPGACoreAccess] = 0x0; // FPGA Core Access OK

@@ -2759,6 +2759,22 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDRSERDESReadBurstSiz
 	return form;
 }
 
+// DDR Gas Guage Register
+uint32_t DTCLib::DTC_Registers::ReadDDRGasGuage()
+{
+  return ReadRegister_(DTC_Register_DDRGasGuage);
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDRGasGuage()
+{
+  auto form = CreateFormatter(DTC_Register_DDRGasGuage);
+  form.description = "DDR Gas Guage";
+  std::stringstream o;
+  o<< "0x" << std::hex << ReadDDRGasGuage();
+  form.vals.push_back(o.str());
+  return form;
+}
+
 // FPGA PROM Program Status Register
 bool DTCLib::DTC_Registers::ReadFPGAPROMProgramFIFOFull()
 {

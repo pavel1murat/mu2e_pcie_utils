@@ -49,6 +49,8 @@ bool rawOutput = false;
 bool useCFOEmulator = true;
 unsigned genDMABlocks = 0;
 std::string rawOutputFile = "/tmp/mu2eUtil.raw";
+std::string simFile = "";
+bool useSimFile =false;
 unsigned delay = 0;
 unsigned cfodelay = 1000;
 unsigned number = 1;
@@ -181,6 +183,8 @@ void printHelpMsg()
 		<< "    -t: Use DebugType flag (1st request gets ExternalDataWithFIFOReset, the rest get ExternalData)" << std::endl
 		<< "    -T: Set DebugType flag for ALL requests (0, 1, or 2)" << std::endl
 		<< "    -f: RAW Output file path" << std::endl
+		<< "    -p: Send DTCLIB_SIM_FILE to DTC and enable Detector Emulator mode" << std::endl
+		<< "    -P: Send <file> to DTC and enable Detector Emulator mode (Default: \"\")" << std::endl
 		<< "    -g: Generate (and send) N DMA blocks for testing the Detector Emulator (Default: 0)" << std::endl
 		<< "    -G: Read out generated data, but don't write new. With -g, will exit after writing data" << std::endl
 	        << "    -r: # of rocs to enable. Hexadecimal, each digit corresponds to a ring. ROC_0: 1, ROC_1: 3, ROC_2: 5, ROC_3: 7, ROC_4: 9, ROC_5: B (Default 0x1, All possible: 0xBBBBBB)" << std::endl
@@ -228,6 +232,13 @@ main(int argc
 				quietCount = getOptionValue(&optind, &argv);
 				if(quietCount == 0) quietCount = 1;
 				break;
+			case 'p':
+			  useSimFile = true;
+			  break;
+			case 'P':
+			  useSimFile = true;
+			  simFile = getOptionValue(&optind, &argv);
+			  break;
 			case 'g':
 				genDMABlocks = getOptionValue(&optind, &argv);
 				break;
@@ -301,6 +312,7 @@ main(int argc
 		<< ", Check SERDES Error Status: " << checkSERDES
 		<< ", Generate DMA Blocks: " << genDMABlocks
 		<< ", Read Data from DDR: " << readGenerated
+		  <<", Use Sim File: " << useSimFile
 		  <<", ROC Mask: " <<std::hex << rocMask
 		  <<", Ring ROC Emulator Mask: " << std::hex << rocEmulatorMask
 		<< ", Debug Type: " << DTC_DebugTypeConverter(debugType).toString();
@@ -308,6 +320,10 @@ main(int argc
 	{
 		std::cout << ", Raw output file: " << rawOutputFile;
 	}
+	if(simFile.size() > 0)
+	  {
+	    std::cout << ", Sim file: " << simFile;
+	  }
 	std::cout << std::endl;
 	if (rawOutput) outputStream.open(rawOutputFile, std::ios::out | std::ios::app | std::ios::binary);
 
@@ -413,7 +429,7 @@ main(int argc
 		auto startTime = std::chrono::steady_clock::now();
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto thisDTC = new DTC(DTC_SimMode_NoCFO,rocMask,rocEmulatorMask);
-
+uint32_t maxGasGauge = 0x0;
 		auto device = thisDTC->GetDevice();
 
 		auto initTime = device->GetDeviceTime();
@@ -426,6 +442,12 @@ main(int argc
 		{
 			WriteGeneratedData(thisDTC);
 		}
+		else if(useSimFile)
+		  {
+		    auto overwrite = false;
+		    if(simFile.size() > 0) overwrite = true;
+		    thisDTC->WriteSimFileToDTC(simFile, false, overwrite);
+		  }
 		else if (readGenerated)
 		{
 			thisDTC->DisableDetectorEmulator();
@@ -472,8 +494,10 @@ main(int argc
 				auto bufSize = static_cast<uint16_t>(*static_cast<uint64_t*>(readPtr));
 				readPtr = static_cast<uint8_t*>(readPtr) + 8;
 				if (!reallyQuiet) std::cout << "Buffer reports DMA size of " << std::dec << bufSize << " bytes. Device driver reports read of " << sts << " bytes," << std::endl;
-				TRACE(1, "util - bufSize is %u", bufSize);
-				if (rawOutput) outputStream.write(static_cast<char*>(readPtr), bufSize - 8);
+uint32_t gasGauge = thisDTC->ReadDDRGasGuage();				
+     TRACE(1, "util - bufSize is %u, gasGuage is %x", bufSize, gasGauge);
+		if(gasGauge > maxGasGauge) maxGasGauge = gasGauge;
+		if (rawOutput) outputStream.write(static_cast<char*>(readPtr), bufSize - 8);
 
 				if (!reallyQuiet)
 				{
@@ -494,7 +518,7 @@ main(int argc
 						if(quiet && line == (quietCount - 1)) line =  static_cast<unsigned>(ceil((sts - 8) / 16.0)) - (1 + quietCount);
 					}
 				}
-			}
+			} else if (checkSERDES) break;
 			if (!reallyQuiet) std::cout << std::endl << std::endl;
 			device->read_release(DTC_DMA_Engine_DAQ, 1);
 			if (delay > 0)
@@ -522,7 +546,8 @@ main(int argc
 			<< "Total Bytes Read: " << Utilities::FormatByteString(totalBytesRead) << "." << std::endl
 			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
 			<< "Read Rate: " << Utilities::FormatByteString(totalBytesRead / totalReadTime) << "/s." << std::endl
-			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime) << "/s." << std::endl;
+			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime) << "/s." << std::endl
+                        << "Maximum Gas Gauge: " << Utilities::FormatByteString(maxGasGauge) << std::endl;
 
 		delete thisDTC;
 	}
@@ -546,6 +571,7 @@ main(int argc
 		auto startTime = std::chrono::steady_clock::now();
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto thisDTC = new DTC(DTC_SimMode_NoCFO,rocMask,rocEmulatorMask);
+uint32_t maxGasGauge = 0x0;
 
 		auto initTime = thisDTC->GetDevice()->GetDeviceTime();
 		thisDTC->GetDevice()->ResetDeviceTime();
@@ -557,6 +583,12 @@ main(int argc
 		{
 			WriteGeneratedData(thisDTC);
 		}
+		else if(useSimFile)
+		  {
+		    auto overwrite = false;
+		    if(simFile.size() > 0) overwrite = true;
+		    thisDTC->WriteSimFileToDTC(simFile, false, overwrite);
+		  }
 		else if (readGenerated)
 		{
 			thisDTC->DisableDetectorEmulator();
@@ -594,6 +626,9 @@ main(int argc
 			}
 
 			auto data = thisDTC->GetData(); //DTC_Timestamp(ts));
+uint32_t gasGauge = thisDTC->ReadDDRGasGuage();				
+ TRACE(1, "util - data count is %zu, gasGuage is %x", data.size(), gasGauge);
+		if(gasGauge > maxGasGauge) maxGasGauge = gasGauge;
 
 			if (data.size() > 0)
 			{
@@ -727,7 +762,8 @@ main(int argc
 			<< "Total Bytes Read: " << Utilities::FormatByteString(totalBytesRead) << "." << std::endl
 			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
 			<< "Read Rate: " << Utilities::FormatByteString(totalBytesRead / totalReadTime) << "/s." << std::endl
-			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime) << "/s." << std::endl;
+			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime) << "/s." << std::endl
+                        << "Maximum Gas Gauge: " << Utilities::FormatByteString(maxGasGauge) << std::endl;
 		delete thisDTC;
 	}
 	else
