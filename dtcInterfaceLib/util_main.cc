@@ -636,7 +636,7 @@ main(int argc
 					auto test = DTC_DataPacket(data[i].blockPointer);
 					//TRACE(19, test.toJSON().c_str());
 					//if (!reallyQuiet) cout << test.toJSON() << '\n'; // dumps whole databuff_t
-					auto h2 = DTC_DataHeaderPacket(test);
+					auto h2 = DTC_HeaderPacket(test);
 					if (expectedTS != h2.GetTimestamp().GetTimestamp(true))
 					{
 						std::cout << std::dec << h2.GetTimestamp().GetTimestamp(true) << " does not match expected timestamp of " << expectedTS << "!!!" << std::endl;
@@ -666,18 +666,44 @@ main(int argc
 							outputStream.write((char*)&word, sizeof(uint8_t));
 						}*/
 					}
-					for (auto jj = 0; jj < h2.GetPacketCount(); ++jj)
-					{
-						auto packet = DTC_DataPacket(reinterpret_cast<uint8_t*>(data[i].blockPointer) + (jj + 1) * 16);
-						if (!quiet) std::cout << "\t" << packet.toJSON() << std::endl;
-						if (rawOutput)
+					if (h2.GetPacketType() == DTCLib::DTC_PacketType_DataHeader) {
+						auto h3 = DTC_DataHeaderPacket(test);
+						for (auto jj = 0; jj < h3.GetPacketCount(); ++jj)
 						{
-							outputStream << packet;
-							/*for (int ii = 0; ii < 16; ++ii)
+							auto packet = DTC_DataPacket(reinterpret_cast<uint8_t*>(data[i].blockPointer) + (jj + 1) * 16);
+							if (!quiet) std::cout << "\t" << packet.toJSON() << std::endl;
+							if (rawOutput)
 							{
-								uint8_t word = packet.GetWord(ii);
-								outputStream.write((char*)&word, sizeof(uint8_t));
-							}*/
+								outputStream << packet;
+								/*for (int ii = 0; ii < 16; ++ii)
+								{
+									uint8_t word = packet.GetWord(ii);
+									outputStream.write((char*)&word, sizeof(uint8_t));
+								}*/
+							}
+						}
+					}
+					else if (h2.GetPacketType() == DTC_PacketType_DTCHeader)
+					{
+						auto h3 = DTC_DTCHeaderPacket(test);
+						std::cout << "DTC_DTCHeaderPacket:" << std::endl;
+						std::cout << h3.toJSON() << std::endl << std::endl;
+
+						uint64_t offset = 16;
+						while (offset < h3.GetByteCount()) {
+							uint64_t wordOffset = offset / 8;
+							auto dhpacket = DTCLib::DTC_DataHeaderPacket(DTCLib::DTC_DataPacket(reinterpret_cast<uint8_t*>(data[i].blockPointer + wordOffset)));
+							std::cout << dhpacket.toJSON() << std::endl;
+
+							int packetMax = dhpacket.GetPacketCount();
+							for (int ii = 0; ii < packetMax; ++ii)
+							{
+								// Packets are 16 bytes. mu2eFragment::Header::data_t is a uint64_t. Therefore, each packet is an offset of 2!
+								auto packet = DTCLib::DTC_DataPacket(reinterpret_cast<uint8_t*>(data[i].blockPointer + wordOffset + 2 + (ii * 2)));
+								std::cout << packet.toJSON() << std::endl;
+							}
+							std::cout << std::endl;
+							offset += dhpacket.GetByteCount();
 						}
 					}
 				}

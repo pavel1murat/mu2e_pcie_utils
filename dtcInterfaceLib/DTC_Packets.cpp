@@ -466,7 +466,7 @@ DTCLib::DTC_HeaderPacket::DTC_HeaderPacket(DTC_DataPacket in) : DTC_DMAPacket(in
 std::string DTCLib::DTC_HeaderPacket::toJSON()
 {
 	std::stringstream ss;
-	ss << "\"DataHeaderPacket\": {";
+	ss << "\"HeaderPacket\": {";
 	ss << headerJSON() << ",";
 	ss << timestamp_.toJSON() << "}";
 	return ss.str();
