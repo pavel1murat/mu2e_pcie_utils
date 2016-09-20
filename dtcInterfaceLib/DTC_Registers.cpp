@@ -10,7 +10,7 @@
 #endif
 #define TRACE_NAME "MU2EDEV"
 
-DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, unsigned rocMask, unsigned rocEmulatorMask) : device_(), simMode_(mode), dmaSize_(16)
+DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, unsigned rocMask) : device_(), simMode_(mode), dmaSize_(16)
 {
 	for (auto ii = 0; ii < 6; ++ii)
 	{
@@ -68,7 +68,7 @@ DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, unsigned rocMask, unsigne
 		}
 	}
 
-	SetSimMode(simMode_, rocMask, rocEmulatorMask);
+	SetSimMode(simMode_, rocMask);
 }
 
 DTCLib::DTC_Registers::~DTC_Registers()
@@ -80,46 +80,45 @@ DTCLib::DTC_Registers::~DTC_Registers()
 	device_.close();
 }
 
-DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode, unsigned rocMask, unsigned rocEmulatorMask)
+DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode, unsigned rocMask)
 {
-  simMode_ = mode;
-  device_.init(simMode_);
+	simMode_ = mode;
+	device_.init(simMode_);
 
-  std::bitset<6> rocEmulatorMaskBS(rocEmulatorMask);
-  bool useTiming = simMode_ == DTC_SimMode_Disabled;
-  for (auto ring : DTC_Rings)
-    {
-      bool ringEnabled = ((rocMask >> (ring * 4)) & 0x1) != 0;
-      if(!ringEnabled) { DisableRing(ring); }
-      else 
+	bool useTiming = simMode_ == DTC_SimMode_Disabled;
+	for (auto ring : DTC_Rings)
 	{
-	  int rocCount = (((rocMask >> (ring * 4)) & 0xF) - 1) / 2;
-	  EnableRing(ring, DTC_RingEnableMode(true,true,useTiming), DTC_ROCS[rocCount+1]);
+		bool ringEnabled = ((rocMask >> (ring * 4)) & 0x1) != 0;
+		if (!ringEnabled) { DisableRing(ring); }
+		else
+		{
+			int rocCount = (((rocMask >> (ring * 4)) & 0xF) - 1) / 2;
+			EnableRing(ring, DTC_RingEnableMode(true, true, useTiming), DTC_ROCS[rocCount + 1]);
+		}
+		if (!ringEnabled)  DisableROCEmulator(ring);
+		if (!ringEnabled)  SetSERDESLoopbackMode(ring, DTC_SERDESLoopbackMode_Disabled);
 	}
-      if(!rocEmulatorMaskBS[ring])  DisableROCEmulator(ring);
-      if(!rocEmulatorMaskBS[ring])  SetSERDESLoopbackMode(ring, DTC_SERDESLoopbackMode_Disabled);
-    }
 
-  if (simMode_ != DTC_SimMode_Disabled)
-    {
-      // Set up hardware simulation mode: Ring 0 Tx/Rx Enabled, Loopback Enabled, ROC Emulator Enabled. All other rings disabled.
-      // for (auto ring : DTC_Rings)
-      // 	{
-      // 	  DisableRing(ring);
-      // 	}
-      //	EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
-      for(auto ring : DTC_Rings) {
-		if (simMode_ == DTC_SimMode_Loopback)
-		{
-			SetSERDESLoopbackMode(ring, DTC_SERDESLoopbackMode_NearPCS);
-			//			SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
+	if (simMode_ != DTC_SimMode_Disabled)
+	{
+		// Set up hardware simulation mode: Ring 0 Tx/Rx Enabled, Loopback Enabled, ROC Emulator Enabled. All other rings disabled.
+		// for (auto ring : DTC_Rings)
+		// 	{
+		// 	  DisableRing(ring);
+		// 	}
+		//	EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
+		for (auto ring : DTC_Rings) {
+			if (simMode_ == DTC_SimMode_Loopback)
+			{
+				SetSERDESLoopbackMode(ring, DTC_SERDESLoopbackMode_NearPCS);
+				//			SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
+			}
+			else if (simMode_ == DTC_SimMode_ROCEmulator)
+			{
+				EnableROCEmulator(ring);
+				//SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
+			}
 		}
-		else if (simMode_ == DTC_SimMode_ROCEmulator)
-		{
-			EnableROCEmulator(ring);
-			//SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
-		}
-      }
 		SetInternalSystemClock();
 		DisableTiming();
 	}
@@ -2762,17 +2761,17 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDRSERDESReadBurstSiz
 // DDR Gas Guage Register
 uint32_t DTCLib::DTC_Registers::ReadDDRGasGuage()
 {
-  return ReadRegister_(DTC_Register_DDRGasGuage);
+	return ReadRegister_(DTC_Register_DDRGasGuage);
 }
 
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDRGasGuage()
 {
-  auto form = CreateFormatter(DTC_Register_DDRGasGuage);
-  form.description = "DDR Gas Guage";
-  std::stringstream o;
-  o<< "0x" << std::hex << ReadDDRGasGuage();
-  form.vals.push_back(o.str());
-  return form;
+	auto form = CreateFormatter(DTC_Register_DDRGasGuage);
+	form.description = "DDR Gas Guage";
+	std::stringstream o;
+	o << "0x" << std::hex << ReadDDRGasGuage();
+	form.vals.push_back(o.str());
+	return form;
 }
 
 // FPGA PROM Program Status Register
