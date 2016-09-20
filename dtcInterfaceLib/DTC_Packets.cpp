@@ -450,7 +450,7 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSReplyPacket::ConvertToDataPacket() const
 }
 
 DTCLib::DTC_HeaderPacket::DTC_HeaderPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_Timestamp timestamp, uint16_t byteCount)
-	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, byteCount), timestamp_(timestamp)
+	: DTC_DMAPacket(type, ring, DTC_ROC_Unused, byteCount), timestamp_(timestamp)
 {}
 
 DTCLib::DTC_HeaderPacket::DTC_HeaderPacket(DTC_DataPacket in) : DTC_DMAPacket(in)

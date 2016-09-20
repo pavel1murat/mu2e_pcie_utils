@@ -20,7 +20,7 @@
 #include "DTC_Types.h"
 #include "DTC_Packets.h"
 
-#define SIM_BUFFCOUNT 4U
+#define SIM_BUFFCOUNT 400U
 
 class DDRSimulator
 {
