@@ -388,7 +388,15 @@ DTCLib::DTC_HeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 		TRACE(19, "DTC::ReadNextDAQPacket: blockByteCount is 0, returning NULL!");
 		return nullptr;
 	}
+
 	auto test = DTC_DataPacket(nextReadPtr_);
+	if(reinterpret_cast<uint8_t*>(nextReadPtr_) + blockByteCount >= daqbuffer_.back()[0] + daqDMAByteCount_)
+	{
+		blockByteCount = daqbuffer_.back()[0] + daqDMAByteCount_ - reinterpret_cast<uint8_t*>(nextReadPtr_);
+		test.SetWord(0, blockByteCount & 0xFF);
+		test.SetWord(1, (blockByteCount >> 8));
+	}
+
 	TRACE(19, test.toJSON().c_str());
 	try {
 		auto test2 = DTC_DataHeaderPacket(test);
