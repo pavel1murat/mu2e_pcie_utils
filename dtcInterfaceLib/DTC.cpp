@@ -56,7 +56,7 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 	last = nullptr;
 	lastDAQBufferActive_ = false;
 
-	DTC_HeaderPacket* packet = nullptr;
+	DTC_DataHeaderPacket* packet = nullptr;
 
 	try
 	{
@@ -325,7 +325,7 @@ void DTCLib::DTC::SendDCSRequestPacket(const DTC_Ring_ID& ring, const DTC_ROC_ID
 	TRACE(19, "DTC::SendDCSRequestPacket after  WriteDMADCSPacket - DTC_DCSRequestPacket");
 }
 
-DTCLib::DTC_HeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
+DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 {
 	TRACE(19, "DTC::ReadNextDAQPacket BEGIN");
 	if (nextReadPtr_ != nullptr)
@@ -390,7 +390,7 @@ DTCLib::DTC_HeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 	}
 
 	auto test = DTC_DataPacket(nextReadPtr_);
-	if(reinterpret_cast<uint8_t*>(nextReadPtr_) + blockByteCount >= daqbuffer_.back()[0] + daqDMAByteCount_)
+	if (reinterpret_cast<uint8_t*>(nextReadPtr_) + blockByteCount >= daqbuffer_.back()[0] + daqDMAByteCount_)
 	{
 		blockByteCount = daqbuffer_.back()[0] + daqDMAByteCount_ - reinterpret_cast<uint8_t*>(nextReadPtr_);
 		test.SetWord(0, blockByteCount & 0xFF);
@@ -398,19 +398,13 @@ DTCLib::DTC_HeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 	}
 
 	TRACE(19, test.toJSON().c_str());
-	try {
-		auto test2 = DTC_DataHeaderPacket(test);
-		TRACE(19, test2.toJSON().c_str());
-		if (static_cast<uint16_t>((1 + test2.GetPacketCount()) * 16) != blockByteCount)
-		{
-			TRACE(19, "Data Error Detected: PacketCount: %u, ExpectedByteCount: %u, BlockByteCount: %u", test2.GetPacketCount(), (1u + test2.GetPacketCount()) * 16u, blockByteCount);
-			throw DTC_DataCorruptionException();
-		}
-	}
-	catch (DTC_WrongPacketTypeException)
+	auto output = new DTC_DataHeaderPacket(test);
+	TRACE(19, output->toJSON().c_str());
+	if (static_cast<uint16_t>((1 + output->GetPacketCount()) * 16) != blockByteCount)
 	{
+		TRACE(19, "Data Error Detected: PacketCount: %u, ExpectedByteCount: %u, BlockByteCount: %u", output->GetPacketCount(), (1u + output->GetPacketCount()) * 16u, blockByteCount);
+		throw DTC_DataCorruptionException();
 	}
-	auto output = new DTC_HeaderPacket(test);
 	first_read_ = false;
 
 	// Update the packet pointers
