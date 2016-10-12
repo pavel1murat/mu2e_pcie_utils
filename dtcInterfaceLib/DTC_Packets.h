@@ -22,6 +22,9 @@
 
 namespace DTCLib
 {
+	/// <summary>
+	/// Defined Packet Types for the DTC DMA Protocol
+	/// </summary>
 	enum DTC_PacketType : uint8_t
 	{
 		DTC_PacketType_DCSRequest = 0,
@@ -32,6 +35,9 @@ namespace DTCLib
 		DTC_PacketType_Invalid = 0x10,
 	};
 
+	/// <summary>
+	/// Possible values for the Status word of the Data Header packet
+	/// </summary>
 	enum DTC_DataStatus
 	{
 		DTC_DataStatus_Valid = 0,
@@ -39,6 +45,9 @@ namespace DTCLib
 		DTC_DataStatus_Invalid = 2,
 	};
 
+	/// <summary>
+	/// Possible values for the Op word of the DCS Reqeust packet.
+	/// </summary>
 	enum DTC_DCSOperationType : uint8_t
 	{
 		DTC_DCSOperationType_Read = 0,

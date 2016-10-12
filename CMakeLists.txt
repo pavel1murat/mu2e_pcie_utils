@@ -63,5 +63,8 @@ add_subdirectory(dtcInterfaceLib)
 # ups - table and config files
 add_subdirectory(ups)
 
+# doc - Doxygen documentation
+add_subdirectory(doc)
+
 # packaging utility
 include(UseCPack)
