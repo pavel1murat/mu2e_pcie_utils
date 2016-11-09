@@ -13,8 +13,8 @@
 #endif
 #define TRACE_NAME "MU2EDEV"
 
-DTCLib::DTC::DTC(DTC_SimMode mode, unsigned rocMask, unsigned rocEmulatorMask) : DTC_Registers(mode, rocMask, rocEmulatorMask),
-daqbuffer_(nullptr), buffers_used_(0), dcsbuffer_(nullptr),
+DTCLib::DTC::DTC(DTC_SimMode mode, unsigned rocMask) : DTC_Registers(mode, rocMask),
+daqbuffer_(), dcsbuffer_(), lastDAQBufferActive_(false), lastDCSBufferActive_(false),
 bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
 lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 {
@@ -27,8 +27,9 @@ lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 
 DTCLib::DTC::~DTC()
 {
-	daqbuffer_ = nullptr;
-	dcsbuffer_ = nullptr;
+	ReleaseAllBuffers();
+	daqbuffer_.clear();
+	dcsbuffer_.clear();
 	lastReadPtr_ = nullptr;
 	nextReadPtr_ = nullptr;
 	dcsReadPtr_ = nullptr;
@@ -43,9 +44,18 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 	std::vector<DTC_DataBlock> output;
 
 	first_read_ = true;
-	TRACE(19, "DTC::GetData: Releasing %i buffers", buffers_used_);
-	device_.read_release(DTC_DMA_Engine_DAQ, buffers_used_);
-	buffers_used_ = 0;
+	TRACE(19, "DTC::GetData: Releasing %i buffers", (int)daqbuffer_.size() + (lastDAQBufferActive_ ? -1 : 0));
+	device_.read_release(DTC_DMA_Engine_DAQ, daqbuffer_.size() + (lastDAQBufferActive_ ? -1 : 0));
+
+	mu2e_databuff_t* last = daqbuffer_.back();
+	daqbuffer_.clear();
+	if (lastDAQBufferActive_)
+	{
+		daqbuffer_.push_back(last);
+	}
+	last = nullptr;
+	lastDAQBufferActive_ = false;
+
 	DTC_DataHeaderPacket* packet = nullptr;
 
 	try
@@ -74,6 +84,7 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 			TRACE(0, "DTC::GetData: Error: Lead packet has wrong timestamp! 0x%llX(expected) != 0x%llX"
 				, (unsigned long long)when.GetTimestamp(true), (unsigned long long)packet->GetTimestamp().GetTimestamp(true));
 			delete packet;
+			lastDAQBufferActive_ = true;
 			return output;
 		}
 
@@ -103,7 +114,7 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 				TRACE(19, "DTC::GetData: Next packet has ts=0x%llx, not 0x%llx; we're done", (unsigned long long)packet->GetTimestamp().GetTimestamp(true), (unsigned long long)when.GetTimestamp(true));
 				done = true;
 				nextReadPtr_ = lastReadPtr_;
-				buffers_used_--;
+				lastDAQBufferActive_ = true;
 			}
 			else
 			{
@@ -329,8 +340,8 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 	auto newBuffer = false;
 	// Check if the nextReadPtr has been initialized, and if its pointing to a valid location
 	if (nextReadPtr_ == nullptr
-		|| nextReadPtr_ >= reinterpret_cast<uint8_t*>(daqbuffer_) + sizeof(mu2e_databuff_t)
-		|| nextReadPtr_ >= reinterpret_cast<uint8_t*>(daqbuffer_) + daqDMAByteCount_
+		|| nextReadPtr_ >= reinterpret_cast<uint8_t*>(daqbuffer_.back()) + sizeof(mu2e_databuff_t)
+		|| nextReadPtr_ >= reinterpret_cast<uint8_t*>(daqbuffer_.back()) + daqDMAByteCount_
 		|| *static_cast<uint16_t*>(nextReadPtr_) == 0)
 	{
 		newBuffer = true;
@@ -339,7 +350,7 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 			lastReadPtr_ = nullptr;
 		}
 		TRACE(19, "DTC::ReadNextDAQPacket Obtaining new DAQ Buffer");
-		void* oldBufferPtr = &daqbuffer_[0];
+		void* oldBufferPtr = &daqbuffer_.back()[0];
 		auto sts = ReadBuffer(DTC_DMA_Engine_DAQ, tmo_ms); // does return code
 		if (sts <= 0)
 		{
@@ -347,7 +358,7 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 			return nullptr;
 		}
 		// MUST BE ABLE TO HANDLE daqbuffer_==nullptr OR retry forever?
-		nextReadPtr_ = &daqbuffer_[0];
+		nextReadPtr_ = &daqbuffer_.back()[0];
 		TRACE(19, "DTC::ReadNextDAQPacket nextReadPtr_=%p *nextReadPtr_=0x%08x lastReadPtr_=%p"
 			, (void*)nextReadPtr_, *(unsigned*)nextReadPtr_, (void*)lastReadPtr_);
 		void* bufferIndexPointer = static_cast<uint8_t*>(nextReadPtr_) + 2;
@@ -359,7 +370,6 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 			device_.read_release(DTC_DMA_Engine_DAQ, 1);
 			return nullptr;
 		}
-		buffers_used_++;
 		bufferIndex_++;
 	}
 	//Read the next packet
@@ -378,14 +388,21 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 		TRACE(19, "DTC::ReadNextDAQPacket: blockByteCount is 0, returning NULL!");
 		return nullptr;
 	}
+
 	auto test = DTC_DataPacket(nextReadPtr_);
+	if (reinterpret_cast<uint8_t*>(nextReadPtr_) + blockByteCount >= daqbuffer_.back()[0] + daqDMAByteCount_)
+	{
+		blockByteCount = daqbuffer_.back()[0] + daqDMAByteCount_ - reinterpret_cast<uint8_t*>(nextReadPtr_);
+		test.SetWord(0, blockByteCount & 0xFF);
+		test.SetWord(1, (blockByteCount >> 8));
+	}
+
 	TRACE(19, test.toJSON().c_str());
 	auto output = new DTC_DataHeaderPacket(test);
 	TRACE(19, output->toJSON().c_str());
 	if (static_cast<uint16_t>((1 + output->GetPacketCount()) * 16) != blockByteCount)
 	{
 		TRACE(19, "Data Error Detected: PacketCount: %u, ExpectedByteCount: %u, BlockByteCount: %u", output->GetPacketCount(), (1u + output->GetPacketCount()) * 16u, blockByteCount);
-		delete output;
 		throw DTC_DataCorruptionException();
 	}
 	first_read_ = false;
@@ -405,14 +422,14 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 DTCLib::DTC_DCSReplyPacket* DTCLib::DTC::ReadNextDCSPacket()
 {
 	TRACE(19, "DTC::ReadNextDCSPacket BEGIN");
-	if (dcsReadPtr_ == nullptr || dcsReadPtr_ >= reinterpret_cast<uint8_t*>(dcsbuffer_) + sizeof(mu2e_databuff_t) || *static_cast<uint16_t*>(dcsReadPtr_) == 0)
+	if (dcsReadPtr_ == nullptr || dcsReadPtr_ >= reinterpret_cast<uint8_t*>(dcsbuffer_.back()) + sizeof(mu2e_databuff_t) || *static_cast<uint16_t*>(dcsReadPtr_) == 0)
 	{
 		TRACE(19, "DTC::ReadNextDCSPacket Obtaining new DCS Buffer");
 		auto retsts = ReadBuffer(DTC_DMA_Engine_DCS);
 		if (retsts > 0)
 		{
-			dcsReadPtr_ = &dcsbuffer_[0];
-			TRACE(19, "DTC::ReadNextDCSPacket dcsReadPtr_=%p dcsBuffer_=%p", (void*)dcsReadPtr_, (void*)dcsbuffer_);
+			dcsReadPtr_ = &dcsbuffer_.back()[0];
+			TRACE(19, "DTC::ReadNextDCSPacket dcsReadPtr_=%p dcsBuffer_=%p", (void*)dcsReadPtr_, (void*)dcsbuffer_.back());
 		}
 		else
 		{
@@ -481,11 +498,11 @@ int DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
 			, (void*)buffer, errorCode, *(unsigned*)buffer);
 		if (channel == DTC_DMA_Engine_DAQ)
 		{
-			daqbuffer_ = buffer;
+			daqbuffer_.push_back(buffer);
 		}
 		else if (channel == DTC_DMA_Engine_DCS)
 		{
-			dcsbuffer_ = buffer;
+			dcsbuffer_.push_back(buffer);
 		}
 	}
 	return errorCode;

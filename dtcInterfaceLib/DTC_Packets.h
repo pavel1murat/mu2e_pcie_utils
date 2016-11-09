@@ -22,6 +22,9 @@
 
 namespace DTCLib
 {
+	/// <summary>
+	/// Defined Packet Types for the DTC DMA Protocol
+	/// </summary>
 	enum DTC_PacketType : uint8_t
 	{
 		DTC_PacketType_DCSRequest = 0,
@@ -32,6 +35,9 @@ namespace DTCLib
 		DTC_PacketType_Invalid = 0x10,
 	};
 
+	/// <summary>
+	/// Possible values for the Status word of the Data Header packet
+	/// </summary>
 	enum DTC_DataStatus
 	{
 		DTC_DataStatus_Valid = 0,
@@ -39,6 +45,9 @@ namespace DTCLib
 		DTC_DataStatus_Invalid = 2,
 	};
 
+	/// <summary>
+	/// Possible values for the Op word of the DCS Reqeust packet.
+	/// </summary>
 	enum DTC_DCSOperationType : uint8_t
 	{
 		DTC_DCSOperationType_Read = 0,
@@ -398,13 +407,11 @@ namespace DTCLib
 		uint8_t address_ : 5;
 		uint16_t data_;
 	};
-
+	
 	class DTC_DataHeaderPacket : public DTC_DMAPacket
 	{
 	public:
-		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status);
-		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp);
-		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp, uint8_t evbMode_);
+		DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp = DTC_Timestamp(), uint8_t evbMode_ = 0);
 		DTC_DataHeaderPacket(const DTC_DataHeaderPacket&) = default;
 		DTC_DataHeaderPacket(DTC_DataHeaderPacket&&) = default;
 		explicit DTC_DataHeaderPacket(DTC_DataPacket in);
@@ -425,7 +432,7 @@ namespace DTCLib
 		{
 			return timestamp_;
 		}
-
+		
 		DTC_DataStatus GetStatus()
 		{
 			return status_[0];

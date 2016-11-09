@@ -118,6 +118,7 @@ namespace DTCLib
 		DTC_Register_DDRSERDESEndAddress = 0x9314,
 		DTC_Register_DDRSERDESWriteBurstSize = 0x9318,
 		DTC_Register_DDRSERDESReadBurstSize = 0x931C,
+		  DTC_Register_DDRGasGuage = 0x9320,
 		DTC_Register_FPGAProgramData = 0x9400,
 		DTC_Register_FPGAPROMProgramStatus = 0x9404,
 		DTC_Register_FPGACoreAccess = 0x9408,
@@ -129,7 +130,7 @@ namespace DTCLib
 	class DTC_Registers
 	{
 	public:
-	  explicit DTC_Registers(DTC_SimMode mode = DTC_SimMode_Disabled, unsigned rocMask = 0x1, unsigned rocEmulatorMask = 0x1);
+	  explicit DTC_Registers(DTC_SimMode mode = DTC_SimMode_Disabled, unsigned rocMask = 0x1);
 		virtual ~DTC_Registers();
 
 		//
@@ -148,7 +149,7 @@ namespace DTCLib
 			return simMode_;
 		}
 
-		DTC_SimMode SetSimMode(DTC_SimMode mode, unsigned rocMask, unsigned rocEmulatorMask);
+		DTC_SimMode SetSimMode(DTC_SimMode mode, unsigned rocMask);
 
 		//
 		// DTC Register Dumps
@@ -525,6 +526,9 @@ namespace DTCLib
 		uint32_t ReadDDRSERDESReadBurstSize();
 		DTC_RegisterFormatter FormatDDRSERDESReadBurstSize();
 
+		uint32_t ReadDDRGasGuage();
+		DTC_RegisterFormatter FormatDDRGasGuage();
+		
 		// FPGA PROM Program Data Register
 
 		// FPGA PROM Program Status Register
@@ -785,7 +789,7 @@ namespace DTCLib
 			{
 				return this->FormatDDRSERDESReadBurstSize();
 			},
-
+			  [this](){ return this->FormatDDRGasGuage(); },
 			[this]()
 			{
 				return this->FormatFPGAPROMProgramStatus();

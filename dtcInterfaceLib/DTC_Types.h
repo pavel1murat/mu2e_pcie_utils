@@ -16,6 +16,8 @@ namespace DTCLib
 {
 	const std::string ExpectedDesignVersion = "v1.4_2015-07-01-00";
 
+	typedef uint8_t DTC_DTC_ID;
+
 	enum DTC_Ring_ID : uint8_t
 	{
 		DTC_Ring_0 = 0,

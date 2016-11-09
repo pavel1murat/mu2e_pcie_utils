@@ -30,12 +30,19 @@ if [ $ROOT_MODE -eq 1 ]; then
   source $TRACE_DIR/script/trace.sh.functions 
   chmod 666 /dev/mu2e
 fi
-test -e /dev/mu2e || { echo 'DTC device file not found. Please re-run this script as root!'; return; }
 
-echo "Setting up TRACE module"
-export TRACE_FILE=/proc/trace/buffer;tonM -nKERNEL 0-19;toffM -nKERNEL 4  # poll noise is on lvls 22-23
-tonSg 0
+MU2EHOST=`hostname|grep -v mu2edaq01|grep -c mu2edaq`
+if [ $MU2EHOST -gt 0 ];then
+  test -e /dev/mu2e || { echo 'DTC device file not found. Please re-run this script as root!'; return; }
 
+  echo "Setting up TRACE module"
+  export TRACE_FILE=/proc/trace/buffer;tonM -nKERNEL 0-19;toffM -nKERNEL 4  # poll noise is on lvls 22-23
+  tonSg 0
+  export DTCLIB_SIM_ENABLE=N
+else
+  export TRACE_FILE=/tmp/trace_buffer_$USER
+  export DTCLIB_SIM_ENABLE=1
+fi
 echo "Doing \"Super\" Reset Chants"
 my_cntl write 0x9100 0xa0000000  >/dev/null # reset DTC  reset serdes osc
 my_cntl write 0x9100 0x00000000  >/dev/null  # clear reset

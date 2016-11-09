@@ -21,10 +21,9 @@ ENDIF()
 set(CMAKE_MODULE_PATH 
         $ENV{ART_DIR}/Modules
         $ENV{CETBUILDTOOLS_DIR}/Modules
-		${CMAKE_CURRENT_SOURCE_DIR}/Modules
+        $ENV{ARTDAQ_UTILITIES_DIR}/Modules
         ${CMAKE_MODULE_PATH})
 
-include(NodeJSAddon)
 include(CetCMakeEnv)
 cet_cmake_env()
 
@@ -46,13 +45,15 @@ cet_report_compiler_flags()
 find_ups_product( gcc v4_9_0 )
 find_ups_product( cetbuildtools v3_03_00 )
 find_ups_product( cetpkgsupport v1_08_03 )
-find_ups_product( swig v3_0_0 )
 find_ups_product( TRACE v3_03_00 )
 
 find_library( TRACE trace PATHS $ENV{TRACE_LIB} )
 
 # macros for art_dictionary and simple_plugin
 include(CetTest)
+
+# Macro for building node.js modules
+include(NodeJSAddon)
 
 # source
 add_subdirectory(mu2e_driver)
@@ -61,6 +62,9 @@ add_subdirectory(dtcInterfaceLib)
 
 # ups - table and config files
 add_subdirectory(ups)
+
+# doc - Doxygen documentation
+add_subdirectory(doc)
 
 # packaging utility
 include(UseCPack)

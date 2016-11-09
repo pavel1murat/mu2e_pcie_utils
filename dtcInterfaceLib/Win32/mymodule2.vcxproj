@@ -67,11 +67,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IntDir>mymodule2\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>C:\LinuxKernels\ironwork;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IntDir>mymodule2\$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\kernel\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\LinuxKernels\ironwork;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IntDir>mymodule2\$(Platform)\$(Configuration)\</IntDir>
