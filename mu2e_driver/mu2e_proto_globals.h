@@ -14,7 +14,7 @@
    60*65536 ~= 3.9 MB / 1000 MB/s ~= 3.9 ms.
    250 Hz should work.
  */
-#define MU2E_NUM_RECV_BUFFS      2000 /*4*/  /*20*/
+#define MU2E_NUM_RECV_BUFFS      1000 /*4*/  /*20*/
 #define MU2E_NUM_RECV_CHANNELS   2
 #define MU2E_RECV_INTER_ENABLED  1
 extern mu2e_databuff_t       *mu2e_recv_databuff_rings[MU2E_NUM_RECV_CHANNELS];

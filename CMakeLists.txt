@@ -19,9 +19,8 @@ IF (NOT CETBUILDTOOLS_VERSION)
 ENDIF()
 
 set(CMAKE_MODULE_PATH 
-        $ENV{ART_DIR}/Modules
+        ${CMAKE_CURRENT_SOURCE_DIR}/Modules
         $ENV{CETBUILDTOOLS_DIR}/Modules
-        $ENV{ARTDAQ_UTILITIES_DIR}/Modules
         ${CMAKE_MODULE_PATH})
 
 include(CetCMakeEnv)
@@ -52,7 +51,6 @@ find_library( TRACE trace PATHS $ENV{TRACE_LIB} )
 # macros for art_dictionary and simple_plugin
 include(CetTest)
 
-# Macro for building node.js modules
 include(NodeJSAddon)
 
 # source
