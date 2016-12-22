@@ -22,7 +22,7 @@ DTCLib::DTC_DataPacket::DTC_DataPacket(const DTC_DataPacket& in)
 	{
 		vals_ = std::vector<uint8_t>(dataSize_);
 		dataPtr_ = &vals_[0];
-		memcpy(dataPtr_, in.GetData(), in.GetSize() * sizeof(uint8_t));
+		memcpy(const_cast<uint8_t*>(dataPtr_), in.GetData(), in.GetSize() * sizeof(uint8_t));
 	}
 	else
 	{
@@ -38,11 +38,11 @@ DTCLib::DTC_DataPacket::~DTC_DataPacket()
 	}
 }
 
-void DTCLib::DTC_DataPacket::SetWord(uint16_t index, uint8_t data) const
+void DTCLib::DTC_DataPacket::SetWord(uint16_t index, uint8_t data)
 {
 	if (!memPacket_ && index < dataSize_)
 	{
-		dataPtr_[index] = data;
+	  const_cast<uint8_t*>(dataPtr_)[index] = data;
 	}
 }
 
@@ -198,7 +198,7 @@ DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in) : DTC_DMAP
 {
 	if (packetType_ != DTC_PacketType_DCSRequest)
 	{
-		throw DTC_WrongPacketTypeException();
+		throw DTC_WrongPacketTypeException(DTC_PacketType_DCSRequest, packetType_);
 	}
 	type_ = static_cast<DTC_DCSOperationType>(in.GetData()[4]);
 	address_ = in.GetData()[6] & 0x1F;
@@ -263,11 +263,11 @@ DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(DTC_Ring_ID ring, DTC_Timestamp
 	}
 }
 
-DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
+DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(const DTC_DataPacket in) : DTC_DMAPacket(in)
 {
 	if (packetType_ != DTC_PacketType_Heartbeat)
 	{
-		throw DTC_WrongPacketTypeException();
+		throw DTC_WrongPacketTypeException(DTC_PacketType_Heartbeat, packetType_);
 	}
 	auto arr = in.GetData();
 	eventMode_[0] = arr[10];
@@ -312,7 +312,7 @@ DTCLib::DTC_DataPacket DTCLib::DTC_HeartbeatPacket::ConvertToDataPacket() const
 	timestamp_.GetTimestamp(output.GetData(), 4);
 	for (auto i = 0; i < 6; ++i)
 	{
-		output.GetData()[10 + i] = eventMode_[i];
+	  output.SetWord(10 + i, eventMode_[i]);
 	}
 	return output;
 }
@@ -327,7 +327,7 @@ DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DataPacket in) : DTC_DM
 {
 	if (packetType_ != DTC_PacketType_DataRequest)
 	{
-		throw DTC_WrongPacketTypeException();
+	  throw DTC_WrongPacketTypeException(DTC_PacketType_DataRequest, packetType_);
 	}
 	timestamp_ = DTC_Timestamp(in.GetData(), 4);
 	debug_ = (in.GetData()[12] & 0x1) == 1;
@@ -400,7 +400,7 @@ DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_DataPacket in) : DTC_DMAPacke
 	TRACE(20, "DTC_DCSReplyPacket::DTC_DCSReplyPacket Before packetType test");
 	if (packetType_ != DTC_PacketType_DCSReply)
 	{
-		throw DTC_WrongPacketTypeException();
+	  throw DTC_WrongPacketTypeException(DTC_PacketType_DCSReply, packetType_);
 	}
 
 	type_ = static_cast<DTC_DCSOperationType>(in.GetData()[4]);
@@ -459,7 +459,7 @@ DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket in) : DTC_DMAP
 {
 	if (packetType_ != DTC_PacketType_DataHeader)
 	{
-		throw DTC_WrongPacketTypeException();
+		throw DTC_WrongPacketTypeException(DTC_PacketType_DataHeader, packetType_);
 	}
 	auto arr = in.GetData();
 	packetCount_ = arr[4] + (arr[5] << 8);

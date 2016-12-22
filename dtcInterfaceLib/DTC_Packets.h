@@ -96,11 +96,11 @@ namespace DTCLib
   public:
     DTC_DataPacket();
 
-    explicit DTC_DataPacket(mu2e_databuff_t* data) : dataPtr_(*data), dataSize_(16), memPacket_(true) { }
+    explicit DTC_DataPacket(const mu2e_databuff_t* data) : dataPtr_(*data), dataSize_(16), memPacket_(true) { }
 
-    explicit DTC_DataPacket(void* data) : dataPtr_(static_cast<uint8_t*>(data)), dataSize_(16), memPacket_(true) { }
+    explicit DTC_DataPacket(const void* data) : dataPtr_(static_cast<const uint8_t*>(data)), dataSize_(16), memPacket_(true) { }
 
-    explicit DTC_DataPacket(uint8_t* data) : dataPtr_(data), dataSize_(16), memPacket_(true) { }
+    explicit DTC_DataPacket(const uint8_t* data) : dataPtr_(data), dataSize_(16), memPacket_(true) { }
 
     DTC_DataPacket(const DTC_DataPacket&);
     DTC_DataPacket(DTC_DataPacket&&) = default;
@@ -110,7 +110,7 @@ namespace DTCLib
     DTC_DataPacket& operator=(const DTC_DataPacket&) = default;
     DTC_DataPacket& operator=(DTC_DataPacket&&) = default;
 
-    void SetWord(uint16_t index, uint8_t data) const;
+    void SetWord(uint16_t index, uint8_t data);
     uint8_t GetWord(uint16_t index) const;
     std::string toJSON() const;
     std::string toPacketFormat() const;
@@ -126,12 +126,12 @@ namespace DTCLib
       return memPacket_;
     }
 
-    void CramIn(DTC_DataPacket& other, int offset) const
+    void CramIn(DTC_DataPacket& other, int offset)
     {
-      if (other.dataSize_ + offset <= dataSize_) memcpy(dataPtr_ + offset, other.dataPtr_, other.dataSize_);
+      if (other.dataSize_ + offset <= dataSize_) memcpy(const_cast<uint8_t*>(dataPtr_) + offset, other.dataPtr_, other.dataSize_);
     }
 
-    uint8_t* GetData() const
+    const uint8_t* GetData() const
     {
       return dataPtr_;
     }
@@ -150,11 +150,11 @@ namespace DTCLib
 
     friend std::ostream& operator<<(std::ostream& s, DTC_DataPacket& p)
     {
-      return s.write(reinterpret_cast<char*>(p.dataPtr_), p.dataSize_);
+      return s.write(reinterpret_cast<const char*>(p.dataPtr_), p.dataSize_);
     }
 
   private:
-    uint8_t* dataPtr_;
+    const uint8_t* dataPtr_;
     uint16_t dataSize_;
     bool memPacket_;
     std::vector<uint8_t> vals_;
@@ -222,7 +222,7 @@ namespace DTCLib
     DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_DCSOperationType type, uint8_t address, uint16_t data);
     DTC_DCSRequestPacket(const DTC_DCSRequestPacket&) = default;
     DTC_DCSRequestPacket(DTC_DCSRequestPacket&&) = default;
-    explicit DTC_DCSRequestPacket(DTC_DataPacket in);
+    explicit DTC_DCSRequestPacket(const DTC_DataPacket in);
 
     DTC_DCSRequestPacket& operator=(const DTC_DCSRequestPacket&) = default;
     DTC_DCSRequestPacket& operator=(DTC_DCSRequestPacket&&) = default;
@@ -275,7 +275,7 @@ namespace DTCLib
     DTC_HeartbeatPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC = DTC_ROC_5, uint8_t* eventMode = nullptr);
     DTC_HeartbeatPacket(const DTC_HeartbeatPacket& right) = default;
     DTC_HeartbeatPacket(DTC_HeartbeatPacket&& right) = default;
-    explicit DTC_HeartbeatPacket(DTC_DataPacket in);
+    explicit DTC_HeartbeatPacket(const DTC_DataPacket in);
 
     virtual ~DTC_HeartbeatPacket() = default;
 
@@ -304,7 +304,7 @@ namespace DTCLib
     DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp timestamp, bool debug = true, uint16_t debugPacketCount = 0, DTC_DebugType type = DTC_DebugType_SpecialSequence);
     DTC_DataRequestPacket(const DTC_DataRequestPacket&) = default;
     DTC_DataRequestPacket(DTC_DataRequestPacket&&) = default;
-    explicit DTC_DataRequestPacket(DTC_DataPacket in);
+    explicit DTC_DataRequestPacket(const DTC_DataPacket in);
 
     bool GetDebug() const
     {
@@ -345,7 +345,7 @@ namespace DTCLib
     DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t counter, DTC_DCSOperationType type, uint8_t address, uint16_t data, bool fifoEmpty);
     DTC_DCSReplyPacket(const DTC_DCSReplyPacket&) = default;
     DTC_DCSReplyPacket(DTC_DCSReplyPacket&&) = default;
-    explicit DTC_DCSReplyPacket(DTC_DataPacket in);
+    explicit DTC_DCSReplyPacket(const DTC_DataPacket in);
 
     uint8_t GetRequestCounter() const
     {
@@ -409,7 +409,7 @@ namespace DTCLib
     DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp = DTC_Timestamp(), uint8_t evbMode_ = 0);
     DTC_DataHeaderPacket(const DTC_DataHeaderPacket&) = default;
     DTC_DataHeaderPacket(DTC_DataHeaderPacket&&) = default;
-    explicit DTC_DataHeaderPacket(DTC_DataPacket in);
+    explicit DTC_DataHeaderPacket(const DTC_DataPacket in);
 
     DTC_DataPacket ConvertToDataPacket() const override;
 

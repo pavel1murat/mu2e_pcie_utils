@@ -610,10 +610,13 @@ namespace DTCLib
   class DTC_WrongPacketTypeException : public std::exception
   {
   public:
+  DTC_WrongPacketTypeException(int expected, int encountered) : expected_(expected), encountered_(encountered) {}
     const char* what() const throw()
     {
-      return "Unexpected packet type encountered!";
+      return ("Unexpected packet type encountered: " + std::to_string(encountered_) + " != " + std::to_string(expected_) + " (expected)").c_str();
     }
+    int expected_;
+    int encountered_;
   };
 
   class DTC_IOErrorException : public std::exception
@@ -639,10 +642,10 @@ namespace DTCLib
     uint64_t timestamp_ : 48;
   public:
     DTC_Timestamp();
-    explicit DTC_Timestamp(uint64_t timestamp);
-    DTC_Timestamp(uint32_t timestampLow, uint16_t timestampHigh);
-    explicit DTC_Timestamp(uint8_t* timeArr, int offset = 0);
-    explicit DTC_Timestamp(std::bitset<48> timestamp);
+    explicit DTC_Timestamp(const uint64_t timestamp);
+    DTC_Timestamp(const uint32_t timestampLow, const uint16_t timestampHigh);
+    explicit DTC_Timestamp(const uint8_t* timeArr, int offset = 0);
+    explicit DTC_Timestamp(const std::bitset<48> timestamp);
     DTC_Timestamp(const DTC_Timestamp&) = default;
     DTC_Timestamp(DTC_Timestamp&&) = default;
 
@@ -696,7 +699,7 @@ namespace DTCLib
       return 0;
     }
 
-    void GetTimestamp(uint8_t* timeArr, int offset = 0) const;
+    void GetTimestamp(const uint8_t* timeArr, int offset = 0) const;
     std::string toJSON(bool arrayMode = false) const;
     std::string toPacketFormat() const;
   };

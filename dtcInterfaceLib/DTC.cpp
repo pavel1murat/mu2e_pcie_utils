@@ -520,7 +520,7 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DataPacket& packet)
 		{
 			auto output = "DTC::WriteDataPacket: Writing packet: " + packet.toJSON();
 			TRACE(21, output.c_str());
-			errorCode = device_.write_data(DTC_DMA_Engine_DCS, thisPacket.GetData(), thisPacket.GetSize() * sizeof(uint8_t));
+			errorCode = device_.write_data(DTC_DMA_Engine_DCS, const_cast<uint8_t*>(thisPacket.GetData()), thisPacket.GetSize() * sizeof(uint8_t));
 			retry--;
 		} while (retry > 0 && errorCode != 0);
 		if (errorCode != 0)
@@ -536,7 +536,7 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DataPacket& packet)
 		{
 			auto output = "DTC::WriteDataPacket: Writing packet: " + packet.toJSON();
 			TRACE(21, output.c_str());
-			errorCode = device_.write_data(DTC_DMA_Engine_DCS, packet.GetData(), packet.GetSize() * sizeof(uint8_t));
+			errorCode = device_.write_data(DTC_DMA_Engine_DCS, const_cast<uint8_t*>(packet.GetData()), packet.GetSize() * sizeof(uint8_t));
 			retry--;
 		} while (retry > 0 && errorCode != 0);
 		if (errorCode != 0)

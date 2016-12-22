@@ -53,33 +53,33 @@ DTCLib::DTC_SimMode DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::string m
 DTCLib::DTC_Timestamp::DTC_Timestamp()
 	: timestamp_(0) {}
 
-DTCLib::DTC_Timestamp::DTC_Timestamp(uint64_t timestamp)
+DTCLib::DTC_Timestamp::DTC_Timestamp(const uint64_t timestamp)
 	: timestamp_(timestamp) {}
 
-DTCLib::DTC_Timestamp::DTC_Timestamp(uint32_t timestampLow, uint16_t timestampHigh)
+DTCLib::DTC_Timestamp::DTC_Timestamp(const uint32_t timestampLow, const uint16_t timestampHigh)
 {
 	SetTimestamp(timestampLow, timestampHigh);
 }
 
-DTCLib::DTC_Timestamp::DTC_Timestamp(uint8_t* timeArr, int offset)
+DTCLib::DTC_Timestamp::DTC_Timestamp(const uint8_t* timeArr, int offset)
 {
-	auto arr = reinterpret_cast<uint64_t*>(timeArr + offset);
+	auto arr = reinterpret_cast<const uint64_t*>(timeArr + offset);
 	timestamp_ = *arr;
 }
 
-DTCLib::DTC_Timestamp::DTC_Timestamp(std::bitset<48> timestamp)
+DTCLib::DTC_Timestamp::DTC_Timestamp(const std::bitset<48> timestamp)
 	: timestamp_(timestamp.to_ullong()) {}
 
-void DTCLib::DTC_Timestamp::SetTimestamp(uint32_t timestampLow, uint16_t timestampHigh)
+void DTCLib::DTC_Timestamp::SetTimestamp(const uint32_t timestampLow, const uint16_t timestampHigh)
 {
-	timestamp_ = timestampLow + (static_cast<uint64_t>(timestampHigh) << 32);
+	timestamp_ = timestampLow + (static_cast<const uint64_t>(timestampHigh) << 32);
 }
 
-void DTCLib::DTC_Timestamp::GetTimestamp(uint8_t* timeArr, int offset) const
+void DTCLib::DTC_Timestamp::GetTimestamp(const uint8_t* timeArr, int offset) const
 {
 	for (auto i = 0; i < 6; i++)
 	{
-		timeArr[i + offset] = static_cast<uint8_t>(timestamp_ >> i * 8);
+	  const_cast<uint8_t*>(timeArr)[i + offset] = static_cast<uint8_t>(timestamp_ >> i * 8);
 	}
 }
 
