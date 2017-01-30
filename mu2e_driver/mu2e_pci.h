@@ -9,7 +9,8 @@
 #define MU2E_PCI_H
 
 #define XILINX_VENDOR_ID 0x10EE
-#define XILINX_DEVICE_ID 0x7042
+#define XILINX_DEVICE_ID1 0x7042
+#define XILINX_DEVICE_ID2 0x7028
 
 
 typedef struct
