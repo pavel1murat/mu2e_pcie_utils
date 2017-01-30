@@ -597,7 +597,7 @@ static int ReadPCIState(struct pci_dev * pdev, m_ioc_pcistate_t * pcistate)
 	/* Since probe has succeeded, indicates that link is up. */
 	pcistate->LinkState = LINK_UP;
 	pcistate->VendorId = XILINX_VENDOR_ID;
-	pcistate->DeviceId = pdev->device;
+	pcistate->DeviceId = XILINX_DEVICE_ID;
 
 	/* Read Interrupt setting - Legacy or MSI/MSI-X */
 	pci_read_config_byte(pdev, PCI_INTERRUPT_PIN, &valb);
@@ -732,34 +732,26 @@ static int __init init_mu2e(void)
 
 	TRACE(0, "init_mu2e");
 
-	TRACE(1, "init_mu2e: Creating filesystem entry");
 	// fs interface, pci, memory, events(i.e polling)
+
 	ret = mu2e_fs_up();
 	if (ret != 0) {
 		ret = -2;
 		goto out_fs;
 	}
-	TRACE(1, "init_mu2e: Initializing PCIe device");
 	ret = mu2e_pci_up();
 	if (ret != 0) {
 		ret = -5;
 		goto out_pci;
 	}
 
-	TRACE(1, "init_mu2e: Getting PCIe Device handle");
-	mu2e_pci_dev = pci_get_device(XILINX_VENDOR_ID, XILINX_DEVICE_ID1, NULL);
+	mu2e_pci_dev = pci_get_device(XILINX_VENDOR_ID, XILINX_DEVICE_ID, NULL);
 	if (mu2e_pci_dev == NULL)
-	  {
-	    TRACE(1, "init_mu2e: Getting PCIe Device handle (alternate Device ID)");
-	    mu2e_pci_dev = pci_get_device(XILINX_VENDOR_ID, XILINX_DEVICE_ID2, NULL);
-	    if (mu2e_pci_dev == NULL)
-	      {
+	{
 		ret = -6;
 		goto out_pci;
-	      }
-	  }
+	}
 
-	TRACE(1, "init_mu2e: Resetting DMA base addresses");
 	/* Use "Dma_" routines to init FPGA "user" application ("DTC") registers.
 	   NOTE: a few more after dma engine setup (below).
 	 */
