@@ -223,7 +223,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever, bool overw
 			memcpy(buf, &sz, sizeof(uint64_t));
 		}
 		//is.read((char*)buf + 8, sz - sizeof(uint64_t));
-		if (sz > 0 && sz + totalSize < 0x7000000)
+		if (sz > 0 && sz + totalSize < 0x3FFFFFFF)
 		{
 			TRACE(5, "Size is %llu, writing to device", (long long unsigned)sz);
 			totalSize += sz;
