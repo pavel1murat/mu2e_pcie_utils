@@ -127,7 +127,7 @@ void WriteGeneratedData(DTC* thisDTC)
 		memcpy(buf, &byteCount, sizeof(uint64_t));
 		uint64_t currentOffset = 8;
 		uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
-		DTC_DataHeaderPacket header(DTC_Ring_0, static_cast<uint16_t>(packetCount), DTC_DataStatus_Valid, DTC_Timestamp(ts));
+		DTC_DataHeaderPacket header(DTC_Ring_0, static_cast<uint16_t>(packetCount), DTC_DataStatus_Valid,0,0, DTC_Timestamp(ts));
 		auto packet = header.ConvertToDataPacket();
 		memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
 		if (rawOutput) outputStream.write(reinterpret_cast<char *>(&byteCount), sizeof(uint64_t));
@@ -457,7 +457,7 @@ main(int argc
 		else if (thisDTC->ReadSimMode() == DTC_SimMode_Loopback)
 		{
 			uint64_t ts = timestampOffset;
-			DTC_DataHeaderPacket header(DTC_Ring_0, static_cast<uint16_t>(0), DTC_DataStatus_Valid, DTC_Timestamp(ts));
+			DTC_DataHeaderPacket header(DTC_Ring_0, static_cast<uint16_t>(0), DTC_DataStatus_Valid,0,0, DTC_Timestamp(ts));
 			std::cout << "Request: " << header.toJSON() << std::endl;
 			thisDTC->WriteDMAPacket(header);
 		}
