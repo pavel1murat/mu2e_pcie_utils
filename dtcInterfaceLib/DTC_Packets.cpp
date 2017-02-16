@@ -449,11 +449,17 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSReplyPacket::ConvertToDataPacket() const
 	return output;
 }
 
-DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp, uint8_t evbMode)
-	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, DTC_ROC_Unused, (1 + packetCount) * 16), packetCount_(packetCount), timestamp_(timestamp), status_(), evbMode_(evbMode)
-{
-	status_[0] = status;
-}
+DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, uint8_t dtcid, 
+	uint8_t packetVersion, DTC_Timestamp timestamp, uint8_t evbMode)
+	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring
+		,		DTC_ROC_Unused, (1 + packetCount) * 16)
+	, packetCount_(packetCount)
+	, timestamp_(timestamp)
+	, status_(status)
+	, dataPacketVersion_(packetVersion)
+	, dtcId_(dtcid)
+	, evbMode_(evbMode)
+{}
 
 DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
 {
@@ -464,9 +470,9 @@ DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket in) : DTC_DMAP
 	auto arr = in.GetData();
 	packetCount_ = arr[4] + (arr[5] << 8);
 	timestamp_ = DTC_Timestamp(arr, 6);
-	status_[0] = static_cast<DTC_DataStatus>(arr[12]);
-	status_[1] = static_cast<DTC_DataStatus>(arr[13]);
-	status_[2] = static_cast<DTC_DataStatus>(arr[14]);
+	status_ = DTC_DataStatus(arr[12]);
+	dataPacketVersion_ = arr[13];
+	dtcId_ = DTC_ID(arr[14]);
 	evbMode_ = arr[15];
 }
 
@@ -477,7 +483,10 @@ std::string DTCLib::DTC_DataHeaderPacket::toJSON()
 	ss << headerJSON() << ",";
 	ss << "\"packetCount\": " << std::dec << static_cast<int>(packetCount_) << ",";
 	ss << timestamp_.toJSON() << ",";
-	ss << "\"status\": " << std::dec << static_cast<int>(status_[0]) << ",";
+	ss << "\"status\": " << std::dec << static_cast<int>(status_) << ",";
+	ss << "\"packetVersion\": " << std::hex << static_cast<int>(dataPacketVersion_) << ",";
+	ss << "\"DTC ID\": " << std::dec << static_cast<int>(dtcId_.GetID()) << ",";
+	ss << "\"Subsystem\": " << std::dec << static_cast<int>(dtcId_.GetSubsystem()) << ",";
 	ss << "\"evbMode\": " << std::hex << "0x" << static_cast<int>(evbMode_) << "}";
 	return ss.str();
 }
@@ -488,8 +497,8 @@ std::string DTCLib::DTC_DataHeaderPacket::toPacketFormat()
 	ss << headerPacketFormat() << std::setfill('0') << std::hex;
 	ss << "     0x" << std::setw(1) << ((packetCount_ & 0x0700) >> 8) << "\t" << "0x" << std::setw(6) << (packetCount_ & 0xFF) << "\n";
 	ss << timestamp_.toPacketFormat();
-	ss << "0x" << std::setw(6) << static_cast<int>(status_[1]) << "\t" << "0x" << std::setw(6) << static_cast<int>(status_[0]) << "\n";
-	ss << "0x" << std::setw(6) << static_cast<int>(evbMode_) << "\t" << "0x" << std::setw(6) << static_cast<int>(status_[2]) << "\n";
+	ss << "0x" << std::setw(6) << static_cast<int>(dataPacketVersion_) << "\t" << "0x" << std::setw(6) << static_cast<int>(status_) << "\n";
+	ss << "0x" << std::setw(6) << static_cast<int>(evbMode_) << "\t" << std::dec << std::setw(2) << static_cast<int>(dtcId_.GetSubsystem()) << std::setw(6) << static_cast<int>(dtcId_.GetID()) << "\n";
 	return ss.str();
 }
 
@@ -499,7 +508,9 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DataHeaderPacket::ConvertToDataPacket() const
 	output.SetWord(4, static_cast<uint8_t>(packetCount_));
 	output.SetWord(5, static_cast<uint8_t>((packetCount_ & 0x0700) >> 8));
 	timestamp_.GetTimestamp(output.GetData(), 6);
-	output.SetWord(12, static_cast<uint8_t>(status_[0]));
+	output.SetWord(12, static_cast<uint8_t>(status_));
+	output.SetWord(13, static_cast<uint8_t>(dataPacketVersion_));
+	output.SetWord(14, static_cast<uint8_t>(dtcId_.GetWord()));
 	output.SetWord(15, evbMode_);
 	return output;
 }

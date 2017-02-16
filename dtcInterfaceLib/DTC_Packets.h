@@ -406,28 +406,37 @@ namespace DTCLib
   class DTC_DataHeaderPacket : public DTC_DMAPacket
   {
   public:
-    DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, DTC_Timestamp timestamp = DTC_Timestamp(), uint8_t evbMode_ = 0);
+    DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, uint8_t dtcid, uint8_t packetVersion, DTC_Timestamp timestamp = DTC_Timestamp(), uint8_t evbMode = 0);
     DTC_DataHeaderPacket(const DTC_DataHeaderPacket&) = default;
     DTC_DataHeaderPacket(DTC_DataHeaderPacket&&) = default;
     explicit DTC_DataHeaderPacket(const DTC_DataPacket in);
 
     DTC_DataPacket ConvertToDataPacket() const override;
 
-    uint8_t GetData() const
+    uint8_t GetEVBMode() const
     {
       return evbMode_;
     }
 
-    Subsystem GetSubsystem() const
+    DTC_Subsystem GetSubsystem() const
     {
-      auto mode = evbMode_;
-      return static_cast<Subsystem>(mode >> 6u);
+		return dtcId_.GetSubsystem();
     }
+
+	uint8_t GetID() const
+	{
+		return dtcId_.GetID();
+	}
 
     uint16_t GetPacketCount() const
     {
       return packetCount_;
     }
+
+	uint8_t GetVersion() const
+	{
+		return dataPacketVersion_;
+	}
 
     DTC_Timestamp GetTimestamp() const
     {
@@ -436,7 +445,7 @@ namespace DTCLib
 
     DTC_DataStatus GetStatus() const
     {
-      return status_[0];
+      return status_;
     }
 
     std::string toJSON() override;
@@ -456,8 +465,10 @@ namespace DTCLib
   private:
     uint16_t packetCount_;
     DTC_Timestamp timestamp_;
-    DTC_DataStatus status_[3];
-    uint8_t evbMode_;
+    DTC_DataStatus status_;
+	uint8_t dataPacketVersion_;
+	DTC_ID dtcId_;
+	uint8_t evbMode_;
   };
 }
 

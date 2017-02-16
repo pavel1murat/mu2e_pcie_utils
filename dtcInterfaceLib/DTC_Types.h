@@ -11,9 +11,25 @@ namespace DTCLib
 {
   const std::string ExpectedDesignVersion = "v1.4_2015-07-01-00";
 
-  typedef uint8_t DTC_DTC_ID;
+  enum DTC_Subsystem : uint8_t
+  {
+	  DTC_Subsystem_Tracker = 0,
+	  DTC_Subsystem_Calorimeter = 1,
+	  DTC_Subsystem_CRV = 2,
+	  DTC_Subsystem_Other = 3
+  };
 
-  enum class Subsystem : uint8_t { Tracker, Calorimeter, CRV, Other };
+  class DTC_ID {
+  private:
+	  uint8_t idData_;
+
+  public:
+	  DTC_ID() : idData_(0) {}
+	  DTC_ID(uint8_t id) : idData_(id) {}
+	  DTC_Subsystem GetSubsystem() const { return static_cast<DTC_Subsystem>(idData_ >> 6); }
+	  uint8_t GetID() const { return idData_ & 0x3F; }
+	  uint8_t GetWord() const { return idData_; }
+  };
 
   enum DTC_Ring_ID : uint8_t
     {
