@@ -67,7 +67,7 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
-    <NMakeIncludeSearchPath>X:\Desktop\artdaq-mrb-base\srcs\artdaq-mrb-base\includes\system;X:\Desktop\artdaq-mrb-base\srcs\artdaq-mrb-base\includes\kernel;X:\Desktop\artdaq-mrb-base\srcs\artdaq-mrb-base\includes\trace;X:\Desktop\artdaq-mrb-base\srcs\artdaq-mrb-base\includes;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeIncludeSearchPath>X:\Desktop\artdaq-mrb-base\srcs\artdaq-mrb-base\includes\kernel;X:\Desktop\artdaq-mrb-base\srcs\artdaq-mrb-base\includes\system;X:\Desktop\artdaq-mrb-base\srcs\artdaq-mrb-base\includes\trace;X:\Desktop\artdaq-mrb-base\srcs\artdaq-mrb-base\includes;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
     <NMakePreprocessorDefinitions>__KERNEL__</NMakePreprocessorDefinitions>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
