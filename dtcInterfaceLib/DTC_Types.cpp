@@ -38,6 +38,10 @@ DTCLib::DTC_SimMode DTCLib::DTC_SimModeConverter::ConvertToSimMode(std::string m
 	{
 		return DTC_SimMode_Performance;
 	}
+	if(modeName.find("arge") != std::string::npos)
+	{
+		return DTC_SimMode_LargeFile;
+	}
 
 	try
 	{

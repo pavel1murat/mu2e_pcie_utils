@@ -322,7 +322,6 @@ void DTCLib::DTCLibTest::doClassTest()
 		if (err)
 		{
 			if (printMessages_) std::cout << "DTC_DataPacket Class failed checks!" << std::endl;
-			goto end;
 		}
 	}
 	catch (std::exception ex)
@@ -481,7 +480,7 @@ void DTCLib::DTCLibTest::doDAQTest()
 		if (data.size() > 0)
 		{
 			if (printMessages_) std::cout << data.size() << " packets returned\n";
-			for (size_t i = 0; i < data.size(); ++i)
+			for (auto i = 0ULL; i < data.size(); ++i)
 			{
 				TRACE(19, "DTC::GetJSONData constructing DataPacket:");
 				auto test = DTC_DataPacket(data[i].blockPointer);
