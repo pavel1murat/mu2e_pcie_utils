@@ -56,6 +56,9 @@ add_subdirectory(mu2e_driver)
 add_subdirectory(mcs)
 add_subdirectory(dtcInterfaceLib)
 
+# tools
+add_subdirectory(tools)
+
 # ups - table and config files
 add_subdirectory(ups)
 
