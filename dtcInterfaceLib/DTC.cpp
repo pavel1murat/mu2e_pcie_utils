@@ -45,7 +45,7 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 
 	first_read_ = true;
 	TRACE(19, "DTC::GetData: Releasing %i buffers", (int)daqbuffer_.size() + (lastDAQBufferActive_ ? -1 : 0));
-	device_.read_release(DTC_DMA_Engine_DAQ, daqbuffer_.size() + (lastDAQBufferActive_ ? -1 : 0));
+	device_.read_release(DTC_DMA_Engine_DAQ, static_cast<unsigned>(daqbuffer_.size() + (lastDAQBufferActive_ ? -1 : 0)));
 
 	mu2e_databuff_t* last = daqbuffer_.back();
 	daqbuffer_.clear();
@@ -186,7 +186,7 @@ std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when)
 	return ss.str();
 }
 
-void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever, bool overwriteEnvironment)
+void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool overwriteEnvironment)
 {
 	auto sim = getenv("DTCLIB_SIM_FILE");
 	if (!overwriteEnvironment && sim != nullptr)
@@ -223,9 +223,9 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool goForever, bool overw
 			memcpy(buf, &sz, sizeof(uint64_t));
 		}
 		//is.read((char*)buf + 8, sz - sizeof(uint64_t));
-		if (sz > 0 && sz + totalSize < 0x3FFFFFFF)
+		if (sz > 0 && (sz + totalSize < 0x3FFFFFFF || simMode_ == DTC_SimMode_LargeFile))
 		{
-			TRACE(5, "Size is %llu, writing to device", (long long unsigned)sz);
+			TRACE(5, "Size is %zu, writing to device", sz);
 			totalSize += sz;
 			n++;
 			TRACE(10, "DTC::WriteSimFileToDTC: totalSize is now %lu, n is now %lu", static_cast<unsigned long>(totalSize), static_cast<unsigned long>(n));
@@ -392,7 +392,7 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 	auto test = DTC_DataPacket(nextReadPtr_);
 	if (reinterpret_cast<uint8_t*>(nextReadPtr_) + blockByteCount >= daqbuffer_.back()[0] + daqDMAByteCount_)
 	{
-		blockByteCount = daqbuffer_.back()[0] + daqDMAByteCount_ - reinterpret_cast<uint8_t*>(nextReadPtr_);
+		blockByteCount = static_cast<uint16_t>(daqbuffer_.back()[0] + daqDMAByteCount_ - reinterpret_cast<uint8_t*>(nextReadPtr_));
 		test.SetWord(0, blockByteCount & 0xFF);
 		test.SetWord(1, (blockByteCount >> 8));
 	}
@@ -462,7 +462,7 @@ void DTCLib::DTC::WriteDetectorEmulatorData(mu2e_databuff_t* buf, size_t sz)
 	int errorCode;
 	do
 	{
-		TRACE(21, "DTC::WriteDetectorEmulatorData: Writing buffer of size %lu", sz);
+		TRACE(21, "DTC::WriteDetectorEmulatorData: Writing buffer of size %zu", sz);
 		errorCode = device_.write_data(DTC_DMA_Engine_DAQ, buf, sz);
 		retry--;
 	} while (retry > 0 && errorCode != 0);

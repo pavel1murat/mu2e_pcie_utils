@@ -142,13 +142,13 @@ int main(int argc, char* argv[])
 			}
 
 			auto diff = static_cast<int64_t>(totalSize + newfrag.dataSize()) - newfrag.fragSize();
-			TRACE(4, "diff=%lli, totalSize=%llu, dataSize=%llu, fragSize=%llu", (long long)diff, (long long unsigned)totalSize, (long long unsigned)newfrag.dataSize(), (long long unsigned)newfrag.fragSize());
+			TRACE(4, "diff=%lli, totalSize=%zu, dataSize=%zu, fragSize=%zu", (long long)diff,totalSize, newfrag.dataSize(),newfrag.fragSize());
 			if (diff > 0)
 			{
 				auto currSize = newfrag.fragSize();
 				auto remaining = 1 - newfrag.hdr_block_count() / static_cast<double>(BLOCK_COUNT_MAX);
 				auto newSize = static_cast<size_t>(currSize * remaining);
-				TRACE(1, "mu2eReceiver::getNext: %lu + %lu > %lu, allocating space for %lu more bytes", totalSize, newfrag.dataSize(), newfrag.fragSize(), static_cast<unsigned long>(newSize + diff));
+				TRACE(1, "mu2eReceiver::getNext: %zu + %zu > %zu, allocating space for %zu more bytes", totalSize, newfrag.dataSize(), newfrag.fragSize(), newSize + diff);
 				newfrag.addSpace(static_cast<size_t>(diff + newSize));
 			}
 
@@ -157,12 +157,12 @@ int main(int argc, char* argv[])
 			size_t intraBlockOffset = 0;
 			for (size_t i = 0; i < data.size(); ++i)
 			{
-				TRACE(4, "Copying data from %p to %p (sz=%llu)", reinterpret_cast<void*>(data[i].blockPointer), reinterpret_cast<void*>(offset + intraBlockOffset), (unsigned long long)data[i].byteSize);
+				TRACE(4, "Copying data from %p to %p (sz=%zu)", reinterpret_cast<void*>(data[i].blockPointer), reinterpret_cast<void*>(offset + intraBlockOffset), data[i].byteSize);
 				memcpy(reinterpret_cast<void*>(offset + intraBlockOffset), data[i].blockPointer, data[i].byteSize);
 				intraBlockOffset += data[i].byteSize;
 			}
 
-			TRACE(3, "Ending SubEvt %lu", newfrag.hdr_block_count());
+			TRACE(3, "Ending SubEvt %zu", newfrag.hdr_block_count());
 			newfrag.endSubEvt(intraBlockOffset);
 		}
 

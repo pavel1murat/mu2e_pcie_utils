@@ -256,7 +256,7 @@ int mu2esim::read_data(int chn, void** buffer, int tmo_ms)
 
 	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
 	TRACE(18, "mu2esim::read_data took %lli milliseconds out of tmo_ms=%i", static_cast<long long>(duration), tmo_ms);
-	return bytesReturned;
+	return static_cast<int>(bytesReturned);
 }
 
 int mu2esim::write_data(int chn, void* buffer, size_t bytes)

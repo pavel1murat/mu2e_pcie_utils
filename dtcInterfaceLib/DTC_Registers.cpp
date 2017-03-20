@@ -61,6 +61,11 @@ DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, unsigned rocMask) : devic
 		case 'P':
 			simMode_ = DTC_SimMode_Performance;
 			break;
+		case '8':
+		case 'f':
+		case 'F':
+			simMode_ = DTC_SimMode_LargeFile;
+			break;
 		case '0':
 		default:
 			simMode_ = DTC_SimMode_Disabled;

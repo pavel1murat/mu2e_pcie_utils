@@ -20,7 +20,7 @@ void printHelpMsg()
 		<< "    -R: DON'T Print Register Dump." << std::endl
 		<< "    -s: Print SERDES Byte and Packet Counters." << std::endl
 		<< "    -p: Print Performance Counters." << std::endl;
-		;
+		
 	exit(0);
 }
 
