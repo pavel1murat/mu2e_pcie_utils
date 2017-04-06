@@ -1,21 +1,10 @@
 #ifndef DTC_REGISTERS_H
 #define DTC_REGISTERS_H
 
-#include <bitset> // std::bitset
-
-
-
-#include <cstdint> // uint8_t, uint16_t
-
-
-
+//#include <bitset> // std::bitset
+//#include <cstdint> // uint8_t, uint16_t
 #include <functional> // std::bind, std::function
-
-
-
 #include <vector> // std::vector
-
-
 
 #include "DTC_Types.h"
 #include "mu2edev.h"
@@ -39,7 +28,7 @@ namespace DTCLib
 		DTC_Register_DTCControl = 0x9100,
 		DTC_Register_DMATransferLength = 0x9104,
 		DTC_Register_SERDESLoopbackEnable = 0x9108,
-		DTC_Register_SERDESOscillatorStatus = 0x910C,
+		DTC_Register_ClockOscillatorStatus = 0x910C,
 		DTC_Register_ROCEmulationEnable = 0x9110,
 		DTC_Register_RingEnable = 0x9114,
 		DTC_Register_SERDESReset = 0x9118,
@@ -60,6 +49,14 @@ namespace DTCLib
 		DTC_Register_EVBPartitionID = 0x9154,
 		DTC_Register_EVBDestCount = 0x9158,
 		DTC_Register_HeartbeatErrorFlags = 0x915c,
+		DTC_Register_SERDESOscillatorFrequency = 0x9160,
+		DTC_Register_SERDESOscillatorControl = 0x9164,
+		DTC_Register_SERDESOscillatorParameterLow = 0x9168,
+		DTC_Register_SERDESOscillatorParameterHigh = 0x916C,
+		DTC_Register_DDROscillatorFrequency = 0x9170,
+		DTC_Register_DDROscillatorControl = 0x9174,
+		DTC_Register_DDROscillatorParameterLow = 0x9178,
+		DTC_Register_DDROscillatorParameterHigh = 0x917C,
 		DTC_Register_TimestampPreset0 = 0x9180,
 		DTC_Register_TimestampPreset1 = 0x9184,
 		DTC_Register_DataPendingTimer = 0x9188,
@@ -118,7 +115,7 @@ namespace DTCLib
 		DTC_Register_DDRSERDESEndAddress = 0x9314,
 		DTC_Register_DDRSERDESWriteBurstSize = 0x9318,
 		DTC_Register_DDRSERDESReadBurstSize = 0x931C,
-		  DTC_Register_DDRGasGuage = 0x9320,
+		DTC_Register_DDRGasGuage = 0x9320,
 		DTC_Register_FPGAProgramData = 0x9400,
 		DTC_Register_FPGAPROMProgramStatus = 0x9404,
 		DTC_Register_FPGACoreAccess = 0x9408,
@@ -130,7 +127,7 @@ namespace DTCLib
 	class DTC_Registers
 	{
 	public:
-	  explicit DTC_Registers(DTC_SimMode mode = DTC_SimMode_Disabled, unsigned rocMask = 0x1);
+		explicit DTC_Registers(DTC_SimMode mode = DTC_SimMode_Disabled, unsigned rocMask = 0x1);
 		virtual ~DTC_Registers();
 
 		//
@@ -153,7 +150,7 @@ namespace DTCLib
 
 		//
 		// DTC Register Dumps
-	       
+
 		std::string FormattedRegDump(int width);
 		std::string PerformanceMonitorRegDump(int width);
 		std::string RingCountersRegDump(int width);
@@ -206,10 +203,6 @@ namespace DTCLib
 		void EnableCFOEmulation();
 		void DisableCFOEmulation();
 		bool ReadCFOEmulation();
-		void ResetSERDESOscillator();
-		bool ReadResetSERDESOscillator();
-		void SetSERDESOscillatorClock(DTC_SerdesClockSpeed speed);
-		DTC_SerdesClockSpeed ReadSERDESOscillatorClock();
 		void ResetDDRWriteAddress();
 		bool ReadResetDDRWriteAddress();
 		void ResetDDRReadAddress();
@@ -225,9 +218,9 @@ namespace DTCLib
 		void EnableSoftwareDRP();
 		void DisableSoftwareDRP();
 		bool ReadSoftwareDRP();
-		void EnableTrackerPacketExpansion();
-		void DisableTrackerPacketExpansion();
-		bool ReadTrackerPacketExpansion();
+		void EnableDCSReception();
+		void DisableDCSReception();
+		bool ReadDCSReception();
 		void SetExternalSystemClock();
 		void SetInternalSystemClock();
 		bool ReadSystemClock();
@@ -248,10 +241,12 @@ namespace DTCLib
 		DTC_SERDESLoopbackMode ReadSERDESLoopback(const DTC_Ring_ID& ring);
 		DTC_RegisterFormatter FormatSERDESLoopbackEnable();
 
-		// SERDES Status Register
+		// Clock Status Register
 		bool ReadSERDESOscillatorIICError();
 		bool ReadSERDESOscillatorInitializationComplete();
-		DTC_RegisterFormatter FormatSERDESOscillatorStatus();
+		bool ReadDDROscillatorIICError();
+		bool ReadDDROscillatorInitializationComplete();
+		DTC_RegisterFormatter FormatClockOscillatorStatus();
 
 		// ROC Emulation Enable Register
 		void EnableROCEmulator(const DTC_Ring_ID& ring);
@@ -349,6 +344,38 @@ namespace DTCLib
 		bool ReadHeartbeat12Mismatch(const DTC_Ring_ID& ring);
 		bool ReadHeartbeat01Mismatch(const DTC_Ring_ID& ring);
 		DTC_RegisterFormatter FormatHeartbeatError();
+
+		// SERDES Oscillator Registers
+		uint32_t ReadSERDESOscillatorFrequency();
+		void SetSERDESOscillatorFrequency(uint32_t freq);
+		bool ReadSERDESOscillaotrIICFSMEnable();
+		void EnableSERDESOscillatorIICFSM();
+		void DisableSERDESOscillatorIICFSM();
+		bool ReadSERDESOscillatorReadWriteMode();
+		void SetSERDESOscillatorWriteMode();
+		void SetSERDESOscillatorReadMode();
+		uint64_t ReadSERDESOscillatorParameters();
+		void SetSERDESOscillatorParameters(uint64_t parameters);
+		DTC_RegisterFormatter FormatSERDESOscillatorFrequency();
+		DTC_RegisterFormatter FormatSERDESOscillatorControl();
+		DTC_RegisterFormatter FormatSERDESOscillatorParameterLow();
+		DTC_RegisterFormatter FormatSERDESOscillatorParameterHigh();
+
+		// DDR Oscillator Registers
+		uint32_t ReadDDROscillatorFrequency();
+		void SetDDROscillatorFrequency(uint32_t freq);
+		bool ReadDDROscillaotrIICFSMEnable();
+		void EnableDDROscillatorIICFSM();
+		void DisableDDROscillatorIICFSM();
+		bool ReadDDROscillatorReadWriteMode();
+		void SetDDROscillatorWriteMode();
+		void SetDDROscillatorReadMode();
+		uint64_t ReadDDROscillatorParameters();
+		void SetDDROscillatorParameters(uint64_t parameters);
+		DTC_RegisterFormatter FormatDDROscillatorFrequency();
+		DTC_RegisterFormatter FormatDDROscillatorControl();
+		DTC_RegisterFormatter FormatDDROscillatorParameterLow();
+		DTC_RegisterFormatter FormatDDROscillatorParameterHigh();
 
 		// Timestamp Preset Registers
 		void SetTimestampPreset(const DTC_Timestamp& preset);
@@ -528,7 +555,7 @@ namespace DTCLib
 
 		uint32_t ReadDDRGasGuage();
 		DTC_RegisterFormatter FormatDDRGasGuage();
-		
+
 		// FPGA PROM Program Data Register
 
 		// FPGA PROM Program Status Register
@@ -548,9 +575,25 @@ namespace DTCLib
 		uint32_t ReadEventModeWord(uint8_t which);
 
 
+		// Oscillator Programming (DDR and SERDES)
+		void SetNewOscillatorFrequency(DTC_OscillatorType oscillator, double targetFrequency);
+		double ReadCurrentFrequency(DTC_OscillatorType oscillator);
+		uint64_t ReadCurrentProgram(DTC_OscillatorType oscillator);
+		void WriteCurrentFrequency(double freq, DTC_OscillatorType oscillator);
+		void WriteCurrentProgram(uint64_t program, DTC_OscillatorType oscillator);
+
 	private:
 		void WriteRegister_(uint32_t data, const DTC_Register& address);
 		uint32_t ReadRegister_(const DTC_Register& address);
+
+		static int DecodeHighSpeedDivider_(int input);
+		static int DecodeOutputDivider_(int input) { return input + 1; }
+		static double DecodeRFREQ_(uint64_t input) { return input / 268435456.0; }
+		static int EncodeHighSpeedDivider_(int input);
+		static int EncodeOutputDivider_(int input);
+		static uint64_t EncodeRFREQ_(double input) { return static_cast<uint64_t>(input * 268435456) & 0x3FFFFFFFFF; }
+		static uint64_t CalculateFrequencyForProgramming_(double targetFrequency, double currentFrequency, uint64_t currentProgram);
+
 
 	protected:
 		mu2edev device_;
@@ -583,7 +626,7 @@ namespace DTCLib
 			},
 			[this]()
 			{
-				return this->FormatSERDESOscillatorStatus();
+				return this->FormatClockOscillatorStatus();
 			},
 			[this]()
 			{
@@ -664,6 +707,35 @@ namespace DTCLib
 			[this]()
 			{
 				return this->FormatHeartbeatError();
+			},
+			[this]() {return this->FormatSERDESOscillatorFrequency(); },
+			[this]()
+			{
+				return this->FormatSERDESOscillatorControl();
+			},
+			[this]()
+			{
+				return this->FormatSERDESOscillatorParameterLow();
+			},
+			[this]()
+			{
+				return this->FormatSERDESOscillatorParameterHigh();
+			},
+			[this]()
+			{
+				return this->FormatDDROscillatorFrequency();
+			},
+			[this]()
+			{
+				return this->FormatDDROscillatorControl();
+			},
+			[this]()
+			{
+				return this->FormatDDROscillatorParameterLow();
+			},
+			[this]()
+			{
+				return this->FormatDDROscillatorParameterHigh();
 			},
 			[this]()
 			{
@@ -789,7 +861,7 @@ namespace DTCLib
 			{
 				return this->FormatDDRSERDESReadBurstSize();
 			},
-			  [this](){ return this->FormatDDRGasGuage(); },
+			  [this]() { return this->FormatDDRGasGuage(); },
 			[this]()
 			{
 				return this->FormatFPGAPROMProgramStatus();
@@ -961,5 +1033,3 @@ namespace DTCLib
 }
 
 #endif //DTC_REGISTERS_H
-
-

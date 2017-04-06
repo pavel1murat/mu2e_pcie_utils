@@ -92,6 +92,12 @@ namespace DTCLib
 		}
 	};
 
+	enum DTC_OscillatorType
+	{
+		DTC_OscillatorType_SERDES,
+		DTC_OscillatorType_DDR,
+	};
+
 	enum DTC_SerdesClockSpeed
 	{
 		DTC_SerdesClockSpeed_25Gbps,
