@@ -1421,13 +1421,15 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESOscillatorParam
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESOscillatorParameterHigh() {
 	auto form = CreateFormatter(DTC_Register_SERDESOscillatorParameterHigh);
 	form.description = "SERDES Oscillator Parameters";
-	std::stringstream o1, o2, o3;
+	std::stringstream o1, o2, o3, o4;
 	o1 << "HSDIV:       " << std::dec << DecodeHighSpeedDivider_((ReadRegister_(DTC_Register_SERDESOscillatorParameterHigh) >> 16) & 0x3);
 	form.vals.push_back(o1.str());
 	o2 << "N1:          " << std::dec << DecodeOutputDivider_((ReadRegister_(DTC_Register_SERDESOscillatorParameterHigh) >> 8) & 0x7F);
 	form.vals.push_back(o2.str());
 	o3 << "RFREQ 37:32: " << std::hex << (ReadRegister_(DTC_Register_SERDESOscillatorParameterHigh) & 0xFF);
 	form.vals.push_back(o3.str());
+	o4 << "RFREQ: " << std::dec << DecodeRFREQ_((static_cast<uint64_t>(ReadRegister_(DTC_Register_SERDESOscillatorParameterHigh) & 0x3F) << 32) + ReadRegister_(DTC_Register_SERDESOscillatorParameterLow));
+	form.vals.push_back(o4.str());
 	return form;
 }
 
@@ -1517,15 +1519,15 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorParamete
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorParameterHigh() {
 	auto form = CreateFormatter(DTC_Register_DDROscillatorParameterHigh);
 	form.description = "DDR Oscillator Parameters";
-	std::stringstream o1, o2 ,o3;
+	std::stringstream o1, o2 ,o3, o4;
 	o1 << "HSDIV:       " << std::dec << DecodeHighSpeedDivider_((ReadRegister_(DTC_Register_DDROscillatorParameterHigh) >> 16) & 0x3);
 	form.vals.push_back(o1.str());
-	o2 << "N1:          " << std::dec << DecodeOutputDivider_((ReadRegister_(DTC_Register_DDROscillatorParameterHigh) >> 8) & 0x7F);
+	o2 << "N1:          " << std::dec << DecodeOutputDivider_((ReadRegister_(DTC_Register_DDROscillatorParameterHigh) >> 8) & 0x3F);
 	form.vals.push_back(o2.str());
 	o3 << "RFREQ 37:32: " << std::hex << (ReadRegister_(DTC_Register_DDROscillatorParameterHigh) & 0xFF);
 	form.vals.push_back(o3.str());
-	return form;
-}
+	o4 << "RFREQ: " << std::dec << DecodeRFREQ_((static_cast<uint64_t>(ReadRegister_(DTC_Register_DDROscillatorParameterHigh) & 0x3F) << 32) + ReadRegister_(DTC_Register_DDROscillatorParameterLow));
+	form.vals.push_back(o4.str());
 
 // Timestamp Preset Registers
 void DTCLib::DTC_Registers::SetTimestampPreset(const DTC_Timestamp& preset)
@@ -3279,6 +3281,7 @@ uint64_t DTCLib::DTC_Registers::CalculateFrequencyForProgramming_(double targetF
 
 	assert(EncodeHighSpeedDivider_(newHighSpeedDivider) != -1);
 	assert(newOutputDivider < 128 && newOutputDivider > 0);
+	assert(newRFREQ > 0);
 
 	auto output = (static_cast<uint64_t>(EncodeHighSpeedDivider_(newHighSpeedDivider)) << 48) + (static_cast<uint64_t>(EncodeOutputDivider_(newOutputDivider)) << 40) + EncodeRFREQ_(newRFREQ);
 	TRACE(4, "CalculateFrequencyForProgramming: New Program: %llu", static_cast<unsigned long long>(output));
