@@ -3115,9 +3115,9 @@ double DTCLib::DTC_Registers::ReadCurrentFrequency(DTC_OscillatorType oscillator
 	switch(oscillator)
 	{
 	case DTC_OscillatorType_SERDES:
-		return ReadSERDESOscillatorFrequency() / 10.0;
+		return ReadSERDESOscillatorFrequency();
 	case DTC_OscillatorType_DDR:
-		return ReadDDROscillatorFrequency() / 10.0;
+		return ReadDDROscillatorFrequency();
 	}
 	return 0;
 }
@@ -3135,7 +3135,7 @@ uint64_t DTCLib::DTC_Registers::ReadCurrentProgram(DTC_OscillatorType oscillator
 }
 void DTCLib::DTC_Registers::WriteCurrentFrequency(double freq, DTC_OscillatorType oscillator)
 {
-	auto newFreq = static_cast<uint32_t>(freq * 10.0);
+	auto newFreq = static_cast<uint32_t>(freq);
 	switch(oscillator)
 	{
 	case DTC_OscillatorType_SERDES:
