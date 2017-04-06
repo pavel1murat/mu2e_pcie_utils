@@ -1400,7 +1400,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESOscillatorFrequ
 	auto form = CreateFormatter(DTC_Register_SERDESOscillatorFrequency);
 	form.description = "SERDES Oscillator Frequency";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadSERDESOscillatorFrequency();
+	o << std::dec << ReadSERDESOscillatorFrequency();
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -1503,7 +1503,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorFrequenc
 	auto form = CreateFormatter(DTC_Register_DDROscillatorFrequency);
 	form.description = "DDR Oscillator Frequency";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadDDROscillatorFrequency();
+	o << std::dec << ReadDDROscillatorFrequency();
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -3245,7 +3245,7 @@ int DTCLib::DTC_Registers::EncodeOutputDivider_(int input)
 
 uint64_t DTCLib::DTC_Registers::CalculateFrequencyForProgramming_(double targetFrequency, double currentFrequency, uint64_t currentProgram)
 {
-	TRACE(4, "CalculateFrequencyForProgramming: targetFrequency=%lf, currentFrequency=%lf, currentProgram=%llu", targetFrequency, currentFrequency, static_cast<unsigned long long>(currentProgram));
+	TRACE(4, "CalculateFrequencyForProgramming: targetFrequency=%lf, currentFrequency=%lf, currentProgram=0x%llx", targetFrequency, currentFrequency, static_cast<unsigned long long>(currentProgram));
 	auto currentHighSpeedDivider = DecodeHighSpeedDivider_(currentProgram >> 48);
 	auto currentOutputDivider = DecodeOutputDivider_((currentProgram >> 40) & 0xFF);
 	auto currentRFREQ = DecodeRFREQ_(currentProgram & 0x3FFFFFFFFF);
@@ -3308,7 +3308,7 @@ uint64_t DTCLib::DTC_Registers::CalculateFrequencyForProgramming_(double targetF
 	}
 
 	auto output = (static_cast<uint64_t>(EncodeHighSpeedDivider_(newHighSpeedDivider)) << 48) + (static_cast<uint64_t>(EncodeOutputDivider_(newOutputDivider)) << 40) + EncodeRFREQ_(newRFREQ);
-	TRACE(4, "CalculateFrequencyForProgramming: New Program: %llu", static_cast<unsigned long long>(output));
+	TRACE(4, "CalculateFrequencyForProgramming: New Program: 0x%llx", static_cast<unsigned long long>(output));
 	return output;
 }
 
