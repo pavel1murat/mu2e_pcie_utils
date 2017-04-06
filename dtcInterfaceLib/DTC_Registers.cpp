@@ -716,7 +716,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatClockOscillatorStatus
 	form.vals.push_back(std::string("DDR IIC Error:        [") + (ReadDDROscillatorIICError() ? "x" : " ") + "]");
 	form.vals.push_back(std::string("DDR Init.Complete:    [") + (ReadDDROscillatorInitializationComplete() ? "x" : " ") + "]");
 	return form;
-	
+
 }
 // ROC Emulation Enable Register
 void DTCLib::DTC_Registers::EnableROCEmulator(const DTC_Ring_ID& ring)
@@ -785,9 +785,9 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatRingEnable()
 	{
 		auto re = ReadRingEnabled(r);
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": ["
-			+ (re.TransmitEnable ? "x" : " ") + ","
-			+ (re.ReceiveEnable ? "x" : " ") + ","
-			+ (re.TimingEnable ? "x" : " ") + "]");
+							+ (re.TransmitEnable ? "x" : " ") + ","
+							+ (re.ReceiveEnable ? "x" : " ") + ","
+							+ (re.TimingEnable ? "x" : " ") + "]");
 	}
 	{
 		auto ce = ReadRingEnabled(DTC_Ring_CFO);
@@ -939,12 +939,12 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESTXBufferStatus(
 	for (auto r : DTC_Rings)
 	{
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": ["
-			+ (ReadSERDESOverflowOrUnderflow(r) ? "x" : " ") + ","
-			+ (ReadSERDESBufferFIFOHalfFull(r) ? "x" : " ") + "]");
+							+ (ReadSERDESOverflowOrUnderflow(r) ? "x" : " ") + ","
+							+ (ReadSERDESBufferFIFOHalfFull(r) ? "x" : " ") + "]");
 	}
 	form.vals.push_back(std::string("CFO:    [")
-		+ (ReadSERDESOverflowOrUnderflow(DTC_Ring_CFO) ? "x" : " ") + ","
-		+ (ReadSERDESBufferFIFOHalfFull(DTC_Ring_CFO) ? "x" : " ") + "]");
+						+ (ReadSERDESOverflowOrUnderflow(DTC_Ring_CFO) ? "x" : " ") + ","
+						+ (ReadSERDESBufferFIFOHalfFull(DTC_Ring_CFO) ? "x" : " ") + "]");
 	return form;
 }
 
@@ -1297,10 +1297,10 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatHeartbeatError()
 	for (auto r : DTC_Rings)
 	{
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": ["
-			+ (ReadHeartbeatTimeout(r) ? "x" : " ") + ","
-			+ (ReadHeartbeat20Mismatch(r) ? "x" : " ") + ","
-			+ (ReadHeartbeat12Mismatch(r) ? "x" : " ") + ","
-			+ (ReadHeartbeat01Mismatch(r) ? "x" : " ") + "]");
+							+ (ReadHeartbeatTimeout(r) ? "x" : " ") + ","
+							+ (ReadHeartbeat20Mismatch(r) ? "x" : " ") + ","
+							+ (ReadHeartbeat12Mismatch(r) ? "x" : " ") + ","
+							+ (ReadHeartbeat01Mismatch(r) ? "x" : " ") + "]");
 	}
 	return form;
 }
@@ -1362,7 +1362,7 @@ void DTCLib::DTC_Registers::SetSERDESOscillatorParameters(uint64_t parameters)
 	WriteRegister_(static_cast<uint32_t>(parameters), DTC_Register_SERDESOscillatorParameterLow);
 	EnableSERDESOscillatorIICFSM();
 	usleep(1000);
-	DisableSERDESOscillatorIICFSM();	
+	DisableSERDESOscillatorIICFSM();
 }
 
 DTCLib::DTC_SerdesClockSpeed DTCLib::DTC_Registers::ReadSERDESOscillatorClock()
@@ -1379,7 +1379,7 @@ DTCLib::DTC_SerdesClockSpeed DTCLib::DTC_Registers::ReadSERDESOscillatorClock()
 void DTCLib::DTC_Registers::SetSERDESOscillatorClock(DTC_SerdesClockSpeed speed)
 {
 	double targetFreq;
-	switch(speed)
+	switch (speed)
 	{
 	case DTC_SerdesClockSpeed_25Gbps:
 		targetFreq = 125000000.0;
@@ -1519,7 +1519,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorParamete
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorParameterHigh() {
 	auto form = CreateFormatter(DTC_Register_DDROscillatorParameterHigh);
 	form.description = "DDR Oscillator Parameters";
-	std::stringstream o1, o2 ,o3, o4;
+	std::stringstream o1, o2, o3, o4;
 	o1 << "HSDIV:       " << std::dec << DecodeHighSpeedDivider_((ReadRegister_(DTC_Register_DDROscillatorParameterHigh) >> 16) & 0x3);
 	form.vals.push_back(o1.str());
 	o2 << "N1:          " << std::dec << DecodeOutputDivider_((ReadRegister_(DTC_Register_DDROscillatorParameterHigh) >> 8) & 0x3F);
@@ -1528,6 +1528,8 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorParamete
 	form.vals.push_back(o3.str());
 	o4 << "RFREQ: " << std::dec << DecodeRFREQ_((static_cast<uint64_t>(ReadRegister_(DTC_Register_DDROscillatorParameterHigh) & 0x3F) << 32) + ReadRegister_(DTC_Register_DDROscillatorParameterLow));
 	form.vals.push_back(o4.str());
+	return form;
+}
 
 // Timestamp Preset Registers
 void DTCLib::DTC_Registers::SetTimestampPreset(const DTC_Timestamp& preset)
@@ -1678,10 +1680,10 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatFIFOFullErrorFlag0()
 	{
 		auto re = ReadFIFOFullErrorFlags(r);
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": ["
-			+ (re.DataRequestOutput ? "x" : " ") + ","
-			+ (re.ReadoutRequestOutput ? "x" : " ") + ","
-			+ (re.CFOLinkInput ? "x" : " ") + ","
-			+ (re.OutputData ? "x" : " ") + "]");
+							+ (re.DataRequestOutput ? "x" : " ") + ","
+							+ (re.ReadoutRequestOutput ? "x" : " ") + ","
+							+ (re.CFOLinkInput ? "x" : " ") + ","
+							+ (re.OutputData ? "x" : " ") + "]");
 	}
 	return form;
 }
@@ -1695,18 +1697,18 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatFIFOFullErrorFlag1()
 	{
 		auto re = ReadFIFOFullErrorFlags(r);
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": ["
-			+ (re.DataInput ? "x" : " ") + ","
-			+ (re.OutputDCSStage2 ? "x" : " ") + ","
-			+ (re.OutputDCS ? "x" : " ") + ","
-			+ (re.OtherOutput ? "x" : " ") + "]");
+							+ (re.DataInput ? "x" : " ") + ","
+							+ (re.OutputDCSStage2 ? "x" : " ") + ","
+							+ (re.OutputDCS ? "x" : " ") + ","
+							+ (re.OtherOutput ? "x" : " ") + "]");
 	}
 	{
 		auto ce = ReadFIFOFullErrorFlags(DTC_Ring_CFO);
 		form.vals.push_back(std::string("CFO:    [") +
-			+(ce.DataInput ? "x" : " ") + ","
-			+ (ce.OutputDCSStage2 ? "x" : " ") + ","
-			+ (ce.OutputDCS ? "x" : " ") + ","
-			+ (ce.OtherOutput ? "x" : " ") + "]");
+							+(ce.DataInput ? "x" : " ") + ","
+							+ (ce.OutputDCSStage2 ? "x" : " ") + ","
+							+ (ce.OutputDCS ? "x" : " ") + ","
+							+ (ce.OtherOutput ? "x" : " ") + "]");
 	}
 	return form;
 }
@@ -1789,16 +1791,16 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatReceivePacketError()
 	for (auto r : DTC_Rings)
 	{
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": ["
-			+ (ReadPacketCRCError(r) ? "x" : " ") + ","
-			+ (ReadPacketError(r) ? "x" : " ") + ","
-			+ (ReadRXElasticBufferOverrun(r) ? "x" : " ") + ","
-			+ (ReadRXElasticBufferUnderrun(r) ? "x" : " ") + "]");
+							+ (ReadPacketCRCError(r) ? "x" : " ") + ","
+							+ (ReadPacketError(r) ? "x" : " ") + ","
+							+ (ReadRXElasticBufferOverrun(r) ? "x" : " ") + ","
+							+ (ReadRXElasticBufferUnderrun(r) ? "x" : " ") + "]");
 	}
 	form.vals.push_back(std::string("CFO:    [")
-		+ (ReadPacketCRCError(DTC_Ring_CFO) ? "x" : " ") + ","
-		+ (ReadPacketError(DTC_Ring_CFO) ? "x" : " ") + ","
-		+ (ReadRXElasticBufferOverrun(DTC_Ring_CFO) ? "x" : " ") + ","
-		+ (ReadRXElasticBufferUnderrun(DTC_Ring_CFO) ? "x" : " ") + "]");
+						+ (ReadPacketCRCError(DTC_Ring_CFO) ? "x" : " ") + ","
+						+ (ReadPacketError(DTC_Ring_CFO) ? "x" : " ") + ","
+						+ (ReadRXElasticBufferOverrun(DTC_Ring_CFO) ? "x" : " ") + ","
+						+ (ReadRXElasticBufferUnderrun(DTC_Ring_CFO) ? "x" : " ") + "]");
 	return form;
 }
 
@@ -3108,13 +3110,14 @@ void DTCLib::DTC_Registers::SetNewOscillatorFrequency(DTC_OscillatorType oscilla
 	auto currentFrequency = ReadCurrentFrequency(oscillator);
 	auto currentProgram = ReadCurrentProgram(oscillator);
 	auto newParameters = CalculateFrequencyForProgramming_(targetFrequency, currentFrequency, currentProgram);
+	if (newParameters == 0) return;
 	WriteCurrentProgram(newParameters, oscillator);
 	WriteCurrentFrequency(targetFrequency, oscillator);
 }
 
 double DTCLib::DTC_Registers::ReadCurrentFrequency(DTC_OscillatorType oscillator)
 {
-	switch(oscillator)
+	switch (oscillator)
 	{
 	case DTC_OscillatorType_SERDES:
 		return ReadSERDESOscillatorFrequency();
@@ -3126,7 +3129,7 @@ double DTCLib::DTC_Registers::ReadCurrentFrequency(DTC_OscillatorType oscillator
 
 uint64_t DTCLib::DTC_Registers::ReadCurrentProgram(DTC_OscillatorType oscillator)
 {
-	switch(oscillator)
+	switch (oscillator)
 	{
 	case DTC_OscillatorType_SERDES:
 		return ReadSERDESOscillatorParameters();
@@ -3138,7 +3141,7 @@ uint64_t DTCLib::DTC_Registers::ReadCurrentProgram(DTC_OscillatorType oscillator
 void DTCLib::DTC_Registers::WriteCurrentFrequency(double freq, DTC_OscillatorType oscillator)
 {
 	auto newFreq = static_cast<uint32_t>(freq);
-	switch(oscillator)
+	switch (oscillator)
 	{
 	case DTC_OscillatorType_SERDES:
 		SetSERDESOscillatorFrequency(newFreq);
@@ -3150,7 +3153,7 @@ void DTCLib::DTC_Registers::WriteCurrentFrequency(double freq, DTC_OscillatorTyp
 }
 void DTCLib::DTC_Registers::WriteCurrentProgram(uint64_t program, DTC_OscillatorType oscillator)
 {
-	switch(oscillator)
+	switch (oscillator)
 	{
 	case DTC_OscillatorType_SERDES:
 		SetSERDESOscillatorParameters(program);
@@ -3197,7 +3200,7 @@ uint32_t DTCLib::DTC_Registers::ReadRegister_(const DTC_Register& address)
 
 int DTCLib::DTC_Registers::DecodeHighSpeedDivider_(int input)
 {
-	switch(input)
+	switch (input)
 	{
 	case 0: return 4;
 	case 1: return 5;
@@ -3211,7 +3214,7 @@ int DTCLib::DTC_Registers::DecodeHighSpeedDivider_(int input)
 
 int DTCLib::DTC_Registers::EncodeHighSpeedDivider_(int input)
 {
-	switch(input)
+	switch (input)
 	{
 	case 4: return 0;
 	case 5: return 1;
@@ -3245,14 +3248,14 @@ uint64_t DTCLib::DTC_Registers::CalculateFrequencyForProgramming_(double targetF
 
 	std::vector<int> hsdiv_values = { 11, 9, 7, 6, 5, 4 };
 	std::vector < std::pair<int, double>> parameter_values;
-	for(auto hsdiv : hsdiv_values)
+	for (auto hsdiv : hsdiv_values)
 	{
 		auto minN = minFreq / (targetFrequency * hsdiv);
 		if (minN > 128) break;
 
 		auto thisN = 2;
 		if (minN < 1) thisN = 1;
-		while(thisN < minN)
+		while (thisN < minN)
 		{
 			thisN += 2;
 		}
@@ -3269,7 +3272,7 @@ uint64_t DTCLib::DTC_Registers::CalculateFrequencyForProgramming_(double targetF
 	for (auto values : parameter_values)
 	{
 		++counter;
-		if(values.second > maxFreq)	continue;
+		if (values.second > maxFreq)	continue;
 
 
 		newHighSpeedDivider = hsdiv_values[counter];
@@ -3279,9 +3282,20 @@ uint64_t DTCLib::DTC_Registers::CalculateFrequencyForProgramming_(double targetF
 	}
 	TRACE(4, "CalculateFrequencyForProgramming: New Program: HSDIV=%d, N1=%d, RFREQ=%lf", newHighSpeedDivider, newOutputDivider, newRFREQ);
 
-	assert(EncodeHighSpeedDivider_(newHighSpeedDivider) != -1);
-	assert(newOutputDivider < 128 && newOutputDivider > 0);
-	assert(newRFREQ > 0);
+	if (EncodeHighSpeedDivider_(newHighSpeedDivider) == -1) {
+		TRACE(0, "ERROR: CalculateFrequencyForProgramming: Invalid HSDIV %d!", newHighSpeedDivider);
+		return 0;
+	}
+	if (newOutputDivider > 128 || newOutputDivider < 0)
+	{
+		TRACE(0, "ERROR: CalculateFrequencyForProgramming: Invalid N1 %d!", newOutputDivider);
+		return 0;
+	}
+	if (newRFREQ <= 0)
+	{
+		TRACE(0, "ERROR: CalculateFrequencyForProgramming: Invalid RFREQ %lf!", newRFREQ);
+		return 0;
+	}
 
 	auto output = (static_cast<uint64_t>(EncodeHighSpeedDivider_(newHighSpeedDivider)) << 48) + (static_cast<uint64_t>(EncodeOutputDivider_(newOutputDivider)) << 40) + EncodeRFREQ_(newRFREQ);
 	TRACE(4, "CalculateFrequencyForProgramming: New Program: %llu", static_cast<unsigned long long>(output));
