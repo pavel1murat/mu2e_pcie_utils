@@ -356,6 +356,8 @@ namespace DTCLib
 		void SetSERDESOscillatorReadMode();
 		uint64_t ReadSERDESOscillatorParameters();
 		void SetSERDESOscillatorParameters(uint64_t parameters);
+		DTC_SerdesClockSpeed ReadSERDESOscillatorClock();
+		void SetSERDESOscillatorClock(DTC_SerdesClockSpeed speed);
 		DTC_RegisterFormatter FormatSERDESOscillatorFrequency();
 		DTC_RegisterFormatter FormatSERDESOscillatorControl();
 		DTC_RegisterFormatter FormatSERDESOscillatorParameterLow();

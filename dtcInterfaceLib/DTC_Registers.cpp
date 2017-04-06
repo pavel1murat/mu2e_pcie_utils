@@ -1364,6 +1364,33 @@ void DTCLib::DTC_Registers::SetSERDESOscillatorParameters(uint64_t parameters)
 	usleep(1000);
 	DisableSERDESOscillatorIICFSM();	
 }
+
+DTCLib::DTC_SerdesClockSpeed DTCLib::DTC_Registers::ReadSERDESOscillatorClock()
+{
+	auto freq = ReadSERDESOscillatorFrequency();
+
+	//Clocks should be accurate to 30 ppm
+	if (freq > 156250000 - (156250000 * 30 / 1000000) && freq < 156250000 + (156250000 * 30 / 1000000))
+		return DTC_SerdesClockSpeed_3125Gbps;
+	if (freq > 125000000 - (125000000 * 30 / 1000000) && freq < 125000000 + (125000000 * 30 / 1000000))
+		return DTC_SerdesClockSpeed_25Gbps;
+	return DTC_SerdesClockSpeed_Unknown;
+}
+void DTCLib::DTC_Registers::SetSERDESOscillatorClock(DTC_SerdesClockSpeed speed)
+{
+	auto targetFreq = 0;
+	switch(speed)
+	{
+	case DTC_SerdesClockSpeed_25Gbps:
+		targetFreq = 125000000;
+		break;
+	case DTC_SerdesClockSpeed_3125Gbps:
+		targetFreq = 156250000;
+		break;
+	}
+	SetNewOscillatorFrequency(DTC_OscillatorType_SERDES, targetFreq);
+}
+
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESOscillatorFrequency() {
 	auto form = CreateFormatter(DTC_Register_SERDESOscillatorFrequency);
 	form.description = "SERDES Oscillator Frequency";

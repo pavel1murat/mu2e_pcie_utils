@@ -64,6 +64,8 @@ int val = 0;
 bool readGenerated = false;
 std::ofstream outputStream;
 unsigned rocMask = 0x1;
+unsigned targetFrequency = 166666667;
+int clockToProgram = 0;
 
 
 unsigned getOptionValue(int* index, char** argv[])
@@ -164,7 +166,7 @@ void WriteGeneratedData(DTC* thisDTC)
 
 void printHelpMsg()
 {
-	std::cout << "Usage: mu2eUtil [options] [read,read_data,reset_detemu,toggle_serdes,loopback,buffer_test,read_release,DTC]" << std::endl;
+	std::cout << "Usage: mu2eUtil [options] [read,read_data,reset_detemu,toggle_serdes,loopback,buffer_test,read_release,DTC,program_clock]" << std::endl;
 	std::cout << "Options are:" << std::endl
 		<< "    -h: This message." << std::endl
 		<< "    -n: Number of times to repeat test. (Default: 1)" << std::endl
@@ -187,6 +189,8 @@ void printHelpMsg()
 		<< "    -g: Generate (and send) N DMA blocks for testing the Detector Emulator (Default: 0)" << std::endl
 		<< "    -G: Read out generated data, but don't write new. With -g, will exit after writing data" << std::endl
 		<< "    -r: # of rocs to enable. Hexadecimal, each digit corresponds to a ring. ROC_0: 1, ROC_1: 3, ROC_2: 5, ROC_3: 7, ROC_4: 9, ROC_5: B (Default 0x1, All possible: 0xBBBBBB)" << std::endl
+		<< "    -F: Frequency to program (in Hz, sorry...Default 166666667 Hz)" << std::endl
+		<< "    -C: Clock to program (0: SERDES, 1: DDR, Default 0)" << std::endl
 		;
 	exit(0);
 }
@@ -275,6 +279,12 @@ main(int argc
 			case 'r':
 				rocMask = getOptionValue(&optind, &argv);
 				break;
+			case 'C':
+				clockToProgram = getOptionValue(&optind, &argv) % 2;
+				break;
+			case 'F':
+				targetFrequency = getOptionValue(&optind, &argv);
+				break;
 			default:
 				std::cout << "Unknown option: " << argv[optind] << std::endl;
 				printHelpMsg();
@@ -309,7 +319,9 @@ main(int argc
 		<< ", Read Data from DDR: " << readGenerated
 		<< ", Use Sim File: " << useSimFile
 		<< ", ROC Mask: " << std::hex << rocMask
-		<< ", Debug Type: " << DTC_DebugTypeConverter(debugType).toString();
+		<< ", Debug Type: " << DTC_DebugTypeConverter(debugType).toString()
+		<< ", Target Frequency: " << std::dec << targetFrequency
+		<< ", Clock To Program: " << (clockToProgram == 0 ? "SERDES" : "DDR");
 	if (rawOutput)
 	{
 		std::cout << ", Raw output file: " << rawOutputFile;
@@ -760,6 +772,14 @@ main(int argc
 			<< "Read Rate: " << Utilities::FormatByteString(totalBytesRead / totalReadTime) << "/s." << std::endl
 			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime) << "/s." << std::endl
 			<< "Maximum Gas Gauge: " << Utilities::FormatByteString(maxGasGauge) << std::endl;
+		delete thisDTC;
+	}
+	else if (op == "program_clock")
+	{
+		// ReSharper disable once CppNonReclaimedResourceAcquisition
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
+		auto oscillator = clockToProgram == 0 ? DTC_OscillatorType_SERDES : DTC_OscillatorType_DDR;
+		thisDTC->SetNewOscillatorFrequency(oscillator, targetFrequency);
 		delete thisDTC;
 	}
 	else
