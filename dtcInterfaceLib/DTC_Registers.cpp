@@ -1351,9 +1351,8 @@ uint64_t DTCLib::DTC_Registers::ReadSERDESOscillatorParameters()
 {
 	SetSERDESOscillatorReadMode();
 	EnableSERDESOscillatorIICFSM();
-	usleep(1000);
-	DisableSERDESOscillatorIICFSM();
 	while (!ReadSERDESOscillatorInitializationComplete()) usleep(1000);
+	DisableSERDESOscillatorIICFSM();
 	return (static_cast<uint64_t>(ReadRegister_(DTC_Register_SERDESOscillatorParameterHigh)) << 32) + ReadRegister_(DTC_Register_SERDESOscillatorParameterLow);
 }
 void DTCLib::DTC_Registers::SetSERDESOscillatorParameters(uint64_t parameters)
@@ -1362,9 +1361,8 @@ void DTCLib::DTC_Registers::SetSERDESOscillatorParameters(uint64_t parameters)
 	WriteRegister_(parameters >> 32, DTC_Register_SERDESOscillatorParameterHigh);
 	WriteRegister_(static_cast<uint32_t>(parameters), DTC_Register_SERDESOscillatorParameterLow);
 	EnableSERDESOscillatorIICFSM();
-	usleep(1000);
-	DisableSERDESOscillatorIICFSM();
 	while (!ReadSERDESOscillatorInitializationComplete()) usleep(1000);
+	DisableSERDESOscillatorIICFSM();
 }
 
 DTCLib::DTC_SerdesClockSpeed DTCLib::DTC_Registers::ReadSERDESOscillatorClock()
@@ -1486,9 +1484,8 @@ uint64_t DTCLib::DTC_Registers::ReadDDROscillatorParameters()
 {
 	SetDDROscillatorReadMode();
 	EnableDDROscillatorIICFSM();
-	usleep(1000);
-	DisableDDROscillatorIICFSM();
 	while (!ReadDDROscillatorInitializationComplete()) usleep(1000);
+	DisableDDROscillatorIICFSM();
 	return (static_cast<uint64_t>(ReadRegister_(DTC_Register_DDROscillatorParameterHigh)) << 32) + ReadRegister_(DTC_Register_DDROscillatorParameterLow);
 }
 void DTCLib::DTC_Registers::SetDDROscillatorParameters(uint64_t parameters)
@@ -1497,9 +1494,8 @@ void DTCLib::DTC_Registers::SetDDROscillatorParameters(uint64_t parameters)
 	WriteRegister_(parameters >> 32, DTC_Register_DDROscillatorParameterHigh);
 	WriteRegister_(static_cast<uint32_t>(parameters), DTC_Register_DDROscillatorParameterLow);
 	EnableDDROscillatorIICFSM();
-	usleep(1000);
-	DisableDDROscillatorIICFSM();
 	while (!ReadDDROscillatorInitializationComplete()) usleep(1000);
+	DisableDDROscillatorIICFSM();
 }
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorFrequency() {
 	auto form = CreateFormatter(DTC_Register_DDROscillatorFrequency);
