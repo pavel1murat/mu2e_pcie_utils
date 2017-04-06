@@ -1411,6 +1411,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESOscillatorContr
 }
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESOscillatorParameterLow()
 {
+	ReadSERDESOscillatorParameters();
 	auto form = CreateFormatter(DTC_Register_SERDESOscillatorParameterLow);
 	form.description = "SERDES Oscillator RFREQ 31:0";
 	std::stringstream o;
@@ -1418,7 +1419,9 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESOscillatorParam
 	form.vals.push_back(o.str());
 	return form;
 }
-DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESOscillatorParameterHigh() {
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESOscillatorParameterHigh()
+{
+	ReadSERDESOscillatorParameters();
 	auto form = CreateFormatter(DTC_Register_SERDESOscillatorParameterHigh);
 	form.description = "SERDES Oscillator Parameters";
 	std::stringstream o1, o2, o3, o4;
@@ -1509,6 +1512,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorControl(
 }
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorParameterLow()
 {
+	ReadDDROscillatorParameters();
 	auto form = CreateFormatter(DTC_Register_DDROscillatorParameterLow);
 	form.description = "DDR Oscillator RFREQ 31:0";
 	std::stringstream o;
@@ -1516,7 +1520,9 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorParamete
 	form.vals.push_back(o.str());
 	return form;
 }
-DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorParameterHigh() {
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorParameterHigh() 
+{
+	ReadDDROscillatorParameters();
 	auto form = CreateFormatter(DTC_Register_DDROscillatorParameterHigh);
 	form.description = "DDR Oscillator Parameters";
 	std::stringstream o1, o2, o3, o4;
