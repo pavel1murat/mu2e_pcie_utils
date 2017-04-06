@@ -1427,9 +1427,11 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESOscillatorParam
 	auto form = CreateFormatter(DTC_Register_SERDESOscillatorParameterHigh);
 	form.description = "SERDES Oscillator Parameters";
 	std::stringstream o1, o2, o3, o4;
-	o1 << "HSDIV:       " << std::dec << DecodeHighSpeedDivider_((ReadRegister_(DTC_Register_SERDESOscillatorParameterHigh) >> 16) & 0x3);
+	auto hsdiv = (ReadRegister_(DTC_Register_SERDESOscillatorParameterHigh) >> 16) & 0x3;
+	o1 << "HSDIV:       " << std::dec << hsdiv << " (" << DecodeHighSpeedDivider_(hsdiv) << ")";
 	form.vals.push_back(o1.str());
-	o2 << "N1:          " << std::dec << DecodeOutputDivider_((ReadRegister_(DTC_Register_SERDESOscillatorParameterHigh) >> 8) & 0x7F);
+	auto n1 = (ReadRegister_(DTC_Register_SERDESOscillatorParameterHigh) >> 8) & 0x7F;
+	o2 << "N1:          " << std::dec << n1 << " (" << DecodeOutputDivider_(n1) << ")";
 	form.vals.push_back(o2.str());
 	o3 << "RFREQ 37:32: " << std::hex << (ReadRegister_(DTC_Register_SERDESOscillatorParameterHigh) & 0xFF);
 	form.vals.push_back(o3.str());
@@ -1530,9 +1532,11 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorParamete
 	auto form = CreateFormatter(DTC_Register_DDROscillatorParameterHigh);
 	form.description = "DDR Oscillator Parameters";
 	std::stringstream o1, o2, o3, o4;
-	o1 << "HSDIV:       " << std::dec << DecodeHighSpeedDivider_((ReadRegister_(DTC_Register_DDROscillatorParameterHigh) >> 16) & 0x3);
+	auto hsdiv = (ReadRegister_(DTC_Register_DDROscillatorParameterHigh) >> 16) & 0x3;
+	o1 << "HSDIV:       " << std::dec << hsdiv << " (" << DecodeHighSpeedDivider_(hsdiv) << ")";
 	form.vals.push_back(o1.str());
-	o2 << "N1:          " << std::dec << DecodeOutputDivider_((ReadRegister_(DTC_Register_DDROscillatorParameterHigh) >> 8) & 0x3F);
+	auto n1 = (ReadRegister_(DTC_Register_DDROscillatorParameterHigh) >> 8) & 0x7F;
+	o2 << "N1:          " << std::dec << n1 << " (" << DecodeOutputDivider_(n1) << ")";
 	form.vals.push_back(o2.str());
 	o3 << "RFREQ 37:32: " << std::hex << (ReadRegister_(DTC_Register_DDROscillatorParameterHigh) & 0xFF);
 	form.vals.push_back(o3.str());
