@@ -1351,8 +1351,9 @@ uint64_t DTCLib::DTC_Registers::ReadSERDESOscillatorParameters()
 {
 	SetSERDESOscillatorReadMode();
 	EnableSERDESOscillatorIICFSM();
-	while (!ReadSERDESOscillatorInitializationComplete()) usleep(1000);
+	usleep(10000);
 	DisableSERDESOscillatorIICFSM();
+	while (!ReadSERDESOscillatorInitializationComplete()) usleep(1000);
 	return (static_cast<uint64_t>(ReadRegister_(DTC_Register_SERDESOscillatorParameterHigh)) << 32) + ReadRegister_(DTC_Register_SERDESOscillatorParameterLow);
 }
 void DTCLib::DTC_Registers::SetSERDESOscillatorParameters(uint64_t parameters)
@@ -1361,8 +1362,9 @@ void DTCLib::DTC_Registers::SetSERDESOscillatorParameters(uint64_t parameters)
 	WriteRegister_(parameters >> 32, DTC_Register_SERDESOscillatorParameterHigh);
 	WriteRegister_(static_cast<uint32_t>(parameters), DTC_Register_SERDESOscillatorParameterLow);
 	EnableSERDESOscillatorIICFSM();
-	while (!ReadSERDESOscillatorInitializationComplete()) usleep(1000);
+	usleep(10000);
 	DisableSERDESOscillatorIICFSM();
+	while (!ReadSERDESOscillatorInitializationComplete()) usleep(1000);
 }
 
 DTCLib::DTC_SerdesClockSpeed DTCLib::DTC_Registers::ReadSERDESOscillatorClock()
@@ -1425,7 +1427,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESOscillatorParam
 	auto form = CreateFormatter(DTC_Register_SERDESOscillatorParameterHigh);
 	form.description = "SERDES Oscillator Parameters";
 	std::stringstream o1, o2, o3, o4;
-	auto hsdiv = (ReadRegister_(DTC_Register_SERDESOscillatorParameterHigh) >> 16) & 0x3;
+	auto hsdiv = (ReadRegister_(DTC_Register_SERDESOscillatorParameterHigh) >> 16) & 0x7;
 	o1 << "HSDIV:       " << std::dec << hsdiv << " (" << DecodeHighSpeedDivider_(hsdiv) << ")";
 	form.vals.push_back(o1.str());
 	auto n1 = (ReadRegister_(DTC_Register_SERDESOscillatorParameterHigh) >> 8) & 0x7F;
@@ -1484,8 +1486,9 @@ uint64_t DTCLib::DTC_Registers::ReadDDROscillatorParameters()
 {
 	SetDDROscillatorReadMode();
 	EnableDDROscillatorIICFSM();
-	while (!ReadDDROscillatorInitializationComplete()) usleep(1000);
+	usleep(10000);
 	DisableDDROscillatorIICFSM();
+	while (!ReadDDROscillatorInitializationComplete()) usleep(1000);
 	return (static_cast<uint64_t>(ReadRegister_(DTC_Register_DDROscillatorParameterHigh)) << 32) + ReadRegister_(DTC_Register_DDROscillatorParameterLow);
 }
 void DTCLib::DTC_Registers::SetDDROscillatorParameters(uint64_t parameters)
@@ -1494,8 +1497,9 @@ void DTCLib::DTC_Registers::SetDDROscillatorParameters(uint64_t parameters)
 	WriteRegister_(parameters >> 32, DTC_Register_DDROscillatorParameterHigh);
 	WriteRegister_(static_cast<uint32_t>(parameters), DTC_Register_DDROscillatorParameterLow);
 	EnableDDROscillatorIICFSM();
-	while (!ReadDDROscillatorInitializationComplete()) usleep(1000);
+	usleep(10000);
 	DisableDDROscillatorIICFSM();
+	while (!ReadDDROscillatorInitializationComplete()) usleep(1000);
 }
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorFrequency() {
 	auto form = CreateFormatter(DTC_Register_DDROscillatorFrequency);
@@ -1528,7 +1532,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorParamete
 	auto form = CreateFormatter(DTC_Register_DDROscillatorParameterHigh);
 	form.description = "DDR Oscillator Parameters";
 	std::stringstream o1, o2, o3, o4;
-	auto hsdiv = (ReadRegister_(DTC_Register_DDROscillatorParameterHigh) >> 16) & 0x3;
+	auto hsdiv = (ReadRegister_(DTC_Register_DDROscillatorParameterHigh) >> 16) & 0x7;
 	o1 << "HSDIV:       " << std::dec << hsdiv << " (" << DecodeHighSpeedDivider_(hsdiv) << ")";
 	form.vals.push_back(o1.str());
 	auto n1 = (ReadRegister_(DTC_Register_DDROscillatorParameterHigh) >> 8) & 0x7F;
@@ -3246,8 +3250,8 @@ int DTCLib::DTC_Registers::EncodeOutputDivider_(int input)
 uint64_t DTCLib::DTC_Registers::CalculateFrequencyForProgramming_(double targetFrequency, double currentFrequency, uint64_t currentProgram)
 {
 	TRACE(4, "CalculateFrequencyForProgramming: targetFrequency=%lf, currentFrequency=%lf, currentProgram=0x%llx", targetFrequency, currentFrequency, static_cast<unsigned long long>(currentProgram));
-	auto currentHighSpeedDivider = DecodeHighSpeedDivider_(currentProgram >> 48);
-	auto currentOutputDivider = DecodeOutputDivider_((currentProgram >> 40) & 0xFF);
+	auto currentHighSpeedDivider = DecodeHighSpeedDivider_((currentProgram >> 48) & 0x7);
+	auto currentOutputDivider = DecodeOutputDivider_((currentProgram >> 40) & 0x7F);
 	auto currentRFREQ = DecodeRFREQ_(currentProgram & 0x3FFFFFFFFF);
 	TRACE(4, "CalculateFrequencyForProgramming: Current HSDIV=%d, N1=%d, RFREQ=%lf", currentHighSpeedDivider, currentOutputDivider, currentRFREQ);
 	const auto minFreq = 4850000000; // Hz
