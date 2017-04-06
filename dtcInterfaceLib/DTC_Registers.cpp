@@ -1370,22 +1370,25 @@ DTCLib::DTC_SerdesClockSpeed DTCLib::DTC_Registers::ReadSERDESOscillatorClock()
 	auto freq = ReadSERDESOscillatorFrequency();
 
 	//Clocks should be accurate to 30 ppm
-	if (freq > 156250000 - (156250000 * 30 / 1000000) && freq < 156250000 + (156250000 * 30 / 1000000))
+	if (freq > 156250000 - 4687.5 && freq < 156250000 + 4687.5)
 		return DTC_SerdesClockSpeed_3125Gbps;
-	if (freq > 125000000 - (125000000 * 30 / 1000000) && freq < 125000000 + (125000000 * 30 / 1000000))
+	if (freq > 125000000 - 3750 && freq < 125000000 + 3750)
 		return DTC_SerdesClockSpeed_25Gbps;
 	return DTC_SerdesClockSpeed_Unknown;
 }
 void DTCLib::DTC_Registers::SetSERDESOscillatorClock(DTC_SerdesClockSpeed speed)
 {
-	auto targetFreq = 0;
+	double targetFreq;
 	switch(speed)
 	{
 	case DTC_SerdesClockSpeed_25Gbps:
-		targetFreq = 125000000;
+		targetFreq = 125000000.0;
 		break;
 	case DTC_SerdesClockSpeed_3125Gbps:
-		targetFreq = 156250000;
+		targetFreq = 156250000.0;
+		break;
+	default:
+		targetFreq = 0.0;
 		break;
 	}
 	SetNewOscillatorFrequency(DTC_OscillatorType_SERDES, targetFreq);
@@ -3238,7 +3241,7 @@ uint64_t DTCLib::DTC_Registers::CalculateFrequencyForProgramming_(double targetF
 	auto fXTAL = currentFrequency * currentHighSpeedDivider * currentOutputDivider / currentRFREQ;
 	TRACE(4, "CalculateFrequencyForProgramming: fXTAL=%lf", fXTAL);
 
-	const std::vector<const int> hsdiv_values = { 11, 9, 7, 6, 5, 4 };
+	std::vector<int> hsdiv_values = { 11, 9, 7, 6, 5, 4 };
 	std::vector < std::pair<int, double>> parameter_values;
 	for(auto hsdiv : hsdiv_values)
 	{
@@ -3277,7 +3280,7 @@ uint64_t DTCLib::DTC_Registers::CalculateFrequencyForProgramming_(double targetF
 	assert(EncodeHighSpeedDivider_(newHighSpeedDivider) != -1);
 	assert(newOutputDivider < 128 && newOutputDivider > 0);
 
-	auto output = (EncodeHighSpeedDivider_(newHighSpeedDivider) << 48) + (EncodeOutputDivider_(newOutputDivider) << 40) + EncodeRFREQ_(newRFREQ);
+	auto output = (static_cast<uint64_t>(EncodeHighSpeedDivider_(newHighSpeedDivider)) << 48) + (static_cast<uint64_t>(EncodeOutputDivider_(newOutputDivider)) << 40) + EncodeRFREQ_(newRFREQ);
 	TRACE(4, "CalculateFrequencyForProgramming: New Program: %llu", static_cast<unsigned long long>(output));
 	return output;
 }

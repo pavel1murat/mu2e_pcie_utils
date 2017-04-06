@@ -100,7 +100,7 @@ int mu2esim::init(DTCLib::DTC_SimMode mode)
 	registers_[DTCLib::DTC_Register_DTCControl] = 0x00000003; // System Clock, Timing Enable
 	registers_[DTCLib::DTC_Register_DMATransferLength] = 0x80000010; //Default value from HWUG
 	registers_[DTCLib::DTC_Register_SERDESLoopbackEnable] = 0x00000000; // SERDES Loopback Disabled
-	registers_[DTCLib::DTC_Register_SERDESOscillatorStatus] = 0x2; // Initialization Complete, no IIC Error
+	registers_[DTCLib::DTC_Register_ClockOscillatorStatus] = 0x20002; // Initialization Complete, no IIC Error
 	registers_[DTCLib::DTC_Register_ROCEmulationEnable] = 0x3F; // ROC Emulators enabled (of course!)
 	registers_[DTCLib::DTC_Register_RingEnable] = 0x3F3F; // All rings Tx/Rx enabled, CFO and timing disabled
 	registers_[DTCLib::DTC_Register_SERDESReset] = 0x0; // No SERDES Reset
