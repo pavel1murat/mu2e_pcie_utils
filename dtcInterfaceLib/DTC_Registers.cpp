@@ -3123,6 +3123,10 @@ void DTCLib::DTC_Registers::SetNewOscillatorFrequency(DTC_OscillatorType oscilla
 {
 	auto currentFrequency = ReadCurrentFrequency(oscillator);
 	auto currentProgram = ReadCurrentProgram(oscillator);
+
+	// Check if targetFrequency is essentially the same as the current frequency...
+	if (abs(currentFrequency - targetFrequency) < targetFrequency * 30 / 1000000) return;
+
 	auto newParameters = CalculateFrequencyForProgramming_(targetFrequency, currentFrequency, currentProgram);
 	if (newParameters == 0) return;
 	WriteCurrentProgram(newParameters, oscillator);

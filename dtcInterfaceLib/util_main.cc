@@ -408,15 +408,20 @@ main(int argc
 		std::cout << "Swapping SERDES Oscillator Clock" << std::endl;
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
-		if (!thisDTC->ReadSERDESOscillatorClock())
+		auto clock = thisDTC->ReadSERDESOscillatorClock();
+		if (clock == DTC_SerdesClockSpeed_3125Gbps)
 		{
 			std::cout << "Setting SERDES Oscillator Clock to 2.5 Gbps" << std::endl;
 			thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_25Gbps);
 		}
-		else
+		else if(clock == DTC_SerdesClockSpeed_25Gbps)
 		{
 			std::cout << "Setting SERDES Oscillator Clock to 3.125 Gbps" << std::endl;
 			thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_3125Gbps);
+		}
+		else
+		{
+			std::cerr << "Error: SERDES clock not recognized value!";
 		}
 		delete thisDTC;
 	}
