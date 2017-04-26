@@ -36,7 +36,8 @@ $script init
 : ER; $script -p100000 -g10 -b74 reset_counters addr dest num_dst enable G read
 : ER; $script -p100000 -g 8 -b74 reset_counters addr dest num_dst enable G read
 : ER; $script -p 33000 -g 9 -b74 reset_counters addr dest num_dst enable G read
-: OK; $script -p 30000 -g 9 -b74 reset_counters addr dest num_dst enable G read
+: OK; $script -p 30000 -g 9 -b74 reset_counters addr dest num_dst enable G sleep read
+: ??; $script -p 20000 -g150 -b642 reset_all_counters addr dest num_dst enable G read_all_counters -d 2
 
           $script soft
 commands:
@@ -86,7 +87,8 @@ cmds=$*
 
 calcf() { fmt=$1;shift;awk "BEGIN{printf \"$fmt\", $*;quit}"; }
 
-for cmd in $cmds;do
+while [ -n "${1-}" ];do
+  cmd=$1; shift
   case $cmd in
   reset_serdes|serdes_reset)
     #disable links
@@ -235,6 +237,7 @@ my_cntl write 0x919c 0x00000000
     my_cntl write 0x9100 0x00000000 >/dev/null
     my_cntl write 0x9100 0x00000001 >/dev/null
     #my_cntl write 0x9100 0x00000000 >/dev/null
+    sleep `expr $opt_pkts / 10000`
     ;;
 
 
@@ -265,6 +268,14 @@ my_cntl write 0x919c 0x00000000
     echo -n "ignored packets: "; my_cntl read $(( 0x9320 + $chreg )) | grep ^0x
     ;;
 
+  read_all_counters)
+    my_cntl read 0x91f0
+    end=`expr $opt_dests - 1`
+    for cc in `seq 0 $end`;do
+        $0 read_counters -c$cc
+    done
+    ;;
+
   reset_counters|reset_c)
     chreg=$(( $opt_channel * 4 ))
     #reset tx/rx packets/bytes counters
@@ -279,6 +290,17 @@ my_cntl write 0x919c 0x00000000
     my_cntl write $(( 0x9320 + $chreg )) 0x00000001
     ;;
 
+  reset_all_counters)
+    end=`expr $opt_dests - 1`
+    for cc in `seq 0 $end`;do
+        $0 reset_counters -c$cc
+    done
+    ;;
+
+  sleep)  # next param is sleep time
+    time=$1; shfit
+    sleep $time
+    ;;
   *) echo "I'm sorry, Dave, but I can't do that";;
   esac
 done
