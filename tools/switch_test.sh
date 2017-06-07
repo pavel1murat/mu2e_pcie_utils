@@ -237,7 +237,7 @@ my_cntl write 0x919c 0x00000000
     my_cntl write 0x9100 0x00000000 >/dev/null
     my_cntl write 0x9100 0x00000001 >/dev/null
     #my_cntl write 0x9100 0x00000000 >/dev/null
-    sleep `expr $opt_pkts / 10000`
+    #sleep `expr $opt_pkts / 10000`
     ;;
 
 
@@ -269,6 +269,19 @@ my_cntl write 0x919c 0x00000000
     ;;
 
   read_all_counters)
+    prop=('|' '/' '-' '\\' '|' '/' '-' '\\')
+    ii=0
+    # check for channel 0 pktcnt stable
+    rxprv=`my_cntl read 0x9220 | grep ^0x`; sleep .5
+    rxp=`my_cntl   read 0x9220 | grep ^0x`
+    until [ $rxprv = $rxp ];do
+        printf "\r%c - %10d" ${prop[$(($ii&7))]} $rxp
+        ii=`expr $ii + 1`
+        rxprv=$rxp
+        sleep .5
+        rxp=`my_cntl   read 0x9220 | grep ^0x`
+    done
+    printf "\n"
     my_cntl read 0x91f0
     end=`expr $opt_dests - 1`
     for cc in `seq 0 $end`;do
