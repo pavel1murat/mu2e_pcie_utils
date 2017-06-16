@@ -199,7 +199,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool o
 	ResetDDRWriteAddress();
 	ResetDDRReadAddress();
 	SetDDRDataLocalStartAddress(0x0);
-	SetDDRDataLocalEndAddress(0x3FFFFFFF);
+	SetDDRDataLocalEndAddress(0xFFFFFFFF);
 	EnableDetectorEmulatorMode();
 	SetDetectorEmulationDMACount(1);
 	SetDetectorEmulationDMADelayCount(250); // 1 microseconds

@@ -55,6 +55,7 @@ unsigned delay = 0;
 unsigned cfodelay = 1000;
 unsigned number = 1;
 unsigned timestampOffset = 1;
+unsigned blockCount = 1;
 unsigned packetCount = 0;
 int requestsAhead = 0;
 std::string op = "";
@@ -116,37 +117,41 @@ void WriteGeneratedData(DTC* thisDTC)
 	thisDTC->ResetDDRReadAddress();
 	thisDTC->ResetDDRWriteAddress();
 	thisDTC->EnableDetectorEmulatorMode();
-	thisDTC->SetDDRDataLocalEndAddress(0x7000000);
+	thisDTC->SetDDRDataLocalEndAddress(0xFFFFFFFF);
 	uint64_t total_size = 0;
 	unsigned ii = 0;
 	for (; ii < genDMABlocks; ++ii)
 	{
 		uint16_t blockByteCount = (1 + packetCount) * 16 * sizeof(uint8_t);
-		uint64_t byteCount = blockByteCount + 8;
+		uint64_t byteCount = (blockByteCount + 8) * blockCount;
 		total_size += byteCount;
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto buf = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
 		memcpy(buf, &byteCount, sizeof(uint64_t));
 		uint64_t currentOffset = 8;
 		uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
-		DTC_DataHeaderPacket header(DTC_Ring_0, static_cast<uint16_t>(packetCount), DTC_DataStatus_Valid,0,0, DTC_Timestamp(ts));
-		auto packet = header.ConvertToDataPacket();
-		memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
-		if (rawOutput) outputStream.write(reinterpret_cast<char *>(&byteCount), sizeof(uint64_t));
-		if (rawOutput) outputStream << packet;
-		currentOffset += 16;
-		for (unsigned jj = 0; jj < packetCount; ++jj)
-		{
-			if (currentOffset + 16 > sizeof(mu2e_databuff_t))
-			{
-				break;
-			}
-			// ReSharper disable CppRedundantParentheses
-			packet.SetWord(14, (jj + 1) & 0xFF);
-			// ReSharper restore CppRedundantParentheses
+
+		for (unsigned kk = 0; kk < blockCount; ++kk) {
+
+			DTC_DataHeaderPacket header(DTC_Ring_0, static_cast<uint16_t>(packetCount), DTC_DataStatus_Valid, 0, 0, DTC_Timestamp(ts));
+			auto packet = header.ConvertToDataPacket();
 			memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
+			if (rawOutput) outputStream.write(reinterpret_cast<char *>(&byteCount), sizeof(uint64_t));
 			if (rawOutput) outputStream << packet;
 			currentOffset += 16;
+			for (unsigned jj = 0; jj < packetCount; ++jj)
+			{
+				if (currentOffset + 16 > sizeof(mu2e_databuff_t))
+				{
+					break;
+				}
+				// ReSharper disable CppRedundantParentheses
+				packet.SetWord(14, (jj + 1) & 0xFF);
+				// ReSharper restore CppRedundantParentheses
+				memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
+				if (rawOutput) outputStream << packet;
+				currentOffset += 16;
+			}
 		}
 
 		thisDTC->GetDevice()->write_data(0, buf, static_cast<size_t>(byteCount));
@@ -176,6 +181,7 @@ void printHelpMsg()
 		<< "    -d: Delay between tests, in us (Default: 0)." << std::endl
 		<< "    -D: CFO Request delay interval (Default: 1000 (minimum)." << std::endl
 		<< "    -c: Number of Debug Packets to request (Default: 0)." << std::endl
+		<< "    -b: Number of Data Blocks to generate per DMA block (Default: 1)." << std::endl
 		<< "    -a: Number of Readout Request/Data Requests to send before starting to read data (Default: 0)." << std::endl
 		<< "    -q: Quiet mode (Don't print requests) Additionally, for buffer_test mode, limits to N (Default 1) packets at the beginning and end of the buffer." << std::endl
 		<< "    -Q: Really Quiet mode (Try not to print anything)" << std::endl
@@ -197,7 +203,7 @@ void printHelpMsg()
 
 int
 main(int argc
-	, char* argv[])
+	 , char* argv[])
 {
 	for (auto optind = 1; optind < argc; ++optind)
 	{
@@ -225,6 +231,9 @@ main(int argc
 				break;
 			case 'c':
 				packetCount = getOptionValue(&optind, &argv);
+				break;
+			case 'b':
+				blockCount = getOptionValue(&optind, &argv);
 				break;
 			case 'a':
 				requestsAhead = getOptionValue(&optind, &argv);
@@ -308,6 +317,7 @@ main(int argc
 		<< ", CFO Delay: " << cfodelay
 		<< ", TS Offset: " << timestampOffset
 		<< ", PacketCount: " << packetCount
+		<< ", DataBlock Count: " << blockCount
 		<< ", Requests Ahead of Reads: " << requestsAhead
 		<< ", Synchronous Request Mode: " << syncRequests
 		<< ", Use DTC CFO Emulator: " << useCFOEmulator
@@ -414,7 +424,7 @@ main(int argc
 			std::cout << "Setting SERDES Oscillator Clock to 2.5 Gbps" << std::endl;
 			thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_25Gbps);
 		}
-		else if(clock == DTC_SerdesClockSpeed_25Gbps)
+		else if (clock == DTC_SerdesClockSpeed_25Gbps)
 		{
 			std::cout << "Setting SERDES Oscillator Clock to 3.125 Gbps" << std::endl;
 			thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_3125Gbps);
@@ -474,7 +484,7 @@ main(int argc
 		else if (thisDTC->ReadSimMode() == DTC_SimMode_Loopback)
 		{
 			uint64_t ts = timestampOffset;
-			DTC_DataHeaderPacket header(DTC_Ring_0, static_cast<uint16_t>(0), DTC_DataStatus_Valid,0,0, DTC_Timestamp(ts));
+			DTC_DataHeaderPacket header(DTC_Ring_0, static_cast<uint16_t>(0), DTC_DataStatus_Valid, 0, 0, DTC_Timestamp(ts));
 			std::cout << "Request: " << header.toJSON() << std::endl;
 			thisDTC->WriteDMAPacket(header);
 		}

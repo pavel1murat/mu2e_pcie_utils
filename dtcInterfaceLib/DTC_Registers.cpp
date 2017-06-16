@@ -4,6 +4,7 @@
 
 #include <chrono>
 #include <assert.h>
+#include <cmath>
 #ifndef _WIN32
 # include <unistd.h>
 # include "trace.h"
@@ -3129,7 +3130,7 @@ void DTCLib::DTC_Registers::SetNewOscillatorFrequency(DTC_OscillatorType oscilla
 	auto currentProgram = ReadCurrentProgram(oscillator);
 
 	// Check if targetFrequency is essentially the same as the current frequency...
-	if (abs(currentFrequency - targetFrequency) < targetFrequency * 30 / 1000000) return;
+	if (fabs(currentFrequency - targetFrequency) < targetFrequency * 30 / 1000000) return;
 
 	auto newParameters = CalculateFrequencyForProgramming_(targetFrequency, currentFrequency, currentProgram);
 	if (newParameters == 0) return;
