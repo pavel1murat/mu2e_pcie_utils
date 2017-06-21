@@ -161,7 +161,7 @@ void WriteGeneratedData(DTC* thisDTC)
 		if (!reallyQuiet)
 		{
 			std::cout << "Buffer " << ii << ":" << std::endl;
-			for (unsigned line = 0; line < static_cast<unsigned>(ceil(byteCount + sizeof(uint64_t) / 16.0)); ++line)
+			for (unsigned line = 0; line < static_cast<unsigned>(ceil((byteCount + sizeof(uint64_t)) / 16.0)); ++line)
 			{
 				std::cout << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
 				//for (unsigned byte = 0; byte < 16; ++byte)
@@ -181,7 +181,7 @@ void WriteGeneratedData(DTC* thisDTC)
 		delete[] buf;
 	}
 
-	std::cout << "Total bytes written: " << total_size << std::endl;
+	std::cout << "Total bytes written: " << std::dec << total_size << std::endl;
 	thisDTC->SetDDRDataLocalEndAddress(static_cast<uint32_t>(total_size));
 	if (readGenerated)
 	{

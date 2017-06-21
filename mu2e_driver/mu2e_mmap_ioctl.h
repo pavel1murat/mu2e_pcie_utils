@@ -314,7 +314,7 @@ static inline unsigned mu2e_chn_info_delta_(int chn, int dir, m_ioc_get_info_t(*
 			: hw - sw);
 
 	TRACE(21, "mu2e_mmap_ioctl::delta_ chn=%d dir=%d hw=%u sw=%u num_buffs=%u delta=%u"
-		, chn, dir, hw, sw, (*mu2e_channel_info_)[chn][C2S].num_buffs, retval);
+		, chn, dir, hw, sw, (*mu2e_channel_info_)[chn][dir].num_buffs, retval);
 	return retval;
 }
 
