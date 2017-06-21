@@ -541,7 +541,8 @@ main(int argc
 
 				if (!reallyQuiet)
 				{
-					for (unsigned line = 0; line < static_cast<unsigned>(ceil((sts - 8) / 16.0)); ++line)
+					auto maxLine = static_cast<unsigned>(ceil((sts - 8) / 16.0));
+					for (unsigned line = 0; line < maxLine; ++line)
 					{
 						std::cout << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
 						//for (unsigned byte = 0; byte < 16; ++byte)
@@ -555,7 +556,11 @@ main(int argc
 							}
 						}
 						std::cout << std::endl;
-						if (quiet && line == (quietCount - 1)) line = static_cast<unsigned>(ceil((sts - 8) / 16.0)) - (1 + quietCount);
+						if (maxLine > quietCount * 2) {
+							if (quiet && line == (quietCount - 1)) {
+								line = static_cast<unsigned>(ceil((sts - 8) / 16.0)) - (1 + quietCount);
+							}
+						}
 					}
 				}
 			}
