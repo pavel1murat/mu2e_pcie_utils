@@ -223,7 +223,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool o
 			memcpy(buf, &sz, sizeof(uint64_t));
 		}
 		//is.read((char*)buf + 8, sz - sizeof(uint64_t));
-		if (sz > 0 && (sz + totalSize < 0x3FFFFFFF || simMode_ == DTC_SimMode_LargeFile))
+		if (sz > 0 && (sz + totalSize < 0xFFFFFFFF || simMode_ == DTC_SimMode_LargeFile))
 		{
 			TRACE(5, "Size is %zu, writing to device", sz);
 			totalSize += sz;
@@ -239,7 +239,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool o
 		delete[] buf;
 	}
 	is.close();
-	SetDDRDataLocalEndAddress(static_cast<uint32_t>(totalSize));
+	SetDDRDataLocalEndAddress(static_cast<uint32_t>(totalSize - 1));
 	SetDetectorEmulatorInUse();
 	/* Instead, set the count and enable in DTCSoftwareCFO!
 	if (!goForever)
