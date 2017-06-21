@@ -161,13 +161,13 @@ void WriteGeneratedData(DTC* thisDTC)
 		if (!reallyQuiet)
 		{
 			std::cout << "Buffer " << ii << ":" << std::endl;
-			for (unsigned line = 0; line < static_cast<unsigned>(ceil(byteCount / 16)); ++line)
+			for (unsigned line = 0; line < static_cast<unsigned>(ceil(byteCount + sizeof(uint64_t) / 16.0)); ++line)
 			{
 				std::cout << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
 				//for (unsigned byte = 0; byte < 16; ++byte)
 				for (unsigned byte = 0; byte < 8; ++byte)
 				{
-					if (line * 16 + 2 * byte < byteCount)
+					if (line * 16 + 2 * byte < byteCount + sizeof(uint64_t))
 					{
 						auto thisWord = reinterpret_cast<uint16_t*>(buf)[line * 8 + byte];
 						std::cout << std::setw(4) << static_cast<int>(thisWord) << " ";
@@ -177,7 +177,7 @@ void WriteGeneratedData(DTC* thisDTC)
 			}
 		}
 
-		thisDTC->GetDevice()->write_data(0, buf, static_cast<size_t>(byteCount));
+		thisDTC->GetDevice()->write_data(0, buf, static_cast<size_t>(byteCount + sizeof(uint64_t)));
 		delete[] buf;
 	}
 
