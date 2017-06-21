@@ -107,14 +107,8 @@ namespace DTCLib
 		DTC_Register_TransmitPacketCountDataRing4 = 0x9270,
 		DTC_Register_TransmitPacketCountDataRing5 = 0x9274,
 		DTC_Register_TransmitPacketCountDataCFO = 0x9278,
-		DTC_Register_DDRDataStartAddress = 0x9300,
-		DTC_Register_DDRDataEndAddress = 0x9304,
-		DTC_Register_DDRDataWriteBurstSize = 0x9308,
-		DTC_Register_DDRDataReadBurstSize = 0x930C,
-		DTC_Register_DDRSERDESStartAddress = 0x9310,
-		DTC_Register_DDRSERDESEndAddress = 0x9314,
-		DTC_Register_DDRSERDESWriteBurstSize = 0x9318,
-		DTC_Register_DDRSERDESReadBurstSize = 0x931C,
+		DTC_Register_DDRDataStartAddress = 0x9304,
+		DTC_Register_DDRDataEndAddress = 0x9308,
 		DTC_Register_DDRGasGuage = 0x9320,
 		DTC_Register_FPGAProgramData = 0x9400,
 		DTC_Register_FPGAPROMProgramStatus = 0x9404,
@@ -524,37 +518,7 @@ namespace DTCLib
 		void SetDDRDataLocalEndAddress(uint32_t address);
 		uint32_t ReadDDRDataLocalEndAddress();
 		DTC_RegisterFormatter FormatDDRDataLocalEndAddress();
-
-		// DDR Event Data Write Burst Size Register
-		void SetDDRDataWriteBurstSize(uint32_t size);
-		uint32_t ReadDDRDataWriteBurstSize();
-		DTC_RegisterFormatter FormatDDRDataWriteBurstSize();
-
-		// DDR Event Data Read Burst Size Register
-		void SetDDRDataReadBurstSize(uint32_t size);
-		uint32_t ReadDDRDataReadBurstSize();
-		DTC_RegisterFormatter FormatDDRDataReadBurstSize();
-
-		// DDR SERDES Local Start Address Register
-		void SetDDRSERDESLocalStartAddress(uint32_t address);
-		uint32_t ReadDDRSERDESLocalStartAddress();
-		DTC_RegisterFormatter FormatDDRSERDESLocalStartAddress();
-
-		// DDR SERDES Local End Address Register
-		void SetDDRSERDESLocalEndAddress(uint32_t address);
-		uint32_t ReadDDRSERDESLocalEndAddress();
-		DTC_RegisterFormatter FormatDDRDERDESLocalEndAddress();
-
-		// DDR SERDES Write Burst Size Register
-		void SetDDRSERDESWriteBurstSize(uint32_t size);
-		uint32_t ReadDDRSERDESWriteBurstSize();
-		DTC_RegisterFormatter FormatDDRSERDESWriteBurstSize();
-
-		// DDR SERDES Read Burst Size Register
-		void SetDDRSERDESReadBurstSize(uint32_t size);
-		uint32_t ReadDDRSERDESReadBurstSize();
-		DTC_RegisterFormatter FormatDDRSERDESReadBurstSize();
-
+		
 		uint32_t ReadDDRGasGuage();
 		DTC_RegisterFormatter FormatDDRGasGuage();
 
@@ -839,31 +803,7 @@ namespace DTCLib
 			{
 				return this->FormatDDRDataLocalEndAddress();
 			},
-			[this]()
-			{
-				return this->FormatDDRDataWriteBurstSize();
-			},
-			[this]()
-			{
-				return this->FormatDDRDataReadBurstSize();
-			},
-			[this]()
-			{
-				return this->FormatDDRSERDESLocalStartAddress();
-			},
-			[this]()
-			{
-				return this->FormatDDRDERDESLocalEndAddress();
-			},
-			[this]()
-			{
-				return this->FormatDDRSERDESWriteBurstSize();
-			},
-			[this]()
-			{
-				return this->FormatDDRSERDESReadBurstSize();
-			},
-			  [this]() { return this->FormatDDRGasGuage(); },
+			[this]() { return this->FormatDDRGasGuage(); },
 			[this]()
 			{
 				return this->FormatFPGAPROMProgramStatus();

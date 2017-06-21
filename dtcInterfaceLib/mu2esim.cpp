@@ -173,12 +173,6 @@ int mu2esim::init(DTCLib::DTC_SimMode mode)
 	registers_[DTCLib::DTC_Register_TransmitPacketCountDataCFO] = 0x0;
 	registers_[DTCLib::DTC_Register_DDRDataStartAddress] = 0x0;
 	registers_[DTCLib::DTC_Register_DDRDataEndAddress] = 0x0;
-	registers_[DTCLib::DTC_Register_DDRDataWriteBurstSize] = 0x0;
-	registers_[DTCLib::DTC_Register_DDRDataReadBurstSize] = 0x0;
-	registers_[DTCLib::DTC_Register_DDRSERDESStartAddress] = 0x0;
-	registers_[DTCLib::DTC_Register_DDRSERDESEndAddress] = 0x0;
-	registers_[DTCLib::DTC_Register_DDRSERDESWriteBurstSize] = 0x0;
-	registers_[DTCLib::DTC_Register_DDRSERDESReadBurstSize] = 0x0;
 	registers_[DTCLib::DTC_Register_DDRGasGuage] = 0x0;
 	registers_[DTCLib::DTC_Register_FPGAProgramData] = 0x0;
 	registers_[DTCLib::DTC_Register_FPGAPROMProgramStatus] = 0x1;
