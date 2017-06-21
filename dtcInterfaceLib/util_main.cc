@@ -123,12 +123,16 @@ void WriteGeneratedData(DTC* thisDTC)
 	for (; ii < genDMABlocks; ++ii)
 	{
 		uint16_t blockByteCount = (1 + packetCount) * 16 * sizeof(uint8_t);
-		uint64_t byteCount = (blockByteCount + 8) * blockCount;
+		uint64_t byteCount = blockByteCount * blockCount + sizeof(uint64_t);
 		total_size += byteCount;
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto buf = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
 		memcpy(buf, &byteCount, sizeof(uint64_t));
-		uint64_t currentOffset = 8;
+		uint64_t currentOffset = 2 * sizeof(uint64_t);
+
+		auto eventByteCount = byteCount - sizeof(uint64_t);
+		memcpy(reinterpret_cast<uint8_t*>(buf) + sizeof(uint64_t), &eventByteCount, sizeof(uint64_t));
+
 		uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
 
 		for (unsigned kk = 0; kk < blockCount; ++kk) {
