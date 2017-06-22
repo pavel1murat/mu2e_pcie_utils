@@ -74,6 +74,13 @@
     <NMakeIncludeSearchPath>X:\Desktop\artdaq-mrb-base\srcs\artdaq-mrb-base\includes\system;X:\Desktop\artdaq-mrb-base\srcs\artdaq-mrb-base\includes\kernel;X:\Desktop\artdaq-mrb-base\srcs\artdaq-mrb-base\includes\trace;X:\Desktop\artdaq-mrb-base\srcs\artdaq-mrb-base\includes;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
     <NMakePreprocessorDefinitions>__KERNEL__</NMakePreprocessorDefinitions>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <NMakeIncludeSearchPath>X:\Desktop\artdaq-mrb-base\srcs\artdaq-mrb-base\includes\system\c++\4.8.5;X:\Desktop\artdaq-mrb-base\srcs\artdaq-mrb-base\includes\kernel;X:\Desktop\artdaq-mrb-base\srcs\artdaq-mrb-base\includes\system;X:\Desktop\artdaq-mrb-base\srcs\TRACE\include;X:\Desktop\artdaq-mrb-base\srcs\artdaq-mrb-base\includes\;X:\Desktop\artdaq-mrb-base\srcs\artdaq-mrb-base\includes\trace;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakePreprocessorDefinitions>__KERNEL__</NMakePreprocessorDefinitions>
+    <RemoteBuildCommandLine>/home/eflumerf/Desktop/mu2e-mrb-base/srcs/pcie_linux_kernel_module/dtcInterfaceLib/Win32/driverBuild.sh build</RemoteBuildCommandLine>
+    <RemoteReBuildCommandLine>/home/eflumerf/Desktop/mu2e-mrb-base/srcs/pcie_linux_kernel_module/dtcInterfaceLib/Win32/driverBuild.sh rebuild</RemoteReBuildCommandLine>
+    <RemoteCleanCommandLine>/home/eflumerf/Desktop/mu2e-mrb-base/srcs/pcie_linux_kernel_module/dtcInterfaceLib/Win32/driverBuild.sh clean</RemoteCleanCommandLine>
+  </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="mu2e_driver\mu2e_event.c" />
     <ClCompile Include="mu2e_driver\mu2e_fs.c" />

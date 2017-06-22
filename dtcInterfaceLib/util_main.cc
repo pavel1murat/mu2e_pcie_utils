@@ -124,10 +124,10 @@ void WriteGeneratedData(DTC* thisDTC)
 	unsigned ii = 0;
 	for (; ii < genDMABlocks; ++ii)
 	{
-		uint16_t blockByteCount = (1 + packetCount) * 16 * sizeof(uint8_t);
-		uint64_t eventByteCount = blockCount * blockByteCount + sizeof(uint64_t); // INCLUSIVE
-		uint64_t dmaByteCount = eventByteCount * eventCount; // EXCLUSIVE!
-		size_t dmaWriteByteCount = dmaByteCount + sizeof(uint64_t);
+		auto blockByteCount = static_cast<uint16_t>((1 + packetCount) * 16 * sizeof(uint8_t));
+		auto eventByteCount = static_cast<uint64_t>(blockCount * blockByteCount + sizeof(uint64_t)); // INCLUSIVE
+		auto dmaByteCount = static_cast<uint64_t>(eventByteCount * eventCount); // EXCLUSIVE!
+		auto dmaWriteByteCount = dmaByteCount + sizeof(uint64_t);
 
 		if(dmaWriteByteCount > 0x10000)
 		{
@@ -138,7 +138,7 @@ void WriteGeneratedData(DTC* thisDTC)
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto buf = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
 		memcpy(buf, &dmaByteCount, sizeof(uint64_t));
-		uint64_t currentOffset = sizeof(uint64_t);
+		auto currentOffset = sizeof(uint64_t);
 
 		for (unsigned ll = 0; ll < eventCount; ++ll) {
 
@@ -147,9 +147,20 @@ void WriteGeneratedData(DTC* thisDTC)
 
 			uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
 
-			for (unsigned kk = 0; kk < blockCount; ++kk) {
+			std::vector<std::pair<DTC_Ring_ID, DTC_ROC_ID>> ids;
+			for(auto ring : DTC_Rings)
+			{
+				for(auto roc : DTC_ROCS)
+				{
+					if (roc == DTC_ROC_Unused) continue;
+					ids.emplace_back(std::make_pair(ring, roc));
+				}
+			}
 
-				DTC_DataHeaderPacket header(DTC_Ring_0, static_cast<uint16_t>(packetCount), DTC_DataStatus_Valid, 0, 0, DTC_Timestamp(ts));
+			for (unsigned kk = 0; kk < blockCount; ++kk) 
+			{
+				auto index = kk % ids.size();
+				DTC_DataHeaderPacket header(ids[index].first,ids[index].second, static_cast<uint16_t>(packetCount), DTC_DataStatus_Valid, static_cast<uint8_t>(kk / ids.size()), 0, DTC_Timestamp(ts));
 				auto packet = header.ConvertToDataPacket();
 				memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
 				if (rawOutput) outputStream << packet;
@@ -171,7 +182,7 @@ void WriteGeneratedData(DTC* thisDTC)
 		}
 
 		total_size_written += dmaWriteByteCount;
-		end_address += dmaByteCount;
+		end_address += static_cast<uint32_t>(dmaByteCount);
 
 		if (!reallyQuiet)
 		{
@@ -527,7 +538,7 @@ main(int argc
 		else if (thisDTC->ReadSimMode() == DTC_SimMode_Loopback)
 		{
 			uint64_t ts = timestampOffset;
-			DTC_DataHeaderPacket header(DTC_Ring_0, static_cast<uint16_t>(0), DTC_DataStatus_Valid, 0, 0, DTC_Timestamp(ts));
+			DTC_DataHeaderPacket header(DTC_Ring_0,DTC_ROC_0, static_cast<uint16_t>(0), DTC_DataStatus_Valid, 0, 0, DTC_Timestamp(ts));
 			std::cout << "Request: " << header.toJSON() << std::endl;
 			thisDTC->WriteDMAPacket(header);
 		}

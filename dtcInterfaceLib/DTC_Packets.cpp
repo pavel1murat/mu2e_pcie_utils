@@ -450,10 +450,9 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSReplyPacket::ConvertToDataPacket() const
 	return output;
 }
 
-DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, uint8_t dtcid, 
+DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t packetCount, DTC_DataStatus status, uint8_t dtcid, 
 	uint8_t packetVersion, DTC_Timestamp timestamp, uint8_t evbMode)
-	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring
-		,		DTC_ROC_Unused, (1 + packetCount) * 16)
+	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, roc, (1 + packetCount) * 16)
 	, packetCount_(packetCount)
 	, timestamp_(timestamp)
 	, status_(status)

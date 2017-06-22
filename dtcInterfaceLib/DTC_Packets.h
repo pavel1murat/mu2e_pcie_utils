@@ -406,7 +406,7 @@ namespace DTCLib
   class DTC_DataHeaderPacket : public DTC_DMAPacket
   {
   public:
-	DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, uint8_t dtcid, uint8_t packetVersion, DTC_Timestamp timestamp = DTC_Timestamp(), uint8_t evbMode = 0);
+	DTC_DataHeaderPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t packetCount, DTC_DataStatus status, uint8_t dtcid, uint8_t packetVersion, DTC_Timestamp timestamp = DTC_Timestamp(), uint8_t evbMode = 0);
 	DTC_DataHeaderPacket(const DTC_DataHeaderPacket&) = default;
 	DTC_DataHeaderPacket(DTC_DataHeaderPacket&&) = default;
 	explicit DTC_DataHeaderPacket(const DTC_DataPacket in);
