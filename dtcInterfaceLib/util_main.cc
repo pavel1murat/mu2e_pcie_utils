@@ -55,6 +55,7 @@ unsigned delay = 0;
 unsigned cfodelay = 1000;
 unsigned number = 1;
 unsigned timestampOffset = 1;
+unsigned eventCount = 1;
 unsigned blockCount = 1;
 unsigned packetCount = 0;
 int requestsAhead = 0;
@@ -118,56 +119,70 @@ void WriteGeneratedData(DTC* thisDTC)
 	thisDTC->ResetDDRWriteAddress();
 	thisDTC->EnableDetectorEmulatorMode();
 	thisDTC->SetDDRDataLocalEndAddress(0xFFFFFFFF);
-	uint64_t total_size = 0;
+	uint64_t total_size_written = 0;
+	uint32_t end_address = 0;
 	unsigned ii = 0;
 	for (; ii < genDMABlocks; ++ii)
 	{
 		uint16_t blockByteCount = (1 + packetCount) * 16 * sizeof(uint8_t);
-		uint64_t byteCount = blockByteCount * blockCount + sizeof(uint64_t);
-		total_size += byteCount;
+		uint64_t eventByteCount = blockCount * blockByteCount + sizeof(uint64_t); // INCLUSIVE
+		uint64_t dmaByteCount = eventByteCount * eventCount; // EXCLUSIVE!
+		size_t dmaWriteByteCount = dmaByteCount + sizeof(uint64_t);
+
+		if(dmaWriteByteCount > 0x10000)
+		{
+			std::cerr << "Requested DMA write is larger than the allowed size! Reduce event/block/packet counts!" << std::endl;
+			exit(1);
+		}
+
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto buf = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
-		memcpy(buf, &byteCount, sizeof(uint64_t));
-		uint64_t currentOffset = 2 * sizeof(uint64_t);
+		memcpy(buf, &dmaByteCount, sizeof(uint64_t));
+		uint64_t currentOffset = sizeof(uint64_t);
 
-		auto eventByteCount = byteCount - sizeof(uint64_t);
-		memcpy(reinterpret_cast<uint8_t*>(buf) + sizeof(uint64_t), &eventByteCount, sizeof(uint64_t));
+		for (unsigned ll = 0; ll < eventCount; ++ll) {
 
-		uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
+			memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, &eventByteCount, sizeof(uint64_t));
+			currentOffset += sizeof(uint64_t);
 
-		for (unsigned kk = 0; kk < blockCount; ++kk) {
+			uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
 
-			DTC_DataHeaderPacket header(DTC_Ring_0, static_cast<uint16_t>(packetCount), DTC_DataStatus_Valid, 0, 0, DTC_Timestamp(ts));
-			auto packet = header.ConvertToDataPacket();
-			memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
-			if (rawOutput) outputStream.write(reinterpret_cast<char *>(&byteCount), sizeof(uint64_t));
-			if (rawOutput) outputStream << packet;
-			currentOffset += 16;
-			for (unsigned jj = 0; jj < packetCount; ++jj)
-			{
-				if (currentOffset + 16 > sizeof(mu2e_databuff_t))
-				{
-					break;
-				}
-				// ReSharper disable CppRedundantParentheses
-				packet.SetWord(14, (jj + 1) & 0xFF);
-				// ReSharper restore CppRedundantParentheses
+			for (unsigned kk = 0; kk < blockCount; ++kk) {
+
+				DTC_DataHeaderPacket header(DTC_Ring_0, static_cast<uint16_t>(packetCount), DTC_DataStatus_Valid, 0, 0, DTC_Timestamp(ts));
+				auto packet = header.ConvertToDataPacket();
 				memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
 				if (rawOutput) outputStream << packet;
 				currentOffset += 16;
+				for (unsigned jj = 0; jj < packetCount; ++jj)
+				{
+					if (currentOffset + 16 > sizeof(mu2e_databuff_t))
+					{
+						break;
+					}
+					// ReSharper disable CppRedundantParentheses
+					packet.SetWord(14, (jj + 1) & 0xFF);
+					// ReSharper restore CppRedundantParentheses
+					memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
+					if (rawOutput) outputStream << packet;
+					currentOffset += 16;
+				}
 			}
 		}
+
+		total_size_written += dmaWriteByteCount;
+		end_address += dmaByteCount;
 
 		if (!reallyQuiet)
 		{
 			std::cout << "Buffer " << ii << ":" << std::endl;
-			for (unsigned line = 0; line < static_cast<unsigned>(ceil((byteCount + sizeof(uint64_t)) / 16.0)); ++line)
+			for (unsigned line = 0; line < static_cast<unsigned>(ceil(dmaWriteByteCount / 16.0)); ++line)
 			{
 				std::cout << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
 				//for (unsigned byte = 0; byte < 16; ++byte)
 				for (unsigned byte = 0; byte < 8; ++byte)
 				{
-					if (line * 16 + 2 * byte < byteCount + sizeof(uint64_t))
+					if (line * 16 + 2 * byte < dmaWriteByteCount)
 					{
 						auto thisWord = reinterpret_cast<uint16_t*>(buf)[line * 8 + byte];
 						std::cout << std::setw(4) << static_cast<int>(thisWord) << " ";
@@ -177,12 +192,12 @@ void WriteGeneratedData(DTC* thisDTC)
 			}
 		}
 
-		thisDTC->GetDevice()->write_data(0, buf, static_cast<size_t>(byteCount + sizeof(uint64_t)));
+		thisDTC->GetDevice()->write_data(0, buf, static_cast<size_t>(dmaWriteByteCount));
 		delete[] buf;
 	}
 
-	std::cout << "Total bytes written: " << std::dec << total_size << std::endl;
-	thisDTC->SetDDRDataLocalEndAddress(static_cast<uint32_t>(total_size));
+	std::cout << "Total bytes written: " << std::dec << total_size_written << std::hex << "( 0x" << total_size_written << " )" << std::endl;
+	thisDTC->SetDDRDataLocalEndAddress(end_address);
 	if (readGenerated)
 	{
 		if (rawOutput) outputStream.close();
@@ -204,7 +219,8 @@ void printHelpMsg()
 		<< "    -d: Delay between tests, in us (Default: 0)." << std::endl
 		<< "    -D: CFO Request delay interval (Default: 1000 (minimum)." << std::endl
 		<< "    -c: Number of Debug Packets to request (Default: 0)." << std::endl
-		<< "    -b: Number of Data Blocks to generate per DMA block (Default: 1)." << std::endl
+		<< "    -b: Number of Data Blocks to generate per Event (Default: 1)." << std::endl
+	    << "    -E: Number of Events to generate per DMA block (Default: 1)." << std::endl
 		<< "    -a: Number of Readout Request/Data Requests to send before starting to read data (Default: 0)." << std::endl
 		<< "    -q: Quiet mode (Don't print requests) Additionally, for buffer_test mode, limits to N (Default 1) packets at the beginning and end of the buffer." << std::endl
 		<< "    -Q: Really Quiet mode (Try not to print anything)" << std::endl
@@ -257,6 +273,9 @@ main(int argc
 				break;
 			case 'b':
 				blockCount = getOptionValue(&optind, &argv);
+				break;
+			case 'E':
+				eventCount = getOptionValue(&optind, &argv);
 				break;
 			case 'a':
 				requestsAhead = getOptionValue(&optind, &argv);
@@ -341,6 +360,7 @@ main(int argc
 		<< ", TS Offset: " << timestampOffset
 		<< ", PacketCount: " << packetCount
 		<< ", DataBlock Count: " << blockCount
+		<< ", Event Count: " << eventCount
 		<< ", Requests Ahead of Reads: " << requestsAhead
 		<< ", Synchronous Request Mode: " << syncRequests
 		<< ", Use DTC CFO Emulator: " << useCFOEmulator
