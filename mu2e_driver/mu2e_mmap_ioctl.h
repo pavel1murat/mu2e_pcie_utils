@@ -11,7 +11,6 @@
 #ifdef __KERNEL__
 # include <asm/ioctl.h>		// _IOWR
 # include "trace.h"
-# include <stdint.h>		// uint16_t
 #else
 # ifndef _WIN32
 #  include <sys/ioctl.h>		// _IOWR
@@ -33,6 +32,7 @@
 #   endif
 #  endif
 # endif
+# include <stdint.h>		// uint16_t
 # include <sys/types.h>
 #endif
 
