@@ -125,9 +125,10 @@ void WriteGeneratedData(DTC* thisDTC)
 	for (; ii < genDMABlocks; ++ii)
 	{
 		auto blockByteCount = static_cast<uint16_t>((1 + packetCount) * 16 * sizeof(uint8_t));
-		auto eventByteCount = static_cast<uint64_t>(blockCount * blockByteCount + sizeof(uint64_t)); // INCLUSIVE
-		auto dmaByteCount = static_cast<uint64_t>(eventByteCount * eventCount); // EXCLUSIVE!
-		auto dmaWriteByteCount = dmaByteCount + sizeof(uint64_t);
+		auto eventByteCount = static_cast<uint64_t>(blockCount * blockByteCount); // Exclusive byte count
+		auto eventWriteByteCount = static_cast<uint64_t>(eventByteCount + sizeof(uint64_t)); // Inclusive byte count
+		auto dmaByteCount = static_cast<uint64_t>(eventWriteByteCount * eventCount); // Exclusive byte count
+		auto dmaWriteByteCount = dmaByteCount + sizeof(uint64_t); // Inclusive byte count
 
 		if(dmaWriteByteCount > 0x10000)
 		{
@@ -137,7 +138,7 @@ void WriteGeneratedData(DTC* thisDTC)
 
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto buf = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
-		memcpy(buf, &dmaByteCount, sizeof(uint64_t));
+		memcpy(buf, &dmaWriteByteCount, sizeof(uint64_t));
 		auto currentOffset = sizeof(uint64_t);
 
 		for (unsigned ll = 0; ll < eventCount; ++ll) {
