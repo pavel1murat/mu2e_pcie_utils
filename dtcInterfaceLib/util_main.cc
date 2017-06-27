@@ -209,7 +209,7 @@ void WriteGeneratedData(DTC* thisDTC)
 	}
 
 	std::cout << "Total bytes written: " << std::dec << total_size_written << std::hex << "( 0x" << total_size_written << " )" << std::endl;
-	thisDTC->SetDDRDataLocalEndAddress(end_address);
+	thisDTC->SetDDRDataLocalEndAddress(end_address - 1);
 	if (readGenerated)
 	{
 		if (rawOutput) outputStream.close();
