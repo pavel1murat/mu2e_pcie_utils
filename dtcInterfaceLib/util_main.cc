@@ -122,6 +122,7 @@ void WriteGeneratedData(DTC* thisDTC)
 	uint64_t total_size_written = 0;
 	uint32_t end_address = 0;
 	unsigned ii = 0;
+	uint64_t ts = timestampOffset;
 	for (; ii < genDMABlocks; ++ii)
 	{
 		auto blockByteCount = static_cast<uint16_t>((1 + packetCount) * 16 * sizeof(uint8_t));
@@ -130,7 +131,7 @@ void WriteGeneratedData(DTC* thisDTC)
 		auto dmaByteCount = static_cast<uint64_t>(eventWriteByteCount * eventCount); // Exclusive byte count
 		auto dmaWriteByteCount = dmaByteCount + sizeof(uint64_t); // Inclusive byte count
 
-		if(dmaWriteByteCount > 0x10000)
+		if (dmaWriteByteCount > 0x10000)
 		{
 			std::cerr << "Requested DMA write is larger than the allowed size! Reduce event/block/packet counts!" << std::endl;
 			exit(1);
@@ -146,22 +147,22 @@ void WriteGeneratedData(DTC* thisDTC)
 			memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, &eventByteCount, sizeof(uint64_t));
 			currentOffset += sizeof(uint64_t);
 
-			uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
+			if (incrementTimestamp) ++ts;
 
 			std::vector<std::pair<DTC_Ring_ID, DTC_ROC_ID>> ids;
-			for(auto ring : DTC_Rings)
+			for (auto ring : DTC_Rings)
 			{
-				for(auto roc : DTC_ROCS)
+				for (auto roc : DTC_ROCS)
 				{
 					if (roc == DTC_ROC_Unused) continue;
 					ids.emplace_back(std::make_pair(ring, roc));
 				}
 			}
 
-			for (unsigned kk = 0; kk < blockCount; ++kk) 
+			for (unsigned kk = 0; kk < blockCount; ++kk)
 			{
 				auto index = kk % ids.size();
-				DTC_DataHeaderPacket header(ids[index].first,ids[index].second, static_cast<uint16_t>(packetCount), DTC_DataStatus_Valid, static_cast<uint8_t>(kk / ids.size()), 0, DTC_Timestamp(ts));
+				DTC_DataHeaderPacket header(ids[index].first, ids[index].second, static_cast<uint16_t>(packetCount), DTC_DataStatus_Valid, static_cast<uint8_t>(kk / ids.size()), 0, DTC_Timestamp(ts));
 				auto packet = header.ConvertToDataPacket();
 				memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
 				if (rawOutput) outputStream << packet;
@@ -232,7 +233,7 @@ void printHelpMsg()
 		<< "    -D: CFO Request delay interval (Default: 1000 (minimum)." << std::endl
 		<< "    -c: Number of Debug Packets to request (Default: 0)." << std::endl
 		<< "    -b: Number of Data Blocks to generate per Event (Default: 1)." << std::endl
-	    << "    -E: Number of Events to generate per DMA block (Default: 1)." << std::endl
+		<< "    -E: Number of Events to generate per DMA block (Default: 1)." << std::endl
 		<< "    -a: Number of Readout Request/Data Requests to send before starting to read data (Default: 0)." << std::endl
 		<< "    -q: Quiet mode (Don't print requests) Additionally, for buffer_test mode, limits to N (Default 1) packets at the beginning and end of the buffer." << std::endl
 		<< "    -Q: Really Quiet mode (Try not to print anything)" << std::endl
@@ -539,7 +540,7 @@ main(int argc
 		else if (thisDTC->ReadSimMode() == DTC_SimMode_Loopback)
 		{
 			uint64_t ts = timestampOffset;
-			DTC_DataHeaderPacket header(DTC_Ring_0,DTC_ROC_0, static_cast<uint16_t>(0), DTC_DataStatus_Valid, 0, 0, DTC_Timestamp(ts));
+			DTC_DataHeaderPacket header(DTC_Ring_0, DTC_ROC_0, static_cast<uint16_t>(0), DTC_DataStatus_Valid, 0, 0, DTC_Timestamp(ts));
 			std::cout << "Request: " << header.toJSON() << std::endl;
 			thisDTC->WriteDMAPacket(header);
 		}
