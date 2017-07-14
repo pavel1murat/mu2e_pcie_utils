@@ -17,50 +17,11 @@
 #include <thread>
 #include <memory>
 #include <queue>
+#include <fstream>
 #include "DTC_Types.h"
 #include "DTC_Packets.h"
 
-#define SIM_BUFFCOUNT 400U
-
-class DDRSimulator
-{
-public:
-	DDRSimulator() : mutex_(), queue_() {}
-
-	virtual ~DDRSimulator()
-	{
-		std::lock_guard<std::mutex> lock(mutex_);
-		while (!queue_.empty())
-		{
-			queue_.pop();
-		}
-	}
-
-	void push(std::shared_ptr<std::vector<uint8_t>> buf)
-	{
-		std::lock_guard<std::mutex> lock(mutex_);
-		queue_.push(buf);
-	}
-
-	bool empty()
-	{
-		std::lock_guard<std::mutex> lock(mutex_);
-		return queue_.empty();
-	}
-
-	std::shared_ptr<std::vector<uint8_t>> pop(bool recycle)
-	{
-		std::lock_guard<std::mutex> lock(mutex_);
-		auto vec = queue_.front();
-		queue_.pop();
-		if (recycle) queue_.push(vec);
-		return vec;
-	}
-
-private:
-	std::mutex mutex_;
-	std::queue<std::shared_ptr<std::vector<uint8_t>>> queue_;
-};
+#define SIM_BUFFCOUNT 40U
 
 class mu2esim
 {
@@ -75,31 +36,31 @@ public:
 	int read_register(uint16_t address, int tmo_ms, uint32_t* output);
 	int write_register(uint16_t address, int tmo_ms, uint32_t data);
 private:
-	static unsigned delta_(int chn, int dir);
+	unsigned delta_(int chn, int dir);
 	static void clearBuffer_(int chn, bool increment = true);
+	void openEvent_(DTCLib::DTC_Timestamp ts);
+	void closeEvent_();
 	void CFOEmulator_();
 	void packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID ring, DTCLib::DTC_ROC_ID roc, uint16_t packetCount);
-	void closeBuffer_(bool drop, DTCLib::DTC_Timestamp ts);
 	void dcsPacketSimulator_(DTCLib::DTC_DCSRequestPacket in);
 
 	std::unordered_map<uint16_t, uint32_t> registers_;
 	unsigned swIdx_[MU2E_MAX_CHANNELS];
+	unsigned hwIdx_[MU2E_MAX_CHANNELS];
 	uint32_t detSimLoopCount_;
 	mu2e_databuff_t* dmaData_[MU2E_MAX_CHANNELS][SIM_BUFFCOUNT];
+	std::fstream ddrFile_;
 	DTCLib::DTC_SimMode mode_;
 	uint16_t simIndex_[6][6];
 	std::thread cfoEmulatorThread_;
 	bool cancelCFO_;
 
-	typedef bool readoutRequestData[6];
+	typedef std::bitset<6> readoutRequestData;
 	std::map<uint64_t, readoutRequestData> readoutRequestReceived_;
-
-	DDRSimulator ddrSim_;
-	DDRSimulator dcsResponses_;
-
-	size_t currentOffset_;
+	
 	DTCLib::DTC_Timestamp currentTimestamp_;
-	std::shared_ptr<std::vector<uint8_t>> currentBuffer_;
+	uint64_t currentEventSize_;
+	std::streampos eventBegin_;
 };
 
 #endif
