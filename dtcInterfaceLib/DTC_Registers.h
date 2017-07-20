@@ -238,8 +238,10 @@ namespace DTCLib
 		// Clock Status Register
 		bool ReadSERDESOscillatorIICError();
 		bool ReadSERDESOscillatorInitializationComplete();
+		bool WaitForSERDESOscillatorInitializationComplete(double max_wait = 1.0);
 		bool ReadDDROscillatorIICError();
 		bool ReadDDROscillatorInitializationComplete();
+		bool WaitForDDROscillatorInitializationComplete(double max_wait = 1.0);
 		DTC_RegisterFormatter FormatClockOscillatorStatus();
 
 		// ROC Emulation Enable Register
