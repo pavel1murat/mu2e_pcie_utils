@@ -55,6 +55,8 @@ unsigned delay = 0;
 unsigned cfodelay = 1000;
 unsigned number = 1;
 unsigned timestampOffset = 1;
+unsigned eventCount = 1;
+unsigned blockCount = 1;
 unsigned packetCount = 0;
 int requestsAhead = 0;
 std::string op = "";
@@ -64,6 +66,8 @@ int val = 0;
 bool readGenerated = false;
 std::ofstream outputStream;
 unsigned rocMask = 0x1;
+unsigned targetFrequency = 166666667;
+int clockToProgram = 0;
 
 
 unsigned getOptionValue(int* index, char** argv[])
@@ -114,45 +118,99 @@ void WriteGeneratedData(DTC* thisDTC)
 	thisDTC->ResetDDRReadAddress();
 	thisDTC->ResetDDRWriteAddress();
 	thisDTC->EnableDetectorEmulatorMode();
-	thisDTC->SetDDRDataLocalEndAddress(0x7000000);
-	uint64_t total_size = 0;
+	thisDTC->SetDDRDataLocalEndAddress(0xFFFFFFFF);
+	uint64_t total_size_written = 0;
+	uint32_t end_address = 0;
 	unsigned ii = 0;
+	uint64_t ts = timestampOffset;
 	for (; ii < genDMABlocks; ++ii)
 	{
-		uint16_t blockByteCount = (1 + packetCount) * 16 * sizeof(uint8_t);
-		uint64_t byteCount = blockByteCount + 8;
-		total_size += byteCount;
-		// ReSharper disable once CppNonReclaimedResourceAcquisition
-		auto buf = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
-		memcpy(buf, &byteCount, sizeof(uint64_t));
-		uint64_t currentOffset = 8;
-		uint64_t ts = timestampOffset + (incrementTimestamp ? ii : 0);
-		DTC_DataHeaderPacket header(DTC_Ring_0, static_cast<uint16_t>(packetCount), DTC_DataStatus_Valid,0,0, DTC_Timestamp(ts));
-		auto packet = header.ConvertToDataPacket();
-		memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
-		if (rawOutput) outputStream.write(reinterpret_cast<char *>(&byteCount), sizeof(uint64_t));
-		if (rawOutput) outputStream << packet;
-		currentOffset += 16;
-		for (unsigned jj = 0; jj < packetCount; ++jj)
+		auto blockByteCount = static_cast<uint16_t>((1 + packetCount) * 16 * sizeof(uint8_t));
+		auto eventByteCount = static_cast<uint64_t>(blockCount * blockByteCount); // Exclusive byte count
+		auto eventWriteByteCount = static_cast<uint64_t>(eventByteCount + sizeof(uint64_t)); // Inclusive byte count
+		auto dmaByteCount = static_cast<uint64_t>(eventWriteByteCount * eventCount); // Exclusive byte count
+		auto dmaWriteByteCount = dmaByteCount + sizeof(uint64_t); // Inclusive byte count
+
+		if (dmaWriteByteCount > 0x10000)
 		{
-			if (currentOffset + 16 > sizeof(mu2e_databuff_t))
-			{
-				break;
-			}
-			// ReSharper disable CppRedundantParentheses
-			packet.SetWord(14, (jj + 1) & 0xFF);
-			// ReSharper restore CppRedundantParentheses
-			memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
-			if (rawOutput) outputStream << packet;
-			currentOffset += 16;
+			std::cerr << "Requested DMA write is larger than the allowed size! Reduce event/block/packet counts!" << std::endl;
+			exit(1);
 		}
 
-		thisDTC->GetDevice()->write_data(0, buf, static_cast<size_t>(byteCount));
+		// ReSharper disable once CppNonReclaimedResourceAcquisition
+		auto buf = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
+		memcpy(buf, &dmaWriteByteCount, sizeof(uint64_t));
+		auto currentOffset = sizeof(uint64_t);
+
+		for (unsigned ll = 0; ll < eventCount; ++ll) {
+
+			memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, &eventByteCount, sizeof(uint64_t));
+			currentOffset += sizeof(uint64_t);
+
+			if (incrementTimestamp) ++ts;
+
+			std::vector<std::pair<DTC_Ring_ID, DTC_ROC_ID>> ids;
+			for (auto ring : DTC_Rings)
+			{
+				for (auto roc : DTC_ROCS)
+				{
+					if (roc == DTC_ROC_Unused) continue;
+					ids.emplace_back(std::make_pair(ring, roc));
+				}
+			}
+
+			for (unsigned kk = 0; kk < blockCount; ++kk)
+			{
+				auto index = kk % ids.size();
+				DTC_DataHeaderPacket header(ids[index].first, ids[index].second, static_cast<uint16_t>(packetCount), DTC_DataStatus_Valid, static_cast<uint8_t>(kk / ids.size()), 0, DTC_Timestamp(ts));
+				auto packet = header.ConvertToDataPacket();
+				memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
+				if (rawOutput) outputStream << packet;
+				currentOffset += 16;
+				for (unsigned jj = 0; jj < packetCount; ++jj)
+				{
+					if (currentOffset + 16 > sizeof(mu2e_databuff_t))
+					{
+						break;
+					}
+					// ReSharper disable CppRedundantParentheses
+					packet.SetWord(14, (jj + 1) & 0xFF);
+					// ReSharper restore CppRedundantParentheses
+					memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
+					if (rawOutput) outputStream << packet;
+					currentOffset += 16;
+				}
+			}
+		}
+
+		total_size_written += dmaWriteByteCount;
+		end_address += static_cast<uint32_t>(dmaByteCount);
+
+		if (!reallyQuiet)
+		{
+			std::cout << "Buffer " << ii << ":" << std::endl;
+			for (unsigned line = 0; line < static_cast<unsigned>(ceil(dmaWriteByteCount / 16.0)); ++line)
+			{
+				std::cout << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
+				//for (unsigned byte = 0; byte < 16; ++byte)
+				for (unsigned byte = 0; byte < 8; ++byte)
+				{
+					if (line * 16 + 2 * byte < dmaWriteByteCount)
+					{
+						auto thisWord = reinterpret_cast<uint16_t*>(buf)[line * 8 + byte];
+						std::cout << std::setw(4) << static_cast<int>(thisWord) << " ";
+					}
+				}
+				std::cout << std::endl;
+			}
+		}
+
+		thisDTC->GetDevice()->write_data(0, buf, static_cast<size_t>(dmaWriteByteCount));
 		delete[] buf;
 	}
 
-	std::cout << "Total bytes written: " << total_size << std::endl;
-	thisDTC->SetDDRDataLocalEndAddress(static_cast<uint32_t>(total_size));
+	std::cout << "Total bytes written: " << std::dec << total_size_written << std::hex << "( 0x" << total_size_written << " )" << std::endl;
+	thisDTC->SetDDRDataLocalEndAddress(end_address - 1);
 	if (readGenerated)
 	{
 		if (rawOutput) outputStream.close();
@@ -164,7 +222,7 @@ void WriteGeneratedData(DTC* thisDTC)
 
 void printHelpMsg()
 {
-	std::cout << "Usage: mu2eUtil [options] [read,read_data,reset_detemu,toggle_serdes,loopback,buffer_test,read_release,DTC]" << std::endl;
+	std::cout << "Usage: mu2eUtil [options] [read,read_data,reset_detemu,toggle_serdes,loopback,buffer_test,read_release,DTC,program_clock]" << std::endl;
 	std::cout << "Options are:" << std::endl
 		<< "    -h: This message." << std::endl
 		<< "    -n: Number of times to repeat test. (Default: 1)" << std::endl
@@ -174,6 +232,8 @@ void printHelpMsg()
 		<< "    -d: Delay between tests, in us (Default: 0)." << std::endl
 		<< "    -D: CFO Request delay interval (Default: 1000 (minimum)." << std::endl
 		<< "    -c: Number of Debug Packets to request (Default: 0)." << std::endl
+		<< "    -b: Number of Data Blocks to generate per Event (Default: 1)." << std::endl
+		<< "    -E: Number of Events to generate per DMA block (Default: 1)." << std::endl
 		<< "    -a: Number of Readout Request/Data Requests to send before starting to read data (Default: 0)." << std::endl
 		<< "    -q: Quiet mode (Don't print requests) Additionally, for buffer_test mode, limits to N (Default 1) packets at the beginning and end of the buffer." << std::endl
 		<< "    -Q: Really Quiet mode (Try not to print anything)" << std::endl
@@ -187,13 +247,15 @@ void printHelpMsg()
 		<< "    -g: Generate (and send) N DMA blocks for testing the Detector Emulator (Default: 0)" << std::endl
 		<< "    -G: Read out generated data, but don't write new. With -g, will exit after writing data" << std::endl
 		<< "    -r: # of rocs to enable. Hexadecimal, each digit corresponds to a ring. ROC_0: 1, ROC_1: 3, ROC_2: 5, ROC_3: 7, ROC_4: 9, ROC_5: B (Default 0x1, All possible: 0xBBBBBB)" << std::endl
+		<< "    -F: Frequency to program (in Hz, sorry...Default 166666667 Hz)" << std::endl
+		<< "    -C: Clock to program (0: SERDES, 1: DDR, Default 0)" << std::endl
 		;
 	exit(0);
 }
 
 int
 main(int argc
-	, char* argv[])
+	 , char* argv[])
 {
 	for (auto optind = 1; optind < argc; ++optind)
 	{
@@ -221,6 +283,12 @@ main(int argc
 				break;
 			case 'c':
 				packetCount = getOptionValue(&optind, &argv);
+				break;
+			case 'b':
+				blockCount = getOptionValue(&optind, &argv);
+				break;
+			case 'E':
+				eventCount = getOptionValue(&optind, &argv);
 				break;
 			case 'a':
 				requestsAhead = getOptionValue(&optind, &argv);
@@ -275,6 +343,12 @@ main(int argc
 			case 'r':
 				rocMask = getOptionValue(&optind, &argv);
 				break;
+			case 'C':
+				clockToProgram = getOptionValue(&optind, &argv) % 2;
+				break;
+			case 'F':
+				targetFrequency = getOptionValue(&optind, &argv);
+				break;
 			default:
 				std::cout << "Unknown option: " << argv[optind] << std::endl;
 				printHelpMsg();
@@ -298,6 +372,8 @@ main(int argc
 		<< ", CFO Delay: " << cfodelay
 		<< ", TS Offset: " << timestampOffset
 		<< ", PacketCount: " << packetCount
+		<< ", DataBlock Count: " << blockCount
+		<< ", Event Count: " << eventCount
 		<< ", Requests Ahead of Reads: " << requestsAhead
 		<< ", Synchronous Request Mode: " << syncRequests
 		<< ", Use DTC CFO Emulator: " << useCFOEmulator
@@ -309,7 +385,9 @@ main(int argc
 		<< ", Read Data from DDR: " << readGenerated
 		<< ", Use Sim File: " << useSimFile
 		<< ", ROC Mask: " << std::hex << rocMask
-		<< ", Debug Type: " << DTC_DebugTypeConverter(debugType).toString();
+		<< ", Debug Type: " << DTC_DebugTypeConverter(debugType).toString()
+		<< ", Target Frequency: " << std::dec << targetFrequency
+		<< ", Clock To Program: " << (clockToProgram == 0 ? "SERDES" : "DDR");
 	if (rawOutput)
 	{
 		std::cout << ", Raw output file: " << rawOutputFile;
@@ -396,15 +474,20 @@ main(int argc
 		std::cout << "Swapping SERDES Oscillator Clock" << std::endl;
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
-		if (!thisDTC->ReadSERDESOscillatorClock())
+		auto clock = thisDTC->ReadSERDESOscillatorClock();
+		if (clock == DTC_SerdesClockSpeed_3125Gbps)
 		{
 			std::cout << "Setting SERDES Oscillator Clock to 2.5 Gbps" << std::endl;
 			thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_25Gbps);
 		}
-		else
+		else if (clock == DTC_SerdesClockSpeed_25Gbps)
 		{
 			std::cout << "Setting SERDES Oscillator Clock to 3.125 Gbps" << std::endl;
 			thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_3125Gbps);
+		}
+		else
+		{
+			std::cerr << "Error: SERDES clock not recognized value!";
 		}
 		delete thisDTC;
 	}
@@ -457,7 +540,7 @@ main(int argc
 		else if (thisDTC->ReadSimMode() == DTC_SimMode_Loopback)
 		{
 			uint64_t ts = timestampOffset;
-			DTC_DataHeaderPacket header(DTC_Ring_0, static_cast<uint16_t>(0), DTC_DataStatus_Valid,0,0, DTC_Timestamp(ts));
+			DTC_DataHeaderPacket header(DTC_Ring_0, DTC_ROC_0, static_cast<uint16_t>(0), DTC_DataStatus_Valid, 0, 0, DTC_Timestamp(ts));
 			std::cout << "Request: " << header.toJSON() << std::endl;
 			thisDTC->WriteDMAPacket(header);
 		}
@@ -495,7 +578,8 @@ main(int argc
 
 				if (!reallyQuiet)
 				{
-					for (unsigned line = 0; line < static_cast<unsigned>(ceil((sts - 8) / 16.0)); ++line)
+					auto maxLine = static_cast<unsigned>(ceil((sts - 8) / 16.0));
+					for (unsigned line = 0; line < maxLine; ++line)
 					{
 						std::cout << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
 						//for (unsigned byte = 0; byte < 16; ++byte)
@@ -509,7 +593,11 @@ main(int argc
 							}
 						}
 						std::cout << std::endl;
-						if (quiet && line == (quietCount - 1)) line = static_cast<unsigned>(ceil((sts - 8) / 16.0)) - (1 + quietCount);
+						if (maxLine > quietCount * 2) {
+							if (quiet && line == (quietCount - 1)) {
+								line = static_cast<unsigned>(ceil((sts - 8) / 16.0)) - (1 + quietCount);
+							}
+						}
 					}
 				}
 			}
@@ -760,6 +848,14 @@ main(int argc
 			<< "Read Rate: " << Utilities::FormatByteString(totalBytesRead / totalReadTime) << "/s." << std::endl
 			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime) << "/s." << std::endl
 			<< "Maximum Gas Gauge: " << Utilities::FormatByteString(maxGasGauge) << std::endl;
+		delete thisDTC;
+	}
+	else if (op == "program_clock")
+	{
+		// ReSharper disable once CppNonReclaimedResourceAcquisition
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
+		auto oscillator = clockToProgram == 0 ? DTC_OscillatorType_SERDES : DTC_OscillatorType_DDR;
+		thisDTC->SetNewOscillatorFrequency(oscillator, targetFrequency);
 		delete thisDTC;
 	}
 	else

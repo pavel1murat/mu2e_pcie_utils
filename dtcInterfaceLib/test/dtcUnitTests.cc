@@ -1,6 +1,7 @@
 #include <iostream>
+#include <ctype.h>
 #ifdef _WIN32
-# include "..\DTCLibTest.h"
+# include "../DTCLibTest.h"
 # include <chrono>
 # include <thread>
 # define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
@@ -67,6 +68,7 @@ int main(int argc, char* argv[])
 				case 5:
 					daqTest = true;
 					break;
+				default: break;
 				}
 			}
 			else

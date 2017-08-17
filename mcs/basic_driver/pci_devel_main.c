@@ -31,7 +31,7 @@
 # define IOCTL_RET_TYPE                       int
 #else
 # define IOCTL_ARGS( inode, filep, cmd, arg )        filep, cmd, arg
-# define IOCTL_FILE_OPS_MEMBER                compat_ioctl
+# define IOCTL_FILE_OPS_MEMBER                unlocked_ioctl
 # define IOCTL_RET_TYPE                       long
 #endif
 
@@ -142,8 +142,10 @@ IOCTL_RET_TYPE devl_ioctl( IOCTL_ARGS( struct inode *inode, struct file *filp
     IOCTL_RET_TYPE    sts=0;
     int               sts2;
 
+    TRACE(6, "Checking IOC_TYPE");
     if(_IOC_TYPE(cmd) != DEVL_IOC_MAGIC) return -ENOTTY;
 
+    TRACE(6, "Checking for correct access for command");
     /* Check read/write and corresponding argument */
     if(_IOC_DIR(cmd) & _IOC_READ)
         if(!access_ok(VERIFY_WRITE, (void *)arg, _IOC_SIZE(cmd)))
@@ -208,6 +210,7 @@ IOCTL_RET_TYPE devl_ioctl( IOCTL_ARGS( struct inode *inode, struct file *filp
 	}
 	break;
     case IOC_UINT32:
+      TRACE(6, "IOC_UINT32");
 	if (pcie_bar_info.baseVAddr == 0)
 	{   sts =devl_ioctl( IOCTL_ARGS( inode, filp, IOC_IOREMAP, 0 ) );
 	    if (sts != 0) { return -1; }

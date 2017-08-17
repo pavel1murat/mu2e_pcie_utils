@@ -192,7 +192,7 @@ int main(int argc, char* argv[])
 			auto tmo_ms = 1500;
 			auto sts = device->read_data(DTC_DMA_Engine_DCS, reinterpret_cast<void**>(&buffer), tmo_ms);
 
-			TRACE(1, "util - read for DCS - ii=%u sts=%d %p", ii, sts, (void*)buffer);
+			TRACE(1, "util - read for DCS - ii=%u sts=%d %p", ii, sts, static_cast<void*>(buffer));
 			if (sts > 0)
 			{
 				auto bufSize = *reinterpret_cast<uint64_t*>(&buffer[0]);

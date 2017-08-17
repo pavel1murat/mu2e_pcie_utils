@@ -38,6 +38,7 @@ DTCLib::DTC_DataPacket::~DTC_DataPacket()
 	}
 }
 
+// ReSharper disable once CppMemberFunctionMayBeConst
 void DTCLib::DTC_DataPacket::SetWord(uint16_t index, uint8_t data)
 {
 	if (!memPacket_ && index < dataSize_)
@@ -312,7 +313,7 @@ DTCLib::DTC_DataPacket DTCLib::DTC_HeartbeatPacket::ConvertToDataPacket() const
 	timestamp_.GetTimestamp(output.GetData(), 4);
 	for (auto i = 0; i < 6; ++i)
 	{
-	  output.SetWord(10 + i, eventMode_[i]);
+	  output.SetWord(static_cast<uint16_t>(10 + i), eventMode_[i]);
 	}
 	return output;
 }
@@ -343,7 +344,7 @@ std::string DTCLib::DTC_DataRequestPacket::toJSON()
 	ss << timestamp_.toJSON() << ",";
 	ss << "\"debug\":" << (debug_ ? "true" : "false") << ",";
 	ss << "\"debugPacketCount\": " << std::dec << static_cast<int>(debugPacketCount_) << ",";
-	ss << "\"debugType\": " << DTC_DebugTypeConverter(type_);
+	ss << DTC_DebugTypeConverter(type_);
 	ss << "}";
 	return ss.str();
 }
@@ -449,10 +450,9 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSReplyPacket::ConvertToDataPacket() const
 	return output;
 }
 
-DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, uint16_t packetCount, DTC_DataStatus status, uint8_t dtcid, 
+DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t packetCount, DTC_DataStatus status, uint8_t dtcid, 
 	uint8_t packetVersion, DTC_Timestamp timestamp, uint8_t evbMode)
-	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring
-		,		DTC_ROC_Unused, (1 + packetCount) * 16)
+	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, roc, (1 + packetCount) * 16)
 	, packetCount_(packetCount)
 	, timestamp_(timestamp)
 	, status_(status)
