@@ -19,7 +19,9 @@ elif [ -d "${MRB_BUILDDIR-}" ]; then
 elif [ -d "${PCIE_LINUX_KERNEL_MODULE_DIR-}" ];then
     fdir="${PCIE_LINUX_KERNEL_MODULE_DIR-}"
 fi
-test -n "$fdir" && DEVMOD=`find $fdir -name pci_devel_main.ko | head -1`
+
+vers=`uname -r`
+test -n "$fdir" && DEVMOD=`find $fdir -name pci_devel_main.ko | grep $vers|head -1`
 if [ -z "$DEVMOD" ];then
    echo "ERROR - can't find pci_devel_main.ko"
    exit
