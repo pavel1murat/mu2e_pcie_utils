@@ -169,7 +169,7 @@ namespace DTCLib
 			return simMode_;
 		}
 
-		DTC_SimMode SetSimMode(DTC_SimMode mode, unsigned rocMask);
+		DTC_SimMode SetSimMode(DTC_SimMode mode, unsigned rocMask, bool skipInit = false);
 
 		//
 		// DTC Register Dumps
