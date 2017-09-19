@@ -124,7 +124,7 @@ int mu2esim::init(DTCLib::DTC_SimMode mode)
 	registers_[DTCLib::DTC_Register_SERDESRXStatus] = 0x0; // SERDES RX Status Nominal
 	registers_[DTCLib::DTC_Register_SERDESResetDone] = 0x7F; // SERDES Resets Done
 	registers_[DTCLib::DTC_Register_SERDESEyescanData] = 0x0; // No Eyescan Error
-	registers_[DTCLib::DTC_Register_SERDESRXCDRLock] = 0x7F; // RX CDR Locked
+	registers_[DTCLib::DTC_Register_SFPSERDESStatus] = 0x7F00007F; // RX CDR Locked
 	registers_[DTCLib::DTC_Register_DMATimeoutPreset] = 0x800; // DMA Timeout Preset
 	registers_[DTCLib::DTC_Register_ROCReplyTimeout] = 0x200000; // ROC Timeout Preset
 	registers_[DTCLib::DTC_Register_ROCReplyTimeoutError] = 0x0; // ROC Timeout Error

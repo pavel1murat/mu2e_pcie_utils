@@ -12,7 +12,7 @@
 #endif
 #define TRACE_NAME "MU2EDEV"
 
-DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, unsigned rocMask) : device_(), simMode_(mode), dmaSize_(16)
+DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, unsigned rocMask, bool skipInit) : device_(), simMode_(mode), dmaSize_(16)
 {
 	for (auto ii = 0; ii < 6; ++ii)
 	{
@@ -74,7 +74,7 @@ DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, unsigned rocMask) : devic
 			break;
 		}
 	}
-
+	if(!skipInit)
 	SetSimMode(simMode_, rocMask);
 }
 
@@ -1052,22 +1052,53 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESEyescanData()
 	return form;
 }
 
-// SERDES RX CDR Lock Register
+// SFP / SERDES Status Register
+
+bool DTCLib::DTC_Registers::ReadSERDESSFPPresent(const DTC_Ring_ID& ring)
+{
+	std::bitset<32> dataSet = ReadRegister_(DTC_Register_SFPSERDESStatus);
+	return dataSet[ring + 24];
+}
+
+bool DTCLib::DTC_Registers::ReadSERDESSFPLOS(const DTC_Ring_ID& ring)
+{
+	std::bitset<32> dataSet = ReadRegister_(DTC_Register_SFPSERDESStatus);
+	return dataSet[ring + 16];
+}
+
+bool DTCLib::DTC_Registers::ReadSERDESSFPTXFault(const DTC_Ring_ID& ring)
+{
+	std::bitset<32> dataSet = ReadRegister_(DTC_Register_SFPSERDESStatus);
+	return dataSet[ring + 8];
+}
+
+
 bool DTCLib::DTC_Registers::ReadSERDESRXCDRLock(const DTC_Ring_ID& ring)
 {
-	std::bitset<32> dataSet = ReadRegister_(DTC_Register_SERDESRXCDRLock);
+	std::bitset<32> dataSet = ReadRegister_(DTC_Register_SFPSERDESStatus);
 	return dataSet[ring];
 }
 
-DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESRXCDRLock()
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSFPSERDESStatus()
 {
-	auto form = CreateFormatter(DTC_Register_SERDESRXCDRLock);
-	form.description = "SERDES RX CDR Lock";
+	auto form = CreateFormatter(DTC_Register_SFPSERDESStatus);
+	form.description = "SFP / SERDES Status";
+	form.vals.push_back("       ([SFP Present, LOS, TX Fault, CDR Lock])");
 	for (auto r : DTC_Rings)
 	{
-		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + (ReadSERDESRXCDRLock(r) ? "x" : " ") + "]");
+	  form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + (ReadSERDESSFPPresent(r) ? "x" : " ") + ","
+                                                                           + (ReadSERDESSFPLOS(r) ? "x" : " ") + ","
+                                                                           + (ReadSERDESSFPTXFault(r) ? "x" : " ") + ","
+                                                                           + (ReadSERDESRXCDRLock(r) ? "x" : " ") + "]");
 	}
-	form.vals.push_back(std::string("CFO:    [") + (ReadSERDESRXCDRLock(DTC_Ring_CFO) ? "x" : " ") + "]");
+	form.vals.push_back(std::string("CFO:    [") + (ReadSERDESSFPPresent(DTC_Ring_CFO) ? "x" : " ") + ","
+                                                 + (ReadSERDESSFPLOS(DTC_Ring_CFO) ? "x" : " ") + ","
+                                                 + (ReadSERDESSFPTXFault(DTC_Ring_CFO) ? "x" : " ") + ","
+                                                 + (ReadSERDESRXCDRLock(DTC_Ring_CFO) ? "x" : " ") + "]");
+	form.vals.push_back(std::string("EVB:    [") + (ReadSERDESSFPPresent(DTC_Ring_EVB) ? "x" : " ") + ","
+                                                 + (ReadSERDESSFPLOS(DTC_Ring_EVB) ? "x" : " ") + ","
+                                                 + (ReadSERDESSFPTXFault(DTC_Ring_EVB) ? "x" : " ") + ","
+                                                 + (ReadSERDESRXCDRLock(DTC_Ring_EVB) ? "x" : " ") + "]");
 	return form;
 }
 

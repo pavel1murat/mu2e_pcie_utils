@@ -41,7 +41,7 @@ namespace DTCLib
 		DTC_Register_SERDESRXStatus = 0x9134,
 		DTC_Register_SERDESResetDone = 0x9138,
 		DTC_Register_SERDESEyescanData = 0x913C,
-		DTC_Register_SERDESRXCDRLock = 0x9140,
+		DTC_Register_SFPSERDESStatus = 0x9140,
 		DTC_Register_DMATimeoutPreset = 0x9144,
 		DTC_Register_ROCReplyTimeout = 0x9148,
 		DTC_Register_ROCReplyTimeoutError = 0x914C,
@@ -121,7 +121,7 @@ namespace DTCLib
 	class DTC_Registers
 	{
 	public:
-		explicit DTC_Registers(DTC_SimMode mode = DTC_SimMode_Disabled, unsigned rocMask = 0x1);
+	  explicit DTC_Registers(DTC_SimMode mode = DTC_SimMode_Disabled, unsigned rocMask = 0x1, bool skipInit = false);
 		virtual ~DTC_Registers();
 
 		//
@@ -298,9 +298,12 @@ namespace DTCLib
 		bool ReadSERDESEyescanError(const DTC_Ring_ID& ring);
 		DTC_RegisterFormatter FormatSERDESEyescanData();
 
-		// SERDES RX CDR Lock Register
+		// SFP / SERDES Status Register
+		bool ReadSERDESSFPPresent(const DTC_Ring_ID& ring);
+		bool ReadSERDESSFPLOS(const DTC_Ring_ID& ring);
+		bool ReadSERDESSFPTXFault(const DTC_Ring_ID& ring);
 		bool ReadSERDESRXCDRLock(const DTC_Ring_ID& ring);
-		DTC_RegisterFormatter FormatSERDESRXCDRLock();
+		DTC_RegisterFormatter FormatSFPSERDESStatus();
 
 		// DMA Timeout Preset Regsiter
 		void SetDMATimeoutPreset(uint32_t preset);
@@ -646,7 +649,7 @@ namespace DTCLib
 			},
 			[this]()
 			{
-				return this->FormatSERDESRXCDRLock();
+				return this->FormatSFPSERDESStatus();
 			},
 			[this]()
 			{

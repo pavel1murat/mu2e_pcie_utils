@@ -39,6 +39,7 @@ namespace DTCLib
 		DTC_Ring_4 = 4,
 		DTC_Ring_5 = 5,
 		DTC_Ring_CFO = 6,
+		DTC_Ring_EVB = 7,
 		DTC_Ring_Unused,
 	};
 
