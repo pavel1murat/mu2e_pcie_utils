@@ -506,7 +506,6 @@ main(int argc
 		auto startTime = std::chrono::steady_clock::now();
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
-		uint32_t maxGasGauge = 0x0;
 		auto device = thisDTC->GetDevice();
 
 		auto initTime = device->GetDeviceTime();
@@ -571,9 +570,8 @@ main(int argc
 				auto bufSize = static_cast<uint16_t>(*static_cast<uint64_t*>(readPtr));
 				readPtr = static_cast<uint8_t*>(readPtr) + 8;
 				if (!reallyQuiet) std::cout << "Buffer reports DMA size of " << std::dec << bufSize << " bytes. Device driver reports read of " << sts << " bytes," << std::endl;
-				uint32_t gasGauge = thisDTC->ReadDDRGasGuage();
-				TRACE(1, "util - bufSize is %u, gasGuage is %x", bufSize, gasGauge);
-				if (gasGauge > maxGasGauge) maxGasGauge = gasGauge;
+
+				TRACE(1, "util - bufSize is %u", bufSize);
 				if (rawOutput) outputStream.write(static_cast<char*>(readPtr), bufSize - 8);
 
 				if (!reallyQuiet)
@@ -629,8 +627,7 @@ main(int argc
 			<< "Total Bytes Read: " << Utilities::FormatByteString(totalBytesRead) << "." << std::endl
 			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
 			<< "Read Rate: " << Utilities::FormatByteString(totalBytesRead / totalReadTime) << "/s." << std::endl
-			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime) << "/s." << std::endl
-			<< "Maximum Gas Gauge: " << Utilities::FormatByteString(maxGasGauge) << std::endl;
+			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime) << "/s." << std::endl;
 
 		delete thisDTC;
 	}
@@ -654,7 +651,6 @@ main(int argc
 		auto startTime = std::chrono::steady_clock::now();
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
-		uint32_t maxGasGauge = 0x0;
 
 		auto initTime = thisDTC->GetDevice()->GetDeviceTime();
 		thisDTC->GetDevice()->ResetDeviceTime();
@@ -709,9 +705,6 @@ main(int argc
 			}
 
 			auto data = thisDTC->GetData(); //DTC_Timestamp(ts));
-			uint32_t gasGauge = thisDTC->ReadDDRGasGuage();
-			TRACE(1, "util - data count is %zu, gasGuage is %x", data.size(), gasGauge);
-			if (gasGauge > maxGasGauge) maxGasGauge = gasGauge;
 
 			if (data.size() > 0)
 			{
@@ -846,8 +839,7 @@ main(int argc
 			<< "Total Bytes Read: " << Utilities::FormatByteString(totalBytesRead) << "." << std::endl
 			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
 			<< "Read Rate: " << Utilities::FormatByteString(totalBytesRead / totalReadTime) << "/s." << std::endl
-			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime) << "/s." << std::endl
-			<< "Maximum Gas Gauge: " << Utilities::FormatByteString(maxGasGauge) << std::endl;
+			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime) << "/s." << std::endl;
 		delete thisDTC;
 	}
 	else if (op == "program_clock")

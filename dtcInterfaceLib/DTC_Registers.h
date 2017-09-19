@@ -79,6 +79,10 @@ namespace DTCLib
 		DTC_Register_DetEmulationDelayCount = 0x91D4,
 		DTC_Register_DetEmulationControl0 = 0x91D8,
 		DTC_Register_DetEmulationControl1 = 0x91DC,
+		DTC_Register_DetEmulationDataStartAddress = 0x91E0,
+		DTC_Register_DetEmulationDataEndAddress = 0x91E4,
+		DTC_Register_ROCDRPDataSyncError = 0x91E8,
+		DTC_Register_EthernetFramePayloadSize = 0x91EC,
 		DTC_Register_ReceiveByteCountDataRing0 = 0x9200,
 		DTC_Register_ReceiveByteCountDataRing1 = 0x9204,
 		DTC_Register_ReceiveByteCountDataRing2 = 0x9208,
@@ -86,6 +90,7 @@ namespace DTCLib
 		DTC_Register_ReceiveByteCountDataRing4 = 0x9210,
 		DTC_Register_ReceiveByteCountDataRing5 = 0x9214,
 		DTC_Register_ReceiveByteCountDataCFO = 0x9218,
+		DTC_Register_ReceiveByteCountDataEVB = 0x921C,
 		DTC_Register_ReceivePacketCountDataRing0 = 0x9220,
 		DTC_Register_ReceivePacketCountDataRing1 = 0x9224,
 		DTC_Register_ReceivePacketCountDataRing2 = 0x9228,
@@ -93,6 +98,7 @@ namespace DTCLib
 		DTC_Register_ReceivePacketCountDataRing4 = 0x9230,
 		DTC_Register_ReceivePacketCountDataRing5 = 0x9234,
 		DTC_Register_ReceivePacketCountDataCFO = 0x9238,
+		DTC_Register_ReceivePacketCountDataEVB = 0x923C,
 		DTC_Register_TransmitByteCountDataRing0 = 0x9240,
 		DTC_Register_TransmitByteCountDataRing1 = 0x9244,
 		DTC_Register_TransmitByteCountDataRing2 = 0x9248,
@@ -100,6 +106,7 @@ namespace DTCLib
 		DTC_Register_TransmitByteCountDataRing4 = 0x9250,
 		DTC_Register_TransmitByteCountDataRing5 = 0x9254,
 		DTC_Register_TransmitByteCountDataCFO = 0x9258,
+		DTC_Register_TransmitByteCountDataEVB = 0x925C,
 		DTC_Register_TransmitPacketCountDataRing0 = 0x9260,
 		DTC_Register_TransmitPacketCountDataRing1 = 0x9264,
 		DTC_Register_TransmitPacketCountDataRing2 = 0x9268,
@@ -107,9 +114,31 @@ namespace DTCLib
 		DTC_Register_TransmitPacketCountDataRing4 = 0x9270,
 		DTC_Register_TransmitPacketCountDataRing5 = 0x9274,
 		DTC_Register_TransmitPacketCountDataCFO = 0x9278,
-		DTC_Register_DDRDataStartAddress = 0xE1E0,
-		DTC_Register_DDRDataEndAddress = 0x91E4,
-		DTC_Register_DDRGasGuage = 0x9320,
+		DTC_Register_TransmitPacketCountDataEVB = 0x927C,
+		DTC_Register_DDRRingBufferFullFlags1 = 0x92B0,
+		DTC_Register_DDRRingBufferFullFlags2 = 0x92B4,
+		DTC_Register_DDRRingBufferFullErrorFlags1 = 0x92B8,
+		DTC_Register_DDRRingBufferFullErrorFlags2 = 0x92BC,
+		DTC_Register_DDRRingBufferEmptyFlags1 = 0x92C0,
+		DTC_Register_DDRRingBufferEmptyFlags2 = 0x92C4,
+		DTC_Register_DDRRingBufferHalfFullFlags1 = 0x92C8,
+		DTC_Register_DDRRingBufferHalfFullFlags2 = 0x92CC,
+		DTC_Register_EventBuilderBufferFullFlags1 = 0x92D0,
+		DTC_Register_EventBuilderBufferFullFlags2 = 0x92D4,
+		DTC_Register_EventBuilderBufferFullErrorFlags1 = 0x92D8,
+		DTC_Register_EventBuilderBufferFullErrorFlags2 = 0x92DC,
+		DTC_Register_EventBuilderBufferEmptyFlags1 = 0x92E0,
+		DTC_Register_EventBuilderBufferEmptyFlags2 = 0x92E4,
+		DTC_Register_EventBuilderBufferHalfFullFlags1 = 0x92E8,
+		DTC_Register_EventBuilderBufferHalfFullFlags2 = 0x92EC,
+		DTC_Register_EVBSERDESPRBSControlStatus = 0x9330,
+		DTC_Register_MissedCFOPacketCountRing0 = 0x9340,
+		DTC_Register_MissedCFOPacketCountRing1 = 0x9344,
+		DTC_Register_MissedCFOPacketCountRing2 = 0x9348,
+		DTC_Register_MissedCFOPacketCountRing3 = 0x934C,
+		DTC_Register_MissedCFOPacketCountRing4 = 0x9350,
+		DTC_Register_MissedCFOPacketCountRing5 = 0x9354,
+		DTC_Register_LocalFragmentDropCount = 0x9360,
 		DTC_Register_FPGAProgramData = 0x9400,
 		DTC_Register_FPGAPROMProgramStatus = 0x9404,
 		DTC_Register_FPGACoreAccess = 0x9408,
@@ -121,7 +150,7 @@ namespace DTCLib
 	class DTC_Registers
 	{
 	public:
-	  explicit DTC_Registers(DTC_SimMode mode = DTC_SimMode_Disabled, unsigned rocMask = 0x1, bool skipInit = false);
+		explicit DTC_Registers(DTC_SimMode mode = DTC_SimMode_Disabled, unsigned rocMask = 0x1, bool skipInit = false);
 		virtual ~DTC_Registers();
 
 		//
@@ -326,6 +355,8 @@ namespace DTCLib
 		DTC_RegisterFormatter FormatRingPacketLength();
 
 		// EVB Network Partition ID / EVB Network Local MAC Index Register
+		void SetEVBMode(uint8_t mode);
+		uint8_t ReadEVBMode();
 		void SetEVBLocalParitionID(uint8_t id);
 		uint8_t ReadEVBLocalParitionID();
 		void SetEVBLocalMACAddress(uint8_t macByte);
@@ -333,6 +364,8 @@ namespace DTCLib
 		DTC_RegisterFormatter FormatEVBLocalParitionIDMACIndex();
 
 		// EVB Number of Destination Nodes Register
+		void SetEVBStartNode(uint8_t node);
+		uint8_t ReadEVBStartNode();
 		void SetEVBNumberOfDestinationNodes(uint8_t number);
 		uint8_t ReadEVBNumberOfDestinationNodes();
 		DTC_RegisterFormatter FormatEVBNumberOfDestinationNodes();
@@ -477,6 +510,26 @@ namespace DTCLib
 		DTC_RegisterFormatter FormatDetectorEmulationControl1();
 
 		// SERDES Counter Registers
+		// DDR Event Data Local Start Address Register
+		void SetDDRDataLocalStartAddress(uint32_t address);
+		uint32_t ReadDDRDataLocalStartAddress();
+		DTC_RegisterFormatter FormatDDRDataLocalStartAddress();
+
+		// DDR Event Data Local End Address Register
+		void SetDDRDataLocalEndAddress(uint32_t address);
+		uint32_t ReadDDRDataLocalEndAddress();
+		DTC_RegisterFormatter FormatDDRDataLocalEndAddress();
+
+		// ROC DRP Sync Error Register
+		uint32_t ReadROCDRPSyncErrors();
+		DTC_RegisterFormatter FormatROCDRPSyncError();
+
+		// Ethernet Frame Payload Max Size
+		uint32_t ReadEthernetPayloadSize();
+		void SetEthernetPayloadSize(uint32_t size);
+		DTC_RegisterFormatter FormatEthernetPayloadSize();
+
+
 		void ClearReceiveByteCount(const DTC_Ring_ID& ring);
 		uint32_t ReadReceiveByteCount(const DTC_Ring_ID& ring);
 		void ClearReceivePacketCount(const DTC_Ring_ID& ring);
@@ -492,6 +545,7 @@ namespace DTCLib
 		DTC_RegisterFormatter FormatReceiveByteCountRing4();
 		DTC_RegisterFormatter FormatReceiveByteCountRing5();
 		DTC_RegisterFormatter FormatReceiveByteCountCFO();
+		DTC_RegisterFormatter FormatReceiveByteCountEVB();
 		DTC_RegisterFormatter FormatReceivePacketCountRing0();
 		DTC_RegisterFormatter FormatReceivePacketCountRing1();
 		DTC_RegisterFormatter FormatReceivePacketCountRing2();
@@ -499,6 +553,7 @@ namespace DTCLib
 		DTC_RegisterFormatter FormatReceivePacketCountRing4();
 		DTC_RegisterFormatter FormatReceivePacketCountRing5();
 		DTC_RegisterFormatter FormatReceivePacketCountCFO();
+		DTC_RegisterFormatter FormatReceivePacketCountEVB();
 		DTC_RegisterFormatter FormatTramsitByteCountRing0();
 		DTC_RegisterFormatter FormatTramsitByteCountRing1();
 		DTC_RegisterFormatter FormatTramsitByteCountRing2();
@@ -506,6 +561,7 @@ namespace DTCLib
 		DTC_RegisterFormatter FormatTramsitByteCountRing4();
 		DTC_RegisterFormatter FormatTramsitByteCountRing5();
 		DTC_RegisterFormatter FormatTramsitByteCountCFO();
+		DTC_RegisterFormatter FormatTramsitByteCountEVB();
 		DTC_RegisterFormatter FormatTransmitPacketCountRing0();
 		DTC_RegisterFormatter FormatTransmitPacketCountRing1();
 		DTC_RegisterFormatter FormatTransmitPacketCountRing2();
@@ -513,19 +569,65 @@ namespace DTCLib
 		DTC_RegisterFormatter FormatTransmitPacketCountRing4();
 		DTC_RegisterFormatter FormatTransmitPacketCountRing5();
 		DTC_RegisterFormatter FormatTransmitPacketCountCFO();
+		DTC_RegisterFormatter FormatTransmitPacketCountEVB();
 
-		// DDR Event Data Local Start Address Register
-		void SetDDRDataLocalStartAddress(uint32_t address);
-		uint32_t ReadDDRDataLocalStartAddress();
-		DTC_RegisterFormatter FormatDDRDataLocalStartAddress();
+		// DDR Memory Flags Registers
+		std::bitset<64> ReadDDRRingBufferFullFlags();
+		std::bitset<64> ReadDDRRingBufferFullErrorFlags();
+		std::bitset<64> ReadDDRRingBufferEmptyFlags();
+		std::bitset<64> ReadDDRRingBufferHalfFullFlags();
+		std::bitset<64> ReadDDREventBuilderBufferFullFlags();
+		std::bitset<64> ReadDDREventBuilderBufferFullErrorFlags();
+		std::bitset<64> ReadDDREventBuilderBufferEmptyFlags();
+		std::bitset<64> ReadDDREventBuilderBufferHalfFullFlags();
+		DTC_RegisterFormatter FormatDDRRingBufferFullFlagsLow();
+		DTC_RegisterFormatter FormatDDRRingBufferFullErrorFlagsLow();
+		DTC_RegisterFormatter FormatDDRRingBufferEmptyFlagsLow();
+		DTC_RegisterFormatter FormatDDRRingBufferHalfFullFlagsLow();
+		DTC_RegisterFormatter FormatDDREventBuilderBufferFullFlagsLow();
+		DTC_RegisterFormatter FormatDDREventBuilderBufferFullErrorFlagsLow();
+		DTC_RegisterFormatter FormatDDREventBuilderBufferEmptyFlagsLow();
+		DTC_RegisterFormatter FormatDDREventBuilderBufferHalfFullFlagsLow();
+		DTC_RegisterFormatter FormatDDRRingBufferFullFlagsHigh();
+		DTC_RegisterFormatter FormatDDRRingBufferFullErrorFlagsHigh();
+		DTC_RegisterFormatter FormatDDRRingBufferEmptyFlagsHigh();
+		DTC_RegisterFormatter FormatDDRRingBufferHalfFullFlagsHigh();
+		DTC_RegisterFormatter FormatDDREventBuilderBufferFullFlagsHigh();
+		DTC_RegisterFormatter FormatDDREventBuilderBufferFullErrorFlagsHigh();
+		DTC_RegisterFormatter FormatDDREventBuilderBufferEmptyFlagsHigh();
+		DTC_RegisterFormatter FormatDDREventBuilderBufferHalfFullFlagsHigh();
 
-		// DDR Event Data Local End Address Register
-		void SetDDRDataLocalEndAddress(uint32_t address);
-		uint32_t ReadDDRDataLocalEndAddress();
-		DTC_RegisterFormatter FormatDDRDataLocalEndAddress();
-		
-		uint32_t ReadDDRGasGuage();
-		DTC_RegisterFormatter FormatDDRGasGuage();
+		// EVB SERDES PRBS Control / Status Register
+		bool ReadEVBSERDESPRBSErrorFlag();
+		uint8_t ReadEVBSERDESTXPRBSSEL();
+		void SetEVBSERDESTXPRBSSEL(uint8_t byte);
+		uint8_t ReadEVBSERDESRXPRBSSEL();
+		void SetEVBSERDESRXPRBSSEL(uint8_t byte);
+		bool ReadEVBSERDESPRBSForceError();
+		void SetEVBSERDESPRBSForceError(bool flag);
+		void ToggleEVBSERDESPRBSForceError();
+		bool ReadEVBSERDESPRBSReset();
+		void SetEVBSERDESPRBSReset(bool flag);
+		void ToggleEVBSERDESPRBSReset();
+		DTC_RegisterFormatter FormatEVBSERDESPRBSControl();
+
+		// Missed CFO Packet Count Registers
+		uint32_t ReadMissedCFOPacketCountRing0();
+		uint32_t ReadMissedCFOPacketCountRing1();
+		uint32_t ReadMissedCFOPacketCountRing2();
+		uint32_t ReadMissedCFOPacketCountRing3();
+		uint32_t ReadMissedCFOPacketCountRing4();
+		uint32_t ReadMissedCFOPacketCountRing5();
+		DTC_RegisterFormatter FormatMissedCFOPacketCountRing0();
+		DTC_RegisterFormatter FormatMissedCFOPacketCountRing1();
+		DTC_RegisterFormatter FormatMissedCFOPacketCountRing2();
+		DTC_RegisterFormatter FormatMissedCFOPacketCountRing3();
+		DTC_RegisterFormatter FormatMissedCFOPacketCountRing4();
+		DTC_RegisterFormatter FormatMissedCFOPacketCountRing5();
+
+		// Local Fragment Drop Count
+		uint32_t ReadLocalFragmentDropCount();
+		DTC_RegisterFormatter FormatLocalFragmentDropCount();
 
 		// FPGA PROM Program Data Register
 
@@ -575,406 +677,140 @@ namespace DTCLib
 		int formatterWidth_;
 
 		const std::vector<std::function<DTC_RegisterFormatter()>> formattedDumpFunctions_{
-			[this]()
-			{
-				return this->FormatDesignVersion();
-			},
-			[this]()
-			{
-				return this->FormatDesignDate();
-			},
-			[this]()
-			{
-				return this->FormatDTCControl();
-			},
-			[this]()
-			{
-				return this->FormatDMATransferLength();
-			},
-			[this]()
-			{
-				return this->FormatSERDESLoopbackEnable();
-			},
-			[this]()
-			{
-				return this->FormatClockOscillatorStatus();
-			},
-			[this]()
-			{
-				return this->FormatROCEmulationEnable();
-			},
-			[this]()
-			{
-				return this->FormatRingEnable();
-			},
-			[this]()
-			{
-				return this->FormatSERDESReset();
-			},
-			[this]()
-			{
-				return this->FormatSERDESRXDisparityError();
-			},
-			[this]()
-			{
-				return this->FormatSERDESRXCharacterNotInTableError();
-			},
-			[this]()
-			{
-				return this->FormatSERDESUnlockError();
-			},
-			[this]()
-			{
-				return this->FormatSERDESPLLLocked();
-			},
-			[this]()
-			{
-				return this->FormatSERDESTXBufferStatus();
-			},
-			[this]()
-			{
-				return this->FormatSERDESRXBufferStatus();
-			},
-			[this]()
-			{
-				return this->FormatSERDESRXStatus();
-			},
-			[this]()
-			{
-				return this->FormatSERDESResetDone();
-			},
-			[this]()
-			{
-				return this->FormatSERDESEyescanData();
-			},
-			[this]()
-			{
-				return this->FormatSFPSERDESStatus();
-			},
-			[this]()
-			{
-				return this->FormatDMATimeoutPreset();
-			},
-			[this]()
-			{
-				return this->FormatROCReplyTimeout();
-			},
-			[this]()
-			{
-				return this->FormatROCReplyTimeoutError();
-			},
-			[this]()
-			{
-				return this->FormatRingPacketLength();
-			},
-			[this]()
-			{
-				return this->FormatEVBLocalParitionIDMACIndex();
-			},
-			[this]()
-			{
-				return this->FormatEVBNumberOfDestinationNodes();
-			},
-			[this]()
-			{
-				return this->FormatHeartbeatError();
-			},
-			[this]() {return this->FormatSERDESOscillatorFrequency(); },
-			[this]()
-			{
-				return this->FormatSERDESOscillatorControl();
-			},
-			[this]()
-			{
-				return this->FormatSERDESOscillatorParameterLow();
-			},
-			[this]()
-			{
-				return this->FormatSERDESOscillatorParameterHigh();
-			},
-			[this]()
-			{
-				return this->FormatDDROscillatorFrequency();
-			},
-			[this]()
-			{
-				return this->FormatDDROscillatorControl();
-			},
-			[this]()
-			{
-				return this->FormatDDROscillatorParameterLow();
-			},
-			[this]()
-			{
-				return this->FormatDDROscillatorParameterHigh();
-			},
-			[this]()
-			{
-				return this->FormatTimestampPreset0();
-			},
-			[this]()
-			{
-				return this->FormatTimestampPreset1();
-			},
-			[this]()
-			{
-				return this->FormatDataPendingTimer();
-			},
-			[this]()
-			{
-				return this->FormatNUMROCs();
-			},
-			[this]()
-			{
-				return this->FormatFIFOFullErrorFlag0();
-			},
-			[this]()
-			{
-				return this->FormatFIFOFullErrorFlag1();
-			},
-			[this]()
-			{
-				return this->FormatFIFOFullErrorFlag2();
-			},
-			[this]()
-			{
-				return this->FormatReceivePacketError();
-			},
-			[this]()
-			{
-				return this->FormatCFOEmulationTimestampLow();
-			},
-			[this]()
-			{
-				return this->FormatCFOEmulationTimestampHigh();
-			},
-			[this]()
-			{
-				return this->FormatCFOEmulationRequestInterval();
-			},
-			[this]()
-			{
-				return this->FormatCFOEmulationNumRequests();
-			},
-			[this]()
-			{
-				return this->FormatCFOEmulationNumPacketsRing01();
-			},
-			[this]()
-			{
-				return this->FormatCFOEmulationNumPacketsRing23();
-			},
-			[this]()
-			{
-				return this->FormatCFOEmulationNumPacketsRing45();
-			},
-			[this]()
-			{
-				return this->FormatCFOEmulationModeBytes03();
-			},
-			[this]()
-			{
-				return this->FormatCFOEmulationModeBytes45();
-			},
-
-			[this]()
-			{
-				return this->FormatCFOEmulationDebugPacketType();
-			},
-
-			[this]()
-			{
-				return this->FormatDetectorEmulationDMACount();
-			},
-
-			[this]()
-			{
-				return this->FormatDetectorEmulationDMADelayCount();
-			},
-				[this]()
-			{
-				return this->FormatDetectorEmulationControl0();
-			},
-				[this]()
-			{
-				return this->FormatDetectorEmulationControl1();
-			},
-
-			[this]()
-			{
-				return this->FormatDDRDataLocalStartAddress();
-			},
-			[this]()
-			{
-				return this->FormatDDRDataLocalEndAddress();
-			},
-			[this]() { return this->FormatDDRGasGuage(); },
-			[this]()
-			{
-				return this->FormatFPGAPROMProgramStatus();
-			},
-			[this]()
-			{
-				return this->FormatFPGACoreAccess();
-			}
+			[this]() { return this->FormatDesignVersion(); },
+			[this]() { return this->FormatDesignDate(); },
+			[this]() { return this->FormatDTCControl(); },
+			[this]() { return this->FormatDMATransferLength(); },
+			[this]() { return this->FormatSERDESLoopbackEnable(); },
+			[this]() { return this->FormatClockOscillatorStatus(); },
+			[this]() { return this->FormatROCEmulationEnable(); },
+			[this]() { return this->FormatRingEnable(); },
+			[this]() { return this->FormatSERDESReset(); },
+			[this]() { return this->FormatSERDESRXDisparityError(); },
+			[this]() { return this->FormatSERDESRXCharacterNotInTableError(); },
+			[this]() { return this->FormatSERDESUnlockError(); },
+			[this]() { return this->FormatSERDESPLLLocked(); },
+			[this]() { return this->FormatSERDESTXBufferStatus(); },
+			[this]() { return this->FormatSERDESRXBufferStatus(); },
+			[this]() { return this->FormatSERDESRXStatus(); },
+			[this]() { return this->FormatSERDESResetDone(); },
+			[this]() { return this->FormatSERDESEyescanData(); },
+			[this]() { return this->FormatSFPSERDESStatus(); },
+			[this]() { return this->FormatDMATimeoutPreset(); },
+			[this]() { return this->FormatROCReplyTimeout(); },
+			[this]() { return this->FormatROCReplyTimeoutError(); },
+			[this]() { return this->FormatRingPacketLength(); },
+			[this]() { return this->FormatEVBLocalParitionIDMACIndex(); },
+			[this]() { return this->FormatEVBNumberOfDestinationNodes(); },
+			[this]() { return this->FormatHeartbeatError(); },
+			[this]() { return this->FormatSERDESOscillatorFrequency(); },
+			[this]() { return this->FormatSERDESOscillatorControl(); },
+			[this]() { return this->FormatSERDESOscillatorParameterLow(); },
+			[this]() { return this->FormatSERDESOscillatorParameterHigh(); },
+			[this]() { return this->FormatDDROscillatorFrequency(); },
+			[this]() { return this->FormatDDROscillatorControl(); },
+			[this]() { return this->FormatDDROscillatorParameterLow(); },
+			[this]() { return this->FormatDDROscillatorParameterHigh(); },
+			[this]() { return this->FormatTimestampPreset0(); },
+			[this]() { return this->FormatTimestampPreset1(); },
+			[this]() { return this->FormatDataPendingTimer(); },
+			[this]() { return this->FormatNUMROCs(); },
+			[this]() { return this->FormatFIFOFullErrorFlag0(); },
+			[this]() { return this->FormatFIFOFullErrorFlag1(); },
+			[this]() { return this->FormatFIFOFullErrorFlag2(); },
+			[this]() { return this->FormatReceivePacketError(); },
+			[this]() { return this->FormatCFOEmulationTimestampLow(); },
+			[this]() { return this->FormatCFOEmulationTimestampHigh(); },
+			[this]() { return this->FormatCFOEmulationRequestInterval(); },
+			[this]() { return this->FormatCFOEmulationNumRequests(); },
+			[this]() { return this->FormatCFOEmulationNumPacketsRing01(); },
+			[this]() { return this->FormatCFOEmulationNumPacketsRing23(); },
+			[this]() { return this->FormatCFOEmulationNumPacketsRing45(); },
+			[this]() { return this->FormatCFOEmulationModeBytes03(); },
+			[this]() { return this->FormatCFOEmulationModeBytes45(); },
+			[this]() { return this->FormatCFOEmulationDebugPacketType(); },
+			[this]() { return this->FormatDetectorEmulationDMACount(); },
+			[this]() { return this->FormatDetectorEmulationDMADelayCount(); },
+			[this]() { return this->FormatDetectorEmulationControl0(); },
+			[this]() { return this->FormatDetectorEmulationControl1(); },
+			[this]() { return this->FormatDDRDataLocalStartAddress(); },
+			[this]() { return this->FormatDDRDataLocalEndAddress(); },
+			[this]() { return this->FormatROCDRPSyncError(); },
+			[this]() { return this->FormatEthernetPayloadSize(); },
+			[this]() { return this->FormatDDRRingBufferFullFlagsLow(); },
+			[this]() { return this->FormatDDRRingBufferFullFlagsHigh(); },
+			[this]() { return this->FormatDDRRingBufferFullErrorFlagsLow(); },
+			[this]() { return this->FormatDDRRingBufferFullErrorFlagsHigh(); },
+			[this]() { return this->FormatDDRRingBufferEmptyFlagsLow(); },
+			[this]() { return this->FormatDDRRingBufferEmptyFlagsHigh(); },
+			[this]() { return this->FormatDDRRingBufferHalfFullFlagsLow(); },
+			[this]() { return this->FormatDDRRingBufferHalfFullFlagsHigh(); },
+			[this]() { return this->FormatDDREventBuilderBufferFullFlagsLow(); },
+			[this]() { return this->FormatDDREventBuilderBufferFullFlagsHigh(); },
+			[this]() { return this->FormatDDREventBuilderBufferFullErrorFlagsLow(); },
+			[this]() { return this->FormatDDREventBuilderBufferFullErrorFlagsHigh(); },
+			[this]() { return this->FormatDDREventBuilderBufferEmptyFlagsLow(); },
+			[this]() { return this->FormatDDREventBuilderBufferEmptyFlagsHigh(); },
+			[this]() { return this->FormatDDREventBuilderBufferHalfFullFlagsLow(); },
+			[this]() { return this->FormatDDREventBuilderBufferHalfFullFlagsHigh(); },
+			[this]() { return this->FormatEVBSERDESPRBSControl(); },
+			[this]() { return this->FormatMissedCFOPacketCountRing0(); },
+			[this]() { return this->FormatMissedCFOPacketCountRing1(); },
+			[this]() { return this->FormatMissedCFOPacketCountRing2(); },
+			[this]() { return this->FormatMissedCFOPacketCountRing3(); },
+			[this]() { return this->FormatMissedCFOPacketCountRing4(); },
+			[this]() { return this->FormatMissedCFOPacketCountRing5(); },
+			[this]() { return this->FormatLocalFragmentDropCount(); },
+			[this]() { return this->FormatFPGAPROMProgramStatus(); },
+			[this]() { return this->FormatFPGACoreAccess(); }
 		};
 
 		const std::vector<std::function<DTC_RegisterFormatter()>> formattedPerfMonFunctions_{
-			[this]()
-			{
-				return this->FormatPerfMonTXByteCount();
-			},
-			[this]()
-			{
-				return this->FormatPerfMonRXByteCount();
-			},
-			[this]()
-			{
-				return this->FormatPerfMonTXPayloadCount();
-			},
-			[this]()
-			{
-				return this->FormatPerfMonRXPayloadCount();
-			},
-			[this]()
-			{
-				return this->FormatPerfMonInitCDC();
-			},
-			[this]()
-			{
-				return this->FormatPerfMonInitCHC();
-			},
-			[this]()
-			{
-				return this->FormatPerfMonInitNPDC();
-			},
-			[this]()
-			{
-				return this->FormatPerfMonInitNPHC();
-			},
-			[this]()
-			{
-				return this->FormatPerfMonInitPDC();
-			},
-			[this]()
-			{
-				return this->FormatPerfMonInitPHC();
-			}
+			[this]() { return this->FormatPerfMonTXByteCount(); },
+			[this]() { return this->FormatPerfMonRXByteCount(); },
+			[this]() { return this->FormatPerfMonTXPayloadCount(); },
+			[this]() { return this->FormatPerfMonRXPayloadCount(); },
+			[this]() { return this->FormatPerfMonInitCDC(); },
+			[this]() { return this->FormatPerfMonInitCHC(); },
+			[this]() { return this->FormatPerfMonInitNPDC(); },
+			[this]() { return this->FormatPerfMonInitNPHC(); },
+			[this]() { return this->FormatPerfMonInitPDC(); },
+			[this]() { return this->FormatPerfMonInitPHC(); }
 		};
 
 		const std::vector<std::function<DTC_RegisterFormatter()>> formattedCounterFunctions_{
-			[this]()
-			{
-				return this->FormatReceiveByteCountRing0();
-			},
-			[this]()
-			{
-				return this->FormatReceiveByteCountRing1();
-			},
-			[this]()
-			{
-				return this->FormatReceiveByteCountRing2();
-			},
-			[this]()
-			{
-				return this->FormatReceiveByteCountRing3();
-			},
-			[this]()
-			{
-				return this->FormatReceiveByteCountRing4();
-			},
-			[this]()
-			{
-				return this->FormatReceiveByteCountRing5();
-			},
-			[this]()
-			{
-				return this->FormatReceiveByteCountCFO();
-			},
-			[this]()
-			{
-				return this->FormatReceivePacketCountRing0();
-			},
-			[this]()
-			{
-				return this->FormatReceivePacketCountRing1();
-			},
-			[this]()
-			{
-				return this->FormatReceivePacketCountRing2();
-			},
-			[this]()
-			{
-				return this->FormatReceivePacketCountRing3();
-			},
-			[this]()
-			{
-				return this->FormatReceivePacketCountRing4();
-			},
-			[this]()
-			{
-				return this->FormatReceivePacketCountRing5();
-			},
-			[this]()
-			{
-				return this->FormatReceivePacketCountCFO();
-			},
-			[this]()
-			{
-				return this->FormatTramsitByteCountRing0();
-			},
-			[this]()
-			{
-				return this->FormatTramsitByteCountRing1();
-			},
-			[this]()
-			{
-				return this->FormatTramsitByteCountRing2();
-			},
-			[this]()
-			{
-				return this->FormatTramsitByteCountRing3();
-			},
-			[this]()
-			{
-				return this->FormatTramsitByteCountRing4();
-			},
-			[this]()
-			{
-				return this->FormatTramsitByteCountRing5();
-			},
-			[this]()
-			{
-				return this->FormatTramsitByteCountCFO();
-			},
-			[this]()
-			{
-				return this->FormatTransmitPacketCountRing0();
-			},
-			[this]()
-			{
-				return this->FormatTransmitPacketCountRing1();
-			},
-			[this]()
-			{
-				return this->FormatTransmitPacketCountRing2();
-			},
-			[this]()
-			{
-				return this->FormatTransmitPacketCountRing3();
-			},
-			[this]()
-			{
-				return this->FormatTransmitPacketCountRing4();
-			},
-			[this]()
-			{
-				return this->FormatTransmitPacketCountRing5();
-			},
-			[this]()
-			{
-				return this->FormatTransmitPacketCountCFO();
-			}
+			[this]() { return this->FormatReceiveByteCountRing0(); },
+			[this]() { return this->FormatReceiveByteCountRing1(); },
+			[this]() { return this->FormatReceiveByteCountRing2(); },
+			[this]() { return this->FormatReceiveByteCountRing3(); },
+			[this]() { return this->FormatReceiveByteCountRing4(); },
+			[this]() { return this->FormatReceiveByteCountRing5(); },
+			[this]() { return this->FormatReceiveByteCountCFO(); },
+			[this]() { return this->FormatReceiveByteCountEVB(); },
+			[this]() { return this->FormatReceivePacketCountRing0(); },
+			[this]() { return this->FormatReceivePacketCountRing1(); },
+			[this]() { return this->FormatReceivePacketCountRing2(); },
+			[this]() { return this->FormatReceivePacketCountRing3(); },
+			[this]() { return this->FormatReceivePacketCountRing4(); },
+			[this]() { return this->FormatReceivePacketCountRing5(); },
+			[this]() { return this->FormatReceivePacketCountCFO(); },
+			[this]() { return this->FormatReceivePacketCountEVB(); },
+			[this]() { return this->FormatTramsitByteCountRing0(); },
+			[this]() { return this->FormatTramsitByteCountRing1(); },
+			[this]() { return this->FormatTramsitByteCountRing2(); },
+			[this]() { return this->FormatTramsitByteCountRing3(); },
+			[this]() { return this->FormatTramsitByteCountRing4(); },
+			[this]() { return this->FormatTramsitByteCountRing5(); },
+			[this]() { return this->FormatTramsitByteCountCFO(); },
+			[this]() { return this->FormatTramsitByteCountEVB(); },
+			[this]() { return this->FormatTransmitPacketCountRing0(); },
+			[this]() { return this->FormatTransmitPacketCountRing1(); },
+			[this]() { return this->FormatTransmitPacketCountRing2(); },
+			[this]() { return this->FormatTransmitPacketCountRing3(); },
+			[this]() { return this->FormatTransmitPacketCountRing4(); },
+			[this]() { return this->FormatTransmitPacketCountRing5(); },
+			[this]() { return this->FormatTransmitPacketCountCFO(); },
+			[this]() { return this->FormatTransmitPacketCountEVB(); }
 		};
 	};
 }
