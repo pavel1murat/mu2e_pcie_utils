@@ -74,8 +74,7 @@ DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, unsigned rocMask, bool sk
 			break;
 		}
 	}
-	if(!skipInit)
-	SetSimMode(simMode_, rocMask);
+	SetSimMode(simMode_, rocMask, skipInit);
 }
 
 DTCLib::DTC_Registers::~DTC_Registers()
@@ -87,10 +86,12 @@ DTCLib::DTC_Registers::~DTC_Registers()
 	device_.close();
 }
 
-DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode, unsigned rocMask)
+DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode, unsigned rocMask, bool skipInit)
 {
 	simMode_ = mode;
 	device_.init(simMode_);
+
+	if(skipInit) return simMode_;
 
 	bool useTiming = simMode_ == DTC_SimMode_Disabled;
 	for (auto ring : DTC_Rings)
