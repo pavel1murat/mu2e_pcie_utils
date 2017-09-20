@@ -75,6 +75,7 @@ namespace DTCLib
 		DTC_Register_CFOEmulationEventMode1 = 0x91C0,
 		DTC_Register_CFOEmulationEventMode2 = 0x91C4,
 		DTC_Register_CFOEmulationDebugPacketType = 0x91C8,
+		DTC_Register_RXPacketCountErrorFlags = 0x91CC,
 		DTC_Register_DetEmulationDMACount = 0x91D0,
 		DTC_Register_DetEmulationDelayCount = 0x91D4,
 		DTC_Register_DetEmulationControl0 = 0x91D8,
@@ -482,6 +483,12 @@ namespace DTCLib
 		DTC_DebugType ReadCFOEmulationDebugType();
 		DTC_RegisterFormatter FormatCFOEmulationDebugPacketType();
 
+		// RX Packet Count Error Flags Register
+		bool ReadRXPacketCountErrorFlags(const DTC_Ring_ID& ring);
+		void ClearRXPacketCountErrorFlags(const DTC_Ring_ID& ring);
+		void ClearRXPacketCountErrorFlags();
+		DTC_RegisterFormatter FormatRXPacketCountErrorFlags();
+
 		// Detector Emulation DMA Count Register
 		void SetDetectorEmulationDMACount(uint32_t count);
 		uint32_t ReadDetectorEmulationDMACount();
@@ -521,7 +528,9 @@ namespace DTCLib
 		DTC_RegisterFormatter FormatDDRDataLocalEndAddress();
 
 		// ROC DRP Sync Error Register
-		uint32_t ReadROCDRPSyncErrors();
+		bool ReadROCDRPSyncErrors(const DTC_Ring_ID& ring);
+		void ClearROCDRPSyncErrors(const DTC_Ring_ID& ring);
+		void ClearROCDRPSyncErrors();
 		DTC_RegisterFormatter FormatROCDRPSyncError();
 
 		// Ethernet Frame Payload Max Size
@@ -618,6 +627,12 @@ namespace DTCLib
 		uint32_t ReadMissedCFOPacketCountRing3();
 		uint32_t ReadMissedCFOPacketCountRing4();
 		uint32_t ReadMissedCFOPacketCountRing5();
+		void ClearMissedCFOPacketCountRing0();
+		void ClearMissedCFOPacketCountRing1();
+		void ClearMissedCFOPacketCountRing2();
+		void ClearMissedCFOPacketCountRing3();
+		void ClearMissedCFOPacketCountRing4();
+		void ClearMissedCFOPacketCountRing5();
 		DTC_RegisterFormatter FormatMissedCFOPacketCountRing0();
 		DTC_RegisterFormatter FormatMissedCFOPacketCountRing1();
 		DTC_RegisterFormatter FormatMissedCFOPacketCountRing2();
@@ -627,6 +642,7 @@ namespace DTCLib
 
 		// Local Fragment Drop Count
 		uint32_t ReadLocalFragmentDropCount();
+		void ClearLocalFragmentDropCount();
 		DTC_RegisterFormatter FormatLocalFragmentDropCount();
 
 		// FPGA PROM Program Data Register

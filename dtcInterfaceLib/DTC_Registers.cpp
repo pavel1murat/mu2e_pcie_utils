@@ -91,7 +91,7 @@ DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode, unsigned
 	simMode_ = mode;
 	device_.init(simMode_);
 
-	if(skipInit) return simMode_;
+	if (skipInit) return simMode_;
 
 	bool useTiming = simMode_ == DTC_SimMode_Disabled;
 	for (auto ring : DTC_Rings)
@@ -2318,6 +2318,40 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatCFOEmulationDebugPack
 	return form;
 }
 
+// RX Packet Count Error Flags Register
+bool DTCLib::DTC_Registers::ReadRXPacketCountErrorFlags(const DTC_Ring_ID & ring)
+{
+	std::bitset<32> dataSet = ReadRegister_(DTC_Register_RXPacketCountErrorFlags);
+	return dataSet[ring];
+}
+
+void DTCLib::DTC_Registers::ClearRXPacketCountErrorFlags(const DTC_Ring_ID& ring)
+{
+
+	std::bitset<32> dataSet;
+	dataSet[ring] = true;
+	WriteRegister_(dataSet.to_ulong(), DTC_Register_RXPacketCountErrorFlags);
+}
+
+void DTCLib::DTC_Registers::ClearRXPacketCountErrorFlags()
+{
+	std::bitset<32> dataSet = ReadRegister_(DTC_Register_RXPacketCountErrorFlags);
+	WriteRegister_(dataSet.to_ulong(), DTC_Register_RXPacketCountErrorFlags);
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatRXPacketCountErrorFlags()
+{
+	auto form = CreateFormatter(DTC_Register_RXPacketCountErrorFlags);
+	form.description = "RX Packet Count Error Flags";
+	for (auto r : DTC_Rings)
+	{
+		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + (ReadRXPacketCountErrorFlags(r) ? "x" : " ") + "]");
+	}
+	form.vals.push_back(std::string("CFO:    [") + (ReadRXPacketCountErrorFlags(DTC_Ring_CFO) ? "x" : " ") + "]");
+	form.vals.push_back(std::string("EVB:    [") + (ReadRXPacketCountErrorFlags(DTC_Ring_EVB) ? "x" : " ") + "]");
+	return form;
+}
+
 // Detector Emulator DMA Count Register
 void DTCLib::DTC_Registers::SetDetectorEmulationDMACount(uint32_t count)
 {
@@ -2476,18 +2510,35 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDRDataLocalEndAddres
 	return form;
 }
 
-uint32_t DTCLib::DTC_Registers::ReadROCDRPSyncErrors()
+// ROC DRP Sync Error Register
+bool DTCLib::DTC_Registers::ReadROCDRPSyncErrors(const DTC_Ring_ID & ring)
 {
-	return ReadRegister_(DTC_Register_ROCDRPDataSyncError);
+	std::bitset<32> dataSet = ReadRegister_(DTC_Register_ROCDRPDataSyncError);
+	return dataSet[ring];
+}
+
+void DTCLib::DTC_Registers::ClearROCDRPSyncErrors(const DTC_Ring_ID& ring)
+{
+
+	std::bitset<32> dataSet;
+	dataSet[ring] = true;
+	WriteRegister_(dataSet.to_ulong(), DTC_Register_ROCDRPDataSyncError);
+}
+
+void DTCLib::DTC_Registers::ClearROCDRPSyncErrors()
+{
+	std::bitset<32> dataSet = ReadRegister_(DTC_Register_ROCDRPDataSyncError);
+	WriteRegister_(dataSet.to_ulong(), DTC_Register_ROCDRPDataSyncError);
 }
 
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatROCDRPSyncError()
 {
 	auto form = CreateFormatter(DTC_Register_ROCDRPDataSyncError);
-	form.description = "ROC DRP Sync Error";
-	std::stringstream o;
-	o << "0x" << std::hex << ReadROCDRPSyncErrors();
-	form.vals.push_back(o.str());
+	form.description = "RX Packet Count Error Flags";
+	for (auto r : DTC_Rings)
+	{
+		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + (ReadRXPacketCountErrorFlags(r) ? "x" : " ") + "]");
+	}
 	return form;
 }
 
@@ -2498,6 +2549,7 @@ uint32_t DTCLib::DTC_Registers::ReadEthernetPayloadSize()
 
 void DTCLib::DTC_Registers::SetEthernetPayloadSize(uint32_t size)
 {
+	if (size > 1492) { size = 1492; }
 	WriteRegister_(size, DTC_Register_EthernetFramePayloadSize);
 }
 
@@ -2506,7 +2558,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatEthernetPayloadSize()
 	auto form = CreateFormatter(DTC_Register_EthernetFramePayloadSize);
 	form.description = "Ethernet Frame Payload Max Size";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadEthernetPayloadSize();
+	o << std::dec << ReadEthernetPayloadSize() << " bytes";
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -3399,6 +3451,31 @@ uint32_t DTCLib::DTC_Registers::ReadMissedCFOPacketCountRing5()
 	return ReadRegister_(DTC_Register_MissedCFOPacketCountRing5);
 }
 
+void DTCLib::DTC_Registers::ClearMissedCFOPacketCountRing0()
+{
+	WriteRegister_(1, DTC_Register_MissedCFOPacketCountRing0);
+}
+void DTCLib::DTC_Registers::ClearMissedCFOPacketCountRing1()
+{
+	WriteRegister_(1, DTC_Register_MissedCFOPacketCountRing1);
+}
+void DTCLib::DTC_Registers::ClearMissedCFOPacketCountRing2()
+{
+	WriteRegister_(1, DTC_Register_MissedCFOPacketCountRing2);
+}
+void DTCLib::DTC_Registers::ClearMissedCFOPacketCountRing3()
+{
+	WriteRegister_(1, DTC_Register_MissedCFOPacketCountRing3);
+}
+void DTCLib::DTC_Registers::ClearMissedCFOPacketCountRing4()
+{
+	WriteRegister_(1, DTC_Register_MissedCFOPacketCountRing4);
+}
+void DTCLib::DTC_Registers::ClearMissedCFOPacketCountRing5()
+{
+	WriteRegister_(1, DTC_Register_MissedCFOPacketCountRing5);
+}
+
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatMissedCFOPacketCountRing0()
 {
 	auto form = CreateFormatter(DTC_Register_MissedCFOPacketCountRing0);
@@ -3462,6 +3539,11 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatMissedCFOPacketCountR
 uint32_t DTCLib::DTC_Registers::ReadLocalFragmentDropCount()
 {
 	return ReadRegister_(DTC_Register_LocalFragmentDropCount);
+}
+
+void DTCLib::DTC_Registers::ClearLocalFragmentDropCount()
+{
+	WriteRegister_(1, DTC_Register_LocalFragmentDropCount);
 }
 
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatLocalFragmentDropCount()
