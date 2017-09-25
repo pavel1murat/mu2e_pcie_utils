@@ -54,7 +54,7 @@ bool useSimFile = false;
 unsigned delay = 0;
 unsigned cfodelay = 1000;
 unsigned number = 1;
-unsigned timestampOffset = 1;
+unsigned long timestampOffset = 1;
 unsigned eventCount = 1;
 unsigned blockCount = 1;
 unsigned packetCount = 0;
@@ -90,6 +90,27 @@ unsigned getOptionValue(int* index, char** argv[])
 	}
 
 	return strtoul(&arg[offset], nullptr, 0);
+}
+unsigned long getOptionValueLong(int* index, char** argv[])
+{
+	auto arg = (*argv)[*index];
+	if (arg[2] == '\0')
+	{
+		(*index)++;
+		unsigned long ret = strtoul((*argv)[*index], nullptr, 0);
+		if (ret == 0 && (*argv)[*index][0] != '0') // No option given 
+		{
+			(*index)--;
+		}
+		return ret;
+	}
+	auto offset = 2;
+	if (arg[2] == '=')
+	{
+		offset = 3;
+	}
+
+	return strtoull(&arg[offset], nullptr, 0);
 }
 
 std::string getOptionString(int* index, char** argv[])
@@ -279,7 +300,7 @@ main(int argc
 				number = getOptionValue(&optind, &argv);
 				break;
 			case 'o':
-				timestampOffset = getOptionValue(&optind, &argv);
+				timestampOffset = getOptionValueLong(&optind, &argv) & 0x0000FFFFFFFFFFFF; // Timestamps are 48 bits
 				break;
 			case 'c':
 				packetCount = getOptionValue(&optind, &argv);
