@@ -115,6 +115,18 @@ DTC_Links() {
     DTCRegDump|grep -A1 "RX Buffer Status" 
 }
 
+DTC_LoadData() {
+    treset;
+    tonM1;
+    DTCLIB_SIM_ENABLE=N mu2eUtil -n 4 -c 10 -g 4 -G buffer_test
+}
+
+DTC_ReadLoadedData() {
+    treset;
+    tonM1;
+    DTCLIB_SIM_ENABLE=N mu2eUtil -n 4 -G buffer_test
+}
+
 echo '\nIf there were no errors, you should now be able to test with: DTC_Test [NumReqs]'
 echo '       or DTC_Test_ROC_emulation [NumReqs]'
 echo 'Example: DTC_Test -n 1       # send       1 read-out/data request pair'
@@ -124,6 +136,8 @@ echo '         DTC_Test3 -f /tmp/mu2eraw.bin # Same as DTC_Test -n 1 -c 200 -S -
 echo 'Use DTC_TestDDR and DTC_TestSRAM for RAM Error Checking modes'
 echo 'Use DTC_Links to see which of Ring0/1 are currently connected'
 echo 'and reset with DTC_Reset and ROC_Reset'
+echo 'Use DTC_LoadData to generate data, send it to the DTC and print the generated buffers to screen'
+echo 'Use DTC_ReadLoadedData to read data generated using DTC_LoadData back'
 echo 'Use "DTC_Test -h" to see other options.'
 echo
 echo 'To see the current state of all of the DTC Registers, use DTCRegDump'
