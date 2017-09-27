@@ -245,7 +245,7 @@ int mu2edev::read_register(uint16_t address, int tmo_ms, uint32_t* output)
 		(std::chrono::steady_clock::now() - start).count();
 	return errorCode;
 }
- 
+
 int mu2edev::write_register(uint16_t address, int tmo_ms, uint32_t data)
 {
 	auto start = std::chrono::steady_clock::now();
@@ -307,7 +307,7 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 		retsts = 0;
 		unsigned delta = mu2e_chn_info_delta_(chn, dir, &mu2e_channel_info_); // check cached info
 		TRACE(3, "write_data delta=%u chn=%d dir=S2C", delta, chn);
-		if (delta == 0)  // recheck with module
+		while (delta <= 1 && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() < 1000)
 		{
 			m_ioc_get_info_t get_info;
 			get_info.chn = chn; get_info.dir = dir; get_info.tmo_ms = 0;
@@ -315,33 +315,28 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 			if (sts != 0) { perror("M_IOC_GET_INFO"); exit(1); }
 			mu2e_channel_info_[chn][dir] = get_info; // copy info struct
 			delta = mu2e_chn_info_delta_(chn, dir, &mu2e_channel_info_);
+			usleep(1000);
 		}
-		else
-		{
-			auto start_time = std::chrono::steady_clock::now();
-			while (delta == 1 && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time).count() < 1000)
-			{
-				TRACE(35, "write_data delta=%u chn=%d dir=S2C Waiting for hw to read buf", delta, chn);
-				usleep(1000);
-			}
-			if (delta == 1)
-			{
-				perror("HW_NOT_READING_BUFS");
-				exit(1);
-			}
 
-			unsigned idx = mu2e_channel_info_[chn][dir].swIdx;
-			void * data = ((mu2e_databuff_t*)(mu2e_mmap_ptrs_[chn][dir][MU2E_MAP_BUFF]))[idx];
-			memcpy(data, buffer, bytes);
-			unsigned long arg = (chn << 24) | (bytes & 0xffffff);// THIS OBIVOUSLY SHOULD BE A MACRO
-			retsts = ioctl(devfd_, M_IOC_BUF_XMIT, arg);
-			if (retsts != 0)
-			  { perror("M_IOC_BUF_XMIT"); } // exit(1); } // Take out the exit call for now
-	// increment our cached info
-			mu2e_channel_info_[chn][dir].swIdx
-				= idx_add(mu2e_channel_info_[chn][dir].swIdx, 1, chn, dir);
+		if (delta <= 1)
+		{
+			perror("HW_NOT_READING_BUFS");
+			exit(1);
 		}
-}
+
+		unsigned idx = mu2e_channel_info_[chn][dir].swIdx;
+		void * data = ((mu2e_databuff_t*)(mu2e_mmap_ptrs_[chn][dir][MU2E_MAP_BUFF]))[idx];
+		memcpy(data, buffer, bytes);
+		unsigned long arg = (chn << 24) | (bytes & 0xffffff);// THIS OBIVOUSLY SHOULD BE A MACRO
+		retsts = ioctl(devfd_, M_IOC_BUF_XMIT, arg);
+		if (retsts != 0)
+		{
+			perror("M_IOC_BUF_XMIT");
+		} // exit(1); } // Take out the exit call for now
+// increment our cached info
+		mu2e_channel_info_[chn][dir].swIdx
+			= idx_add(mu2e_channel_info_[chn][dir].swIdx, 1, chn, dir);
+	}
 #endif
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
 		(std::chrono::steady_clock::now() - start).count();
