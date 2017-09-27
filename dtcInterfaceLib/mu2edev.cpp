@@ -245,7 +245,7 @@ int mu2edev::read_register(uint16_t address, int tmo_ms, uint32_t* output)
 		(std::chrono::steady_clock::now() - start).count();
 	return errorCode;
 }
-
+ 
 int mu2edev::write_register(uint16_t address, int tmo_ms, uint32_t data)
 {
 	auto start = std::chrono::steady_clock::now();
@@ -318,10 +318,16 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 		}
 		else
 		{
-			while (delta == 1)
+			auto start_time = std::chrono::steady_clock::now();
+			while (delta == 1 && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time).count() < 1000)
 			{
 				TRACE(35, "write_data delta=%u chn=%d dir=S2C Waiting for hw to read buf", delta, chn);
 				usleep(1000);
+			}
+			if (delta == 1)
+			{
+				perror("HW_NOT_READING_BUFS");
+				exit(1);
 			}
 
 			unsigned idx = mu2e_channel_info_[chn][dir].swIdx;
