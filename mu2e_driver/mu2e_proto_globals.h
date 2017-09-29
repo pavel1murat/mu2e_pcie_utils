@@ -29,10 +29,10 @@ extern mu2e_buffdesc_S2C_t   *mu2e_send_buffdesc_rings[MU2E_NUM_SEND_CHANNELS];
 /// PCI Sending interface data
 /// </summary>
 typedef struct
-{   mu2e_databuff_t     *databuffs;
-    dma_addr_t           databuffs_dma;
-    mu2e_buffdesc_S2C_t *buffdesc_ring;
-    dma_addr_t           buffdesc_ring_dma;
+{   mu2e_databuff_t     *databuffs; ///< Data buffers for transmitting
+    dma_addr_t           databuffs_dma; ///< DMA address for buffers for transmitting
+    mu2e_buffdesc_S2C_t *buffdesc_ring; ///< Descriptors for transmitting
+    dma_addr_t           buffdesc_ring_dma; ///< DMA address for descriptors for transmitting
 } pci_sender_t;
 
 extern pci_sender_t mu2e_pci_sender[MU2E_NUM_SEND_CHANNELS];
@@ -41,10 +41,10 @@ extern pci_sender_t mu2e_pci_sender[MU2E_NUM_SEND_CHANNELS];
 /// PCI Receiving interface data
 /// </summary>
 typedef struct
-{   mu2e_databuff_t     **databuffs;
-    dma_addr_t          *databuffs_dma;
-    mu2e_buffdesc_C2S_t **buffdesc_ring;
-    dma_addr_t          *buffdesc_ring_dma;
+{   mu2e_databuff_t     **databuffs; ///< pointers to data buffers for receiving
+    dma_addr_t          *databuffs_dma; ///< DMA address of data buffers for receiving
+    mu2e_buffdesc_C2S_t **buffdesc_ring; ///< Pointers to buffer descriptors for receiving
+    dma_addr_t          *buffdesc_ring_dma; ///< DMA Address of buffer descriptor ring for receiving
 } pci_recver_t;
 
 extern pci_recver_t mu2e_pci_recver[MU2E_NUM_RECV_CHANNELS];

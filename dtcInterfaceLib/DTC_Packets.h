@@ -403,50 +403,123 @@ namespace DTCLib
   class DTC_DCSRequestPacket : public DTC_DMAPacket
   {
   public:
+	  /// <summary>
+	  /// Default Constructor, zeroes out header fields
+	  /// </summary>
 	DTC_DCSRequestPacket();
+	/// <summary>
+	/// DCSRequestPacket constructor, using given ring and roc
+	/// </summary>
+	/// <param name="ring">Ring ID for packet</param>
+	/// <param name="roc">ROC ID for packet</param>
 	DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc);
+	/// <summary>
+	/// Create a DTC_DCSRequestPacket instance with the given fields filled in
+	/// </summary>
+	/// <param name="ring">Ring ID for packet</param>
+	/// <param name="roc">ROC ID for packet</param>
+	/// <param name="type">OpCode of packet</param>
+	/// <param name="address">Target address</param>
+	/// <param name="data">Data (for write)</param>
 	DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_DCSOperationType type, uint8_t address, uint16_t data);
-	DTC_DCSRequestPacket(const DTC_DCSRequestPacket&) = default;
-	DTC_DCSRequestPacket(DTC_DCSRequestPacket&&) = default;
+	/// <summary>
+	/// Default Copy Constructor
+	/// </summary>
+	/// <param name="in">DTC_DCSRequestPacket to copy</param>
+	DTC_DCSRequestPacket(const DTC_DCSRequestPacket& in) = default;
+	/// <summary>
+	/// Default Move Constructor
+	/// </summary>
+	/// <param name="in">DTC_DCSRequestPacket rvalue</param>
+	DTC_DCSRequestPacket(DTC_DCSRequestPacket&& in) = default;
+	/// <summary>
+	/// Construct a DTC_DCSRequestPacket using the data in the given DataPacket
+	/// </summary>
+	/// <param name="in">DataPacket to parse</param>
 	explicit DTC_DCSRequestPacket(const DTC_DataPacket in);
 
-	DTC_DCSRequestPacket& operator=(const DTC_DCSRequestPacket&) = default;
-	DTC_DCSRequestPacket& operator=(DTC_DCSRequestPacket&&) = default;
+	/// <summary>
+	/// Default Copy Assignment Operator
+	/// </summary>
+	/// <param name="in">DTC_DCSRequestPacket to copy</param>
+	/// <returns>DTC_DCSRequestPacket Reference</returns>
+	DTC_DCSRequestPacket& operator=(const DTC_DCSRequestPacket& in) = default;
+	/// <summary>
+	/// Default Move Assignment Operator
+	/// </summary>
+	/// <param name="in">DTC_DCSRequestPacket rvalue</param>
+	/// <returns>DTC_DCSRequestPacket Reference</returns>
+	DTC_DCSRequestPacket& operator=(DTC_DCSRequestPacket&& in) = default;
 
 	virtual ~DTC_DCSRequestPacket() = default;
 
+	/// <summary>
+	/// Gets the data word from the DCS Request Packet
+	/// </summary>
+	/// <returns>Value of the data word from the DCS Request</returns>
 	uint16_t GetData() const
 	{
 	  return data_;
 	}
 
+	/// <summary>
+	/// Sets the data word in the DCS Request Packet
+	/// </summary>
+	/// <param name="data">Value of the data word to set</param>
 	void SetData(uint16_t data)
 	{
 	  data_ = data;
 	}
 
+	/// <summary>
+	/// Gets the target address of the DCS Request Packet, in the ROC address space
+	/// </summary>
+	/// <returns>Target address of the DCS Request Packet</returns>
 	uint8_t GetAddress() const
 	{
 	  return address_;
 	}
-
+	/// <summary>
+	/// Sets the target address of the DCS Request Packet in the ROC address space
+	/// </summary>
+	/// <param name="address">New target address</param>
 	void SetAddress(uint8_t address)
 	{
 	  address_ = address & 0x1F;
 	}
 
+	/// <summary>
+	/// Gets the opcode of the DCS Request Packet
+	/// </summary>
+	/// <returns>Current Opcode of the DCS Request Packet</returns>
 	DTC_DCSOperationType GetType() const
 	{
 	  return type_;
 	}
 
+	/// <summary>
+	/// Sets the opcode of the DCS Request Packet
+	/// </summary>
+	/// <param name="type">Opcode to set</param>
 	void SetType(DTC_DCSOperationType type)
 	{
 	  type_ = type;
 	}
 
+	/// <summary>
+	/// Convert a DTC_DCSRequestPacket to DTC_DataPacket in "owner" mode
+	/// </summary>
+	/// <returns>DTC_DataPacket with DCS Request Packet contents set</returns>
 	DTC_DataPacket ConvertToDataPacket() const override;
+	/// <summary>
+	/// Convert the DCS Request Packet to JSON representation
+	/// </summary>
+	/// <returns>JSON-formatted string representation of DCS Request packet</returns>
 	std::string toJSON() override;
+	/// <summary>
+	/// Converts the DCS Request Packet to "packet format" representation (See DTC_DataPacket::toPacketFormat())
+	/// </summary>
+	/// <returns>"packet format" string representation of DCS Request packet</returns>
 	std::string toPacketFormat() override;
   private:
 	DTC_DCSOperationType type_;

@@ -45,34 +45,40 @@
 /// </summary>
 union DataHeaderPacket
 {
+	/// <summary>
+	/// Raw packet
+	/// </summary>
 	struct
 	{
-		uint16_t w0;
-		uint16_t w1;
-		uint16_t w2;
-		uint16_t w3;
-		uint16_t w4;
-		uint16_t w5;
-		uint16_t w6;
-		uint16_t w7;
+		uint16_t w0; ///< Word 0
+		uint16_t w1; ///< Word 1
+		uint16_t w2; ///< Word 2
+		uint16_t w3; ///< Word 3
+		uint16_t w4; ///< Word 4
+		uint16_t w5; ///< Word 5
+		uint16_t w6; ///< Word 6
+		uint16_t w7; ///< Word 7
 	} w;
+	/// <summary>
+	/// Decoded packet
+	/// </summary>
 	struct
 	{
-		uint16_t TransferByteCount;
+		uint16_t TransferByteCount; ///< Block Byte count
 
-		uint16_t Resv1 : 4;
-		uint16_t PacketType : 4;
-		uint16_t RingID : 4;
-		uint16_t Resv0 : 3;
-		uint16_t Valid : 1;
+		uint16_t Resv1 : 4; ///< Reserved
+		uint16_t PacketType : 4; ///< Type of packet
+		uint16_t RingID : 4; ///< Ring ID of packet
+		uint16_t Resv0 : 3; ///< Reserved
+		uint16_t Valid : 1; ///< Is the packet valid?
 
-		uint16_t PacketCount : 8;
-		uint16_t Resv2 : 8;
-		uint16_t ts10;
-		uint16_t ts32;
-		uint16_t ts54;
-		uint16_t data32;
-		uint16_t data54;
+		uint16_t PacketCount : 8; ///< Packet count requested
+		uint16_t Resv2 : 8; ///< Reserved
+		uint16_t ts10; ///< Timestamp bytes 1 and 2 (Least significant)
+		uint16_t ts32; ///< Timestamp bytes 3 and 4
+		uint16_t ts54; ///< Timestamp bytes 5 and 6 (Most significant)
+		uint16_t data32; ///< Data bytes 1 and 2
+		uint16_t data54; ///< Data bytes 3 and 4
 	} s;
 };
 /// <summary>
@@ -80,34 +86,40 @@ union DataHeaderPacket
 /// </summary>
 union DataRequestPacket
 {
+	/// <summary>
+	/// Raw Packet
+	/// </summary>
 	struct
 	{
-		uint16_t w0;
-		uint16_t w1;
-		uint16_t w2;
-		uint16_t w3;
-		uint16_t w4;
-		uint16_t w5;
-		uint16_t w6;
-		uint16_t w7;
+		uint16_t w0; ///< Word 0
+		uint16_t w1; ///< Word 1
+		uint16_t w2; ///< Word 2
+		uint16_t w3; ///< Word 3
+		uint16_t w4; ///< Word 4
+		uint16_t w5; ///< Word 5
+		uint16_t w6; ///< Word 6
+		uint16_t w7; ///< Word 7
 	} w;
+	/// <summary>
+	/// Decoded packet
+	/// </summary>
 	struct
 	{
-		uint16_t TransferByteCount;
+		uint16_t TransferByteCount; ///< Block Byte count
 
-		uint16_t Resv1 : 4;
-		uint16_t PacketType : 4;
-		uint16_t RingID : 4;
-		uint16_t Resv0 : 3;
-		uint16_t Valid : 1;
+		uint16_t Resv1 : 4; ///< Reserved
+		uint16_t PacketType : 4; ///< Type of packet
+		uint16_t RingID : 4; ///< Ring ID of packet
+		uint16_t Resv0 : 3; ///< Reserved
+		uint16_t Valid : 1; ///< Is the packet valid?
 
-		uint16_t PacketCount : 8;
-		uint16_t Resv2 : 8;
-		uint16_t ts10;
-		uint16_t ts32;
-		uint16_t ts54;
-		uint16_t data32;
-		uint16_t data54;
+		uint16_t PacketCount : 8; ///< Packet count requested
+		uint16_t Resv2 : 8; ///< Reserved
+		uint16_t ts10; ///< Timestamp bytes 1 and 2 (Least significant)
+		uint16_t ts32; ///< Timestamp bytes 3 and 4
+		uint16_t ts54; ///< Timestamp bytes 5 and 6 (Most significant)
+		uint16_t data32; ///< Data bytes 1 and 2
+		uint16_t data54; ///< Data bytes 3 and 4
 	} s;
 };
 /// <summary>
@@ -115,14 +127,14 @@ union DataRequestPacket
 /// </summary>
 struct DataPacket
 {
-	uint16_t data10;
-	uint16_t data32;
-	uint16_t data54;
-	uint16_t data76;
-	uint16_t data98;
-	uint16_t dataBA;
-	uint16_t dataDC;
-	uint16_t dataFE;
+	uint16_t data10;///< Bytes 1 and 2 of the Data Packet
+	uint16_t data32;///< Bytes 3 and 4 of the Data Packet
+	uint16_t data54;///< Bytes 5 and 6 of the Data Packet
+	uint16_t data76;///< Bytes 7 and 8 of the Data Packet
+	uint16_t data98;///< Bytes 9 and 10 of the Data Packet
+	uint16_t dataBA;///< Bytes 11 and 12 of the Data Packet
+	uint16_t dataDC;///< Bytes 13 and 14 of the Data Packet
+	uint16_t dataFE;  ///< Bytes 15 and 16 of the Data Packet
 };
 
 // Used in kernel mmap function
@@ -183,9 +195,9 @@ NOTE: for _IOR, _IOW: the size is only for the data at the address used in the
 /// </summary>
 typedef struct
 {
-	int reg_offset;
-	int access_type;		// 0=read, 1=write
-	unsigned val;
+	int reg_offset; ///< Offset of register from BAR0
+	int access_type;		///< 0=read, 1=write
+	unsigned val;	///< Value of register
 } m_ioc_reg_access_t;
 
 /** Structure used in IOCTL to start/stop a test & to get current test state */
@@ -310,13 +322,13 @@ enum { MU2E_MAP_BUFF, MU2E_MAP_META };
 /// </summary>
 typedef struct
 {
-	int chn;
-	int dir;
-	int	tmo_ms;
-	unsigned buff_size;
-	unsigned num_buffs;
-	unsigned hwIdx;
-	unsigned swIdx;
+	int chn; ///< Channel (DAQ or DCS)
+	int dir; ///< Direction (C2S or S2C)
+	int	tmo_ms; ///< Timeout for buffers
+	unsigned buff_size; ///< Size of the buffers in this chn/dir
+	unsigned num_buffs; ///< Number of buffers in this chn/dir
+	unsigned hwIdx; ///< Current buffer index for the hardware
+	unsigned swIdx; ///< Current buffer index for the software
 } m_ioc_get_info_t;
 
 
