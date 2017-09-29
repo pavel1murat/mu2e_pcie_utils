@@ -298,7 +298,6 @@ typedef struct
    userspace and kernel land. For userspace the variable is defined in
    the mu2edev class (and therefore the using namsspace
  */
- // ReSharper disable once CppRedundantInlineSpecifier
 static inline unsigned mu2e_chn_info_delta_(int chn, int dir, m_ioc_get_info_t(*mu2e_channel_info_)[MU2E_MAX_CHANNELS][2])
 {
 	unsigned hw = (*mu2e_channel_info_)[chn][dir].hwIdx;

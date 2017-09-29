@@ -158,7 +158,6 @@ void WriteGeneratedData(DTC* thisDTC)
 			exit(1);
 		}
 
-		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto buf = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
 		memcpy(buf, &dmaWriteByteCount, sizeof(uint64_t));
 		if (rawOutput) outputStream.write(reinterpret_cast<char*>(&dmaWriteByteCount), sizeof(uint64_t));
@@ -196,9 +195,7 @@ void WriteGeneratedData(DTC* thisDTC)
 					{
 						break;
 					}
-					// ReSharper disable CppRedundantParentheses
 					packet.SetWord(14, (jj + 1) & 0xFF);
-					// ReSharper restore CppRedundantParentheses
 					memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
 					if (rawOutput) outputStream << packet;
 					currentOffset += 16;
@@ -425,7 +422,6 @@ main(int argc
 	if (op == "read")
 	{
 		std::cout << "Operation \"read\"" << std::endl;
-		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
 		auto packet = thisDTC->ReadNextDAQPacket();
 		if (!reallyQuiet) std::cout << packet->toJSON() << '\n';
@@ -443,7 +439,6 @@ main(int argc
 	else if (op == "read_data")
 	{
 		std::cout << "Operation \"read_data\"" << std::endl;
-		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
 
 		auto device = thisDTC->GetDevice();
@@ -471,13 +466,11 @@ main(int argc
 					for (unsigned line = 0; line < static_cast<unsigned>(ceil((bufSize - 8) / 16)); ++line)
 					{
 						std::cout << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
-						//for (unsigned byte = 0; byte < 16; ++byte)
 						for (unsigned byte = 0; byte < 8; ++byte)
 						{
 							if (line * 16 + 2 * byte < bufSize - 8u)
 							{
 								auto thisWord = reinterpret_cast<uint16_t*>(buffer)[4 + line * 8 + byte];
-								//uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
 								std::cout << std::setw(4) << static_cast<int>(thisWord) << " ";
 							}
 						}
@@ -495,7 +488,6 @@ main(int argc
 	else if (op == "toggle_serdes")
 	{
 		std::cout << "Swapping SERDES Oscillator Clock" << std::endl;
-		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
 		auto clock = thisDTC->ReadSERDESOscillatorClock();
 		if (clock == DTC_SerdesClockSpeed_3125Gbps)
@@ -527,7 +519,6 @@ main(int argc
 	{
 		std::cout << "Operation \"buffer_test\"" << std::endl;
 		auto startTime = std::chrono::steady_clock::now();
-		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
 		auto device = thisDTC->GetDevice();
 
@@ -672,7 +663,6 @@ main(int argc
 	else if (op == "DTC")
 	{
 		auto startTime = std::chrono::steady_clock::now();
-		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
 
 		auto initTime = thisDTC->GetDevice()->GetDeviceTime();
@@ -867,7 +857,6 @@ main(int argc
 	}
 	else if (op == "program_clock")
 	{
-		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
 		auto oscillator = clockToProgram == 0 ? DTC_OscillatorType_SERDES : DTC_OscillatorType_DDR;
 		thisDTC->SetNewOscillatorFrequency(oscillator, targetFrequency);

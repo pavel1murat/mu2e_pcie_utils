@@ -130,17 +130,17 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 			}
 		}
 	}
-	catch (DTC_WrongPacketTypeException ex)
+	catch (DTC_WrongPacketTypeException& ex)
 	{
 		TRACE(19, "DTC::GetData: Bad omen: Wrong packet type at the current read position");
 		nextReadPtr_ = nullptr;
 	}
-	catch (DTC_IOErrorException ex)
+	catch (DTC_IOErrorException& ex)
 	{
 		nextReadPtr_ = nullptr;
 		TRACE(19, "DTC::GetData: IO Exception Occurred!");
 	}
-	catch (DTC_DataCorruptionException ex)
+	catch (DTC_DataCorruptionException& ex)
 	{
 		nextReadPtr_ = nullptr;
 		TRACE(19, "DTC::GetData: Data Corruption Exception Occurred!");
@@ -211,7 +211,6 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool o
 	while (is && is.good() && sizeCheck)
 	{
 		TRACE(5, "Reading a DMA from file...%s", file.c_str());
-		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto buf = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
 		is.read(reinterpret_cast<char*>(buf), sizeof(uint64_t));
 		auto sz = *reinterpret_cast<uint64_t*>(buf);
