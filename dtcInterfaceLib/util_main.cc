@@ -161,11 +161,13 @@ void WriteGeneratedData(DTC* thisDTC)
 		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto buf = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
 		memcpy(buf, &dmaWriteByteCount, sizeof(uint64_t));
+		if (rawOutput) outputStream << dmaWriteByteCount;
 		auto currentOffset = sizeof(uint64_t);
 
 		for (unsigned ll = 0; ll < eventCount; ++ll) {
 
 			memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, &eventByteCount, sizeof(uint64_t));
+			if (rawOutput) outputStream << eventByteCount;
 			currentOffset += sizeof(uint64_t);
 
 			if (incrementTimestamp) ++ts;
