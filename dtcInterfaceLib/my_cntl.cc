@@ -16,7 +16,7 @@ static char* rev=(char*)"$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
 #include "mu2e_driver/mu2e_mmap_ioctl.h"	// m_ioc_cmd_t
 
 #define USAGE "\
-   usage: %s <start|stop>\n\
+   usage: %s <start|stop|dump>\n\
           %s read <offset>\n\
           %s write <offset> <val>\n\
           %s write_loopback_data [-p<packet_cnt>] [data]...\n\
