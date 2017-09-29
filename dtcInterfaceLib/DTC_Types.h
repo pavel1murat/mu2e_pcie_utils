@@ -19,6 +19,9 @@ namespace DTCLib
 		DTC_Subsystem_Other = 3
 	};
 
+	/// <summary>
+	/// The DTC_ID field is used to uniquely identify each DTC. The ID consists of 2 bits of Subsystem ID and 6 bits of DTC ID.
+	/// </summary>
 	class DTC_ID {
 		uint8_t idData_;
 
@@ -58,6 +61,9 @@ namespace DTCLib
 
 	static const std::vector<DTC_ROC_ID> DTC_ROCS{ DTC_ROC_Unused, DTC_ROC_0, DTC_ROC_1, DTC_ROC_2, DTC_ROC_3, DTC_ROC_4, DTC_ROC_5 };
 
+	/// <summary>
+	/// The DTC_ROCIDConverter converts a DTC_ROC_ID enumeration value to string or JSON representation
+	/// </summary>
 	struct DTC_ROCIDConverter
 	{
 		DTC_ROC_ID roc_;
@@ -116,6 +122,9 @@ namespace DTCLib
 		DTC_DebugType_Invalid = 5,
 	};
 
+	/// <summary>
+	/// The DTC_DebugTypeConverter converts a DTC_DebugType enumeration value to string or JSON representation
+	/// </summary>
 	struct DTC_DebugTypeConverter
 	{
 		DTC_DebugType type_;
@@ -159,6 +168,9 @@ namespace DTCLib
 		DTC_RXBufferStatus_Unknown = 0x10,
 	};
 
+	/// <summary>
+	/// The DTC_RXBufferStatusConverter converts a DTC_RXBufferStatus enumeration value to string or JSON representation
+	/// </summary>
 	struct DTC_RXBufferStatusConverter
 	{
 		DTC_RXBufferStatus status_;
@@ -204,6 +216,9 @@ namespace DTCLib
 		DTC_RXStatus_RXDisparityError = 7,
 	};
 
+	/// <summary>
+	/// The DTC_RXStatusConverter converts a DTC_RXStatus enumeration value to string or JSON representation
+	/// </summary>
 	struct DTC_RXStatusConverter
 	{
 		DTC_RXStatus status_;
@@ -250,6 +265,9 @@ namespace DTCLib
 		DTC_SERDESLoopbackMode_FarPCS = 6,
 	};
 
+	/// <summary>
+	/// The DTC_SERDESLoopbackModeConverter converts a DTC_SERDESLoopbackMode enumeration value to string or JSON representation
+	/// </summary>
 	struct DTC_SERDESLoopbackModeConverter
 	{
 		DTC_SERDESLoopbackMode mode_;
@@ -295,6 +313,9 @@ namespace DTCLib
 		DTC_SimMode_Invalid,
 	};
 
+	/// <summary>
+	/// The DTC_SimModeConverter converts a DTC_SimMode enumeration value to string or JSON representation
+	/// </summary>
 	struct DTC_SimModeConverter
 	{
 		DTC_SimMode mode_;
@@ -336,6 +357,9 @@ namespace DTCLib
 		}
 	};
 
+	/// <summary>
+	/// A DTC_WrongPacketTypeException is thrown when an attempt to decode a DMA packet is made and the type in the DMA header is different than the type of the packet expected
+	/// </summary>
 	class DTC_WrongPacketTypeException : public std::exception
 	{
 	public:
@@ -348,6 +372,9 @@ namespace DTCLib
 		int encountered_;
 	};
 
+	/// <summary>
+	/// A DTC_IOErrorException is thrown when the DTC is not communicating when communication is expected
+	/// </summary>
 	class DTC_IOErrorException : public std::exception
 	{
 	public:
@@ -357,6 +384,9 @@ namespace DTCLib
 		}
 	};
 
+	/// <summary>
+	/// A DTC_DataCorruptionException is thrown when corrupt data is detected coming from the DTC
+	/// </summary>
 	class DTC_DataCorruptionException : public std::exception
 	{
 	public:
@@ -366,6 +396,9 @@ namespace DTCLib
 		}
 	};
 
+	/// <summary>
+	/// The mu2e Timestamp is a 48-bit quantity. This class manages all the different ways it could be accessed.
+	/// </summary>
 	class DTC_Timestamp
 	{
 		uint64_t timestamp_ : 48;
@@ -433,6 +466,9 @@ namespace DTCLib
 		std::string toPacketFormat() const;
 	};
 
+	/// <summary>
+	/// This class is used to decode the SERDES RX Disparity Error register
+	/// </summary>
 	class DTC_SERDESRXDisparityError
 	{
 		std::bitset<2> data_;
@@ -470,6 +506,9 @@ namespace DTCLib
 		}
 	};
 
+	/// <summary>
+	/// This structure is used to decode the SERDES Character Not In Table Error register
+	/// </summary>
 	class DTC_CharacterNotInTableError
 	{
 		std::bitset<2> data_;
@@ -507,6 +546,9 @@ namespace DTCLib
 		}
 	};
 
+	/// <summary>
+	/// This structure is used to decode the RingEnable register value
+	/// </summary>
 	struct DTC_RingEnableMode
 	{
 		bool TransmitEnable;
@@ -537,6 +579,9 @@ namespace DTCLib
 		}
 	};
 
+	/// <summary>
+	/// This structure is used to decode the FIFOFullErrorFlags register values
+	/// </summary>
 	struct DTC_FIFOFullErrorFlags
 	{
 		bool OutputData;
@@ -590,6 +635,9 @@ namespace DTCLib
 		}
 	};
 
+	/// <summary>
+	/// The DTC_RegisterFormatter class is used to print a DTC register in a human-readable format
+	/// </summary>
 	struct DTC_RegisterFormatter
 	{
 		DTC_RegisterFormatter() : address(0), value(0), descWidth(28), description(""), vals() {}
@@ -629,6 +677,10 @@ namespace DTCLib
 		}
 	};
 
+	/// <summary>
+	/// A Data Block object (DataHeader packet plus associated Data Packets)
+	/// Constructed as a pointer to a region of memory
+	/// </summary>
 	struct DTC_DataBlock
 	{
 		typedef uint64_t pointer_t;
@@ -638,6 +690,9 @@ namespace DTCLib
 		DTC_DataBlock(pointer_t* ptr, size_t sz) : blockPointer(ptr), byteSize(sz) {}
 	};
 
+	/// <summary>
+	/// Several useful data manipulation utilities
+	/// </summary>
 	struct Utilities
 	{
 		static std::string FormatByteString(double bytes);

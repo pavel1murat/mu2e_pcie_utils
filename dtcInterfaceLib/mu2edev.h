@@ -14,6 +14,10 @@
 #include <atomic>
 #include "mu2esim.h"
 
+/// <summary>
+/// This class handles the raw interaction with the mu2e device driver
+/// It also will pass through device commands to the mu2esim class if it is active.
+/// </summary>
 class mu2edev
 {
 public:

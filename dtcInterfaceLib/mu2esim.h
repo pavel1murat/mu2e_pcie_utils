@@ -23,6 +23,9 @@
 
 #define SIM_BUFFCOUNT 40U
 
+/// <summary>
+/// The mu2esim class emulates a DTC in software. It can be used for hardware-independent testing of software, especially higher-level trigger algorithms.
+/// </summary>
 class mu2esim
 {
 public:

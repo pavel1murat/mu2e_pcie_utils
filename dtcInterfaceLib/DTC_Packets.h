@@ -51,6 +51,9 @@ namespace DTCLib
 		DTC_DCSOperationType_Unknown = 255
 		};
 
+  /// <summary>
+  /// Convert a DTC_DCSOperationType eunumeration value to its string or JSON representation
+  /// </summary>
   struct DTC_DCSOperationTypeConverter
   {
 	DTC_DCSOperationType type_;
@@ -91,63 +94,170 @@ namespace DTCLib
 	}
   };
 
+  /// <summary>
+  /// The DTC_DataPacket class represents the 16 bytes of raw data for all DTC packets.
+  /// The class works in two modes: "overlay" mode, where the data is in a fixed location in memory and modification is restricted, and
+  /// "owner" mode, where the DataPacket is a concrete instance.
+  /// </summary>
   class DTC_DataPacket
   {
   public:
+	  /// <summary>
+	  /// Construct a DTC_DataPacket in owner mode
+	  /// </summary>
 	DTC_DataPacket();
 
+	/// <summary>
+	/// Construct a DTC_DataPacket in "overlay" mode using the given DMA buffer pointer. Flag will be set that the packet is read-only.
+	/// </summary>
+	/// <param name="data">Pointer data</param>
 	explicit DTC_DataPacket(const mu2e_databuff_t* data) : dataPtr_(*data), dataSize_(16), memPacket_(true) { }
 
+	/// <summary>
+	/// Construct a DTC_DataPacket using a pointer to data. Flag will be set that the packet is read-only.
+	/// </summary>
+	/// <param name="data">Pointer to data</param>
 	explicit DTC_DataPacket(const void* data) : dataPtr_(static_cast<const uint8_t*>(data)), dataSize_(16), memPacket_(true) { }
 
+	/// <summary>
+	/// Construct a DTC_DataPacket in "overlay" mode using the given byte pointer. Flag will be set that the packet is read-only.
+	/// </summary>
+	/// <param name="data">Pointer to data</param>
 	explicit DTC_DataPacket(const uint8_t* data) : dataPtr_(data), dataSize_(16), memPacket_(true) { }
 
-	DTC_DataPacket(const DTC_DataPacket&);
-	DTC_DataPacket(DTC_DataPacket&&) = default;
+	/// <summary>
+	/// Creates a copy of the DTC_DataPacket. Mode is preserved, if the existing DataPacket was in "owner" mode, a deep copy is made, otherwise
+	/// the reference to the read-only memory will be copied.
+	/// </summary>
+	/// <param name="in">Input DTC_DataPacket</param>
+	DTC_DataPacket(const DTC_DataPacket& in);
+	/// <summary>
+	/// Default move constructor
+	/// </summary>
+	/// <param name="in">DTC_DataPacket rvalue</param>
+	DTC_DataPacket(DTC_DataPacket&& in) = default;
 
 	virtual ~DTC_DataPacket();
 
-	DTC_DataPacket& operator=(const DTC_DataPacket&) = default;
-	DTC_DataPacket& operator=(DTC_DataPacket&&) = default;
+	/// <summary>
+	/// Default copy-assignment operator
+	/// </summary>
+	/// <param name="in">DTC_DataPacket lvalue</param>
+	/// <returns>DTC_DataPacket reference</returns>
+	DTC_DataPacket& operator=(const DTC_DataPacket& in) = default;
+	/// <summary>
+	/// Default move-assignment operator
+	/// </summary>
+	/// <param name="in">DTC_DataPacket rvalue</param>
+	/// <returns>DTC_DataPacket reference</returns>
+	DTC_DataPacket& operator=(DTC_DataPacket&& in) = default;
 
+	/// <summary>
+	/// Set the given word of the DataPacket.
+	/// No-op if the DataPacket is in overlay mode
+	/// </summary>
+	/// <param name="index">Index of the word to change</param>
+	/// <param name="data">Value of the word</param>
 	void SetWord(uint16_t index, uint8_t data);
+	/// <summary>
+	/// Gets the current value of the given word
+	/// </summary>
+	/// <param name="index">Index of the word</param>
+	/// <returns>Value of the word</returns>
 	uint8_t GetWord(uint16_t index) const;
+	/// <summary>
+	/// Creates a JSON represenation of the DTC_DataPacket
+	/// </summary>
+	/// <returns>JSON-formatted string representation of the DTC_DataPacket</returns>
 	std::string toJSON() const;
+	/// <summary>
+	/// Create a "packet format" representation of the DTC_DataPacket. See "DTC Hardware User's Guide" for "packet format" representation.
+	/// </summary>
+	/// <returns>"packet format" string representation of the DTC_DataPacket</returns>
 	std::string toPacketFormat() const;
+	/// <summary>
+	/// Resize a DTC_DataPacket in "owner" mode. New size must be larger than current.
+	/// </summary>
+	/// <param name="dmaSize">Size in bytes of the new packet</param>
+	/// <returns>If the resize operation was successful</returns>
 	bool Resize(const uint16_t dmaSize);
 
+	/// <summary>
+	/// Get the current size, in bytes, of the DTC_DataPacket (default: 16)
+	/// </summary>
+	/// <returns></returns>
 	uint16_t GetSize() const
 	{
 	  return dataSize_;
 	}
 
+	/// <summary>
+	/// Determine whether the DataPacket is in owner mode or overlay mode
+	/// </summary>
+	/// <returns>True if the DataPacket is in overlay mode</returns>
 	bool IsMemoryPacket() const
 	{
 	  return memPacket_;
 	}
 
-	void CramIn(DTC_DataPacket& other, int offset)
+	/// <summary>
+	/// Add a DTC_DataPacket's data to this DataPacket. DataPacket must be large enough to accomodate data and in "owner" mode.
+	/// </summary>
+	/// <param name="other">Packet to add</param>
+	/// <param name="offset">Where to copy packet in this DataPacket</param>
+	/// <returns>True if successful</returns>
+	bool CramIn(DTC_DataPacket& other, int offset)
 	{
-	  if (other.dataSize_ + offset <= dataSize_) memcpy(const_cast<uint8_t*>(dataPtr_) + offset, other.dataPtr_, other.dataSize_);
+		if (other.dataSize_ + offset <= dataSize_)
+		{
+			memcpy(const_cast<uint8_t*>(dataPtr_) + offset, other.dataPtr_, other.dataSize_);
+			return true;
+		}
+		return false;
 	}
 
+	/// <summary>
+	/// Gets the pointer to the data
+	/// </summary>
+	/// <returns>Pointer to DTC_DataPacket data. Use GetSize() to determine the valid range of this pointer</returns>
 	const uint8_t* GetData() const
 	{
 	  return dataPtr_;
 	}
 
+	/// <summary>
+	/// Comparison operator. Returns this.Equals(other)
+	/// </summary>
+	/// <param name="other">DataPacket to compare</param>
+	/// <returns>this.Equals(other)</returns>
 	bool operator==(const DTC_DataPacket& other) const
 	{
 	  return Equals(other);
 	}
 
+	/// <summary>
+	/// Comparison operator. Returns !this.Equals(other)
+	/// </summary>
+	/// <param name="other">DataPacket to compare</param>
+	/// <returns>!this.Equals(other)</returns>
 	bool operator!=(const DTC_DataPacket& other) const
 	{
 	  return !Equals(other);
 	}
 
+	/// <summary>
+	/// Compare the contents of two DataPackets. Ignores the first two bytes as they may differ (reserved words in most DMA packets).
+	/// </summary>
+	/// <param name="other">Data packet to compare</param>
+	/// <returns>Whether the two DataPackets contents are equal</returns>
 	bool Equals(const DTC_DataPacket& other) const;
 
+	/// <summary>
+	/// Serialize a DTC_DataPacket to the given ostream
+	/// </summary>
+	/// <param name="s">Stream to write to</param>
+	/// <param name="p">DataPacket to stream, in binary</param>
+	/// <returns>Stream reference for continued streaming</returns>
 	friend std::ostream& operator<<(std::ostream& s, DTC_DataPacket& p)
 	{
 	  return s.write(reinterpret_cast<const char*>(p.dataPtr_), p.dataSize_);
@@ -160,53 +270,126 @@ namespace DTCLib
 	std::vector<uint8_t> vals_;
   };
 
+  /// <summary>
+  /// Header information common to all DTC Packets (except Data Packets)
+  /// </summary>
   class DTC_DMAPacket
   {
   protected:
-	uint16_t byteCount_;
-	bool valid_;
-	DTC_Ring_ID ringID_;
-	DTC_PacketType packetType_;
-	DTC_ROC_ID rocID_;
+	uint16_t byteCount_; ///< Byte count of current block
+	bool valid_; ///< Whether the DTC believes the packet to be valid
+	DTC_Ring_ID ringID_; ///< Ring identifier of packet
+	DTC_PacketType packetType_; ///< Packet type
+	DTC_ROC_ID rocID_; ///< ROC identifier of the packet
 
   public:
+	  /// <summary>
+	  /// DTC_DMAPacket default constructor. Fills in header fields with default (invalid) values.
+	  /// </summary>
 	DTC_DMAPacket() : byteCount_(0), valid_(false), ringID_(DTC_Ring_Unused), packetType_(DTC_PacketType_Invalid), rocID_(DTC_ROC_Unused) { }
 
+	/// <summary>
+	/// Create a DTC_DMAPacket with the given parameters
+	/// </summary>
+	/// <param name="type">Packet Type</param>
+	/// <param name="ring">Ring ID</param>
+	/// <param name="roc">ROC ID</param>
+	/// <param name="byteCount">Block byte count. Default is the minimum value, 64 bytes</param>
+	/// <param name="valid">Valid flag for packet, default true</param>
 	DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t byteCount = 64, bool valid = true);
 
-
+	/// <summary>
+	/// Construct a DTC_DMAPacket using the data in the given DataPacket
+	/// </summary>
+	/// <param name="in">DTC_DataPacket to interpret</param>
 	explicit DTC_DMAPacket(const DTC_DataPacket in);
-	DTC_DMAPacket(const DTC_DMAPacket&) = default;
-	DTC_DMAPacket(DTC_DMAPacket&&) = default;
+	/// <summary>
+	/// Default Copy Constructor
+	/// </summary>
+	/// <param name="in">DTC_DMAPacket to copy</param>
+	DTC_DMAPacket(const DTC_DMAPacket& in) = default;
+	/// <summary>
+	/// Default move Constructor
+	/// </summary>
+	/// <param name="in">DTC_DMAPacket rvalue</param>
+	DTC_DMAPacket(DTC_DMAPacket&& in) = default;
 
 	virtual ~DTC_DMAPacket() = default;
 
-	DTC_DMAPacket& operator=(const DTC_DMAPacket&) = default;
-	DTC_DMAPacket& operator=(DTC_DMAPacket&&) = default;
+	/// <summary>
+	/// Default Copy Assignment Operator
+	/// </summary>
+	/// <param name="in">DTC_DMAPacket to copy</param>
+	/// <returns>DTC_DMAPacket reference</returns>
+	DTC_DMAPacket& operator=(const DTC_DMAPacket& in) = default;
+	/// <summary>
+	/// Default Move Assignment Operator
+	/// </summary>
+	/// <param name="in">DTC_DMAPacket rvalue</param>
+	/// <returns>DTC_DMAPacket reference</returns>
+	DTC_DMAPacket& operator=(DTC_DMAPacket&& in) = default;
 
+	/// <summary>
+	/// Convert a DTC_DMAPacket to DTC_DataPacket in "owner" mode
+	/// </summary>
+	/// <returns>DTC_DataPacket with DMA Header bytes set</returns>
 	virtual DTC_DataPacket ConvertToDataPacket() const;
 
+	/// <summary>
+	/// Packet Type accessor
+	/// </summary>
+	/// <returns>Packet Type of DMA Packet</returns>
 	DTC_PacketType GetPacketType() const
 	{
 	  return packetType_;
 	}
 
+	/// <summary>
+	/// Gets the DMA Header in JSON
+	/// </summary>
+	/// <returns>JSON-formatted string representation of DMA Header information</returns>
 	std::string headerJSON() const;
+	/// <summary>
+	/// Gets the DMA header in "packet format" (See DTC_DataPacket::toPacketFormat())
+	/// </summary>
+	/// <returns>"packet format" string representation of DMA header information</returns>
 	std::string headerPacketFormat() const;
 
+	/// <summary>
+	/// Gets the block byte count
+	/// </summary>
+	/// <returns>Block byte count of DMA Header</returns>
 	uint16_t GetByteCount() const
 	{
 	  return byteCount_;
 	}
 
+	/// <summary>
+	/// Gets the Ring ID of the packet
+	/// </summary>
+	/// <returns>The Ring ID of the packet</returns>
 	DTC_Ring_ID GetRingID() const
 	{
 	  return ringID_;
 	}
 
+	/// <summary>
+	/// Converts the DMA Packet to "packet format" representation (See DTC_DataPacket::toPacketFormat())
+	/// </summary>
+	/// <returns>"packet format" string representation of DMA packet</returns>
 	virtual std::string toPacketFormat();
+	/// <summary>
+	/// Convert the DMA Packet to JSON representation
+	/// </summary>
+	/// <returns>JSON-formatted string representation of DMA packet</returns>
 	virtual std::string toJSON();
 
+	/// <summary>
+	/// Stream the JSON representation of the DTC_DMAPacket to the given stream
+	/// </summary>
+	/// <param name="stream">Stream to write JSON data to</param>
+	/// <param name="packet">Packet to stream</param>
+	/// <returns>Stream reference for continued streaming</returns>
 	friend std::ostream& operator<<(std::ostream& stream, DTC_DMAPacket& packet)
 	{
 	  stream << packet.toJSON();
@@ -214,6 +397,9 @@ namespace DTCLib
 	}
   };
 
+  /// <summary>
+  /// Representation of a DCS Request Packet
+  /// </summary>
   class DTC_DCSRequestPacket : public DTC_DMAPacket
   {
   public:
@@ -268,6 +454,9 @@ namespace DTCLib
 	uint16_t data_;
   };
 
+  /// <summary>
+  /// The DTC Heartbeat Packet (sometimes referred to as a "Readout Request" packet)
+  /// </summary>
   class DTC_HeartbeatPacket : public DTC_DMAPacket
   {
   public:
@@ -297,6 +486,9 @@ namespace DTCLib
 	uint8_t eventMode_[6];
   };
 
+  /// <summary>
+  /// The DTC Data Request Packet
+  /// </summary>
   class DTC_DataRequestPacket : public DTC_DMAPacket
   {
   public:
@@ -338,6 +530,9 @@ namespace DTCLib
 	DTC_DebugType type_;
   };
 
+  /// <summary>
+  /// The DCS Reply Packet
+  /// </summary>
   class DTC_DCSReplyPacket : public DTC_DMAPacket
   {
   public:
@@ -403,6 +598,9 @@ namespace DTCLib
 	uint16_t data_;
   };
 
+  /// <summary>
+  /// The DTC Data Header Packet (A Data Header and its associated Data Packets forms a Data Block)
+  /// </summary>
   class DTC_DataHeaderPacket : public DTC_DMAPacket
   {
   public:

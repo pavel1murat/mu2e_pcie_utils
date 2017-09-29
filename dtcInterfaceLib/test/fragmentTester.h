@@ -3,6 +3,9 @@
 
 #define BLOCK_COUNT_MAX 10000
 
+/// <summary>
+/// A small pseudo-Fragment used for testing
+/// </summary>
 class fragmentTester
 {
 public:

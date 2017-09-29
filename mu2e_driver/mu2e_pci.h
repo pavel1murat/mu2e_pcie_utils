@@ -11,7 +11,9 @@
 #define XILINX_VENDOR_ID 0x10EE
 #define XILINX_DEVICE_ID 0x7042
 
-
+ /// <summary>
+ /// Information about the base memory address of the DTC register space
+ /// </summary>
 typedef struct
 {   unsigned long basePAddr;    /**< Base address of device memory */
     unsigned long baseLen;      /**< Length of device memory */

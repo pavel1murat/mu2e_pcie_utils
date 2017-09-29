@@ -10,7 +10,7 @@
 
 typedef uint16_t adc_t;
 
-// Struct to hold information from simulated CAL digis read in from external file
+/// Struct to hold information from simulated CAL digis read in from external file
 struct calhit {
 	int evt;
 	int crystalId;
@@ -25,7 +25,7 @@ struct calhit {
 
 };
 
-// Struct to hold information from simulated TRK digis read in from external file
+/// Struct to hold information from simulated TRK digis read in from external file
 struct trkhit {
 	int evt;
 	int strawIdx;

@@ -148,6 +148,11 @@ namespace DTCLib
 		DTC_Register_Invalid,
 	};
 
+	/// <summary>
+	/// The DTC_Registers class represents the DTC Register space, and all the methods necessary to read and write those registers.
+	/// Each register has, at the very least, a read method, a write method, and a DTC_RegisterFormatter method which
+	/// formats the register value in a human-readable way.
+	/// </summary>
 	class DTC_Registers
 	{
 	public:

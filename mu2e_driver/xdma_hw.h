@@ -45,7 +45,10 @@ extern "C" {
 #define DMA_SIZE                (MAX_DMA_ENGINES * DMA_ENGINE_PER_SIZE)
 
 
-
+#pragma pack(push, 1)
+	/// <summary>
+	/// Server to Card Buffer Descriptor
+	/// </summary>
 	typedef struct
 	{
 		u32    ByteCount : 20;
@@ -72,8 +75,11 @@ extern "C" {
 		u32    EndOfPkt : 1;
 		u64    SystemAddress;
 		u32    NextDescPtr;
-	} __attribute__((packed)) mu2e_buffdesc_S2C_t;
+	} mu2e_buffdesc_S2C_t;
 
+	/// <summary>
+	/// Card to Server Buffer descriptor
+	/// </summary>
 	typedef struct
 	{
 		u32    ByteCount : 20;
@@ -100,8 +106,8 @@ extern "C" {
 		u32    b31_ : 1;
 		u64    SystemAddress;
 		u32    NextDescPtr;
-	} __attribute__((packed)) mu2e_buffdesc_C2S_t;
-
+	} mu2e_buffdesc_C2S_t;
+#pragma pack(pop)
 
 
 #ifdef __KERNEL__

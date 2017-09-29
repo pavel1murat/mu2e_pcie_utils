@@ -40,6 +40,9 @@
 #define MU2E_DEV_FILE       "mu2e"
 #define MU2E_MAX_CHANNELS	2
 
+/// <summary>
+/// Data Header Packet definition, hardware view
+/// </summary>
 union DataHeaderPacket
 {
 	struct
@@ -72,6 +75,9 @@ union DataHeaderPacket
 		uint16_t data54;
 	} s;
 };
+/// <summary>
+/// Data Request Packet, hardware view
+/// </summary>
 union DataRequestPacket
 {
 	struct
@@ -104,6 +110,9 @@ union DataRequestPacket
 		uint16_t data54;
 	} s;
 };
+/// <summary>
+/// DataPacket definition, hardware view
+/// </summary>
 struct DataPacket
 {
 	uint16_t data10;
@@ -169,7 +178,9 @@ NOTE: for _IOR, _IOW: the size is only for the data at the address used in the
 #define M_IOC_DUMP           _IO  ( MU2E_IOC_MAGIC,14 )
 #define M_IOC_BUF_XMIT       _IO  ( MU2E_IOC_MAGIC,16 )
 
-
+/// <summary>
+/// Register Access information
+/// </summary>
 typedef struct
 {
 	int reg_offset;
@@ -206,6 +217,9 @@ typedef struct
 	int      InitFCPH;      /**< Initial FC Credits for Posted Data */
 } m_ioc_pcistate_t;
 
+/// <summary>
+/// Structure used in IOCTL to get DMA Engine state from driver
+/// </summary>
 typedef struct
 {
 	int      Engine;        /**< Engine Number */
@@ -219,6 +233,9 @@ typedef struct
 	unsigned TestMode;      /**< Current Test Mode */
 } m_ioc_engstate_t;
 
+/// <summary>
+/// Structure used in IOCTL to get DMA statistics from driver (single data point)
+/// </summary>
 typedef struct  /* MAYBE THIS SHOULD GO ELSEWHERE??? */
 {
 	int      Engine;        /**< Engine Number */
@@ -227,12 +244,18 @@ typedef struct  /* MAYBE THIS SHOULD GO ELSEWHERE??? */
 	unsigned LWT;           /**< Last Wait Time */
 } DMAStatistics;
 
+/// <summary>
+/// Structure used in IOCTL to get DMA statistics from driver
+/// </summary>
 typedef struct
 {
 	int            Count;   /**< Number of statistics captures */
 	DMAStatistics *engptr;  /**< Pointer to array to store statistics */
 } m_ioc_engstats_t;
 
+/// <summary>
+/// Structure used in IOCTL to get transmit and receive statistics from driver
+/// </summary>
 typedef struct
 {
 	unsigned int LTX;           /**< Last TX Byte Rate */
@@ -282,6 +305,9 @@ enum { MU2E_MAP_BUFF, MU2E_MAP_META };
 
 #define DTC_Register_Engine_Control( eng, dir ) (((eng*0x100)+(dir*0x2000))+0x4)
 
+/// <summary>
+/// Structure used in IOCTL to get information about DMA transfer buffer status
+/// </summary>
 typedef struct
 {
 	int chn;
