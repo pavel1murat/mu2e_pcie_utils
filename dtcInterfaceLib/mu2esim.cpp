@@ -50,10 +50,8 @@ mu2esim::mu2esim()
 	swIdx_[1] = 0;
 	for (unsigned ii = 0; ii < SIM_BUFFCOUNT; ++ii)
 	{
-		// ReSharper disable CppNonReclaimedResourceAcquisition
 		dmaData_[0][ii] = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
 		dmaData_[1][ii] = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
-		// ReSharper restore CppNonReclaimedResourceAcquisition
 	}
 	release_all(0);
 	release_all(1);
@@ -634,9 +632,7 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 		packet[10] = 2;
 		packet[11] = 2;
 		packet[12] = static_cast<uint8_t>(3 * simIndex_[ring][roc]);
-		// ReSharper disable CppRedundantParentheses
 		packet[13] = static_cast<uint8_t>((3 * simIndex_[ring][roc]) >> 8);
-		// ReSharper restore CppRedundantParentheses
 		packet[14] = 0;
 		packet[15] = 0;
 
@@ -647,9 +643,7 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 	case DTCLib::DTC_SimMode_Calorimeter:
 	{
 		packet[0] = static_cast<uint8_t>(simIndex_[ring][roc]);
-		// ReSharper disable CppRedundantParentheses
 		packet[1] = static_cast<uint8_t>((simIndex_[ring][roc] >> 8) & 0xF) + ((simIndex_[ring][roc] & 0xF) << 4);
-		// ReSharper restore CppRedundantParentheses
 		packet[2] = 0x0; // No TDC value!
 		packet[3] = 0x0;
 		packet[4] = static_cast<uint8_t>(nSamples);
@@ -661,9 +655,7 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 		packet[10] = 2;
 		packet[11] = 2;
 		packet[12] = static_cast<uint8_t>(3 * simIndex_[ring][roc]);
-		// ReSharper disable CppRedundantParentheses
 		packet[13] = static_cast<uint8_t>((3 * simIndex_[ring][roc]) >> 8);
-		// ReSharper restore CppRedundantParentheses
 		packet[14] = 4;
 		packet[15] = 4;
 
@@ -674,27 +666,19 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 		for (auto i = 1; i < nPackets; ++i)
 		{
 			packet[0] = static_cast<uint8_t>(samplesProcessed * simIndex_[ring][roc]);
-			// ReSharper disable CppRedundantParentheses
 			packet[1] = static_cast<uint8_t>((samplesProcessed * simIndex_[ring][roc]) >> 8);
-			// ReSharper restore CppRedundantParentheses
 			packet[2] = static_cast<uint8_t>(samplesProcessed + 1);
 			packet[3] = static_cast<uint8_t>(samplesProcessed + 1);
 			packet[4] = static_cast<uint8_t>((2 + samplesProcessed) * simIndex_[ring][roc]);
-			// ReSharper disable CppRedundantParentheses
 			packet[5] = static_cast<uint8_t>(((2 + samplesProcessed) * simIndex_[ring][roc]) >> 8);
-			// ReSharper restore CppRedundantParentheses
 			packet[6] = static_cast<uint8_t>(samplesProcessed + 3);
 			packet[7] = static_cast<uint8_t>(samplesProcessed + 3);
 			packet[8] = static_cast<uint8_t>((4 + samplesProcessed) * simIndex_[ring][roc]);
-			// ReSharper disable CppRedundantParentheses
 			packet[9] = static_cast<uint8_t>(((4 + samplesProcessed) * simIndex_[ring][roc]) >> 8);
-			// ReSharper restore CppRedundantParentheses
 			packet[10] = static_cast<uint8_t>(samplesProcessed + 5);
 			packet[11] = static_cast<uint8_t>(samplesProcessed + 5);
 			packet[12] = static_cast<uint8_t>((6 + samplesProcessed) * simIndex_[ring][roc]);
-			// ReSharper disable CppRedundantParentheses
 			packet[13] = static_cast<uint8_t>(((6 + samplesProcessed) * simIndex_[ring][roc]) >> 8);
-			// ReSharper restore CppRedundantParentheses
 			packet[14] = static_cast<uint8_t>(samplesProcessed + 7);
 			packet[15] = static_cast<uint8_t>(samplesProcessed + 7);
 

@@ -44,7 +44,6 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode)
 	if (simMode != DTCLib::DTC_SimMode_Disabled && simMode != DTCLib::DTC_SimMode_NoCFO
 		&& simMode != DTCLib::DTC_SimMode_ROCEmulator && simMode != DTCLib::DTC_SimMode_Loopback)
 	{
-		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		simulator_ = new mu2esim();
 		simulator_->init(simMode);
 	}

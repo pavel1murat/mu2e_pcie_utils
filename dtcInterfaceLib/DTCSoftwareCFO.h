@@ -19,6 +19,13 @@
 
 namespace DTCLib
 {
+	/// <summary>
+	/// DEPRECATED
+	/// The DTCSoftwareCFO class is responsible for sending ReadoutRequest and
+	/// DataRequest packets to the DTC in the absence of a functioning CFO.
+	/// Requests are sent asynchronously, and the overall behaviour is meant to
+	/// emulate a system with a CFO as closely as possible.
+	/// </summary>
 	class DTCSoftwareCFO
 	{
 	public:

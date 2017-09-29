@@ -1004,14 +1004,14 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESRXBufferStatus(
 		auto re = ReadSERDESRXBufferStatus(r);
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": " + DTC_RXBufferStatusConverter(re).toString());
 	}
-	{
-		auto ce = ReadSERDESRXBufferStatus(DTC_Ring_CFO);
-		form.vals.push_back(std::string("CFO:    ") + DTC_RXBufferStatusConverter(ce).toString());
-	}
-	{
-		auto ee = ReadSERDESRXBufferStatus(DTC_Ring_EVB);
-		form.vals.push_back(std::string("EVB:    ") + DTC_RXBufferStatusConverter(ee).toString());
-	}
+
+	auto ce = ReadSERDESRXBufferStatus(DTC_Ring_CFO);
+	form.vals.push_back(std::string("CFO:    ") + DTC_RXBufferStatusConverter(ce).toString());
+
+
+	auto ee = ReadSERDESRXBufferStatus(DTC_Ring_EVB);
+	form.vals.push_back(std::string("EVB:    ") + DTC_RXBufferStatusConverter(ee).toString());
+
 	return form;
 }
 
@@ -1740,10 +1740,8 @@ void DTCLib::DTC_Registers::SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_R
 	maxROCs_[ring] = lastRoc;
 	auto numRocs = lastRoc == DTC_ROC_Unused ? 0 : lastRoc + 1;
 	ringRocs[ring * 3] = numRocs & 1;
-	// ReSharper disable CppRedundantParentheses
 	ringRocs[ring * 3 + 1] = ((numRocs & 2) >> 1) & 1;
 	ringRocs[ring * 3 + 2] = ((numRocs & 4) >> 2) & 1;
-	// ReSharper restore CppRedundantParentheses
 	WriteRegister_(ringRocs.to_ulong(), DTC_Register_NUMROCs);
 }
 

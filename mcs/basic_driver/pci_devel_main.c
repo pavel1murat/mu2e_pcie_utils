@@ -39,6 +39,9 @@
 
 struct pci_dev *pci_dev_sp=0;
 
+/// <summary>
+/// Information about the base memory address of the DTC register space
+/// </summary>
 typedef struct
 {   unsigned long basePAddr;    /**< Base address of device memory */
     unsigned long baseLen;      /**< Length of device memory */

@@ -19,6 +19,9 @@ namespace DTCLib
 		DTC_Subsystem_Other = 3
 	};
 
+	/// <summary>
+	/// The DTC_ID field is used to uniquely identify each DTC. The ID consists of 2 bits of Subsystem ID and 6 bits of DTC ID.
+	/// </summary>
 	class DTC_ID {
 		uint8_t idData_;
 
@@ -58,6 +61,9 @@ namespace DTCLib
 
 	static const std::vector<DTC_ROC_ID> DTC_ROCS{ DTC_ROC_Unused, DTC_ROC_0, DTC_ROC_1, DTC_ROC_2, DTC_ROC_3, DTC_ROC_4, DTC_ROC_5 };
 
+	/// <summary>
+	/// The DTC_ROCIDConverter converts a DTC_ROC_ID enumeration value to string or JSON representation
+	/// </summary>
 	struct DTC_ROCIDConverter
 	{
 		DTC_ROC_ID roc_;
@@ -116,6 +122,9 @@ namespace DTCLib
 		DTC_DebugType_Invalid = 5,
 	};
 
+	/// <summary>
+	/// The DTC_DebugTypeConverter converts a DTC_DebugType enumeration value to string or JSON representation
+	/// </summary>
 	struct DTC_DebugTypeConverter
 	{
 		DTC_DebugType type_;
@@ -159,6 +168,9 @@ namespace DTCLib
 		DTC_RXBufferStatus_Unknown = 0x10,
 	};
 
+	/// <summary>
+	/// The DTC_RXBufferStatusConverter converts a DTC_RXBufferStatus enumeration value to string or JSON representation
+	/// </summary>
 	struct DTC_RXBufferStatusConverter
 	{
 		DTC_RXBufferStatus status_;
@@ -204,6 +216,9 @@ namespace DTCLib
 		DTC_RXStatus_RXDisparityError = 7,
 	};
 
+	/// <summary>
+	/// The DTC_RXStatusConverter converts a DTC_RXStatus enumeration value to string or JSON representation
+	/// </summary>
 	struct DTC_RXStatusConverter
 	{
 		DTC_RXStatus status_;
@@ -250,6 +265,9 @@ namespace DTCLib
 		DTC_SERDESLoopbackMode_FarPCS = 6,
 	};
 
+	/// <summary>
+	/// The DTC_SERDESLoopbackModeConverter converts a DTC_SERDESLoopbackMode enumeration value to string or JSON representation
+	/// </summary>
 	struct DTC_SERDESLoopbackModeConverter
 	{
 		DTC_SERDESLoopbackMode mode_;
@@ -295,6 +313,9 @@ namespace DTCLib
 		DTC_SimMode_Invalid,
 	};
 
+	/// <summary>
+	/// The DTC_SimModeConverter converts a DTC_SimMode enumeration value to string or JSON representation
+	/// </summary>
 	struct DTC_SimModeConverter
 	{
 		DTC_SimMode mode_;
@@ -336,6 +357,9 @@ namespace DTCLib
 		}
 	};
 
+	/// <summary>
+	/// A DTC_WrongPacketTypeException is thrown when an attempt to decode a DMA packet is made and the type in the DMA header is different than the type of the packet expected
+	/// </summary>
 	class DTC_WrongPacketTypeException : public std::exception
 	{
 	public:
@@ -348,6 +372,9 @@ namespace DTCLib
 		int encountered_;
 	};
 
+	/// <summary>
+	/// A DTC_IOErrorException is thrown when the DTC is not communicating when communication is expected
+	/// </summary>
 	class DTC_IOErrorException : public std::exception
 	{
 	public:
@@ -357,6 +384,9 @@ namespace DTCLib
 		}
 	};
 
+	/// <summary>
+	/// A DTC_DataCorruptionException is thrown when corrupt data is detected coming from the DTC
+	/// </summary>
 	class DTC_DataCorruptionException : public std::exception
 	{
 	public:
@@ -366,6 +396,9 @@ namespace DTCLib
 		}
 	};
 
+	/// <summary>
+	/// The mu2e Timestamp is a 48-bit quantity. This class manages all the different ways it could be accessed.
+	/// </summary>
 	class DTC_Timestamp
 	{
 		uint64_t timestamp_ : 48;
@@ -433,36 +466,89 @@ namespace DTCLib
 		std::string toPacketFormat() const;
 	};
 
+	/// <summary>
+	/// This class is used to decode the SERDES RX Disparity Error register
+	/// </summary>
 	class DTC_SERDESRXDisparityError
 	{
 		std::bitset<2> data_;
 
 	public:
+		/// <summary>
+		/// Default Constructor
+		/// </summary>
 		DTC_SERDESRXDisparityError();
+		/// <summary>
+		/// Construct a DTC_SERDESRXDisparityError using the given bitset
+		/// </summary>
+		/// <param name="data">Bits to use for initialization</param>
 		explicit DTC_SERDESRXDisparityError(std::bitset<2> data);
+		/// <summary>
+		/// Construct a DTC_SERDESRXDisparityError using the register value and a Ring ID
+		/// </summary>
+		/// <param name="data">Register value to read error bits from</param>
+		/// <param name="ring">Ring to read</param>
 		DTC_SERDESRXDisparityError(uint32_t data, DTC_Ring_ID ring);
-		DTC_SERDESRXDisparityError(const DTC_SERDESRXDisparityError&) = default;
-		DTC_SERDESRXDisparityError(DTC_SERDESRXDisparityError&&) = default;
+		/// <summary>
+		/// Default Copy Constructor
+		/// </summary>
+		/// <param name="in">DTC_SERDESRXDisparityError to copy</param>
+		DTC_SERDESRXDisparityError(const DTC_SERDESRXDisparityError& in) = default;
+		/// <summary>
+		/// Default Move Constructor
+		/// </summary>
+		/// <param name="in">DTC_SERDESRXDisparityError rvalue</param>
+		DTC_SERDESRXDisparityError(DTC_SERDESRXDisparityError&& in) = default;
 
-		DTC_SERDESRXDisparityError& operator=(const DTC_SERDESRXDisparityError&) = default;
-		DTC_SERDESRXDisparityError& operator=(DTC_SERDESRXDisparityError&&) = default;
+		/// <summary>
+		/// Default Copy Assignment Operator
+		/// </summary>
+		/// <param name="in">DTC_SERDESRXDisparityError to copy</param>
+		/// <returns>DTC_SERDESRXDisparityError Reference</returns>
+		DTC_SERDESRXDisparityError& operator=(const DTC_SERDESRXDisparityError& in) = default;
+		/// <summary>
+		/// Default Move Assignment Operator
+		/// </summary>
+		/// <param name="in">DTC_SERDESRXDisparityError rvalue</param>
+		/// <returns>DTC_SERDESRXDisparityError reference</returns>
+		DTC_SERDESRXDisparityError& operator=(DTC_SERDESRXDisparityError&& in) = default;
 
+		/// <summary>
+		/// Sets the data bits
+		/// </summary>
+		/// <param name="data">Data bits to set</param>
 		void SetData(std::bitset<2> data)
 		{
 			data_ = data;
 		}
 
+		/// <summary>
+		/// Gets the data bitset
+		/// </summary>
+		/// <returns>Data bits</returns>
 		std::bitset<2> GetData() const
 		{
 			return data_;
 		}
 
+		/// <summary>
+		/// Get the integer representation of the error flags
+		/// </summary>
+		/// <param name="output">Whether to output data (signature different than bitset version)</param>
+		/// <returns>Data as int</returns>
 		int GetData(bool output) const
 		{
 			if (output) return static_cast<int>(data_.to_ulong());
 			return 0;
 		}
 
+		/// <summary>
+		/// Write the DTC_SERDESRXDisparityError to stream in JSON format.
+		/// Note that the JSON represents an object, calling code should add a key if there's other objects to stream
+		/// </summary>
+		/// <param name="stream">Stream to write to</param>
+		/// <param name="error">DTC_SERDESRXDisparityError to parse</param>
+		/// <returns>Stream object for continued streaming</returns>
 		friend std::ostream& operator<<(std::ostream& stream, DTC_SERDESRXDisparityError error)
 		{
 			stream << "{\"low\":" << error.GetData()[0] << ",\"high\":" << error.GetData()[1] << "}";
@@ -470,36 +556,90 @@ namespace DTCLib
 		}
 	};
 
+	/// <summary>
+	/// This structure is used to decode the SERDES Character Not In Table Error register
+	/// </summary>
 	class DTC_CharacterNotInTableError
 	{
 		std::bitset<2> data_;
 
 	public:
+		/// <summary>
+		/// Default Constructor
+		/// Initializes data bits to 0,0
+		/// </summary>
 		DTC_CharacterNotInTableError();
+		/// <summary>
+		/// Constructor using data bits
+		/// </summary>
+		/// <param name="data">data bits for this instance</param>
 		explicit DTC_CharacterNotInTableError(std::bitset<2> data);
+		/// <summary>
+		/// DTC_CharacterNotInTableError Constructor
+		/// </summary>
+		/// <param name="data">Register value</param>
+		/// <param name="ring">Specific ring to read</param>
 		DTC_CharacterNotInTableError(uint32_t data, DTC_Ring_ID ring);
-		DTC_CharacterNotInTableError(const DTC_CharacterNotInTableError&) = default;
-		DTC_CharacterNotInTableError(DTC_CharacterNotInTableError&&) = default;
+		/// <summary>
+		/// Default Copy Constructor
+		/// </summary>
+		/// <param name="in">DTC_CharacterNotInTableError to copy</param>
+		DTC_CharacterNotInTableError(const DTC_CharacterNotInTableError& in) = default;
+		/// <summary>
+		/// Default Move Constructor
+		/// </summary>
+		/// <param name="in">DTC_CharacterNotInTableError rvalue</param>
+		DTC_CharacterNotInTableError(DTC_CharacterNotInTableError&& in) = default;
 
-		DTC_CharacterNotInTableError& operator=(const DTC_CharacterNotInTableError&) = default;
-		DTC_CharacterNotInTableError& operator=(DTC_CharacterNotInTableError&&) = default;
+		/// <summary>
+		/// Default Copy Assignment Operator
+		/// </summary>
+		/// <param name="in">DTC_CharacterNotInTableError to copy</param>
+		/// <returns>DTC_CharacterNotInTableError reference</returns>
+		DTC_CharacterNotInTableError& operator=(const DTC_CharacterNotInTableError& in) = default;
+		/// <summary>
+		/// Default Move Assignment Operator
+		/// </summary>
+		/// <param name="in">DTC_CharacterNotInTableError rvalue</param>
+		/// <returns>DTC_CharacterNotInTableError reference</returns>
+		DTC_CharacterNotInTableError& operator=(DTC_CharacterNotInTableError&& in) = default;
 
+		/// <summary>
+		/// Sets the data bits
+		/// </summary>
+		/// <param name="data">Data bits to set</param>
 		void SetData(std::bitset<2> data)
 		{
 			data_ = data;
 		}
 
+		/// <summary>
+		/// Gets the data bitset
+		/// </summary>
+		/// <returns>Data bits</returns>
 		std::bitset<2> GetData() const
 		{
 			return data_;
 		}
 
+		/// <summary>
+		/// Get the integer representation of the error flags
+		/// </summary>
+		/// <param name="output">Whether to output data (signature different than bitset version)</param>
+		/// <returns>Data as int</returns>
 		int GetData(bool output) const
 		{
 			if (output) return static_cast<int>(data_.to_ulong());
 			return 0;
 		}
 
+		/// <summary>
+		/// Write the DTC_CharacterNotInTableError to stream in JSON format.
+		/// Note that the JSON represents an object, calling code should add a key if there's other objects to stream
+		/// </summary>
+		/// <param name="stream">Stream to write to</param>
+		/// <param name="error">DTC_CharacterNotInTableError to parse</param>
+		/// <returns>Stream object for continued streaming</returns>
 		friend std::ostream& operator<<(std::ostream& stream, DTC_CharacterNotInTableError error)
 		{
 			stream << "{\"low\":" << error.GetData()[0] << ",\"high\":" << error.GetData()[1] << "}";
@@ -507,16 +647,35 @@ namespace DTCLib
 		}
 	};
 
+	/// <summary>
+	/// This structure is used to decode the RingEnable register value
+	/// </summary>
 	struct DTC_RingEnableMode
 	{
-		bool TransmitEnable;
-		bool ReceiveEnable;
-		bool TimingEnable;
+		bool TransmitEnable; ///< Whether transmit is enabled on this link
+		bool ReceiveEnable; ///< Whether receive is enabled on this link
+		bool TimingEnable; ///< Whether timing is enabled on this link
 
+		/// <summary>
+		/// Default constructor. Sets all enable bits to true.
+		/// </summary>
 		DTC_RingEnableMode() : TransmitEnable(true), ReceiveEnable(true), TimingEnable(true) { }
 
+		/// <summary>
+		/// Construct a DTC_RingEnableMode instance with the given flags
+		/// </summary>
+		/// <param name="transmit">Enable TX</param>
+		/// <param name="receive">Enable RX</param>
+		/// <param name="timing">Enable CFO</param>
 		DTC_RingEnableMode(bool transmit, bool receive, bool timing) : TransmitEnable(transmit), ReceiveEnable(receive), TimingEnable(timing) { }
 
+		/// <summary>
+		/// Write the DTC_RingEnableMode to stream in JSON format.
+		/// Note that the JSON represents an object, calling code should add a key if there's other objects to stream
+		/// </summary>
+		/// <param name="stream">Stream to write to</param>
+		/// <param name="mode">DTC_RingEnableMode to parse</param>
+		/// <returns>Stream object for continued streaming</returns>
 		friend std::ostream& operator<<(std::ostream& stream, const DTC_RingEnableMode& mode)
 		{
 			auto formatSet = (stream.flags() & std::ios_base::boolalpha) != 0;
@@ -526,29 +685,48 @@ namespace DTCLib
 			return stream;
 		}
 
+		/// <summary>
+		/// Determine if two DTC_RingEnableMode objects are equal
+		/// They are equal if TX, RX and Timing bits are all equal
+		/// </summary>
+		/// <param name="left">LHS of compare</param>
+		/// <param name="right">RHS of compare</param>
+		/// <returns>Whether all three bits of both sides are equal</returns>
 		friend bool operator==(const DTC_RingEnableMode& left, const DTC_RingEnableMode& right)
 		{
 			return left.TransmitEnable == right.TransmitEnable && left.ReceiveEnable == right.ReceiveEnable && left.TimingEnable == right.TimingEnable;
 		}
 
+		/// <summary>
+		/// Determine if two DTC_RingEnableMode objects are not equal
+		/// </summary>
+		/// <param name="left">LHS of compare</param>
+		/// <param name="right">RHS of compare</param>
+		/// <returns>!(left == right)</returns>
 		friend bool operator!=(const DTC_RingEnableMode& left, const DTC_RingEnableMode& right)
 		{
 			return !(left == right);
 		}
 	};
 
+	/// <summary>
+	/// This structure is used to decode the FIFOFullErrorFlags register values
+	/// </summary>
 	struct DTC_FIFOFullErrorFlags
 	{
-		bool OutputData;
-		bool CFOLinkInput;
-		bool ReadoutRequestOutput;
-		bool DataRequestOutput;
-		bool OtherOutput;
-		bool OutputDCS;
-		bool OutputDCSStage2;
-		bool DataInput;
-		bool DCSStatusInput;
+		bool OutputData; ///< Output Data FIFO Full
+		bool CFOLinkInput; ///< CFO Link Input FIFO Full
+		bool ReadoutRequestOutput; ///< Readout Request Output FIFO Full
+		bool DataRequestOutput; ///< Data Request Output FIFO Full
+		bool OtherOutput; ///< Other Output FIFO Full
+		bool OutputDCS; ///< Output DCS FIFO Full
+		bool OutputDCSStage2; ///< Output DCS Stage 2 FIFO Full
+		bool DataInput; ///< Data Input FIFO Full
+		bool DCSStatusInput; ///< DCS Status Input FIFO Full
 
+		/// <summary>
+		/// Default Constructor, sets all flags to false
+		/// </summary>
 		DTC_FIFOFullErrorFlags()
 			: OutputData(false)
 			, CFOLinkInput(false)
@@ -560,6 +738,18 @@ namespace DTCLib
 			, DataInput(false)
 			, DCSStatusInput(false) { }
 
+		/// <summary>
+		/// Construct a DTC_FIFOFUllErrorFlags instance with the given values
+		/// </summary>
+		/// <param name="outputData">Output Data FIFO Full</param>
+		/// <param name="cfoLinkInput">CFO Link Input FIFO Full</param>
+		/// <param name="readoutRequest">Readout Request FIFO Full</param>
+		/// <param name="dataRequest">Data Request FIFO Full</param>
+		/// <param name="otherOutput"> Other Output FIFO Full</param>
+		/// <param name="outputDCS">Output DCS FIFO Full</param>
+		/// <param name="outputDCS2">Output DCS Stage 2 FIFO Full</param>
+		/// <param name="dataInput">Data Input FIFO Full</param>
+		/// <param name="dcsInput">DCS Status Input FIFO Full</param>
 		DTC_FIFOFullErrorFlags(bool outputData, bool cfoLinkInput, bool readoutRequest, bool dataRequest,
 							   bool otherOutput, bool outputDCS, bool outputDCS2, bool dataInput, bool dcsInput)
 			: OutputData(outputData)
@@ -572,6 +762,13 @@ namespace DTCLib
 			, DataInput(dataInput)
 			, DCSStatusInput(dcsInput) { }
 
+		/// <summary>
+		/// Write the DTC_FIFOFullErrorFlags to stream in JSON format.
+		/// Note that the JSON represents an object, calling code should add a key if there's other objects to stream
+		/// </summary>
+		/// <param name="stream">Stream to write to</param>
+		/// <param name="flags">Flags to parse</param>
+		/// <returns>Stream object for continued streaming</returns>
 		friend std::ostream& operator<<(std::ostream& stream, const DTC_FIFOFullErrorFlags& flags)
 		{
 			auto formatSet = (stream.flags() & std::ios_base::boolalpha) != 0;
@@ -590,20 +787,48 @@ namespace DTCLib
 		}
 	};
 
+	/// <summary>
+	/// The DTC_RegisterFormatter class is used to print a DTC register in a human-readable format
+	/// </summary>
 	struct DTC_RegisterFormatter
 	{
+		/// <summary>
+		/// Default Constructor with zero values
+		/// </summary>
 		DTC_RegisterFormatter() : address(0), value(0), descWidth(28), description(""), vals() {}
 
+		/// <summary>
+		/// Default Copy Consturctor
+		/// </summary>
+		/// <param name="r">DTC_RegisterFormatter to copy</param>
 		DTC_RegisterFormatter(const DTC_RegisterFormatter& r) = default;
+		/// <summary>
+		/// Default Move Constructor
+		/// </summary>
+		/// <param name="r">DTC_RegisterFormatter rvalue</param>
 		DTC_RegisterFormatter(DTC_RegisterFormatter&& r) = default;
-		uint16_t address;
-		uint32_t value;
-		int descWidth;
-		std::string description;
-		std::vector<std::string> vals;
+		uint16_t address; ///< Address of the register
+		uint32_t value; ///< Value of the register
+		int descWidth; ///< Display width of description field
+		std::string description; ///< Description of the register (name)
+		std::vector<std::string> vals; ///< Human-readable descriptions of register values (bits, etc)
 
+		/// <summary>
+		/// Default Copy Assignment Operator
+		/// </summary>
+		/// <param name="r">RHS</param>
+		/// <returns>DTC_RegisterFormatter regerence</returns>
 		DTC_RegisterFormatter& operator=(const DTC_RegisterFormatter& r) = default;
 
+		/// <summary>
+		/// Write out the DTC_RegisterFormatter to the given stream. This function uses setw to make sure that fields for
+		/// different registers still line up.
+		/// Format is: "    0xADDR  | 0xVALUEXXX | DESCRIPTION: Variable size, minimum of 28 chars | Value 1
+		///                                                                                        | Value 2 ..."
+		/// </summary>
+		/// <param name="stream">Stream to write register data to</param>
+		/// <param name="reg">RegisterFormatter to write</param>
+		/// <returns>Stream reference for continued streaming</returns>
 		friend std::ostream& operator<<(std::ostream& stream, const DTC_RegisterFormatter& reg)
 		{
 			stream << std::hex << std::setfill('0');
@@ -629,20 +854,55 @@ namespace DTCLib
 		}
 	};
 
+	/// <summary>
+	/// A Data Block object (DataHeader packet plus associated Data Packets)
+	/// Constructed as a pointer to a region of memory
+	/// </summary>
 	struct DTC_DataBlock
 	{
-		typedef uint64_t pointer_t;
-		pointer_t* blockPointer;
-		size_t byteSize;
+		typedef uint64_t pointer_t; ///< DataBlock pointers should be 64-bit aligned
+		pointer_t* blockPointer; ///< Pointer to DataBlock in Memeory
+		size_t byteSize; ///< Size of DataBlock
 
+		/// <summary>
+		/// Create a DTC_DataBlock pointing to the given location in memory with the given size
+		/// </summary>
+		/// <param name="ptr">Pointer to DataBlock in memory</param>
+		/// <param name="sz">Size of DataBlock</param>
 		DTC_DataBlock(pointer_t* ptr, size_t sz) : blockPointer(ptr), byteSize(sz) {}
 	};
 
+	/// <summary>
+	/// Several useful data manipulation utilities
+	/// </summary>
 	struct Utilities
 	{
+		/// <summary>
+		/// Create a string with "[value] [unit]" for a given number of bytes, using FormatBytes(bytes)
+		/// </summary>
+		/// <param name="bytes">Number of bytes to convert to string</param>
+		/// <returns>String with converted value</returns>
 		static std::string FormatByteString(double bytes);
+		/// <summary>
+		/// Determine the best units for describing a given number of bytes.
+		/// Algorithm will divide by 1024, and if the result is greater than 1 and less than 1024, use that unit.
+		/// Maximum unit is TB.
+		/// </summary>
+		/// <param name="bytes">Number of bytes to format</param>
+		/// <returns>Pair of Value in "best unit" and string representation of unit (i.e. "KB", "MB", etc)</returns>
 		static std::pair<double, std::string> FormatBytes(double bytes);
+		/// <summary>
+		/// Create a string with "[value] [unit]" for a given number of seconds, using FormatTime(seconds)
+		/// </summary>
+		/// <param name="seconds">Number of seconds to convert to string</param>
+		/// <returns>String with converted value</returns>
 		static std::string FormatTimeString(double seconds);
+		/// <summary>
+		/// Determine the best units for describing a given number of seconds.
+		/// Will find largest time span which has unit greater than 1, up to days, down to ns.
+		/// </summary>
+		/// <param name="seconds">Number of seconds to convert</param>
+		/// <returns>Pair of Value in "best unit" and string representation of unit (i.e. "ns", "us", "hours", etc)</returns>
 		static std::pair<double, std::string> FormatTime(double seconds);
 	};
 }

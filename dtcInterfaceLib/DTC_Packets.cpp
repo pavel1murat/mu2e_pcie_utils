@@ -38,7 +38,6 @@ DTCLib::DTC_DataPacket::~DTC_DataPacket()
 	}
 }
 
-// ReSharper disable once CppMemberFunctionMayBeConst
 void DTCLib::DTC_DataPacket::SetWord(uint16_t index, uint8_t data)
 {
 	if (!memPacket_ && index < dataSize_)
@@ -364,11 +363,9 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DataRequestPacket::ConvertToDataPacket() cons
 {
 	auto output = DTC_DMAPacket::ConvertToDataPacket();
 	timestamp_.GetTimestamp(output.GetData(), 4);
-	// ReSharper disable CppRedundantParentheses
 	output.SetWord(12, (static_cast<uint8_t>(type_) << 4) + (debug_ ? 1 : 0));
 	output.SetWord(14, debugPacketCount_ & 0xFF);
 	output.SetWord(15, (debugPacketCount_ >> 8) & 0xFF);
-	// ReSharper restore CppRedundantParentheses
 	return output;
 }
 

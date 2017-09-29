@@ -10,32 +10,32 @@
 
 typedef uint16_t adc_t;
 
-// Struct to hold information from simulated CAL digis read in from external file
+/// Struct to hold information from simulated CAL digis read in from external file
 struct calhit {
-	int evt;
-	int crystalId;
-	int recoDigiId;
-	int recoDigiT0;
-	int recoDigiSamples;
-	std::vector<double> waveform;
+	int evt; ///< Event Number
+	int crystalId; ///< Crystal ID
+	int recoDigiId; ///< Digit ID
+	int recoDigiT0; ///< TDC Value
+	int recoDigiSamples; ///< Sample count
+	std::vector<double> waveform; ///< Reconstructed waveform
 
-	int rocID;
-	int ringID;
-	int apdID;
+	int rocID; ///< ROC ID of CAL digit
+	int ringID; ///< Ring ID of CAL digit
+	int apdID; ///< APD ID of CAL digit
 
 };
 
-// Struct to hold information from simulated TRK digis read in from external file
+/// Struct to hold information from simulated TRK digis read in from external file
 struct trkhit {
-	int evt;
-	int strawIdx;
-	int recoDigiT0;
-	int recoDigiT1;
-	int recoDigiSamples;
-	std::vector<double> waveform;
+	int evt; ///< Event Number
+	int strawIdx; ///< Straw Index
+	int recoDigiT0; ///< TDC Value 0
+	int recoDigiT1; ///< TDC Value 1
+	int recoDigiSamples; ///< Sample count
+	std::vector<double> waveform; ///< Reconstructed waveform
 
-	int rocID;
-	int ringID;
+	int rocID; ///< ROC ID of TRK digit
+	int ringID; ///< Ring ID of TRK digit
 };
 
 
