@@ -189,7 +189,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 	m_ioc_reg_access_t	reg_access;
 	m_ioc_get_info_t	get_info;
 	int			chn, dir, num;
-	unsigned		myIdx, nxtIdx;
+	unsigned		myIdx, nxtIdx, hwIdx;
 	volatile mu2e_buffdesc_S2C_t   *desc_S2C_p;
 	u32                 	descDmaAdr;
 	m_ioc_pcistate_t	pcistate;
@@ -517,20 +517,20 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		for (jj = 0; jj < MU2E_NUM_SEND_BUFFS; ++jj)
 		{
 			TRACE(10, "%3u %2x 0x%08x", jj, 0
-				, ((u32*)&(mu2e_pci_sender[0].buffdesc_ring[jj]))[0]);
+				, ((u32*)&(mu2e_pci_sender[0].buffdesc_ring[jj]))[0] );
 			TRACE(10, "%3u %2x 0x%016llx", jj, 4
-				, mu2e_pci_sender[0].buffdesc_ring[jj].UserControl);
+				, mu2e_pci_sender[0].buffdesc_ring[jj].UserControl );
 			TRACE(10, "%3u %2x 0x%08x", jj, 12
-				, ((u32*)&(mu2e_pci_sender[0].buffdesc_ring[jj]))[3]);
+				, ((u32*)&(mu2e_pci_sender[0].buffdesc_ring[jj]))[3] );
 			TRACE(10, "%3u %2x 0x%08x", jj, 16
-				, ((u32*)&(mu2e_pci_sender[0].buffdesc_ring[jj]))[4]);
+				, ((u32*)&(mu2e_pci_sender[0].buffdesc_ring[jj]))[4] );
 			TRACE(10, "%3u %2x 0x%016llx", jj, 20
-				, mu2e_pci_sender[0].buffdesc_ring[jj].SystemAddress);
+				, mu2e_pci_sender[0].buffdesc_ring[jj].SystemAddress );
 			TRACE(10, "%3u %2x 0x%08x", jj, 28
-				, mu2e_pci_sender[0].buffdesc_ring[jj].NextDescPtr);
+				, mu2e_pci_sender[0].buffdesc_ring[jj].NextDescPtr );
 			TRACE(10, "%3u meta@%p[%d]=%u", jj
-				, mu2e_mmap_ptrs[0][C2S][MU2E_MAP_META], jj
-				, ((u32*)(mu2e_mmap_ptrs[0][C2S][MU2E_MAP_META]))[jj]);
+				, mu2e_mmap_ptrs[0][S2C][MU2E_MAP_META], jj
+				, ((u32*)(mu2e_mmap_ptrs[0][S2C][MU2E_MAP_META]))[jj] );
 			TRACE(10, "%3u 0x%08x 0x%08x 0x%08x 0x%08x", jj
 				, ((u32*)&(mu2e_pci_sender[0].databuffs[jj]))[0]
 				, ((u32*)&(mu2e_pci_sender[0].databuffs[jj]))[1]
@@ -550,7 +550,8 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		desc_S2C_p = idx2descVirtAdr(myIdx, chn, dir);
 		if (desc_S2C_p->Complete != 1)
 		{
-			TRACE(11, "ioctl BUF_XMIT -EAGAIN");
+		  TRACE(11, "ioctl BUF_XMIT -EAGAIN myIdx=%u err=%d desc_S2C_p=%p 0x%016llx"
+			, myIdx, desc_S2C_p->Error, desc_S2C_p, *(u64*)desc_S2C_p );
 			return -EAGAIN;
 		}
 
@@ -563,19 +564,23 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		desc_S2C_p->EndOfPkt = 1;
 
 		{void * data = ((mu2e_databuff_t*)(mu2e_mmap_ptrs[chn][dir][MU2E_MAP_BUFF]))[myIdx];
-		TRACE(11, "ioctl BUF_XMIT byte cnt=%d data=0x%08x", desc_S2C_p->ByteCnt, *(u32*)data);
+		TRACE(11, "ioctl BUF_XMIT myIdx=%u desc_S2C_p=%p ByteCnt=%d data=0x%08x"
+		      , myIdx, desc_S2C_p, desc_S2C_p->ByteCnt, *(u32*)data);
 		}
 
+		/* See Transmit (S2C) Descriptor Management
+		   on page 56 of kc705_TRD_k7_pcie_dma_ddr3_base_Doc_13.4.pdf */
 		nxtIdx = idx_add(myIdx, 1, chn, dir);
 		descDmaAdr = idx2descDmaAdr(nxtIdx, chn, dir);
 		// Dma_mReadReg(mu2e_pcie_bar_info.baseVAddr, 0x9108); // DEBUG read "user" reg.
-		TRACE(11, "mu2e_ioctl BUF_XMIT before WriteChnReg");
+		TRACE(11, "mu2e_ioctl BUF_XMIT before WriteChnReg REG_SW_NEXT_BD");
 		Dma_mWriteChnReg(chn, dir, REG_SW_NEXT_BD, descDmaAdr);
-		TRACE(11, "mu2e_ioctl BUF_XMIT after WriteChnReg");
 		mu2e_channel_info_[chn][dir].swIdx = nxtIdx;
 		// just update hwIdx here
-		mu2e_channel_info_[chn][dir].hwIdx = descDmaAdr2idx(Dma_mReadChnReg(chn, dir, REG_HW_NEXT_BD)
-								    , chn, dir,mu2e_channel_info_[chn][dir].hwIdx);
+		mu2e_channel_info_[chn][dir].hwIdx = hwIdx = descDmaAdr2idx( Dma_mReadChnReg(chn,dir,REG_HW_NEXT_BD)
+									    , chn, dir,mu2e_channel_info_[chn][dir].hwIdx );
+		TRACE(11, "mu2e_ioctl BUF_XMIT after WriteChnReg REG_SW_NEXT_BD swIdx=%u hwIdx=%u hw->Complete=%d"
+		      , nxtIdx, hwIdx, ((mu2e_buffdesc_S2C_t*)idx2descVirtAdr(hwIdx,chn,dir))->Complete );
 		break;
 	default:
 		TRACE(10, "mu2e_ioctl: unknown cmd");
@@ -774,7 +779,9 @@ static int __init init_mu2e(void)
   //Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
   //	              , 0x9114, 0x00003f3f ); // make sure all links are enabled
 
-	TRACE(1, "init_mu2e reset done bits: 0x%08x", Dma_mReadReg((unsigned long)mu2e_pcie_bar_info.baseVAddr, 0x9138));
+	TRACE(1, "init_mu2e reset done bits: 0x%08x MU2E_NUM_RECV_CHANNELS=%d MU2E_NUM_RECV_BUFFS=%d MU2E_NUM_SEND_BUFFS=%d"
+	      , Dma_mReadReg((unsigned long)mu2e_pcie_bar_info.baseVAddr,0x9138)
+	      , MU2E_NUM_RECV_CHANNELS, MU2E_NUM_RECV_BUFFS, MU2E_NUM_SEND_BUFFS );
 
 
 	/* DMA Engine (channels) setup... (buffers and descriptors (and metadata)) */
