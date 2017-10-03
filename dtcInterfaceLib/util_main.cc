@@ -91,13 +91,13 @@ unsigned getOptionValue(int* index, char** argv[])
 
 	return strtoul(&arg[offset], nullptr, 0);
 }
-unsigned long getOptionValueLong(int* index, char** argv[])
+unsigned long long getOptionValueLong(int* index, char** argv[])
 {
 	auto arg = (*argv)[*index];
 	if (arg[2] == '\0')
 	{
 		(*index)++;
-		unsigned long ret = strtoul((*argv)[*index], nullptr, 0);
+		unsigned long long ret = strtoull((*argv)[*index], nullptr, 0);
 		if (ret == 0 && (*argv)[*index][0] != '0') // No option given 
 		{
 			(*index)--;
@@ -594,21 +594,17 @@ main(int argc
 					for (unsigned line = 0; line < maxLine; ++line)
 					{
 						std::cout << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
-						//for (unsigned byte = 0; byte < 16; ++byte)
 						for (unsigned byte = 0; byte < 8; ++byte)
 						{
 							if (line * 16 + 2 * byte < sts - 8u)
 							{
 								auto thisWord = reinterpret_cast<uint16_t*>(buffer)[4 + line * 8 + byte];
-								//uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
 								std::cout << std::setw(4) << static_cast<int>(thisWord) << " ";
 							}
 						}
 						std::cout << std::endl;
-						if (maxLine > quietCount * 2) {
-							if (quiet && line == (quietCount - 1)) {
+						if (maxLine > quietCount * 2 &&quiet && line == (quietCount - 1)) {
 								line = static_cast<unsigned>(ceil((sts - 8) / 16.0)) - (1 + quietCount);
-							}
 						}
 					}
 				}
@@ -637,8 +633,8 @@ main(int argc
 			<< "Device Init Time: " << Utilities::FormatTimeString(initTime) << "." << std::endl
 			<< "Device Request Time: " << Utilities::FormatTimeString(readoutRequestTime) << "." << std::endl
 			<< "Device Read Time: " << Utilities::FormatTimeString(readDevTime) << "." << std::endl
-			<< "Total Bytes Written: " << Utilities::FormatByteString(totalBytesWritten) << "." << std::endl
-			<< "Total Bytes Read: " << Utilities::FormatByteString(totalBytesRead) << "." << std::endl
+			<< "Total Bytes Written: " << Utilities::FormatByteString(static_cast<double>(totalBytesWritten)) << "." << std::endl
+			<< "Total Bytes Read: " << Utilities::FormatByteString(static_cast<double>(totalBytesRead)) << "." << std::endl
 			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
 			<< "Read Rate: " << Utilities::FormatByteString(totalBytesRead / totalReadTime) << "/s." << std::endl
 			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime) << "/s." << std::endl;
@@ -848,8 +844,8 @@ main(int argc
 			<< "Device Init Time: " << initTime << " s." << std::endl
 			<< "Device Request Time: " << readoutRequestTime << " s." << std::endl
 			<< "Device Read Time: " << readDevTime << " s." << std::endl
-			<< "Total Bytes Written: " << Utilities::FormatByteString(totalBytesWritten) << "." << std::endl
-			<< "Total Bytes Read: " << Utilities::FormatByteString(totalBytesRead) << "." << std::endl
+			<< "Total Bytes Written: " << Utilities::FormatByteString(static_cast<double>(totalBytesWritten)) << "." << std::endl
+			<< "Total Bytes Read: " << Utilities::FormatByteString(static_cast<double>(totalBytesRead)) << "." << std::endl
 			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
 			<< "Read Rate: " << Utilities::FormatByteString(totalBytesRead / totalReadTime) << "/s." << std::endl
 			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime) << "/s." << std::endl;

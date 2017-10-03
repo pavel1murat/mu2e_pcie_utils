@@ -270,7 +270,7 @@ int mu2esim::write_data(int chn, void* buffer, size_t bytes)
 			auto writeBytes = *reinterpret_cast<uint64_t*>(buffer) - sizeof(uint64_t);
 			auto ptr = reinterpret_cast<char*>(buffer) + (sizeof(uint64_t) / sizeof(char));
 			ddrFile_.write(ptr, writeBytes);
-			registers_[DTCLib::DTC_Register_DetEmulationDataEndAddress] += writeBytes;
+			registers_[DTCLib::DTC_Register_DetEmulationDataEndAddress] += static_cast<uint32_t>(writeBytes);
 			ddrFile_.flush();
 			return 0;
 		}
@@ -510,19 +510,18 @@ unsigned mu2esim::delta_(int chn, int dir)
 		return ((sw >= hw)
 				? SIM_BUFFCOUNT - (sw - hw)
 				: hw - sw);
-	return 0;
 }
 
 void mu2esim::clearBuffer_(int chn, bool increment)
 {
-	/*
 	// Clear the buffer:
+	/*
 	TRACE(17, "mu2esim::clearBuffer_: Clearing output buffer");
 	if (increment)
 	{
 		hwIdx_[chn] = (hwIdx_[chn] + 1) % SIM_BUFFCOUNT;
 	}
-	//memset(dmaData_[chn][hwIdx_[chn]], 0, sizeof(mu2e_databuff_t));
+	memset(dmaData_[chn][hwIdx_[chn]], 0, sizeof(mu2e_databuff_t));
 	*/
 	TRACE(17, "mu2esim::clearBuffer_(%i, %u): NOP", chn, increment);
 }

@@ -9,7 +9,7 @@ command=$1;shift
 source /home/eflumerf/products/setups
 source /home/eflumerf/Desktop/mu2e-mrb-base/products/setups
 setup mrb
-source /home/eflumerf/Desktop/mu2e-mrb-base/localProducts_mu2e__e10_s41_prof/setup
+source /home/eflumerf/Desktop/mu2e-mrb-base/localProducts_mu2e_*/setup
 source mrbSetEnv
 
 cd $MRB_BUILDDIR/pcie_linux_kernel_module/mu2e_driver
