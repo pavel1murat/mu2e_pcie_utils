@@ -159,9 +159,10 @@ namespace DTCLib
 		explicit DTC_Registers(DTC_SimMode mode = DTC_SimMode_Disabled, unsigned rocMask = 0x1, bool skipInit = false);
 		virtual ~DTC_Registers();
 
-		//
-		// Device Access
-		//
+		/// <summary>
+		/// Get a pointer to the device handle
+		/// </summary>
+		/// <returns>mu2edev* pointer</returns>
 		mu2edev* GetDevice()
 		{
 			return &device_;
@@ -179,7 +180,7 @@ namespace DTCLib
 
 		//
 		// DTC Register Dumps
-
+		//
 		std::string FormattedRegDump(int width);
 		std::string PerformanceMonitorRegDump(int width);
 		std::string RingCountersRegDump(int width);
@@ -690,14 +691,18 @@ namespace DTCLib
 
 
 	protected:
-		mu2edev device_;
-		DTC_SimMode simMode_;
-		DTC_ROC_ID maxROCs_[6];
-		bool usingDetectorEmulator_;
-		uint16_t dmaSize_;
-		int formatterWidth_;
+		mu2edev device_; ///< Device handle
+		DTC_SimMode simMode_; ///< Simulation mode
+		DTC_ROC_ID maxROCs_[6]; ///< Map of active ROCs
+		bool usingDetectorEmulator_; ///< Whether Detector Emulation mode is enabled
+		uint16_t dmaSize_; ///< Size of DMAs, in bytes (default 32k)
+		int formatterWidth_; ///< Description field width, in characters
 
-		const std::vector<std::function<DTC_RegisterFormatter()>> formattedDumpFunctions_{
+		/// <summary>
+		/// Functions needed to print regular register map
+		/// </summary>
+		const std::vector<std::function<DTC_RegisterFormatter()>> formattedDumpFunctions_
+		{
 			[this]() { return this->FormatDesignVersion(); },
 			[this]() { return this->FormatDesignDate(); },
 			[this]() { return this->FormatDTCControl(); },
@@ -786,7 +791,11 @@ namespace DTCLib
 			[this]() { return this->FormatFPGACoreAccess(); }
 		};
 
-		const std::vector<std::function<DTC_RegisterFormatter()>> formattedPerfMonFunctions_{
+		/// <summary>
+		/// Dump Monitor Performance Registers
+		/// </summary>
+		const std::vector<std::function<DTC_RegisterFormatter()>> formattedPerfMonFunctions_
+		{
 			[this]() { return this->FormatPerfMonTXByteCount(); },
 			[this]() { return this->FormatPerfMonRXByteCount(); },
 			[this]() { return this->FormatPerfMonTXPayloadCount(); },
@@ -799,7 +808,11 @@ namespace DTCLib
 			[this]() { return this->FormatPerfMonInitPHC(); }
 		};
 
-		const std::vector<std::function<DTC_RegisterFormatter()>> formattedCounterFunctions_{
+		/// <summary>
+		/// Dump Byte/Packet Counter Registers
+		/// </summary>
+		const std::vector<std::function<DTC_RegisterFormatter()>> formattedCounterFunctions_
+		{
 			[this]() { return this->FormatReceiveByteCountRing0(); },
 			[this]() { return this->FormatReceiveByteCountRing1(); },
 			[this]() { return this->FormatReceiveByteCountRing2(); },

@@ -22,14 +22,35 @@ namespace DTCLib
 	/// <summary>
 	/// The DTC_ID field is used to uniquely identify each DTC. The ID consists of 2 bits of Subsystem ID and 6 bits of DTC ID.
 	/// </summary>
-	class DTC_ID {
+	class DTC_ID
+	{
 		uint8_t idData_;
 
 	public:
+		/// <summary>
+		/// DTC_ID default constructor
+		/// Initializes DTC_ID to 0
+		/// </summary>
 		DTC_ID() : idData_(0) {}
+		/// <summary>
+		/// DTC_ID constructor
+		/// </summary>
+		/// <param name="id">DTC_ID byte from data packet</param>
 		explicit DTC_ID(uint8_t id) : idData_(id) {}
+		/// <summary>
+		/// Get the DTC_Subsystem of the DTC_ID
+		/// </summary>
+		/// <returns>DTC_Subsystem of the DTC_ID instance</returns>
 		DTC_Subsystem GetSubsystem() const { return static_cast<DTC_Subsystem>(idData_ >> 6); }
+		/// <summary>
+		/// Return the DTC ID within the subsystem
+		/// </summary>
+		/// <returns>DTC ID</returns>
 		uint8_t GetID() const { return idData_ & 0x3F; }
+		/// <summary>
+		/// Return the whole DTC_ID word
+		/// </summary>
+		/// <returns>DTC_ID byte as seen in packet</returns>
 		uint8_t GetWord() const { return idData_; }
 	};
 
@@ -66,10 +87,18 @@ namespace DTCLib
 	/// </summary>
 	struct DTC_ROCIDConverter
 	{
-		DTC_ROC_ID roc_;
+		DTC_ROC_ID roc_; ///< DTC_ROC_ID to convert
 
-		explicit DTC_ROCIDConverter(DTC_ROC_ID roc) : roc_(roc) { }
+		/// <summary>
+		/// Construct a DTC_ROCIDConverter instance using the given DTC_ROC_ID
+		/// </summary>
+		/// <param name="roc">DTC_ROC_ID to convert</param>
+		explicit DTC_ROCIDConverter(DTC_ROC_ID roc) : roc_(roc) {}
 
+		/// <summary>
+		/// Convert the DTC_ROC_ID to its string representation
+		/// </summary>
+		/// <returns>String representation of DTC_ROC_ID</returns>
 		std::string toString() const
 		{
 			switch (roc_)
@@ -92,6 +121,12 @@ namespace DTCLib
 			}
 		}
 
+		/// <summary>
+		/// Write a DTC_ROCIDConverter in JSON format to the given stream
+		/// </summary>
+		/// <param name="stream">Stream to write</param>
+		/// <param name="roc">DTC_ROCIDConverter to serialize</param>
+		/// <returns>Stream reference for continued streaming</returns>
 		friend std::ostream& operator<<(std::ostream& stream, const DTC_ROCIDConverter& roc)
 		{
 			stream << "\"DTC_ROC_ID\":\"" << roc.toString() << "\"";
@@ -127,10 +162,18 @@ namespace DTCLib
 	/// </summary>
 	struct DTC_DebugTypeConverter
 	{
-		DTC_DebugType type_;
+		DTC_DebugType type_; ///< DTC_DebugType to convert
 
-		explicit DTC_DebugTypeConverter(DTC_DebugType type) : type_(type) { }
+		/// <summary>
+		/// Construct a DTC_DebugTypeConverter instance using the given DTC_DebugType
+		/// </summary>
+		/// <param name="type">DTC_DebugType to convert</param>
+		explicit DTC_DebugTypeConverter(DTC_DebugType type) : type_(type) {}
 
+		/// <summary>
+		/// Convert the DTC_DebugType to its string representation
+		/// </summary>
+		/// <returns>String representation of DTC_DebugType</returns>
 		std::string toString() const
 		{
 			switch (type_)
@@ -151,6 +194,12 @@ namespace DTCLib
 			return "Unknown";
 		}
 
+		/// <summary>
+		/// Write a DTC_DebugTypeConverter in JSON format to the given stream
+		/// </summary>
+		/// <param name="stream">Stream to write</param>
+		/// <param name="type">DTC_DebugTypeConverter to serialize</param>
+		/// <returns>Stream reference for continued streaming</returns>
 		friend std::ostream& operator<<(std::ostream& stream, const DTC_DebugTypeConverter& type)
 		{
 			stream << "\"DTC_DebugType\":\"" << type.toString() << "\"";
@@ -173,10 +222,18 @@ namespace DTCLib
 	/// </summary>
 	struct DTC_RXBufferStatusConverter
 	{
-		DTC_RXBufferStatus status_;
+		DTC_RXBufferStatus status_; ///< DTC_RXBufferStatus to convert
 
-		explicit DTC_RXBufferStatusConverter(DTC_RXBufferStatus status) : status_(status) { }
+		/// <summary>
+		/// Construct a DTC_RXBufferStatusConverter instance using the given DTC_RXBufferStatus
+		/// </summary>
+		/// <param name="status">DTC_RXBufferStatus to convert</param>
+		explicit DTC_RXBufferStatusConverter(DTC_RXBufferStatus status) : status_(status) {}
 
+		/// <summary>
+		/// Convert the DTC_RXBufferStatus to its string representation
+		/// </summary>
+		/// <returns>String representation of DTC_RXBufferStatus</returns>
 		std::string toString() const
 		{
 			switch (status_)
@@ -197,6 +254,12 @@ namespace DTCLib
 			}
 		}
 
+		/// <summary>
+		/// Write a DTC_RXBufferStatusConverter in JSON format to the given stream
+		/// </summary>
+		/// <param name="stream">Stream to write</param>
+		/// <param name="status">DTC_RXBufferStatusConverter to serialize</param>
+		/// <returns>Stream reference for continued streaming</returns>
 		friend std::ostream& operator<<(std::ostream& stream, const DTC_RXBufferStatusConverter& status)
 		{
 			stream << "\"DTC_RXBufferStatus\":\"" << status.toString() << "\"";
@@ -221,10 +284,18 @@ namespace DTCLib
 	/// </summary>
 	struct DTC_RXStatusConverter
 	{
-		DTC_RXStatus status_;
+		DTC_RXStatus status_; ///< DTC_RXStatus to convert
 
+		/// <summary>
+		/// Construct a DTC_RXStatusConverter instance using the given DTC_RXStatus
+		/// </summary>
+		/// <param name="status">DTC_RXStatus to convert</param>
 		explicit DTC_RXStatusConverter(DTC_RXStatus status);
 
+		/// <summary>
+		/// Convert the DTC_RXStatus to its string representation
+		/// </summary>
+		/// <returns>String representation of DTC_RXStatus</returns>
 		std::string toString() const
 		{
 			switch (status_)
@@ -249,6 +320,12 @@ namespace DTCLib
 			return "Unknown";
 		}
 
+		/// <summary>
+		/// Write a DTC_RXStatusConverter in JSON format to the given stream
+		/// </summary>
+		/// <param name="stream">Stream to write</param>
+		/// <param name="status">DTC_RXStatusConverter to serialize</param>
+		/// <returns>Stream reference for continued streaming</returns>
 		friend std::ostream& operator<<(std::ostream& stream, const DTC_RXStatusConverter& status)
 		{
 			stream << "\"DTC_RXStatus\":\"" << status.toString() << "\"";
@@ -270,10 +347,18 @@ namespace DTCLib
 	/// </summary>
 	struct DTC_SERDESLoopbackModeConverter
 	{
-		DTC_SERDESLoopbackMode mode_;
+		DTC_SERDESLoopbackMode mode_; ///< DTC_SERDESLoopbackMode to convert
 
-		explicit DTC_SERDESLoopbackModeConverter(DTC_SERDESLoopbackMode mode) : mode_(mode) { }
+		/// <summary>
+		/// Construct a DTC_SERDESLoopbackModeConverter instance using the given DTC_SERDESLoopbackMode
+		/// </summary>
+		/// <param name="mode">DTC_SERDESLoopbackMode to convert</param>
+		explicit DTC_SERDESLoopbackModeConverter(DTC_SERDESLoopbackMode mode) : mode_(mode) {}
 
+		/// <summary>
+		/// Convert the DTC_SERDESLoopbackMode to its string representation
+		/// </summary>
+		/// <returns>String representation of DTC_SERDESLoopbackMode</returns>
 		std::string toString() const
 		{
 			switch (mode_)
@@ -292,6 +377,12 @@ namespace DTCLib
 			return "Unknown";
 		}
 
+		/// <summary>
+		/// Write a DTC_SERDESLoopbackModeConverter in JSON format to the given stream
+		/// </summary>
+		/// <param name="stream">Stream to write</param>
+		/// <param name="mode">DTC_SERDESLoopbackModeConverter to serialize</param>
+		/// <returns>Stream reference for continued streaming</returns>
 		friend std::ostream& operator<<(std::ostream& stream, const DTC_SERDESLoopbackModeConverter& mode)
 		{
 			stream << "\"DTC_SERDESLoopbackMode\":\"" << mode.toString() << "\"";
@@ -299,6 +390,16 @@ namespace DTCLib
 		}
 	};
 
+	/// <summary>
+	/// The DTC_SimMode enumeration is used to control the behavior of the DTC class.
+	/// 
+	/// DTC_SimMode_Tracker, Calorimeter, CosmicVeto, Performance, and LargeFile activate the mu2esim DTC emulator
+	/// in the corresponding mode. 
+	/// DTC_SimMode_Disabled does nothing to set up the DTC beyond basic initialization.
+	/// DTC_SimMode_NoCFO enables the DTC CFO Emulator to send ReadoutRequest and DataRequest packets.
+	/// DTC_SimMode_ROCEmulator enables the DTC ROC Emulator
+	/// DTC_SimMode_Loopback enables the SERDES loopback on the DTC
+	/// </summary>
 	enum DTC_SimMode
 	{
 		DTC_SimMode_Disabled = 0,
@@ -318,12 +419,27 @@ namespace DTCLib
 	/// </summary>
 	struct DTC_SimModeConverter
 	{
-		DTC_SimMode mode_;
+		DTC_SimMode mode_; ///< DTC_SimMode to convert to string
 
-		explicit DTC_SimModeConverter(DTC_SimMode mode) : mode_(mode) { }
+		/// <summary>
+		/// Construct a DTC_SimModeConverter instance using the given DTC_SimMode
+		/// </summary>
+		/// <param name="mode">DTC_SimMode to convert</param>
+		explicit DTC_SimModeConverter(DTC_SimMode mode) : mode_(mode) {}
 
-		static DTC_SimMode ConvertToSimMode(std::string);
+		/// <summary>
+		/// Parse a string and return the DTC_SimMode which corresponds to it
+		/// 
+		/// Will search for SimMode name (see DTC_SimModeConverter::toString(),), or integer value (i.e. 1 = DTC_SimMode_Tracker, see enumeration definition)
+		/// </summary>
+		/// <param name="s">String to parse</param>
+		/// <returns>DTC_SimMode corresponding to string</returns>
+		static DTC_SimMode ConvertToSimMode(std::string s);
 
+		/// <summary>
+		/// Convert the DTC_SimMode to its string representation
+		/// </summary>
+		/// <returns>String representation of DTC_SimMode</returns>
 		std::string toString() const
 		{
 			switch (mode_)
@@ -350,6 +466,12 @@ namespace DTCLib
 			}
 		}
 
+		/// <summary>
+		/// Write a DTC_SimModeConverter in JSON format to the given stream
+		/// </summary>
+		/// <param name="stream">Stream to write</param>
+		/// <param name="mode">DTC_SimModeConverter to serialize</param>
+		/// <returns>Stream reference for continued streaming</returns>
 		friend std::ostream& operator<<(std::ostream& stream, const DTC_SimModeConverter& mode)
 		{
 			stream << "\"DTC_SimMode\":\"" << mode.toString() << "\"";
@@ -363,13 +485,22 @@ namespace DTCLib
 	class DTC_WrongPacketTypeException : public std::exception
 	{
 	public:
+		/// <summary>
+		/// A DTC_WrongPacketTypeException is thrown when an attempt is made to construct a DTC packet with data that does not match the packet type
+		/// </summary>
+		/// <param name="expected">Expected packet type</param>
+		/// <param name="encountered">Encountered packet type</param>
 		DTC_WrongPacketTypeException(int expected, int encountered) : expected_(expected), encountered_(encountered) {}
+		/// <summary>
+		/// Describe the exception
+		/// </summary>
+		/// <returns>String describing the exception</returns>
 		const char* what() const throw()
 		{
 			return ("Unexpected packet type encountered: " + std::to_string(encountered_) + " != " + std::to_string(expected_) + " (expected)").c_str();
 		}
-		int expected_;
-		int encountered_;
+		int expected_; ///< Packet type which was expected based on the type of DTC packet constructed
+		int encountered_; ///< Packet type encountered in data
 	};
 
 	/// <summary>
@@ -378,6 +509,10 @@ namespace DTCLib
 	class DTC_IOErrorException : public std::exception
 	{
 	public:
+		/// <summary>
+		/// Describe the exception
+		/// </summary>
+		/// <returns>String describing the exception</returns>
 		const char* what() const throw()
 		{
 			return "Unable to communicate with the DTC";
@@ -390,6 +525,10 @@ namespace DTCLib
 	class DTC_DataCorruptionException : public std::exception
 	{
 	public:
+		/// <summary>
+		/// Describe the exception
+		/// </summary>
+		/// <returns>String describing the exception</returns>
 		const char* what() const throw()
 		{
 			return "Corruption detected in data stream from DTC";
@@ -403,55 +542,140 @@ namespace DTCLib
 	{
 		uint64_t timestamp_ : 48;
 	public:
+		/// <summary>
+		/// Default Constructor. Initializes timestamp to value 0
+		/// </summary>
 		DTC_Timestamp();
+		/// <summary>
+		/// Construct a timestamp using the given quad word
+		/// </summary>
+		/// <param name="timestamp">64-bit unsigned integer representing timestamp. Top 16 bits will be discarded</param>
 		explicit DTC_Timestamp(const uint64_t timestamp);
+		/// <summary>
+		/// Construct a timestamp using the given low and high words
+		/// </summary>
+		/// <param name="timestampLow">Lower 32 bits of timestamp</param>
+		/// <param name="timestampHigh">Upper 16 bits of timestamp</param>
 		DTC_Timestamp(const uint32_t timestampLow, const uint16_t timestampHigh);
+		/// <summary>
+		/// Construct a DTC_Timestamp using the given byte array. Length of the array must be greater than 6 + offset!
+		/// </summary>
+		/// <param name="timeArr">Byte array to read timestamp from (i.e. DTC_DataPacket::GetData())</param>
+		/// <param name="offset">Location of timestamp byte 0 in array (Default 0)</param>
 		explicit DTC_Timestamp(const uint8_t* timeArr, int offset = 0);
+		/// <summary>
+		/// Construct a DTC_Timestamp using a std::bitset of the 48-bit timestamp
+		/// </summary>
+		/// <param name="timestamp">std::bitset containing timestamp</param>
 		explicit DTC_Timestamp(const std::bitset<48> timestamp);
-		DTC_Timestamp(const DTC_Timestamp&) = default;
-		DTC_Timestamp(DTC_Timestamp&&) = default;
+		/// <summary>
+		/// Default copy constructor
+		/// </summary>
+		/// <param name="r">DTC_Timestamp to copy</param>
+		DTC_Timestamp(const DTC_Timestamp& r) = default;
+		/// <summary>
+		/// Default move constructor
+		/// </summary>
+		/// <param name="r">DTC_Timestamp rvalue</param>
+		DTC_Timestamp(DTC_Timestamp&& r) = default;
 
+		/// <summary>
+		/// DTC_Timestamp Default Destructor
+		/// </summary>
 		virtual ~DTC_Timestamp() = default;
-		DTC_Timestamp& operator=(DTC_Timestamp&&) = default;
-		DTC_Timestamp& operator=(const DTC_Timestamp&) = default;
+		/// <summary>
+		/// Default move assignment operator
+		/// </summary>
+		/// <param name="r">DTC_Timestamp rvalue</param>
+		/// <returns>DTC_Timestamp reference</returns>
+		DTC_Timestamp& operator=(DTC_Timestamp&& r) = default;
+		/// <summary>
+		/// Default copy assignment operator
+		/// </summary>
+		/// <param name="r">DTC_Timestamp to copy</param>
+		/// <returns>DTC_Timestamp reference</returns>
+		DTC_Timestamp& operator=(const DTC_Timestamp& r) = default;
 
+		/// <summary>
+		/// Compare two DTC_Timestamp instances
+		/// </summary>
+		/// <param name="r">Other timestamp</param>
+		/// <returns>Result of comparison</returns>
 		bool operator==(const DTC_Timestamp r) const
 		{
 			return r.GetTimestamp(true) == timestamp_;
 		}
 
+		/// <summary>
+		/// Compare two DTC_Timestamp instances
+		/// </summary>
+		/// <param name="r">Other timestamp</param>
+		/// <returns>Result of comparison</returns>
 		bool operator!=(const DTC_Timestamp r) const
 		{
 			return r.GetTimestamp(true) != timestamp_;
 		}
 
+		/// <summary>
+		/// Compare two DTC_Timestamp instances
+		/// </summary>
+		/// <param name="r">Other timestamp</param>
+		/// <returns>Result of comparison</returns>
 		bool operator<(const DTC_Timestamp r)
 		{
 			return r.GetTimestamp(true) > timestamp_;
 		}
 
+		/// <summary>
+		/// Compare two DTC_Timestamp instances
+		/// </summary>
+		/// <param name="r">Other timestamp</param>
+		/// <returns>Result of comparison</returns>
 		bool operator<(const DTC_Timestamp r) const
 		{
 			return r.GetTimestamp(true) > timestamp_;
 		}
 
+		/// <summary>
+		/// Add an integer to a timestamp instance
+		/// </summary>
+		/// <param name="r">Integer to add to timestamp</param>
+		/// <returns>New timestamp with result</returns>
 		DTC_Timestamp operator+(const int r) const
 		{
 			return DTC_Timestamp(r + timestamp_);
 		}
 
+		/// <summary>
+		/// Set the timestamp using the given quad word
+		/// </summary>
+		/// <param name="timestamp">64-bit unsigned integer representing timestamp. Top 16 bits will be discarded</param>
 		void SetTimestamp(uint64_t timestamp)
 		{
 			timestamp_ = timestamp & 0x0000FFFFFFFFFFFF;
 		}
 
+		/// <summary>
+		/// Set the timestamp using the given low and high words
+		/// </summary>
+		/// <param name="timestampLow">Lower 32 bits of the timestamp</param>
+		/// <param name="timestampHigh">Upper 16 bits of the timstamp</param>
 		void SetTimestamp(uint32_t timestampLow, uint16_t timestampHigh);
 
+		/// <summary>
+		/// Returns the timstamp as a 48-bit std::bitset
+		/// </summary>
+		/// <returns>The timestamp as a 48-bit std::bitset</returns>
 		std::bitset<48> GetTimestamp() const
 		{
 			return timestamp_;
 		}
 
+		/// <summary>
+		/// Returns the timestamp as a 64-bit unsigned integer
+		/// </summary>
+		/// <param name="dummy">Whether to return a timestamp (used to distinguish signature)</param>
+		/// <returns>Timestamp as a 64-bit unsigned integer</returns>
 		uint64_t GetTimestamp(bool dummy) const
 		{
 			if (dummy)
@@ -461,8 +685,28 @@ namespace DTCLib
 			return 0;
 		}
 
+		/// <summary>
+		/// Copies the timestamp into the given byte array, starting at some offset.
+		/// Size of input array MUST be larger than offset + 6
+		/// </summary>
+		/// <param name="timeArr">Byte array for output</param>
+		/// <param name="offset">Target index of byte 0 of the timestamp</param>
 		void GetTimestamp(const uint8_t* timeArr, int offset = 0) const;
+
+		/// <summary>
+		/// Convert the timestamp to a JSON representation
+		/// </summary>
+		/// <param name="arrayMode">(Default: false) If true, will create a JSON array of the 6 bytes. Otherwise, represents timestamp as a single number</param>
+		/// <returns>JSON-formatted string containing timestamp</returns>
 		std::string toJSON(bool arrayMode = false) const;
+
+		/// <summary>
+		/// Convert the 48-bit timestamp to the format used in the Packet format definitions.
+		/// Byte 1 | Byte 0
+		/// Byte 3 | Byte 2
+		/// Byte 5 | Byte 4
+		/// </summary>
+		/// <returns>String representing timestamp in "packet format"</returns>
 		std::string toPacketFormat() const;
 	};
 
@@ -659,7 +903,7 @@ namespace DTCLib
 		/// <summary>
 		/// Default constructor. Sets all enable bits to true.
 		/// </summary>
-		DTC_RingEnableMode() : TransmitEnable(true), ReceiveEnable(true), TimingEnable(true) { }
+		DTC_RingEnableMode() : TransmitEnable(true), ReceiveEnable(true), TimingEnable(true) {}
 
 		/// <summary>
 		/// Construct a DTC_RingEnableMode instance with the given flags
@@ -667,7 +911,7 @@ namespace DTCLib
 		/// <param name="transmit">Enable TX</param>
 		/// <param name="receive">Enable RX</param>
 		/// <param name="timing">Enable CFO</param>
-		DTC_RingEnableMode(bool transmit, bool receive, bool timing) : TransmitEnable(transmit), ReceiveEnable(receive), TimingEnable(timing) { }
+		DTC_RingEnableMode(bool transmit, bool receive, bool timing) : TransmitEnable(transmit), ReceiveEnable(receive), TimingEnable(timing) {}
 
 		/// <summary>
 		/// Write the DTC_RingEnableMode to stream in JSON format.
@@ -736,7 +980,8 @@ namespace DTCLib
 			, OutputDCS(false)
 			, OutputDCSStage2(false)
 			, DataInput(false)
-			, DCSStatusInput(false) { }
+			, DCSStatusInput(false)
+		{}
 
 		/// <summary>
 		/// Construct a DTC_FIFOFUllErrorFlags instance with the given values
@@ -760,7 +1005,8 @@ namespace DTCLib
 			, OutputDCS(outputDCS)
 			, OutputDCSStage2(outputDCS2)
 			, DataInput(dataInput)
-			, DCSStatusInput(dcsInput) { }
+			, DCSStatusInput(dcsInput)
+		{}
 
 		/// <summary>
 		/// Write the DTC_FIFOFullErrorFlags to stream in JSON format.
