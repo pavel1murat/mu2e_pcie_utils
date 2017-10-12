@@ -49,6 +49,7 @@ bool rawOutput = false;
 bool useCFOEmulator = true;
 unsigned genDMABlocks = 0;
 std::string rawOutputFile = "/tmp/mu2eUtil.raw";
+std::string expectedDesignVersion = "";
 std::string simFile = "";
 bool useSimFile = false;
 unsigned delay = 0;
@@ -269,6 +270,7 @@ void printHelpMsg()
 		<< "    -r: # of rocs to enable. Hexadecimal, each digit corresponds to a ring. ROC_0: 1, ROC_1: 3, ROC_2: 5, ROC_3: 7, ROC_4: 9, ROC_5: B (Default 0x1, All possible: 0xBBBBBB)" << std::endl
 		<< "    -F: Frequency to program (in Hz, sorry...Default 166666667 Hz)" << std::endl
 		<< "    -C: Clock to program (0: SERDES, 1: DDR, Default 0)" << std::endl
+		<< "    -v: Expected DTC Design version string (Default: \"\")" << std::endl
 		;
 	exit(0);
 }
@@ -369,6 +371,9 @@ main(int argc
 			case 'F':
 				targetFrequency = getOptionValue(&optind, &argv);
 				break;
+			case 'v':
+				expectedDesignVersion = getOptionString(&optind, &argv);
+				break;
 			default:
 				std::cout << "Unknown option: " << argv[optind] << std::endl;
 				printHelpMsg();
@@ -407,7 +412,9 @@ main(int argc
 		<< ", ROC Mask: " << std::hex << rocMask
 		<< ", Debug Type: " << DTC_DebugTypeConverter(debugType).toString()
 		<< ", Target Frequency: " << std::dec << targetFrequency
-		<< ", Clock To Program: " << (clockToProgram == 0 ? "SERDES" : "DDR");
+		<< ", Clock To Program: " << (clockToProgram == 0 ? "SERDES" : "DDR")
+		<< ", Expected Design Version: " << expectedDesignVersion
+		;
 	if (rawOutput)
 	{
 		std::cout << ", Raw output file: " << rawOutputFile;
@@ -422,7 +429,7 @@ main(int argc
 	if (op == "read")
 	{
 		std::cout << "Operation \"read\"" << std::endl;
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
 		auto packet = thisDTC->ReadNextDAQPacket();
 		if (!reallyQuiet) std::cout << packet->toJSON() << '\n';
 		if (rawOutput)
@@ -439,7 +446,7 @@ main(int argc
 	else if (op == "read_data")
 	{
 		std::cout << "Operation \"read_data\"" << std::endl;
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
 
 		auto device = thisDTC->GetDevice();
 		if (readGenerated)
@@ -488,7 +495,7 @@ main(int argc
 	else if (op == "toggle_serdes")
 	{
 		std::cout << "Swapping SERDES Oscillator Clock" << std::endl;
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
 		auto clock = thisDTC->ReadSERDESOscillatorClock();
 		if (clock == DTC_SerdesClockSpeed_3125Gbps)
 		{
@@ -509,7 +516,7 @@ main(int argc
 	else if (op == "reset_detemu")
 	{
 		std::cout << "Resetting Detector Emulator" << std::endl;
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
 		thisDTC->ClearDetectorEmulatorInUse();
 		thisDTC->ResetDDR();
 		thisDTC->ResetDTC();
@@ -519,7 +526,7 @@ main(int argc
 	{
 		std::cout << "Operation \"buffer_test\"" << std::endl;
 		auto startTime = std::chrono::steady_clock::now();
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
 		auto device = thisDTC->GetDevice();
 
 		auto initTime = device->GetDeviceTime();
@@ -659,7 +666,7 @@ main(int argc
 	else if (op == "DTC")
 	{
 		auto startTime = std::chrono::steady_clock::now();
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
 
 		auto initTime = thisDTC->GetDevice()->GetDeviceTime();
 		thisDTC->GetDevice()->ResetDeviceTime();
@@ -853,7 +860,7 @@ main(int argc
 	}
 	else if (op == "program_clock")
 	{
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
 		auto oscillator = clockToProgram == 0 ? DTC_OscillatorType_SERDES : DTC_OscillatorType_DDR;
 		thisDTC->SetNewOscillatorFrequency(oscillator, targetFrequency);
 		delete thisDTC;

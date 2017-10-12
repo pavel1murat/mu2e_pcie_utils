@@ -19,9 +19,10 @@ namespace DTCLib
 		/// <summary>
 		/// Construct an instance of the DTC class
 		/// </summary>
+		/// <param name="expectedDesignVersion">Expected DTC Firmware Design Version. If set, will throw an exception if the DTC firmware does not match (Default: "")</param>
 		/// <param name="mode">The desired simulation mode for the DTC (Default: Disabled)</param>
 		/// <param name="rocMask">Which ROCs should be active. Each hex digit corresponds to a Ring, and the number indicates how many ROCs are active on that ring. (Default: 0x1)</param>
-	  explicit DTC(DTC_SimMode mode = DTC_SimMode_Disabled, unsigned rocMask = 0x1);
+		explicit DTC(std::string expectedDesignVersion = "", DTC_SimMode mode = DTC_SimMode_Disabled, unsigned rocMask = 0x1);
 		virtual ~DTC();
 
 		//
@@ -154,7 +155,8 @@ namespace DTCLib
 		/// <summary>
 		/// Releases all buffers to the hardware, from both the DAQ and DCS channels
 		/// </summary>
-		void ReleaseAllBuffers() {
+		void ReleaseAllBuffers()
+		{
 			ReleaseAllBuffers(DTC_DMA_Engine_DAQ);
 			ReleaseAllBuffers(DTC_DMA_Engine_DCS);
 		}

@@ -9,8 +9,6 @@
 
 namespace DTCLib
 {
-	const std::string ExpectedDesignVersion = "v1.4_2015-07-01-00";
-
 	enum DTC_Subsystem : uint8_t
 	{
 		DTC_Subsystem_Tracker = 0,
@@ -477,6 +475,30 @@ namespace DTCLib
 			stream << "\"DTC_SimMode\":\"" << mode.toString() << "\"";
 			return stream;
 		}
+	};
+
+	/// <summary>
+	/// A DTC_WrongVersionException is thrown when an attempt to initialize a DTC is made with a certain firmware version expected, and the firmware does not match that version
+	/// </summary>
+	class DTC_WrongVersionException : public std::exception
+	{
+	public:
+		/// <summary>
+		/// A DTC_WrongVersionException is thrown when an attempt is made to construct a DTC packet with data that does not match the packet type
+		/// </summary>
+		/// <param name="expected">Expected firmware version string</param>
+		/// <param name="encountered">Encountered firmware version string</param>
+		DTC_WrongVersionException(std::string expected, std::string encountered) : expected_(expected), encountered_(encountered) {}
+		/// <summary>
+		/// Describe the exception
+		/// </summary>
+		/// <returns>String describing the exception</returns>
+		const char* what() const throw()
+		{
+			return ("Unexpected firmware version encountered: " + encountered_ + " != " + expected_ + " (expected)").c_str();
+		}
+		std::string expected_; ///< Expected Firmware version string
+		std::string encountered_; ///< Firmware version string of DTC
 	};
 
 	/// <summary>

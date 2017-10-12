@@ -12,7 +12,7 @@
 #endif
 #define TRACE_NAME "MU2EDEV"
 
-DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, unsigned rocMask, bool skipInit) : device_(), simMode_(mode), dmaSize_(16)
+DTCLib::DTC_Registers::DTC_Registers(std::string expectedDesignVersion, DTC_SimMode mode, unsigned rocMask, bool skipInit) : device_(), simMode_(mode), dmaSize_(16)
 {
 	for (auto ii = 0; ii < 6; ++ii)
 	{
@@ -74,7 +74,7 @@ DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, unsigned rocMask, bool sk
 			break;
 		}
 	}
-	SetSimMode(simMode_, rocMask, skipInit);
+	SetSimMode(expectedDesignVersion, simMode_, rocMask, skipInit);
 }
 
 DTCLib::DTC_Registers::~DTC_Registers()
@@ -86,10 +86,14 @@ DTCLib::DTC_Registers::~DTC_Registers()
 	device_.close();
 }
 
-DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode, unsigned rocMask, bool skipInit)
+DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(std::string expectedDesignVersion,DTC_SimMode mode, unsigned rocMask, bool skipInit)
 {
 	simMode_ = mode;
 	device_.init(simMode_);
+	if (expectedDesignVersion != "" && expectedDesignVersion != ReadDesignVersion())
+	{
+		throw new DTC_WrongVersionException(expectedDesignVersion, ReadDesignVersion());
+	}
 
 	if (skipInit) return simMode_;
 
