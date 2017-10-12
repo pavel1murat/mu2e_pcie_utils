@@ -640,11 +640,11 @@ main(int argc
 			<< "Device Init Time: " << Utilities::FormatTimeString(initTime) << "." << std::endl
 			<< "Device Request Time: " << Utilities::FormatTimeString(readoutRequestTime) << "." << std::endl
 			<< "Device Read Time: " << Utilities::FormatTimeString(readDevTime) << "." << std::endl
-			<< "Total Bytes Written: " << Utilities::FormatByteString(static_cast<double>(totalBytesWritten)) << "." << std::endl
-			<< "Total Bytes Read: " << Utilities::FormatByteString(static_cast<double>(totalBytesRead)) << "." << std::endl
-			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
-			<< "Read Rate: " << Utilities::FormatByteString(totalBytesRead / totalReadTime) << "/s." << std::endl
-			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime) << "/s." << std::endl;
+			<< "Total Bytes Written: " << Utilities::FormatByteString(static_cast<double>(totalBytesWritten), "") << "." << std::endl
+			<< "Total Bytes Read: " << Utilities::FormatByteString(static_cast<double>(totalBytesRead), "") << "." << std::endl
+			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime, "/s") << std::endl
+			<< "Read Rate: " << Utilities::FormatByteString(totalBytesRead / totalReadTime, "/s") << std::endl
+			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime, "/s") << std::endl;
 
 		delete thisDTC;
 	}
@@ -851,11 +851,11 @@ main(int argc
 			<< "Device Init Time: " << initTime << " s." << std::endl
 			<< "Device Request Time: " << readoutRequestTime << " s." << std::endl
 			<< "Device Read Time: " << readDevTime << " s." << std::endl
-			<< "Total Bytes Written: " << Utilities::FormatByteString(static_cast<double>(totalBytesWritten)) << "." << std::endl
-			<< "Total Bytes Read: " << Utilities::FormatByteString(static_cast<double>(totalBytesRead)) << "." << std::endl
-			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
-			<< "Read Rate: " << Utilities::FormatByteString(totalBytesRead / totalReadTime) << "/s." << std::endl
-			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime) << "/s." << std::endl;
+			<< "Total Bytes Written: " << Utilities::FormatByteString(static_cast<double>(totalBytesWritten),"") << "." << std::endl
+			<< "Total Bytes Read: " << Utilities::FormatByteString(static_cast<double>(totalBytesRead),"") << "." << std::endl
+			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime,"/s") << "." << std::endl
+			<< "Read Rate: " << Utilities::FormatByteString(totalBytesRead / totalReadTime, "/s") << "." << std::endl
+			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime, "/s") << "." << std::endl;
 		delete thisDTC;
 	}
 	else if (op == "program_clock")

@@ -1149,8 +1149,9 @@ namespace DTCLib
 		/// Create a string with "[value] [unit]" for a given number of bytes, using FormatBytes(bytes)
 		/// </summary>
 		/// <param name="bytes">Number of bytes to convert to string</param>
+		/// <param name="extraUnit">Extra units to be applied after converted byte unit (i.e. "/s")</param>
 		/// <returns>String with converted value</returns>
-		static std::string FormatByteString(double bytes);
+		static std::string FormatByteString(double bytes, std::string extraUnit);
 		/// <summary>
 		/// Determine the best units for describing a given number of bytes.
 		/// Algorithm will divide by 1024, and if the result is greater than 1 and less than 1024, use that unit.

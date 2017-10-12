@@ -145,11 +145,11 @@ DTCLib::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError(uint32_t data
 }
 
 
-std::string DTCLib::Utilities::FormatByteString(double bytes)
+std::string DTCLib::Utilities::FormatByteString(double bytes, std::string extraUnit)
 {
 	auto res = FormatBytes(bytes);
 	std::stringstream s;
-	s << std::setprecision(5) << res.first << " " << res.second;
+	s << std::setprecision(5) << res.first << " " << res.second <<  extraUnit << " (" << std::to_string(bytes) << "bytes" << extraUnit << ")";
 	return s.str();
 }
 
