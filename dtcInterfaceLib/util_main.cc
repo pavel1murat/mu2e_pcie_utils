@@ -548,7 +548,11 @@ main(int argc
 		{
 			auto overwrite = false;
 			if (simFile.size() > 0) overwrite = true;
-			thisDTC->WriteSimFileToDTC(simFile, false, overwrite);
+			thisDTC->WriteSimFileToDTC(simFile, false, overwrite, rawOutputFile);
+			if (readGenerated)
+			{
+				exit(0);
+			}
 		}
 		else if (readGenerated)
 		{
@@ -598,7 +602,7 @@ main(int argc
 				if (!reallyQuiet) std::cout << "Buffer reports DMA size of " << std::dec << bufSize << " bytes. Device driver reports read of " << sts << " bytes," << std::endl;
 
 				TRACE(1, "util - bufSize is %u", bufSize);
-				if (rawOutput) outputStream.write(static_cast<char*>(readPtr), bufSize);
+				if (rawOutput) outputStream.write(static_cast<char*>(readPtr), sts - 8);
 
 				if (!reallyQuiet)
 				{

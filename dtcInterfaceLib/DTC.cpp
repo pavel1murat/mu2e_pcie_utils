@@ -186,8 +186,14 @@ std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when)
 	return ss.str();
 }
 
-void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool overwriteEnvironment)
+void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool overwriteEnvironment, std::string outputFileName)
 {
+	auto writeOutput = outputFileName != "";
+	std::ofstream outputStream;
+	if (writeOutput)
+	{
+		outputStream.open(outputFileName, std::ios::out | std::ios::app | std::ios::binary);
+	}
 	auto sim = getenv("DTCLIB_SIM_FILE");
 	if (!overwriteEnvironment && sim != nullptr)
 	{
@@ -220,11 +226,17 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool o
 		{
 			sz = 64;
 			memcpy(buf, &sz, sizeof(uint64_t));
+			bzero(buf, sz);
 		}
 		//is.read((char*)buf + 8, sz - sizeof(uint64_t));
 		if (sz > 0 && (sz + totalSize < 0xFFFFFFFF || simMode_ == DTC_SimMode_LargeFile))
 		{
 			TRACE(5, "Size is %zu, writing to device", sz);
+			if (writeOutput)
+			{
+				TRACE(11, "DTC::WriteSimFileToDTC: Stripping off DMA header words and writing to binary file");
+				outputStream.write(reinterpret_cast<char*>(buf) + 16, sz - 16);
+			}
 			totalSize += sz;
 			n++;
 			TRACE(10, "DTC::WriteSimFileToDTC: totalSize is now %lu, n is now %lu", static_cast<unsigned long>(totalSize), static_cast<unsigned long>(n));
@@ -238,6 +250,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool o
 		delete[] buf;
 	}
 	is.close();
+	if (writeOutput) outputStream.close();
 	SetDDRDataLocalEndAddress(static_cast<uint32_t>(totalSize - 1));
 	SetDetectorEmulatorInUse();
 	/* Instead, set the count and enable in DTCSoftwareCFO!

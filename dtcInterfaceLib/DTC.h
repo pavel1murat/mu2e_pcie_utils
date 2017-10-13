@@ -48,7 +48,8 @@ namespace DTCLib
 		/// <param name="file">File name to read into DTC memory</param>
 		/// <param name="goForever">Whether readout should loop through the file</param>
 		/// <param name="overwriteEnvrionment">Whether to use file instead of DTCLIB_SIM_FILE</param>
-		void WriteSimFileToDTC(std::string file, bool goForever, bool overwriteEnvrionment = false);
+		/// <param name="outputFileName">Name of binary file to write expected output (Default: "", no file created)</param>
+		void WriteSimFileToDTC(std::string file, bool goForever, bool overwriteEnvrionment = false, std::string outputFileName = "");
 
 
 		// DCS Register R/W
