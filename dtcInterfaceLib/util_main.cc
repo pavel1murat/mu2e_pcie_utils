@@ -46,6 +46,7 @@ bool quiet = false;
 unsigned quietCount = 1;
 bool reallyQuiet = false;
 bool rawOutput = false;
+bool writeDMAHeadersToOutput = false;
 bool useCFOEmulator = true;
 unsigned genDMABlocks = 0;
 std::string rawOutputFile = "/tmp/mu2eUtil.raw";
@@ -161,13 +162,13 @@ void WriteGeneratedData(DTC* thisDTC)
 
 		auto buf = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
 		memcpy(buf, &dmaWriteByteCount, sizeof(uint64_t));
-		if (rawOutput) outputStream.write(reinterpret_cast<char*>(&dmaWriteByteCount), sizeof(uint64_t));
+		if (rawOutput && writeDMAHeadersToOutput) outputStream.write(reinterpret_cast<char*>(&dmaWriteByteCount), sizeof(uint64_t));
 		auto currentOffset = sizeof(uint64_t);
 
 		for (unsigned ll = 0; ll < eventCount; ++ll) {
 
 			memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, &eventByteCount, sizeof(uint64_t));
-			if (rawOutput) outputStream.write(reinterpret_cast<char*>(&eventByteCount), sizeof(uint64_t));
+			if (rawOutput && writeDMAHeadersToOutput) outputStream.write(reinterpret_cast<char*>(&eventByteCount), sizeof(uint64_t));
 			currentOffset += sizeof(uint64_t);
 
 			if (incrementTimestamp) ++ts;
@@ -263,6 +264,7 @@ void printHelpMsg()
 		<< "    -t: Use DebugType flag (1st request gets ExternalDataWithFIFOReset, the rest get ExternalData)" << std::endl
 		<< "    -T: Set DebugType flag for ALL requests (0, 1, or 2)" << std::endl
 		<< "    -f: RAW Output file path" << std::endl
+		<< "    -H: Write DMA headers to raw output file (when -f is used with -g)"
 		<< "    -p: Send DTCLIB_SIM_FILE to DTC and enable Detector Emulator mode" << std::endl
 		<< "    -P: Send <file> to DTC and enable Detector Emulator mode (Default: \"\")" << std::endl
 		<< "    -g: Generate (and send) N DMA blocks for testing the Detector Emulator (Default: 0)" << std::endl
@@ -346,6 +348,9 @@ main(int argc
 			case 'f':
 				rawOutput = true;
 				rawOutputFile = getOptionString(&optind, &argv);
+				break;
+			case 'H':
+				writeDMAHeadersToOutput = true;
 				break;
 			case 't':
 				debugType = DTC_DebugType_ExternalSerialWithReset;
