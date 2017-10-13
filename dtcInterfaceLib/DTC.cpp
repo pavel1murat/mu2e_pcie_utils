@@ -219,6 +219,12 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool o
 		TRACE(5, "Reading a DMA from file...%s", file.c_str());
 		auto buf = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
 		is.read(reinterpret_cast<char*>(buf), sizeof(uint64_t));
+		if (is.eof())
+		{
+			TRACE(5, "End of file reached.");
+			delete[] buf;
+			break;
+		}
 		auto sz = *reinterpret_cast<uint64_t*>(buf);
 		//TRACE(5, "Size is %llu, writing to device", (long long unsigned)sz);
 		is.read(reinterpret_cast<char*>(buf) + 8, sz - sizeof(uint64_t));
@@ -237,6 +243,16 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool o
 				TRACE(11, "DTC::WriteSimFileToDTC: Stripping off DMA header words and writing to binary file");
 				outputStream.write(reinterpret_cast<char*>(buf) + 16, sz - 16);
 			}
+
+			auto exclusiveByteCount = *(reinterpret_cast<uint64_t*>(buf) + 1);
+			TRACE(11, "DTC::WriteSimFileToDTC: Inclusive byte count: %llu, Exclusive byte count: %llu", (long long unsigned)sz,(long long unsigned)exclusiveByteCount);
+			if (sz - 16 != exclusiveByteCount)
+			{
+				TRACE(0, "DTC::WriteSimFileToDTC: ERROR: Inclusive Byte count %llu is inconsistent with exclusive byte count %llu for DMA at %llu (%llu != %llu)",
+					  (long long unsigned)sz, (long long unsigned)exclusiveByteCount, (long long unsigned) totalSize, (long long unsigned)sz - 16, (long long unsigned)exclusiveByteCount);
+				sizeCheck = false;
+			}
+
 			totalSize += sz;
 			n++;
 			TRACE(10, "DTC::WriteSimFileToDTC: totalSize is now %lu, n is now %lu", static_cast<unsigned long>(totalSize), static_cast<unsigned long>(n));
