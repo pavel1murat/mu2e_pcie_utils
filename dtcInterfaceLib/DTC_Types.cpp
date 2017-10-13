@@ -149,7 +149,7 @@ std::string DTCLib::Utilities::FormatByteString(double bytes, std::string extraU
 {
 	auto res = FormatBytes(bytes);
 	std::stringstream s;
-	s << std::setprecision(5) << res.first << " " << res.second <<  extraUnit << " (" << std::to_string(bytes) << "bytes" << extraUnit << ")";
+	s << std::setprecision(5) << res.first << " " << res.second <<  extraUnit << " (" << std::to_string(static_cast<uint64_t>(bytes)) << " bytes" << extraUnit << ")";
 	return s.str();
 }
 
