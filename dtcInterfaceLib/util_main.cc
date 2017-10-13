@@ -598,7 +598,7 @@ main(int argc
 				if (!reallyQuiet) std::cout << "Buffer reports DMA size of " << std::dec << bufSize << " bytes. Device driver reports read of " << sts << " bytes," << std::endl;
 
 				TRACE(1, "util - bufSize is %u", bufSize);
-				if (rawOutput) outputStream.write(static_cast<char*>(readPtr), bufSize - 8);
+				if (rawOutput) outputStream.write(static_cast<char*>(readPtr), bufSize);
 
 				if (!reallyQuiet)
 				{
