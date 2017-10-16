@@ -379,9 +379,9 @@ int mu2esim::write_register(uint16_t address, int tmo_ms, uint32_t data)
 	registers_[address] = data;
 	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
 	TRACE(18, "mu2esim::write_register took %lli milliseconds out of tmo_ms=%i", static_cast<long long>(duration), tmo_ms);
-	if (address == 0x9100) // DTC Control
+	std::bitset<32> dataBS(data);
+	if (address == DTCLib::DTC_Register_DTCControl)
 	{
-		std::bitset<32> dataBS(data);
 		auto detectorEmulationMode = (registers_[DTCLib::DTC_Register_DetEmulationControl0] & 0x3) != 0;
 		if (dataBS[30] == 1 && !detectorEmulationMode)
 		{
@@ -412,6 +412,19 @@ int mu2esim::write_register(uint16_t address, int tmo_ms, uint32_t data)
 			ddrFile_.open("mu2esim.bin", std::ios::trunc | std::ios::binary | std::ios::out | std::ios::in);
 			eventBegin_ = ddrFile_.tellp();
 		}
+	}
+	if (address == DTCLib::DTC_Register_DetEmulationControl0)
+	{
+		if (dataBS[0] == 0)
+		{
+			ddrFile_.close();
+			ddrFile_.open("mu2esim.bin", std::ios::trunc | std::ios::binary | std::ios::out | std::ios::in);
+			eventBegin_ = ddrFile_.tellp();
+		}
+	}
+	if (address == DTCLib::DTC_Register_DetEmulationDataStartAddress)
+	{
+		ddrFile_.seekg(data);
 	}
 	return 0;
 }
