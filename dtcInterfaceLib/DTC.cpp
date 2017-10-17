@@ -188,6 +188,7 @@ std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when)
 
 void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool overwriteEnvironment, std::string outputFileName)
 {
+	TRACE(4, "DTC::WriteSimFileToDTC BEGIN");
 	auto writeOutput = outputFileName != "";
 	std::ofstream outputStream;
 	if (writeOutput)
@@ -200,6 +201,8 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool o
 		file = std::string(sim);
 	}
 
+
+	TRACE(4, "DTC::WriteSimFileToDTC file is " + file + ", Setting up DTC");
 	DisableDetectorEmulator();
 	DisableDetectorEmulatorMode();
 	ResetDDRWriteAddress();
@@ -213,31 +216,36 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool o
 	auto n = 0;
 
 	auto sizeCheck = true;
+	TRACE(4, "DTC::WriteSimFileToDTC Opening file");
 	std::ifstream is(file, std::ifstream::binary);
+	TRACE(4, "DTC::WriteSimFileToDTC Reading file");
 	while (is && is.good() && sizeCheck)
 	{
-		TRACE(5, "Reading a DMA from file...%s", file.c_str());
+		TRACE(5, "DTC::WriteSimFileToDTC Reading a DMA from file...%s", file.c_str());
 		auto buf = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
 		is.read(reinterpret_cast<char*>(buf), sizeof(uint64_t));
 		if (is.eof())
 		{
-			TRACE(5, "End of file reached.");
+			TRACE(5, "DTC::WriteSimFileToDTC End of file reached.");
 			delete[] buf;
 			break;
 		}
 		auto sz = *reinterpret_cast<uint64_t*>(buf);
 		//TRACE(5, "Size is %llu, writing to device", (long long unsigned)sz);
 		is.read(reinterpret_cast<char*>(buf) + 8, sz - sizeof(uint64_t));
-		if (sz < 64 && sz > 0)
+		if (sz < 80 && sz > 0)
 		{
-			sz = 64;
+			auto oldSize = sz;
+			sz = 80;
 			memcpy(buf, &sz, sizeof(uint64_t));
-			bzero(buf, sz);
+			uint64_t sixtyFour = 64;
+			memcpy(reinterpret_cast<uint64_t*>(buf) + 1, &sixtyFour, sizeof(uint64_t));
+			bzero(reinterpret_cast<uint64_t*>(buf) + 2, sz - oldSize);
 		}
 		//is.read((char*)buf + 8, sz - sizeof(uint64_t));
 		if (sz > 0 && (sz + totalSize < 0xFFFFFFFF || simMode_ == DTC_SimMode_LargeFile))
 		{
-			TRACE(5, "Size is %zu, writing to device", sz);
+			TRACE(5, "DTC::WriteSimFileToDTC Size is %zu, writing to device", sz);
 			if (writeOutput)
 			{
 				TRACE(11, "DTC::WriteSimFileToDTC: Stripping off DMA header words and writing to binary file");
@@ -248,7 +256,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool o
 			TRACE(11, "DTC::WriteSimFileToDTC: Inclusive byte count: %llu, Exclusive byte count: %llu", (long long unsigned)sz,(long long unsigned)exclusiveByteCount);
 			if (sz - 16 != exclusiveByteCount)
 			{
-				TRACE(0, "DTC::WriteSimFileToDTC: ERROR: Inclusive Byte count %llu is inconsistent with exclusive byte count %llu for DMA at %llu (%llu != %llu)",
+				TRACE(0, "DTC::WriteSimFileToDTC: ERROR: Inclusive Byte count %llu is inconsistent with exclusive byte count %llu for DMA at 0x%llx (%llu != %llu)",
 					  (long long unsigned)sz, (long long unsigned)exclusiveByteCount, (long long unsigned) totalSize, (long long unsigned)sz - 16, (long long unsigned)exclusiveByteCount);
 				sizeCheck = false;
 			}
@@ -260,25 +268,18 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool o
 		}
 		else if (sz > 0)
 		{
-			TRACE(5, "DTC memory is now full. Closing file.");
+			TRACE(5, "DTC::WriteSimFileToDTC DTC memory is now full. Closing file.");
 			sizeCheck = false;
 		}
 		delete[] buf;
 	}
+
+	TRACE(4, "DTC::WriteSimFileToDTC Closing file. sizecheck=%i, eof=%i, fail=%i, bad=%i", sizeCheck, is.eof(), is.fail(), is.bad());
 	is.close();
 	if (writeOutput) outputStream.close();
 	SetDDRDataLocalEndAddress(static_cast<uint32_t>(totalSize - 1));
 	SetDetectorEmulatorInUse();
-	/* Instead, set the count and enable in DTCSoftwareCFO!
-	if (!goForever)
-	{
-		SetDetectorEmulationDMACount(n);
-	}
-	else
-	{
-		SetDetectorEmulationDMACount(0);
-	}
-	EnableDetectorEmulator();*/
+	TRACE(4, "DTC::WriteSimFileToDTC END");
 }
 
 // ROC Register Functions
