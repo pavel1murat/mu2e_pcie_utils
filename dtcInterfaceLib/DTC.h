@@ -50,7 +50,12 @@ namespace DTCLib
 		/// <param name="overwriteEnvrionment">Whether to use file instead of DTCLIB_SIM_FILE</param>
 		/// <param name="outputFileName">Name of binary file to write expected output (Default: "", no file created)</param>
 		void WriteSimFileToDTC(std::string file, bool goForever, bool overwriteEnvrionment = false, std::string outputFileName = "");
-
+		/// <summary>
+		/// Read the DTC memory and determine whether the file was written correctly.
+		/// </summary>
+		/// <param name="file">File to verify against</param>
+		/// <returns>True if file is in DTC memory without errors</returns>
+		bool VerifySimFileInDTC(std::string file);
 
 		// DCS Register R/W
 		/// <summary>
