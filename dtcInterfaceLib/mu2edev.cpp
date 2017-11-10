@@ -327,11 +327,19 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 		void * data = ((mu2e_databuff_t*)(mu2e_mmap_ptrs_[chn][dir][MU2E_MAP_BUFF]))[idx];
 		memcpy(data, buffer, bytes);
 		unsigned long arg = (chn << 24) | (bytes & 0xffffff);// THIS OBIVOUSLY SHOULD BE A MACRO
-		retsts = ioctl(devfd_, M_IOC_BUF_XMIT, arg);
-		if (retsts != 0)
+
+		int retry = 5;
+		while (retry > 0)
 		{
-			perror("M_IOC_BUF_XMIT");
-		} // exit(1); } // Take out the exit call for now
+
+			retsts = ioctl(devfd_, M_IOC_BUF_XMIT, arg);
+			if (retsts != 0)
+			{
+				perror("M_IOC_BUF_XMIT");
+				if (retsts != -EAGAIN) retry = 0;
+				else usleep(1000);
+			} // exit(1); } // Take out the exit call for now
+		}
 // increment our cached info
 		mu2e_channel_info_[chn][dir].swIdx
 			= idx_add(mu2e_channel_info_[chn][dir].swIdx, 1, chn, dir);
