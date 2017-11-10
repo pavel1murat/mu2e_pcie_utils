@@ -329,17 +329,17 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 		unsigned long arg = (chn << 24) | (bytes & 0xffffff);// THIS OBIVOUSLY SHOULD BE A MACRO
 
 		int retry = 5;
-		while (retry > 0)
+		do
 		{
-
 			retsts = ioctl(devfd_, M_IOC_BUF_XMIT, arg);
 			if (retsts != 0)
 			{
 				perror("M_IOC_BUF_XMIT");
 				if (retsts != -EAGAIN) retry = 0;
-				else usleep(1000);
+				else usleep(10000);
 			} // exit(1); } // Take out the exit call for now
-		}
+			retry--;
+		} while (retry > 0 && retsts < 0);
 // increment our cached info
 		mu2e_channel_info_[chn][dir].swIdx
 			= idx_add(mu2e_channel_info_[chn][dir].swIdx, 1, chn, dir);
