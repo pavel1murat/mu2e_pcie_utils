@@ -355,18 +355,26 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file)
 
 			mu2e_databuff_t* buffer;
 			auto tmo_ms = 1500;
-			TRACE(1, "DTC::VerifySimFileInDTC - before read for DAQ ");
+			TRACE(4, "DTC::VerifySimFileInDTC - before read for DAQ ");
 			auto sts = device_.read_data(DTC_DMA_Engine_DAQ, reinterpret_cast<void**>(&buffer), tmo_ms);
 			size_t readSz = *(reinterpret_cast<uint64_t*>(buffer));
-			TRACE(1, "DTC::VerifySimFileInDTC - after read, sz=%zu sts=%d rdSz=%zu", sz, sts, readSz);
+			TRACE(4, "DTC::VerifySimFileInDTC - after read, sz=%zu sts=%d rdSz=%zu", sz, sts, readSz);
 
 			// DMA engine strips off leading 64-bit word
-			if (static_cast<size_t>(sts) - sizeof(uint64_t) != sz) { return false; }
+			TRACE(6, "DTC::VerifySimFileInDTC - Checking buffer size");
+			if (static_cast<size_t>(sts) != sz - sizeof(uint64_t)) { return false; }
 
-			for (size_t ii = 0; ii < sts; ++ii)
+			TRACE(6, "DTC::VerifySimFileInDTC - Checking buffer contents");
+			size_t cnt = sts % sizeof(uint64_t) == 0 ? sts / sizeof(uint64_t) : 1 + (sts / sizeof(uint64_t));
+
+			for (size_t ii = 0; ii < cnt; ii+=8)
 			{
-				if (buffer[ii] != buf[ii + 8])
+				auto l = *(reinterpret_cast<uint64_t*>(buffer) + ii);
+				auto r = *(reinterpret_cast<uint64_t*>(buf) +ii + 1);
+				if (l != r)
 				{
+				TRACE(1, "DTC::VerifySimFileInDTC Byte %zu: Expected 0x%llx, but got 0x%llx. Returning False!", ii, 
+						static_cast<unsigned long long>(r), static_cast<unsigned long long>(l));
 					delete[] buf;
 					is.close();
 					return false;
