@@ -13,7 +13,7 @@
 #endif
 #define TRACE_NAME "MU2EDEV"
 
-DTCLib::DTC::DTC(std::string expectedDesignVersion,DTC_SimMode mode, unsigned rocMask) : DTC_Registers(expectedDesignVersion, mode, rocMask),
+DTCLib::DTC::DTC(std::string expectedDesignVersion, DTC_SimMode mode, unsigned rocMask) : DTC_Registers(expectedDesignVersion, mode, rocMask),
 daqbuffer_(), dcsbuffer_(), lastDAQBufferActive_(false), lastDCSBufferActive_(false),
 bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
 lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
@@ -67,7 +67,8 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 		{
 			TRACE(19, "DTC::GetData before ReadNextDAQPacket, tries=%i", tries);
 			packet = ReadNextDAQPacket(first_read_ ? 100 : 1);
-			if (packet != nullptr) {
+			if (packet != nullptr)
+			{
 				TRACE(19, "DTC::GetData after ReadDMADAQPacket, ts=0x%llx", (unsigned long long)packet->GetTimestamp().GetTimestamp(true));
 			}
 			tries++;
@@ -82,7 +83,7 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 		if (packet->GetTimestamp() != when && when.GetTimestamp(true) != 0)
 		{
 			TRACE(0, "DTC::GetData: Error: Lead packet has wrong timestamp! 0x%llX(expected) != 0x%llX"
-				, (unsigned long long)when.GetTimestamp(true), (unsigned long long)packet->GetTimestamp().GetTimestamp(true));
+				  , (unsigned long long)when.GetTimestamp(true), (unsigned long long)packet->GetTimestamp().GetTimestamp(true));
 			delete packet;
 			lastDAQBufferActive_ = true;
 			return output;
@@ -124,7 +125,8 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 			delete packet;
 			packet = nullptr;
 
-			if (!done) {
+			if (!done)
+			{
 				TRACE(19, "DTC::GetData: Adding pointer %p to the list", (void*)lastReadPtr_);
 				output.push_back(DTC_DataBlock(reinterpret_cast<DTC_DataBlock::pointer_t*>(lastReadPtr_), sz2));
 			}
@@ -356,14 +358,14 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file)
 			TRACE(1, "DTC::VerifySimFileInDTC - before read for DAQ ");
 			auto sts = device_.read_data(DTC_DMA_Engine_DAQ, reinterpret_cast<void**>(&buffer), tmo_ms);
 			size_t readSz = *(reinterpret_cast<uint64_t*>(buffer));
-			size_t readExclusiveByteCount = *(reinterpret_cast<uint64_t*>(buffer) + 1);
-			TRACE(1, "DTC::VerifySimFileInDTC - after read, sts=%d rdSz=%zu, rdEBC=%zu", sts, readSz, readExclusiveByteCount);
+			TRACE(1, "DTC::VerifySimFileInDTC - after read, sz=%zu sts=%d rdSz=%zu", sz, sts, readSz);
 
-			if (static_cast<size_t>(sts) != sz) { return false; }
+			// DMA engine strips off leading 64-bit word
+			if (static_cast<size_t>(sts) - sizeof(uint64_t) != sz) { return false; }
 
-			for (size_t ii = 0; ii < sz; ++ii)
+			for (size_t ii = 0; ii < sts; ++ii)
 			{
-				if (buffer[ii] != buf[ii])
+				if (buffer[ii] != buf[ii + 8])
 				{
 					delete[] buf;
 					is.close();
@@ -462,7 +464,7 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 	if (nextReadPtr_ != nullptr)
 	{
 		TRACE(19, "DTC::ReadNextDAQPacket BEFORE BUFFER CHECK nextReadPtr_=%p *nextReadPtr_=0x%08x"
-			, (void*)nextReadPtr_, *(uint16_t*)nextReadPtr_);
+			  , (void*)nextReadPtr_, *(uint16_t*)nextReadPtr_);
 	}
 	else
 	{
@@ -491,7 +493,7 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 		// MUST BE ABLE TO HANDLE daqbuffer_==nullptr OR retry forever?
 		nextReadPtr_ = &daqbuffer_.back()[0];
 		TRACE(19, "DTC::ReadNextDAQPacket nextReadPtr_=%p *nextReadPtr_=0x%08x lastReadPtr_=%p"
-			, (void*)nextReadPtr_, *(unsigned*)nextReadPtr_, (void*)lastReadPtr_);
+			  , (void*)nextReadPtr_, *(unsigned*)nextReadPtr_, (void*)lastReadPtr_);
 		void* bufferIndexPointer = static_cast<uint8_t*>(nextReadPtr_) + 2;
 		if (nextReadPtr_ == oldBufferPtr && bufferIndex_ == *static_cast<uint32_t*>(bufferIndexPointer))
 		{
@@ -626,7 +628,7 @@ int DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
 	else
 	{
 		TRACE(16, "DTC::ReadDataPacket buffer_=%p errorCode=%d *buffer_=0x%08x"
-			, (void*)buffer, errorCode, *(unsigned*)buffer);
+			  , (void*)buffer, errorCode, *(unsigned*)buffer);
 		if (channel == DTC_DMA_Engine_DAQ)
 		{
 			daqbuffer_.push_back(buffer);

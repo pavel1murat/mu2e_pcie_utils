@@ -328,15 +328,14 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 		memcpy(data, buffer, bytes);
 		unsigned long arg = (chn << 24) | (bytes & 0xffffff);// THIS OBIVOUSLY SHOULD BE A MACRO
 
-		int retry = 5;
+		int retry = 15;
 		do
 		{
 			retsts = ioctl(devfd_, M_IOC_BUF_XMIT, arg);
 			if (retsts != 0)
 			{
 				perror("M_IOC_BUF_XMIT");
-				if (retsts != -EAGAIN) retry = 0;
-				else usleep(10000);
+				usleep(50000);
 			} // exit(1); } // Take out the exit call for now
 			retry--;
 		} while (retry > 0 && retsts != 0);
