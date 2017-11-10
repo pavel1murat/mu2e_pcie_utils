@@ -339,10 +339,13 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 				else usleep(10000);
 			} // exit(1); } // Take out the exit call for now
 			retry--;
-		} while (retry > 0 && retsts < 0);
+		} while (retry > 0 && retsts != 0);
 // increment our cached info
-		mu2e_channel_info_[chn][dir].swIdx
-			= idx_add(mu2e_channel_info_[chn][dir].swIdx, 1, chn, dir);
+		if (retsts == 0)
+		{
+			mu2e_channel_info_[chn][dir].swIdx
+				= idx_add(mu2e_channel_info_[chn][dir].swIdx, 1, chn, dir);
+		}
 	}
 #endif
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
