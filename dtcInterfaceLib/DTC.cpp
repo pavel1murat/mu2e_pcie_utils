@@ -358,7 +358,6 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file)
 			size_t readExclusiveByteCount = *(reinterpret_cast<uint64_t*>(buffer) + 1);
 			TRACE(1, "DTC::VerifySimFileInDTC - after read, sts=%d rdSz=%zu, rdEBC=%zu", sts, readSz, readExclusiveByteCount);
 
-
 			if (static_cast<size_t>(sts) != sz) { return false; }
 
 			for (size_t ii = 0; ii < sz; ++ii)
