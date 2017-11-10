@@ -295,6 +295,9 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool o
 		TRACE(0, "DTC::WriteSimFileToDTC FAILED after 5 attempts! ABORTING!");
 		exit(4);
 	}
+	else {
+	TRACE(2, "DTC::WriteSimFileToDTC Took %d attempts to write file",retryCount);
+}
 
 	SetDetectorEmulatorInUse();
 	TRACE(4, "DTC::WriteSimFileToDTC END");
