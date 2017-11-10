@@ -346,6 +346,7 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file)
 			n++;
 			TRACE(10, "DTC::VerifySimFileInDTC: totalSize is now %lu, n is now %lu", static_cast<unsigned long>(totalSize), static_cast<unsigned long>(n));
 			//WriteDetectorEmulatorData(buf, static_cast<size_t>(sz));
+			DisableDetectorEmulator();
 			SetDetectorEmulationDMACount(1);
 			EnableDetectorEmulator();
 
@@ -353,6 +354,10 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file)
 			auto tmo_ms = 1500;
 			TRACE(1, "DTC::VerifySimFileInDTC - before read for DAQ ");
 			auto sts = device_.read_data(DTC_DMA_Engine_DAQ, reinterpret_cast<void**>(&buffer), tmo_ms);
+			size_t readSz = *(reinterpret_cast<uint64_t*>(buffer));
+			size_t readExclusiveByteCount = *(reinterpret_cast<uint64_t*>(buffer) + 1);
+			TRACE(1, "DTC::VerifySimFileInDTC - after read, sts=%d rdSz=%zu, rdEBC=%zu", sts, readSz, readExclusiveByteCount);
+
 
 			if (static_cast<size_t>(sts) != sz) { return false; }
 
