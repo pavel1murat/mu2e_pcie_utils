@@ -376,7 +376,7 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file)
 				auto r = *(reinterpret_cast<uint64_t*>(buf) +ii + 1);
 				if (l != r)
 				{
-				TRACE(1, "DTC::VerifySimFileInDTC Byte %zu: Expected 0x%llx, but got 0x%llx. Returning False!", ii, 
+				TRACE(1, "DTC::VerifySimFileInDTC Buffer %d Byte %zu: Expected 0x%llx, but got 0x%llx. Returning False!", n, ii, 
 						static_cast<unsigned long long>(r), static_cast<unsigned long long>(l));
 					delete[] buf;
 					is.close();
