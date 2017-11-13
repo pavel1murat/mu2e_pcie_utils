@@ -370,7 +370,7 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file)
 			TRACE(6, "DTC::VerifySimFileInDTC - Checking buffer contents");
 			size_t cnt = sts % sizeof(uint64_t) == 0 ? sts / sizeof(uint64_t) : 1 + (sts / sizeof(uint64_t));
 
-			for (size_t ii = 0; ii < cnt; ii+=8)
+			for (size_t ii = 0; ii < cnt; ++ii)
 			{
 				auto l = *(reinterpret_cast<uint64_t*>(buffer) + ii);
 				auto r = *(reinterpret_cast<uint64_t*>(buf) +ii + 1);
