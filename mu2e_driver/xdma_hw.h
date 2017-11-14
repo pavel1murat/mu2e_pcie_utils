@@ -45,63 +45,69 @@ extern "C" {
 #define DMA_SIZE                (MAX_DMA_ENGINES * DMA_ENGINE_PER_SIZE)
 
 
-
+#pragma pack(push, 1)
+	/// <summary>
+	/// Server to Card Buffer Descriptor
+	/// </summary>
 	typedef struct
 	{
-		u32    ByteCount : 20;
-		u32    Rsvd : 4;
-		u32    Complete : 1;
-		u32    Short : 1;
-		u32    b26 : 1;
-		u32    b27 : 1;
-		u32    Error : 1;
-		u32    b29 : 1;
-		u32    b30 : 1;
-		u32    b31 : 1;
-		u64    UserControl;
-		u32    CardAddress;
-		u32    ByteCnt : 20;
-		u32    Rsvd_ : 4;
-		u32    IrqComplete : 1;
-		u32    IrqError : 1;
-		u32    b26_ : 1;
-		u32    b27_ : 1;
-		u32    b28_ : 1;
-		u32    b29_ : 1;
-		u32    StartOfPkt : 1;
-		u32    EndOfPkt : 1;
-		u64    SystemAddress;
-		u32    NextDescPtr;
-	} __attribute__((packed)) mu2e_buffdesc_S2C_t;
+		u32    ByteCount : 20; ///< Size of the Descriptor, as probided by the operating system
+		u32    Rsvd : 4; ///< Reserved bits
+		u32    Complete : 1; ///< Set when the descriptor completes without error
+		u32    Short : 1; ///< Set when the descriptor completed with a byte count less than the requested byte count
+		u32    b26 : 1; ///< Reserved bit
+		u32    b27 : 1; ///< Reserved bit
+		u32    Error : 1;///< Set when the descriptor completes due to an error
+		u32    b29 : 1; ///< Reserved bit
+		u32    b30 : 1; ///< Reserved bit
+		u32    b31 : 1; ///< Reserved bit
+		u64    UserControl; ///< Contains application-specific control information
+		u32    CardAddress; ///< Card starting address for this descriptor in card memory
+		u32    ByteCnt : 20; ///< Control and Status: Control: Byte count for descriptor, status: Byte count transferred by DMA engine
+		u32    Rsvd_ : 4; ///< Reserved bits
+		u32    IrqComplete : 1; ///< Generate an interrupt when this descriptor completes without error
+		u32    IrqError : 1; ///< Generate an interrupt when this descriptor completes with error
+		u32    b26_ : 1; ///< Reserved bit
+		u32    b27_ : 1; ///< Reserved bit
+		u32    b28_ : 1; ///< Reserved bit
+		u32    b29_ : 1; ///< Reserved bit
+		u32    StartOfPkt : 1; ///< Set if this descriptor contains the start of a packet
+		u32    EndOfPkt : 1; ///< Set if this descriptor contains the end of a packet
+		u64    SystemAddress; ///< System starting address for trhis descriptor
+		u32    NextDescPtr; ///< 32-byte address aligned pointer to the next descriptor in the chain, or 0x0 if this is the last descriptor
+	} mu2e_buffdesc_S2C_t;
 
+	/// <summary>
+	/// Card to Server Buffer descriptor
+	/// </summary>
 	typedef struct
 	{
-		u32    ByteCount : 20;
-		u32    Rsvd : 4;
-		u32    Complete : 1;
-		u32    Short : 1;
-		u32    Lo0 : 1;
-		u32    Hi0 : 1;
-		u32    Error : 1;
-		u32    b29 : 1;
-		u32    b30 : 1;
-		u32    b31 : 1;
-		u64    UserStatus;
-		u32    CardAddress;
-		u32    RsvdByteCnt : 20;
-		u32    Rsvd_ : 4;
-		u32    IrqComplete : 1;
-		u32    IrqError : 1;
-		u32    b26_ : 1;
-		u32    b27_ : 1;
-		u32    b28_ : 1;
-		u32    b29_ : 1;
-		u32    b30_ : 1;
-		u32    b31_ : 1;
-		u64    SystemAddress;
-		u32    NextDescPtr;
-	} __attribute__((packed)) mu2e_buffdesc_C2S_t;
-
+		u32    ByteCount : 20; ///< Size of the Descriptor, as probided by the operating system
+		u32    Rsvd : 4; ///< Reserved bits
+		u32    Complete : 1; ///< Set when the descriptor completes without an error
+		u32    Short : 1; ///< Set when the descriptor completed with a byte count less than the requested byte count
+		u32    Lo0 : 1; ///< Set if C2SDescUserStatus[31:0]==0
+		u32    Hi0 : 1; ///< Set if C2SDescUserStatus[63:32]==0
+		u32    Error : 1; ///< Set when the descriptor completes due to an error
+		u32    b29 : 1; ///< Reserved bit
+		u32    b30 : 1; ///< Reserved bit
+		u32    b31 : 1; ///< Reserved bit
+		u64    UserStatus; ///< Contains application-specific status information
+		u32    CardAddress; ///< Card starting address for this descriptor in card memory
+		u32    RsvdByteCnt : 20; ///< The number of bytes the DMA engine wrote into the Descriptor
+		u32    Rsvd_ : 4; ///< Reserved bits
+		u32    IrqComplete : 1; ///< Flag to indicate that the IRQ has been serviced
+		u32    IrqError : 1; ///< Flag to indicate that there was an IRQ error
+		u32    b26_ : 1; ///< Reserved bit
+		u32    b27_ : 1; ///< Reserved bit
+		u32    b28_ : 1; ///< Reserved bit
+		u32    b29_ : 1; ///< Reserved bit
+		u32    b30_ : 1; ///< Reserved bit
+		u32    b31_ : 1; ///< Reserved bit
+		u64    SystemAddress; ///< System starting address for trhis descriptor
+		u32    NextDescPtr; ///< 32-byte address aligned pointer to the next descriptor in the chain, or 0x0 if this is the last descriptor
+	} mu2e_buffdesc_C2S_t;
+#pragma pack(pop)
 
 
 #ifdef __KERNEL__

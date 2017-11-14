@@ -40,80 +40,101 @@
 #define MU2E_DEV_FILE       "mu2e"
 #define MU2E_MAX_CHANNELS	2
 
+/// <summary>
+/// Data Header Packet definition, hardware view
+/// </summary>
 union DataHeaderPacket
 {
+	/// <summary>
+	/// Raw packet
+	/// </summary>
 	struct
 	{
-		uint16_t w0;
-		uint16_t w1;
-		uint16_t w2;
-		uint16_t w3;
-		uint16_t w4;
-		uint16_t w5;
-		uint16_t w6;
-		uint16_t w7;
+		uint16_t w0; ///< Word 0
+		uint16_t w1; ///< Word 1
+		uint16_t w2; ///< Word 2
+		uint16_t w3; ///< Word 3
+		uint16_t w4; ///< Word 4
+		uint16_t w5; ///< Word 5
+		uint16_t w6; ///< Word 6
+		uint16_t w7; ///< Word 7
 	} w;
+	/// <summary>
+	/// Decoded packet
+	/// </summary>
 	struct
 	{
-		uint16_t TransferByteCount;
+		uint16_t TransferByteCount; ///< Block Byte count
 
-		uint16_t Resv1 : 4;
-		uint16_t PacketType : 4;
-		uint16_t RingID : 4;
-		uint16_t Resv0 : 3;
-		uint16_t Valid : 1;
+		uint16_t Resv1 : 4; ///< Reserved
+		uint16_t PacketType : 4; ///< Type of packet
+		uint16_t RingID : 4; ///< Ring ID of packet
+		uint16_t Resv0 : 3; ///< Reserved
+		uint16_t Valid : 1; ///< Is the packet valid?
 
-		uint16_t PacketCount : 8;
-		uint16_t Resv2 : 8;
-		uint16_t ts10;
-		uint16_t ts32;
-		uint16_t ts54;
-		uint16_t data32;
-		uint16_t data54;
+		uint16_t PacketCount : 8; ///< Packet count requested
+		uint16_t Resv2 : 8; ///< Reserved
+		uint16_t ts10; ///< Timestamp bytes 1 and 2 (Least significant)
+		uint16_t ts32; ///< Timestamp bytes 3 and 4
+		uint16_t ts54; ///< Timestamp bytes 5 and 6 (Most significant)
+		uint16_t data32; ///< Data bytes 1 and 2
+		uint16_t data54; ///< Data bytes 3 and 4
 	} s;
 };
+/// <summary>
+/// Data Request Packet, hardware view
+/// </summary>
 union DataRequestPacket
 {
+	/// <summary>
+	/// Raw Packet
+	/// </summary>
 	struct
 	{
-		uint16_t w0;
-		uint16_t w1;
-		uint16_t w2;
-		uint16_t w3;
-		uint16_t w4;
-		uint16_t w5;
-		uint16_t w6;
-		uint16_t w7;
+		uint16_t w0; ///< Word 0
+		uint16_t w1; ///< Word 1
+		uint16_t w2; ///< Word 2
+		uint16_t w3; ///< Word 3
+		uint16_t w4; ///< Word 4
+		uint16_t w5; ///< Word 5
+		uint16_t w6; ///< Word 6
+		uint16_t w7; ///< Word 7
 	} w;
+	/// <summary>
+	/// Decoded packet
+	/// </summary>
 	struct
 	{
-		uint16_t TransferByteCount;
+		uint16_t TransferByteCount; ///< Block Byte count
 
-		uint16_t Resv1 : 4;
-		uint16_t PacketType : 4;
-		uint16_t RingID : 4;
-		uint16_t Resv0 : 3;
-		uint16_t Valid : 1;
+		uint16_t Resv1 : 4; ///< Reserved
+		uint16_t PacketType : 4; ///< Type of packet
+		uint16_t RingID : 4; ///< Ring ID of packet
+		uint16_t Resv0 : 3; ///< Reserved
+		uint16_t Valid : 1; ///< Is the packet valid?
 
-		uint16_t PacketCount : 8;
-		uint16_t Resv2 : 8;
-		uint16_t ts10;
-		uint16_t ts32;
-		uint16_t ts54;
-		uint16_t data32;
-		uint16_t data54;
+		uint16_t PacketCount : 8; ///< Packet count requested
+		uint16_t Resv2 : 8; ///< Reserved
+		uint16_t ts10; ///< Timestamp bytes 1 and 2 (Least significant)
+		uint16_t ts32; ///< Timestamp bytes 3 and 4
+		uint16_t ts54; ///< Timestamp bytes 5 and 6 (Most significant)
+		uint16_t data32; ///< Data bytes 1 and 2
+		uint16_t data54; ///< Data bytes 3 and 4
 	} s;
 };
+/// <summary>
+/// DataPacket definition, hardware view
+/// </summary>
 struct DataPacket
 {
-	uint16_t data10;
-	uint16_t data32;
-	uint16_t data54;
-	uint16_t data76;
-	uint16_t data98;
-	uint16_t dataBA;
-	uint16_t dataDC;
-	uint16_t dataFE;
+	uint16_t data10;///< Bytes 1 and 2 of the Data Packet
+	uint16_t data32;///< Bytes 3 and 4 of the Data Packet
+	uint16_t data54;///< Bytes 5 and 6 of the Data Packet
+	uint16_t data76;///< Bytes 7 and 8 of the Data Packet
+	uint16_t data98;///< Bytes 9 and 10 of the Data Packet
+	uint16_t dataBA;///< Bytes 11 and 12 of the Data Packet
+	uint16_t dataDC;///< Bytes 13 and 14 of the Data Packet
+	uint16_t dataFE;  ///< Bytes 15 and 16 of the Data Packet
 };
 
 // Used in kernel mmap function
@@ -169,12 +190,14 @@ NOTE: for _IOR, _IOW: the size is only for the data at the address used in the
 #define M_IOC_DUMP           _IO  ( MU2E_IOC_MAGIC,14 )
 #define M_IOC_BUF_XMIT       _IO  ( MU2E_IOC_MAGIC,16 )
 
-
+/// <summary>
+/// Register Access information
+/// </summary>
 typedef struct
 {
-	int reg_offset;
-	int access_type;		// 0=read, 1=write
-	unsigned val;
+	int reg_offset; ///< Offset of register from BAR0
+	int access_type;		///< 0=read, 1=write
+	unsigned val;	///< Value of register
 } m_ioc_reg_access_t;
 
 /** Structure used in IOCTL to start/stop a test & to get current test state */
@@ -206,6 +229,9 @@ typedef struct
 	int      InitFCPH;      /**< Initial FC Credits for Posted Data */
 } m_ioc_pcistate_t;
 
+/// <summary>
+/// Structure used in IOCTL to get DMA Engine state from driver
+/// </summary>
 typedef struct
 {
 	int      Engine;        /**< Engine Number */
@@ -219,6 +245,9 @@ typedef struct
 	unsigned TestMode;      /**< Current Test Mode */
 } m_ioc_engstate_t;
 
+/// <summary>
+/// Structure used in IOCTL to get DMA statistics from driver (single data point)
+/// </summary>
 typedef struct  /* MAYBE THIS SHOULD GO ELSEWHERE??? */
 {
 	int      Engine;        /**< Engine Number */
@@ -227,12 +256,18 @@ typedef struct  /* MAYBE THIS SHOULD GO ELSEWHERE??? */
 	unsigned LWT;           /**< Last Wait Time */
 } DMAStatistics;
 
+/// <summary>
+/// Structure used in IOCTL to get DMA statistics from driver
+/// </summary>
 typedef struct
 {
 	int            Count;   /**< Number of statistics captures */
 	DMAStatistics *engptr;  /**< Pointer to array to store statistics */
 } m_ioc_engstats_t;
 
+/// <summary>
+/// Structure used in IOCTL to get transmit and receive statistics from driver
+/// </summary>
 typedef struct
 {
 	unsigned int LTX;           /**< Last TX Byte Rate */
@@ -282,15 +317,18 @@ enum { MU2E_MAP_BUFF, MU2E_MAP_META };
 
 #define DTC_Register_Engine_Control( eng, dir ) (((eng*0x100)+(dir*0x2000))+0x4)
 
+/// <summary>
+/// Structure used in IOCTL to get information about DMA transfer buffer status
+/// </summary>
 typedef struct
 {
-	int chn;
-	int dir;
-	int	tmo_ms;
-	unsigned buff_size;
-	unsigned num_buffs;
-	unsigned hwIdx;
-	unsigned swIdx;
+	int chn; ///< Channel (DAQ or DCS)
+	int dir; ///< Direction (C2S or S2C)
+	int	tmo_ms; ///< Timeout for buffers
+	unsigned buff_size; ///< Size of the buffers in this chn/dir
+	unsigned num_buffs; ///< Number of buffers in this chn/dir
+	unsigned hwIdx; ///< Current buffer index for the hardware
+	unsigned swIdx; ///< Current buffer index for the software
 } m_ioc_get_info_t;
 
 
@@ -298,7 +336,6 @@ typedef struct
    userspace and kernel land. For userspace the variable is defined in
    the mu2edev class (and therefore the using namsspace
  */
- // ReSharper disable once CppRedundantInlineSpecifier
 static inline unsigned mu2e_chn_info_delta_(int chn, int dir, m_ioc_get_info_t(*mu2e_channel_info_)[MU2E_MAX_CHANNELS][2])
 {
 	unsigned hw = (*mu2e_channel_info_)[chn][dir].hwIdx;

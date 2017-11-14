@@ -50,10 +50,8 @@ mu2esim::mu2esim()
 	swIdx_[1] = 0;
 	for (unsigned ii = 0; ii < SIM_BUFFCOUNT; ++ii)
 	{
-		// ReSharper disable CppNonReclaimedResourceAcquisition
 		dmaData_[0][ii] = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
 		dmaData_[1][ii] = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
-		// ReSharper restore CppNonReclaimedResourceAcquisition
 	}
 	release_all(0);
 	release_all(1);
@@ -124,7 +122,7 @@ int mu2esim::init(DTCLib::DTC_SimMode mode)
 	registers_[DTCLib::DTC_Register_SERDESRXStatus] = 0x0; // SERDES RX Status Nominal
 	registers_[DTCLib::DTC_Register_SERDESResetDone] = 0x7F; // SERDES Resets Done
 	registers_[DTCLib::DTC_Register_SERDESEyescanData] = 0x0; // No Eyescan Error
-	registers_[DTCLib::DTC_Register_SERDESRXCDRLock] = 0x7F; // RX CDR Locked
+	registers_[DTCLib::DTC_Register_SFPSERDESStatus] = 0x7F00007F; // RX CDR Locked
 	registers_[DTCLib::DTC_Register_DMATimeoutPreset] = 0x800; // DMA Timeout Preset
 	registers_[DTCLib::DTC_Register_ROCReplyTimeout] = 0x200000; // ROC Timeout Preset
 	registers_[DTCLib::DTC_Register_ROCReplyTimeoutError] = 0x0; // ROC Timeout Error
@@ -190,9 +188,9 @@ int mu2esim::init(DTCLib::DTC_SimMode mode)
 	registers_[DTCLib::DTC_Register_TransmitPacketCountDataRing4] = 0x0;
 	registers_[DTCLib::DTC_Register_TransmitPacketCountDataRing5] = 0x0;
 	registers_[DTCLib::DTC_Register_TransmitPacketCountDataCFO] = 0x0;
-	registers_[DTCLib::DTC_Register_DDRDataStartAddress] = 0x0;
-	registers_[DTCLib::DTC_Register_DDRDataEndAddress] = 0x0;
-	registers_[DTCLib::DTC_Register_DDRGasGuage] = 0x0;
+	registers_[DTCLib::DTC_Register_DetEmulationDataStartAddress] = 0x0;
+	registers_[DTCLib::DTC_Register_DetEmulationDataEndAddress] = 0x0;
+	registers_[DTCLib::DTC_Register_EthernetFramePayloadSize] = 0x5D4;
 	registers_[DTCLib::DTC_Register_FPGAProgramData] = 0x0;
 	registers_[DTCLib::DTC_Register_FPGAPROMProgramStatus] = 0x1;
 	registers_[DTCLib::DTC_Register_FPGACoreAccess] = 0x0; // FPGA Core Access OK
@@ -272,7 +270,7 @@ int mu2esim::write_data(int chn, void* buffer, size_t bytes)
 			auto writeBytes = *reinterpret_cast<uint64_t*>(buffer) - sizeof(uint64_t);
 			auto ptr = reinterpret_cast<char*>(buffer) + (sizeof(uint64_t) / sizeof(char));
 			ddrFile_.write(ptr, writeBytes);
-			registers_[DTCLib::DTC_Register_DDRDataEndAddress] += writeBytes;
+			registers_[DTCLib::DTC_Register_DetEmulationDataEndAddress] += static_cast<uint32_t>(writeBytes);
 			ddrFile_.flush();
 			return 0;
 		}
@@ -381,9 +379,9 @@ int mu2esim::write_register(uint16_t address, int tmo_ms, uint32_t data)
 	registers_[address] = data;
 	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
 	TRACE(18, "mu2esim::write_register took %lli milliseconds out of tmo_ms=%i", static_cast<long long>(duration), tmo_ms);
-	if (address == 0x9100) // DTC Control
+	std::bitset<32> dataBS(data);
+	if (address == DTCLib::DTC_Register_DTCControl)
 	{
-		std::bitset<32> dataBS(data);
 		auto detectorEmulationMode = (registers_[DTCLib::DTC_Register_DetEmulationControl0] & 0x3) != 0;
 		if (dataBS[30] == 1 && !detectorEmulationMode)
 		{
@@ -414,6 +412,19 @@ int mu2esim::write_register(uint16_t address, int tmo_ms, uint32_t data)
 			ddrFile_.open("mu2esim.bin", std::ios::trunc | std::ios::binary | std::ios::out | std::ios::in);
 			eventBegin_ = ddrFile_.tellp();
 		}
+	}
+	if (address == DTCLib::DTC_Register_DetEmulationControl0)
+	{
+		if (dataBS[0] == 0)
+		{
+			ddrFile_.close();
+			ddrFile_.open("mu2esim.bin", std::ios::trunc | std::ios::binary | std::ios::out | std::ios::in);
+			eventBegin_ = ddrFile_.tellp();
+		}
+	}
+	if (address == DTCLib::DTC_Register_DetEmulationDataStartAddress)
+	{
+		ddrFile_.seekg(data);
 	}
 	return 0;
 }
@@ -512,19 +523,18 @@ unsigned mu2esim::delta_(int chn, int dir)
 		return ((sw >= hw)
 				? SIM_BUFFCOUNT - (sw - hw)
 				: hw - sw);
-	return 0;
 }
 
 void mu2esim::clearBuffer_(int chn, bool increment)
 {
-	/*
 	// Clear the buffer:
+	/*
 	TRACE(17, "mu2esim::clearBuffer_: Clearing output buffer");
 	if (increment)
 	{
 		hwIdx_[chn] = (hwIdx_[chn] + 1) % SIM_BUFFCOUNT;
 	}
-	//memset(dmaData_[chn][hwIdx_[chn]], 0, sizeof(mu2e_databuff_t));
+	memset(dmaData_[chn][hwIdx_[chn]], 0, sizeof(mu2e_databuff_t));
 	*/
 	TRACE(17, "mu2esim::clearBuffer_(%i, %u): NOP", chn, increment);
 }
@@ -634,9 +644,7 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 		packet[10] = 2;
 		packet[11] = 2;
 		packet[12] = static_cast<uint8_t>(3 * simIndex_[ring][roc]);
-		// ReSharper disable CppRedundantParentheses
 		packet[13] = static_cast<uint8_t>((3 * simIndex_[ring][roc]) >> 8);
-		// ReSharper restore CppRedundantParentheses
 		packet[14] = 0;
 		packet[15] = 0;
 
@@ -647,9 +655,7 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 	case DTCLib::DTC_SimMode_Calorimeter:
 	{
 		packet[0] = static_cast<uint8_t>(simIndex_[ring][roc]);
-		// ReSharper disable CppRedundantParentheses
 		packet[1] = static_cast<uint8_t>((simIndex_[ring][roc] >> 8) & 0xF) + ((simIndex_[ring][roc] & 0xF) << 4);
-		// ReSharper restore CppRedundantParentheses
 		packet[2] = 0x0; // No TDC value!
 		packet[3] = 0x0;
 		packet[4] = static_cast<uint8_t>(nSamples);
@@ -661,9 +667,7 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 		packet[10] = 2;
 		packet[11] = 2;
 		packet[12] = static_cast<uint8_t>(3 * simIndex_[ring][roc]);
-		// ReSharper disable CppRedundantParentheses
 		packet[13] = static_cast<uint8_t>((3 * simIndex_[ring][roc]) >> 8);
-		// ReSharper restore CppRedundantParentheses
 		packet[14] = 4;
 		packet[15] = 4;
 
@@ -674,27 +678,19 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 		for (auto i = 1; i < nPackets; ++i)
 		{
 			packet[0] = static_cast<uint8_t>(samplesProcessed * simIndex_[ring][roc]);
-			// ReSharper disable CppRedundantParentheses
 			packet[1] = static_cast<uint8_t>((samplesProcessed * simIndex_[ring][roc]) >> 8);
-			// ReSharper restore CppRedundantParentheses
 			packet[2] = static_cast<uint8_t>(samplesProcessed + 1);
 			packet[3] = static_cast<uint8_t>(samplesProcessed + 1);
 			packet[4] = static_cast<uint8_t>((2 + samplesProcessed) * simIndex_[ring][roc]);
-			// ReSharper disable CppRedundantParentheses
 			packet[5] = static_cast<uint8_t>(((2 + samplesProcessed) * simIndex_[ring][roc]) >> 8);
-			// ReSharper restore CppRedundantParentheses
 			packet[6] = static_cast<uint8_t>(samplesProcessed + 3);
 			packet[7] = static_cast<uint8_t>(samplesProcessed + 3);
 			packet[8] = static_cast<uint8_t>((4 + samplesProcessed) * simIndex_[ring][roc]);
-			// ReSharper disable CppRedundantParentheses
 			packet[9] = static_cast<uint8_t>(((4 + samplesProcessed) * simIndex_[ring][roc]) >> 8);
-			// ReSharper restore CppRedundantParentheses
 			packet[10] = static_cast<uint8_t>(samplesProcessed + 5);
 			packet[11] = static_cast<uint8_t>(samplesProcessed + 5);
 			packet[12] = static_cast<uint8_t>((6 + samplesProcessed) * simIndex_[ring][roc]);
-			// ReSharper disable CppRedundantParentheses
 			packet[13] = static_cast<uint8_t>(((6 + samplesProcessed) * simIndex_[ring][roc]) >> 8);
-			// ReSharper restore CppRedundantParentheses
 			packet[14] = static_cast<uint8_t>(samplesProcessed + 7);
 			packet[15] = static_cast<uint8_t>(samplesProcessed + 7);
 

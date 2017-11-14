@@ -61,7 +61,7 @@ int main(int argc
 		}
 	}
 
-	auto thisDTC = new DTCLib::DTC_Registers();
+	auto thisDTC = new DTCLib::DTC_Registers("", DTCLib::DTC_SimMode_Disabled, 0x1, true);
 
 	auto cols = 80;
 	auto lines = 24;

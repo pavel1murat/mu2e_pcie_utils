@@ -12,7 +12,7 @@
 #endif
 #define TRACE_NAME "MU2EDEV"
 
-DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, unsigned rocMask) : device_(), simMode_(mode), dmaSize_(16)
+DTCLib::DTC_Registers::DTC_Registers(std::string expectedDesignVersion, DTC_SimMode mode, unsigned rocMask, bool skipInit) : device_(), simMode_(mode), dmaSize_(16)
 {
 	for (auto ii = 0; ii < 6; ++ii)
 	{
@@ -74,8 +74,7 @@ DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, unsigned rocMask) : devic
 			break;
 		}
 	}
-
-	SetSimMode(simMode_, rocMask);
+	SetSimMode(expectedDesignVersion, simMode_, rocMask, skipInit);
 }
 
 DTCLib::DTC_Registers::~DTC_Registers()
@@ -87,10 +86,16 @@ DTCLib::DTC_Registers::~DTC_Registers()
 	device_.close();
 }
 
-DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode, unsigned rocMask)
+DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(std::string expectedDesignVersion,DTC_SimMode mode, unsigned rocMask, bool skipInit)
 {
 	simMode_ = mode;
 	device_.init(simMode_);
+	if (expectedDesignVersion != "" && expectedDesignVersion != ReadDesignVersion())
+	{
+		throw new DTC_WrongVersionException(expectedDesignVersion, ReadDesignVersion());
+	}
+
+	if (skipInit) return simMode_;
 
 	bool useTiming = simMode_ == DTC_SimMode_Disabled;
 	for (auto ring : DTC_Rings)
@@ -114,7 +119,8 @@ DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(DTC_SimMode mode, unsigned
 		// 	  DisableRing(ring);
 		// 	}
 		//	EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
-		for (auto ring : DTC_Rings) {
+		for (auto ring : DTC_Rings)
+		{
 			if (simMode_ == DTC_SimMode_Loopback)
 			{
 				SetSERDESLoopbackMode(ring, DTC_SERDESLoopbackMode_NearPCS);
@@ -681,6 +687,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESLoopbackEnable(
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": " + DTC_SERDESLoopbackModeConverter(ReadSERDESLoopback(r)).toString());
 	}
 	form.vals.push_back(std::string("CFO:    ") + DTC_SERDESLoopbackModeConverter(ReadSERDESLoopback(DTC_Ring_CFO)).toString());
+	form.vals.push_back(std::string("EVB:    ") + DTC_SERDESLoopbackModeConverter(ReadSERDESLoopback(DTC_Ring_EVB)).toString());
 	return form;
 }
 
@@ -701,7 +708,8 @@ bool DTCLib::DTC_Registers::WaitForSERDESOscillatorInitializationComplete(double
 {
 	auto start_time = std::chrono::steady_clock::now();
 	while (!ReadSERDESOscillatorInitializationComplete() &&
-		   std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::steady_clock::now() - start_time).count() < max_wait) {
+		   std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::steady_clock::now() - start_time).count() < max_wait)
+	{
 		usleep(1000);
 	}
 	return ReadSERDESOscillatorInitializationComplete();
@@ -722,7 +730,8 @@ bool DTCLib::DTC_Registers::WaitForDDROscillatorInitializationComplete(double ma
 {
 	auto start_time = std::chrono::steady_clock::now();
 	while (!ReadDDROscillatorInitializationComplete() &&
-		   std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::steady_clock::now() - start_time).count() < max_wait) {
+		   std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::steady_clock::now() - start_time).count() < max_wait)
+	{
 		usleep(1000);
 	}
 	return ReadDDROscillatorInitializationComplete();
@@ -814,6 +823,10 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatRingEnable()
 		auto ce = ReadRingEnabled(DTC_Ring_CFO);
 		form.vals.push_back(std::string("CFO:    [") + "TX:[" + (ce.TransmitEnable ? "x" : " ") + "], " + "RX:[" + (ce.ReceiveEnable ? "x" : " ") + "]]");
 	}
+	{
+		auto ee = ReadRingEnabled(DTC_Ring_EVB);
+		form.vals.push_back(std::string("EVB:    [") + "TX:[" + (ee.TransmitEnable ? "x" : " ") + "], " + "RX:[" + (ee.ReceiveEnable ? "x" : " ") + "]]");
+	}
 	return form;
 }
 
@@ -856,6 +869,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESReset()
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + (ReadResetSERDES(r) ? "x" : " ") + "]");
 	}
 	form.vals.push_back(std::string("CFO:    [") + (ReadResetSERDES(DTC_Ring_CFO) ? "x" : " ") + "]");
+	form.vals.push_back(std::string("EVB:    [") + (ReadResetSERDES(DTC_Ring_EVB) ? "x" : " ") + "]");
 	return form;
 }
 
@@ -877,6 +891,8 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESRXDisparityErro
 	}
 	auto ce = ReadSERDESRXDisparityError(DTC_Ring_CFO);
 	form.vals.push_back(std::string("CFO:    [") + to_string(ce.GetData()[1]) + "," + to_string(ce.GetData()[0]) + "]");
+	auto ee = ReadSERDESRXDisparityError(DTC_Ring_EVB);
+	form.vals.push_back(std::string("EVB:    [") + to_string(ee.GetData()[1]) + "," + to_string(ee.GetData()[0]) + "]");
 	return form;
 }
 
@@ -898,6 +914,8 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESRXCharacterNotI
 	}
 	auto ce = ReadSERDESRXCharacterNotInTableError(DTC_Ring_CFO);
 	form.vals.push_back(std::string("CFO:    [") + to_string(ce.GetData()[1]) + "," + to_string(ce.GetData()[0]) + "]");
+	auto ee = ReadSERDESRXCharacterNotInTableError(DTC_Ring_EVB);
+	form.vals.push_back(std::string("EVB:    [") + to_string(ee.GetData()[1]) + "," + to_string(ee.GetData()[0]) + "]");
 	return form;
 }
 
@@ -917,6 +935,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESUnlockError()
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + (ReadSERDESUnlockError(r) ? "x" : " ") + "]");
 	}
 	form.vals.push_back(std::string("CFO:    [") + (ReadSERDESUnlockError(DTC_Ring_CFO) ? "x" : " ") + "]");
+	form.vals.push_back(std::string("EVB:    [") + (ReadSERDESUnlockError(DTC_Ring_EVB) ? "x" : " ") + "]");
 	return form;
 }
 
@@ -936,6 +955,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESPLLLocked()
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + (ReadSERDESPLLLocked(r) ? "x" : " ") + "]");
 	}
 	form.vals.push_back(std::string("CFO:    [") + (ReadSERDESPLLLocked(DTC_Ring_CFO) ? "x" : " ") + "]");
+	form.vals.push_back(std::string("EVB:    [") + (ReadSERDESPLLLocked(DTC_Ring_EVB) ? "x" : " ") + "]");
 	return form;
 }
 
@@ -966,6 +986,9 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESTXBufferStatus(
 	form.vals.push_back(std::string("CFO:    [")
 						+ (ReadSERDESOverflowOrUnderflow(DTC_Ring_CFO) ? "x" : " ") + ","
 						+ (ReadSERDESBufferFIFOHalfFull(DTC_Ring_CFO) ? "x" : " ") + "]");
+	form.vals.push_back(std::string("EVB:    [")
+						+ (ReadSERDESOverflowOrUnderflow(DTC_Ring_EVB) ? "x" : " ") + ","
+						+ (ReadSERDESBufferFIFOHalfFull(DTC_Ring_EVB) ? "x" : " ") + "]");
 	return form;
 }
 
@@ -985,10 +1008,14 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESRXBufferStatus(
 		auto re = ReadSERDESRXBufferStatus(r);
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": " + DTC_RXBufferStatusConverter(re).toString());
 	}
-	{
-		auto ce = ReadSERDESRXBufferStatus(DTC_Ring_CFO);
-		form.vals.push_back(std::string("CFO:    ") + DTC_RXBufferStatusConverter(ce).toString());
-	}
+
+	auto ce = ReadSERDESRXBufferStatus(DTC_Ring_CFO);
+	form.vals.push_back(std::string("CFO:    ") + DTC_RXBufferStatusConverter(ce).toString());
+
+
+	auto ee = ReadSERDESRXBufferStatus(DTC_Ring_EVB);
+	form.vals.push_back(std::string("EVB:    ") + DTC_RXBufferStatusConverter(ee).toString());
+
 	return form;
 }
 
@@ -1010,6 +1037,8 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESRXStatus()
 	}
 	auto ce = ReadSERDESRXStatus(DTC_Ring_CFO);
 	form.vals.push_back(std::string("CFO:    ") + DTC_RXStatusConverter(ce).toString());
+	auto ee = ReadSERDESRXStatus(DTC_Ring_EVB);
+	form.vals.push_back(std::string("EVB:    ") + DTC_RXStatusConverter(ee).toString());
 
 	return form;
 }
@@ -1030,6 +1059,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESResetDone()
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + (ReadResetSERDESDone(r) ? "x" : " ") + "]");
 	}
 	form.vals.push_back(std::string("CFO:    [") + (ReadResetSERDESDone(DTC_Ring_CFO) ? "x" : " ") + "]");
+	form.vals.push_back(std::string("EVB:    [") + (ReadResetSERDESDone(DTC_Ring_EVB) ? "x" : " ") + "]");
 	return form;
 }
 
@@ -1049,25 +1079,57 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESEyescanData()
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + (ReadSERDESEyescanError(r) ? "x" : " ") + "]");
 	}
 	form.vals.push_back(std::string("CFO:    [") + (ReadSERDESEyescanError(DTC_Ring_CFO) ? "x" : " ") + "]");
+	form.vals.push_back(std::string("EVB:    [") + (ReadSERDESEyescanError(DTC_Ring_EVB) ? "x" : " ") + "]");
 	return form;
 }
 
-// SERDES RX CDR Lock Register
+// SFP / SERDES Status Register
+
+bool DTCLib::DTC_Registers::ReadSERDESSFPPresent(const DTC_Ring_ID& ring)
+{
+	std::bitset<32> dataSet = ReadRegister_(DTC_Register_SFPSERDESStatus);
+	return dataSet[ring + 24];
+}
+
+bool DTCLib::DTC_Registers::ReadSERDESSFPLOS(const DTC_Ring_ID& ring)
+{
+	std::bitset<32> dataSet = ReadRegister_(DTC_Register_SFPSERDESStatus);
+	return dataSet[ring + 16];
+}
+
+bool DTCLib::DTC_Registers::ReadSERDESSFPTXFault(const DTC_Ring_ID& ring)
+{
+	std::bitset<32> dataSet = ReadRegister_(DTC_Register_SFPSERDESStatus);
+	return dataSet[ring + 8];
+}
+
+
 bool DTCLib::DTC_Registers::ReadSERDESRXCDRLock(const DTC_Ring_ID& ring)
 {
-	std::bitset<32> dataSet = ReadRegister_(DTC_Register_SERDESRXCDRLock);
+	std::bitset<32> dataSet = ReadRegister_(DTC_Register_SFPSERDESStatus);
 	return dataSet[ring];
 }
 
-DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESRXCDRLock()
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSFPSERDESStatus()
 {
-	auto form = CreateFormatter(DTC_Register_SERDESRXCDRLock);
-	form.description = "SERDES RX CDR Lock";
+	auto form = CreateFormatter(DTC_Register_SFPSERDESStatus);
+	form.description = "SFP / SERDES Status";
+	form.vals.push_back("       ([SFP Present, LOS, TX Fault, CDR Lock])");
 	for (auto r : DTC_Rings)
 	{
-		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + (ReadSERDESRXCDRLock(r) ? "x" : " ") + "]");
+		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + (ReadSERDESSFPPresent(r) ? "x" : " ") + ","
+							+ (ReadSERDESSFPLOS(r) ? "x" : " ") + ","
+							+ (ReadSERDESSFPTXFault(r) ? "x" : " ") + ","
+							+ (ReadSERDESRXCDRLock(r) ? "x" : " ") + "]");
 	}
-	form.vals.push_back(std::string("CFO:    [") + (ReadSERDESRXCDRLock(DTC_Ring_CFO) ? "x" : " ") + "]");
+	form.vals.push_back(std::string("CFO:    [") + (ReadSERDESSFPPresent(DTC_Ring_CFO) ? "x" : " ") + ","
+						+ (ReadSERDESSFPLOS(DTC_Ring_CFO) ? "x" : " ") + ","
+						+ (ReadSERDESSFPTXFault(DTC_Ring_CFO) ? "x" : " ") + ","
+						+ (ReadSERDESRXCDRLock(DTC_Ring_CFO) ? "x" : " ") + "]");
+	form.vals.push_back(std::string("EVB:    [") + (ReadSERDESSFPPresent(DTC_Ring_EVB) ? "x" : " ") + ","
+						+ (ReadSERDESSFPLOS(DTC_Ring_EVB) ? "x" : " ") + ","
+						+ (ReadSERDESSFPTXFault(DTC_Ring_EVB) ? "x" : " ") + ","
+						+ (ReadSERDESRXCDRLock(DTC_Ring_EVB) ? "x" : " ") + "]");
 	return form;
 }
 
@@ -1161,29 +1223,42 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatRingPacketLength()
 
 
 // EVB Network Partition ID / EVB Network Local MAC Index Register
-void DTCLib::DTC_Registers::SetEVBLocalParitionID(uint8_t id)
+void DTCLib::DTC_Registers::SetEVBMode(uint8_t mode)
 {
 	auto regVal = ReadRegister_(DTC_Register_EVBPartitionID) & 0xFF00FFFF;
-	regVal += id << 16;
+	regVal += mode << 16;
+	WriteRegister_(regVal, DTC_Register_EVBPartitionID);
+}
+
+uint8_t DTCLib::DTC_Registers::ReadEVBMode()
+{
+	auto regVal = ReadRegister_(DTC_Register_EVBPartitionID) & 0xFF0000;
+	return static_cast<uint8_t>(regVal >> 16);
+}
+
+void DTCLib::DTC_Registers::SetEVBLocalParitionID(uint8_t id)
+{
+	auto regVal = ReadRegister_(DTC_Register_EVBPartitionID) & 0xFFFFFCFF;
+	regVal += (id & 0x3) << 8;
 	WriteRegister_(regVal, DTC_Register_EVBPartitionID);
 }
 
 uint8_t DTCLib::DTC_Registers::ReadEVBLocalParitionID()
 {
 	auto regVal = ReadRegister_(DTC_Register_EVBPartitionID) & 0xFF0000;
-	return static_cast<uint8_t>(regVal >> 16);
+	return static_cast<uint8_t>((regVal >> 8) & 0x3);
 }
 
 void DTCLib::DTC_Registers::SetEVBLocalMACAddress(uint8_t macByte)
 {
-	auto regVal = ReadRegister_(DTC_Register_EVBPartitionID) & 0xFFFFFF00;
-	regVal += macByte;
+	auto regVal = ReadRegister_(DTC_Register_EVBPartitionID) & 0xFFFFFFC0;
+	regVal += (macByte & 0x3F);
 	WriteRegister_(regVal, DTC_Register_EVBPartitionID);
 }
 
 uint8_t DTCLib::DTC_Registers::ReadEVBLocalMACAddress()
 {
-	return ReadRegister_(DTC_Register_EVBPartitionID) & 0xFF;
+	return ReadRegister_(DTC_Register_EVBPartitionID) & 0x3F;
 }
 
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatEVBLocalParitionIDMACIndex()
@@ -1191,6 +1266,10 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatEVBLocalParitionIDMAC
 	auto form = CreateFormatter(DTC_Register_EVBPartitionID);
 	form.description = "EVB Local Partition ID / MAC Index";
 	std::ostringstream o;
+	o << "EVB Mode: 0x" << std::hex << static_cast<int>(ReadEVBMode());
+	form.vals.push_back(o.str());
+	o.str("");
+	o.clear();
 	o << "EVB Local Parition ID: 0x" << std::hex << static_cast<int>(ReadEVBLocalParitionID());
 	form.vals.push_back(o.str());
 	o.str("");
@@ -1201,22 +1280,41 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatEVBLocalParitionIDMAC
 }
 
 // EVB Number of Destination Nodes Register
+
+void DTCLib::DTC_Registers::SetEVBStartNode(uint8_t node)
+{
+	auto regVal = ReadRegister_(DTC_Register_EVBDestCount) & 0xFFFFC0FF;
+	regVal += (node & 0x3F) << 8;
+	WriteRegister_(regVal, DTC_Register_EVBDestCount);
+}
+
+uint8_t DTCLib::DTC_Registers::ReadEVBStartNode()
+{
+	return static_cast<uint8_t>((ReadRegister_(DTC_Register_EVBDestCount) & 0x3F00) >> 8);
+}
+
 void DTCLib::DTC_Registers::SetEVBNumberOfDestinationNodes(uint8_t number)
 {
-	WriteRegister_(number & 0x3F, DTC_Register_EVBDestCount);
+	auto regVal = ReadRegister_(DTC_Register_EVBDestCount) & 0xFFFFFFC0;
+	regVal += (number & 0x3F);
+	WriteRegister_(regVal, DTC_Register_EVBDestCount);
 }
 
 uint8_t DTCLib::DTC_Registers::ReadEVBNumberOfDestinationNodes()
 {
-	return static_cast<uint8_t>(ReadRegister_(DTC_Register_EVBDestCount));
+	return static_cast<uint8_t>(ReadRegister_(DTC_Register_EVBDestCount) & 0x3F);
 }
 
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatEVBNumberOfDestinationNodes()
 {
 	auto form = CreateFormatter(DTC_Register_EVBDestCount);
-	form.description = "EVB Number of Destination Nodes";
+	form.description = "EVB Number of Destination Nodes / Start Node";
 	std::stringstream o;
-	o << std::dec << static_cast<int>(ReadEVBNumberOfDestinationNodes());
+	o << "EVB Start Node: " << std::dec << static_cast<int>(ReadEVBStartNode());
+	form.vals.push_back(o.str());
+	o.str("");
+	o.clear();
+	o << "EVB Number of Destination Nodes: " << std::dec << static_cast<int>(ReadEVBNumberOfDestinationNodes());
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -1357,7 +1455,8 @@ bool DTCLib::DTC_Registers::ReadSERDESOscillatorReadWriteMode()
 	std::bitset<32> data = ReadRegister_(DTC_Register_SERDESOscillatorControl);
 	return data[0];
 }
-void DTCLib::DTC_Registers::SetSERDESOscillatorWriteMode() {
+void DTCLib::DTC_Registers::SetSERDESOscillatorWriteMode()
+{
 	std::bitset<32> data = ReadRegister_(DTC_Register_SERDESOscillatorControl);
 	data[0] = true;
 	WriteRegister_(data.to_ulong(), DTC_Register_SERDESOscillatorControl);
@@ -1415,13 +1514,16 @@ void DTCLib::DTC_Registers::SetSERDESOscillatorClock(DTC_SerdesClockSpeed speed)
 		break;
 	}
 	SetNewOscillatorFrequency(DTC_OscillatorType_SERDES, targetFreq);
-for(auto & ring : DTC_Rings) {
-	ResetSERDES(ring,1000);
-}
-ResetSERDES(DTC_Ring_CFO, 1000);
+	for (auto & ring : DTC_Rings)
+	{
+		ResetSERDES(ring, 1000);
+	}
+	ResetSERDES(DTC_Ring_CFO, 1000);
+	ResetSERDES(DTC_Ring_EVB, 1000);
 }
 
-DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESOscillatorFrequency() {
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESOscillatorFrequency()
+{
 	auto form = CreateFormatter(DTC_Register_SERDESOscillatorFrequency);
 	form.description = "SERDES Oscillator Frequency";
 	std::stringstream o;
@@ -1429,7 +1531,8 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESOscillatorFrequ
 	form.vals.push_back(o.str());
 	return form;
 }
-DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESOscillatorControl() {
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESOscillatorControl()
+{
 	auto form = CreateFormatter(DTC_Register_SERDESOscillatorControl);
 	form.description = "SERDES Oscillator Control";
 	form.vals.push_back(std::string("IIC FSM Active:  [") + (ReadSERDESOscillaotrIICFSMEnable() ? "x" : " ") + "]");
@@ -1496,7 +1599,8 @@ bool DTCLib::DTC_Registers::ReadDDROscillatorReadWriteMode()
 	std::bitset<32> data = ReadRegister_(DTC_Register_DDROscillatorControl);
 	return data[0];
 }
-void DTCLib::DTC_Registers::SetDDROscillatorWriteMode() {
+void DTCLib::DTC_Registers::SetDDROscillatorWriteMode()
+{
 	std::bitset<32> data = ReadRegister_(DTC_Register_DDROscillatorControl);
 	data[0] = true;
 	WriteRegister_(data.to_ulong(), DTC_Register_DDROscillatorControl);
@@ -1526,7 +1630,8 @@ void DTCLib::DTC_Registers::SetDDROscillatorParameters(uint64_t parameters)
 	DisableDDROscillatorIICFSM();
 	WaitForDDROscillatorInitializationComplete();
 }
-DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorFrequency() {
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorFrequency()
+{
 	auto form = CreateFormatter(DTC_Register_DDROscillatorFrequency);
 	form.description = "DDR Oscillator Frequency";
 	std::stringstream o;
@@ -1534,7 +1639,8 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorFrequenc
 	form.vals.push_back(o.str());
 	return form;
 }
-DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorControl() {
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorControl()
+{
 	auto form = CreateFormatter(DTC_Register_DDROscillatorControl);
 	form.description = "DDR Oscillator Control";
 	form.vals.push_back(std::string("IIC FSM Active:  [") + (ReadDDROscillaotrIICFSMEnable() ? "x" : " ") + "]");
@@ -1551,7 +1657,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorParamete
 	form.vals.push_back(o.str());
 	return form;
 }
-DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorParameterHigh() 
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDROscillatorParameterHigh()
 {
 	ReadDDROscillatorParameters();
 	auto form = CreateFormatter(DTC_Register_DDROscillatorParameterHigh);
@@ -1638,10 +1744,8 @@ void DTCLib::DTC_Registers::SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_R
 	maxROCs_[ring] = lastRoc;
 	auto numRocs = lastRoc == DTC_ROC_Unused ? 0 : lastRoc + 1;
 	ringRocs[ring * 3] = numRocs & 1;
-	// ReSharper disable CppRedundantParentheses
 	ringRocs[ring * 3 + 1] = ((numRocs & 2) >> 1) & 1;
 	ringRocs[ring * 3 + 2] = ((numRocs & 4) >> 2) & 1;
-	// ReSharper restore CppRedundantParentheses
 	WriteRegister_(ringRocs.to_ulong(), DTC_Register_NUMROCs);
 }
 
@@ -1749,6 +1853,14 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatFIFOFullErrorFlag1()
 							+ (ce.OutputDCS ? "x" : " ") + ","
 							+ (ce.OtherOutput ? "x" : " ") + "]");
 	}
+	{
+		auto ce = ReadFIFOFullErrorFlags(DTC_Ring_EVB);
+		form.vals.push_back(std::string("EVB:    [") +
+							+(ce.DataInput ? "x" : " ") + ","
+							+ (ce.OutputDCSStage2 ? "x" : " ") + ","
+							+ (ce.OutputDCS ? "x" : " ") + ","
+							+ (ce.OtherOutput ? "x" : " ") + "]");
+	}
 	return form;
 }
 
@@ -1765,6 +1877,10 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatFIFOFullErrorFlag2()
 	{
 		auto ce = ReadFIFOFullErrorFlags(DTC_Ring_CFO);
 		form.vals.push_back(std::string("CFO:    [") + (ce.DCSStatusInput ? "x" : " ") + "]");
+	}
+	{
+		auto ce = ReadFIFOFullErrorFlags(DTC_Ring_EVB);
+		form.vals.push_back(std::string("EVB:    [") + (ce.DCSStatusInput ? "x" : " ") + "]");
 	}
 	return form;
 }
@@ -1840,6 +1956,11 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatReceivePacketError()
 						+ (ReadPacketError(DTC_Ring_CFO) ? "x" : " ") + ","
 						+ (ReadRXElasticBufferOverrun(DTC_Ring_CFO) ? "x" : " ") + ","
 						+ (ReadRXElasticBufferUnderrun(DTC_Ring_CFO) ? "x" : " ") + "]");
+	form.vals.push_back(std::string("EVB:    [")
+						+ (ReadPacketCRCError(DTC_Ring_EVB) ? "x" : " ") + ","
+						+ (ReadPacketError(DTC_Ring_EVB) ? "x" : " ") + ","
+						+ (ReadRXElasticBufferOverrun(DTC_Ring_EVB) ? "x" : " ") + ","
+						+ (ReadRXElasticBufferUnderrun(DTC_Ring_EVB) ? "x" : " ") + "]");
 	return form;
 }
 
@@ -2199,6 +2320,40 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatCFOEmulationDebugPack
 	return form;
 }
 
+// RX Packet Count Error Flags Register
+bool DTCLib::DTC_Registers::ReadRXPacketCountErrorFlags(const DTC_Ring_ID & ring)
+{
+	std::bitset<32> dataSet = ReadRegister_(DTC_Register_RXPacketCountErrorFlags);
+	return dataSet[ring];
+}
+
+void DTCLib::DTC_Registers::ClearRXPacketCountErrorFlags(const DTC_Ring_ID& ring)
+{
+
+	std::bitset<32> dataSet;
+	dataSet[ring] = true;
+	WriteRegister_(dataSet.to_ulong(), DTC_Register_RXPacketCountErrorFlags);
+}
+
+void DTCLib::DTC_Registers::ClearRXPacketCountErrorFlags()
+{
+	std::bitset<32> dataSet = ReadRegister_(DTC_Register_RXPacketCountErrorFlags);
+	WriteRegister_(dataSet.to_ulong(), DTC_Register_RXPacketCountErrorFlags);
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatRXPacketCountErrorFlags()
+{
+	auto form = CreateFormatter(DTC_Register_RXPacketCountErrorFlags);
+	form.description = "RX Packet Count Error Flags";
+	for (auto r : DTC_Rings)
+	{
+		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + (ReadRXPacketCountErrorFlags(r) ? "x" : " ") + "]");
+	}
+	form.vals.push_back(std::string("CFO:    [") + (ReadRXPacketCountErrorFlags(DTC_Ring_CFO) ? "x" : " ") + "]");
+	form.vals.push_back(std::string("EVB:    [") + (ReadRXPacketCountErrorFlags(DTC_Ring_EVB) ? "x" : " ") + "]");
+	return form;
+}
+
 // Detector Emulator DMA Count Register
 void DTCLib::DTC_Registers::SetDetectorEmulationDMACount(uint32_t count)
 {
@@ -2315,6 +2470,101 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDetectorEmulationCont
 	return form;
 }
 
+// DDR Event Data Local Start Address Register
+void DTCLib::DTC_Registers::SetDDRDataLocalStartAddress(uint32_t address)
+{
+	WriteRegister_(address, DTC_Register_DetEmulationDataStartAddress);
+}
+
+uint32_t DTCLib::DTC_Registers::ReadDDRDataLocalStartAddress()
+{
+	return ReadRegister_(DTC_Register_DetEmulationDataStartAddress);
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDRDataLocalStartAddress()
+{
+	auto form = CreateFormatter(DTC_Register_DetEmulationDataStartAddress);
+	form.description = "DDR Event Data Local Start Address";
+	std::stringstream o;
+	o << "0x" << std::hex << ReadDDRDataLocalStartAddress();
+	form.vals.push_back(o.str());
+	return form;
+}
+
+// DDR Event Data Local End Address Register
+void DTCLib::DTC_Registers::SetDDRDataLocalEndAddress(uint32_t address)
+{
+	WriteRegister_(address, DTC_Register_DetEmulationDataEndAddress);
+}
+
+uint32_t DTCLib::DTC_Registers::ReadDDRDataLocalEndAddress()
+{
+	return ReadRegister_(DTC_Register_DetEmulationDataEndAddress);
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDRDataLocalEndAddress()
+{
+	auto form = CreateFormatter(DTC_Register_DetEmulationDataEndAddress);
+	form.description = "DDR Event Data Local End Address";
+	std::stringstream o;
+	o << "0x" << std::hex << ReadDDRDataLocalEndAddress();
+	form.vals.push_back(o.str());
+	return form;
+}
+
+// ROC DRP Sync Error Register
+bool DTCLib::DTC_Registers::ReadROCDRPSyncErrors(const DTC_Ring_ID & ring)
+{
+	std::bitset<32> dataSet = ReadRegister_(DTC_Register_ROCDRPDataSyncError);
+	return dataSet[ring];
+}
+
+void DTCLib::DTC_Registers::ClearROCDRPSyncErrors(const DTC_Ring_ID& ring)
+{
+
+	std::bitset<32> dataSet;
+	dataSet[ring] = true;
+	WriteRegister_(dataSet.to_ulong(), DTC_Register_ROCDRPDataSyncError);
+}
+
+void DTCLib::DTC_Registers::ClearROCDRPSyncErrors()
+{
+	std::bitset<32> dataSet = ReadRegister_(DTC_Register_ROCDRPDataSyncError);
+	WriteRegister_(dataSet.to_ulong(), DTC_Register_ROCDRPDataSyncError);
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatROCDRPSyncError()
+{
+	auto form = CreateFormatter(DTC_Register_ROCDRPDataSyncError);
+	form.description = "RX Packet Count Error Flags";
+	for (auto r : DTC_Rings)
+	{
+		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + (ReadRXPacketCountErrorFlags(r) ? "x" : " ") + "]");
+	}
+	return form;
+}
+
+uint32_t DTCLib::DTC_Registers::ReadEthernetPayloadSize()
+{
+	return ReadRegister_(DTC_Register_EthernetFramePayloadSize);
+}
+
+void DTCLib::DTC_Registers::SetEthernetPayloadSize(uint32_t size)
+{
+	if (size > 1492) { size = 1492; }
+	WriteRegister_(size, DTC_Register_EthernetFramePayloadSize);
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatEthernetPayloadSize()
+{
+	auto form = CreateFormatter(DTC_Register_EthernetFramePayloadSize);
+	form.description = "Ethernet Frame Payload Max Size";
+	std::stringstream o;
+	o << std::dec << ReadEthernetPayloadSize() << " bytes";
+	form.vals.push_back(o.str());
+	return form;
+}
+
 // SERDES Counter Registers
 void DTCLib::DTC_Registers::ClearReceiveByteCount(const DTC_Ring_ID& ring)
 {
@@ -2342,6 +2592,9 @@ void DTCLib::DTC_Registers::ClearReceiveByteCount(const DTC_Ring_ID& ring)
 	case DTC_Ring_CFO:
 		reg = DTC_Register_ReceiveByteCountDataCFO;
 		break;
+	case DTC_Ring_EVB:
+		reg = DTC_Register_ReceiveByteCountDataEVB;
+		break;
 	default:
 		return;
 	}
@@ -2366,6 +2619,8 @@ uint32_t DTCLib::DTC_Registers::ReadReceiveByteCount(const DTC_Ring_ID& ring)
 		return ReadRegister_(DTC_Register_ReceiveByteCountDataRing5);
 	case DTC_Ring_CFO:
 		return ReadRegister_(DTC_Register_ReceiveByteCountDataCFO);
+	case DTC_Ring_EVB:
+		return ReadRegister_(DTC_Register_ReceiveByteCountDataEVB);
 	default:
 		return 0;
 	}
@@ -2397,6 +2652,9 @@ void DTCLib::DTC_Registers::ClearReceivePacketCount(const DTC_Ring_ID& ring)
 	case DTC_Ring_CFO:
 		reg = DTC_Register_ReceivePacketCountDataCFO;
 		break;
+	case DTC_Ring_EVB:
+		reg = DTC_Register_ReceivePacketCountDataEVB;
+		break;
 	default:
 		return;
 	}
@@ -2421,6 +2679,8 @@ uint32_t DTCLib::DTC_Registers::ReadReceivePacketCount(const DTC_Ring_ID& ring)
 		return ReadRegister_(DTC_Register_ReceivePacketCountDataRing5);
 	case DTC_Ring_CFO:
 		return ReadRegister_(DTC_Register_ReceivePacketCountDataCFO);
+	case DTC_Ring_EVB:
+		return ReadRegister_(DTC_Register_ReceivePacketCountDataEVB);
 	default:
 		return 0;
 	}
@@ -2452,6 +2712,9 @@ void DTCLib::DTC_Registers::ClearTransmitByteCount(const DTC_Ring_ID& ring)
 	case DTC_Ring_CFO:
 		reg = DTC_Register_TransmitByteCountDataCFO;
 		break;
+	case DTC_Ring_EVB:
+		reg = DTC_Register_TransmitByteCountDataEVB;
+		break;
 	default:
 		return;
 	}
@@ -2476,6 +2739,8 @@ uint32_t DTCLib::DTC_Registers::ReadTransmitByteCount(const DTC_Ring_ID& ring)
 		return ReadRegister_(DTC_Register_TransmitByteCountDataRing5);
 	case DTC_Ring_CFO:
 		return ReadRegister_(DTC_Register_TransmitByteCountDataCFO);
+	case DTC_Ring_EVB:
+		return ReadRegister_(DTC_Register_TransmitByteCountDataEVB);
 	default:
 		return 0;
 	}
@@ -2507,6 +2772,9 @@ void DTCLib::DTC_Registers::ClearTransmitPacketCount(const DTC_Ring_ID& ring)
 	case DTC_Ring_CFO:
 		reg = DTC_Register_TransmitPacketCountDataCFO;
 		break;
+	case DTC_Ring_EVB:
+		reg = DTC_Register_TransmitPacketCountDataEVB;
+		break;
 	default:
 		return;
 	}
@@ -2531,6 +2799,8 @@ uint32_t DTCLib::DTC_Registers::ReadTransmitPacketCount(const DTC_Ring_ID& ring)
 		return ReadRegister_(DTC_Register_TransmitPacketCountDataRing5);
 	case DTC_Ring_CFO:
 		return ReadRegister_(DTC_Register_TransmitPacketCountDataCFO);
+	case DTC_Ring_EVB:
+		return ReadRegister_(DTC_Register_TransmitPacketCountDataEVB);
 	default:
 		return 0;
 	}
@@ -2606,6 +2876,16 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatReceiveByteCountCFO()
 	return form;
 }
 
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatReceiveByteCountEVB()
+{
+	auto form = CreateFormatter(DTC_Register_ReceiveByteCountDataEVB);
+	form.description = "Receive Byte Count: EVB";
+	std::stringstream o;
+	o << "0x" << std::hex << ReadReceiveByteCount(DTC_Ring_EVB);
+	form.vals.push_back(o.str());
+	return form;
+}
+
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatReceivePacketCountRing0()
 {
 	auto form = CreateFormatter(DTC_Register_ReceivePacketCountDataRing0);
@@ -2672,6 +2952,16 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatReceivePacketCountCFO
 	form.description = "Receive Packet Count: CFO";
 	std::stringstream o;
 	o << "0x" << std::hex << ReadReceivePacketCount(DTC_Ring_CFO);
+	form.vals.push_back(o.str());
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatReceivePacketCountEVB()
+{
+	auto form = CreateFormatter(DTC_Register_ReceivePacketCountDataEVB);
+	form.description = "Receive Packet Count: EVB";
+	std::stringstream o;
+	o << "0x" << std::hex << ReadReceivePacketCount(DTC_Ring_EVB);
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -2746,6 +3036,16 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatTramsitByteCountCFO()
 	return form;
 }
 
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatTramsitByteCountEVB()
+{
+	auto form = CreateFormatter(DTC_Register_TransmitByteCountDataEVB);
+	form.description = "Transmit Byte Count: EVB";
+	std::stringstream o;
+	o << "0x" << std::hex << ReadTransmitByteCount(DTC_Ring_EVB);
+	form.vals.push_back(o.str());
+	return form;
+}
+
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatTransmitPacketCountRing0()
 {
 	auto form = CreateFormatter(DTC_Register_TransmitPacketCountDataRing0);
@@ -2816,60 +3116,444 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatTransmitPacketCountCF
 	return form;
 }
 
-// DDR Event Data Local Start Address Register
-void DTCLib::DTC_Registers::SetDDRDataLocalStartAddress(uint32_t address)
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatTransmitPacketCountEVB()
 {
-	WriteRegister_(address, DTC_Register_DDRDataStartAddress);
-}
-
-uint32_t DTCLib::DTC_Registers::ReadDDRDataLocalStartAddress()
-{
-	return ReadRegister_(DTC_Register_DDRDataStartAddress);
-}
-
-DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDRDataLocalStartAddress()
-{
-	auto form = CreateFormatter(DTC_Register_DDRDataStartAddress);
-	form.description = "DDR Event Data Local Start Address";
+	auto form = CreateFormatter(DTC_Register_TransmitPacketCountDataEVB);
+	form.description = "Transmit Packet Count: EVB";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadDDRDataLocalStartAddress();
+	o << "0x" << std::hex << ReadTransmitPacketCount(DTC_Ring_EVB);
 	form.vals.push_back(o.str());
 	return form;
 }
 
-// DDR Event Data Local End Address Register
-void DTCLib::DTC_Registers::SetDDRDataLocalEndAddress(uint32_t address)
+std::bitset<64> DTCLib::DTC_Registers::ReadDDRRingBufferFullFlags()
 {
-	WriteRegister_(address, DTC_Register_DDRDataEndAddress);
+	uint64_t flags = ReadRegister_(DTC_Register_DDRRingBufferFullFlags1) + (static_cast<uint64_t>(ReadRegister_(DTC_Register_DDRRingBufferFullFlags2)) << 32);
+	return std::bitset<64>(flags);
 }
 
-uint32_t DTCLib::DTC_Registers::ReadDDRDataLocalEndAddress()
+std::bitset<64> DTCLib::DTC_Registers::ReadDDRRingBufferFullErrorFlags()
 {
-	return ReadRegister_(DTC_Register_DDRDataEndAddress);
+	uint64_t flags = ReadRegister_(DTC_Register_DDRRingBufferFullErrorFlags1) + (static_cast<uint64_t>(ReadRegister_(DTC_Register_DDRRingBufferFullErrorFlags2)) << 32);
+	return std::bitset<64>(flags);
 }
 
-DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDRDataLocalEndAddress()
+std::bitset<64> DTCLib::DTC_Registers::ReadDDRRingBufferEmptyFlags()
 {
-	auto form = CreateFormatter(DTC_Register_DDRDataEndAddress);
-	form.description = "DDR Event Data Local End Address";
+	uint64_t flags = ReadRegister_(DTC_Register_DDRRingBufferEmptyFlags1) + (static_cast<uint64_t>(ReadRegister_(DTC_Register_DDRRingBufferEmptyFlags2)) << 32);
+	return std::bitset<64>(flags);
+}
+
+std::bitset<64> DTCLib::DTC_Registers::ReadDDRRingBufferHalfFullFlags()
+{
+	uint64_t flags = ReadRegister_(DTC_Register_DDRRingBufferHalfFullFlags1) + (static_cast<uint64_t>(ReadRegister_(DTC_Register_DDRRingBufferHalfFullFlags2)) << 32);
+	return std::bitset<64>(flags);
+}
+
+std::bitset<64> DTCLib::DTC_Registers::ReadDDREventBuilderBufferFullFlags()
+{
+	uint64_t flags = ReadRegister_(DTC_Register_EventBuilderBufferFullFlags2) + (static_cast<uint64_t>(ReadRegister_(DTC_Register_EventBuilderBufferFullFlags2)) << 32);
+	return std::bitset<64>(flags);
+}
+
+std::bitset<64> DTCLib::DTC_Registers::ReadDDREventBuilderBufferFullErrorFlags()
+{
+	uint64_t flags = ReadRegister_(DTC_Register_EventBuilderBufferFullErrorFlags2) + (static_cast<uint64_t>(ReadRegister_(DTC_Register_EventBuilderBufferFullErrorFlags2)) << 32);
+	return std::bitset<64>(flags);
+}
+
+std::bitset<64> DTCLib::DTC_Registers::ReadDDREventBuilderBufferEmptyFlags()
+{
+	uint64_t flags = ReadRegister_(DTC_Register_EventBuilderBufferEmptyFlags2) + (static_cast<uint64_t>(ReadRegister_(DTC_Register_EventBuilderBufferEmptyFlags2)) << 32);
+	return std::bitset<64>(flags);
+}
+
+std::bitset<64> DTCLib::DTC_Registers::ReadDDREventBuilderBufferHalfFullFlags()
+{
+	uint64_t flags = ReadRegister_(DTC_Register_EventBuilderBufferHalfFullFlags2) + (static_cast<uint64_t>(ReadRegister_(DTC_Register_EventBuilderBufferHalfFullFlags2)) << 32);
+	return std::bitset<64>(flags);
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDRRingBufferFullFlagsLow()
+{
+	auto form = CreateFormatter(DTC_Register_DDRRingBufferFullFlags1);
+	form.description = "DDR Ring Buffer Full Flags (0-31)";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadDDRDataLocalEndAddress();
+	o << "0x" << std::hex << ReadRegister_(DTC_Register_DDRRingBufferFullFlags1);
 	form.vals.push_back(o.str());
 	return form;
 }
 
-// DDR Gas Guage Register
-uint32_t DTCLib::DTC_Registers::ReadDDRGasGuage()
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDRRingBufferFullErrorFlagsLow()
 {
-	return ReadRegister_(DTC_Register_DDRGasGuage);
+	auto form = CreateFormatter(DTC_Register_DDRRingBufferFullErrorFlags1);
+	form.description = "DDR Ring Buffer Full Error Flags (0-31)";
+	std::stringstream o;
+	o << "0x" << std::hex << ReadRegister_(DTC_Register_DDRRingBufferFullErrorFlags1);
+	form.vals.push_back(o.str());
+	return form;
 }
 
-DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDRGasGuage()
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDRRingBufferEmptyFlagsLow()
 {
-	auto form = CreateFormatter(DTC_Register_DDRGasGuage);
-	form.description = "DDR Gas Guage";
+	auto form = CreateFormatter(DTC_Register_DDRRingBufferEmptyFlags1);
+	form.description = "DDR Ring Buffer Empty Flags (0-31)";
 	std::stringstream o;
-	o << "0x" << std::hex << ReadDDRGasGuage();
+	o << "0x" << std::hex << ReadRegister_(DTC_Register_DDRRingBufferEmptyFlags1);
+	form.vals.push_back(o.str());
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDRRingBufferHalfFullFlagsLow()
+{
+	auto form = CreateFormatter(DTC_Register_DDRRingBufferHalfFullFlags1);
+	form.description = "DDR Ring Buffer Half Full Flags (0-31)";
+	std::stringstream o;
+	o << "0x" << std::hex << ReadRegister_(DTC_Register_DDRRingBufferHalfFullFlags1);
+	form.vals.push_back(o.str());
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDREventBuilderBufferFullFlagsLow()
+{
+	auto form = CreateFormatter(DTC_Register_EventBuilderBufferFullFlags1);
+	form.description = "DDR Event Builder Buffer Full Flags (0-31)";
+	std::stringstream o;
+	o << "0x" << std::hex << ReadRegister_(DTC_Register_EventBuilderBufferFullFlags1);
+	form.vals.push_back(o.str());
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDREventBuilderBufferFullErrorFlagsLow()
+{
+	auto form = CreateFormatter(DTC_Register_EventBuilderBufferFullErrorFlags1);
+	form.description = "DDR Event Builder Buffer Full Error Flags (0-31)";
+	std::stringstream o;
+	o << "0x" << std::hex << ReadRegister_(DTC_Register_EventBuilderBufferFullErrorFlags1);
+	form.vals.push_back(o.str());
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDREventBuilderBufferEmptyFlagsLow()
+{
+	auto form = CreateFormatter(DTC_Register_EventBuilderBufferEmptyFlags1);
+	form.description = "DDR Event Builder Buffer Empty Flags (0-31)";
+	std::stringstream o;
+	o << "0x" << std::hex << ReadRegister_(DTC_Register_EventBuilderBufferEmptyFlags1);
+	form.vals.push_back(o.str());
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDREventBuilderBufferHalfFullFlagsLow()
+{
+	auto form = CreateFormatter(DTC_Register_EventBuilderBufferHalfFullFlags1);
+	form.description = "DDR Event Builder Buffer Half Full Flags (0-31)";
+	std::stringstream o;
+	o << "0x" << std::hex << ReadRegister_(DTC_Register_EventBuilderBufferHalfFullFlags1);
+	form.vals.push_back(o.str());
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDRRingBufferFullFlagsHigh()
+{
+	auto form = CreateFormatter(DTC_Register_DDRRingBufferFullFlags2);
+	form.description = "DDR Ring Buffer Full Flags (32-63)";
+	std::stringstream o;
+	o << "0x" << std::hex << ReadRegister_(DTC_Register_DDRRingBufferFullFlags2);
+	form.vals.push_back(o.str());
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDRRingBufferFullErrorFlagsHigh()
+{
+	auto form = CreateFormatter(DTC_Register_DDRRingBufferFullErrorFlags2);
+	form.description = "DDR Ring Buffer Full Error Flags (32-63)";
+	std::stringstream o;
+	o << "0x" << std::hex << ReadRegister_(DTC_Register_DDRRingBufferFullErrorFlags2);
+	form.vals.push_back(o.str());
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDRRingBufferEmptyFlagsHigh()
+{
+	auto form = CreateFormatter(DTC_Register_DDRRingBufferEmptyFlags2);
+	form.description = "DDR Ring Buffer Empty Flags (32-63)";
+	std::stringstream o;
+	o << "0x" << std::hex << ReadRegister_(DTC_Register_DDRRingBufferEmptyFlags2);
+	form.vals.push_back(o.str());
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDRRingBufferHalfFullFlagsHigh()
+{
+	auto form = CreateFormatter(DTC_Register_DDRRingBufferHalfFullFlags2);
+	form.description = "DDR Ring Buffer Half Full Flags (32-63)";
+	std::stringstream o;
+	o << "0x" << std::hex << ReadRegister_(DTC_Register_DDRRingBufferHalfFullFlags2);
+	form.vals.push_back(o.str());
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDREventBuilderBufferFullFlagsHigh()
+{
+	auto form = CreateFormatter(DTC_Register_EventBuilderBufferFullFlags2);
+	form.description = "DDR Event Builder Buffer Full Flags (32-63)";
+	std::stringstream o;
+	o << "0x" << std::hex << ReadRegister_(DTC_Register_EventBuilderBufferFullFlags2);
+	form.vals.push_back(o.str());
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDREventBuilderBufferFullErrorFlagsHigh()
+{
+	auto form = CreateFormatter(DTC_Register_EventBuilderBufferFullErrorFlags2);
+	form.description = "DDR Event Builder Buffer Full Error Flags (32-63)";
+	std::stringstream o;
+	o << "0x" << std::hex << ReadRegister_(DTC_Register_EventBuilderBufferFullErrorFlags2);
+	form.vals.push_back(o.str());
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDREventBuilderBufferEmptyFlagsHigh()
+{
+	auto form = CreateFormatter(DTC_Register_EventBuilderBufferEmptyFlags2);
+	form.description = "DDR Event Builder Buffer Empty Flags (32-63)";
+	std::stringstream o;
+	o << "0x" << std::hex << ReadRegister_(DTC_Register_EventBuilderBufferEmptyFlags2);
+	form.vals.push_back(o.str());
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatDDREventBuilderBufferHalfFullFlagsHigh()
+{
+	auto form = CreateFormatter(DTC_Register_EventBuilderBufferHalfFullFlags2);
+	form.description = "DDR Event Builder Buffer Half Full Flags (32-63)";
+	std::stringstream o;
+	o << "0x" << std::hex << ReadRegister_(DTC_Register_EventBuilderBufferHalfFullFlags2);
+	form.vals.push_back(o.str());
+	return form;
+}
+
+bool DTCLib::DTC_Registers::ReadEVBSERDESPRBSErrorFlag()
+{
+	std::bitset<32> regVal(ReadRegister_(DTC_Register_EVBSERDESPRBSControlStatus));
+	return regVal[30];
+}
+
+uint8_t DTCLib::DTC_Registers::ReadEVBSERDESTXPRBSSEL()
+{
+	uint8_t regVal = static_cast<uint8_t>((ReadRegister_(DTC_Register_EVBSERDESPRBSControlStatus) & 0x7000) >> 12);
+	return regVal;
+}
+
+void DTCLib::DTC_Registers::SetEVBSERDESTXPRBSSEL(uint8_t byte)
+{
+	uint8_t regVal = (ReadRegister_(DTC_Register_EVBSERDESPRBSControlStatus) & 0xFFFF8FFF);
+	regVal += ((byte & 0x7) << 12);
+	WriteRegister_(regVal, DTC_Register_EVBSERDESPRBSControlStatus);
+}
+
+uint8_t DTCLib::DTC_Registers::ReadEVBSERDESRXPRBSSEL()
+{
+	uint8_t regVal = static_cast<uint8_t>((ReadRegister_(DTC_Register_EVBSERDESPRBSControlStatus) & 0x700) >> 8);
+	return regVal;
+}
+
+void DTCLib::DTC_Registers::SetEVBSERDESRXPRBSSEL(uint8_t byte)
+{
+	uint8_t regVal = (ReadRegister_(DTC_Register_EVBSERDESPRBSControlStatus) & 0xFFFFF8FF);
+	regVal += ((byte & 0x7) << 8);
+	WriteRegister_(regVal, DTC_Register_EVBSERDESPRBSControlStatus);
+}
+
+bool DTCLib::DTC_Registers::ReadEVBSERDESPRBSForceError()
+{
+	std::bitset<32> regVal(ReadRegister_(DTC_Register_EVBSERDESPRBSControlStatus));
+	return regVal[1];
+}
+
+void DTCLib::DTC_Registers::SetEVBSERDESPRBSForceError(bool flag)
+{
+	std::bitset<32> regVal(ReadRegister_(DTC_Register_EVBSERDESPRBSControlStatus));
+	regVal[1] = flag;
+	WriteRegister_(regVal.to_ulong(), DTC_Register_EVBSERDESPRBSControlStatus);
+}
+
+void DTCLib::DTC_Registers::ToggleEVBSERDESPRBSForceError()
+{
+	std::bitset<32> regVal(ReadRegister_(DTC_Register_EVBSERDESPRBSControlStatus));
+	regVal.flip(0);
+	WriteRegister_(regVal.to_ulong(), DTC_Register_EVBSERDESPRBSControlStatus);
+}
+
+bool DTCLib::DTC_Registers::ReadEVBSERDESPRBSReset()
+{
+	std::bitset<32> regVal(ReadRegister_(DTC_Register_EVBSERDESPRBSControlStatus));
+	return regVal[0];
+}
+
+void DTCLib::DTC_Registers::SetEVBSERDESPRBSReset(bool flag)
+{
+	std::bitset<32> regVal(ReadRegister_(DTC_Register_EVBSERDESPRBSControlStatus));
+	regVal[0] = flag;
+	WriteRegister_(regVal.to_ulong(), DTC_Register_EVBSERDESPRBSControlStatus);
+}
+
+void DTCLib::DTC_Registers::ToggleEVBSERDESPRBSReset()
+{
+	std::bitset<32> regVal(ReadRegister_(DTC_Register_EVBSERDESPRBSControlStatus));
+	regVal.flip(0);
+	WriteRegister_(regVal.to_ulong(), DTC_Register_EVBSERDESPRBSControlStatus);
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatEVBSERDESPRBSControl()
+{
+	auto form = CreateFormatter(DTC_Register_EVBSERDESPRBSControlStatus);
+	form.description = "EVB SERDES PRBS Control / Status";
+	form.vals.push_back(std::string("PRBS Error: [") + (ReadEVBSERDESPRBSErrorFlag() ? "x" : " ") + "]");
+	std::stringstream o;
+	o << "EVB SERDES TX PRBS Select: 0x" << std::hex << static_cast<int>(ReadEVBSERDESTXPRBSSEL());
+	form.vals.push_back(o.str());
+	o.str("");
+	o.clear();
+	o << "EVB SERDES RX PRBS Select: 0x" << std::hex << static_cast<int>(ReadEVBSERDESRXPRBSSEL());
+	form.vals.push_back(std::string("PRBS Force Error: [") + (ReadEVBSERDESPRBSForceError() ? "x" : " ") + "]");
+	form.vals.push_back(std::string("PRBS Reset: [") + (ReadEVBSERDESPRBSReset() ? "x" : " ") + "]");
+
+	return form;
+}
+
+uint32_t DTCLib::DTC_Registers::ReadMissedCFOPacketCountRing0()
+{
+	return ReadRegister_(DTC_Register_MissedCFOPacketCountRing0);
+}
+
+uint32_t DTCLib::DTC_Registers::ReadMissedCFOPacketCountRing1()
+{
+	return ReadRegister_(DTC_Register_MissedCFOPacketCountRing1);
+}
+
+uint32_t DTCLib::DTC_Registers::ReadMissedCFOPacketCountRing2()
+{
+	return ReadRegister_(DTC_Register_MissedCFOPacketCountRing2);
+}
+
+uint32_t DTCLib::DTC_Registers::ReadMissedCFOPacketCountRing3()
+{
+	return ReadRegister_(DTC_Register_MissedCFOPacketCountRing3);
+}
+
+uint32_t DTCLib::DTC_Registers::ReadMissedCFOPacketCountRing4()
+{
+	return ReadRegister_(DTC_Register_MissedCFOPacketCountRing4);
+}
+
+uint32_t DTCLib::DTC_Registers::ReadMissedCFOPacketCountRing5()
+{
+	return ReadRegister_(DTC_Register_MissedCFOPacketCountRing5);
+}
+
+void DTCLib::DTC_Registers::ClearMissedCFOPacketCountRing0()
+{
+	WriteRegister_(1, DTC_Register_MissedCFOPacketCountRing0);
+}
+void DTCLib::DTC_Registers::ClearMissedCFOPacketCountRing1()
+{
+	WriteRegister_(1, DTC_Register_MissedCFOPacketCountRing1);
+}
+void DTCLib::DTC_Registers::ClearMissedCFOPacketCountRing2()
+{
+	WriteRegister_(1, DTC_Register_MissedCFOPacketCountRing2);
+}
+void DTCLib::DTC_Registers::ClearMissedCFOPacketCountRing3()
+{
+	WriteRegister_(1, DTC_Register_MissedCFOPacketCountRing3);
+}
+void DTCLib::DTC_Registers::ClearMissedCFOPacketCountRing4()
+{
+	WriteRegister_(1, DTC_Register_MissedCFOPacketCountRing4);
+}
+void DTCLib::DTC_Registers::ClearMissedCFOPacketCountRing5()
+{
+	WriteRegister_(1, DTC_Register_MissedCFOPacketCountRing5);
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatMissedCFOPacketCountRing0()
+{
+	auto form = CreateFormatter(DTC_Register_MissedCFOPacketCountRing0);
+	form.description = "Missed CFO Packet Count Ring 0";
+	std::stringstream o;
+	o << std::dec << ReadMissedCFOPacketCountRing0();
+	form.vals.push_back(o.str());
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatMissedCFOPacketCountRing1()
+{
+	auto form = CreateFormatter(DTC_Register_MissedCFOPacketCountRing1);
+	form.description = "Missed CFO Packet Count Ring 1";
+	std::stringstream o;
+	o << std::dec << ReadMissedCFOPacketCountRing1();
+	form.vals.push_back(o.str());
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatMissedCFOPacketCountRing2()
+{
+	auto form = CreateFormatter(DTC_Register_MissedCFOPacketCountRing2);
+	form.description = "Missed CFO Packet Count Ring 2";
+	std::stringstream o;
+	o << std::dec << ReadMissedCFOPacketCountRing2();
+	form.vals.push_back(o.str());
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatMissedCFOPacketCountRing3()
+{
+	auto form = CreateFormatter(DTC_Register_MissedCFOPacketCountRing3);
+	form.description = "Missed CFO Packet Count Ring 3";
+	std::stringstream o;
+	o << std::dec << ReadMissedCFOPacketCountRing3();
+	form.vals.push_back(o.str());
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatMissedCFOPacketCountRing4()
+{
+	auto form = CreateFormatter(DTC_Register_MissedCFOPacketCountRing4);
+	form.description = "Missed CFO Packet Count Ring 4";
+	std::stringstream o;
+	o << std::dec << ReadMissedCFOPacketCountRing4();
+	form.vals.push_back(o.str());
+	return form;
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatMissedCFOPacketCountRing5()
+{
+	auto form = CreateFormatter(DTC_Register_MissedCFOPacketCountRing5);
+	form.description = "Missed CFO Packet Count Ring 5";
+	std::stringstream o;
+	o << std::dec << ReadMissedCFOPacketCountRing5();
+	form.vals.push_back(o.str());
+	return form;
+}
+
+uint32_t DTCLib::DTC_Registers::ReadLocalFragmentDropCount()
+{
+	return ReadRegister_(DTC_Register_LocalFragmentDropCount);
+}
+
+void DTCLib::DTC_Registers::ClearLocalFragmentDropCount()
+{
+	WriteRegister_(1, DTC_Register_LocalFragmentDropCount);
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatLocalFragmentDropCount()
+{
+	auto form = CreateFormatter(DTC_Register_LocalFragmentDropCount);
+	form.description = "Local Data Fragment Drop Count";
+	std::stringstream o;
+	o << std::dec << ReadLocalFragmentDropCount();
 	form.vals.push_back(o.str());
 	return form;
 }
@@ -2962,7 +3646,8 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatFPGACoreAccess()
 // Event Mode Lookup Table
 void DTCLib::DTC_Registers::SetAllEventModeWords(uint32_t data)
 {
-	for (uint16_t address = DTC_Register_EventModeLookupTableStart; address <= DTC_Register_EventModeLookupTableEnd; address += 4) {
+	for (uint16_t address = DTC_Register_EventModeLookupTableStart; address <= DTC_Register_EventModeLookupTableEnd; address += 4)
+	{
 		auto retry = 3;
 		int errorCode;
 		do
@@ -2980,7 +3665,8 @@ void DTCLib::DTC_Registers::SetAllEventModeWords(uint32_t data)
 void DTCLib::DTC_Registers::SetEventModeWord(uint8_t which, uint32_t data)
 {
 	uint16_t address = DTC_Register_EventModeLookupTableStart + (which * 4);
-	if (address <= DTC_Register_EventModeLookupTableEnd) {
+	if (address <= DTC_Register_EventModeLookupTableEnd)
+	{
 		auto retry = 3;
 		int errorCode;
 		do
@@ -2998,7 +3684,8 @@ void DTCLib::DTC_Registers::SetEventModeWord(uint8_t which, uint32_t data)
 uint32_t DTCLib::DTC_Registers::ReadEventModeWord(uint8_t which)
 {
 	uint16_t address = DTC_Register_EventModeLookupTableStart + (which * 4);
-	if (address <= DTC_Register_EventModeLookupTableEnd) {
+	if (address <= DTC_Register_EventModeLookupTableEnd)
+	{
 		auto retry = 3;
 		int errorCode;
 		uint32_t data;
@@ -3199,7 +3886,8 @@ uint64_t DTCLib::DTC_Registers::CalculateFrequencyForProgramming_(double targetF
 	}
 	TRACE(4, "CalculateFrequencyForProgramming: New Program: HSDIV=%d, N1=%d, RFREQ=%lf", newHighSpeedDivider, newOutputDivider, newRFREQ);
 
-	if (EncodeHighSpeedDivider_(newHighSpeedDivider) == -1) {
+	if (EncodeHighSpeedDivider_(newHighSpeedDivider) == -1)
+	{
 		TRACE(0, "ERROR: CalculateFrequencyForProgramming: Invalid HSDIV %d!", newHighSpeedDivider);
 		return 0;
 	}

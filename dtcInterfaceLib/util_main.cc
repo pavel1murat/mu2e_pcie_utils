@@ -46,15 +46,17 @@ bool quiet = false;
 unsigned quietCount = 1;
 bool reallyQuiet = false;
 bool rawOutput = false;
+bool writeDMAHeadersToOutput = false;
 bool useCFOEmulator = true;
 unsigned genDMABlocks = 0;
 std::string rawOutputFile = "/tmp/mu2eUtil.raw";
+std::string expectedDesignVersion = "";
 std::string simFile = "";
 bool useSimFile = false;
 unsigned delay = 0;
 unsigned cfodelay = 1000;
 unsigned number = 1;
-unsigned timestampOffset = 1;
+unsigned long timestampOffset = 1;
 unsigned eventCount = 1;
 unsigned blockCount = 1;
 unsigned packetCount = 0;
@@ -90,6 +92,27 @@ unsigned getOptionValue(int* index, char** argv[])
 	}
 
 	return strtoul(&arg[offset], nullptr, 0);
+}
+unsigned long long getOptionValueLong(int* index, char** argv[])
+{
+	auto arg = (*argv)[*index];
+	if (arg[2] == '\0')
+	{
+		(*index)++;
+		unsigned long long ret = strtoull((*argv)[*index], nullptr, 0);
+		if (ret == 0 && (*argv)[*index][0] != '0') // No option given 
+		{
+			(*index)--;
+		}
+		return ret;
+	}
+	auto offset = 2;
+	if (arg[2] == '=')
+	{
+		offset = 3;
+	}
+
+	return strtoull(&arg[offset], nullptr, 0);
 }
 
 std::string getOptionString(int* index, char** argv[])
@@ -137,14 +160,15 @@ void WriteGeneratedData(DTC* thisDTC)
 			exit(1);
 		}
 
-		// ReSharper disable once CppNonReclaimedResourceAcquisition
 		auto buf = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
 		memcpy(buf, &dmaWriteByteCount, sizeof(uint64_t));
+		if (rawOutput && writeDMAHeadersToOutput) outputStream.write(reinterpret_cast<char*>(&dmaWriteByteCount), sizeof(uint64_t));
 		auto currentOffset = sizeof(uint64_t);
 
 		for (unsigned ll = 0; ll < eventCount; ++ll) {
 
 			memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, &eventByteCount, sizeof(uint64_t));
+			if (rawOutput && writeDMAHeadersToOutput) outputStream.write(reinterpret_cast<char*>(&eventByteCount), sizeof(uint64_t));
 			currentOffset += sizeof(uint64_t);
 
 			if (incrementTimestamp) ++ts;
@@ -173,9 +197,7 @@ void WriteGeneratedData(DTC* thisDTC)
 					{
 						break;
 					}
-					// ReSharper disable CppRedundantParentheses
 					packet.SetWord(14, (jj + 1) & 0xFF);
-					// ReSharper restore CppRedundantParentheses
 					memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
 					if (rawOutput) outputStream << packet;
 					currentOffset += 16;
@@ -242,6 +264,7 @@ void printHelpMsg()
 		<< "    -t: Use DebugType flag (1st request gets ExternalDataWithFIFOReset, the rest get ExternalData)" << std::endl
 		<< "    -T: Set DebugType flag for ALL requests (0, 1, or 2)" << std::endl
 		<< "    -f: RAW Output file path" << std::endl
+		<< "    -H: Write DMA headers to raw output file (when -f is used with -g)"
 		<< "    -p: Send DTCLIB_SIM_FILE to DTC and enable Detector Emulator mode" << std::endl
 		<< "    -P: Send <file> to DTC and enable Detector Emulator mode (Default: \"\")" << std::endl
 		<< "    -g: Generate (and send) N DMA blocks for testing the Detector Emulator (Default: 0)" << std::endl
@@ -249,6 +272,7 @@ void printHelpMsg()
 		<< "    -r: # of rocs to enable. Hexadecimal, each digit corresponds to a ring. ROC_0: 1, ROC_1: 3, ROC_2: 5, ROC_3: 7, ROC_4: 9, ROC_5: B (Default 0x1, All possible: 0xBBBBBB)" << std::endl
 		<< "    -F: Frequency to program (in Hz, sorry...Default 166666667 Hz)" << std::endl
 		<< "    -C: Clock to program (0: SERDES, 1: DDR, Default 0)" << std::endl
+		<< "    -v: Expected DTC Design version string (Default: \"\")" << std::endl
 		;
 	exit(0);
 }
@@ -279,7 +303,7 @@ main(int argc
 				number = getOptionValue(&optind, &argv);
 				break;
 			case 'o':
-				timestampOffset = getOptionValue(&optind, &argv);
+				timestampOffset = getOptionValueLong(&optind, &argv) & 0x0000FFFFFFFFFFFF; // Timestamps are 48 bits
 				break;
 			case 'c':
 				packetCount = getOptionValue(&optind, &argv);
@@ -325,6 +349,9 @@ main(int argc
 				rawOutput = true;
 				rawOutputFile = getOptionString(&optind, &argv);
 				break;
+			case 'H':
+				writeDMAHeadersToOutput = true;
+				break;
 			case 't':
 				debugType = DTC_DebugType_ExternalSerialWithReset;
 				stickyDebugType = false;
@@ -348,6 +375,9 @@ main(int argc
 				break;
 			case 'F':
 				targetFrequency = getOptionValue(&optind, &argv);
+				break;
+			case 'v':
+				expectedDesignVersion = getOptionString(&optind, &argv);
 				break;
 			default:
 				std::cout << "Unknown option: " << argv[optind] << std::endl;
@@ -387,7 +417,9 @@ main(int argc
 		<< ", ROC Mask: " << std::hex << rocMask
 		<< ", Debug Type: " << DTC_DebugTypeConverter(debugType).toString()
 		<< ", Target Frequency: " << std::dec << targetFrequency
-		<< ", Clock To Program: " << (clockToProgram == 0 ? "SERDES" : "DDR");
+		<< ", Clock To Program: " << (clockToProgram == 0 ? "SERDES" : "DDR")
+		<< ", Expected Design Version: " << expectedDesignVersion
+		;
 	if (rawOutput)
 	{
 		std::cout << ", Raw output file: " << rawOutputFile;
@@ -402,8 +434,7 @@ main(int argc
 	if (op == "read")
 	{
 		std::cout << "Operation \"read\"" << std::endl;
-		// ReSharper disable once CppNonReclaimedResourceAcquisition
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
 		auto packet = thisDTC->ReadNextDAQPacket();
 		if (!reallyQuiet) std::cout << packet->toJSON() << '\n';
 		if (rawOutput)
@@ -420,8 +451,7 @@ main(int argc
 	else if (op == "read_data")
 	{
 		std::cout << "Operation \"read_data\"" << std::endl;
-		// ReSharper disable once CppNonReclaimedResourceAcquisition
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
 
 		auto device = thisDTC->GetDevice();
 		if (readGenerated)
@@ -448,13 +478,11 @@ main(int argc
 					for (unsigned line = 0; line < static_cast<unsigned>(ceil((bufSize - 8) / 16)); ++line)
 					{
 						std::cout << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
-						//for (unsigned byte = 0; byte < 16; ++byte)
 						for (unsigned byte = 0; byte < 8; ++byte)
 						{
 							if (line * 16 + 2 * byte < bufSize - 8u)
 							{
 								auto thisWord = reinterpret_cast<uint16_t*>(buffer)[4 + line * 8 + byte];
-								//uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
 								std::cout << std::setw(4) << static_cast<int>(thisWord) << " ";
 							}
 						}
@@ -472,8 +500,7 @@ main(int argc
 	else if (op == "toggle_serdes")
 	{
 		std::cout << "Swapping SERDES Oscillator Clock" << std::endl;
-		// ReSharper disable once CppNonReclaimedResourceAcquisition
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
 		auto clock = thisDTC->ReadSERDESOscillatorClock();
 		if (clock == DTC_SerdesClockSpeed_3125Gbps)
 		{
@@ -494,7 +521,7 @@ main(int argc
 	else if (op == "reset_detemu")
 	{
 		std::cout << "Resetting Detector Emulator" << std::endl;
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
 		thisDTC->ClearDetectorEmulatorInUse();
 		thisDTC->ResetDDR();
 		thisDTC->ResetDTC();
@@ -504,9 +531,7 @@ main(int argc
 	{
 		std::cout << "Operation \"buffer_test\"" << std::endl;
 		auto startTime = std::chrono::steady_clock::now();
-		// ReSharper disable once CppNonReclaimedResourceAcquisition
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
-		uint32_t maxGasGauge = 0x0;
+		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
 		auto device = thisDTC->GetDevice();
 
 		auto initTime = device->GetDeviceTime();
@@ -523,7 +548,11 @@ main(int argc
 		{
 			auto overwrite = false;
 			if (simFile.size() > 0) overwrite = true;
-			thisDTC->WriteSimFileToDTC(simFile, false, overwrite);
+			thisDTC->WriteSimFileToDTC(simFile, false, overwrite, rawOutputFile);
+			if (readGenerated)
+			{
+				exit(0);
+			}
 		}
 		else if (readGenerated)
 		{
@@ -571,10 +600,9 @@ main(int argc
 				auto bufSize = static_cast<uint16_t>(*static_cast<uint64_t*>(readPtr));
 				readPtr = static_cast<uint8_t*>(readPtr) + 8;
 				if (!reallyQuiet) std::cout << "Buffer reports DMA size of " << std::dec << bufSize << " bytes. Device driver reports read of " << sts << " bytes," << std::endl;
-				uint32_t gasGauge = thisDTC->ReadDDRGasGuage();
-				TRACE(1, "util - bufSize is %u, gasGuage is %x", bufSize, gasGauge);
-				if (gasGauge > maxGasGauge) maxGasGauge = gasGauge;
-				if (rawOutput) outputStream.write(static_cast<char*>(readPtr), bufSize - 8);
+
+				TRACE(1, "util - bufSize is %u", bufSize);
+				if (rawOutput) outputStream.write(static_cast<char*>(readPtr), sts - 8);
 
 				if (!reallyQuiet)
 				{
@@ -582,21 +610,17 @@ main(int argc
 					for (unsigned line = 0; line < maxLine; ++line)
 					{
 						std::cout << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
-						//for (unsigned byte = 0; byte < 16; ++byte)
 						for (unsigned byte = 0; byte < 8; ++byte)
 						{
 							if (line * 16 + 2 * byte < sts - 8u)
 							{
 								auto thisWord = reinterpret_cast<uint16_t*>(buffer)[4 + line * 8 + byte];
-								//uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
 								std::cout << std::setw(4) << static_cast<int>(thisWord) << " ";
 							}
 						}
 						std::cout << std::endl;
-						if (maxLine > quietCount * 2) {
-							if (quiet && line == (quietCount - 1)) {
+						if (maxLine > quietCount * 2 &&quiet && line == (quietCount - 1)) {
 								line = static_cast<unsigned>(ceil((sts - 8) / 16.0)) - (1 + quietCount);
-							}
 						}
 					}
 				}
@@ -625,12 +649,11 @@ main(int argc
 			<< "Device Init Time: " << Utilities::FormatTimeString(initTime) << "." << std::endl
 			<< "Device Request Time: " << Utilities::FormatTimeString(readoutRequestTime) << "." << std::endl
 			<< "Device Read Time: " << Utilities::FormatTimeString(readDevTime) << "." << std::endl
-			<< "Total Bytes Written: " << Utilities::FormatByteString(totalBytesWritten) << "." << std::endl
-			<< "Total Bytes Read: " << Utilities::FormatByteString(totalBytesRead) << "." << std::endl
-			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
-			<< "Read Rate: " << Utilities::FormatByteString(totalBytesRead / totalReadTime) << "/s." << std::endl
-			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime) << "/s." << std::endl
-			<< "Maximum Gas Gauge: " << Utilities::FormatByteString(maxGasGauge) << std::endl;
+			<< "Total Bytes Written: " << Utilities::FormatByteString(static_cast<double>(totalBytesWritten), "") << "." << std::endl
+			<< "Total Bytes Read: " << Utilities::FormatByteString(static_cast<double>(totalBytesRead), "") << "." << std::endl
+			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime, "/s") << std::endl
+			<< "Read Rate: " << Utilities::FormatByteString(totalBytesRead / totalReadTime, "/s") << std::endl
+			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime, "/s") << std::endl;
 
 		delete thisDTC;
 	}
@@ -652,9 +675,7 @@ main(int argc
 	else if (op == "DTC")
 	{
 		auto startTime = std::chrono::steady_clock::now();
-		// ReSharper disable once CppNonReclaimedResourceAcquisition
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
-		uint32_t maxGasGauge = 0x0;
+		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
 
 		auto initTime = thisDTC->GetDevice()->GetDeviceTime();
 		thisDTC->GetDevice()->ResetDeviceTime();
@@ -709,9 +730,6 @@ main(int argc
 			}
 
 			auto data = thisDTC->GetData(); //DTC_Timestamp(ts));
-			uint32_t gasGauge = thisDTC->ReadDDRGasGuage();
-			TRACE(1, "util - data count is %zu, gasGuage is %x", data.size(), gasGauge);
-			if (gasGauge > maxGasGauge) maxGasGauge = gasGauge;
 
 			if (data.size() > 0)
 			{
@@ -842,18 +860,16 @@ main(int argc
 			<< "Device Init Time: " << initTime << " s." << std::endl
 			<< "Device Request Time: " << readoutRequestTime << " s." << std::endl
 			<< "Device Read Time: " << readDevTime << " s." << std::endl
-			<< "Total Bytes Written: " << Utilities::FormatByteString(totalBytesWritten) << "." << std::endl
-			<< "Total Bytes Read: " << Utilities::FormatByteString(totalBytesRead) << "." << std::endl
-			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime) << "/s." << std::endl
-			<< "Read Rate: " << Utilities::FormatByteString(totalBytesRead / totalReadTime) << "/s." << std::endl
-			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime) << "/s." << std::endl
-			<< "Maximum Gas Gauge: " << Utilities::FormatByteString(maxGasGauge) << std::endl;
+			<< "Total Bytes Written: " << Utilities::FormatByteString(static_cast<double>(totalBytesWritten),"") << "." << std::endl
+			<< "Total Bytes Read: " << Utilities::FormatByteString(static_cast<double>(totalBytesRead),"") << "." << std::endl
+			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime,"/s") << "." << std::endl
+			<< "Read Rate: " << Utilities::FormatByteString(totalBytesRead / totalReadTime, "/s") << "." << std::endl
+			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime, "/s") << "." << std::endl;
 		delete thisDTC;
 	}
 	else if (op == "program_clock")
 	{
-		// ReSharper disable once CppNonReclaimedResourceAcquisition
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
 		auto oscillator = clockToProgram == 0 ? DTC_OscillatorType_SERDES : DTC_OscillatorType_DDR;
 		thisDTC->SetNewOscillatorFrequency(oscillator, targetFrequency);
 		delete thisDTC;

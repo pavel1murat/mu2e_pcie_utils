@@ -13,7 +13,7 @@
 #endif
 #define TRACE_NAME "MU2EDEV"
 
-DTCLib::DTC::DTC(DTC_SimMode mode, unsigned rocMask) : DTC_Registers(mode, rocMask),
+DTCLib::DTC::DTC(std::string expectedDesignVersion, DTC_SimMode mode, unsigned rocMask) : DTC_Registers(expectedDesignVersion, mode, rocMask),
 daqbuffer_(), dcsbuffer_(), lastDAQBufferActive_(false), lastDCSBufferActive_(false),
 bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
 lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
@@ -67,7 +67,8 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 		{
 			TRACE(19, "DTC::GetData before ReadNextDAQPacket, tries=%i", tries);
 			packet = ReadNextDAQPacket(first_read_ ? 100 : 1);
-			if (packet != nullptr) {
+			if (packet != nullptr)
+			{
 				TRACE(19, "DTC::GetData after ReadDMADAQPacket, ts=0x%llx", (unsigned long long)packet->GetTimestamp().GetTimestamp(true));
 			}
 			tries++;
@@ -82,7 +83,7 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 		if (packet->GetTimestamp() != when && when.GetTimestamp(true) != 0)
 		{
 			TRACE(0, "DTC::GetData: Error: Lead packet has wrong timestamp! 0x%llX(expected) != 0x%llX"
-				, (unsigned long long)when.GetTimestamp(true), (unsigned long long)packet->GetTimestamp().GetTimestamp(true));
+				  , (unsigned long long)when.GetTimestamp(true), (unsigned long long)packet->GetTimestamp().GetTimestamp(true));
 			delete packet;
 			lastDAQBufferActive_ = true;
 			return output;
@@ -124,23 +125,24 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 			delete packet;
 			packet = nullptr;
 
-			if (!done) {
+			if (!done)
+			{
 				TRACE(19, "DTC::GetData: Adding pointer %p to the list", (void*)lastReadPtr_);
 				output.push_back(DTC_DataBlock(reinterpret_cast<DTC_DataBlock::pointer_t*>(lastReadPtr_), sz2));
 			}
 		}
 	}
-	catch (DTC_WrongPacketTypeException ex)
+	catch (DTC_WrongPacketTypeException& ex)
 	{
 		TRACE(19, "DTC::GetData: Bad omen: Wrong packet type at the current read position");
 		nextReadPtr_ = nullptr;
 	}
-	catch (DTC_IOErrorException ex)
+	catch (DTC_IOErrorException& ex)
 	{
 		nextReadPtr_ = nullptr;
 		TRACE(19, "DTC::GetData: IO Exception Occurred!");
 	}
-	catch (DTC_DataCorruptionException ex)
+	catch (DTC_DataCorruptionException& ex)
 	{
 		nextReadPtr_ = nullptr;
 		TRACE(19, "DTC::GetData: Data Corruption Exception Occurred!");
@@ -186,71 +188,214 @@ std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when)
 	return ss.str();
 }
 
-void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool overwriteEnvironment)
+void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool overwriteEnvironment, std::string outputFileName)
 {
-	auto sim = getenv("DTCLIB_SIM_FILE");
-	if (!overwriteEnvironment && sim != nullptr)
+	bool success = false;
+	int retryCount = 0;
+	while (!success && retryCount < 5)
 	{
-		file = std::string(sim);
+
+		TRACE(4, "DTC::WriteSimFileToDTC BEGIN");
+		auto writeOutput = outputFileName != "";
+		std::ofstream outputStream;
+		if (writeOutput)
+		{
+			outputStream.open(outputFileName, std::ios::out | std::ios::binary);
+		}
+		auto sim = getenv("DTCLIB_SIM_FILE");
+		if (!overwriteEnvironment && sim != nullptr)
+		{
+			file = std::string(sim);
+		}
+
+
+		TRACE(4, "DTC::WriteSimFileToDTC file is " + file + ", Setting up DTC");
+		DisableDetectorEmulator();
+		DisableDetectorEmulatorMode();
+		ResetDDR();
+		ResetDDRWriteAddress();
+		ResetDDRReadAddress();
+		SetDDRDataLocalStartAddress(0x0);
+		SetDDRDataLocalEndAddress(0xFFFFFFFF);
+		EnableDetectorEmulatorMode();
+		SetDetectorEmulationDMACount(1);
+		SetDetectorEmulationDMADelayCount(250); // 1 microseconds
+		uint64_t totalSize = 0;
+		auto n = 0;
+
+		auto sizeCheck = true;
+		TRACE(4, "DTC::WriteSimFileToDTC Opening file");
+		std::ifstream is(file, std::ifstream::binary);
+		TRACE(4, "DTC::WriteSimFileToDTC Reading file");
+		while (is && is.good() && sizeCheck)
+		{
+			TRACE(5, "DTC::WriteSimFileToDTC Reading a DMA from file...%s", file.c_str());
+			auto buf = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
+			is.read(reinterpret_cast<char*>(buf), sizeof(uint64_t));
+			if (is.eof())
+			{
+				TRACE(5, "DTC::WriteSimFileToDTC End of file reached.");
+				delete[] buf;
+				break;
+			}
+			auto sz = *reinterpret_cast<uint64_t*>(buf);
+			//TRACE(5, "Size is %llu, writing to device", (long long unsigned)sz);
+			is.read(reinterpret_cast<char*>(buf) + 8, sz - sizeof(uint64_t));
+			if (sz < 80 && sz > 0)
+			{
+				auto oldSize = sz;
+				sz = 80;
+				memcpy(buf, &sz, sizeof(uint64_t));
+				uint64_t sixtyFour = 64;
+				memcpy(reinterpret_cast<uint64_t*>(buf) + 1, &sixtyFour, sizeof(uint64_t));
+				bzero(reinterpret_cast<uint64_t*>(buf) + 2, sz - oldSize);
+			}
+			//is.read((char*)buf + 8, sz - sizeof(uint64_t));
+			if (sz > 0 && (sz + totalSize < 0xFFFFFFFF || simMode_ == DTC_SimMode_LargeFile))
+			{
+				TRACE(5, "DTC::WriteSimFileToDTC Size is %zu, writing to device", sz);
+				if (writeOutput)
+				{
+					TRACE(11, "DTC::WriteSimFileToDTC: Stripping off DMA header words and writing to binary file");
+					outputStream.write(reinterpret_cast<char*>(buf) + 16, sz - 16);
+				}
+
+				auto exclusiveByteCount = *(reinterpret_cast<uint64_t*>(buf) + 1);
+				TRACE(11, "DTC::WriteSimFileToDTC: Inclusive byte count: %llu, Exclusive byte count: %llu", (long long unsigned)sz, (long long unsigned)exclusiveByteCount);
+				if (sz - 16 != exclusiveByteCount)
+				{
+					TRACE(0, "DTC::WriteSimFileToDTC: ERROR: Inclusive Byte count %llu is inconsistent with exclusive byte count %llu for DMA at 0x%llx (%llu != %llu)",
+						(long long unsigned)sz, (long long unsigned)exclusiveByteCount, (long long unsigned) totalSize, (long long unsigned)sz - 16, (long long unsigned)exclusiveByteCount);
+					sizeCheck = false;
+				}
+
+				totalSize += sz;
+				n++;
+				TRACE(10, "DTC::WriteSimFileToDTC: totalSize is now %lu, n is now %lu", static_cast<unsigned long>(totalSize), static_cast<unsigned long>(n));
+				WriteDetectorEmulatorData(buf, static_cast<size_t>(sz));
+			}
+			else if (sz > 0)
+			{
+				TRACE(5, "DTC::WriteSimFileToDTC DTC memory is now full. Closing file.");
+				sizeCheck = false;
+			}
+			delete[] buf;
+		}
+
+		TRACE(4, "DTC::WriteSimFileToDTC Closing file. sizecheck=%i, eof=%i, fail=%i, bad=%i", sizeCheck, is.eof(), is.fail(), is.bad());
+		is.close();
+		if (writeOutput) outputStream.close();
+		SetDDRDataLocalEndAddress(static_cast<uint32_t>(totalSize - 1));
+		success = VerifySimFileInDTC(file);
+		retryCount++;
 	}
 
-	DisableDetectorEmulator();
-	DisableDetectorEmulatorMode();
-	ResetDDRWriteAddress();
-	ResetDDRReadAddress();
-	SetDDRDataLocalStartAddress(0x0);
-	SetDDRDataLocalEndAddress(0xFFFFFFFF);
-	EnableDetectorEmulatorMode();
-	SetDetectorEmulationDMACount(1);
-	SetDetectorEmulationDMADelayCount(250); // 1 microseconds
+	if (retryCount == 5)
+	{
+		TRACE(0, "DTC::WriteSimFileToDTC FAILED after 5 attempts! ABORTING!");
+		exit(4);
+	}
+	else {
+	TRACE(2, "DTC::WriteSimFileToDTC Took %d attempts to write file",retryCount);
+}
+
+	SetDetectorEmulatorInUse();
+	TRACE(4, "DTC::WriteSimFileToDTC END");
+}
+
+bool DTCLib::DTC::VerifySimFileInDTC(std::string file)
+{
 	uint64_t totalSize = 0;
 	auto n = 0;
-
 	auto sizeCheck = true;
+	ResetDDRReadAddress();
+	TRACE(4, "DTC::VerifySimFileInDTC Opening file");
 	std::ifstream is(file, std::ifstream::binary);
+	TRACE(4, "DTC::VerifySimFileInDTC Reading file");
 	while (is && is.good() && sizeCheck)
 	{
-		TRACE(5, "Reading a DMA from file...%s", file.c_str());
-		// ReSharper disable once CppNonReclaimedResourceAcquisition
+		TRACE(5, "DTC::VerifySimFileInDTC Reading a DMA from file...%s", file.c_str());
 		auto buf = reinterpret_cast<mu2e_databuff_t*>(new char[0x10000]);
 		is.read(reinterpret_cast<char*>(buf), sizeof(uint64_t));
+		if (is.eof())
+		{
+			TRACE(5, "DTC::VerifySimFileInDTC End of file reached.");
+			delete[] buf;
+			break;
+		}
 		auto sz = *reinterpret_cast<uint64_t*>(buf);
 		//TRACE(5, "Size is %llu, writing to device", (long long unsigned)sz);
 		is.read(reinterpret_cast<char*>(buf) + 8, sz - sizeof(uint64_t));
-		if (sz < 64 && sz > 0)
+		if (sz < 80 && sz > 0)
 		{
-			sz = 64;
+			auto oldSize = sz;
+			sz = 80;
 			memcpy(buf, &sz, sizeof(uint64_t));
+			uint64_t sixtyFour = 64;
+			memcpy(reinterpret_cast<uint64_t*>(buf) + 1, &sixtyFour, sizeof(uint64_t));
+			bzero(reinterpret_cast<uint64_t*>(buf) + 2, sz - oldSize);
 		}
-		//is.read((char*)buf + 8, sz - sizeof(uint64_t));
+
 		if (sz > 0 && (sz + totalSize < 0xFFFFFFFF || simMode_ == DTC_SimMode_LargeFile))
 		{
-			TRACE(5, "Size is %zu, writing to device", sz);
+			TRACE(5, "DTC::VerifySimFileInDTC Size is %zu, writing to device", sz);
+			auto exclusiveByteCount = *(reinterpret_cast<uint64_t*>(buf) + 1);
+			TRACE(11, "DTC::VerifySimFileInDTC: Inclusive byte count: %llu, Exclusive byte count: %llu", (long long unsigned)sz, (long long unsigned)exclusiveByteCount);
+			if (sz - 16 != exclusiveByteCount)
+			{
+				TRACE(0, "DTC::VerifySimFileInDTC: ERROR: Inclusive Byte count %llu is inconsistent with exclusive byte count %llu for DMA at 0x%llx (%llu != %llu)",
+					(long long unsigned)sz, (long long unsigned)exclusiveByteCount, (long long unsigned) totalSize, (long long unsigned)sz - 16, (long long unsigned)exclusiveByteCount);
+				sizeCheck = false;
+			}
+
 			totalSize += sz;
 			n++;
-			TRACE(10, "DTC::WriteSimFileToDTC: totalSize is now %lu, n is now %lu", static_cast<unsigned long>(totalSize), static_cast<unsigned long>(n));
-			WriteDetectorEmulatorData(buf, static_cast<size_t>(sz));
+			TRACE(10, "DTC::VerifySimFileInDTC: totalSize is now %lu, n is now %lu", static_cast<unsigned long>(totalSize), static_cast<unsigned long>(n));
+			//WriteDetectorEmulatorData(buf, static_cast<size_t>(sz));
+			DisableDetectorEmulator();
+			SetDetectorEmulationDMACount(1);
+			EnableDetectorEmulator();
+
+			mu2e_databuff_t* buffer;
+			auto tmo_ms = 1500;
+			TRACE(4, "DTC::VerifySimFileInDTC - before read for DAQ ");
+			auto sts = device_.read_data(DTC_DMA_Engine_DAQ, reinterpret_cast<void**>(&buffer), tmo_ms);
+			size_t readSz = *(reinterpret_cast<uint64_t*>(buffer));
+			TRACE(4, "DTC::VerifySimFileInDTC - after read, sz=%zu sts=%d rdSz=%zu", sz, sts, readSz);
+
+			// DMA engine strips off leading 64-bit word
+			TRACE(6, "DTC::VerifySimFileInDTC - Checking buffer size");
+			if (static_cast<size_t>(sts) != sz - sizeof(uint64_t)) { return false; }
+
+			TRACE(6, "DTC::VerifySimFileInDTC - Checking buffer contents");
+			size_t cnt = sts % sizeof(uint64_t) == 0 ? sts / sizeof(uint64_t) : 1 + (sts / sizeof(uint64_t));
+
+			for (size_t ii = 0; ii < cnt; ++ii)
+			{
+				auto l = *(reinterpret_cast<uint64_t*>(buffer) + ii);
+				auto r = *(reinterpret_cast<uint64_t*>(buf) +ii + 1);
+				if (l != r)
+				{
+				size_t address = totalSize - sz + ((ii + 1) * sizeof(uint64_t));
+				TRACE(1, "DTC::VerifySimFileInDTC Buffer %d word %zu (Address in file 0x%zu): Expected 0x%llx, but got 0x%llx. Returning False!", n, ii,  address,
+						static_cast<unsigned long long>(r), static_cast<unsigned long long>(l));
+					delete[] buf;
+					is.close();
+					return false;
+				}
+			}
 		}
 		else if (sz > 0)
 		{
-			TRACE(5, "DTC memory is now full. Closing file.");
+			TRACE(5, "DTC::VerifySimFileInDTC DTC memory is now full. Closing file.");
 			sizeCheck = false;
 		}
 		delete[] buf;
 	}
+
+	TRACE(4, "DTC::VerifySimFileInDTC Closing file. sizecheck=%i, eof=%i, fail=%i, bad=%i", sizeCheck, is.eof(), is.fail(), is.bad());
 	is.close();
-	SetDDRDataLocalEndAddress(static_cast<uint32_t>(totalSize - 1));
-	SetDetectorEmulatorInUse();
-	/* Instead, set the count and enable in DTCSoftwareCFO!
-	if (!goForever)
-	{
-		SetDetectorEmulationDMACount(n);
-	}
-	else
-	{
-		SetDetectorEmulationDMACount(0);
-	}
-	EnableDetectorEmulator();*/
+	return true;
 }
 
 // ROC Register Functions
@@ -331,7 +476,7 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 	if (nextReadPtr_ != nullptr)
 	{
 		TRACE(19, "DTC::ReadNextDAQPacket BEFORE BUFFER CHECK nextReadPtr_=%p *nextReadPtr_=0x%08x"
-			, (void*)nextReadPtr_, *(uint16_t*)nextReadPtr_);
+			  , (void*)nextReadPtr_, *(uint16_t*)nextReadPtr_);
 	}
 	else
 	{
@@ -360,7 +505,7 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 		// MUST BE ABLE TO HANDLE daqbuffer_==nullptr OR retry forever?
 		nextReadPtr_ = &daqbuffer_.back()[0];
 		TRACE(19, "DTC::ReadNextDAQPacket nextReadPtr_=%p *nextReadPtr_=0x%08x lastReadPtr_=%p"
-			, (void*)nextReadPtr_, *(unsigned*)nextReadPtr_, (void*)lastReadPtr_);
+			  , (void*)nextReadPtr_, *(unsigned*)nextReadPtr_, (void*)lastReadPtr_);
 		void* bufferIndexPointer = static_cast<uint8_t*>(nextReadPtr_) + 2;
 		if (nextReadPtr_ == oldBufferPtr && bufferIndex_ == *static_cast<uint32_t*>(bufferIndexPointer))
 		{
@@ -495,7 +640,7 @@ int DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
 	else
 	{
 		TRACE(16, "DTC::ReadDataPacket buffer_=%p errorCode=%d *buffer_=0x%08x"
-			, (void*)buffer, errorCode, *(unsigned*)buffer);
+			  , (void*)buffer, errorCode, *(unsigned*)buffer);
 		if (channel == DTC_DMA_Engine_DAQ)
 		{
 			daqbuffer_.push_back(buffer);

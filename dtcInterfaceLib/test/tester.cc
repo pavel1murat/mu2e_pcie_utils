@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
 
 	TRACE(1, "simFile is %s", simFile.c_str());
 	auto mode = DTC_SimModeConverter::ConvertToSimMode(std::to_string(modeint));
-	auto thisDTC = new DTC(mode);
+	auto thisDTC = new DTC("",mode);
 	if (simFile.size() > 0)
 	{
 		thisDTC->WriteSimFileToDTC(simFile, true, true);
