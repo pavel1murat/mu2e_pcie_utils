@@ -369,10 +369,10 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file)
 
 			TRACE(6, "DTC::VerifySimFileInDTC - Checking buffer contents");
 
-			for (size_t ii = 0; ii < sts; ++ii)
+			for (size_t ii = 0; ii < static_cast<size_t>(sts); ++ii)
 			{
-				auto l = *(buffer + ii);
-				auto r = *(buf + ii + sizeof(uint64_t));
+				auto l = *(*buffer + ii);
+				auto r = *(*buf + ii + sizeof(uint64_t));
 				if (l != r)
 				{
 				size_t address = totalSize - sz + ii + sizeof(uint64_t);
