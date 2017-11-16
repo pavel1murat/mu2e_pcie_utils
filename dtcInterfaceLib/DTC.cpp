@@ -371,7 +371,7 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file, std::string rawOutputFile
 			if (writeOutput)
 			{
 				TRACE(11, "DTC::VerifySimFileInDTC: Writing to binary file");
-				outputStream.write(reinterpret_cast<char*>(buffer), sts);
+				outputStream.write(reinterpret_cast<char*>(buffer + 8), sts - 8);
 			}
 			size_t readSz = *(reinterpret_cast<uint64_t*>(buffer));
 			TRACE(4, "DTC::VerifySimFileInDTC - after read, sz=%zu sts=%d rdSz=%zu", sz, sts, readSz);
