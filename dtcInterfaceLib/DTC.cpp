@@ -286,7 +286,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool o
 		is.close();
 		if (writeOutput) outputStream.close();
 		SetDDRDataLocalEndAddress(static_cast<uint32_t>(totalSize - 1));
-		success = VerifySimFileInDTC(file);
+		success = VerifySimFileInDTC(file, outputFileName);
 		retryCount++;
 	}
 
@@ -303,11 +303,19 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool o
 	TRACE(4, "DTC::WriteSimFileToDTC END");
 }
 
-bool DTCLib::DTC::VerifySimFileInDTC(std::string file)
+bool DTCLib::DTC::VerifySimFileInDTC(std::string file, std::string rawOutputFilename)
 {
 	uint64_t totalSize = 0;
 	auto n = 0;
 	auto sizeCheck = true;
+
+	auto writeOutput = rawOutputFilename != "";
+	std::ofstream outputStream;
+	if (writeOutput)
+	{
+		outputStream.open(rawOutputFilename + ".verify", std::ios::out | std::ios::binary);
+	}
+
 	ResetDDRReadAddress();
 	TRACE(4, "DTC::VerifySimFileInDTC Opening file");
 	std::ifstream is(file, std::ifstream::binary);
@@ -359,7 +367,12 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file)
 			mu2e_databuff_t* buffer;
 			auto tmo_ms = 1500;
 			TRACE(4, "DTC::VerifySimFileInDTC - before read for DAQ ");
-			auto sts = device_.read_data(DTC_DMA_Engine_DAQ, reinterpret_cast<void**>(&buffer), tmo_ms);
+			auto sts = device_.read_data(DTC_DMA_Engine_DAQ, reinterpret_cast<void**>(&buffer), tmo_ms);		
+			if (writeOutput)
+			{
+				TRACE(11, "DTC::VerifySimFileInDTC: Writing to binary file");
+				outputStream.write(reinterpret_cast<char*>(buffer), sts);
+			}
 			size_t readSz = *(reinterpret_cast<uint64_t*>(buffer));
 			TRACE(4, "DTC::VerifySimFileInDTC - after read, sz=%zu sts=%d rdSz=%zu", sz, sts, readSz);
 
@@ -381,6 +394,7 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file)
 						static_cast<unsigned long long>(r), static_cast<unsigned long long>(l));
 					delete[] buf;
 					is.close();
+					if (writeOutput) outputStream.close();
 					return false;
 				}
 			}
@@ -395,6 +409,7 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file)
 
 	TRACE(4, "DTC::VerifySimFileInDTC Closing file. sizecheck=%i, eof=%i, fail=%i, bad=%i", sizeCheck, is.eof(), is.fail(), is.bad());
 	is.close();
+	if (writeOutput) outputStream.close();
 	return true;
 }
 

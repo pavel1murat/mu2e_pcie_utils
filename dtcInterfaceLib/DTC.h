@@ -54,8 +54,9 @@ namespace DTCLib
 		/// Read the DTC memory and determine whether the file was written correctly.
 		/// </summary>
 		/// <param name="file">File to verify against</param>
+		/// <param name="rawOutputFilename">Default: "". If set, file to write data retrieved from the DTC to</param>
 		/// <returns>True if file is in DTC memory without errors</returns>
-		bool VerifySimFileInDTC(std::string file);
+		bool VerifySimFileInDTC(std::string file, std::string rawOutputFilename = "");
 
 		// DCS Register R/W
 		/// <summary>
