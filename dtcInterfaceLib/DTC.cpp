@@ -188,7 +188,7 @@ std::string DTCLib::DTC::GetJSONData(DTC_Timestamp when)
 	return ss.str();
 }
 
-void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool overwriteEnvironment, std::string outputFileName)
+void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool overwriteEnvironment, std::string outputFileName, bool skipVerify)
 {
 	bool success = false;
 	int retryCount = 0;
@@ -286,7 +286,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool o
 		is.close();
 		if (writeOutput) outputStream.close();
 		SetDDRDataLocalEndAddress(static_cast<uint32_t>(totalSize - 1));
-		success = VerifySimFileInDTC(file, outputFileName);
+		success = skipVerify || VerifySimFileInDTC(file, outputFileName);
 		retryCount++;
 	}
 

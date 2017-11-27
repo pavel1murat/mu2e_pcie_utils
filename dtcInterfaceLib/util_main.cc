@@ -46,6 +46,7 @@ bool quiet = false;
 unsigned quietCount = 1;
 bool reallyQuiet = false;
 bool rawOutput = false;
+bool skipVerify = false;
 bool writeDMAHeadersToOutput = false;
 bool useCFOEmulator = true;
 unsigned genDMABlocks = 0;
@@ -244,7 +245,7 @@ void WriteGeneratedData(DTC* thisDTC)
 
 void printHelpMsg()
 {
-	std::cout << "Usage: mu2eUtil [options] [read,read_data,reset_ddrread,reset_detemu,toggle_serdes,loopback,buffer_test,read_release,DTC,program_clock]" << std::endl;
+	std::cout << "Usage: mu2eUtil [options] [read,read_data,reset_ddrread,reset_detemu,toggle_serdes,loopback,buffer_test,read_release,DTC,program_clock,verify_simfile]" << std::endl;
 	std::cout << "Options are:" << std::endl
 		<< "    -h: This message." << std::endl
 		<< "    -n: Number of times to repeat test. (Default: 1)" << std::endl
@@ -273,6 +274,7 @@ void printHelpMsg()
 		<< "    -F: Frequency to program (in Hz, sorry...Default 166666667 Hz)" << std::endl
 		<< "    -C: Clock to program (0: SERDES, 1: DDR, Default 0)" << std::endl
 		<< "    -v: Expected DTC Design version string (Default: \"\")" << std::endl
+		<< "    -V: Do NOT attempt to verify that the sim file landed in DTC memory correctly" << std::endl
 		;
 	exit(0);
 }
@@ -379,6 +381,9 @@ main(int argc
 			case 'v':
 				expectedDesignVersion = getOptionString(&optind, &argv);
 				break;
+			case 'V':
+				skipVerify = true;
+				break;
 			default:
 				std::cout << "Unknown option: " << argv[optind] << std::endl;
 				printHelpMsg();
@@ -414,6 +419,7 @@ main(int argc
 		<< ", Generate DMA Blocks: " << genDMABlocks
 		<< ", Read Data from DDR: " << readGenerated
 		<< ", Use Sim File: " << useSimFile
+		<< ", Skip Verify: " << skipVerify
 		<< ", ROC Mask: " << std::hex << rocMask
 		<< ", Debug Type: " << DTC_DebugTypeConverter(debugType).toString()
 		<< ", Target Frequency: " << std::dec << targetFrequency
@@ -534,6 +540,19 @@ main(int argc
 		thisDTC->ResetDTC();
 		delete thisDTC;
 	}
+	else if (op == "verify_simfile")
+	{
+		std::cout << "Operation \"verify_simfile\"" << std::endl;
+		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		auto device = thisDTC->GetDevice();
+
+		device->ResetDeviceTime();
+
+		if (useSimFile)
+		{
+			thisDTC->VerifySimFileInDTC(simFile,rawOutputFile);
+		}
+	}
 	else if (op == "buffer_test")
 	{
 		std::cout << "Operation \"buffer_test\"" << std::endl;
@@ -555,7 +574,7 @@ main(int argc
 		{
 			auto overwrite = false;
 			if (simFile.size() > 0) overwrite = true;
-			thisDTC->WriteSimFileToDTC(simFile, false, overwrite, rawOutputFile);
+			thisDTC->WriteSimFileToDTC(simFile, false, overwrite, rawOutputFile, skipVerify);
 			if (readGenerated)
 			{
 				exit(0);
