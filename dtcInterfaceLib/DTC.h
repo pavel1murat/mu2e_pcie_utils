@@ -49,7 +49,8 @@ namespace DTCLib
 		/// <param name="goForever">Whether readout should loop through the file</param>
 		/// <param name="overwriteEnvrionment">Whether to use file instead of DTCLIB_SIM_FILE</param>
 		/// <param name="outputFileName">Name of binary file to write expected output (Default: "", no file created)</param>
-		void WriteSimFileToDTC(std::string file, bool goForever, bool overwriteEnvrionment = false, std::string outputFileName = "");
+		/// <param name="skipVerify">Skip the verify stage of WriteSimFileToDTC</param>
+		void WriteSimFileToDTC(std::string file, bool goForever, bool overwriteEnvrionment = false, std::string outputFileName = "", bool skipVerify = false);
 		/// <summary>
 		/// Read the DTC memory and determine whether the file was written correctly.
 		/// </summary>
