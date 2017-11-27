@@ -244,7 +244,7 @@ void WriteGeneratedData(DTC* thisDTC)
 
 void printHelpMsg()
 {
-	std::cout << "Usage: mu2eUtil [options] [read,read_data,reset_detemu,toggle_serdes,loopback,buffer_test,read_release,DTC,program_clock]" << std::endl;
+	std::cout << "Usage: mu2eUtil [options] [read,read_data,reset_ddrread,reset_detemu,toggle_serdes,loopback,buffer_test,read_release,DTC,program_clock]" << std::endl;
 	std::cout << "Options are:" << std::endl
 		<< "    -h: This message." << std::endl
 		<< "    -n: Number of times to repeat test. (Default: 1)" << std::endl
@@ -516,6 +516,13 @@ main(int argc
 		{
 			std::cerr << "Error: SERDES clock not recognized value!";
 		}
+		delete thisDTC;
+	}
+	else if (op == "reset_ddrread")
+	{
+		std::cout << "Resetting DDR Read Address" << std::endl;
+		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		thisDTC->ResetDDRReadAddress();
 		delete thisDTC;
 	}
 	else if (op == "reset_detemu")
