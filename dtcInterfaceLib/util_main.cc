@@ -550,6 +550,8 @@ main(int argc
 
 		if (useSimFile)
 		{
+			thisDTC->DisableDetectorEmulator();
+			thisDTC->EnableDetectorEmulatorMode();
 			thisDTC->VerifySimFileInDTC(simFile,rawOutputFile);
 		}
 	}
