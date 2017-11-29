@@ -358,7 +358,7 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file, std::string rawOutputFile
 
 		if (sz > 0 && (sz + totalSize < 0xFFFFFFFF || simMode_ == DTC_SimMode_LargeFile))
 		{
-			TRACE(5, "DTC::VerifySimFileInDTC Size is %zu, writing to device", sz);
+			TRACE(5, "DTC::VerifySimFileInDTC Expected Size is %zu, reading from device", sz);
 			auto exclusiveByteCount = *(reinterpret_cast<uint64_t*>(buf) + 1);
 			TRACE(11, "DTC::VerifySimFileInDTC: Inclusive byte count: %llu, Exclusive byte count: %llu", (long long unsigned)sz, (long long unsigned)exclusiveByteCount);
 			if (sz - 16 != exclusiveByteCount)
@@ -380,7 +380,7 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file, std::string rawOutputFile
 			auto tmo_ms = 1500;
 			TRACE(4, "DTC::VerifySimFileInDTC - before read for DAQ ");
 			auto sts = device_.read_data(DTC_DMA_Engine_DAQ, reinterpret_cast<void**>(&buffer), tmo_ms);
-			if (writeOutput)
+			if (writeOutput && sts > 8)
 			{
 				TRACE(11, "DTC::VerifySimFileInDTC: Writing to binary file");
 				outputStream.write(reinterpret_cast<char*>(buffer + 8), sts - 8);
@@ -393,6 +393,11 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file, std::string rawOutputFile
 			if (static_cast<size_t>(sts) != sz - sizeof(uint64_t))
 			{
 				TRACE(0, "DTC::VerifySimFileInDTC Buffer %d has size 0x%zx but the input file has size 0x%zx for that buffer!", n, static_cast<size_t>(sts), sz - sizeof(uint64_t));
+
+				device_.read_release(DTC_DMA_Engine_DAQ, 1);
+				delete[] buf;
+				is.close();
+				if (writeOutput) outputStream.close();
 				return false;
 			}
 
@@ -411,9 +416,11 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file, std::string rawOutputFile
 					delete[] buf;
 					is.close();
 					if (writeOutput) outputStream.close();
+					device_.read_release(DTC_DMA_Engine_DAQ, 1);
 					return false;
 				}
 			}
+			device_.read_release(DTC_DMA_Engine_DAQ, 1);
 		}
 		else if (sz > 0)
 		{
