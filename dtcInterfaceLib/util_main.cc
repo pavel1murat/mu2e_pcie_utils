@@ -155,7 +155,7 @@ void WriteGeneratedData(DTC* thisDTC)
 		auto dmaByteCount = static_cast<uint64_t>(eventWriteByteCount * eventCount); // Exclusive byte count
 		auto dmaWriteByteCount = dmaByteCount + sizeof(uint64_t); // Inclusive byte count
 
-		if (dmaWriteByteCount > 0x10000)
+		if (dmaWriteByteCount > 0x7FFF)
 		{
 			std::cerr << "Requested DMA write is larger than the allowed size! Reduce event/block/packet counts!" << std::endl;
 			exit(1);

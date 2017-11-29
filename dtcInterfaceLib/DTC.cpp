@@ -316,9 +316,19 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file, std::string rawOutputFile
 		outputStream.open(rawOutputFilename + ".verify", std::ios::out | std::ios::binary);
 	}
 
+		auto sim = getenv("DTCLIB_SIM_FILE");
+		if (file.size() == 0 && sim != nullptr)
+		{
+			file = std::string(sim);
+		}
+
 	ResetDDRReadAddress();
 	TRACE(4, "DTC::VerifySimFileInDTC Opening file");
 	std::ifstream is(file, std::ifstream::binary);
+	if(!is || !is.good()) {
+	  TRACE(0, "DTC::VerifySimFileInDTC Failed to open file " + file + "!");
+	}
+
 	TRACE(4, "DTC::VerifySimFileInDTC Reading file");
 	while (is && is.good() && sizeCheck)
 	{
@@ -378,7 +388,10 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file, std::string rawOutputFile
 
 			// DMA engine strips off leading 64-bit word
 			TRACE(6, "DTC::VerifySimFileInDTC - Checking buffer size");
-			if (static_cast<size_t>(sts) != sz - sizeof(uint64_t)) { return false; }
+			if (static_cast<size_t>(sts) != sz - sizeof(uint64_t)) {
+			  TRACE(0, "DTC::VerifySimFileInDTC Buffer %d has size 0x%zx but the input file has size 0x%zx for that buffer!", n, static_cast<size_t>(sts), sz - sizeof(uint64_t));
+			  return false;
+			}
 
 			TRACE(6, "DTC::VerifySimFileInDTC - Checking buffer contents");
 			size_t cnt = sts % sizeof(uint64_t) == 0 ? sts / sizeof(uint64_t) : 1 + (sts / sizeof(uint64_t));
@@ -390,7 +403,7 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file, std::string rawOutputFile
 				if (l != r)
 				{
 				size_t address = totalSize - sz + ((ii + 1) * sizeof(uint64_t));
-				TRACE(1, "DTC::VerifySimFileInDTC Buffer %d word %zu (Address in file 0x%zx): Expected 0x%llx, but got 0x%llx. Returning False!", n, ii,  address,
+				TRACE(0, "DTC::VerifySimFileInDTC Buffer %d word %zu (Address in file 0x%zx): Expected 0x%llx, but got 0x%llx. Returning False!", n, ii,  address,
 						static_cast<unsigned long long>(r), static_cast<unsigned long long>(l));
 					delete[] buf;
 					is.close();
@@ -408,6 +421,7 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file, std::string rawOutputFile
 	}
 
 	TRACE(4, "DTC::VerifySimFileInDTC Closing file. sizecheck=%i, eof=%i, fail=%i, bad=%i", sizeCheck, is.eof(), is.fail(), is.bad());
+	TRACE(1, "DTC::VerifySimFileInDTC: The Detector Emulation file was written correctly");
 	is.close();
 	if (writeOutput) outputStream.close();
 	return true;
