@@ -166,7 +166,8 @@ void WriteGeneratedData(DTC* thisDTC)
 		if (rawOutput && writeDMAHeadersToOutput) outputStream.write(reinterpret_cast<char*>(&dmaWriteByteCount), sizeof(uint64_t));
 		auto currentOffset = sizeof(uint64_t);
 
-		for (unsigned ll = 0; ll < eventCount; ++ll) {
+		for (unsigned ll = 0; ll < eventCount; ++ll)
+		{
 
 			memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, &eventByteCount, sizeof(uint64_t));
 			if (rawOutput && writeDMAHeadersToOutput) outputStream.write(reinterpret_cast<char*>(&eventByteCount), sizeof(uint64_t));
@@ -552,7 +553,7 @@ main(int argc
 		{
 			thisDTC->DisableDetectorEmulator();
 			thisDTC->EnableDetectorEmulatorMode();
-			thisDTC->VerifySimFileInDTC(simFile,rawOutputFile);
+			thisDTC->VerifySimFileInDTC(simFile, rawOutputFile);
 		}
 	}
 	else if (op == "buffer_test")
@@ -647,8 +648,9 @@ main(int argc
 							}
 						}
 						std::cout << std::endl;
-						if (maxLine > quietCount * 2 &&quiet && line == (quietCount - 1)) {
-								line = static_cast<unsigned>(ceil((sts - 8) / 16.0)) - (1 + quietCount);
+						if (maxLine > quietCount * 2 && quiet && line == (quietCount - 1))
+						{
+							line = static_cast<unsigned>(ceil((sts - 8) / 16.0)) - (1 + quietCount);
 						}
 					}
 				}
@@ -888,9 +890,9 @@ main(int argc
 			<< "Device Init Time: " << initTime << " s." << std::endl
 			<< "Device Request Time: " << readoutRequestTime << " s." << std::endl
 			<< "Device Read Time: " << readDevTime << " s." << std::endl
-			<< "Total Bytes Written: " << Utilities::FormatByteString(static_cast<double>(totalBytesWritten),"") << "." << std::endl
-			<< "Total Bytes Read: " << Utilities::FormatByteString(static_cast<double>(totalBytesRead),"") << "." << std::endl
-			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime,"/s") << "." << std::endl
+			<< "Total Bytes Written: " << Utilities::FormatByteString(static_cast<double>(totalBytesWritten), "") << "." << std::endl
+			<< "Total Bytes Read: " << Utilities::FormatByteString(static_cast<double>(totalBytesRead), "") << "." << std::endl
+			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime, "/s") << "." << std::endl
 			<< "Read Rate: " << Utilities::FormatByteString(totalBytesRead / totalReadTime, "/s") << "." << std::endl
 			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime, "/s") << "." << std::endl;
 		delete thisDTC;

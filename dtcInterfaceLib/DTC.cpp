@@ -269,7 +269,7 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool o
 					sizeCheck = false;
 				}
 
-				totalSize += sz;
+				totalSize += sz - 8;
 				n++;
 				TRACE(10, "DTC::WriteSimFileToDTC: totalSize is now %lu, n is now %lu", static_cast<unsigned long>(totalSize), static_cast<unsigned long>(n));
 				WriteDetectorEmulatorData(buf, static_cast<size_t>(sz));
@@ -295,9 +295,10 @@ void DTCLib::DTC::WriteSimFileToDTC(std::string file, bool /*goForever*/, bool o
 		TRACE(0, "DTC::WriteSimFileToDTC FAILED after 5 attempts! ABORTING!");
 		exit(4);
 	}
-	else {
-	TRACE(2, "DTC::WriteSimFileToDTC Took %d attempts to write file",retryCount);
-}
+	else
+	{
+		TRACE(2, "DTC::WriteSimFileToDTC Took %d attempts to write file", retryCount);
+	}
 
 	SetDetectorEmulatorInUse();
 	TRACE(4, "DTC::WriteSimFileToDTC END");
@@ -316,17 +317,18 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file, std::string rawOutputFile
 		outputStream.open(rawOutputFilename + ".verify", std::ios::out | std::ios::binary);
 	}
 
-		auto sim = getenv("DTCLIB_SIM_FILE");
-		if (file.size() == 0 && sim != nullptr)
-		{
-			file = std::string(sim);
-		}
+	auto sim = getenv("DTCLIB_SIM_FILE");
+	if (file.size() == 0 && sim != nullptr)
+	{
+		file = std::string(sim);
+	}
 
 	ResetDDRReadAddress();
 	TRACE(4, "DTC::VerifySimFileInDTC Opening file");
 	std::ifstream is(file, std::ifstream::binary);
-	if(!is || !is.good()) {
-	  TRACE(0, "DTC::VerifySimFileInDTC Failed to open file " + file + "!");
+	if (!is || !is.good())
+	{
+		TRACE(0, "DTC::VerifySimFileInDTC Failed to open file " + file + "!");
 	}
 
 	TRACE(4, "DTC::VerifySimFileInDTC Reading file");
@@ -377,7 +379,7 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file, std::string rawOutputFile
 			mu2e_databuff_t* buffer;
 			auto tmo_ms = 1500;
 			TRACE(4, "DTC::VerifySimFileInDTC - before read for DAQ ");
-			auto sts = device_.read_data(DTC_DMA_Engine_DAQ, reinterpret_cast<void**>(&buffer), tmo_ms);		
+			auto sts = device_.read_data(DTC_DMA_Engine_DAQ, reinterpret_cast<void**>(&buffer), tmo_ms);
 			if (writeOutput)
 			{
 				TRACE(11, "DTC::VerifySimFileInDTC: Writing to binary file");
@@ -388,9 +390,10 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file, std::string rawOutputFile
 
 			// DMA engine strips off leading 64-bit word
 			TRACE(6, "DTC::VerifySimFileInDTC - Checking buffer size");
-			if (static_cast<size_t>(sts) != sz - sizeof(uint64_t)) {
-			  TRACE(0, "DTC::VerifySimFileInDTC Buffer %d has size 0x%zx but the input file has size 0x%zx for that buffer!", n, static_cast<size_t>(sts), sz - sizeof(uint64_t));
-			  return false;
+			if (static_cast<size_t>(sts) != sz - sizeof(uint64_t))
+			{
+				TRACE(0, "DTC::VerifySimFileInDTC Buffer %d has size 0x%zx but the input file has size 0x%zx for that buffer!", n, static_cast<size_t>(sts), sz - sizeof(uint64_t));
+				return false;
 			}
 
 			TRACE(6, "DTC::VerifySimFileInDTC - Checking buffer contents");
@@ -399,12 +402,12 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file, std::string rawOutputFile
 			for (size_t ii = 0; ii < cnt; ++ii)
 			{
 				auto l = *(reinterpret_cast<uint64_t*>(*buffer) + ii);
-				auto r = *(reinterpret_cast<uint64_t*>(*buf) +ii + 1);
+				auto r = *(reinterpret_cast<uint64_t*>(*buf) + ii + 1);
 				if (l != r)
 				{
-				size_t address = totalSize - sz + ((ii + 1) * sizeof(uint64_t));
-				TRACE(0, "DTC::VerifySimFileInDTC Buffer %d word %zu (Address in file 0x%zx): Expected 0x%llx, but got 0x%llx. Returning False!", n, ii,  address,
-						static_cast<unsigned long long>(r), static_cast<unsigned long long>(l));
+					size_t address = totalSize - sz + ((ii + 1) * sizeof(uint64_t));
+					TRACE(0, "DTC::VerifySimFileInDTC Buffer %d word %zu (Address in file 0x%zx): Expected 0x%llx, but got 0x%llx. Returning False!", n, ii, address,
+						  static_cast<unsigned long long>(r), static_cast<unsigned long long>(l));
 					delete[] buf;
 					is.close();
 					if (writeOutput) outputStream.close();
