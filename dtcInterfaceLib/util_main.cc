@@ -146,6 +146,7 @@ void WriteGeneratedData(DTC* thisDTC)
 	uint64_t total_size_written = 0;
 	uint32_t end_address = 0;
 	unsigned ii = 0;
+	uint32_t packetCounter = 0;
 	uint64_t ts = timestampOffset;
 	for (; ii < genDMABlocks; ++ii)
 	{
@@ -202,15 +203,16 @@ void WriteGeneratedData(DTC* thisDTC)
 						break;
 					}
 
-					dataPacket[0] = 0xFEED;
-					dataPacket[1] = 0xBEE5;
-					for (int word = 2; word < 8; ++word)
-					{
-						dataPacket[word] = (jj + 1) & 0xFFFF;
-					}
+					dataPacket[0] = 0x4144;
+					dataPacket[1] = 0x4154;
+					dataPacket[2] = 0x4144;
+					dataPacket[3] = 0x4154;
+                                        packetCounter += 1;
+                                        memcpy(&dataPacket[4], &packetCounter, sizeof(uint32_t));
+					memcpy(&dataPacket[6], &packetCounter, sizeof(uint32_t));
 
 					memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, &dataPacket[0], sizeof(uint8_t) * 16);
-					if (rawOutput) outputStream << dataPacket;
+					if (rawOutput) outputStream.write(reinterpret_cast<char*>(&dataPacket[0]), 16);
 					currentOffset += 16;
 				}
 			}
