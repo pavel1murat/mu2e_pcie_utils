@@ -209,7 +209,8 @@ void WriteGeneratedData(DTC* thisDTC)
 					dataPacket[3] = 0x4154;
                                         packetCounter += 1;
                                         memcpy(&dataPacket[4], &packetCounter, sizeof(uint32_t));
-					memcpy(&dataPacket[6], &packetCounter, sizeof(uint32_t));
+					uint32_t tmp = jj + 1;
+					memcpy(&dataPacket[6], &tmp, sizeof(uint32_t));
 
 					memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, &dataPacket[0], sizeof(uint8_t) * 16);
 					if (rawOutput) outputStream.write(reinterpret_cast<char*>(&dataPacket[0]), 16);
