@@ -193,14 +193,23 @@ void WriteGeneratedData(DTC* thisDTC)
 				memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
 				if (rawOutput) outputStream << packet;
 				currentOffset += 16;
+
+				uint16_t dataPacket[8];
 				for (unsigned jj = 0; jj < packetCount; ++jj)
 				{
 					if (currentOffset + 16 > sizeof(mu2e_databuff_t))
 					{
 						break;
 					}
-					packet.SetWord(14, (jj + 1) & 0xFF);
-					memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
+
+					dataPacket[0] = 0xFEED;
+					dataPacket[1] = 0xBEE5;
+					for (int word = 2; word < 8; ++word)
+					{
+						dataPacket[word] = (jj + 1) & 0xFFFF;
+					}
+
+					memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, dataPacket, sizeof(uint8_t) * 16);
 					if (rawOutput) outputStream << packet;
 					currentOffset += 16;
 				}
