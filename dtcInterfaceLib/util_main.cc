@@ -209,8 +209,8 @@ void WriteGeneratedData(DTC* thisDTC)
 						dataPacket[word] = (jj + 1) & 0xFFFF;
 					}
 
-					memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, dataPacket, sizeof(uint8_t) * 16);
-					if (rawOutput) outputStream << packet;
+					memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, &dataPacket[0], sizeof(uint8_t) * 16);
+					if (rawOutput) outputStream << dataPacket;
 					currentOffset += 16;
 				}
 			}
