@@ -39,7 +39,7 @@ pci_recver_t mu2e_pci_recver[MU2E_NUM_RECV_CHANNELS] = { {0}, };
 
 // This variable name is used in a macro that expects the same
 // variable name in the user-space "library"
-m_ioc_get_info_t mu2e_channel_info_[MU2E_MAX_CHANNELS][2];
+m_ioc_get_info_t mu2e_channel_info_[MU2E_MAX_CHANNELS][2]; // See enums in mu2e_mmap_ioctl.h (0=C2S)
 
 //    ch,dir,buffers/meta
 volatile void *  mu2e_mmap_ptrs[MU2E_MAX_CHANNELS][2][2];
@@ -191,7 +191,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 	int			chn, dir, num;
 	unsigned		myIdx, nxtIdx, hwIdx;
 	volatile mu2e_buffdesc_S2C_t   *desc_S2C_p;
-	u32                 	descDmaAdr;
+	u32                 	descDmaAdr_swNxt;
 	m_ioc_pcistate_t	pcistate;
 	m_ioc_engstate_t	eng;
 	m_ioc_engstats_t	es;
@@ -407,27 +407,39 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		}
 		break;
 	case M_IOC_GET_INFO:
-		TRACE(11, "mu2e_ioctl: cmd=GET_INFO");
-		if (copy_from_user(&get_info, (void*)arg, sizeof(m_ioc_get_info_t)))
-		{
-			printk("copy_from_user failed\n"); return (-EFAULT);
+		if (copy_from_user(&get_info, (void*)arg, sizeof(m_ioc_get_info_t))) {
+			TRACE( 0,"copy_from_user failed\n"); return (-EFAULT);
 		}
 		tmo_jiffies = msecs_to_jiffies(get_info.tmo_ms);
-		if (!mu2e_chn_info_delta_(get_info.chn, C2S, &mu2e_channel_info_))
-		{
-			TRACE(11, "mu2e_ioctl: cmd=GET_INFO wait_event_interruptible_timeout jiffies=%u", tmo_jiffies);
-			if (wait_event_interruptible_timeout(get_info_wait_queue
-				, mu2e_chn_info_delta_(get_info.chn, C2S, &mu2e_channel_info_)
-				, tmo_jiffies) == 0)
-			{
-				TRACE(16, "mu2e_ioctl: cmd=GET_INFO tmo");
+		dir = get_info.dir;
+		chn = get_info.chn;
+		if (get_info.dir == C2S) {
+			if (!mu2e_chn_info_delta_(get_info.chn, C2S, &mu2e_channel_info_)) {
+				TRACE( 11, "mu2e_ioctl: cmd=GET_INFO wait_event_interruptible_timeout jiffies=%u", tmo_jiffies);
+				if (wait_event_interruptible_timeout(get_info_wait_queue
+				                                     , mu2e_chn_info_delta_(get_info.chn, C2S, &mu2e_channel_info_)
+				                                     , tmo_jiffies) == 0) {
+					TRACE(16, "mu2e_ioctl: cmd=GET_INFO tmo");
+				}
 			}
-
+		} else {
+			jj=mu2e_channel_info_[chn][dir].num_buffs;
+			hwIdx = mu2e_channel_info_[chn][dir].hwIdx;
+			while ( ((mu2e_buffdesc_S2C_t*)idx2descVirtAdr(hwIdx,chn,dir))->Complete
+			       && hwIdx != mu2e_channel_info_[chn][dir].swIdx
+			       && jj-- ) {
+				hwIdx = idx_add(hwIdx, 1, chn, dir);
+				TRACE( 11, "ioctl GET_INFO mu2e_channel_info_[chn][dir].hwIdx=%u swIdx=%u lps=%u"
+				      , hwIdx, mu2e_channel_info_[chn][dir].swIdx, jj );
+			}
+			mu2e_channel_info_[chn][dir].hwIdx = hwIdx;
 		}
 		get_info = mu2e_channel_info_[get_info.chn][get_info.dir];
+		TRACE( 11, "mu2e_ioctl: cmd=GET_INFO dir=%d get_info.dir=%u hwIdx=%u swIdx=%u"
+		      ,dir,get_info.dir, get_info.hwIdx, get_info.swIdx );
 		if (copy_to_user((void*)arg, &get_info, sizeof(m_ioc_get_info_t)))
 		{
-			printk("copy_to_user failed\n"); return (-EFAULT);
+			TRACE( 0,"copy_to_user failed\n"); return (-EFAULT);
 		}
 		break;
 	case M_IOC_BUF_GIVE:
@@ -539,7 +551,6 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		}
 		break;
 	case M_IOC_BUF_XMIT:
-		TRACE(11, "mu2e_ioctl: cmd=BUF_XMIT");
 
 		chn = arg >> 24;
 		dir = S2C;
@@ -548,39 +559,55 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		// FIX ME --- race condition
 		myIdx = mu2e_channel_info_[chn][dir].swIdx;
 		desc_S2C_p = idx2descVirtAdr(myIdx, chn, dir);
-		if (desc_S2C_p->Complete != 1)
-		{
-		  TRACE(11, "ioctl BUF_XMIT -EAGAIN myIdx=%u err=%d desc_S2C_p=%p 0x%016llx"
-			, myIdx, desc_S2C_p->Error, desc_S2C_p, *(u64*)desc_S2C_p );
+		if (desc_S2C_p->Complete != 1) {
+			TRACE(11, "ioctl BUF_XMIT -EAGAIN myIdx=%u err=%d desc_S2C_p=%p 0x%016llx counts(in,sts)=%u,%u"
+		        , myIdx, desc_S2C_p->Error, desc_S2C_p, *(u64*)desc_S2C_p, desc_S2C_p->ByteCount, desc_S2C_p->ByteCnt );
 			return -EAGAIN;
 		}
+		TRACE(11, "mu2e_ioctl: cmd=BUF_XMIT desc_S2C_p=%p 0x%016llx",desc_S2C_p, *(u64*)desc_S2C_p);
 
 		desc_S2C_p->Complete = 0; // FIX ME --- race condition
 		desc_S2C_p->ByteCount = arg & 0xfffff; // 20 bits max
 		desc_S2C_p->ByteCnt = arg & 0xfffff; // 20 bits max
+# if MU2E_RECV_INTER_ENABLED
+		desc_S2C_p->IrqComplete = 1;
+		desc_S2C_p->IrqError = 1;
+# else
 		desc_S2C_p->IrqComplete = 0;
 		desc_S2C_p->IrqError = 0;
+# endif
 		desc_S2C_p->StartOfPkt = 1;
 		desc_S2C_p->EndOfPkt = 1;
-
-		{void * data = ((mu2e_databuff_t*)(mu2e_mmap_ptrs[chn][dir][MU2E_MAP_BUFF]))[myIdx];
-		TRACE(11, "ioctl BUF_XMIT myIdx=%u desc_S2C_p=%p ByteCnt=%d data=0x%08x"
-		      , myIdx, desc_S2C_p, desc_S2C_p->ByteCnt, *(u32*)data);
+		{	void * data = ((mu2e_databuff_t*)(mu2e_mmap_ptrs[chn][dir][MU2E_MAP_BUFF]))[myIdx];
+			TRACE(11, "ioctl BUF_XMIT myIdx=%u desc_S2C_p(%p)=%016llx ByteCnt=%d data(%p)[2-5]=%016llx %016llx %016llx %016llx"
+			, myIdx, desc_S2C_p, *(u64*)desc_S2C_p, desc_S2C_p->ByteCnt, data, ((u64*)data)[2], ((u64*)data)[3], ((u64*)data)[4], ((u64*)data)[5] );
 		}
 
 		/* See Transmit (S2C) Descriptor Management
 		   on page 56 of kc705_TRD_k7_pcie_dma_ddr3_base_Doc_13.4.pdf */
 		nxtIdx = idx_add(myIdx, 1, chn, dir);
-		descDmaAdr = idx2descDmaAdr(nxtIdx, chn, dir);
+		descDmaAdr_swNxt = idx2descDmaAdr(nxtIdx, chn, dir);
+
+		// update hwIdx here - MUST CHECK Buffer Descriptor Complete bit!!! (not register!!!)
+		jj=mu2e_channel_info_[chn][dir].num_buffs;
+		hwIdx = mu2e_channel_info_[chn][dir].hwIdx;
+		while ( ((mu2e_buffdesc_S2C_t*)idx2descVirtAdr(hwIdx,chn,dir))->Complete
+		       && hwIdx != myIdx && jj--) {
+			hwIdx = idx_add(hwIdx, 1, chn, dir);
+			TRACE( 11, "ioctl BUF_XMIT mu2e_channel_info_[chn][dir].hwIdx=%u swIdx=%u lps=%u"
+			, hwIdx, mu2e_channel_info_[chn][dir].swIdx, jj );
+		}
+		mu2e_channel_info_[chn][dir].hwIdx = hwIdx;
+
 		// Dma_mReadReg(mu2e_pcie_bar_info.baseVAddr, 0x9108); // DEBUG read "user" reg.
-		TRACE(11, "mu2e_ioctl BUF_XMIT before WriteChnReg REG_SW_NEXT_BD");
-		Dma_mWriteChnReg(chn, dir, REG_SW_NEXT_BD, descDmaAdr);
+		TRACE(11, "mu2e_ioctl BUF_XMIT b4 WriteChnReg REG_SW_NEXT_BD(idx=%u) TELLING DMA TO GO (DO THIS BD) hwIdx=%u ->Complete=%d [0].Complete=%d"
+		      ,nxtIdx, hwIdx, ((mu2e_buffdesc_S2C_t*)idx2descVirtAdr(hwIdx,chn,dir))->Complete, ((mu2e_buffdesc_S2C_t*)idx2descVirtAdr(0,chn,dir))->Complete );
+		Dma_mWriteChnReg(chn, dir, REG_SW_NEXT_BD, descDmaAdr_swNxt);
+
 		mu2e_channel_info_[chn][dir].swIdx = nxtIdx;
-		// just update hwIdx here
-		mu2e_channel_info_[chn][dir].hwIdx = hwIdx = descDmaAdr2idx( Dma_mReadChnReg(chn,dir,REG_HW_NEXT_BD)
-									    , chn, dir,mu2e_channel_info_[chn][dir].hwIdx );
-		TRACE(11, "mu2e_ioctl BUF_XMIT after WriteChnReg REG_SW_NEXT_BD swIdx=%u hwIdx=%u hw->Complete=%d"
-		      , nxtIdx, hwIdx, ((mu2e_buffdesc_S2C_t*)idx2descVirtAdr(hwIdx,chn,dir))->Complete );
+		TRACE(11, "mu2e_ioctl BUF_XMIT after WriteChnReg REG_SW_NEXT_BD swIdx=%u hwIdx=%u ->Complete=%d CmpltIdx=%u"
+			, nxtIdx, hwIdx, ((mu2e_buffdesc_S2C_t*)idx2descVirtAdr(hwIdx,chn,dir))->Complete
+			, descDmaAdr2idx( Dma_mReadChnReg(chn,dir,REG_HW_NEXT_BD),chn,dir,0 ) );
 		break;
 	default:
 		TRACE(10, "mu2e_ioctl: unknown cmd");
@@ -864,7 +891,10 @@ static int __init init_mu2e(void)
 
 		ctrlStsVal = DMA_ENG_ENABLE;
 #if MU2E_RECV_INTER_ENABLED
+		TRACE( 1, "init_mu2e: ctrlStsVal |= DMA_ENG_INT_ENABLE" );
 		ctrlStsVal |= DMA_ENG_INT_ENABLE;
+#else
+		TRACE( 1, "init_mu2e: no DmaInterrrupt" );
 #endif
 		Dma_mWriteChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS, ctrlStsVal);
 
@@ -897,6 +927,8 @@ static int __init init_mu2e(void)
 			, mu2e_pci_sender[chn].databuffs_dma
 			, mu2e_pci_sender[chn].buffdesc_ring_dma
 			, mu2e_mmap_ptrs[chn][dir][MU2E_MAP_META]);
+		mu2e_channel_info_[chn][dir].chn = chn;
+		mu2e_channel_info_[chn][dir].dir = dir;
 		mu2e_channel_info_[chn][dir].buff_size = sizeof(mu2e_databuff_t);
 		mu2e_channel_info_[chn][dir].num_buffs = MU2E_NUM_SEND_BUFFS;
 		for (jj = 0; jj < MU2E_NUM_SEND_BUFFS; ++jj)
@@ -908,8 +940,7 @@ static int __init init_mu2e(void)
 			mu2e_pci_sender[chn].buffdesc_ring[jj].SystemAddress =
 				mu2e_pci_sender[chn].databuffs_dma
 				+ sizeof(mu2e_databuff_t) * jj;
-			/* mark complete */
-			mu2e_pci_sender[chn].buffdesc_ring[jj].Complete = 1;
+			mu2e_pci_sender[chn].buffdesc_ring[jj].Complete = 1; // Only reset just before giving to Engine -- enables check for complete -- which should be done before memcpy
 		}
 
 		// now write to the HW...
@@ -941,15 +972,15 @@ static int __init init_mu2e(void)
 	/* Now enable interrupts using MSI mode */
 	if (!pci_enable_msi(mu2e_pci_dev))
 	{
-		printk(KERN_INFO "MSI enabled\n");
+		TRACE( 1, "MSI enabled");
 		MSIEnabled = 1;
 	}
 
 	ret = request_irq(mu2e_pci_dev->irq, DmaInterrupt, IRQF_SHARED, "mu2e", mu2e_pci_dev);
 	if (ret)
 	{
-		printk(KERN_ERR "xdma could not allocate interrupt %d\n", mu2e_pci_dev->irq);
-		printk(KERN_ERR "Unload driver and try running with polled mode instead\n");
+		TRACE( 0, "xdma could not allocate interrupt %d", mu2e_pci_dev->irq);
+		TRACE( 0, "Unload driver and try running with polled mode instead");
 	}
 	Dma_mIntEnable((unsigned long)mu2e_pcie_bar_info.baseVAddr);
 # endif

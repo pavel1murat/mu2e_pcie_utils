@@ -402,6 +402,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatPerfMonInitPHC()
 // DTC Control Register
 void DTCLib::DTC_Registers::ResetDTC()
 {
+	TRACE( 15, "ResetDTC start" );
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	data[31] = 1; // DTC Reset bit
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
@@ -506,6 +507,7 @@ bool DTCLib::DTC_Registers::ReadCFOEmulatorDRP()
 
 void DTCLib::DTC_Registers::EnableAutogenDRP()
 {
+	TRACE( 15, "EnableAutogenDRP start" );
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	data[23] = 1;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);

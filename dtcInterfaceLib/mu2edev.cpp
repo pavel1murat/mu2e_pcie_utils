@@ -319,6 +319,7 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 
 		if (delta <= 1)
 		{
+			TRACE( 0, "HW_NOT_READING_BUFS");
 			perror("HW_NOT_READING_BUFS");
 			exit(1);
 		}

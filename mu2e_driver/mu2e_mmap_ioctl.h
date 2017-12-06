@@ -329,6 +329,7 @@ typedef struct
 	unsigned num_buffs; ///< Number of buffers in this chn/dir
 	unsigned hwIdx; ///< Current buffer index for the hardware
 	unsigned swIdx; ///< Current buffer index for the software
+    /* unsigned cmpltIdx; maybe also need... particularly/especially for S2C */
 } m_ioc_get_info_t;
 
 
