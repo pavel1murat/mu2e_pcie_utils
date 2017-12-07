@@ -319,6 +319,7 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 
 		if (delta <= 1)
 		{
+			TRACE( 0, "HW_NOT_READING_BUFS");
 			perror("HW_NOT_READING_BUFS");
 			exit(1);
 		}
@@ -334,7 +335,8 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 			retsts = ioctl(devfd_, M_IOC_BUF_XMIT, arg);
 			if (retsts != 0)
 			{
-				perror("M_IOC_BUF_XMIT");
+			TRACE(3, "write_data ioctl returned %d, errno=%d (%s), retrying.", retsts,errno, strerror(errno));
+				//perror("M_IOC_BUF_XMIT");
 				usleep(50000);
 			} // exit(1); } // Take out the exit call for now
 			retry--;

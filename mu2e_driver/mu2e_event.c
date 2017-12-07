@@ -20,8 +20,10 @@
 struct timer_list packets_timer;
 int packets_timer_guard = 1;
 
-
-static void poll_packets(unsigned long __opaque)
+/* Poll for completed "read dma (C2S)" buffers.
+   Called from timer or interrupt (indirectly via mu2e_force_poll).
+ */
+static void poll_packets(unsigned long __opaque /* not used */)
 {
 	unsigned long       base;
 	int                 error, did_work;
@@ -70,7 +72,8 @@ static void poll_packets(unsigned long __opaque)
 			//continue;
 			break;
 		}
-		TRACE(21, "poll_packets: newCmpltIdx=0x%x MU2E_NUM_RECV_BUFFS=%i Current idx=0x%x", newCmpltIdx, MU2E_NUM_RECV_BUFFS, mu2e_channel_info_[chn][dir].hwIdx);
+		TRACE(21, "poll_packets: MU2E_NUM_RECV_BUFFS=%i newCmpltIdx=0x%x Current_hwIdx=0x%x"
+		      , MU2E_NUM_RECV_BUFFS, newCmpltIdx, mu2e_channel_info_[chn][dir].hwIdx);
 		// check just-read-HW-val (converted to idx) against "cached" copy
 		while (newCmpltIdx != mu2e_channel_info_[chn][dir].hwIdx/*ie.cachedCmplt*/)
 		{   // NEED TO UPDATE Receive Byte Counts

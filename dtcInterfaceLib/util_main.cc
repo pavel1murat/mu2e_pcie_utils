@@ -46,6 +46,7 @@ bool quiet = false;
 unsigned quietCount = 1;
 bool reallyQuiet = false;
 bool rawOutput = false;
+bool skipVerify = false;
 bool writeDMAHeadersToOutput = false;
 bool useCFOEmulator = true;
 unsigned genDMABlocks = 0;
@@ -145,6 +146,7 @@ void WriteGeneratedData(DTC* thisDTC)
 	uint64_t total_size_written = 0;
 	uint32_t end_address = 0;
 	unsigned ii = 0;
+	uint32_t packetCounter = 0;
 	uint64_t ts = timestampOffset;
 	for (; ii < genDMABlocks; ++ii)
 	{
@@ -154,7 +156,7 @@ void WriteGeneratedData(DTC* thisDTC)
 		auto dmaByteCount = static_cast<uint64_t>(eventWriteByteCount * eventCount); // Exclusive byte count
 		auto dmaWriteByteCount = dmaByteCount + sizeof(uint64_t); // Inclusive byte count
 
-		if (dmaWriteByteCount > 0x10000)
+		if (dmaWriteByteCount > 0x7FFF)
 		{
 			std::cerr << "Requested DMA write is larger than the allowed size! Reduce event/block/packet counts!" << std::endl;
 			exit(1);
@@ -165,7 +167,8 @@ void WriteGeneratedData(DTC* thisDTC)
 		if (rawOutput && writeDMAHeadersToOutput) outputStream.write(reinterpret_cast<char*>(&dmaWriteByteCount), sizeof(uint64_t));
 		auto currentOffset = sizeof(uint64_t);
 
-		for (unsigned ll = 0; ll < eventCount; ++ll) {
+		for (unsigned ll = 0; ll < eventCount; ++ll)
+		{
 
 			memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, &eventByteCount, sizeof(uint64_t));
 			if (rawOutput && writeDMAHeadersToOutput) outputStream.write(reinterpret_cast<char*>(&eventByteCount), sizeof(uint64_t));
@@ -191,15 +194,26 @@ void WriteGeneratedData(DTC* thisDTC)
 				memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
 				if (rawOutput) outputStream << packet;
 				currentOffset += 16;
+
+				uint16_t dataPacket[8];
 				for (unsigned jj = 0; jj < packetCount; ++jj)
 				{
 					if (currentOffset + 16 > sizeof(mu2e_databuff_t))
 					{
 						break;
 					}
-					packet.SetWord(14, (jj + 1) & 0xFF);
-					memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
-					if (rawOutput) outputStream << packet;
+
+					dataPacket[0] = 0x4144;
+					dataPacket[1] = 0x4154;
+					dataPacket[2] = 0x4144;
+					dataPacket[3] = 0x4154;
+                                        packetCounter += 1;
+                                        memcpy(&dataPacket[4], &packetCounter, sizeof(uint32_t));
+					uint32_t tmp = jj + 1;
+					memcpy(&dataPacket[6], &tmp, sizeof(uint32_t));
+
+					memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, &dataPacket[0], sizeof(uint8_t) * 16);
+					if (rawOutput) outputStream.write(reinterpret_cast<char*>(&dataPacket[0]), 16);
 					currentOffset += 16;
 				}
 			}
@@ -244,7 +258,7 @@ void WriteGeneratedData(DTC* thisDTC)
 
 void printHelpMsg()
 {
-	std::cout << "Usage: mu2eUtil [options] [read,read_data,reset_detemu,toggle_serdes,loopback,buffer_test,read_release,DTC,program_clock]" << std::endl;
+	std::cout << "Usage: mu2eUtil [options] [read,read_data,reset_ddrread,reset_detemu,toggle_serdes,loopback,buffer_test,read_release,DTC,program_clock,verify_simfile]" << std::endl;
 	std::cout << "Options are:" << std::endl
 		<< "    -h: This message." << std::endl
 		<< "    -n: Number of times to repeat test. (Default: 1)" << std::endl
@@ -273,6 +287,7 @@ void printHelpMsg()
 		<< "    -F: Frequency to program (in Hz, sorry...Default 166666667 Hz)" << std::endl
 		<< "    -C: Clock to program (0: SERDES, 1: DDR, Default 0)" << std::endl
 		<< "    -v: Expected DTC Design version string (Default: \"\")" << std::endl
+		<< "    -V: Do NOT attempt to verify that the sim file landed in DTC memory correctly" << std::endl
 		;
 	exit(0);
 }
@@ -379,6 +394,9 @@ main(int argc
 			case 'v':
 				expectedDesignVersion = getOptionString(&optind, &argv);
 				break;
+			case 'V':
+				skipVerify = true;
+				break;
 			default:
 				std::cout << "Unknown option: " << argv[optind] << std::endl;
 				printHelpMsg();
@@ -414,6 +432,7 @@ main(int argc
 		<< ", Generate DMA Blocks: " << genDMABlocks
 		<< ", Read Data from DDR: " << readGenerated
 		<< ", Use Sim File: " << useSimFile
+		<< ", Skip Verify: " << skipVerify
 		<< ", ROC Mask: " << std::hex << rocMask
 		<< ", Debug Type: " << DTC_DebugTypeConverter(debugType).toString()
 		<< ", Target Frequency: " << std::dec << targetFrequency
@@ -518,6 +537,13 @@ main(int argc
 		}
 		delete thisDTC;
 	}
+	else if (op == "reset_ddrread")
+	{
+		std::cout << "Resetting DDR Read Address" << std::endl;
+		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		thisDTC->ResetDDRReadAddress();
+		delete thisDTC;
+	}
 	else if (op == "reset_detemu")
 	{
 		std::cout << "Resetting Detector Emulator" << std::endl;
@@ -526,6 +552,21 @@ main(int argc
 		thisDTC->ResetDDR();
 		thisDTC->ResetDTC();
 		delete thisDTC;
+	}
+	else if (op == "verify_simfile")
+	{
+		std::cout << "Operation \"verify_simfile\"" << std::endl;
+		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		auto device = thisDTC->GetDevice();
+
+		device->ResetDeviceTime();
+
+		if (useSimFile)
+		{
+			thisDTC->DisableDetectorEmulator();
+			thisDTC->EnableDetectorEmulatorMode();
+			thisDTC->VerifySimFileInDTC(simFile, rawOutputFile);
+		}
 	}
 	else if (op == "buffer_test")
 	{
@@ -548,7 +589,7 @@ main(int argc
 		{
 			auto overwrite = false;
 			if (simFile.size() > 0) overwrite = true;
-			thisDTC->WriteSimFileToDTC(simFile, false, overwrite, rawOutputFile);
+			thisDTC->WriteSimFileToDTC(simFile, false, overwrite, rawOutputFile, skipVerify);
 			if (readGenerated)
 			{
 				exit(0);
@@ -619,8 +660,9 @@ main(int argc
 							}
 						}
 						std::cout << std::endl;
-						if (maxLine > quietCount * 2 &&quiet && line == (quietCount - 1)) {
-								line = static_cast<unsigned>(ceil((sts - 8) / 16.0)) - (1 + quietCount);
+						if (maxLine > quietCount * 2 && quiet && line == (quietCount - 1))
+						{
+							line = static_cast<unsigned>(ceil((sts - 8) / 16.0)) - (1 + quietCount);
 						}
 					}
 				}
@@ -860,9 +902,9 @@ main(int argc
 			<< "Device Init Time: " << initTime << " s." << std::endl
 			<< "Device Request Time: " << readoutRequestTime << " s." << std::endl
 			<< "Device Read Time: " << readDevTime << " s." << std::endl
-			<< "Total Bytes Written: " << Utilities::FormatByteString(static_cast<double>(totalBytesWritten),"") << "." << std::endl
-			<< "Total Bytes Read: " << Utilities::FormatByteString(static_cast<double>(totalBytesRead),"") << "." << std::endl
-			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime,"/s") << "." << std::endl
+			<< "Total Bytes Written: " << Utilities::FormatByteString(static_cast<double>(totalBytesWritten), "") << "." << std::endl
+			<< "Total Bytes Read: " << Utilities::FormatByteString(static_cast<double>(totalBytesRead), "") << "." << std::endl
+			<< "Total PCIe Rate: " << Utilities::FormatByteString((totalBytesWritten + totalBytesRead) / totalTime, "/s") << "." << std::endl
 			<< "Read Rate: " << Utilities::FormatByteString(totalBytesRead / totalReadTime, "/s") << "." << std::endl
 			<< "Device Read Rate: " << Utilities::FormatByteString(totalBytesRead / readDevTime, "/s") << "." << std::endl;
 		delete thisDTC;

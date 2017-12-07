@@ -49,13 +49,15 @@ namespace DTCLib
 		/// <param name="goForever">Whether readout should loop through the file</param>
 		/// <param name="overwriteEnvrionment">Whether to use file instead of DTCLIB_SIM_FILE</param>
 		/// <param name="outputFileName">Name of binary file to write expected output (Default: "", no file created)</param>
-		void WriteSimFileToDTC(std::string file, bool goForever, bool overwriteEnvrionment = false, std::string outputFileName = "");
+		/// <param name="skipVerify">Skip the verify stage of WriteSimFileToDTC</param>
+		void WriteSimFileToDTC(std::string file, bool goForever, bool overwriteEnvrionment = false, std::string outputFileName = "", bool skipVerify = false);
 		/// <summary>
 		/// Read the DTC memory and determine whether the file was written correctly.
 		/// </summary>
 		/// <param name="file">File to verify against</param>
+		/// <param name="rawOutputFilename">Default: "". If set, file to write data retrieved from the DTC to</param>
 		/// <returns>True if file is in DTC memory without errors</returns>
-		bool VerifySimFileInDTC(std::string file);
+		bool VerifySimFileInDTC(std::string file, std::string rawOutputFilename = "");
 
 		// DCS Register R/W
 		/// <summary>
