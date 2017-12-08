@@ -2,9 +2,6 @@
 #include <sstream>
 #include <iomanip>
 #include <cstring>
-#ifndef _WIN32
-# include "trace.h"
-#endif
 
 DTCLib::DTC_DataPacket::DTC_DataPacket()
 {

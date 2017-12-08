@@ -6,21 +6,14 @@
 #include <iostream>
 #include <fstream>
 
-#ifndef _WIN32
-# include <unistd.h>
-# include "trace.h"
-#else
-#endif
-#define TRACE_NAME "MU2EDEV"
+#include <unistd.h>
+#include "trace.h"
 
 DTCLib::DTC::DTC(std::string expectedDesignVersion, DTC_SimMode mode, unsigned rocMask) : DTC_Registers(expectedDesignVersion, mode, rocMask),
 daqbuffer_(), dcsbuffer_(), lastDAQBufferActive_(false), lastDCSBufferActive_(false),
 bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
 lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)
 {
-#ifdef _WIN32
-#pragma warning(disable: 4996)
-#endif
 	//ELF, 05/18/2016: Rick reports that 3.125 Gbp
 	//SetSERDESOscillatorClock(DTC_SerdesClockSpeed_25Gbps); // We're going to 2.5Gbps for now
 }

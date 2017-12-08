@@ -5,12 +5,8 @@
 #include <chrono>
 #include <assert.h>
 #include <cmath>
-#ifndef _WIN32
 # include <unistd.h>
 # include "trace.h"
-#else
-#endif
-#define TRACE_NAME "MU2EDEV"
 
 DTCLib::DTC_Registers::DTC_Registers(std::string expectedDesignVersion, DTC_SimMode mode, unsigned rocMask, bool skipInit) : device_(), simMode_(mode), dmaSize_(16)
 {
@@ -19,10 +15,6 @@ DTCLib::DTC_Registers::DTC_Registers(std::string expectedDesignVersion, DTC_SimM
 		maxROCs_[ii] = DTC_ROC_Unused;
 	}
 
-#ifdef _WIN32
-	simMode_ = DTC_SimMode_Tracker;
-#pragma warning(disable: 4996)
-#endif
 	auto sim = getenv("DTCLIB_SIM_ENABLE");
 	if (sim != nullptr)
 	{
