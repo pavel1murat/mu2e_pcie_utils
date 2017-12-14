@@ -7,11 +7,7 @@
 
 #include "DTC_Types.h"
 
-#ifndef _WIN32
 #include "mu2e_driver/mu2e_mmap_ioctl.h"
-#else
-#include "../mu2e_driver/mu2e_mmap_ioctl.h"
-#endif
 
 
 namespace DTCLib

@@ -5,3 +5,4 @@ make.out
 *.tmp
 *.*.user
 *.psess
+.editorconfig

@@ -19,23 +19,8 @@
 #include <cmath>
 #include "DTC.h"
 #include "DTCSoftwareCFO.h"
-#ifdef _WIN32
-# include <thread>
-# define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
-# ifndef TRACE
-#  include <stdio.h>
-#  ifdef _DEBUG
-#   define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
-#  else
-#   define TRACE(...)
-#  endif
-# define TRACE_CNTL(...)
-# endif
-#else
-# include "trace.h"
-# include <unistd.h>		// usleep
-#endif
-#define TRACE_NAME "MU2EDEV"
+#include "trace.h"
+#include <unistd.h>		// usleep
 
 using namespace DTCLib;
 
@@ -159,6 +144,7 @@ void WriteGeneratedData(DTC* thisDTC)
 		if (dmaWriteByteCount > 0x7FFF)
 		{
 			std::cerr << "Requested DMA write is larger than the allowed size! Reduce event/block/packet counts!" << std::endl;
+			std::cerr << "Block Byte Count: " << std::hex << std::showbase << blockByteCount << ", Event Byte Count: " << eventByteCount << ", DMA Write Count: " << dmaWriteByteCount << ", MAX: 0x7FFF" << std::endl;
 			exit(1);
 		}
 

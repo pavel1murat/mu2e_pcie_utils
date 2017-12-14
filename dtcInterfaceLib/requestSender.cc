@@ -8,21 +8,8 @@
 #include <string>
 #include "DTCSoftwareCFO.h"
 
-#ifdef _WIN32
-# define usleep(x)  std::this_thread::sleep_for(std::chrono::microseconds(x));
-# ifndef TRACE
-#  include <stdio.h>
-#  ifdef _DEBUG
-#   define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
-#  else
-#   define TRACE(...)
-#  endif
-# endif
-# define TRACE_CNTL(...)
-#else
-# include "trace.h"
-# include <unistd.h>		// usleep
-#endif
+#include "trace.h"
+#include <unistd.h>		// usleep
 
 unsigned getOptionValue(int* index, char** argv[])
 {

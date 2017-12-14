@@ -4,13 +4,9 @@
 
 #include <stdio.h>
 #include <iostream>
-#ifndef _WIN32
-# include "dtcInterfaceLib/DTC_Registers.h"
+#include "dtcInterfaceLib/DTC_Registers.h"
 #include <sys/ioctl.h>
 #include <unistd.h>
-#else
-# include "DTC_Registers.h"
-#endif
 
 void printHelpMsg()
 {

@@ -3,20 +3,7 @@
 
 #include <iostream>
 
-#ifndef _WIN32
-# include "trace.h"
-#else
-# ifndef TRACE
-#  include <stdio.h>
-#  ifdef _DEBUG
-#   define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
-#   define TRACE_CNTL(...)
-#  else
-#   define TRACE(...)
-#   define TRACE_CNTL(...)
-#  endif
-# endif
-#endif
+#include "trace.h"
 
 DTCLib::DTCLibTest::DTCLibTest() : running_(false), classPassed_(0), classFailed_(0),
                                    regPassed_(0), regFailed_(0), daqPassed_(0), daqFailed_(0), dcsPassed_(0), dcsFailed_(0),

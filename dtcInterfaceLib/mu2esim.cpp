@@ -9,21 +9,7 @@
  *    make mu2edev.o CFLAGS='-g -Wall -std=c++0x'
  */
 
-#define TRACE_NAME "MU2EDEV"
-#ifndef _WIN32
-# include <trace.h>
-#else
-# ifndef TRACE
-#  include <stdio.h>
-#  ifdef _DEBUG
-#   define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
-#  else
-#   define TRACE(...)
-#  endif
-# define TRACE_CNTL(...)
-# endif
-# pragma warning(disable: 4351 6385 6386)
-#endif
+#include "trace.h"
 #include "mu2esim.h"
 #include <vector>
 #include <cmath>
@@ -556,7 +542,7 @@ void mu2esim::openEvent_(DTCLib::DTC_Timestamp ts)
 void mu2esim::closeEvent_()
 {
 	TRACE(18, "mu2esim::closeEvent_: Checking current event size %llu", (unsigned long long)currentEventSize_);
-	if (currentEventSize_ > 0) {
+	if (currentEventSize_ > 0 && ddrFile_) {
 		auto currentPos = ddrFile_.tellp();
 		ddrFile_.seekp(eventBegin_);
 		TRACE(18, "mu2esim::closeEvent_: Writing event size word");

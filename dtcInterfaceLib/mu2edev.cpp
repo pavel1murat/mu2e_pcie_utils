@@ -9,21 +9,7 @@
  *    make mu2edev.o CFLAGS='-g -Wall -std=c++0x'
  */
 
-#define TRACE_NAME "MU2EDEV"
-#ifndef _WIN32
-# include <trace.h>
-#else
-# ifndef TRACE
-#  include <stdio.h>
-#  ifdef _DEBUG
-#   define TRACE(lvl,...) printf(__VA_ARGS__); printf("\n")
-#  else
-#   define TRACE(...)
-#  endif
-# define TRACE_CNTL(...)
-# endif
-# pragma warning(disable: 4351)
-#endif
+#include <trace.h>
 #include <chrono>
 #include "mu2edev.h"
 
@@ -54,7 +40,6 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode)
 			delete simulator_;
 			simulator_ = nullptr;
 		}
-#ifndef _WIN32
 		int sts;
 		devfd_ = open("/dev/" MU2E_DEV_FILE, O_RDWR);
 		if (devfd_ == -1 || devfd_ == 0)
@@ -122,7 +107,6 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode)
 					//write_register(addr, 0, 0x100);//bit 8 enable=1
 				}
 			}
-#endif
 	}
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
 		(std::chrono::steady_clock::now() - start).count();
@@ -141,7 +125,6 @@ int mu2edev::read_data(int chn, void** buffer, int tmo_ms)
 	{
 		retsts = simulator_->read_data(chn, buffer, tmo_ms);
 	}
-#ifndef _WIN32
 	else
 	{
 		retsts = 0;
@@ -177,7 +160,6 @@ int mu2edev::read_data(int chn, void** buffer, int tmo_ms)
 			}
 		}
 	}
-#endif
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
 		(std::chrono::steady_clock::now() - start).count();
 	if (retsts > 0) readSize_ += retsts;
@@ -195,7 +177,6 @@ int mu2edev::read_release(int chn, unsigned num)
 	{
 		retsts = simulator_->read_release(chn, num);
 	}
-#ifndef _WIN32
 	else
 	{
 		retsts = 0;
@@ -217,7 +198,6 @@ int mu2edev::read_release(int chn, unsigned num)
 				buffers_held_ = 0;
 		}
 	}
-#endif
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
 		(std::chrono::steady_clock::now() - start).count();
 	return retsts;
@@ -230,16 +210,12 @@ int mu2edev::read_register(uint16_t address, int tmo_ms, uint32_t* output)
 	{
 		return simulator_->read_register(address, tmo_ms, output);
 	}
-#ifdef _WIN32
-	auto errorCode = -1;
-#else
 	m_ioc_reg_access_t reg;
 	reg.reg_offset = address;
 	reg.access_type = 0;
 	int errorCode = ioctl(devfd_, M_IOC_REG_ACCESS, &reg);
 	*output = reg.val;
 	TRACE(24, "Read value 0x%x from register 0x%x", reg.val, address);
-#endif
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
 		(std::chrono::steady_clock::now() - start).count();
 	return errorCode;
@@ -253,7 +229,6 @@ int mu2edev::write_register(uint16_t address, int tmo_ms, uint32_t data)
 	{
 		retsts = simulator_->write_register(address, tmo_ms, data);
 	}
-#ifndef _WIN32
 	else
 	{
 		m_ioc_reg_access_t reg;
@@ -263,7 +238,6 @@ int mu2edev::write_register(uint16_t address, int tmo_ms, uint32_t data)
 		TRACE(24, "Writing value 0x%x to register 0x%x", data, address);
 		retsts = ioctl(devfd_, M_IOC_REG_ACCESS, &reg);
 	}
-#endif
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
 		(std::chrono::steady_clock::now() - start).count();
 	return retsts;
@@ -273,7 +247,6 @@ void mu2edev::meta_dump(int chn, int dir)
 {
 	TRACE(17, "mu2edev::meta_dump: chn=%i, dir=%i", chn, dir);
 	auto start = std::chrono::steady_clock::now();
-#ifndef _WIN32
 	if (simulator_ == nullptr)
 	{
 		int retsts = 0;
@@ -286,7 +259,6 @@ void mu2edev::meta_dump(int chn, int dir)
 			}
 		}
 	}
-#endif
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
 		(std::chrono::steady_clock::now() - start).count();
 }
@@ -299,7 +271,6 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 	{
 		retsts = simulator_->write_data(chn, buffer, bytes);
 	}
-#ifndef _WIN32
 	else
 	{
 		int dir = S2C;
@@ -348,7 +319,6 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 				= idx_add(mu2e_channel_info_[chn][dir].swIdx, 1, chn, dir);
 		}
 	}
-#endif
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
 		(std::chrono::steady_clock::now() - start).count();
 	if (retsts >= 0) writeSize_ += bytes;
