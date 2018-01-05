@@ -6,3 +6,6 @@ make.out
 *.*.user
 *.psess
 .editorconfig
+bin
+obj
+*.vcxproj*
