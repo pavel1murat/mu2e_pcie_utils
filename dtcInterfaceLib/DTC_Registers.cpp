@@ -1516,7 +1516,7 @@ void DTCLib::DTC_Registers::SetSERDESOscillatorClock(DTC_SerdesClockSpeed speed)
 		ResetSERDES(ring, 1000);
 	}
 	ResetSERDES(DTC_Ring_CFO, 1000);
-//	ResetSERDES(DTC_Ring_EVB, 1000);
+	//ResetSERDES(DTC_Ring_EVB, 1000);
 }
 
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESOscillatorFrequency()
