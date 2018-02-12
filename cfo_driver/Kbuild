@@ -5,5 +5,5 @@
  # $RCSfile: Kbuild,v $
  # rev="$Revision: 1.1 $$Date: 2014/01/31 04:24:43 $";
 
-obj-m := mu2e.o
-mu2e-objs := mu2e_main.o mu2e_pci.o mu2e_fs.o mu2e_event.o
+obj-m := mu2ecfo.o
+mu2ecfo-objs := cfo_main.o cfo_pci.o cfo_fs.o cfo_event.o

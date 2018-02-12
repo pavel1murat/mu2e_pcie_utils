@@ -1,4 +1,4 @@
-/*  This file (mu2e_init.c) was created by Ron Rechenmacher <ron@fnal.gov> on
+/*  This file (cfo_init.c) was created by Ron Rechenmacher <ron@fnal.gov> on
 	Feb  5, 2014. "TERMS AND CONDITIONS" governing this file are in the README
 	or COPYING file. If you do not have such a file, one can be obtained by
 	contacting Ron or Fermi Lab in Batavia IL, 60510, phone: 630-840-3000.
@@ -9,12 +9,12 @@
 #include <linux/pci.h>		/* pci_* */
 
 #include "trace.h"		/* TRACE */
-#include "mu2e_mmap_ioctl.h"	/* C2S */
+#include "cfo_mmap_ioctl.h"	/* C2S */
 #include "xdma_hw.h"		/* Dma_mIntDisable nests xio.h -> xbasic_types.h */
-#include "mu2e_pci.h"
+#include "cfo_pci.h"
 
 
-#define DRIVER_NAME      "mu2e_driver"
+#define DRIVER_NAME      "cfo_driver"
 
 /** PCI device structure which probes for targeted design */
 static struct pci_device_id xilinx_ids[] = {
@@ -35,7 +35,7 @@ static int ReadDMAEngineConfiguration(  struct pci_dev * pdev
 	u32		  Hardware_design_version;
 
 	/* DMA registers are offset from BAR0 */
-	base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
+	base = (unsigned long)(cfo_pcie_bar_info.baseVAddr);
 
 	Hardware_design_version = XIo_In32(base+0x9000);
 	printk(KERN_INFO "Hardware design version %x from %lx\n", Hardware_design_version, base );
@@ -83,14 +83,14 @@ static int ReadDMAEngineConfiguration(  struct pci_dev * pdev
 }   // ReadDMAEngineConfiguration
 
 
-static int mu2e_pci_probe(  struct pci_dev             *pdev
+static int cfo_pci_probe(  struct pci_dev             *pdev
 					, const struct pci_device_id *ent )
 {
 	int pciRet;
 	int bar=0;
 	u32 size;
 
-	TRACE( 0, "mu2e_pci_probe" );
+	TRACE( 0, "cfo_pci_probe" );
 	/* Initialize device before it is used by driver. Ask low-level
 	 * code to enable I/O and memory. Wake up the device if it was
 	 * suspended. Beware, this function can fail.
@@ -134,73 +134,73 @@ static int mu2e_pci_probe(  struct pci_dev             *pdev
 	goto out2;
 	}
 
-	mu2e_pcie_bar_info.basePAddr = pci_resource_start( pdev, bar );
-	mu2e_pcie_bar_info.baseLen   = size;
+	cfo_pcie_bar_info.basePAddr = pci_resource_start( pdev, bar );
+	cfo_pcie_bar_info.baseLen   = size;
 
-	mu2e_pcie_bar_info.baseVAddr = ioremap( mu2e_pcie_bar_info.basePAddr,size );
-	if (mu2e_pcie_bar_info.baseVAddr == 0UL)
+	cfo_pcie_bar_info.baseVAddr = ioremap( cfo_pcie_bar_info.basePAddr,size );
+	if (cfo_pcie_bar_info.baseVAddr == 0UL)
 	{   printk(KERN_ERR "Cannot map BAR %d space, invalidating.\n", bar );
 	goto out2;
 	}
 
 	/* Disable global interrupts */
-	Dma_mIntDisable( mu2e_pcie_bar_info.baseVAddr );
+	Dma_mIntDisable( cfo_pcie_bar_info.baseVAddr );
 
-	TRACE( 1, "mu2e_pci_probe read a channel reg to quite compiler 0x%x"
+	TRACE( 1, "cfo_pci_probe read a channel reg to quite compiler 0x%x"
 	  , Dma_mReadChnReg(0,C2S,REG_HW_CMPLT_BD) );
 
 	// clear "App 0/1" registers
-	Dma_mWriteReg( mu2e_pcie_bar_info.baseVAddr, 0x9100, 0 );
-	Dma_mWriteReg( mu2e_pcie_bar_info.baseVAddr, 0x9108, 0 );
-	Dma_mWriteReg( mu2e_pcie_bar_info.baseVAddr, 0x9200, 0 );
-	Dma_mWriteReg( mu2e_pcie_bar_info.baseVAddr, 0x9208, 0 );
+	Dma_mWriteReg( cfo_pcie_bar_info.baseVAddr, 0x9100, 0 );
+	Dma_mWriteReg( cfo_pcie_bar_info.baseVAddr, 0x9108, 0 );
+	Dma_mWriteReg( cfo_pcie_bar_info.baseVAddr, 0x9200, 0 );
+	Dma_mWriteReg( cfo_pcie_bar_info.baseVAddr, 0x9208, 0 );
 
 	/* Read DMA engine configuration and initialise data structures */
 	if (ReadDMAEngineConfiguration( pdev/*, dmaData*/ ) != 0)
 	goto out2;
 
-	mu2e_pci_dev = pdev;   /* GLOBAL */
+	cfo_pci_dev = pdev;   /* GLOBAL */
 
 	return (0);			/* SUCCESS */
 
  out2:
-	printk( "mu2e_pci_probe - out2\n" );
+	printk( "cfo_pci_probe - out2\n" );
 	pci_release_regions( pdev );
 	pci_disable_device( pdev );
 	return (1);		/* error */
-}   // mu2e_pci_probe
+}   // cfo_pci_probe
 
 
-static void mu2e_pci_remove(struct pci_dev *pdev)
+static void cfo_pci_remove(struct pci_dev *pdev)
 {
-	printk( "mu2e_pci_remove start\n ");
+	printk( "cfo_pci_remove start\n ");
 	pci_release_regions( pdev );
-	printk( "mu2e_pci_remove after release_regions, before disable_device\n" );
+	printk( "cfo_pci_remove after release_regions, before disable_device\n" );
 	pci_disable_device( pdev );
-	printk( "mu2e_pci_remove after disable_device, before set_drvdata\n" );
+	printk( "cfo_pci_remove after disable_device, before set_drvdata\n" );
 	pci_set_drvdata( pdev, NULL );
-	printk( "mu2e_pci_remove complete\n" );
-}   // mu2e_remove
+	printk( "cfo_pci_remove complete\n" );
+}   // cfo_remove
 
 
 
-static struct pci_driver mu2e_driver =
+static struct pci_driver cfo_driver =
 	{   .name     = DRIVER_NAME,
 	.id_table = xilinx_ids,
-	.probe    = mu2e_pci_probe,
-	.remove   = mu2e_pci_remove
+	.probe    = cfo_pci_probe,
+	.remove   = cfo_pci_remove
 	};
 
-int mu2e_pci_up( void )
+int cfo_pci_up( void )
 {
 	int sts;
-	sts = pci_register_driver( &mu2e_driver );
+	sts = pci_register_driver( &cfo_driver);
 	return (0);
-}   // mu2e_pci_up
+}   // cfo_pci_up
 
-void mu2e_pci_down( void )
+void cfo_pci_down( void )
 {
-	pci_unregister_driver( &mu2e_driver );
-}   // mu2e_pci_down
+	pci_unregister_driver( &cfo_driver);
+}   // cfo_pci_down
 
 

@@ -1,12 +1,12 @@
-// This file (mu2e_ioctl.h) was created by Ron Rechenmacher <ron@fnal.gov> on
+// This file (cfo_ioctl.h) was created by Ron Rechenmacher <ron@fnal.gov> on
 // Feb  5, 2014. "TERMS AND CONDITIONS" governing this file are in the README
 // or COPYING file. If you do not have such a file, one can be obtained by
 // contacting Ron or Fermi Lab in Batavia IL, 60510, phone: 630-840-3000.
 // $RCSfile: .emacs.gnu,v $
 // rev="$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
 
-#ifndef MU2E_MMAP_IOCTL_H
-#define MU2E_MMAP_IOCTL_H
+#ifndef CFO_MMAP_IOCTL_H
+#define CFO_MMAP_IOCTL_H
 
 #ifdef __KERNEL__
 # include <asm/ioctl.h>		// _IOWR
@@ -20,8 +20,8 @@
 #endif
 
 
-#define MU2E_DEV_FILE       "mu2e"
-#define MU2E_MAX_CHANNELS	2
+#define CFO_DEV_FILE       "mu2ecfo"
+#define CFO_MAX_CHANNELS	2
 
 /// <summary>
 /// Data Header Packet definition, hardware view
@@ -133,7 +133,7 @@ struct DataPacket
 	 +sysconf(_SC_PAGE_SIZE)*(map&1) )
 
 #define idx_add( idx, add, chn, dir )				 \
-	__extension__ ({unsigned num_buffs=mu2e_channel_info_[chn][dir].num_buffs; \
+	__extension__ ({unsigned num_buffs=cfo_channel_info_[chn][dir].num_buffs; \
 	(add<0)								\
 		?(((unsigned)-add>idx)					\
 		  ?(num_buffs-(-add-idx))%num_buffs		\
@@ -156,22 +156,22 @@ NOTE: for _IOR, _IOW: the size is only for the data at the address used in the
 	  large buffer, the only thing that these macros should consider is the
 	  pointer used (directly) in the ioctl call.
  */
-#define MU2E_IOC_MAGIC 'C'
+#define CFO_IOC_MAGIC 'C'
 
-#define M_IOC_REG_ACCESS     _IOWR( MU2E_IOC_MAGIC, 9, m_ioc_reg_access_t )
-#define M_IOC_GET_TST_STATE  _IOWR( MU2E_IOC_MAGIC, 1, m_ioc_cmd_t )
-#define M_IOC_TEST_START     _IOW ( MU2E_IOC_MAGIC, 2, m_ioc_cmd_t )
-#define M_IOC_TEST_STOP      _IOW ( MU2E_IOC_MAGIC, 3, m_ioc_cmd_t )
+#define M_IOC_REG_ACCESS     _IOWR( CFO_IOC_MAGIC, 9, m_ioc_reg_access_t )
+#define M_IOC_GET_TST_STATE  _IOWR( CFO_IOC_MAGIC, 1, m_ioc_cmd_t )
+#define M_IOC_TEST_START     _IOW ( CFO_IOC_MAGIC, 2, m_ioc_cmd_t )
+#define M_IOC_TEST_STOP      _IOW ( CFO_IOC_MAGIC, 3, m_ioc_cmd_t )
 
-#define M_IOC_GET_PCI_STATE  _IOR ( MU2E_IOC_MAGIC, 4, m_ioc_pcistate_t )
-#define M_IOC_GET_ENG_STATE  _IOWR( MU2E_IOC_MAGIC, 5, m_ioc_engstate_t )
-#define M_IOC_GET_DMA_STATS  _IOWR( MU2E_IOC_MAGIC, 6, m_ioc_engstats_t )
-#define M_IOC_GET_TRN_STATS  _IOWR( MU2E_IOC_MAGIC, 7, TRNStatsArray )
+#define M_IOC_GET_PCI_STATE  _IOR ( CFO_IOC_MAGIC, 4, m_ioc_pcistate_t )
+#define M_IOC_GET_ENG_STATE  _IOWR( CFO_IOC_MAGIC, 5, m_ioc_engstate_t )
+#define M_IOC_GET_DMA_STATS  _IOWR( CFO_IOC_MAGIC, 6, m_ioc_engstats_t )
+#define M_IOC_GET_TRN_STATS  _IOWR( CFO_IOC_MAGIC, 7, TRNStatsArray )
 
-#define M_IOC_GET_INFO	     _IOWR( MU2E_IOC_MAGIC,12, m_ioc_get_info_t  )
-#define M_IOC_BUF_GIVE       _IO  ( MU2E_IOC_MAGIC,13 )//arg=(chn<<24)|(dir<<16)|num
-#define M_IOC_DUMP           _IO  ( MU2E_IOC_MAGIC,14 )
-#define M_IOC_BUF_XMIT       _IO  ( MU2E_IOC_MAGIC,16 )
+#define M_IOC_GET_INFO	     _IOWR( CFO_IOC_MAGIC,12, m_ioc_get_info_t  )
+#define M_IOC_BUF_GIVE       _IO  ( CFO_IOC_MAGIC,13 )//arg=(chn<<24)|(dir<<16)|num
+#define M_IOC_DUMP           _IO  ( CFO_IOC_MAGIC,14 )
+#define M_IOC_BUF_XMIT       _IO  ( CFO_IOC_MAGIC,16 )
 
 /// <summary>
 /// Register Access information
@@ -280,25 +280,25 @@ typedef struct
 
 //------------------------------------------
 
-typedef unsigned char mu2e_databuff_t[0x10000];
+typedef unsigned char cfo_databuff_t[0x10000];
 
 
 typedef enum {
-	DTC_DMA_Engine_DAQ = 0,
-	DTC_DMA_Engine_DCS = 1,
-	DTC_DMA_Engine_Invalid,
-} DTC_DMA_Engine;
+	CFO_DMA_Engine_DAQ = 0,
+	CFO_DMA_Engine_DCS = 1,
+	CFO_DMA_Engine_Invalid,
+} CFO_DMA_Engine;
 
 typedef enum {
-	DTC_DMA_Direction_C2S = 0,
-	DTC_DMA_Direction_S2C = 1,
-	DTC_DMA_Direction_Invalid,
-} DTC_DMA_Direction;
+	CFO_DMA_Direction_C2S = 0,
+	CFO_DMA_Direction_S2C = 1,
+	CFO_DMA_Direction_Invalid,
+} CFO_DMA_Direction;
 
 enum { C2S, S2C };
-enum { MU2E_MAP_BUFF, MU2E_MAP_META };
+enum { CFO_MAP_BUFF, CFO_MAP_META };
 
-#define DTC_Register_Engine_Control( eng, dir ) (((eng*0x100)+(dir*0x2000))+0x4)
+#define CFO_Register_Engine_Control( eng, dir ) (((eng*0x100)+(dir*0x2000))+0x4)
 
 /// <summary>
 /// Structure used in IOCTL to get information about DMA transfer buffer status
@@ -316,26 +316,26 @@ typedef struct
 } m_ioc_get_info_t;
 
 
-/* This inline references mu2e_channel_info_ -- the name of a variable in both
+/* This inline references cfo_channel_info_ -- the name of a variable in both
    userspace and kernel land. For userspace the variable is defined in
-   the mu2edev class (and therefore the using namsspace
+   the cfodev class (and therefore the using namsspace
  */
-static inline unsigned mu2e_chn_info_delta_(int chn, int dir, m_ioc_get_info_t(*mu2e_channel_info_)[MU2E_MAX_CHANNELS][2])
+static inline unsigned cfo_chn_info_delta_(int chn, int dir, m_ioc_get_info_t(*cfo_channel_info_)[CFO_MAX_CHANNELS][2])
 {
-	unsigned hw = (*mu2e_channel_info_)[chn][dir].hwIdx;
-	unsigned sw = (*mu2e_channel_info_)[chn][dir].swIdx;
+	unsigned hw = (*cfo_channel_info_)[chn][dir].hwIdx;
+	unsigned sw = (*cfo_channel_info_)[chn][dir].swIdx;
 	unsigned retval;
 	if (dir == C2S)
 		retval = ((hw >= sw)
 			? hw - sw
-			: (*mu2e_channel_info_)[chn][dir].num_buffs + hw - sw);
+			: (*cfo_channel_info_)[chn][dir].num_buffs + hw - sw);
 	else
 		retval = ((sw >= hw)
-			? (*mu2e_channel_info_)[chn][dir].num_buffs - (sw - hw)
+			? (*cfo_channel_info_)[chn][dir].num_buffs - (sw - hw)
 			: hw - sw);
 
-	TRACE(21, "mu2e_mmap_ioctl::delta_ chn=%d dir=%d hw=%u sw=%u num_buffs=%u delta=%u"
-		, chn, dir, hw, sw, (*mu2e_channel_info_)[chn][dir].num_buffs, retval);
+	TRACE(21, "cfo_mmap_ioctl::delta_ chn=%d dir=%d hw=%u sw=%u num_buffs=%u delta=%u"
+		, chn, dir, hw, sw, (*cfo_channel_info_)[chn][dir].num_buffs, retval);
 	return retval;
 }
 
@@ -349,4 +349,4 @@ static inline unsigned mu2e_chn_info_delta_(int chn, int dir, m_ioc_get_info_t(*
 #define INT_MSIX            0x3         /**< MSI-X Interrupts capability */
 
 
-#endif // MU2E_MMAP_IOCTL_H
+#endif // CFO_MMAP_IOCTL_H

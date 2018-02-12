@@ -1,4 +1,4 @@
-/*  This file (mu2e_fs.c) was created by Ron Rechenmacher <ron@fnal.gov> on
+/*  This file (cfo_fs.c) was created by Ron Rechenmacher <ron@fnal.gov> on
     Feb  5, 2014. "TERMS AND CONDITIONS" governing this file are in the README
     or COPYING file. If you do not have such a file, one can be obtained by
     contacting Ron or Fermi Lab in Batavia IL, 60510, phone: 630-840-3000.
@@ -12,19 +12,19 @@
 #include <linux/types.h>        /* dev_t */
 
 #include "trace.h"		/* TRACE */
-#include "mu2e_mmap_ioctl.h"	/* MU2E_DEV_FILE */
-#include "mu2e_fs.h"
+#include "cfo_mmap_ioctl.h"	/* CFO_DEV_FILE */
+#include "cfo_fs.h"
 
 
-static struct file_operations mu2e_file_ops =
+static struct file_operations cfo_file_ops =
 {   .owner=   THIS_MODULE,
     .llseek=  NULL,           	/* lseek        */
     .read=    NULL,		/* read         */
     .write=   NULL,           	/* write        */
     /*.readdir= NULL,              readdir      */
     .poll=    NULL,             /* poll         */
-    .IOCTL_FILE_OPS_MEMBER=mu2e_ioctl,/* ioctl  */
-    .mmap=    mu2e_mmap,   	/* mmap         */
+    .IOCTL_FILE_OPS_MEMBER=cfo_ioctl,/* ioctl  */
+    .mmap=    cfo_mmap,   	/* mmap         */
     NULL,                       /* open         */
     NULL,                       /* flush        */
     NULL,                       /* release (close?)*/
@@ -35,40 +35,40 @@ static struct file_operations mu2e_file_ops =
     NULL                        /* lock         */
 };
 
-dev_t         mu2e_dev_number;
-struct class *mu2e_dev_class;
-struct cdev   mu2e_cdev;
+dev_t         cfo_dev_number;
+struct class *cfo_dev_class;
+struct cdev   cfo_cdev;
 
-int mu2e_fs_up()
+int cfo_fs_up()
 {
     int sts;
-    sts = alloc_chrdev_region( &mu2e_dev_number, 0, 1, "mu2e_drv" );
+    sts = alloc_chrdev_region( &cfo_dev_number, 0, 1, "cfo_drv" );
 
     if(sts < 0)
     {   TRACE( 3, "dcm_init(): Failed to get device numbers" );
         return (sts);
     }
     
-    mu2e_dev_class = class_create( THIS_MODULE, "mu2e_dev" );
+    cfo_dev_class = class_create( THIS_MODULE, "cfo_dev" );
     
-    cdev_init( &mu2e_cdev, &mu2e_file_ops );
+    cdev_init( &cfo_cdev, &cfo_file_ops );
 
-    mu2e_cdev.owner = THIS_MODULE;
-    mu2e_cdev.ops   = &mu2e_file_ops;
+    cfo_cdev.owner = THIS_MODULE;
+    cfo_cdev.ops   = &cfo_file_ops;
 
-    sts = cdev_add ( &mu2e_cdev, mu2e_dev_number, 1 );
-    device_create( mu2e_dev_class, NULL, mu2e_dev_number, NULL, MU2E_DEV_FILE );
+    sts = cdev_add ( &cfo_cdev, cfo_dev_number, 1 );
+    device_create( cfo_dev_class, NULL, cfo_dev_number, NULL, CFO_DEV_FILE );
     // NOTE: permissions set -- use udev - i.e:
-    // echo 'KERNEL=="mu2e", MODE="0666"' >/etc/udev/rules.d/98-mu2e.rules
+    // echo 'KERNEL=="cfo", MODE="0666"' >/etc/udev/rules.d/98-cfo.rules
 
     return (0);
-}   // mu2e_fs
+}   // cfo_fs
 
 
-void mu2e_fs_down()
+void cfo_fs_down()
 {
-    device_destroy( mu2e_dev_class, mu2e_dev_number);
-    cdev_del( &mu2e_cdev );
-    class_destroy( mu2e_dev_class);
-    unregister_chrdev_region( mu2e_dev_number, 1 );
+    device_destroy( cfo_dev_class, cfo_dev_number);
+    cdev_del( &cfo_cdev );
+    class_destroy( cfo_dev_class);
+    unregister_chrdev_region( cfo_dev_number, 1 );
 }

@@ -19,7 +19,7 @@ fcldir      -
 
 #
 product		 version	optional
-TRACE            v3_13_01
+TRACE            v3_13_04
 swig             v3_0_12        -       optional
 nodejs           v4_5_0         -       optional
 cetbuildtools    v5_08_01        -       only_for_build

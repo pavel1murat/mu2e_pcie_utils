@@ -1,4 +1,4 @@
-/*  This file (mu2e.c) was created by Ron Rechenmacher <ron@fnal.gov> on
+/*  This file (cfo.c) was created by Ron Rechenmacher <ron@fnal.gov> on
 	Feb  5, 2014. "TERMS AND CONDITIONS" governing this file are in the README
 	or COPYING file. If you do not have such a file, one can be obtained by
 	contacting Ron or Fermi Lab in Batavia IL, 60510, phone: 630-840-3000.
@@ -19,30 +19,30 @@
 #include "xdma_hw.h"		/* struct BuffDesc */
 
 #include "trace.h"		/* TRACE */
-#include "mu2e_fs.h"		/* mu2e_ioctl prototype */
-#include "mu2e_pci.h"		/* bar_info_t, extern mu2e_pci*  */
-#include "mu2e_event.h"
-#include "mu2e_mmap_ioctl.h"
-#include "mu2e_proto_globals.h"	/* MU2E_MAX_CHANNEL, etc. */
+#include "cfo_fs.h"		/* cfo_ioctl prototype */
+#include "cfo_pci.h"		/* bar_info_t, extern cfo_pci*  */
+#include "cfo_event.h"
+#include "cfo_mmap_ioctl.h"
+#include "cfo_proto_globals.h"	/* CFO_MAX_CHANNEL, etc. */
 
 
 	/* GLOBALS */
 
-struct pci_dev *mu2e_pci_dev = 0;
+struct pci_dev *cfo_pci_dev = 0;
 
-bar_info_t      mu2e_pcie_bar_info;
+bar_info_t      cfo_pcie_bar_info;
 
 
-pci_sender_t mu2e_pci_sender[MU2E_NUM_SEND_CHANNELS] = { {0}, };
+pci_sender_t cfo_pci_sender[CFO_NUM_SEND_CHANNELS] = { {0}, };
 
-pci_recver_t mu2e_pci_recver[MU2E_NUM_RECV_CHANNELS] = { {0}, };
+pci_recver_t cfo_pci_recver[CFO_NUM_RECV_CHANNELS] = { {0}, };
 
 // This variable name is used in a macro that expects the same
 // variable name in the user-space "library"
-m_ioc_get_info_t mu2e_channel_info_[MU2E_MAX_CHANNELS][2]; // See enums in mu2e_mmap_ioctl.h (0=C2S)
+m_ioc_get_info_t cfo_channel_info_[CFO_MAX_CHANNELS][2]; // See enums in cfo_mmap_ioctl.h (0=C2S)
 
 //    ch,dir,buffers/meta
-volatile void *  mu2e_mmap_ptrs[MU2E_MAX_CHANNELS][2][2];
+volatile void *  cfo_mmap_ptrs[CFO_MAX_CHANNELS][2][2];
 
 /* for exclusion of all program flows (processes, ISRs and BHs) */
 static DEFINE_SPINLOCK(DmaStatsLock);
@@ -79,7 +79,7 @@ static int checkDmaEngine(unsigned chn, unsigned dir) {
 	if (dir == C2S && (status & (DMA_ENG_INT_ALERR | DMA_ENG_INT_FETERR | DMA_ENG_INT_ABORTERR | DMA_ENG_INT_CHAINEND)) != 0)
 	{
 		TRACE(20, "checkDmaEngine: One of the error bits set: chn=%d dir=%d sts=0x%llx", chn, dir, (unsigned long long)status);
-		printk("DTC DMA Interrupt Error Bits Set: chn=%d dir=%d, sts=0x%llx", chn, dir, (unsigned long long)status);
+		printk("CFO DMA Interrupt Error Bits Set: chn=%d dir=%d, sts=0x%llx", chn, dir, (unsigned long long)status);
 		/* Perform soft reset of DMA engine */
 		Dma_mWriteChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_USER_RESET);
 		status = Dma_mReadChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS);
@@ -112,13 +112,13 @@ static int checkDmaEngine(unsigned chn, unsigned dir) {
 
 static irqreturn_t DmaInterrupt(int irq, void *dev_id)
 {
-#if MU2E_RECV_INTER_ENABLED
+#if CFO_RECV_INTER_ENABLED
 	unsigned long base;
 	unsigned chn;
 
 	TRACE(20, "DmaInterrrupt: start");
 
-	base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
+	base = (unsigned long)(cfo_pcie_bar_info.baseVAddr);
 	Dma_mIntDisable(base);
 
 	TRACE(20, "DmaInterrupt: Checking DMA Engines");
@@ -130,9 +130,9 @@ static irqreturn_t DmaInterrupt(int irq, void *dev_id)
 	TRACE(20, "DmaInterrupt: Calling poll routine");
 	/* Handle DMA and any user interrupts */
 #if 0
-	if (mu2e_sched_poll() == 0)
+	if (cfo_sched_poll() == 0)
 #else
-	if (mu2e_force_poll() == 0)
+	if (cfo_force_poll() == 0)
 #endif
 	{
 		Dma_mIntAck(base, DMA_ENG_ALLINT_MASK);
@@ -144,32 +144,32 @@ static irqreturn_t DmaInterrupt(int irq, void *dev_id)
 }
 
 
-int mu2e_mmap(struct file *file, struct vm_area_struct *vma)
+int cfo_mmap(struct file *file, struct vm_area_struct *vma)
 {
 	int	          ch, dir, map;
 	unsigned long phys_addr, uaddr;
 	int           sts = 0, ii;
 
 	page2chDirMap(vma->vm_pgoff, ch, dir, map);
-	TRACE(4, "mu2e_mmap: vm_pgoff:%lu ch:%d dir:%d map:%d: %p"
-		, vma->vm_pgoff, ch, dir, map, mu2e_mmap_ptrs[ch][dir][map]);
-	if (map == MU2E_MAP_META)
+	TRACE(4, "cfo_mmap: vm_pgoff:%lu ch:%d dir:%d map:%d: %p"
+		, vma->vm_pgoff, ch, dir, map, cfo_mmap_ptrs[ch][dir][map]);
+	if (map == CFO_MAP_META)
 		vma->vm_flags &= ~VM_WRITE;
 
-	if (dir == C2S && map == MU2E_MAP_BUFF) {
+	if (dir == C2S && map == CFO_MAP_BUFF) {
 		uaddr = vma->vm_start;
-		for (ii = 0; ii < MU2E_NUM_RECV_BUFFS; ++ii) {
-			phys_addr = virt_to_phys(((void**)mu2e_mmap_ptrs[ch][dir][map])[ii]);
+		for (ii = 0; ii < CFO_NUM_RECV_BUFFS; ++ii) {
+			phys_addr = virt_to_phys(((void**)cfo_mmap_ptrs[ch][dir][map])[ii]);
 			sts |= io_remap_pfn_range(vma, uaddr
 				, phys_addr >> PAGE_SHIFT
-				, sizeof(mu2e_databuff_t)
+				, sizeof(cfo_databuff_t)
 				, vma->vm_page_prot);
-			uaddr += sizeof(mu2e_databuff_t);
+			uaddr += sizeof(cfo_databuff_t);
 		}
 	}
 	else
 	{
-		phys_addr = virt_to_phys(mu2e_mmap_ptrs[ch][dir][map]);
+		phys_addr = virt_to_phys(cfo_mmap_ptrs[ch][dir][map]);
 		sts = io_remap_pfn_range(vma, vma->vm_start
 			, phys_addr >> PAGE_SHIFT
 			, vma->vm_end - vma->vm_start
@@ -178,9 +178,9 @@ int mu2e_mmap(struct file *file, struct vm_area_struct *vma)
 	if (sts) return -EAGAIN;
 
 	return (0);
-}   // mu2e_mmap
+}   // cfo_mmap
 
-IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
+IOCTL_RET_TYPE cfo_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 	, unsigned int cmd, unsigned long arg))
 {
 	IOCTL_RET_TYPE		retval = 0;
@@ -190,7 +190,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 	m_ioc_get_info_t	get_info;
 	int			chn, dir, num;
 	unsigned		myIdx, nxtIdx, hwIdx;
-	volatile mu2e_buffdesc_S2C_t   *desc_S2C_p;
+	volatile cfo_buffdesc_S2C_t   *desc_S2C_p;
 	u32                 	descDmaAdr_swNxt;
 	m_ioc_pcistate_t	pcistate;
 	m_ioc_engstate_t	eng;
@@ -201,8 +201,8 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 	TRNStatistics	       *ts;
 	unsigned		tmo_jiffies;
 
-	TRACE(11, "mu2e_ioctl: start - cmd=0x%x", cmd);
-	if (_IOC_TYPE(cmd) != MU2E_IOC_MAGIC) return -ENOTTY;
+	TRACE(11, "cfo_ioctl: start - cmd=0x%x", cmd);
+	if (_IOC_TYPE(cmd) != CFO_IOC_MAGIC) return -ENOTTY;
 
 	/* Check read/write and corresponding argument */
 	if (_IOC_DIR(cmd) & _IOC_READ)
@@ -213,32 +213,32 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 			return -EFAULT;
 
 	/* DMA registers are offset from BAR0 */
-	base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
+	base = (unsigned long)(cfo_pcie_bar_info.baseVAddr);
 
-	TRACE(11, "mu2e_ioctl: start2");
+	TRACE(11, "cfo_ioctl: start2");
 	switch (cmd)
 	{
 	case M_IOC_GET_TST_STATE:
-		TRACE(11, "mu2e_ioctl: cmd=GET_TST_STATE");
+		TRACE(11, "cfo_ioctl: cmd=GET_TST_STATE");
 		break;
 	case M_IOC_TEST_START:
-		TRACE(11, "mu2e_ioctl: cmd=TEST_START");
+		TRACE(11, "cfo_ioctl: cmd=TEST_START");
 		// enable dma ch0/C2S w/GENERATOR
 		Dma_mWriteChnReg(0, C2S, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_ENABLE);
 		msleep(20);
-		Dma_mWriteReg(mu2e_pcie_bar_info.baseVAddr
+		Dma_mWriteReg(cfo_pcie_bar_info.baseVAddr
 			, 0x9108, /*0x3f*/0xffffffff); // LOOPBACK
 		msleep(10);
 		//Dma_mWriteReg( base, 0x9100, 1 );  // 1=enable generator
 		break;
 	case M_IOC_TEST_STOP:
-		TRACE(11, "mu2e_ioctl: cmd=TEST_STOP");
+		TRACE(11, "cfo_ioctl: cmd=TEST_STOP");
 		break;
 		/* ------------------------------------------------------------------- */
 
 	case M_IOC_GET_PCI_STATE:	/* m_ioc_pcistate_t; formerly IGET_PCI_STATE      _IOR(XPMON_MAGIC,4,PCIState) */
-		TRACE(11, "mu2e_ioctl: cmd=GET_PCI_STATE");
-		ReadPCIState(mu2e_pci_dev, &pcistate);
+		TRACE(11, "cfo_ioctl: cmd=GET_PCI_STATE");
+		ReadPCIState(cfo_pci_dev, &pcistate);
 		if (copy_to_user((m_ioc_pcistate_t *)arg, &pcistate, sizeof(m_ioc_pcistate_t)))
 		{
 			printk("copy_to_user failed\n");
@@ -247,7 +247,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		}
 		break;
 	case M_IOC_GET_ENG_STATE:	/* m_ioc_engstate_t; formerly IGET_ENG_STATE      _IOR(XPMON_MAGIC,5,EngState) */
-		TRACE(11, "mu2e_ioctl: cmd=GET_ENG_STATE");
+		TRACE(11, "cfo_ioctl: cmd=GET_ENG_STATE");
 		if (copy_from_user(&eng, (m_ioc_engstate_t *)arg, sizeof(m_ioc_engstate_t)))
 		{
 			printk("\ncopy_from_user failed\n");
@@ -289,7 +289,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		}
 		break;
 	case M_IOC_GET_DMA_STATS:	/* m_ioc_engstats_t; formerly IGET_DMA_STATISTICS _IOR(XPMON_MAGIC,6,EngStatsArray) */
-		TRACE(11, "mu2e_ioctl: cmd=GET_DMA_STATS");
+		TRACE(11, "cfo_ioctl: cmd=GET_DMA_STATS");
 		if (copy_from_user(&es, (m_ioc_engstats_t *)arg, sizeof(m_ioc_engstats_t)))
 		{
 			printk("copy_from_user failed\n");
@@ -341,7 +341,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		}
 		break;
 	case M_IOC_GET_TRN_STATS:   /* TRNStatsArray;    formerly IGET_TRN_STATISTICS _IOR(XPMON_MAGIC,7,TRNStatsArray) */
-		TRACE(11, "mu2e_ioctl: cmd=GET_TRN_STATS");
+		TRACE(11, "cfo_ioctl: cmd=GET_TRN_STATS");
 		if (copy_from_user(&tsa, (TRNStatsArray *)arg, sizeof(TRNStatsArray)))
 		{
 			printk("copy_from_user failed\n");
@@ -393,12 +393,12 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		}
 		if (reg_access.access_type)
 		{
-			TRACE(11, "mu2e_ioctl: cmd=REG_ACCESS - write offset=0x%x, val=0x%x", reg_access.reg_offset, reg_access.val);
+			TRACE(11, "cfo_ioctl: cmd=REG_ACCESS - write offset=0x%x, val=0x%x", reg_access.reg_offset, reg_access.val);
 			Dma_mWriteReg(base, reg_access.reg_offset, reg_access.val);
 		}
 		else
 		{
-			TRACE(11, "mu2e_ioctl: cmd=REG_ACCESS - read offset=0x%x", reg_access.reg_offset);
+			TRACE(11, "cfo_ioctl: cmd=REG_ACCESS - read offset=0x%x", reg_access.reg_offset);
 			reg_access.val = Dma_mReadReg(base, reg_access.reg_offset);
 			if (copy_to_user((void*)arg, &reg_access, sizeof(reg_access)))
 			{
@@ -414,28 +414,28 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		dir = get_info.dir;
 		chn = get_info.chn;
 		if (get_info.dir == C2S) {
-			if (!mu2e_chn_info_delta_(get_info.chn, C2S, &mu2e_channel_info_)) {
-				TRACE( 11, "mu2e_ioctl: cmd=GET_INFO wait_event_interruptible_timeout jiffies=%u", tmo_jiffies);
+			if (!cfo_chn_info_delta_(get_info.chn, C2S, &cfo_channel_info_)) {
+				TRACE( 11, "cfo_ioctl: cmd=GET_INFO wait_event_interruptible_timeout jiffies=%u", tmo_jiffies);
 				if (wait_event_interruptible_timeout(get_info_wait_queue
-				                                     , mu2e_chn_info_delta_(get_info.chn, C2S, &mu2e_channel_info_)
+				                                     , cfo_chn_info_delta_(get_info.chn, C2S, &cfo_channel_info_)
 				                                     , tmo_jiffies) == 0) {
-					TRACE(16, "mu2e_ioctl: cmd=GET_INFO tmo");
+					TRACE(16, "cfo_ioctl: cmd=GET_INFO tmo");
 				}
 			}
 		} else {
-			jj=mu2e_channel_info_[chn][dir].num_buffs;
-			hwIdx = mu2e_channel_info_[chn][dir].hwIdx;
-			while ( ((mu2e_buffdesc_S2C_t*)idx2descVirtAdr(hwIdx,chn,dir))->Complete
-			       && hwIdx != mu2e_channel_info_[chn][dir].swIdx
+			jj=cfo_channel_info_[chn][dir].num_buffs;
+			hwIdx = cfo_channel_info_[chn][dir].hwIdx;
+			while ( ((cfo_buffdesc_S2C_t*)idx2descVirtAdr(hwIdx,chn,dir))->Complete
+			       && hwIdx != cfo_channel_info_[chn][dir].swIdx
 			       && jj-- ) {
 				hwIdx = idx_add(hwIdx, 1, chn, dir);
-				TRACE( 11, "ioctl GET_INFO mu2e_channel_info_[chn][dir].hwIdx=%u swIdx=%u lps=%u"
-				      , hwIdx, mu2e_channel_info_[chn][dir].swIdx, jj );
+				TRACE( 11, "ioctl GET_INFO cfo_channel_info_[chn][dir].hwIdx=%u swIdx=%u lps=%u"
+				      , hwIdx, cfo_channel_info_[chn][dir].swIdx, jj );
 			}
-			mu2e_channel_info_[chn][dir].hwIdx = hwIdx;
+			cfo_channel_info_[chn][dir].hwIdx = hwIdx;
 		}
-		get_info = mu2e_channel_info_[get_info.chn][get_info.dir];
-		TRACE( 11, "mu2e_ioctl: cmd=GET_INFO dir=%d get_info.dir=%u hwIdx=%u swIdx=%u"
+		get_info = cfo_channel_info_[get_info.chn][get_info.dir];
+		TRACE( 11, "cfo_ioctl: cmd=GET_INFO dir=%d get_info.dir=%u hwIdx=%u swIdx=%u"
 		      ,dir,get_info.dir, get_info.hwIdx, get_info.swIdx );
 		if (copy_to_user((void*)arg, &get_info, sizeof(m_ioc_get_info_t)))
 		{
@@ -443,35 +443,35 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		}
 		break;
 	case M_IOC_BUF_GIVE:
-		TRACE(11, "mu2e_ioctl: cmd=BUF_GIVE");
+		TRACE(11, "cfo_ioctl: cmd=BUF_GIVE");
 		chn = arg >> 24;
 		dir = (arg >> 16) & 1;
 		num = arg & 0xffff;
-		TRACE(11, "mu2e_ioctl: BUF_GIVE chn:%u dir:%u num:%u", chn, dir, num);
-		myIdx = idx_add(mu2e_channel_info_[chn][dir].swIdx, num, chn, dir);
+		TRACE(11, "cfo_ioctl: BUF_GIVE chn:%u dir:%u num:%u", chn, dir, num);
+		myIdx = idx_add(cfo_channel_info_[chn][dir].swIdx, num, chn, dir);
 		Dma_mWriteChnReg(chn, dir, REG_SW_NEXT_BD, idx2descDmaAdr(myIdx, chn, dir));
 		checkDmaEngine(chn, dir);
-		mu2e_channel_info_[chn][dir].swIdx = myIdx;
+		cfo_channel_info_[chn][dir].swIdx = myIdx;
 		break;
 	case M_IOC_DUMP:
 		TRACE(10, "SERDES LOOPBACK Enable 0x%x"
-			, Dma_mReadReg(mu2e_pcie_bar_info.baseVAddr, 0x9108));
+			, Dma_mReadReg(cfo_pcie_bar_info.baseVAddr, 0x9108));
 		TRACE(10, "Ring Enable 0x%x"
-			, Dma_mReadReg(mu2e_pcie_bar_info.baseVAddr, 0x9114));
+			, Dma_mReadReg(cfo_pcie_bar_info.baseVAddr, 0x9114));
 		TRACE(10, "SERDES Rx Disparity error (2 bits/link) 0x%x"
-			, Dma_mReadReg(mu2e_pcie_bar_info.baseVAddr, 0x911c));
+			, Dma_mReadReg(cfo_pcie_bar_info.baseVAddr, 0x911c));
 		TRACE(10, "SERDES Rx character not in table (2 bits/link) 0x%x"
-			, Dma_mReadReg(mu2e_pcie_bar_info.baseVAddr, 0x9120));
+			, Dma_mReadReg(cfo_pcie_bar_info.baseVAddr, 0x9120));
 		TRACE(10, "SERDES unlock error 0x%x"
-			, Dma_mReadReg(mu2e_pcie_bar_info.baseVAddr, 0x9124));
+			, Dma_mReadReg(cfo_pcie_bar_info.baseVAddr, 0x9124));
 		TRACE(10, "SERDES PLL lock 0x%x"
-			, Dma_mReadReg(mu2e_pcie_bar_info.baseVAddr, 0x9128));
+			, Dma_mReadReg(cfo_pcie_bar_info.baseVAddr, 0x9128));
 		TRACE(10, "SERDES Tx buffer status (2 bits/link) 0x%x"
-			, Dma_mReadReg(mu2e_pcie_bar_info.baseVAddr, 0x912c));
+			, Dma_mReadReg(cfo_pcie_bar_info.baseVAddr, 0x912c));
 		TRACE(10, "SERDES Rx buffer status (3 bits/link) 0x%x"
-			, Dma_mReadReg(mu2e_pcie_bar_info.baseVAddr, 0x9130));
+			, Dma_mReadReg(cfo_pcie_bar_info.baseVAddr, 0x9130));
 		TRACE(10, "SERDES Reset done 0x%x"
-			, Dma_mReadReg(mu2e_pcie_bar_info.baseVAddr, 0x9138));
+			, Dma_mReadReg(cfo_pcie_bar_info.baseVAddr, 0x9138));
 		for (chn = 0; chn < 2; ++chn)
 			for (dir = 0; dir < 2; ++dir)
 			{
@@ -491,63 +491,63 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 					u32 sw = descDmaAdr2idx(sw_next, chn, dir,0);
 					u32 hw_has_recv_data = ((hw >= sw)
 						? hw - sw
-						: MU2E_NUM_RECV_BUFFS + hw - sw);
-					hw = mu2e_channel_info_[chn][dir].hwIdx;
-					sw = mu2e_channel_info_[chn][dir].swIdx;
+						: CFO_NUM_RECV_BUFFS + hw - sw);
+					hw = cfo_channel_info_[chn][dir].hwIdx;
+					sw = cfo_channel_info_[chn][dir].swIdx;
 					sw_has_recv_data = ((hw >= sw)
 						? hw - sw
-						: MU2E_NUM_RECV_BUFFS + hw - sw);
+						: CFO_NUM_RECV_BUFFS + hw - sw);
 					TRACE(10, "hw_has_recv_data=%u sw=%u", hw_has_recv_data, sw_has_recv_data);
 				}
 			}
 		TRACE(10, "RECV[0] BUFFS:");
-		for (jj = 0; jj < MU2E_NUM_RECV_BUFFS; ++jj)
+		for (jj = 0; jj < CFO_NUM_RECV_BUFFS; ++jj)
 		{
 			TRACE(10, "%3u %2x 0x%08x", jj, 0
-				, ((u32*)&(mu2e_pci_recver[0].buffdesc_ring[jj]))[0]);
+				, ((u32*)&(cfo_pci_recver[0].buffdesc_ring[jj]))[0]);
 			TRACE(10, "%3u %2x 0x%016llx", jj, 4
-				, mu2e_pci_recver[0].buffdesc_ring[jj]->UserStatus);
+				, cfo_pci_recver[0].buffdesc_ring[jj]->UserStatus);
 			TRACE(10, "%3u %2x 0x%08x", jj, 12
-				, mu2e_pci_recver[0].buffdesc_ring[jj]->CardAddress);
+				, cfo_pci_recver[0].buffdesc_ring[jj]->CardAddress);
 			TRACE(10, "%3u %2x 0x%08x IrqComplete=%u", jj, 16
-				, ((u32*)&(mu2e_pci_recver[0].buffdesc_ring[jj]))[4]
-				, mu2e_pci_recver[0].buffdesc_ring[jj]->IrqComplete);
+				, ((u32*)&(cfo_pci_recver[0].buffdesc_ring[jj]))[4]
+				, cfo_pci_recver[0].buffdesc_ring[jj]->IrqComplete);
 			TRACE(10, "%3u %2x 0x%016llx", jj, 20
-				, mu2e_pci_recver[0].buffdesc_ring[jj]->SystemAddress);
+				, cfo_pci_recver[0].buffdesc_ring[jj]->SystemAddress);
 			TRACE(10, "%3u %2x 0x%08x", jj, 28
-				, mu2e_pci_recver[0].buffdesc_ring[jj]->NextDescPtr);
+				, cfo_pci_recver[0].buffdesc_ring[jj]->NextDescPtr);
 			TRACE(10, "%3u meta@%p[%d]=%u", jj
-				, mu2e_mmap_ptrs[0][C2S][MU2E_MAP_META], jj
-				, ((u32*)(mu2e_mmap_ptrs[0][C2S][MU2E_MAP_META]))[jj]);
+				, cfo_mmap_ptrs[0][C2S][CFO_MAP_META], jj
+				, ((u32*)(cfo_mmap_ptrs[0][C2S][CFO_MAP_META]))[jj]);
 			TRACE(10, "%3u 0x%08x 0x%08x 0x%08x 0x%08x", jj
-				, ((u32*)&(mu2e_pci_recver[0].databuffs[jj]))[0]
-				, ((u32*)&(mu2e_pci_recver[0].databuffs[jj]))[1]
-				, ((u32*)&(mu2e_pci_recver[0].databuffs[jj]))[2]
-				, ((u32*)&(mu2e_pci_recver[0].databuffs[jj]))[3]);
+				, ((u32*)&(cfo_pci_recver[0].databuffs[jj]))[0]
+				, ((u32*)&(cfo_pci_recver[0].databuffs[jj]))[1]
+				, ((u32*)&(cfo_pci_recver[0].databuffs[jj]))[2]
+				, ((u32*)&(cfo_pci_recver[0].databuffs[jj]))[3]);
 		}
 		TRACE(10, "SEND[0] BUFFS:");
-		for (jj = 0; jj < MU2E_NUM_SEND_BUFFS; ++jj)
+		for (jj = 0; jj < CFO_NUM_SEND_BUFFS; ++jj)
 		{
 			TRACE(10, "%3u %2x 0x%08x", jj, 0
-				, ((u32*)&(mu2e_pci_sender[0].buffdesc_ring[jj]))[0] );
+				, ((u32*)&(cfo_pci_sender[0].buffdesc_ring[jj]))[0] );
 			TRACE(10, "%3u %2x 0x%016llx", jj, 4
-				, mu2e_pci_sender[0].buffdesc_ring[jj].UserControl );
+				, cfo_pci_sender[0].buffdesc_ring[jj].UserControl );
 			TRACE(10, "%3u %2x 0x%08x", jj, 12
-				, ((u32*)&(mu2e_pci_sender[0].buffdesc_ring[jj]))[3] );
+				, ((u32*)&(cfo_pci_sender[0].buffdesc_ring[jj]))[3] );
 			TRACE(10, "%3u %2x 0x%08x", jj, 16
-				, ((u32*)&(mu2e_pci_sender[0].buffdesc_ring[jj]))[4] );
+				, ((u32*)&(cfo_pci_sender[0].buffdesc_ring[jj]))[4] );
 			TRACE(10, "%3u %2x 0x%016llx", jj, 20
-				, mu2e_pci_sender[0].buffdesc_ring[jj].SystemAddress );
+				, cfo_pci_sender[0].buffdesc_ring[jj].SystemAddress );
 			TRACE(10, "%3u %2x 0x%08x", jj, 28
-				, mu2e_pci_sender[0].buffdesc_ring[jj].NextDescPtr );
+				, cfo_pci_sender[0].buffdesc_ring[jj].NextDescPtr );
 			TRACE(10, "%3u meta@%p[%d]=%u", jj
-				, mu2e_mmap_ptrs[0][S2C][MU2E_MAP_META], jj
-				, ((u32*)(mu2e_mmap_ptrs[0][S2C][MU2E_MAP_META]))[jj] );
+				, cfo_mmap_ptrs[0][S2C][CFO_MAP_META], jj
+				, ((u32*)(cfo_mmap_ptrs[0][S2C][CFO_MAP_META]))[jj] );
 			TRACE(10, "%3u 0x%08x 0x%08x 0x%08x 0x%08x", jj
-				, ((u32*)&(mu2e_pci_sender[0].databuffs[jj]))[0]
-				, ((u32*)&(mu2e_pci_sender[0].databuffs[jj]))[1]
-				, ((u32*)&(mu2e_pci_sender[0].databuffs[jj]))[2]
-				, ((u32*)&(mu2e_pci_sender[0].databuffs[jj]))[3]);
+				, ((u32*)&(cfo_pci_sender[0].databuffs[jj]))[0]
+				, ((u32*)&(cfo_pci_sender[0].databuffs[jj]))[1]
+				, ((u32*)&(cfo_pci_sender[0].databuffs[jj]))[2]
+				, ((u32*)&(cfo_pci_sender[0].databuffs[jj]))[3]);
 		}
 		break;
 	case M_IOC_BUF_XMIT:
@@ -557,19 +557,19 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 
 		// look at next descriptor and verify that it is complete
 		// FIX ME --- race condition
-		myIdx = mu2e_channel_info_[chn][dir].swIdx;
+		myIdx = cfo_channel_info_[chn][dir].swIdx;
 		desc_S2C_p = idx2descVirtAdr(myIdx, chn, dir);
 		if (desc_S2C_p->Complete != 1) {
 			TRACE(11, "ioctl BUF_XMIT -EAGAIN myIdx=%u err=%d desc_S2C_p=%p 0x%016llx counts(in,sts)=%u,%u"
 		        , myIdx, desc_S2C_p->Error, desc_S2C_p, *(u64*)desc_S2C_p, desc_S2C_p->ByteCount, desc_S2C_p->ByteCnt );
 			return -EAGAIN;
 		}
-		TRACE(11, "mu2e_ioctl: cmd=BUF_XMIT desc_S2C_p=%p 0x%016llx",desc_S2C_p, *(u64*)desc_S2C_p);
+		TRACE(11, "cfo_ioctl: cmd=BUF_XMIT desc_S2C_p=%p 0x%016llx",desc_S2C_p, *(u64*)desc_S2C_p);
 
 		desc_S2C_p->Complete = 0; // FIX ME --- race condition
 		desc_S2C_p->ByteCount = arg & 0xfffff; // 20 bits max
 		desc_S2C_p->ByteCnt = arg & 0xfffff; // 20 bits max
-# if MU2E_RECV_INTER_ENABLED
+# if CFO_RECV_INTER_ENABLED
 		desc_S2C_p->IrqComplete = 1;
 		desc_S2C_p->IrqError = 1;
 # else
@@ -578,7 +578,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 # endif
 		desc_S2C_p->StartOfPkt = 1;
 		desc_S2C_p->EndOfPkt = 1;
-		{	void * data = ((mu2e_databuff_t*)(mu2e_mmap_ptrs[chn][dir][MU2E_MAP_BUFF]))[myIdx];
+		{	void * data = ((cfo_databuff_t*)(cfo_mmap_ptrs[chn][dir][CFO_MAP_BUFF]))[myIdx];
 			TRACE(11, "ioctl BUF_XMIT myIdx=%u desc_S2C_p(%p)=%016llx ByteCnt=%d data(%p)[2-5]=%016llx %016llx %016llx %016llx"
 			, myIdx, desc_S2C_p, *(u64*)desc_S2C_p, desc_S2C_p->ByteCnt, data, ((u64*)data)[2], ((u64*)data)[3], ((u64*)data)[4], ((u64*)data)[5] );
 		}
@@ -589,33 +589,33 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		descDmaAdr_swNxt = idx2descDmaAdr(nxtIdx, chn, dir);
 
 		// update hwIdx here - MUST CHECK Buffer Descriptor Complete bit!!! (not register!!!)
-		jj=mu2e_channel_info_[chn][dir].num_buffs;
-		hwIdx = mu2e_channel_info_[chn][dir].hwIdx;
-		while ( ((mu2e_buffdesc_S2C_t*)idx2descVirtAdr(hwIdx,chn,dir))->Complete
+		jj=cfo_channel_info_[chn][dir].num_buffs;
+		hwIdx = cfo_channel_info_[chn][dir].hwIdx;
+		while ( ((cfo_buffdesc_S2C_t*)idx2descVirtAdr(hwIdx,chn,dir))->Complete
 		       && hwIdx != myIdx && jj--) {
 			hwIdx = idx_add(hwIdx, 1, chn, dir);
-			TRACE( 11, "ioctl BUF_XMIT mu2e_channel_info_[chn][dir].hwIdx=%u swIdx=%u lps=%u"
-			, hwIdx, mu2e_channel_info_[chn][dir].swIdx, jj );
+			TRACE( 11, "ioctl BUF_XMIT cfo_channel_info_[chn][dir].hwIdx=%u swIdx=%u lps=%u"
+			, hwIdx, cfo_channel_info_[chn][dir].swIdx, jj );
 		}
-		mu2e_channel_info_[chn][dir].hwIdx = hwIdx;
+		cfo_channel_info_[chn][dir].hwIdx = hwIdx;
 
-		// Dma_mReadReg(mu2e_pcie_bar_info.baseVAddr, 0x9108); // DEBUG read "user" reg.
-		TRACE(11, "mu2e_ioctl BUF_XMIT b4 WriteChnReg REG_SW_NEXT_BD(idx=%u) TELLING DMA TO GO (DO THIS BD) hwIdx=%u ->Complete=%d [0].Complete=%d"
-		      ,nxtIdx, hwIdx, ((mu2e_buffdesc_S2C_t*)idx2descVirtAdr(hwIdx,chn,dir))->Complete, ((mu2e_buffdesc_S2C_t*)idx2descVirtAdr(0,chn,dir))->Complete );
+		// Dma_mReadReg(cfo_pcie_bar_info.baseVAddr, 0x9108); // DEBUG read "user" reg.
+		TRACE(11, "cfo_ioctl BUF_XMIT b4 WriteChnReg REG_SW_NEXT_BD(idx=%u) TELLING DMA TO GO (DO THIS BD) hwIdx=%u ->Complete=%d [0].Complete=%d"
+		      ,nxtIdx, hwIdx, ((cfo_buffdesc_S2C_t*)idx2descVirtAdr(hwIdx,chn,dir))->Complete, ((cfo_buffdesc_S2C_t*)idx2descVirtAdr(0,chn,dir))->Complete );
 		Dma_mWriteChnReg(chn, dir, REG_SW_NEXT_BD, descDmaAdr_swNxt);
 
-		mu2e_channel_info_[chn][dir].swIdx = nxtIdx;
-		TRACE(11, "mu2e_ioctl BUF_XMIT after WriteChnReg REG_SW_NEXT_BD swIdx=%u hwIdx=%u ->Complete=%d CmpltIdx=%u"
-			, nxtIdx, hwIdx, ((mu2e_buffdesc_S2C_t*)idx2descVirtAdr(hwIdx,chn,dir))->Complete
+		cfo_channel_info_[chn][dir].swIdx = nxtIdx;
+		TRACE(11, "cfo_ioctl BUF_XMIT after WriteChnReg REG_SW_NEXT_BD swIdx=%u hwIdx=%u ->Complete=%d CmpltIdx=%u"
+			, nxtIdx, hwIdx, ((cfo_buffdesc_S2C_t*)idx2descVirtAdr(hwIdx,chn,dir))->Complete
 			, descDmaAdr2idx( Dma_mReadChnReg(chn,dir,REG_HW_NEXT_BD),chn,dir,0 ) );
 		break;
 	default:
-		TRACE(10, "mu2e_ioctl: unknown cmd");
+		TRACE(10, "cfo_ioctl: unknown cmd");
 		return (-1); // some error
 	}
-	TRACE(11, "mu2e_ioctl: end");
+	TRACE(11, "cfo_ioctl: end");
 	return (retval);
-}   // mu2e_ioctl
+}   // cfo_ioctl
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -667,7 +667,7 @@ static int ReadPCIState(struct pci_dev * pdev, m_ioc_pcistate_t * pcistate)
 	}
 
 	/* Read Initial Flow Control Credits information */
-	base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
+	base = (unsigned long)(cfo_pcie_bar_info.baseVAddr);
 
 	pcistate->InitFCCplD = XIo_In32(base + 0x901c) & 0x00000FFF;
 	pcistate->InitFCCplH = XIo_In32(base + 0x9020) & 0x000000FF;
@@ -691,8 +691,8 @@ void free_mem(void)
 	unsigned       chn, jj, ii;
 
 	// stop "app"
-	Dma_mWriteReg(mu2e_pcie_bar_info.baseVAddr
-		, 0x9100, 0x80000000); // DTC reset, Clear Latched Errors
+	Dma_mWriteReg(cfo_pcie_bar_info.baseVAddr
+		, 0x9100, 0x80000000); // CFO reset, Clear Latched Errors
 	msleep(10);
 
 	for (chn = 0; chn < 2; ++chn)
@@ -709,39 +709,39 @@ void free_mem(void)
 		}
 	}
 
-	for (chn = 0; chn < MU2E_NUM_RECV_CHANNELS; ++chn)
+	for (chn = 0; chn < CFO_NUM_RECV_CHANNELS; ++chn)
 	{
-		for (ii = 0; ii < MU2E_NUM_RECV_BUFFS; ++ii) {
-			if (mu2e_pci_recver[chn].databuffs[ii])
-				dma_free_coherent(&mu2e_pci_dev->dev
-					, sizeof(mu2e_databuff_t)
-					, mu2e_pci_recver[chn].databuffs[ii]
-					, mu2e_pci_recver[chn].databuffs_dma[ii]);
-			if (mu2e_pci_recver[chn].buffdesc_ring[ii])
-				dma_free_coherent(&mu2e_pci_dev->dev
-					, sizeof(mu2e_buffdesc_C2S_t)
-					, mu2e_pci_recver[chn].buffdesc_ring[ii]
-					, mu2e_pci_recver[chn].buffdesc_ring_dma[ii]);
+		for (ii = 0; ii < CFO_NUM_RECV_BUFFS; ++ii) {
+			if (cfo_pci_recver[chn].databuffs[ii])
+				dma_free_coherent(&cfo_pci_dev->dev
+					, sizeof(cfo_databuff_t)
+					, cfo_pci_recver[chn].databuffs[ii]
+					, cfo_pci_recver[chn].databuffs_dma[ii]);
+			if (cfo_pci_recver[chn].buffdesc_ring[ii])
+				dma_free_coherent(&cfo_pci_dev->dev
+					, sizeof(cfo_buffdesc_C2S_t)
+					, cfo_pci_recver[chn].buffdesc_ring[ii]
+					, cfo_pci_recver[chn].buffdesc_ring_dma[ii]);
 		}
-		kfree(mu2e_pci_recver[chn].databuffs);
-		kfree(mu2e_pci_recver[chn].buffdesc_ring);
-		kfree(mu2e_pci_recver[chn].databuffs_dma);
-		kfree(mu2e_pci_recver[chn].buffdesc_ring_dma);
-		free_pages((unsigned long)mu2e_mmap_ptrs[chn][C2S][MU2E_MAP_META], 0);
+		kfree(cfo_pci_recver[chn].databuffs);
+		kfree(cfo_pci_recver[chn].buffdesc_ring);
+		kfree(cfo_pci_recver[chn].databuffs_dma);
+		kfree(cfo_pci_recver[chn].buffdesc_ring_dma);
+		free_pages((unsigned long)cfo_mmap_ptrs[chn][C2S][CFO_MAP_META], 0);
 	}
-	for (chn = 0; chn < MU2E_NUM_SEND_CHANNELS; ++chn)
+	for (chn = 0; chn < CFO_NUM_SEND_CHANNELS; ++chn)
 	{
-		if (mu2e_pci_sender[chn].databuffs)
-			dma_free_coherent(&mu2e_pci_dev->dev
-				, sizeof(mu2e_databuff_t)*MU2E_NUM_SEND_BUFFS
-				, mu2e_pci_sender[chn].databuffs
-				, mu2e_pci_sender[chn].databuffs_dma);
-		if (mu2e_pci_sender[chn].buffdesc_ring)
-			dma_free_coherent(&mu2e_pci_dev->dev
-				, sizeof(mu2e_buffdesc_S2C_t)*MU2E_NUM_SEND_BUFFS
-				, mu2e_pci_sender[chn].buffdesc_ring
-				, mu2e_pci_sender[chn].buffdesc_ring_dma);
-		free_pages((unsigned long)mu2e_mmap_ptrs[chn][S2C][MU2E_MAP_META], 0);
+		if (cfo_pci_sender[chn].databuffs)
+			dma_free_coherent(&cfo_pci_dev->dev
+				, sizeof(cfo_databuff_t)*CFO_NUM_SEND_BUFFS
+				, cfo_pci_sender[chn].databuffs
+				, cfo_pci_sender[chn].databuffs_dma);
+		if (cfo_pci_sender[chn].buffdesc_ring)
+			dma_free_coherent(&cfo_pci_dev->dev
+				, sizeof(cfo_buffdesc_S2C_t)*CFO_NUM_SEND_BUFFS
+				, cfo_pci_sender[chn].buffdesc_ring
+				, cfo_pci_sender[chn].buffdesc_ring_dma);
+		free_pages((unsigned long)cfo_mmap_ptrs[chn][S2C][CFO_MAP_META], 0);
 	}
 }   // free_mem
 
@@ -752,7 +752,7 @@ void free_mem(void)
 //////////////////////////////////////////////////////////////////////////////
 
 
-static int __init init_mu2e(void)
+static int __init init_cfo(void)
 {
 	int             ret = 0;          /* SUCCESS */
 	unsigned        chn, ii, jj, dir;
@@ -762,185 +762,185 @@ static int __init init_mu2e(void)
 	u32             descDmaAdr;
 	u32             ctrlStsVal;
 
-	TRACE(0, "init_mu2e");
+	TRACE(0, "init_cfo");
 
 	// fs interface, pci, memory, events(i.e polling)
 
-	ret = mu2e_fs_up();
+	ret = cfo_fs_up();
 	if (ret != 0) {
 		ret = -2;
 		goto out_fs;
 	}
-	ret = mu2e_pci_up();
+	ret = cfo_pci_up();
 	if (ret != 0) {
 		ret = -5;
 		goto out_pci;
 	}
 
-	mu2e_pci_dev = pci_get_device(XILINX_VENDOR_ID, XILINX_DEVICE_ID, NULL);
-	if (mu2e_pci_dev == NULL)
+	cfo_pci_dev = pci_get_device(XILINX_VENDOR_ID, XILINX_DEVICE_ID, NULL);
+	if (cfo_pci_dev == NULL)
 	{
 		ret = -6;
 		goto out_pci;
 	}
 
-	/* Use "Dma_" routines to init FPGA "user" application ("DTC") registers.
+	/* Use "Dma_" routines to init FPGA "user" application ("CFO") registers.
 	   NOTE: a few more after dma engine setup (below).
 	 */
-	 //Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
+	 //Dma_mWriteReg((unsigned long)cfo_pcie_bar_info.baseVAddr
 	 //                , 0x9008, 0x00000002 ); // reset axi interface IP
-	Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
+	Dma_mWriteReg((unsigned long)cfo_pcie_bar_info.baseVAddr
 		, 0x9100, 0x30000000); // Oscillator resets
 	msleep(20);
-	Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
-		, 0x9100, 0x80000000); // DTC reset, Clear Oscillator resets
+	Dma_mWriteReg((unsigned long)cfo_pcie_bar_info.baseVAddr
+		, 0x9100, 0x80000000); // CFO reset, Clear Oscillator resets
 	msleep(20);
-	Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
-		, 0x9100, 0x00000000); // Clear DTC reset
+	Dma_mWriteReg((unsigned long)cfo_pcie_bar_info.baseVAddr
+		, 0x9100, 0x00000000); // Clear CFO reset
 	msleep(20);
-	Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
+	Dma_mWriteReg((unsigned long)cfo_pcie_bar_info.baseVAddr
 		, 0x9118, 0x0000003f); // Reset all links
 	msleep(20);
-	Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
+	Dma_mWriteReg((unsigned long)cfo_pcie_bar_info.baseVAddr
 		, 0x9118, 0x00000000); // Clear Link Resets
-  //Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
+  //Dma_mWriteReg((unsigned long)cfo_pcie_bar_info.baseVAddr
   //	              , 0x9114, 0x00003f3f ); // make sure all links are enabled
 
-	TRACE(1, "init_mu2e reset done bits: 0x%08x MU2E_NUM_RECV_CHANNELS=%d MU2E_NUM_RECV_BUFFS=%d MU2E_NUM_SEND_BUFFS=%d"
-	      , Dma_mReadReg((unsigned long)mu2e_pcie_bar_info.baseVAddr,0x9138)
-	      , MU2E_NUM_RECV_CHANNELS, MU2E_NUM_RECV_BUFFS, MU2E_NUM_SEND_BUFFS );
+	TRACE(1, "init_cfo reset done bits: 0x%08x CFO_NUM_RECV_CHANNELS=%d CFO_NUM_RECV_BUFFS=%d CFO_NUM_SEND_BUFFS=%d"
+	      , Dma_mReadReg((unsigned long)cfo_pcie_bar_info.baseVAddr,0x9138)
+	      , CFO_NUM_RECV_CHANNELS, CFO_NUM_RECV_BUFFS, CFO_NUM_SEND_BUFFS );
 
 
 	/* DMA Engine (channels) setup... (buffers and descriptors (and metadata)) */
 	dir = C2S;
-	for (chn = 0; chn < MU2E_NUM_RECV_CHANNELS; ++chn)
+	for (chn = 0; chn < CFO_NUM_RECV_CHANNELS; ++chn)
 	{
-		TRACE(1, "init_mu2e dma_alloc (#=%d)", MU2E_NUM_RECV_BUFFS);
+		TRACE(1, "init_cfo dma_alloc (#=%d)", CFO_NUM_RECV_BUFFS);
 
-		va = kmalloc(MU2E_NUM_RECV_BUFFS * sizeof(void *), GFP_KERNEL); // Array of data buffer pointers
-		vb = kmalloc(MU2E_NUM_RECV_BUFFS * sizeof(void *), GFP_KERNEL); // Array of buffdesc pointers
+		va = kmalloc(CFO_NUM_RECV_BUFFS * sizeof(void *), GFP_KERNEL); // Array of data buffer pointers
+		vb = kmalloc(CFO_NUM_RECV_BUFFS * sizeof(void *), GFP_KERNEL); // Array of buffdesc pointers
 		if (va == NULL || vb == NULL) goto out;
-		mu2e_pci_recver[chn].databuffs = va;
-		mu2e_pci_recver[chn].buffdesc_ring = vb;
+		cfo_pci_recver[chn].databuffs = va;
+		cfo_pci_recver[chn].buffdesc_ring = vb;
 
-		va = kmalloc(MU2E_NUM_RECV_BUFFS * sizeof(dma_addr_t), GFP_KERNEL); // dma addresses of data buffers
-		vb = kmalloc(MU2E_NUM_RECV_BUFFS * sizeof(dma_addr_t), GFP_KERNEL); // dma addresses of buffdesc memory
+		va = kmalloc(CFO_NUM_RECV_BUFFS * sizeof(dma_addr_t), GFP_KERNEL); // dma addresses of data buffers
+		vb = kmalloc(CFO_NUM_RECV_BUFFS * sizeof(dma_addr_t), GFP_KERNEL); // dma addresses of buffdesc memory
 		if (va == NULL || vb == NULL) goto out;
-		mu2e_pci_recver[chn].databuffs_dma = va;
-		mu2e_pci_recver[chn].buffdesc_ring_dma = vb;
+		cfo_pci_recver[chn].databuffs_dma = va;
+		cfo_pci_recver[chn].buffdesc_ring_dma = vb;
 
-		for (ii = 0; ii < MU2E_NUM_RECV_BUFFS; ++ii) {
-			mu2e_pci_recver[chn].databuffs[ii] =
-				dma_alloc_coherent(&mu2e_pci_dev->dev, sizeof(mu2e_databuff_t), &(mu2e_pci_recver[chn].databuffs_dma[ii]), GFP_KERNEL);
-			mu2e_pci_recver[chn].buffdesc_ring[ii] =
-				dma_alloc_coherent(&mu2e_pci_dev->dev, sizeof(mu2e_buffdesc_C2S_t), &(mu2e_pci_recver[chn].buffdesc_ring_dma[ii]), GFP_KERNEL);
-			TRACE(1, "init_mu2e mu2e_pci_recver[%u].databuffs=%p databuffs_dma=0x%llx "
+		for (ii = 0; ii < CFO_NUM_RECV_BUFFS; ++ii) {
+			cfo_pci_recver[chn].databuffs[ii] =
+				dma_alloc_coherent(&cfo_pci_dev->dev, sizeof(cfo_databuff_t), &(cfo_pci_recver[chn].databuffs_dma[ii]), GFP_KERNEL);
+			cfo_pci_recver[chn].buffdesc_ring[ii] =
+				dma_alloc_coherent(&cfo_pci_dev->dev, sizeof(cfo_buffdesc_C2S_t), &(cfo_pci_recver[chn].buffdesc_ring_dma[ii]), GFP_KERNEL);
+			TRACE(1, "init_cfo cfo_pci_recver[%u].databuffs=%p databuffs_dma=0x%llx "
 				"buffdesc_ring=%p buffdesc_ring_dma=0x%llx"
 				, chn
-				, mu2e_pci_recver[chn].databuffs[ii]
-				, mu2e_pci_recver[chn].databuffs_dma[ii]
-					, mu2e_pci_recver[chn].buffdesc_ring[ii]
-				, mu2e_pci_recver[chn].buffdesc_ring_dma[ii]);
+				, cfo_pci_recver[chn].databuffs[ii]
+				, cfo_pci_recver[chn].databuffs_dma[ii]
+					, cfo_pci_recver[chn].buffdesc_ring[ii]
+				, cfo_pci_recver[chn].buffdesc_ring_dma[ii]);
 		}
 
-		mu2e_mmap_ptrs[chn][dir][MU2E_MAP_BUFF] = mu2e_pci_recver[chn].databuffs;
-		//mu2e_mmap_ptrs[chn][dir][MU2E_MAP_META] = mu2e_pci_recver[chn].buffdesc_ring;
-		mu2e_mmap_ptrs[chn][dir][MU2E_MAP_META] = (void*)__get_free_pages(GFP_KERNEL, 0);
+		cfo_mmap_ptrs[chn][dir][CFO_MAP_BUFF] = cfo_pci_recver[chn].databuffs;
+		//cfo_mmap_ptrs[chn][dir][CFO_MAP_META] = cfo_pci_recver[chn].buffdesc_ring;
+		cfo_mmap_ptrs[chn][dir][CFO_MAP_META] = (void*)__get_free_pages(GFP_KERNEL, 0);
 
-		TRACE(1, "init_mu2e mu2e_pci_recver[%u].meta@%p"
+		TRACE(1, "init_cfo cfo_pci_recver[%u].meta@%p"
 			, chn
-			, mu2e_mmap_ptrs[chn][dir][MU2E_MAP_META]);
+			, cfo_mmap_ptrs[chn][dir][CFO_MAP_META]);
 
-		mu2e_channel_info_[chn][dir].chn = chn;
-		mu2e_channel_info_[chn][dir].dir = dir;
-		mu2e_channel_info_[chn][dir].buff_size = sizeof(mu2e_databuff_t);
-		mu2e_channel_info_[chn][dir].num_buffs = MU2E_NUM_RECV_BUFFS;
+		cfo_channel_info_[chn][dir].chn = chn;
+		cfo_channel_info_[chn][dir].dir = dir;
+		cfo_channel_info_[chn][dir].buff_size = sizeof(cfo_databuff_t);
+		cfo_channel_info_[chn][dir].num_buffs = CFO_NUM_RECV_BUFFS;
 
-		for (jj = 0; jj < MU2E_NUM_RECV_BUFFS; ++jj)
+		for (jj = 0; jj < CFO_NUM_RECV_BUFFS; ++jj)
 		{   /* ring -> link to next (and last to 1st via modulus) */
-			mu2e_pci_recver[chn].buffdesc_ring[jj]->NextDescPtr = mu2e_pci_recver[chn].buffdesc_ring_dma[(jj + 1) % MU2E_NUM_RECV_BUFFS];
+			cfo_pci_recver[chn].buffdesc_ring[jj]->NextDescPtr = cfo_pci_recver[chn].buffdesc_ring_dma[(jj + 1) % CFO_NUM_RECV_BUFFS];
 			/* put the _buffer_ address in the descriptor */
-			mu2e_pci_recver[chn].buffdesc_ring[jj]->SystemAddress = mu2e_pci_recver[chn].databuffs_dma[jj];
+			cfo_pci_recver[chn].buffdesc_ring[jj]->SystemAddress = cfo_pci_recver[chn].databuffs_dma[jj];
 			/* and the size of the buffer also */
-			mu2e_pci_recver[chn].buffdesc_ring[jj]->RsvdByteCnt = sizeof(mu2e_databuff_t);
-#if MU2E_RECV_INTER_ENABLED
-			mu2e_pci_recver[chn].buffdesc_ring[jj]->IrqComplete = 1;
-			mu2e_pci_recver[chn].buffdesc_ring[jj]->IrqError = 1;
+			cfo_pci_recver[chn].buffdesc_ring[jj]->RsvdByteCnt = sizeof(cfo_databuff_t);
+#if CFO_RECV_INTER_ENABLED
+			cfo_pci_recver[chn].buffdesc_ring[jj]->IrqComplete = 1;
+			cfo_pci_recver[chn].buffdesc_ring[jj]->IrqError = 1;
 #else
-			mu2e_pci_recver[chn].buffdesc_ring[jj]->IrqComplete = 0;
-			mu2e_pci_recver[chn].buffdesc_ring[jj]->IrqError = 0;
+			cfo_pci_recver[chn].buffdesc_ring[jj]->IrqComplete = 0;
+			cfo_pci_recver[chn].buffdesc_ring[jj]->IrqError = 0;
 #endif
 		}
 
 		// now write to the HW...
-		TRACE(1, "init_mu2e write 0x%llx to 32bit reg", mu2e_pci_recver[chn].buffdesc_ring_dma[0]);
+		TRACE(1, "init_cfo write 0x%llx to 32bit reg", cfo_pci_recver[chn].buffdesc_ring_dma[0]);
 		Dma_mWriteChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_RESET);
 		msleep(20);
 		Dma_mWriteChnReg(chn, dir, REG_HW_NEXT_BD
-			, (u32)mu2e_pci_recver[chn].buffdesc_ring_dma[0]);
-		mu2e_channel_info_[chn][dir].hwIdx = 0;
+			, (u32)cfo_pci_recver[chn].buffdesc_ring_dma[0]);
+		cfo_channel_info_[chn][dir].hwIdx = 0;
 		//TRACE( 1, "recver[chn=%d] REG_HW_NEXT_BD=%u"
-		//    , chn, descDmaAdr2idx( (u32)mu2e_pci_recver[chn].buffdesc_ring_dma,chn,dir));
+		//    , chn, descDmaAdr2idx( (u32)cfo_pci_recver[chn].buffdesc_ring_dma,chn,dir));
 
 		// set "DMA_ENG" (ie. HW) last/complete == SW NEXT to show "num avail" == 0
-		descDmaAdr = idx2descDmaAdr(MU2E_NUM_RECV_BUFFS - 1, chn, dir);
+		descDmaAdr = idx2descDmaAdr(CFO_NUM_RECV_BUFFS - 1, chn, dir);
 		Dma_mWriteChnReg(chn, dir, REG_SW_NEXT_BD, descDmaAdr);
 		Dma_mWriteChnReg(chn, dir, REG_HW_CMPLT_BD, descDmaAdr);
-		mu2e_channel_info_[chn][dir].hwIdx = MU2E_NUM_RECV_BUFFS - 1;
-		mu2e_channel_info_[chn][dir].swIdx = MU2E_NUM_RECV_BUFFS - 1;
+		cfo_channel_info_[chn][dir].hwIdx = CFO_NUM_RECV_BUFFS - 1;
+		cfo_channel_info_[chn][dir].swIdx = CFO_NUM_RECV_BUFFS - 1;
 
 		ctrlStsVal = DMA_ENG_ENABLE;
-#if MU2E_RECV_INTER_ENABLED
-		TRACE( 1, "init_mu2e: ctrlStsVal |= DMA_ENG_INT_ENABLE" );
+#if CFO_RECV_INTER_ENABLED
+		TRACE( 1, "init_cfo: ctrlStsVal |= DMA_ENG_INT_ENABLE" );
 		ctrlStsVal |= DMA_ENG_INT_ENABLE;
 #else
-		TRACE( 1, "init_mu2e: no DmaInterrrupt" );
+		TRACE( 1, "init_cfo: no DmaInterrrupt" );
 #endif
 		Dma_mWriteChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS, ctrlStsVal);
 
 	}
 
 	dir = S2C;
-	for (chn = 0; chn < MU2E_NUM_SEND_CHANNELS; ++chn)
+	for (chn = 0; chn < CFO_NUM_SEND_CHANNELS; ++chn)
 	{
-		databuff_sz = sizeof(mu2e_databuff_t)*MU2E_NUM_SEND_BUFFS;
-		buffdesc_sz = sizeof(mu2e_buffdesc_C2S_t)*MU2E_NUM_SEND_BUFFS;
-		TRACE(1, "init_mu2e dma_alloc (#=%d) databuff_sz=%lu buffdesc_sz=%lu"
-			, MU2E_NUM_SEND_BUFFS, databuff_sz, buffdesc_sz);
-		va = dma_alloc_coherent(&mu2e_pci_dev->dev, databuff_sz
-			, &mu2e_pci_sender[chn].databuffs_dma
+		databuff_sz = sizeof(cfo_databuff_t)*CFO_NUM_SEND_BUFFS;
+		buffdesc_sz = sizeof(cfo_buffdesc_C2S_t)*CFO_NUM_SEND_BUFFS;
+		TRACE(1, "init_cfo dma_alloc (#=%d) databuff_sz=%lu buffdesc_sz=%lu"
+			, CFO_NUM_SEND_BUFFS, databuff_sz, buffdesc_sz);
+		va = dma_alloc_coherent(&cfo_pci_dev->dev, databuff_sz
+			, &cfo_pci_sender[chn].databuffs_dma
 			, GFP_KERNEL);
 		if (va == NULL) goto out;
-		mu2e_pci_sender[chn].databuffs = va;
-		mu2e_mmap_ptrs[chn][dir][MU2E_MAP_BUFF] = va;
-		va = dma_alloc_coherent(&mu2e_pci_dev->dev, buffdesc_sz
-			, &mu2e_pci_sender[chn].buffdesc_ring_dma
+		cfo_pci_sender[chn].databuffs = va;
+		cfo_mmap_ptrs[chn][dir][CFO_MAP_BUFF] = va;
+		va = dma_alloc_coherent(&cfo_pci_dev->dev, buffdesc_sz
+			, &cfo_pci_sender[chn].buffdesc_ring_dma
 			, GFP_KERNEL);
 		if (va == NULL) goto out;
-		mu2e_pci_sender[chn].buffdesc_ring = va;
-		mu2e_mmap_ptrs[chn][dir][MU2E_MAP_META] = (void*)__get_free_pages(GFP_KERNEL, 0);
+		cfo_pci_sender[chn].buffdesc_ring = va;
+		cfo_mmap_ptrs[chn][dir][CFO_MAP_META] = (void*)__get_free_pages(GFP_KERNEL, 0);
 
-		TRACE(1, "init_mu2e mu2e_pci_sender[%u].databuffs=%p databuffs_dma=0x%llx "
+		TRACE(1, "init_cfo cfo_pci_sender[%u].databuffs=%p databuffs_dma=0x%llx "
 			"buffdesc_ring_dma=0x%llx meta@%p"
 			, chn
-			, mu2e_pci_sender[chn].databuffs
-			, mu2e_pci_sender[chn].databuffs_dma
-			, mu2e_pci_sender[chn].buffdesc_ring_dma
-			, mu2e_mmap_ptrs[chn][dir][MU2E_MAP_META]);
-		mu2e_channel_info_[chn][dir].chn = chn;
-		mu2e_channel_info_[chn][dir].dir = dir;
-		mu2e_channel_info_[chn][dir].buff_size = sizeof(mu2e_databuff_t);
-		mu2e_channel_info_[chn][dir].num_buffs = MU2E_NUM_SEND_BUFFS;
-		for (jj = 0; jj < MU2E_NUM_SEND_BUFFS; ++jj)
+			, cfo_pci_sender[chn].databuffs
+			, cfo_pci_sender[chn].databuffs_dma
+			, cfo_pci_sender[chn].buffdesc_ring_dma
+			, cfo_mmap_ptrs[chn][dir][CFO_MAP_META]);
+		cfo_channel_info_[chn][dir].chn = chn;
+		cfo_channel_info_[chn][dir].dir = dir;
+		cfo_channel_info_[chn][dir].buff_size = sizeof(cfo_databuff_t);
+		cfo_channel_info_[chn][dir].num_buffs = CFO_NUM_SEND_BUFFS;
+		for (jj = 0; jj < CFO_NUM_SEND_BUFFS; ++jj)
 		{   /* ring -> link to next (and last to 1st via modulus) */
-			mu2e_pci_sender[chn].buffdesc_ring[jj].NextDescPtr =
-				mu2e_pci_sender[chn].buffdesc_ring_dma
-				+ sizeof(mu2e_buffdesc_S2C_t) * ((jj + 1) % MU2E_NUM_SEND_BUFFS);
+			cfo_pci_sender[chn].buffdesc_ring[jj].NextDescPtr =
+				cfo_pci_sender[chn].buffdesc_ring_dma
+				+ sizeof(cfo_buffdesc_S2C_t) * ((jj + 1) % CFO_NUM_SEND_BUFFS);
 			/* put the _buffer_ address in the descriptor */
-			mu2e_pci_sender[chn].buffdesc_ring[jj].SystemAddress =
-				mu2e_pci_sender[chn].databuffs_dma
-				+ sizeof(mu2e_databuff_t) * jj;
-			mu2e_pci_sender[chn].buffdesc_ring[jj].Complete = 1; // Only reset just before giving to Engine -- enables check for complete -- which should be done before memcpy
+			cfo_pci_sender[chn].buffdesc_ring[jj].SystemAddress =
+				cfo_pci_sender[chn].databuffs_dma
+				+ sizeof(cfo_databuff_t) * jj;
+			cfo_pci_sender[chn].buffdesc_ring[jj].Complete = 1; // Only reset just before giving to Engine -- enables check for complete -- which should be done before memcpy
 		}
 
 		// now write to the HW...
@@ -948,11 +948,11 @@ static int __init init_mu2e(void)
 		msleep(20);
 		// HW_NEXT and SW_Next registers to start of ring
 		Dma_mWriteChnReg(chn, dir, REG_HW_NEXT_BD
-			, (u32)mu2e_pci_sender[chn].buffdesc_ring_dma);
-		mu2e_channel_info_[chn][dir].hwIdx = 0;
+			, (u32)cfo_pci_sender[chn].buffdesc_ring_dma);
+		cfo_channel_info_[chn][dir].hwIdx = 0;
 		Dma_mWriteChnReg(chn, dir, REG_SW_NEXT_BD
-			, (u32)mu2e_pci_sender[chn].buffdesc_ring_dma);
-		mu2e_channel_info_[chn][dir].swIdx = 0;
+			, (u32)cfo_pci_sender[chn].buffdesc_ring_dma);
+		cfo_channel_info_[chn][dir].swIdx = 0;
 
 		// reset HW_Completed register
 		Dma_mWriteChnReg(chn, dir, REG_HW_CMPLT_BD, 0);
@@ -960,29 +960,29 @@ static int __init init_mu2e(void)
 		Dma_mWriteChnReg(chn, dir, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_ENABLE);
 	}
 
-	/* Now, finish up with some more mu2e fpga user application stuff... */
-	Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
+	/* Now, finish up with some more cfo fpga user application stuff... */
+	Dma_mWriteReg((unsigned long)cfo_pcie_bar_info.baseVAddr
 		, 0x9104, 0x80000040); // write max and min DMA xfer sizes
-	Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info.baseVAddr
+	Dma_mWriteReg((unsigned long)cfo_pcie_bar_info.baseVAddr
 		, 0x9150, 0x00000010); // set ring packet size
 
-	ret = mu2e_event_up();
+	ret = cfo_event_up();
 
-# if MU2E_RECV_INTER_ENABLED
+# if CFO_RECV_INTER_ENABLED
 	/* Now enable interrupts using MSI mode */
-	if (!pci_enable_msi(mu2e_pci_dev))
+	if (!pci_enable_msi(cfo_pci_dev))
 	{
 		TRACE( 1, "MSI enabled");
 		MSIEnabled = 1;
 	}
 
-	ret = request_irq(mu2e_pci_dev->irq, DmaInterrupt, IRQF_SHARED, "mu2e", mu2e_pci_dev);
+	ret = request_irq(cfo_pci_dev->irq, DmaInterrupt, IRQF_SHARED, "cfo", cfo_pci_dev);
 	if (ret)
 	{
-		TRACE( 0, "xdma could not allocate interrupt %d", mu2e_pci_dev->irq);
+		TRACE( 0, "xdma could not allocate interrupt %d", cfo_pci_dev->irq);
 		TRACE( 0, "Unload driver and try running with polled mode instead");
 	}
-	Dma_mIntEnable((unsigned long)mu2e_pcie_bar_info.baseVAddr);
+	Dma_mIntEnable((unsigned long)cfo_pcie_bar_info.baseVAddr);
 # endif
 
 	return (ret);
@@ -993,34 +993,34 @@ out:
 	free_mem();
 out_pci:
 	TRACE(0, "Error - destroying pci device");
-	mu2e_pci_down();
+	cfo_pci_down();
 out_fs:
 	TRACE(0, "Error - destroying filesystem entry");
-	mu2e_fs_down();
+	cfo_fs_down();
 	return (ret);
-}   // init_mu2e
+}   // init_cfo
 
 
-static void __exit exit_mu2e(void)
+static void __exit exit_cfo(void)
 {
-	TRACE(1, "exit_mu2e() called");
+	TRACE(1, "exit_cfo() called");
 
 
-	Dma_mIntDisable((unsigned long)mu2e_pcie_bar_info.baseVAddr);
-	free_irq(mu2e_pci_dev->irq, mu2e_pci_dev);
-	if (MSIEnabled) pci_disable_msi(mu2e_pci_dev);
+	Dma_mIntDisable((unsigned long)cfo_pcie_bar_info.baseVAddr);
+	free_irq(cfo_pci_dev->irq, cfo_pci_dev);
+	if (MSIEnabled) pci_disable_msi(cfo_pci_dev);
 
 	// events, memory, pci, fs interface
-	mu2e_event_down();
+	cfo_event_down();
 	free_mem();
-	mu2e_pci_down();
-	mu2e_fs_down();
-}   // exit_mu2e
+	cfo_pci_down();
+	cfo_fs_down();
+}   // exit_cfo
 
 
-module_init(init_mu2e);
-module_exit(exit_mu2e);
+module_init(init_cfo);
+module_exit(exit_cfo);
 
 MODULE_AUTHOR("Ron Rechenmacher");
-MODULE_DESCRIPTION("mu2e pcie driver");
+MODULE_DESCRIPTION("cfo pcie driver");
 MODULE_LICENSE("GPL"); /* Get rid of taint message by declaring code as GPL */

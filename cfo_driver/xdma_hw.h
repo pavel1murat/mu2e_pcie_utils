@@ -75,7 +75,7 @@ extern "C" {
 		u32    EndOfPkt : 1; ///< Set if this descriptor contains the end of a packet
 		u64    SystemAddress; ///< System starting address for trhis descriptor
 		u32    NextDescPtr; ///< 32-byte address aligned pointer to the next descriptor in the chain, or 0x0 if this is the last descriptor
-	} mu2e_buffdesc_S2C_t;
+	} cfo_buffdesc_S2C_t;
 
 	/// <summary>
 	/// Card to Server Buffer descriptor
@@ -106,47 +106,47 @@ extern "C" {
 		u32    b31_ : 1; ///< Reserved bit
 		u64    SystemAddress; ///< System starting address for trhis descriptor
 		u32    NextDescPtr; ///< 32-byte address aligned pointer to the next descriptor in the chain, or 0x0 if this is the last descriptor
-	} mu2e_buffdesc_C2S_t;
+	} cfo_buffdesc_C2S_t;
 #pragma pack(pop)
 
 
 #ifdef __KERNEL__
 	/*                                    [ch][dir]    */
-	static unsigned long mu2e_ch_reg_offset[2][2] = { {0x2000,0x0}, {0x2100,0x100} };
+	static unsigned long cfo_ch_reg_offset[2][2] = { {0x2000,0x0}, {0x2100,0x100} };
 
 #define Dma_mReadChnReg( chn, dir, reg )		\
 	Dma_mReadReg( \
-	(unsigned long)mu2e_pcie_bar_info.baseVAddr+mu2e_ch_reg_offset[chn][dir]\
+	(unsigned long)cfo_pcie_bar_info.baseVAddr+cfo_ch_reg_offset[chn][dir]\
 		 , reg )
 
 #define Dma_mWriteChnReg( chn, dir, reg, val )	\
 	Dma_mWriteReg( \
-	(unsigned long)mu2e_pcie_bar_info.baseVAddr+mu2e_ch_reg_offset[chn][dir]\
+	(unsigned long)cfo_pcie_bar_info.baseVAddr+cfo_ch_reg_offset[chn][dir]\
 		  , reg, val )
 #endif
 
 
 #define descDmaAdr2idx( regval, chn, dir, hnt )		\
 	(dir == C2S)					\
-	? ({u32 ii = hnt % MU2E_NUM_RECV_BUFFS, lc=0; do{						\
+	? ({u32 ii = hnt % CFO_NUM_RECV_BUFFS, lc=0; do{						\
 	  TRACE(19,"descDmaAdr2idx: regval=%x buffdesc_ring_dma[%d/%d]=%x, chn=%d, dir=%d",   \
-			regval,ii,MU2E_NUM_RECV_BUFFS,(u32)mu2e_pci_recver[chn].buffdesc_ring_dma[ii],chn,dir);   \
-	  if(regval == mu2e_pci_recver[chn].buffdesc_ring_dma[ii])break; ii=(ii + 1) % MU2E_NUM_RECV_BUFFS; ++lc;} \
-		 while (lc < MU2E_NUM_RECV_BUFFS); ii;} ) \
-	: ( (u32)(regval-mu2e_pci_sender[chn].buffdesc_ring_dma) \
-	   /(u32)sizeof(mu2e_buffdesc_S2C_t) )
+			regval,ii,CFO_NUM_RECV_BUFFS,(u32)cfo_pci_recver[chn].buffdesc_ring_dma[ii],chn,dir);   \
+	  if(regval == cfo_pci_recver[chn].buffdesc_ring_dma[ii])break; ii=(ii + 1) % CFO_NUM_RECV_BUFFS; ++lc;} \
+		 while (lc < CFO_NUM_RECV_BUFFS); ii;} ) \
+	: ( (u32)(regval-cfo_pci_sender[chn].buffdesc_ring_dma) \
+	   /(u32)sizeof(cfo_buffdesc_S2C_t) )
 
 #define idx2descDmaAdr( idx, chn, dir ) \
 	(dir == C2S)					\
-	? ( (u32)mu2e_pci_recver[chn].buffdesc_ring_dma[idx])		\
-	: ( (u32)mu2e_pci_sender[chn].buffdesc_ring_dma		\
-	   +(u32)sizeof(mu2e_buffdesc_S2C_t)*idx )
+	? ( (u32)cfo_pci_recver[chn].buffdesc_ring_dma[idx])		\
+	: ( (u32)cfo_pci_sender[chn].buffdesc_ring_dma		\
+	   +(u32)sizeof(cfo_buffdesc_S2C_t)*idx )
 
 #define idx2descVirtAdr( idx, chn, dir ) \
 	((dir == C2S)						\
-	 ? (void*)( (ulong)mu2e_pci_recver[chn].buffdesc_ring[idx] )			\
-	 : (void*)( (ulong)mu2e_pci_sender[chn].buffdesc_ring		\
-		   +sizeof(mu2e_buffdesc_S2C_t)*idx ) )
+	 ? (void*)( (ulong)cfo_pci_recver[chn].buffdesc_ring[idx] )			\
+	 : (void*)( (ulong)cfo_pci_sender[chn].buffdesc_ring		\
+		   +sizeof(cfo_buffdesc_S2C_t)*idx ) )
 
 
 	/** @name Device register offset definitions. Register access is 32-bit.
