@@ -2,7 +2,7 @@
 # This line defines the product name and version
 parent pcie_linux_kernel_module	v1_10_03
 #defaultqual	e10
-defaultqual	e14
+defaultqual	e15
 
 # These optional lines define the installed directories where
 # headers, libraries, and executables will be found
