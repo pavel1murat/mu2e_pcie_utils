@@ -30,7 +30,7 @@ end_product_list
 # a "-" here means the dependent product is not required by the parent and will not be setup
 qualifier   TRACE     swig	nodejs	notes
 e15:prof    -nq-      e15:prof  -nq-    -std=c++14
-c15:debug   -nq-      e15:debug -nq-    -std=c++14
+e15:debug   -nq-      e15:debug -nq-    -std=c++14
 e14:prof    -nq-      e14:prof	-nq-	-std=c++14
 e14:debug   -nq-      e14:debug	-nq-	-std=c++14
 e10:prof    -nq-      e10:prof	-nq-	-std=c++14
