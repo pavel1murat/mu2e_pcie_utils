@@ -1,3 +1,7 @@
+
+#define TRACE_NAME "DTCSoftwareCFO"
+#include "trace.h"
+
 #include "DTCSoftwareCFO.h"
 #include <iostream>
 
@@ -40,7 +44,7 @@ void DTCLib::DTCSoftwareCFO::WaitForRequestsToBeSent() const
 void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 {
 	if (theDTC_->IsDetectorEmulatorInUse()) {
-		TRACE(19, "DTCSoftwareCFO: Enabling Detector Emulator for 1 DMA");
+		TLOG(10) << "Enabling Detector Emulator for 1 DMA";
 		//theDTC_->ResetDTC();
 		theDTC_->DisableDetectorEmulator();
 		theDTC_->SetDetectorEmulationDMACount(1);
@@ -53,24 +57,24 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 		{
 			if (!ringMode_[ring].TimingEnable && ringMode_[ring].TransmitEnable)
 			{
-				TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp before SendReadoutRequestPacket");
+				TLOG(11) << "SendRequestForTimestamp before SendReadoutRequestPacket";
 				theDTC_->SendReadoutRequestPacket(ring, ts, quiet_);
 				int maxRoc;
 				if ((maxRoc = theDTC_->ReadRingROCCount(ring)) != DTC_ROC_Unused)
 				{
 					for (uint8_t roc = 0; roc <= maxRoc; ++roc)
 					{
-						TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp before DTC_DataRequestPacket req");
+						TLOG(11) << "SendRequestForTimestamp before DTC_DataRequestPacket req";
 						DTC_DataRequestPacket req(ring, static_cast<DTC_ROC_ID>(roc), ts, true,
 												  debugPacketCount_, debugType_);
 						if (debugType_ == DTC_DebugType_ExternalSerialWithReset && !stickyDebugType_)
 						{
 							debugType_ = DTC_DebugType_ExternalSerial;
 						}
-						TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp before WriteDMADAQPacket - DTC_DataRequestPacket");
+						TLOG(11) << "SendRequestForTimestamp before WriteDMADAQPacket - DTC_DataRequestPacket";
 						if (!quiet_) std::cout << req.toJSON() << std::endl;
 						theDTC_->WriteDMAPacket(req);
-						TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp after  WriteDMADAQPacket - DTC_DataRequestPacket");
+						TLOG(11) << "SendRequestForTimestamp after  WriteDMADAQPacket - DTC_DataRequestPacket";
 					}
 				}
 				//usleep(2000);
@@ -79,7 +83,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 	}
 	else
 	{
-		TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp setting up DTC CFO Emulator");
+		TLOG(12) << "SendRequestForTimestamp setting up DTC CFO Emulator";
 		theDTC_->DisableCFOEmulation();
 		theDTC_->SetCFOEmulationTimestamp(ts);
 		for (auto ring : DTC_Rings)
@@ -94,9 +98,9 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 		theDTC_->SetCFOEmulationDebugType(debugType_);
 		theDTC_->SetCFOEmulationModeByte(5, 1);
 		theDTC_->EnableDebugPacketMode();
-		TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp enabling DTC CFO Emulator");
+		TLOG(12) << "SendRequestForTimestamp enabling DTC CFO Emulator";
 		theDTC_->EnableCFOEmulation();
-		TRACE(19, "DTCSoftwareCFO::SendRequestForTimestamp done");
+		TLOG(12) << "SendRequestForTimestamp done";
 	}
 	requestsSent_ = true;
 }
@@ -104,7 +108,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start, bool increment, uint32_t delayBetweenDataRequests, int requestsAhead)
 {
 	if (theDTC_->IsDetectorEmulatorInUse()) {
-		TRACE(19, "DTCSoftwareCFO: Enabling Detector Emulator for %i DMAs", count);
+		TLOG(13) << "Enabling Detector Emulator for " << count << " DMAs";
 		//theDTC_->ResetDTC();
 		theDTC_->DisableDetectorEmulator();
 		theDTC_->SetDetectorEmulationDMACount(count + 1);
@@ -130,7 +134,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start
 	}
 	else
 	{
-		TRACE(19, "DTCSoftwareCFO::SendRequestsForRange setting up DTC CFO Emulator");
+		TLOG(13) << "SendRequestsForRange setting up DTC CFO Emulator";
 		theDTC_->DisableCFOEmulation();
 		theDTC_->SetCFOEmulationTimestamp(start);
 		for (auto ring : DTC_Rings)
@@ -145,16 +149,16 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start
 		theDTC_->SetCFOEmulationModeByte(5, 1);
 		theDTC_->EnableDebugPacketMode();
 		theDTC_->SetCFOEmulationRequestInterval(delayBetweenDataRequests);
-		TRACE(19, "DTCSoftwareCFO::SendRequestsForRange enabling DTC CFO Emulator");
+		TLOG(13) << "SendRequestsForRange enabling DTC CFO Emulator";
 		theDTC_->EnableCFOEmulation();
-		TRACE(19, "DTCSoftwareCFO::SendRequestsForRange done");
+		TLOG(13) << "SendRequestsForRange done";
 	}
 }
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync(DTC_Timestamp start, int count,
 														  bool increment, uint32_t delayBetweenDataRequests, int requestsAhead)
 {
-	TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImplSync Start");
+	TLOG(14) << "SendRequestsForRangeImplSync Start";
 	for (auto ii = 0; ii < count; ++ii)
 	{
 		auto ts = start + (increment ? ii : 0);
@@ -173,7 +177,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync(DTC_Timestamp start, i
 void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync(DTC_Timestamp start, int count,
 														   bool increment, uint32_t delayBetweenDataRequests)
 {
-	TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImplAsync Start");
+	TLOG(15) << "SendRequestsForRangeImplAsync Start";
 
 	// Send Readout Requests first
 	for (auto ii = 0; ii < count; ++ii)
@@ -185,14 +189,14 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync(DTC_Timestamp start, 
 			{
 				if (ringMode_[ring].TransmitEnable)
 				{
-					TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImpl before SendReadoutRequestPacket");
+					TLOG(15) << "SendRequestsForRangeImpl before SendReadoutRequestPacket";
 					theDTC_->SendReadoutRequestPacket(ring, ts, quiet_);
 				}
 			}
 			if (abort_) return;
 		}
 	}
-	TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImpl setting RequestsSent flag");
+	TLOG(15) << "SendRequestsForRangeImpl setting RequestsSent flag";
 	requestsSent_ = true;
 
 	// Now do the DataRequests, sleeping for the required delay between each.
@@ -210,17 +214,17 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync(DTC_Timestamp start, 
 					{
 						for (uint8_t roc = 0; roc <= maxRoc; ++roc)
 						{
-							TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImpl before DTC_DataRequestPacket req");
+							TLOG(15) << "SendRequestsForRangeImpl before DTC_DataRequestPacket req";
 							DTC_DataRequestPacket req(ring, static_cast<DTC_ROC_ID>(roc), ts, true,
 													  static_cast<uint16_t>(debugPacketCount_), debugType_);
 							if (debugType_ == DTC_DebugType_ExternalSerialWithReset && !stickyDebugType_)
 							{
 								debugType_ = DTC_DebugType_ExternalSerial;
 							}
-							TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImpl before WriteDMADAQPacket - DTC_DataRequestPacket");
+							TLOG(15) << "SendRequestsForRangeImpl before WriteDMADAQPacket - DTC_DataRequestPacket";
 							if (!quiet_) std::cout << req.toJSON() << std::endl;
 							theDTC_->WriteDMAPacket(req);
-							TRACE(19, "DTCSoftwareCFO::SendRequestsForRangeImpl after  WriteDMADAQPacket - DTC_DataRequestPacket");
+							TLOG(15) << "SendRequestsForRangeImpl after  WriteDMADAQPacket - DTC_DataRequestPacket";
 							if (abort_) return;
 						}
 					}
