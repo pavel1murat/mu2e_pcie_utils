@@ -575,13 +575,13 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 	if (newBuffer)
 	{
 		daqDMAByteCount_ = static_cast<uint16_t>(*static_cast<uint16_t*>(nextReadPtr_));
-		nextReadPtr_ = static_cast<uint8_t*>(nextReadPtr_) + 2;
+		nextReadPtr_ = reinterpret_cast<uint8_t*>(nextReadPtr_) + 2;
 		*static_cast<uint32_t*>(nextReadPtr_) = bufferIndex_;
-		nextReadPtr_ = static_cast<uint8_t*>(nextReadPtr_) + 6;
+		nextReadPtr_ = reinterpret_cast<uint8_t*>(nextReadPtr_) + 6;
 	}
-	auto blockByteCount = *static_cast<uint16_t*>(nextReadPtr_);
+	auto blockByteCount = *reinterpret_cast<uint16_t*>(nextReadPtr_);
 	TLOG(TLVL_ReadNextDAQPacket) << "ReadNextDAQPacket: blockByteCount=" << blockByteCount << ", daqDMAByteCount=" << daqDMAByteCount_
-		<< ", nextReadPtr_=" << (void*)nextReadPtr_ << ", *nextReadPtr=0x" << std::hex << *((uint8_t*)nextReadPtr_);
+		<< ", nextReadPtr_=" << (void*)nextReadPtr_ << ", *nextReadPtr=" << (int)*((uint16_t*)nextReadPtr_);
 	if (blockByteCount == 0 || blockByteCount == 0xcafe)
 	{
 		TLOG(TLVL_ReadNextDAQPacket) << "ReadNextDAQPacket: blockByteCount is 0, returning NULL!";
@@ -589,9 +589,12 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 	}
 
 	auto test = DTC_DataPacket(nextReadPtr_);
-	if (reinterpret_cast<uint8_t*>(nextReadPtr_) + blockByteCount >= daqbuffer_.back()[0] + daqDMAByteCount_)
+	TLOG(TLVL_ReadNextDAQPacket) << "ReadNextDAQPacket: current+blockByteCount=" << (void*)(reinterpret_cast<uint8_t*>(nextReadPtr_) + blockByteCount)
+		<< ", end of dma buffer=" << (void*)(daqbuffer_.back()[0] + daqDMAByteCount_ + 8); // +8 because first 8 bytes are not included in byte count
+	if (reinterpret_cast<uint8_t*>(nextReadPtr_) + blockByteCount > daqbuffer_.back()[0] + daqDMAByteCount_ + 8)
 	{
-		blockByteCount = static_cast<uint16_t>(daqbuffer_.back()[0] + daqDMAByteCount_ - reinterpret_cast<uint8_t*>(nextReadPtr_));
+		blockByteCount = static_cast<uint16_t>(daqbuffer_.back()[0] + daqDMAByteCount_ + 8 - reinterpret_cast<uint8_t*>(nextReadPtr_));// +8 because first 8 bytes are not included in byte count
+		TLOG(TLVL_ReadNextDAQPacket) << "Adjusting blockByteCount to " << blockByteCount << " due to end-of-DMA condition";
 		test.SetWord(0, blockByteCount & 0xFF);
 		test.SetWord(1, (blockByteCount >> 8));
 	}
@@ -601,7 +604,7 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 	TLOG(TLVL_ReadNextDAQPacket) << output->toJSON();
 	if (static_cast<uint16_t>((1 + output->GetPacketCount()) * 16) != blockByteCount)
 	{
-		TLOG(TLVL_ReadNextDAQPacket) << "Data Error Detected: PacketCount: " << output->GetPacketCount()
+		TLOG(TLVL_ERROR) << "Data Error Detected: PacketCount: " << output->GetPacketCount()
 			<< ", ExpectedByteCount: " << (1u + output->GetPacketCount()) * 16u << ", BlockByteCount: " << blockByteCount;
 		throw DTC_DataCorruptionException();
 	}
@@ -613,7 +616,7 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 	lastReadPtr_ = nextReadPtr_;
 
 	// Increment by the size of the data block
-	nextReadPtr_ = static_cast<char*>(nextReadPtr_) + blockByteCount;
+	nextReadPtr_ = reinterpret_cast<char*>(nextReadPtr_) + blockByteCount;
 
 	TLOG(TLVL_ReadNextDAQPacket) << "ReadNextDAQPacket RETURN";
 	return output;
