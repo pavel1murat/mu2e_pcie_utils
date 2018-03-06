@@ -39,9 +39,10 @@ namespace DTCLib
 		/// <param name="stickyDebugType">Whether the debug type should stay as the flag or revert to default</param>
 		/// <param name="quiet">When true, don't print debug information to screen</param>
 		/// <param name="asyncRR">Whether to send ReadoutRequests asynchronously</param>
+		/// <param name="forceNoDebugMode">Do NOT set the Debug flag in Data Request</param>
 		DTCSoftwareCFO(DTC* dtc, bool useCFOEmulator, uint16_t debugPacketCount = 0,
 		               DTC_DebugType debugType = DTC_DebugType_ExternalSerialWithReset, bool stickyDebugType = false,
-		               bool quiet = false, bool asyncRR = false);
+		               bool quiet = false, bool asyncRR = false, bool forceNoDebugMode = false);
 		/// <summary>
 		/// DTCSoftwareCFO Destructor
 		/// </summary>
@@ -109,6 +110,7 @@ namespace DTCLib
 		bool stickyDebugType_;
 		bool quiet_; // Don't print as much
 		bool asyncRR_;
+		bool forceNoDebug_;
 
 		// Object basic properties (not accessible)
 		DTC* theDTC_;

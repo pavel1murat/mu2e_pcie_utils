@@ -34,6 +34,7 @@ bool rawOutput = false;
 bool skipVerify = false;
 bool writeDMAHeadersToOutput = false;
 bool useCFOEmulator = true;
+bool forceNoDebug = false;
 unsigned genDMABlocks = 0;
 std::string rawOutputFile = "/tmp/mu2eUtil.raw";
 std::string expectedDesignVersion = "";
@@ -193,8 +194,8 @@ void WriteGeneratedData(DTC* thisDTC)
 					dataPacket[1] = 0x4154;
 					dataPacket[2] = 0x4144;
 					dataPacket[3] = 0x4154;
-                                        packetCounter += 1;
-                                        memcpy(&dataPacket[4], &packetCounter, sizeof(uint32_t));
+					packetCounter += 1;
+					memcpy(&dataPacket[4], &packetCounter, sizeof(uint32_t));
 					uint32_t tmp = jj + 1;
 					memcpy(&dataPacket[6], &tmp, sizeof(uint32_t));
 
@@ -254,6 +255,7 @@ void printHelpMsg()
 		<< "    -d: Delay between tests, in us (Default: 0)." << std::endl
 		<< "    -D: CFO Request delay interval (Default: 1000 (minimum)." << std::endl
 		<< "    -c: Number of Debug Packets to request (Default: 0)." << std::endl
+		<< "    -N: Do NOT set the Debug flag in generated Data Request packets" << std::endl
 		<< "    -b: Number of Data Blocks to generate per Event (Default: 1)." << std::endl
 		<< "    -E: Number of Events to generate per DMA block (Default: 1)." << std::endl
 		<< "    -a: Number of Readout Request/Data Requests to send before starting to read data (Default: 0)." << std::endl
@@ -280,7 +282,7 @@ void printHelpMsg()
 
 int
 main(int argc
-	 , char* argv[])
+	, char* argv[])
 {
 	for (auto optind = 1; optind < argc; ++optind)
 	{
@@ -308,6 +310,9 @@ main(int argc
 				break;
 			case 'c':
 				packetCount = getOptionValue(&optind, &argv);
+				break;
+			case 'N':
+				forceNoDebug = true;
 				break;
 			case 'b':
 				blockCount = getOptionValue(&optind, &argv);
@@ -406,6 +411,7 @@ main(int argc
 		<< ", CFO Delay: " << cfodelay
 		<< ", TS Offset: " << timestampOffset
 		<< ", PacketCount: " << packetCount
+		<< ", Force NO Debug Flag: " << forceNoDebug
 		<< ", DataBlock Count: " << blockCount
 		<< ", Event Count: " << eventCount
 		<< ", Requests Ahead of Reads: " << requestsAhead
@@ -565,7 +571,7 @@ main(int argc
 		device->ResetDeviceTime();
 		auto afterInit = std::chrono::steady_clock::now();
 
-		DTCSoftwareCFO cfo(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet, false);
+		DTCSoftwareCFO cfo(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet, false, forceNoDebug);
 
 		if (genDMABlocks > 0)
 		{
@@ -709,7 +715,7 @@ main(int argc
 		thisDTC->GetDevice()->ResetDeviceTime();
 		auto afterInit = std::chrono::steady_clock::now();
 
-		DTCSoftwareCFO theCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet);
+		DTCSoftwareCFO theCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet, forceNoDebug);
 
 		if (genDMABlocks > 0)
 		{
