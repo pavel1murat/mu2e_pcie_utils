@@ -562,6 +562,7 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 		void* bufferIndexPointer = static_cast<uint8_t*>(nextReadPtr_) + 2;
 		if (nextReadPtr_ == oldBufferPtr && bufferIndex_ == *static_cast<uint32_t*>(bufferIndexPointer))
 		{
+			TLOG(TLVL_ReadNextDAQPacket) << "New buffer is the same as old. Releasing buffer and retrying";
 			nextReadPtr_ = nullptr;
 			//We didn't actually get a new buffer...this probably means there's no more data
 			//Try and see if we're merely stuck...hopefully, all the data is out of the buffers...
