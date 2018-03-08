@@ -18,7 +18,6 @@
 #include <chrono>
 #include <cmath>
 #include "CFO.h"
-#include "CFOSoftwareCFO.h"
 #include "trace.h"
 #include <unistd.h>		// usleep
 

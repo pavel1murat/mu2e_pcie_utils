@@ -683,8 +683,6 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESLoopbackEnable(
 	{
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": " + CFO_SERDESLoopbackModeConverter(ReadSERDESLoopback(r)).toString());
 	}
-	form.vals.push_back(std::string("CFO:    ") + CFO_SERDESLoopbackModeConverter(ReadSERDESLoopback(CFO_Ring_CFO)).toString());
-	form.vals.push_back(std::string("EVB:    ") + CFO_SERDESLoopbackModeConverter(ReadSERDESLoopback(CFO_Ring_EVB)).toString());
 	return form;
 }
 
@@ -745,37 +743,8 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatClockOscillatorStatus
 	return form;
 
 }
-// ROC Emulation Enable Register
-void CFOLib::CFO_Registers::EnableROCEmulator(const CFO_Ring_ID& ring)
-{
-	std::bitset<32> dataSet = ReadRegister_(CFO_Register_ROCEmulationEnable);
-	dataSet[ring] = 1;
-	WriteRegister_(dataSet.to_ulong(), CFO_Register_ROCEmulationEnable);
-}
 
-void CFOLib::CFO_Registers::DisableROCEmulator(const CFO_Ring_ID& ring)
-{
-	std::bitset<32> dataSet = ReadRegister_(CFO_Register_ROCEmulationEnable);
-	dataSet[ring] = 0;
-	WriteRegister_(dataSet.to_ulong(), CFO_Register_ROCEmulationEnable);
-}
 
-bool CFOLib::CFO_Registers::ReadROCEmulator(const CFO_Ring_ID& ring)
-{
-	std::bitset<32> dataSet = ReadRegister_(CFO_Register_ROCEmulationEnable);
-	return dataSet[ring];
-}
-
-CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatROCEmulationEnable()
-{
-	auto form = CreateFormatter(CFO_Register_ROCEmulationEnable);
-	form.description = "ROC Emulator Enable";
-	for (auto r : CFO_Rings)
-	{
-		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + (ReadROCEmulator(r) ? "x" : " ") + "]");
-	}
-	return form;
-}
 
 // Ring Enable Register
 void CFOLib::CFO_Registers::EnableRing(const CFO_Ring_ID& ring, const CFO_RingEnableMode& mode, const CFO_ROC_ID& lastRoc)
@@ -865,8 +834,6 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESReset()
 	{
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + (ReadResetSERDES(r) ? "x" : " ") + "]");
 	}
-	form.vals.push_back(std::string("CFO:    [") + (ReadResetSERDES(CFO_Ring_CFO) ? "x" : " ") + "]");
-	form.vals.push_back(std::string("EVB:    [") + (ReadResetSERDES(CFO_Ring_EVB) ? "x" : " ") + "]");
 	return form;
 }
 
@@ -886,10 +853,6 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESRXDisparityErro
 		auto re = ReadSERDESRXDisparityError(r);
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + to_string(re.GetData()[1]) + "," + to_string(re.GetData()[0]) + "]");
 	}
-	auto ce = ReadSERDESRXDisparityError(CFO_Ring_CFO);
-	form.vals.push_back(std::string("CFO:    [") + to_string(ce.GetData()[1]) + "," + to_string(ce.GetData()[0]) + "]");
-	auto ee = ReadSERDESRXDisparityError(CFO_Ring_EVB);
-	form.vals.push_back(std::string("EVB:    [") + to_string(ee.GetData()[1]) + "," + to_string(ee.GetData()[0]) + "]");
 	return form;
 }
 
@@ -909,10 +872,6 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESRXCharacterNotI
 		auto re = ReadSERDESRXCharacterNotInTableError(r);
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + to_string(re.GetData()[1]) + "," + to_string(re.GetData()[0]) + "]");
 	}
-	auto ce = ReadSERDESRXCharacterNotInTableError(CFO_Ring_CFO);
-	form.vals.push_back(std::string("CFO:    [") + to_string(ce.GetData()[1]) + "," + to_string(ce.GetData()[0]) + "]");
-	auto ee = ReadSERDESRXCharacterNotInTableError(CFO_Ring_EVB);
-	form.vals.push_back(std::string("EVB:    [") + to_string(ee.GetData()[1]) + "," + to_string(ee.GetData()[0]) + "]");
 	return form;
 }
 
@@ -931,8 +890,6 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESUnlockError()
 	{
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + (ReadSERDESUnlockError(r) ? "x" : " ") + "]");
 	}
-	form.vals.push_back(std::string("CFO:    [") + (ReadSERDESUnlockError(CFO_Ring_CFO) ? "x" : " ") + "]");
-	form.vals.push_back(std::string("EVB:    [") + (ReadSERDESUnlockError(CFO_Ring_EVB) ? "x" : " ") + "]");
 	return form;
 }
 
@@ -951,8 +908,6 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESPLLLocked()
 	{
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + (ReadSERDESPLLLocked(r) ? "x" : " ") + "]");
 	}
-	form.vals.push_back(std::string("CFO:    [") + (ReadSERDESPLLLocked(CFO_Ring_CFO) ? "x" : " ") + "]");
-	form.vals.push_back(std::string("EVB:    [") + (ReadSERDESPLLLocked(CFO_Ring_EVB) ? "x" : " ") + "]");
 	return form;
 }
 
@@ -980,12 +935,6 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESTXBufferStatus(
 							+ (ReadSERDESOverflowOrUnderflow(r) ? "x" : " ") + ","
 							+ (ReadSERDESBufferFIFOHalfFull(r) ? "x" : " ") + "]");
 	}
-	form.vals.push_back(std::string("CFO:    [")
-						+ (ReadSERDESOverflowOrUnderflow(CFO_Ring_CFO) ? "x" : " ") + ","
-						+ (ReadSERDESBufferFIFOHalfFull(CFO_Ring_CFO) ? "x" : " ") + "]");
-	form.vals.push_back(std::string("EVB:    [")
-						+ (ReadSERDESOverflowOrUnderflow(CFO_Ring_EVB) ? "x" : " ") + ","
-						+ (ReadSERDESBufferFIFOHalfFull(CFO_Ring_EVB) ? "x" : " ") + "]");
 	return form;
 }
 
@@ -1006,13 +955,6 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESRXBufferStatus(
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": " + CFO_RXBufferStatusConverter(re).toString());
 	}
 
-	auto ce = ReadSERDESRXBufferStatus(CFO_Ring_CFO);
-	form.vals.push_back(std::string("CFO:    ") + CFO_RXBufferStatusConverter(ce).toString());
-
-
-	auto ee = ReadSERDESRXBufferStatus(CFO_Ring_EVB);
-	form.vals.push_back(std::string("EVB:    ") + CFO_RXBufferStatusConverter(ee).toString());
-
 	return form;
 }
 
@@ -1032,10 +974,6 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESRXStatus()
 		auto re = ReadSERDESRXStatus(r);
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": " + CFO_RXStatusConverter(re).toString());
 	}
-	auto ce = ReadSERDESRXStatus(CFO_Ring_CFO);
-	form.vals.push_back(std::string("CFO:    ") + CFO_RXStatusConverter(ce).toString());
-	auto ee = ReadSERDESRXStatus(CFO_Ring_EVB);
-	form.vals.push_back(std::string("EVB:    ") + CFO_RXStatusConverter(ee).toString());
 
 	return form;
 }
@@ -1055,8 +993,6 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESResetDone()
 	{
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + (ReadResetSERDESDone(r) ? "x" : " ") + "]");
 	}
-	form.vals.push_back(std::string("CFO:    [") + (ReadResetSERDESDone(CFO_Ring_CFO) ? "x" : " ") + "]");
-	form.vals.push_back(std::string("EVB:    [") + (ReadResetSERDESDone(CFO_Ring_EVB) ? "x" : " ") + "]");
 	return form;
 }
 
@@ -1075,8 +1011,6 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESEyescanData()
 	{
 		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": [" + (ReadSERDESEyescanError(r) ? "x" : " ") + "]");
 	}
-	form.vals.push_back(std::string("CFO:    [") + (ReadSERDESEyescanError(CFO_Ring_CFO) ? "x" : " ") + "]");
-	form.vals.push_back(std::string("EVB:    [") + (ReadSERDESEyescanError(CFO_Ring_EVB) ? "x" : " ") + "]");
 	return form;
 }
 
@@ -1119,14 +1053,6 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSFPSERDESStatus()
 							+ (ReadSERDESSFPTXFault(r) ? "x" : " ") + ","
 							+ (ReadSERDESRXCDRLock(r) ? "x" : " ") + "]");
 	}
-	form.vals.push_back(std::string("CFO:    [") + (ReadSERDESSFPPresent(CFO_Ring_CFO) ? "x" : " ") + ","
-						+ (ReadSERDESSFPLOS(CFO_Ring_CFO) ? "x" : " ") + ","
-						+ (ReadSERDESSFPTXFault(CFO_Ring_CFO) ? "x" : " ") + ","
-						+ (ReadSERDESRXCDRLock(CFO_Ring_CFO) ? "x" : " ") + "]");
-	form.vals.push_back(std::string("EVB:    [") + (ReadSERDESSFPPresent(CFO_Ring_EVB) ? "x" : " ") + ","
-						+ (ReadSERDESSFPLOS(CFO_Ring_EVB) ? "x" : " ") + ","
-						+ (ReadSERDESSFPTXFault(CFO_Ring_EVB) ? "x" : " ") + ","
-						+ (ReadSERDESRXCDRLock(CFO_Ring_EVB) ? "x" : " ") + "]");
 	return form;
 }
 
@@ -1276,151 +1202,7 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatEVBLocalParitionIDMAC
 	return form;
 }
 
-// EVB Number of Destination Nodes Register
-
-void CFOLib::CFO_Registers::SetEVBStartNode(uint8_t node)
-{
-	auto regVal = ReadRegister_(CFO_Register_EVBDestCount) & 0xFFFFC0FF;
-	regVal += (node & 0x3F) << 8;
-	WriteRegister_(regVal, CFO_Register_EVBDestCount);
-}
-
-uint8_t CFOLib::CFO_Registers::ReadEVBStartNode()
-{
-	return static_cast<uint8_t>((ReadRegister_(CFO_Register_EVBDestCount) & 0x3F00) >> 8);
-}
-
-void CFOLib::CFO_Registers::SetEVBNumberOfDestinationNodes(uint8_t number)
-{
-	auto regVal = ReadRegister_(CFO_Register_EVBDestCount) & 0xFFFFFFC0;
-	regVal += (number & 0x3F);
-	WriteRegister_(regVal, CFO_Register_EVBDestCount);
-}
-
-uint8_t CFOLib::CFO_Registers::ReadEVBNumberOfDestinationNodes()
-{
-	return static_cast<uint8_t>(ReadRegister_(CFO_Register_EVBDestCount) & 0x3F);
-}
-
-CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatEVBNumberOfDestinationNodes()
-{
-	auto form = CreateFormatter(CFO_Register_EVBDestCount);
-	form.description = "EVB Number of Destination Nodes / Start Node";
-	std::stringstream o;
-	o << "EVB Start Node: " << std::dec << static_cast<int>(ReadEVBStartNode());
-	form.vals.push_back(o.str());
-	o.str("");
-	o.clear();
-	o << "EVB Number of Destination Nodes: " << std::dec << static_cast<int>(ReadEVBNumberOfDestinationNodes());
-	form.vals.push_back(o.str());
-	return form;
-}
-
-// Heartbeat Error Register
-bool CFOLib::CFO_Registers::ReadHeartbeatTimeout(const CFO_Ring_ID& ring)
-{
-	std::bitset<32> data = ReadRegister_(CFO_Register_HeartbeatErrorFlags);
-	switch (ring)
-	{
-	case CFO_Ring_0:
-		return data[24];
-	case CFO_Ring_1:
-		return data[25];
-	case CFO_Ring_2:
-		return data[26];
-	case CFO_Ring_3:
-		return data[27];
-	case CFO_Ring_4:
-		return data[28];
-	case CFO_Ring_5:
-		return data[29];
-	default:
-		return false;
-	}
-}
-
-bool CFOLib::CFO_Registers::ReadHeartbeat20Mismatch(const CFO_Ring_ID& ring)
-{
-	std::bitset<32> data = ReadRegister_(CFO_Register_HeartbeatErrorFlags);
-	switch (ring)
-	{
-	case CFO_Ring_0:
-		return data[16];
-	case CFO_Ring_1:
-		return data[17];
-	case CFO_Ring_2:
-		return data[18];
-	case CFO_Ring_3:
-		return data[19];
-	case CFO_Ring_4:
-		return data[20];
-	case CFO_Ring_5:
-		return data[21];
-	default:
-		return false;
-	}
-}
-
-bool CFOLib::CFO_Registers::ReadHeartbeat12Mismatch(const CFO_Ring_ID& ring)
-{
-	std::bitset<32> data = ReadRegister_(CFO_Register_HeartbeatErrorFlags);
-	switch (ring)
-	{
-	case CFO_Ring_0:
-		return data[8];
-	case CFO_Ring_1:
-		return data[9];
-	case CFO_Ring_2:
-		return data[10];
-	case CFO_Ring_3:
-		return data[11];
-	case CFO_Ring_4:
-		return data[12];
-	case CFO_Ring_5:
-		return data[13];
-	default:
-		return false;
-	}
-}
-
-bool CFOLib::CFO_Registers::ReadHeartbeat01Mismatch(const CFO_Ring_ID& ring)
-{
-	std::bitset<32> data = ReadRegister_(CFO_Register_HeartbeatErrorFlags);
-	switch (ring)
-	{
-	case CFO_Ring_0:
-		return data[0];
-	case CFO_Ring_1:
-		return data[1];
-	case CFO_Ring_2:
-		return data[2];
-	case CFO_Ring_3:
-		return data[3];
-	case CFO_Ring_4:
-		return data[4];
-	case CFO_Ring_5:
-		return data[5];
-	default:
-		return false;
-	}
-}
-
-CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatHeartbeatError()
-{
-	auto form = CreateFormatter(CFO_Register_HeartbeatErrorFlags);
-	form.description = "Heartbeat Error Flags";
-	form.vals.push_back("       ([Timeout, 2-0 Mismatch, 1-2 Mismatch, 0-1 Mismatch])");
-	for (auto r : CFO_Rings)
-	{
-		form.vals.push_back(std::string("Ring ") + std::to_string(r) + ": ["
-							+ (ReadHeartbeatTimeout(r) ? "x" : " ") + ","
-							+ (ReadHeartbeat20Mismatch(r) ? "x" : " ") + ","
-							+ (ReadHeartbeat12Mismatch(r) ? "x" : " ") + ","
-							+ (ReadHeartbeat01Mismatch(r) ? "x" : " ") + "]");
-	}
-	return form;
-}
-
+/*
 // SEREDES Oscillator Registers
 uint32_t CFOLib::CFO_Registers::ReadSERDESOscillatorFrequency()
 {
@@ -1672,6 +1454,7 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatDDROscillatorParamete
 	form.vals.push_back(o4.str());
 	return form;
 }
+*/
 
 // Timestamp Preset Registers
 void CFOLib::CFO_Registers::SetTimestampPreset(const CFO_Timestamp& preset)
@@ -1713,37 +1496,16 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatTimestampPreset1()
 	return form;
 }
 
-// Data Pending Timer Register
-void CFOLib::CFO_Registers::SetDataPendingTimer(uint32_t timer)
-{
-	WriteRegister_(timer, CFO_Register_DataPendingTimer);
-}
-
-uint32_t CFOLib::CFO_Registers::ReadDataPendingTimer()
-{
-	return ReadRegister_(CFO_Register_DataPendingTimer);
-}
-
-CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatDataPendingTimer()
-{
-	auto form = CreateFormatter(CFO_Register_DataPendingTimer);
-	form.description = "DMA Data Pending Timer";
-	std::stringstream o;
-	o << "0x" << std::hex << ReadDataPendingTimer();
-	form.vals.push_back(o.str());
-	return form;
-}
-
 // NUMROCs Register
-void CFOLib::CFO_Registers::SetMaxROCNumber(const CFO_Ring_ID& ring, const CFO_ROC_ID& lastRoc)
+void CFOLib::CFO_Registers::SetMaxROCNumber(const CFO_Ring_ID& ring, const uint8_t& lastRoc)
 {
-	std::bitset<32> ringRocs = ReadRegister_(CFO_Register_NUMROCs);
+	std::bitset<32> ringRocs = ReadRegister_(CFO_Register_NUMDTCs);
 	maxROCs_[ring] = lastRoc;
 	auto numRocs = lastRoc == CFO_ROC_Unused ? 0 : lastRoc + 1;
 	ringRocs[ring * 3] = numRocs & 1;
 	ringRocs[ring * 3 + 1] = ((numRocs & 2) >> 1) & 1;
 	ringRocs[ring * 3 + 2] = ((numRocs & 4) >> 2) & 1;
-	WriteRegister_(ringRocs.to_ulong(), CFO_Register_NUMROCs);
+	WriteRegister_(ringRocs.to_ulong(), CFO_Register_NUMDTCs);
 }
 
 CFOLib::CFO_ROC_ID CFOLib::CFO_Registers::ReadRingROCCount(const CFO_Ring_ID& ring, bool local)

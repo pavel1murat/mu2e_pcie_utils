@@ -3,7 +3,6 @@ set(NODEJS_ADDON_NAME "CFO")
 cet_make_library(LIBRARY_NAME CFOInterface SOURCE
             CFO.cpp
             CFOLibTest.cpp
-            CFOSoftwareCFO.cpp
 			CFO_Registers.cpp
 			CFO_Packets.cpp
             CFO_Types.cpp

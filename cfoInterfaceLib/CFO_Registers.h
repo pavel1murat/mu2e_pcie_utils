@@ -15,6 +15,7 @@ namespace CFOLib
 	{
 		CFO_Register_DesignVersion = 0x9000,
 		CFO_Register_DesignDate = 0x9004,
+		CFO_Register_DesignStatus = 0x9008,
 		CFO_Register_PerfMonTXByteCount = 0x900C,
 		CFO_Register_PerfMonRXByteCount = 0x9010,
 		CFO_Register_PerfMonTXPayloadCount = 0x9014,
@@ -29,7 +30,6 @@ namespace CFOLib
 		CFO_Register_DMATransferLength = 0x9104,
 		CFO_Register_SERDESLoopbackEnable = 0x9108,
 		CFO_Register_ClockOscillatorStatus = 0x910C,
-		CFO_Register_ROCEmulationEnable = 0x9110,
 		CFO_Register_RingEnable = 0x9114,
 		CFO_Register_SERDESReset = 0x9118,
 		CFO_Register_SERDESRXDisparityError = 0x911C,
@@ -42,109 +42,59 @@ namespace CFOLib
 		CFO_Register_SERDESResetDone = 0x9138,
 		CFO_Register_SERDESEyescanData = 0x913C,
 		CFO_Register_SFPSERDESStatus = 0x9140,
-		CFO_Register_DMATimeoutPreset = 0x9144,
-		CFO_Register_ROCReplyTimeout = 0x9148,
-		CFO_Register_ROCReplyTimeoutError = 0x914C,
+		CFO_Register_BeamOnTimeoutPreset = 0x9144,
+		CFO_Register_EnableBeamOnMode = 0x9148,
+		CFO_Register_EnableBeamOffMode = 0x914C,
 		CFO_Register_RingPacketLength = 0x9150,
-		CFO_Register_EVBPartitionID = 0x9154,
-		CFO_Register_EVBDestCount = 0x9158,
-		CFO_Register_HeartbeatErrorFlags = 0x915c,
-		CFO_Register_SERDESOscillatorFrequency = 0x9160,
-		CFO_Register_SERDESOscillatorControl = 0x9164,
-		CFO_Register_SERDESOscillatorParameterLow = 0x9168,
-		CFO_Register_SERDESOscillatorParameterHigh = 0x916C,
-		CFO_Register_DDROscillatorFrequency = 0x9170,
-		CFO_Register_DDROscillatorControl = 0x9174,
-		CFO_Register_DDROscillatorParameterLow = 0x9178,
-		CFO_Register_DDROscillatorParameterHigh = 0x917C,
 		CFO_Register_TimestampPreset0 = 0x9180,
 		CFO_Register_TimestampPreset1 = 0x9184,
-		CFO_Register_DataPendingTimer = 0x9188,
-		CFO_Register_NUMROCs = 0x918C,
+		CFO_Register_NUMDTCs = 0x918C,
 		CFO_Register_FIFOFullErrorFlag0 = 0x9190,
-		CFO_Register_FIFOFullErrorFlag1 = 0x9194,
-		CFO_Register_FIFOFullErrorFlag2 = 0x9198,
 		CFO_Register_ReceivePacketError = 0x919C,
-		CFO_Register_CFOEmulationTimestampLow = 0x91A0,
-		CFO_Register_CFOEmulationTimestampHigh = 0x91A4,
-		CFO_Register_CFOEmulationRequestInterval = 0x91A8,
-		CFO_Register_CFOEmulationNumRequests = 0x91AC,
-		CFO_Register_CFOEmulationNumPacketsRings10 = 0x91B0,
-		CFO_Register_CFOEmulationNumPacketsRings32 = 0x91B4,
-		CFO_Register_CFOEmulationNumPacketsRings54 = 0x91B8,
-		CFO_Register_CFOEmulationEventMode1 = 0x91C0,
-		CFO_Register_CFOEmulationEventMode2 = 0x91C4,
-		CFO_Register_CFOEmulationDebugPacketType = 0x91C8,
-		CFO_Register_RXPacketCountErrorFlags = 0x91CC,
-		CFO_Register_DetEmulationDMACount = 0x91D0,
-		CFO_Register_DetEmulationDelayCount = 0x91D4,
-		CFO_Register_DetEmulationControl0 = 0x91D8,
-		CFO_Register_DetEmulationControl1 = 0x91DC,
-		CFO_Register_DetEmulationDataStartAddress = 0x91E0,
-		CFO_Register_DetEmulationDataEndAddress = 0x91E4,
-		CFO_Register_ROCDRPDataSyncError = 0x91E8,
-		CFO_Register_EthernetFramePayloadSize = 0x91EC,
+		CFO_Register_EventWindowHoldoffTime = 0x91A4,
+		CFO_Register_EventWindowEmulatorInterval = 0x91A8,
+		CFO_Register_EventWindowTimeout = 0x91AC,
+		CFO_Register_EventWindowTimeoutError = 0x91B0,
 		CFO_Register_ReceiveByteCountDataRing0 = 0x9200,
 		CFO_Register_ReceiveByteCountDataRing1 = 0x9204,
 		CFO_Register_ReceiveByteCountDataRing2 = 0x9208,
 		CFO_Register_ReceiveByteCountDataRing3 = 0x920C,
 		CFO_Register_ReceiveByteCountDataRing4 = 0x9210,
 		CFO_Register_ReceiveByteCountDataRing5 = 0x9214,
-		CFO_Register_ReceiveByteCountDataCFO = 0x9218,
-		CFO_Register_ReceiveByteCountDataEVB = 0x921C,
+		CFO_Register_ReceiveByteCountDataRing6 = 0x9218,
+		CFO_Register_ReceiveByteCountDataRing7 = 0x921C,
 		CFO_Register_ReceivePacketCountDataRing0 = 0x9220,
 		CFO_Register_ReceivePacketCountDataRing1 = 0x9224,
 		CFO_Register_ReceivePacketCountDataRing2 = 0x9228,
 		CFO_Register_ReceivePacketCountDataRing3 = 0x922C,
 		CFO_Register_ReceivePacketCountDataRing4 = 0x9230,
 		CFO_Register_ReceivePacketCountDataRing5 = 0x9234,
-		CFO_Register_ReceivePacketCountDataCFO = 0x9238,
-		CFO_Register_ReceivePacketCountDataEVB = 0x923C,
+		CFO_Register_ReceivePacketCountDataRing6 = 0x9238,
+		CFO_Register_ReceivePacketCountDataRing7 = 0x923C,
 		CFO_Register_TransmitByteCountDataRing0 = 0x9240,
 		CFO_Register_TransmitByteCountDataRing1 = 0x9244,
 		CFO_Register_TransmitByteCountDataRing2 = 0x9248,
 		CFO_Register_TransmitByteCountDataRing3 = 0x924C,
 		CFO_Register_TransmitByteCountDataRing4 = 0x9250,
 		CFO_Register_TransmitByteCountDataRing5 = 0x9254,
-		CFO_Register_TransmitByteCountDataCFO = 0x9258,
-		CFO_Register_TransmitByteCountDataEVB = 0x925C,
+		CFO_Register_TransmitByteCountDataRing6 = 0x9258,
+		CFO_Register_TransmitByteCountDataRing7 = 0x925C,
 		CFO_Register_TransmitPacketCountDataRing0 = 0x9260,
 		CFO_Register_TransmitPacketCountDataRing1 = 0x9264,
 		CFO_Register_TransmitPacketCountDataRing2 = 0x9268,
 		CFO_Register_TransmitPacketCountDataRing3 = 0x926C,
 		CFO_Register_TransmitPacketCountDataRing4 = 0x9270,
 		CFO_Register_TransmitPacketCountDataRing5 = 0x9274,
-		CFO_Register_TransmitPacketCountDataCFO = 0x9278,
-		CFO_Register_TransmitPacketCountDataEVB = 0x927C,
-		CFO_Register_DDRRingBufferFullFlags1 = 0x92B0,
-		CFO_Register_DDRRingBufferFullFlags2 = 0x92B4,
-		CFO_Register_DDRRingBufferFullErrorFlags1 = 0x92B8,
-		CFO_Register_DDRRingBufferFullErrorFlags2 = 0x92BC,
-		CFO_Register_DDRRingBufferEmptyFlags1 = 0x92C0,
-		CFO_Register_DDRRingBufferEmptyFlags2 = 0x92C4,
-		CFO_Register_DDRRingBufferHalfFullFlags1 = 0x92C8,
-		CFO_Register_DDRRingBufferHalfFullFlags2 = 0x92CC,
-		CFO_Register_EventBuilderBufferFullFlags1 = 0x92D0,
-		CFO_Register_EventBuilderBufferFullFlags2 = 0x92D4,
-		CFO_Register_EventBuilderBufferFullErrorFlags1 = 0x92D8,
-		CFO_Register_EventBuilderBufferFullErrorFlags2 = 0x92DC,
-		CFO_Register_EventBuilderBufferEmptyFlags1 = 0x92E0,
-		CFO_Register_EventBuilderBufferEmptyFlags2 = 0x92E4,
-		CFO_Register_EventBuilderBufferHalfFullFlags1 = 0x92E8,
-		CFO_Register_EventBuilderBufferHalfFullFlags2 = 0x92EC,
-		CFO_Register_EVBSERDESPRBSControlStatus = 0x9330,
-		CFO_Register_MissedCFOPacketCountRing0 = 0x9340,
-		CFO_Register_MissedCFOPacketCountRing1 = 0x9344,
-		CFO_Register_MissedCFOPacketCountRing2 = 0x9348,
-		CFO_Register_MissedCFOPacketCountRing3 = 0x934C,
-		CFO_Register_MissedCFOPacketCountRing4 = 0x9350,
-		CFO_Register_MissedCFOPacketCountRing5 = 0x9354,
-		CFO_Register_LocalFragmentDropCount = 0x9360,
+		CFO_Register_TransmitPacketCountDataRing6 = 0x9278,
+		CFO_Register_TransmitPacketCountDataRing7 = 0x927C,
+		CFO_Register_DDRWriteStartAddress = 0x9300,
+		CFO_Register_DDRReadStartAddress = 0x9304,
+		CFO_Register_DDRReadByteCount = 0x9308,
+		CFO_Register_DDRBeamOnBaseAddress = 0x930C,
+		CFO_Register_DDRBeamOffBaseAddress = 0x9310,
 		CFO_Register_FPGAProgramData = 0x9400,
 		CFO_Register_FPGAPROMProgramStatus = 0x9404,
 		CFO_Register_FPGACoreAccess = 0x9408,
-		CFO_Register_EventModeLookupTableStart = 0x9500,
-		CFO_Register_EventModeLookupTableEnd = 0x98FC,
 		CFO_Register_Invalid,
 	};
 
@@ -380,62 +330,6 @@ namespace CFOLib
 		/// <returns>True if the CFO is currently resetting, false otherwise</returns>
 		bool ReadResetCFO();
 		/// <summary>
-		/// Enable the CFO CFO Emulator
-		/// Parameters for the CFO Emulator, such as count and starting timestamp, must be set before enabling.
-		/// </summary>
-		void EnableCFOEmulation();
-		/// <summary>
-		/// Disable the CFO CFO Emulator
-		/// </summary>
-		void DisableCFOEmulation();
-		/// <summary>
-		/// Reads the current state of the CFO CFO Emulator
-		/// </summary>
-		/// <returns>True if the emulator is enabled, false otherwise</returns>
-		bool ReadCFOEmulation();
-		/// <summary>
-		/// Resets the DDR Write pointer to 0
-		/// </summary>
-		void ResetDDRWriteAddress();
-		/// <summary>
-		/// Determine whether a DDR Write Pointer reset is in progress
-		/// </summary>
-		/// <returns>True if the DDR Write pointer is resetting, false otherwise</returns>
-		bool ReadResetDDRWriteAddress();
-		/// <summary>
-		/// Reset the DDR Read pointer to 0
-		/// </summary>
-		void ResetDDRReadAddress();
-		/// <summary>
-		/// Determine whether the DDR Read pointer is currently being reset.
-		/// </summary>
-		/// <returns>True if the read pointer is currently being reset, false otherwise</returns>
-		bool ReadResetDDRReadAddress();
-		/// <summary>
-		/// Reset the DDR memory interface
-		/// </summary>
-		void ResetDDR();
-		/// <summary>
-		/// Determine whether the DDR memory interface is currently being reset
-		/// </summary>
-		/// <returns>True if the DDR memory interface is currently being reset, false otherwise</returns>
-		bool ReadResetDDR();
-		/// <summary>
-		/// Enable sending Data Request packets from the CFO CFO Emulator with every
-		/// Readout Request
-		/// </summary>
-		void EnableCFOEmulatorDRP();
-		/// <summary>
-		/// Disable sending Data Request packets from the CFO CFO Emulator with every
-		/// Readout Request
-		/// </summary>
-		void DisableCFOEmulatorDRP();
-		/// <summary>
-		/// Read whether the CFO CFO Emulator is sending Data Request packets with every readout request
-		/// </summary>
-		/// <returns>True if the CFO CFO Emulator is sending Data Request packets with every readout request, false otherwise</returns>
-		bool ReadCFOEmulatorDRP();
-		/// <summary>
 		/// Enable automatically generating Data Request packets from the CFO CFO Emulator
 		/// </summary>
 		void EnableAutogenDRP();
@@ -448,34 +342,9 @@ namespace CFOLib
 		/// </summary>
 		/// <returns>True if Data Request packets are generated by the CFO CFO Emulator, false otherwise</returns>
 		bool ReadAutogenDRP();
-		/// <summary>
-		/// Enable receiving Data Request Packets from the CFOLib on DMA Channel 0
-		/// Possibly obsolete, ask Rick before using
-		/// </summary>
-		void EnableSoftwareDRP();
-		/// <summary>
-		/// Disable receiving Data Request Packets from the CFOLib on DMA Channel 0
-		/// Possibly obsolete, ask Rick before using
-		/// </summary>
-		void DisableSoftwareDRP();
-		/// <summary>
-		/// Read whether receiving Data Request Packets from the CFOLib on DMA Channel 0 is enabled
-		/// </summary>
-		/// <returns>True if receiving Data Request Packets from the CFOLib on DMA Channel 0 is enabled, false otherwise</returns>
-		bool ReadSoftwareDRP();
-		/// <summary>
-		/// Enalbe receiving DCS packets.
-		/// </summary>
-		void EnableDCSReception();
-		/// <summary>
-		/// Disable receiving DCS packets. Any DCS packets received will be ignored
-		/// </summary>
-		void DisableDCSReception();
-		/// <summary>
-		/// Read the status of the DCS Enable bit
-		/// </summary>
-		/// <returns>Whether DCS packet reception is enabled</returns>
-		bool ReadDCSReception();
+		void EnableEventWindowInput();
+		void DisableEventWindowInput();
+		bool ReadEventWindowInput();
 		/// <summary>
 		/// Set the CFO to External timing mode
 		/// </summary>
@@ -594,30 +463,6 @@ namespace CFOLib
 		/// <returns>CFO_RegisterFormatter object containing register information</returns>
 		CFO_RegisterFormatter FormatClockOscillatorStatus();
 
-		// ROC Emulation Enable Register
-		/// <summary>
-		/// Enable the ROC emulator on the given ring
-		/// Note that the ROC Emulator will use the NUMROCs register to determine how many ROCs to emulate
-		/// </summary>
-		/// <param name="ring">Ring to enable</param>
-		void EnableROCEmulator(const CFO_Ring_ID& ring);
-		/// <summary>
-		/// Disable the ROC emulator on the given ring
-		/// </summary>
-		/// <param name="ring">Ring to disable</param>
-		void DisableROCEmulator(const CFO_Ring_ID& ring);
-		/// <summary>
-		/// Read the state of the ROC emulator on the given ring
-		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <returns>True if the ROC Emulator is enabled on the ring</returns>
-		bool ReadROCEmulator(const CFO_Ring_ID& ring);
-		/// <summary>
-		/// Formats the register's current value for register dumps
-		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatROCEmulationEnable();
-
 		// Ring Enable Register
 		/// <summary>
 		/// Enable a SERDES Ring
@@ -625,7 +470,7 @@ namespace CFOLib
 		/// <param name="ring">Ring to enable</param>
 		/// <param name="mode">Ring enable bits to set (Default: All)</param>
 		/// <param name="lastRoc">Number of ROCs in the Ring (Default: Invalid value)</param>
-		void EnableRing(const CFO_Ring_ID& ring, const CFO_RingEnableMode& mode = CFO_RingEnableMode(), const CFO_ROC_ID& lastRoc = CFO_ROC_Unused);
+		void EnableRing(const CFO_Ring_ID& ring, const CFO_RingEnableMode& mode = CFO_RingEnableMode());
 		/// <summary>
 		/// Disable a SERDES Ring
 		/// The given mode bits will be UNSET
