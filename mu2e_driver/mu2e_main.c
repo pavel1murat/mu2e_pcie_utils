@@ -834,9 +834,9 @@ static int __init init_mu2e(void)
 				dma_alloc_coherent(&mu2e_pci_dev->dev, sizeof(mu2e_databuff_t), &(mu2e_pci_recver[chn].databuffs_dma[ii]), GFP_KERNEL);
 			mu2e_pci_recver[chn].buffdesc_ring[ii] =
 				dma_alloc_coherent(&mu2e_pci_dev->dev, sizeof(mu2e_buffdesc_C2S_t), &(mu2e_pci_recver[chn].buffdesc_ring_dma[ii]), GFP_KERNEL);
-			TRACE(1, "init_mu2e mu2e_pci_recver[%u].databuffs=%p databuffs_dma=0x%llx "
+			TRACE(1, "init_mu2e mu2e_pci_recver[%u][%u].databuffs=%p databuffs_dma=0x%llx "
 				"buffdesc_ring=%p buffdesc_ring_dma=0x%llx"
-				, chn
+				, chn, ii
 				, mu2e_pci_recver[chn].databuffs[ii]
 				, mu2e_pci_recver[chn].databuffs_dma[ii]
 					, mu2e_pci_recver[chn].buffdesc_ring[ii]
