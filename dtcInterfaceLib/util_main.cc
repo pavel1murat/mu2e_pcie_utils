@@ -447,14 +447,16 @@ main(int argc
 		std::cout << "Operation \"read\"" << std::endl;
 		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
 		auto packet = thisDTC->ReadNextDAQPacket();
-		if (!reallyQuiet) std::cout << packet->toJSON() << '\n';
-		if (rawOutput)
-		{
-			auto rawPacket = packet->ConvertToDataPacket();
-			for (auto ii = 0; ii < 16; ++ii)
+		if (packet) {
+			if (!reallyQuiet) std::cout << packet->toJSON() << '\n';
+			if (rawOutput)
 			{
-				auto word = rawPacket.GetWord(ii);
-				outputStream.write(reinterpret_cast<char*>(&word), sizeof(uint8_t));
+				auto rawPacket = packet->ConvertToDataPacket();
+				for (auto ii = 0; ii < 16; ++ii)
+				{
+					auto word = rawPacket.GetWord(ii);
+					outputStream.write(reinterpret_cast<char*>(&word), sizeof(uint8_t));
+				}
 			}
 		}
 		delete thisDTC;
