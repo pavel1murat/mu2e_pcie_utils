@@ -10,6 +10,7 @@
  */
 
 #include <trace.h>
+#include <signal.h>
 #include <chrono>
 #include "mu2edev.h"
 
@@ -292,7 +293,8 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 		{
 			TRACE( 0, "HW_NOT_READING_BUFS");
 			perror("HW_NOT_READING_BUFS");
-			exit(1);
+			kill(0, SIGUSR2);
+			exit(2);
 		}
 
 		unsigned idx = mu2e_channel_info_[chn][dir].swIdx;
