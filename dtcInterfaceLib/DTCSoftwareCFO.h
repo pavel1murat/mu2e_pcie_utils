@@ -16,6 +16,7 @@
 
 #include <thread>
 #include <atomic>
+#include <set>
 
 namespace DTCLib
 {
@@ -65,6 +66,13 @@ namespace DTCLib
 		                          bool increment = true, uint32_t delayBetweenDataRequests = 0, int requestsAhead = 1);
 
 		/// <summary>
+		/// Send requests for a list of timestamps.
+		/// </summary>
+		/// <param name="timestamps">List of timestamps to send</param>
+		/// <param name="delayBetweenDataRequests">Number of microseconds to wait between requests</param>
+		void SendRequestsForList(std::set<DTC_Timestamp> timestamps, uint32_t delayBetweenDataRequests = 0);
+
+		/// <summary>
 		/// Enable quiet mode.
 		/// 
 		/// When in quiet mode, DTCSoftwareCFO will not print ReadoutRequest packets or DataRequest packets to screen.
@@ -103,6 +111,9 @@ namespace DTCLib
 		                                   bool increment = true, uint32_t delayBetweenDataRequests = 0);
 		void SendRequestsForRangeImplSync(DTC_Timestamp start, int count,
 		                                  bool increment = true, uint32_t delayBetweenDataRequests = 0, int requestsAhead = 1);
+
+		void SendRequestsForListImplAsync(std::set<DTC_Timestamp> timestamps, uint32_t delayBetweenDataRequests = 0);
+
 		// Request Parameters
 		bool useCFOEmulator_;
 		uint16_t debugPacketCount_;
@@ -115,7 +126,7 @@ namespace DTCLib
 		// Object basic properties (not accessible)
 		DTC* theDTC_;
 		DTC_RingEnableMode ringMode_[6];
-		std::thread theThread_;
+		std::unique_ptr<std::thread> theThread_;
 		std::atomic<bool> requestsSent_;
 		std::atomic<bool> abort_;
 	};

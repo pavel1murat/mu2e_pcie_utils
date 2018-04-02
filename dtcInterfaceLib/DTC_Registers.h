@@ -72,6 +72,7 @@ namespace DTCLib
 		DTC_Register_CFOEmulationNumPacketsRings10 = 0x91B0,
 		DTC_Register_CFOEmulationNumPacketsRings32 = 0x91B4,
 		DTC_Register_CFOEmulationNumPacketsRings54 = 0x91B8,
+		DTC_Register_CFOEmulationNumNullHeartbeats = 0x91BC,
 		DTC_Register_CFOEmulationEventMode1 = 0x91C0,
 		DTC_Register_CFOEmulationEventMode2 = 0x91C4,
 		DTC_Register_CFOEmulationDebugPacketType = 0x91C8,
@@ -1363,6 +1364,23 @@ namespace DTCLib
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
 		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing45();
 
+		// CFO Emulation Number of Null Heartbeats Register
+		/// <summary>
+		/// Set the number of null heartbeats the CFO Emulator will generate following the requested ones
+		/// </summary>
+		/// <param name="numPackets">Number of null heartbeats to generate</param>
+		void SetCFOEmulationNumNullHeartbeats(const uint32_t& count);
+		/// <summary>
+		/// Read the requested number of null heartbeats that will follow the configured heartbeats from the CFO Emulator
+		/// </summary>
+		/// <returns>Number of null heartbeats to follow "live" heartbeats</returns>
+		uint32_t ReadCFOEmulationNumNullHeartbeats();
+		/// <summary>
+		/// Formats the register's current value for register dumps
+		/// </summary>
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatCFOEmulationNumNullHeartbeats();
+
 		// CFO Emulation Event Mode Bytes Registers
 		/// <summary>
 		/// Set the given CFO Emulation Mode byte to the given value
@@ -2267,6 +2285,7 @@ namespace DTCLib
 			[this]() { return this->FormatCFOEmulationNumPacketsRing01(); },
 			[this]() { return this->FormatCFOEmulationNumPacketsRing23(); },
 			[this]() { return this->FormatCFOEmulationNumPacketsRing45(); },
+			[this]() { return this->FormatCFOEmulationNumNullHeartbeats(); },
 			[this]() { return this->FormatCFOEmulationModeBytes03(); },
 			[this]() { return this->FormatCFOEmulationModeBytes45(); },
 			[this]() { return this->FormatCFOEmulationDebugPacketType(); },

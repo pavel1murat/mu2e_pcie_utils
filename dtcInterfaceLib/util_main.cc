@@ -21,6 +21,7 @@
 #include "DTCSoftwareCFO.h"
 #include "trace.h"
 #include <unistd.h>		// usleep
+#include <set>
 
 using namespace DTCLib;
 
@@ -39,6 +40,7 @@ unsigned genDMABlocks = 0;
 std::string rawOutputFile = "/tmp/mu2eUtil.raw";
 std::string expectedDesignVersion = "";
 std::string simFile = "";
+std::string timestampFile = "";
 bool useSimFile = false;
 unsigned delay = 0;
 unsigned cfodelay = 1000;
@@ -117,6 +119,73 @@ std::string getOptionString(int* index, char** argv[])
 	}
 
 	return std::string(&arg[offset]);
+}
+
+unsigned getLongOptionValue(int* index, char** argv[])
+{
+	auto arg = std::string((*argv)[*index]);
+	auto pos = arg.find('=');
+
+	if (pos == std::string::npos)
+	{
+		(*index)++;
+		unsigned ret = strtoul((*argv)[*index], nullptr, 0);
+		if (ret == 0 && (*argv)[*index][0] != '0') // No option given 
+		{
+			(*index)--;
+		}
+		return ret;
+	}
+
+	return strtoul(&arg[++pos], nullptr, 0);
+}
+unsigned long long getLongOptionValueLong(int* index, char** argv[])
+{
+	auto arg = std::string((*argv)[*index]);
+	auto pos = arg.find('=');
+
+
+	if (pos == std::string::npos)
+	{
+		(*index)++;
+		unsigned long long ret = strtoull((*argv)[*index], nullptr, 0);
+		if (ret == 0 && (*argv)[*index][0] != '0') // No option given 
+		{
+			(*index)--;
+		}
+		return ret;
+	}
+
+	return strtoull(&arg[++pos], nullptr, 0);
+}
+
+std::string getLongOptionOption(int* index, char** argv[])
+{
+	auto arg = std::string((*argv)[*index]);
+	auto pos = arg.find('=');
+
+	if (pos == std::string::npos)
+	{
+		return arg;
+	}
+	else
+	{
+		return arg.substr(0, pos - 1);
+	}
+}
+
+std::string getLongOptionString(int* index, char** argv[])
+{
+	auto arg = std::string((*argv)[*index]);
+
+	if (arg.find('=') == std::string::npos)
+	{
+		return std::string((*argv)[++(*index)]);
+	}
+	else
+	{
+		return arg.substr(arg.find('='));
+	}
 }
 
 void WriteGeneratedData(DTC* thisDTC)
@@ -247,7 +316,7 @@ void printHelpMsg()
 {
 	std::cout << "Usage: mu2eUtil [options] [read,read_data,reset_ddrread,reset_detemu,toggle_serdes,loopback,buffer_test,read_release,DTC,program_clock,verify_simfile]" << std::endl;
 	std::cout << "Options are:" << std::endl
-		<< "    -h: This message." << std::endl
+		<< "    -h, --help: This message." << std::endl
 		<< "    -n: Number of times to repeat test. (Default: 1)" << std::endl
 		<< "    -o: Starting Timestamp offest. (Default: 1)." << std::endl
 		<< "    -i: Do not increment Timestamps." << std::endl
@@ -276,6 +345,7 @@ void printHelpMsg()
 		<< "    -C: Clock to program (0: SERDES, 1: DDR, Default 0)" << std::endl
 		<< "    -v: Expected DTC Design version string (Default: \"\")" << std::endl
 		<< "    -V: Do NOT attempt to verify that the sim file landed in DTC memory correctly" << std::endl
+		<< "    --timestamp-list: Read <file> for timestamps to request (CFO will generate heartbeats for all timestamps in range spanned by file)" << std::endl
 		;
 	exit(0);
 }
@@ -388,6 +458,19 @@ main(int argc
 			case 'V':
 				skipVerify = true;
 				break;
+			case '-': // Long option
+			{
+				auto option = getLongOptionOption(&optind, &argv);
+				if (option == "--timestamp-list")
+				{
+					timestampFile = getLongOptionString(&optind, &argv);
+				}
+				else if (option == "--help")
+				{
+					printHelpMsg();
+				}
+				break;
+			}
 			default:
 				std::cout << "Unknown option: " << argv[optind] << std::endl;
 				printHelpMsg();
@@ -569,6 +652,7 @@ main(int argc
 		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
 		auto device = thisDTC->GetDevice();
 
+
 		auto initTime = device->GetDeviceTime();
 		device->ResetDeviceTime();
 		auto afterInit = std::chrono::steady_clock::now();
@@ -597,7 +681,20 @@ main(int argc
 			thisDTC->EnableDetectorEmulator();
 		}
 
-		if (thisDTC->ReadSimMode() != DTC_SimMode_Loopback && !syncRequests)
+		if (thisDTC->ReadSimMode() != DTC_SimMode_Loopback && timestampFile != "")
+		{
+			syncRequests = false;
+			std::set<DTC_Timestamp> timestamps;
+			std::ifstream is(timestampFile);
+			uint64_t a;
+			while (is >> a)
+			{
+				timestamps.insert(DTC_Timestamp(a));
+			}
+			number = timestamps.size();
+			cfo.SendRequestsForList(timestamps, cfodelay);
+		}
+		else if (thisDTC->ReadSimMode() != DTC_SimMode_Loopback && !syncRequests)
 		{
 			cfo.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, cfodelay, requestsAhead);
 		}

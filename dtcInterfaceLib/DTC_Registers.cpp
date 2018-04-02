@@ -2153,6 +2153,27 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatCFOEmulationNumPacket
 	return form;
 }
 
+
+// CFO Emulation Number of Null Heartbeats Register
+void DTCLib::DTC_Registers::SetCFOEmulationNumNullHeartbeats(const uint32_t& count)
+{
+	WriteRegister_(count, DTC_Register_CFOEmulationNumNullHeartbeats);
+}
+
+uint32_t DTCLib::DTC_Registers::ReadCFOEmulationNumNullHeartbeats()
+{
+	return ReadRegister_(DTC_Register_CFOEmulationNumNullHeartbeats);
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatCFOEmulationNumNullHeartbeats()
+{
+	auto form = CreateFormatter(DTC_Register_CFOEmulationNumNullHeartbeats);
+	form.description = "CFO Emulator Num Null Heartbeats";
+	form.vals.push_back(std::to_string(ReadCFOEmulationNumNullHeartbeats()));
+	return form;
+}
+
+
 // CFO Emulation Event Mode Bytes Registers
 void DTCLib::DTC_Registers::SetCFOEmulationModeByte(const uint8_t& byteNum, uint8_t data)
 {

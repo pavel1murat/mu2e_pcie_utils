@@ -16,6 +16,7 @@ DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(DTC* dtc, bool useCFOEmulator, uint16_t d
 	, quiet_(quiet)
 	, asyncRR_(asyncRR)
 	, forceNoDebug_(forceNoDebug)
+	, theThread_(nullptr)
 	, requestsSent_(false)
 	, abort_(false)
 {
@@ -32,6 +33,7 @@ DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(DTC* dtc, bool useCFOEmulator, uint16_t d
 DTCLib::DTCSoftwareCFO::~DTCSoftwareCFO()
 {
 	abort_ = true;
+	if (theThread_ && theThread_->joinable()) theThread_->join();
 }
 
 void DTCLib::DTCSoftwareCFO::WaitForRequestsToBeSent() const
@@ -126,11 +128,13 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start
 		requestsSent_ = false;
 		if (asyncRR_)
 		{
-			theThread_ = std::thread(&DTCSoftwareCFO::SendRequestsForRangeImplAsync, this, start, count, increment, delayBetweenDataRequests);
+			if (theThread_ && theThread_->joinable()) theThread_->join();
+			theThread_.reset(new std::thread(&DTCSoftwareCFO::SendRequestsForRangeImplAsync, this, start, count, increment, delayBetweenDataRequests));
 		}
 		else
 		{
-			theThread_ = std::thread(&DTCSoftwareCFO::SendRequestsForRangeImplSync, this, start, count, increment, delayBetweenDataRequests, requestsAhead);
+			if (theThread_ && theThread_->joinable()) theThread_->join();
+			theThread_.reset(new std::thread(&DTCSoftwareCFO::SendRequestsForRangeImplSync, this, start, count, increment, delayBetweenDataRequests, requestsAhead));
 		}
 		WaitForRequestsToBeSent();
 	}
@@ -147,6 +151,61 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start
 			}
 		}
 		theDTC_->SetCFOEmulationNumRequests(count);
+		theDTC_->SetCFOEmulationDebugType(debugType_);
+		theDTC_->SetCFOEmulationModeByte(5, 1);
+		if (!forceNoDebug_) theDTC_->EnableDebugPacketMode();
+		else theDTC_->DisableDebugPacketMode();
+		theDTC_->SetCFOEmulationRequestInterval(delayBetweenDataRequests);
+		TLOG(13) << "SendRequestsForRange enabling DTC CFO Emulator";
+		theDTC_->EnableCFOEmulation();
+		TLOG(13) << "SendRequestsForRange done";
+	}
+}
+
+void DTCLib::DTCSoftwareCFO::SendRequestsForList(std::set<DTC_Timestamp> timestamps, uint32_t delayBetweenDataRequests)
+{
+	if (theDTC_->IsDetectorEmulatorInUse()) {
+		TLOG(16) << "Enabling Detector Emulator for " << timestamps.size() << " DMAs";
+		//theDTC_->ResetDTC();
+		theDTC_->DisableDetectorEmulator();
+		theDTC_->SetDetectorEmulationDMACount(timestamps.size() + 1);
+		theDTC_->EnableDetectorEmulator();
+		return;
+	}
+
+	if (theThread_ && theThread_->joinable()) theThread_->join();
+	theThread_.reset(new std::thread(&DTCSoftwareCFO::SendRequestsForListImplAsync, this, timestamps, delayBetweenDataRequests));
+}
+
+void DTCLib::DTCSoftwareCFO::SendRequestsForListImplAsync(std::set<DTC_Timestamp> timestamps, uint32_t delayBetweenDataRequests)
+{
+	if (delayBetweenDataRequests < 1000)
+	{
+		delayBetweenDataRequests = 1000;
+	}
+
+	auto ii = timestamps.begin();
+	while (ii != timestamps.end() && !abort_)
+	{
+		TLOG(16) << "Setting up CFO Emulator for next entry in list";
+		auto thisTimestamp = *ii;
+		++ii;
+		DTC_Timestamp nextTimestamp = thisTimestamp + 5; // Generate 5 nulls at the end of the list
+		if (ii != timestamps.end()) {
+			nextTimestamp = *ii;
+		}
+
+		theDTC_->DisableCFOEmulation();
+		theDTC_->SetCFOEmulationTimestamp(thisTimestamp);
+		for (auto ring : DTC_Rings)
+		{
+			if (!ringMode_[ring].TimingEnable && ringMode_[ring].TransmitEnable)
+			{
+				theDTC_->SetCFOEmulationNumPackets(ring, debugPacketCount_);
+			}
+		}
+		theDTC_->SetCFOEmulationNumRequests(1);
+		theDTC_->SetCFOEmulationNumNullHeartbeats(nextTimestamp.GetTimestamp(true) - thisTimestamp.GetTimestamp(true) - 1);
 		theDTC_->SetCFOEmulationDebugType(debugType_);
 		theDTC_->SetCFOEmulationModeByte(5, 1);
 		if (!forceNoDebug_) theDTC_->EnableDebugPacketMode();
