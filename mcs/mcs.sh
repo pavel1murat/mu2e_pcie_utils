@@ -6,8 +6,8 @@
  # $RCSfile: .emacs.gnu,v $
  # rev='$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $'
 set -u
-test $# -eq 1 || { echo "usage: `basename $0` <file>"; exit; }
 
+devnum=$1; shift
 file=$1; shift
 
 # look for pci_devel_main.ko
@@ -34,7 +34,7 @@ if type mcs >/dev/null;then :;else
 fi
 
 
-pids=`lsof -t /dev/mu2e 2>/dev/null` && kill $pids
+pids=`lsof -t /dev/mu2e* 2>/dev/null` && kill $pids
 
 lsmod | grep pci_devel_main >/dev/null && rmmod pci_devel_main
 sleep 1
@@ -60,13 +60,25 @@ tonSg 0-7; tonMg 0-15
 
 insmod $DEVMOD
 
-echo 'reg 0x9000 value...'
-devl uint32 0x9000
-echo 'reg 0x9004 value...'
-devl uint32 0x9004
+echo "Detected mu2e devices:"
+
+for dev in /dev/pcidev*;do
+	echo $dev
+    ii=${dev#/dev/pcidev}
+    echo 'reg 0x9000 value...'
+    devl $ii uint32 0x9000
+    echo 'reg 0x9004 value...'
+    devl $ii uint32 0x9004
+done
+
+if [ "x$file" == "x" ] || ! [ -e $file ]; then
+	echo "Invalid or null file argument!"
+	 echo "usage: `basename $0` <devicenum> <file>";
+	 exit
+fi
 
 export TRACE_NAME=mcs
-mcs $file | tee /tmp/mcs.out\
+mcs $devnum $file | tee /tmp/mcs.out\
  |{ xx=11;while xx=`expr $xx - 1`;do IFS= read ln;echo "$ln";done;echo ...;tail;}
 
 echo "Now Power Cycle!!!!!!!!!"
