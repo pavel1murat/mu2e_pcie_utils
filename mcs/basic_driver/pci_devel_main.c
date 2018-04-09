@@ -229,7 +229,6 @@ IOCTL_RET_TYPE devl_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 									 , unsigned int cmd, unsigned long arg))
 {
 	IOCTL_RET_TYPE    sts = 0;
-	int               sts2;
 	int               devIdx = iminor(filp->f_path.dentry->d_inode);
 
 	TRACE(6, "Checking IOC_TYPE");
@@ -249,27 +248,7 @@ IOCTL_RET_TYPE devl_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 	case IOC_HELLO:
 		TRACE(6, "devl_ioctl - hello");
 		break;
-	case IOC_REGISTER:
-		if (pci_dev_sp[devIdx] == 0)
-		{
-			sts2 = pci_register_driver(&devl_driver);
-			TRACE(6, "devl_ioctl - pci_register=%d", sts2);
-			sts = (IOCTL_RET_TYPE)sts2;
-		}
-		else
-			TRACE(6, "devl_ioctl - already registered");
-		break;
-	case IOC_UNREGISTER:
-		devl_pci_down();
-		break;
 	case IOC_IOREMAP:
-		if (pci_dev_sp[devIdx] == 0)
-		{
-			TRACE(6, "devl_ioctl - IOREMAP first need to register");
-			sts2 = pci_register_driver(&devl_driver);
-			TRACE(6, "devl_ioctl - pci_register=%d", sts2);
-			sts = (IOCTL_RET_TYPE)sts2;
-		}
 		if (sts == 0)
 		{
 			u32 size;
@@ -374,8 +353,16 @@ static int __init init_devl(void)
 	ret = devl_fs_up();
 	if (ret) goto out;
 
-	return (ret);
 
+	ret = pci_register_driver(&devl_driver);
+	TRACE(6, "devl_ioctl - pci_register=%d", ret);
+
+	if (ret) goto out2;
+
+	return (ret);
+out2:
+	TRACE(0, "Unregistering pci driver");
+	devl_pci_down();
 out:
 	TRACE(0, "Error - freeing memory");
 	devl_fs_down();
