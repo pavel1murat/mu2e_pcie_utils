@@ -173,13 +173,22 @@ out2:
 static void devl_pci_remove(struct pci_dev *pdev)
 {
 	int ii;
+	int match = -1;
 	for (ii = 0; ii < next_minor_number; ++ii)
 	{
 		if (pdev == pci_dev_sp[ii])
 		{
 			pci_dev_sp[ii] = 0;
+			match = ii;
 		}
 	}
+
+	if (match < 0)
+	{
+		TRACE(6, "devl_pci_remove device already removed");
+		return;
+	}
+
 	TRACE(6, "devl_pci_remove start pdev=%p", pdev);
 	device_destroy(devl_dev_class, pdev->dev.devt);
 	TRACE(6, "devl_pci_remove after device_destroy, before release_regions");
