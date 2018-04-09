@@ -100,6 +100,7 @@ int devl_fs_up(void)
 
 	sts = cdev_add(&devl_cdev, devl_dev_number, 10);
 
+	TRACE(5, "devl_fs_up MAJOR=%d MINOR=%d", MAJOR(devl_dev_number), MINOR(devl_dev_number));
 	return (0);
 }   // devl_fs_up
 
@@ -151,6 +152,7 @@ static int devl_pci_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 		goto out2;
 	}
 
+	TRACE(5, "devl_pci_probe MAJOR=%d MINOR=%d", MAJOR(pdev->dev.devt), MINOR(pdev->dev.devt));
 	if (MINOR(pdev->dev.devt) < 10)
 	{
 		device_create(devl_dev_class, NULL, pdev->dev.devt, NULL, PCIDEVL_DEV_FILE, MINOR(pdev->dev.devt));
@@ -206,12 +208,12 @@ void devl_pci_down(void)
 	int ii;
 	for (ii = 0; ii < 10; ++ii)
 	{
-	if (pcie_bar_info[ii].baseVAddr != 0)
-	{
-		TRACE(6, "devl_pci_down - iounmap( pcie_bar_info.baseVAddr )");
-		iounmap(pcie_bar_info[ii].baseVAddr);
-		pcie_bar_info[ii].baseVAddr = 0;
-	}
+		if (pcie_bar_info[ii].baseVAddr != 0)
+		{
+			TRACE(6, "devl_pci_down - iounmap( pcie_bar_info.baseVAddr )");
+			iounmap(pcie_bar_info[ii].baseVAddr);
+			pcie_bar_info[ii].baseVAddr = 0;
+		}
 		if (pci_dev_sp[ii] == 0)
 			TRACE(6, "devl_pci_down - pci_unregister - device NOT registered");
 		else
