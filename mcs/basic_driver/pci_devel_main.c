@@ -77,6 +77,7 @@ static struct file_operations devl_file_ops =
 };
 
 dev_t         devl_dev_number;
+int           next_minor_number = 0;
 struct class *devl_dev_class;
 struct cdev   devl_cdev;
 
@@ -152,11 +153,12 @@ static int devl_pci_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 		goto out2;
 	}
 
-	TRACE(5, "devl_pci_probe MAJOR=%d MINOR=%d", MAJOR(pdev->dev.devt), MINOR(pdev->dev.devt));
-	if (MINOR(pdev->dev.devt) < 10)
+	TRACE(5, "devl_pci_probe MAJOR=%d MINOR=%d", MAJOR(devl_dev_number), next_minor_number);
+	if (next_minor_number < 10)
 	{
-		device_create(devl_dev_class, NULL, pdev->dev.devt, NULL, PCIDEVL_DEV_FILE, MINOR(pdev->dev.devt));
-		pci_dev_sp[MINOR(pdev->dev.devt)] = pdev;		/* GLOBAL */
+		pdev->device = device_create(devl_dev_class, NULL, pdev->dev.devt, NULL, PCIDEVL_DEV_FILE, next_minor_number);
+		pci_dev_sp[next_minor_number] = pdev;		/* GLOBAL */
+		next_minor_number++;
 	}
 	else goto out2;
 	return (0);
@@ -171,7 +173,7 @@ out2:
 static void devl_pci_remove(struct pci_dev *pdev)
 {
 	int ii;
-	for (ii = 0; ii < 10; ++ii)
+	for (ii = 0; ii < next_minor_number; ++ii)
 	{
 		if (pdev == pci_dev_sp[ii])
 		{
@@ -206,7 +208,7 @@ static struct pci_driver devl_driver =
 void devl_pci_down(void)
 {
 	int ii;
-	for (ii = 0; ii < 10; ++ii)
+	for (ii = 0; ii < next_minor_number; ++ii)
 	{
 		if (pcie_bar_info[ii].baseVAddr != 0)
 		{
@@ -232,6 +234,7 @@ IOCTL_RET_TYPE devl_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 {
 	IOCTL_RET_TYPE    sts = 0;
 	int               devIdx = iminor(filp->f_path.dentry->d_inode);
+	TRACE(6, "devl_ioctl devIdx=%d", devIdx);
 
 	TRACE(6, "Checking IOC_TYPE");
 	if (_IOC_TYPE(cmd) != DEVL_IOC_MAGIC) return -ENOTTY;
