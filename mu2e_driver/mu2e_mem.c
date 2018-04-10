@@ -3,6 +3,7 @@
 #include <linux/module.h>	// module_param, THIS_MODULE
 #include <linux/kernel.h>	// KERN_INFO, printk
 #include <linux/pci.h>
+#include <linux/fs.h>
 
 #include "mu2e_proto_globals.h"
 #include "mu2e_mem.h"
@@ -13,33 +14,26 @@ int mu2e_mmap(struct file *file, struct vm_area_struct *vma)
 	int	          ch, dir, map;
 	unsigned long phys_addr, uaddr;
 	int           sts = 0, ii;
+	int               dtc = iminor(file->f_path.dentry->d_inode);
 
 	page2chDirMap(vma->vm_pgoff, ch, dir, map);
-	TRACE(4, "mu2e_mmap: vm_pgoff:%lu ch:%d dir:%d map:%d: %p"
-		  , vma->vm_pgoff, ch, dir, map, mu2e_mmap_ptrs[ch][dir][map]);
-	if (map == MU2E_MAP_META)
-		vma->vm_flags &= ~VM_WRITE;
+	TRACE(4, "mu2e_mmap: vm_pgoff:%lu ch:%d dir:%d map:%d: %p", vma->vm_pgoff, ch, dir, map, mu2e_mmap_ptrs[dtc][ch][dir][map]);
+	if (map == MU2E_MAP_META)		vma->vm_flags &= ~VM_WRITE;
 
 	if (dir == C2S && map == MU2E_MAP_BUFF)
 	{
 		uaddr = vma->vm_start;
 		for (ii = 0; ii < MU2E_NUM_RECV_BUFFS; ++ii)
 		{
-			phys_addr = virt_to_phys(((void**)mu2e_mmap_ptrs[ch][dir][map])[ii]);
-			sts |= io_remap_pfn_range(vma, uaddr
-									  , phys_addr >> PAGE_SHIFT
-									  , sizeof(mu2e_databuff_t)
-									  , vma->vm_page_prot);
+			phys_addr = virt_to_phys(((void**)mu2e_mmap_ptrs[dtc][ch][dir][map])[ii]);
+			sts |= io_remap_pfn_range(vma, uaddr, phys_addr >> PAGE_SHIFT, sizeof(mu2e_databuff_t), vma->vm_page_prot);
 			uaddr += sizeof(mu2e_databuff_t);
 		}
 	}
 	else
 	{
-		phys_addr = virt_to_phys(mu2e_mmap_ptrs[ch][dir][map]);
-		sts = io_remap_pfn_range(vma, vma->vm_start
-								 , phys_addr >> PAGE_SHIFT
-								 , vma->vm_end - vma->vm_start
-								 , vma->vm_page_prot);
+		phys_addr = virt_to_phys(mu2e_mmap_ptrs[dtc][ch][dir][map]);
+		sts = io_remap_pfn_range(vma, vma->vm_start, phys_addr >> PAGE_SHIFT, vma->vm_end - vma->vm_start, vma->vm_page_prot);
 	}
 	if (sts) return -EAGAIN;
 
@@ -80,7 +74,7 @@ int alloc_mem(int dtc)
 										 //Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info[dtc].baseVAddr
 										 //	              , 0x9114, 0x00003f3f ); // make sure all links are enabled
 
-	TRACE(1, "init_mu2e reset done bits: 0x%08x MU2E_NUM_RECV_CHANNELS=%d MU2E_NUM_RECV_BUFFS=%d MU2E_NUM_SEND_BUFFS=%d"
+	TRACE(1, "alloc_mem reset done bits: 0x%08x MU2E_NUM_RECV_CHANNELS=%d MU2E_NUM_RECV_BUFFS=%d MU2E_NUM_SEND_BUFFS=%d"
 		  , Dma_mReadReg((unsigned long)mu2e_pcie_bar_info[dtc].baseVAddr, 0x9138)
 		  , MU2E_NUM_RECV_CHANNELS, MU2E_NUM_RECV_BUFFS, MU2E_NUM_SEND_BUFFS);
 
@@ -89,7 +83,7 @@ int alloc_mem(int dtc)
 	dir = C2S;
 	for (chn = 0; chn < MU2E_NUM_RECV_CHANNELS; ++chn)
 	{
-		TRACE(1, "init_mu2e dma_alloc (#=%d)", MU2E_NUM_RECV_BUFFS);
+		TRACE(1, "alloc_mem dma_alloc (#=%d)", MU2E_NUM_RECV_BUFFS);
 
 		va = kmalloc(MU2E_NUM_RECV_BUFFS * sizeof(void *), GFP_KERNEL); // Array of data buffer pointers
 		vb = kmalloc(MU2E_NUM_RECV_BUFFS * sizeof(void *), GFP_KERNEL); // Array of buffdesc pointers
@@ -109,9 +103,9 @@ int alloc_mem(int dtc)
 				dma_alloc_coherent(&mu2e_pci_dev[dtc]->dev, sizeof(mu2e_databuff_t), &(mu2e_pci_recver[dtc][chn].databuffs_dma[ii]), GFP_KERNEL);
 			mu2e_pci_recver[dtc][chn].buffdesc_ring[ii] =
 				dma_alloc_coherent(&mu2e_pci_dev[dtc]->dev, sizeof(mu2e_buffdesc_C2S_t), &(mu2e_pci_recver[dtc][chn].buffdesc_ring_dma[ii]), GFP_KERNEL);
-			TRACE(1, "init_mu2e mu2e_pci_recver[dtc][%u][%u].databuffs=%p databuffs_dma=0x%llx "
+			TRACE(1, "alloc_mem mu2e_pci_recver[%d][%u][%u].databuffs=%p databuffs_dma=0x%llx "
 				  "buffdesc_ring=%p buffdesc_ring_dma=0x%llx"
-				  , chn, ii
+				  , dtc, chn, ii
 				  , mu2e_pci_recver[dtc][chn].databuffs[ii]
 				  , mu2e_pci_recver[dtc][chn].databuffs_dma[ii]
 				  , mu2e_pci_recver[dtc][chn].buffdesc_ring[ii]
@@ -122,9 +116,8 @@ int alloc_mem(int dtc)
 		//mu2e_mmap_ptrs[dtc][chn][dir][MU2E_MAP_META] = mu2e_pci_recver[dtc][chn].buffdesc_ring;
 		mu2e_mmap_ptrs[dtc][chn][dir][MU2E_MAP_META] = (void*)__get_free_pages(GFP_KERNEL, 0);
 
-		TRACE(1, "init_mu2e mu2e_pci_recver[dtc][%u].meta@%p"
-			  , chn
-			  , mu2e_mmap_ptrs[chn][dir][MU2E_MAP_META]);
+		TRACE(1, "alloc_mem mu2e_pci_recver[%d][%u].meta@%p"
+			  ,dtc, chn			  , mu2e_mmap_ptrs[dtc][chn][dir][MU2E_MAP_META]);
 
 		mu2e_channel_info_[dtc][chn][dir].chn = chn;
 		mu2e_channel_info_[dtc][chn][dir].dir = dir;
@@ -148,7 +141,7 @@ int alloc_mem(int dtc)
 		}
 
 		// now write to the HW...
-		TRACE(1, "init_mu2e write 0x%llx to 32bit reg", mu2e_pci_recver[dtc][chn].buffdesc_ring_dma[0]);
+		TRACE(1, "alloc_mem write 0x%llx to 32bit reg", mu2e_pci_recver[dtc][chn].buffdesc_ring_dma[0]);
 		Dma_mWriteChnReg(dtc, chn, dir, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_RESET);
 		msleep(20);
 		Dma_mWriteChnReg(dtc, chn, dir, REG_HW_NEXT_BD
@@ -166,10 +159,10 @@ int alloc_mem(int dtc)
 
 		ctrlStsVal = DMA_ENG_ENABLE;
 #if MU2E_RECV_INTER_ENABLED
-		TRACE(1, "init_mu2e: ctrlStsVal |= DMA_ENG_INT_ENABLE");
+		TRACE(1, "alloc_mem: ctrlStsVal |= DMA_ENG_INT_ENABLE");
 		ctrlStsVal |= DMA_ENG_INT_ENABLE;
 #else
-		TRACE(1, "init_mu2e: no DmaInterrrupt");
+		TRACE(1, "alloc_mem: no DmaInterrrupt");
 #endif
 		Dma_mWriteChnReg(dtc, chn, dir, REG_DMA_ENG_CTRL_STATUS, ctrlStsVal);
 
@@ -180,7 +173,7 @@ int alloc_mem(int dtc)
 	{
 		databuff_sz = sizeof(mu2e_databuff_t)*MU2E_NUM_SEND_BUFFS;
 		buffdesc_sz = sizeof(mu2e_buffdesc_C2S_t)*MU2E_NUM_SEND_BUFFS;
-		TRACE(1, "init_mu2e dma_alloc (#=%d) databuff_sz=%lu buffdesc_sz=%lu"
+		TRACE(1, "alloc_mem dma_alloc (#=%d) databuff_sz=%lu buffdesc_sz=%lu"
 			  , MU2E_NUM_SEND_BUFFS, databuff_sz, buffdesc_sz);
 		va = dma_alloc_coherent(&mu2e_pci_dev[dtc]->dev, databuff_sz
 								, &mu2e_pci_sender[dtc][chn].databuffs_dma
@@ -195,9 +188,9 @@ int alloc_mem(int dtc)
 		mu2e_pci_sender[dtc][chn].buffdesc_ring = va;
 		mu2e_mmap_ptrs[dtc][chn][dir][MU2E_MAP_META] = (void*)__get_free_pages(GFP_KERNEL, 0);
 
-		TRACE(1, "init_mu2e mu2e_pci_sender[dtc][%u].databuffs=%p databuffs_dma=0x%llx "
+		TRACE(1, "alloc_mem mu2e_pci_sender[%d][%u].databuffs=%p databuffs_dma=0x%llx "
 			  "buffdesc_ring_dma=0x%llx meta@%p"
-			  , chn
+			  ,dtc, chn
 			  , mu2e_pci_sender[dtc][chn].databuffs
 			  , mu2e_pci_sender[dtc][chn].databuffs_dma
 			  , mu2e_pci_sender[dtc][chn].buffdesc_ring_dma
@@ -233,7 +226,7 @@ int alloc_mem(int dtc)
 		Dma_mWriteChnReg(dtc, chn, dir, REG_HW_CMPLT_BD, 0);
 
 		Dma_mWriteChnReg(dtc, chn, dir, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_ENABLE);
-	}
+}
 
 	/* Now, finish up with some more mu2e fpga user application stuff... */
 	Dma_mWriteReg((unsigned long)mu2e_pcie_bar_info[dtc].baseVAddr
@@ -289,7 +282,7 @@ void free_mem(int dtc)
 		kfree(mu2e_pci_recver[dtc][chn].buffdesc_ring);
 		kfree(mu2e_pci_recver[dtc][chn].databuffs_dma);
 		kfree(mu2e_pci_recver[dtc][chn].buffdesc_ring_dma);
-		free_pages((unsigned long)mu2e_mmap_ptrs[chn][C2S][MU2E_MAP_META], 0);
+		free_pages((unsigned long)mu2e_mmap_ptrs[dtc][chn][C2S][MU2E_MAP_META], 0);
 	}
 	for (chn = 0; chn < MU2E_NUM_SEND_CHANNELS; ++chn)
 	{
@@ -303,6 +296,6 @@ void free_mem(int dtc)
 							  , sizeof(mu2e_buffdesc_S2C_t)*MU2E_NUM_SEND_BUFFS
 							  , mu2e_pci_sender[dtc][chn].buffdesc_ring
 							  , mu2e_pci_sender[dtc][chn].buffdesc_ring_dma);
-		free_pages((unsigned long)mu2e_mmap_ptrs[chn][S2C][MU2E_MAP_META], 0);
+		free_pages((unsigned long)mu2e_mmap_ptrs[dtc][chn][S2C][MU2E_MAP_META], 0);
 	}
 }   // free_mem
