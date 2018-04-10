@@ -15,9 +15,34 @@ void printHelpMsg()
 		<< "    -h: This message." << std::endl
 		<< "    -R: DON'T Print Register Dump." << std::endl
 		<< "    -s: Print SERDES Byte and Packet Counters." << std::endl
-		<< "    -p: Print Performance Counters." << std::endl;
+		<< "    -p: Print Performance Counters." << std::endl
+		<< "    -d: DTC instance to use (overridden by $DTCLIB_DTC, defaults to 0)"  << std::endl
+		;
 
 	exit(0);
+}
+
+
+unsigned getOptionValue(int* index, char** argv[])
+{
+	auto arg = (*argv)[*index];
+	if (arg[2] == '\0')
+	{
+		(*index)++;
+		unsigned ret = strtoul((*argv)[*index], nullptr, 0);
+		if (ret == 0 && (*argv)[*index][0] != '0') // No option given 
+		{
+			(*index)--;
+		}
+		return ret;
+	}
+	auto offset = 2;
+	if (arg[2] == '=')
+	{
+		offset = 3;
+	}
+
+	return strtoul(&arg[offset], nullptr, 0);
 }
 
 int main(int argc
@@ -26,6 +51,7 @@ int main(int argc
 	auto printPerformanceCounters = false;
 	auto printSERDESCounters = false;
 	auto printRegisterDump = true;
+	int dtc = 0;
 
 	for (auto optind = 1; optind < argc; ++optind)
 	{
@@ -44,6 +70,9 @@ int main(int argc
 					break;
 				case 'R':
 					printRegisterDump = false;
+					break;
+				case 'd':
+					dtc = getOptionValue(&optind, &argv);
 					break;
 				default:
 					std::cout << "Unknown option: " << argv[optind][index] << std::endl;
