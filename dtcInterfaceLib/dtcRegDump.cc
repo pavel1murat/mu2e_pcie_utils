@@ -57,10 +57,7 @@ int main(int argc
 	{
 		if (argv[optind][0] == '-')
 		{
-			auto index = 1;
-			while (argv[optind][index] != '\0')
-			{
-				switch (argv[optind][index])
+				switch (argv[optind][1])
 				{
 				case 's':
 					printSERDESCounters = true;
@@ -75,15 +72,13 @@ int main(int argc
 					dtc = getOptionValue(&optind, &argv);
 					break;
 				default:
-					std::cout << "Unknown option: " << argv[optind][index] << std::endl;
+					std::cout << "Unknown option: " << argv[optind] << std::endl;
 					printHelpMsg();
 					break;
 				case 'h':
 					printHelpMsg();
 					break;
 				}
-				index++;
-			}
 		}
 	}
 
