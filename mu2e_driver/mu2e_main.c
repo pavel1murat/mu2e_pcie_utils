@@ -461,8 +461,8 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 			TRACE(10, "%3u %2x 0x%08x", jj, 28
 				  , mu2e_pci_recver[dtc][0].buffdesc_ring[jj]->NextDescPtr);
 			TRACE(10, "%3u meta@%p[%d]=%u", jj
-				  , mu2e_mmap_ptrs[0][C2S][MU2E_MAP_META], jj
-				  , ((u32*)(mu2e_mmap_ptrs[0][C2S][MU2E_MAP_META]))[jj]);
+				  , mu2e_mmap_ptrs[dtc][0][C2S][MU2E_MAP_META], jj
+				  , ((u32*)(mu2e_mmap_ptrs[dtc][0][C2S][MU2E_MAP_META]))[jj]);
 			TRACE(10, "%3u 0x%08x 0x%08x 0x%08x 0x%08x", jj
 				  , ((u32*)&(mu2e_pci_recver[dtc][0].databuffs[jj]))[0]
 				  , ((u32*)&(mu2e_pci_recver[dtc][0].databuffs[jj]))[1]
@@ -485,8 +485,8 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 			TRACE(10, "%3u %2x 0x%08x", jj, 28
 				  , mu2e_pci_sender[dtc][0].buffdesc_ring[jj].NextDescPtr);
 			TRACE(10, "%3u meta@%p[%d]=%u", jj
-				  , mu2e_mmap_ptrs[0][S2C][MU2E_MAP_META], jj
-				  , ((u32*)(mu2e_mmap_ptrs[0][S2C][MU2E_MAP_META]))[jj]);
+				  , mu2e_mmap_ptrs[dtc][0][S2C][MU2E_MAP_META], jj
+				  , ((u32*)(mu2e_mmap_ptrs[dtc][0][S2C][MU2E_MAP_META]))[jj]);
 			TRACE(10, "%3u 0x%08x 0x%08x 0x%08x 0x%08x", jj
 				  , ((u32*)&(mu2e_pci_sender[dtc][0].databuffs[jj]))[0]
 				  , ((u32*)&(mu2e_pci_sender[dtc][0].databuffs[jj]))[1]

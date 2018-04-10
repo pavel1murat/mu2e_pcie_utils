@@ -129,8 +129,8 @@ extern "C" {
 #define descDmaAdr2idx( regval,dtc, chn, dir, hnt )		\
 	(dir == C2S)					\
 	? ({u32 ii = hnt % MU2E_NUM_RECV_BUFFS, lc=0; do{						\
-	  TRACE(19,"descDmaAdr2idx: regval=%x buffdesc_ring_dma[%d/%d]=%x, chn=%d, dir=%d",   \
-			regval,ii,MU2E_NUM_RECV_BUFFS,(u32)mu2e_pci_recver[dtc][chn].buffdesc_ring_dma[ii],chn,dir);   \
+	  TRACE(19,"descDmaAdr2idx: regval=%x buffdesc_ring_dma[%d/%d]=%x, dtc=%d, chn=%d, dir=%d",   \
+			regval,ii,MU2E_NUM_RECV_BUFFS,(u32)mu2e_pci_recver[dtc][chn].buffdesc_ring_dma[ii],dtc,chn,dir);   \
 	  if(regval == mu2e_pci_recver[dtc][chn].buffdesc_ring_dma[ii])break; ii=(ii + 1) % MU2E_NUM_RECV_BUFFS; ++lc;} \
 		 while (lc < MU2E_NUM_RECV_BUFFS); ii;} ) \
 	: ( (u32)(regval-mu2e_pci_sender[dtc][chn].buffdesc_ring_dma) \
