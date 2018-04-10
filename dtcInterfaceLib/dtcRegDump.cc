@@ -16,7 +16,7 @@ void printHelpMsg()
 		<< "    -R: DON'T Print Register Dump." << std::endl
 		<< "    -s: Print SERDES Byte and Packet Counters." << std::endl
 		<< "    -p: Print Performance Counters." << std::endl
-		<< "    -d: DTC instance to use (overridden by $DTCLIB_DTC, defaults to 0)"  << std::endl
+		<< "    -d: DTC instance to use (defaults to DTCLIB_DTC if set, 0 otherwise)"  << std::endl
 		;
 
 	exit(0);
@@ -51,7 +51,7 @@ int main(int argc
 	auto printPerformanceCounters = false;
 	auto printSERDESCounters = false;
 	auto printRegisterDump = true;
-	int dtc = 0;
+	int dtc = -1;
 
 	for (auto optind = 1; optind < argc; ++optind)
 	{

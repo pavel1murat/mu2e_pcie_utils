@@ -60,8 +60,7 @@ unsigned rocMask = 0x1;
 unsigned targetFrequency = 166666667;
 int clockToProgram = 0;
 
-auto dtcE = getenv("DTCLIB_DTC");
-int dtc = dtcE != nullptr ? atoi(dtcE) : 0;
+int dtc = -1;
 
 
 unsigned getOptionValue(int* index, char** argv[])
@@ -349,7 +348,7 @@ void printHelpMsg()
 		<< "    -v: Expected DTC Design version string (Default: \"\")" << std::endl
 		<< "    -V: Do NOT attempt to verify that the sim file landed in DTC memory correctly" << std::endl
 		<< "    --timestamp-list: Read <file> for timestamps to request (CFO will generate heartbeats for all timestamps in range spanned by file)" << std::endl
-		<< "    --dtc: Use dtc <num> (Overridden by DTCLIB_DTC, defaults to 0, see ls /dev/mu2e* for available DTCs)"
+		<< "    --dtc: Use dtc <num> (Defaults to DTCLIB_DTC if set, 0 otherwise, see ls /dev/mu2e* for available DTCs)"
 		;
 	exit(0);
 }

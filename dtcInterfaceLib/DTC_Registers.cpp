@@ -67,10 +67,14 @@ DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, int dtc, unsigned rocMask
 		}
 	}
 
-	auto dtcE = getenv("DTCLIB_DTC");
-	if (dtcE != nullptr)
+	if (dtc == -1)
 	{
-		dtc = atoi(dtcE);
+		auto dtcE = getenv("DTCLIB_DTC");
+		if (dtcE != nullptr)
+		{
+			dtc = atoi(dtcE);
+		}
+		else dtc = 0;
 	}
 
 	SetSimMode(expectedDesignVersion, simMode_,dtc, rocMask, skipInit);
