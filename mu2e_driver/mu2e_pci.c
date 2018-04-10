@@ -218,6 +218,9 @@ static void mu2e_pci_remove(struct pci_dev *pdev)
 {
 	int dtc = MINOR(pdev->dev.devt);
 
+	if(mu2e_pci_dev[dtc] == 0) return;
+	mu2e_pci_dev[dtc] = 0;
+
 	mu2e_event_down(dtc);
 	device_destroy(mu2e_dev_class, pdev->dev.devt);
 
