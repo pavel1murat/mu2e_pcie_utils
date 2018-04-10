@@ -156,7 +156,8 @@ static int devl_pci_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	TRACE(5, "devl_pci_probe MAJOR=%d MINOR=%d", MAJOR(devl_dev_number), next_minor_number);
 	if (next_minor_number < 10)
 	{
-		device_create(devl_dev_class, NULL, MKDEV(MAJOR(devl_dev_number), next_minor_number), NULL, PCIDEVL_DEV_FILE, next_minor_number);
+		pdev->dev.devt = MKDEV(MAJOR(devl_dev_number), next_minor_number);
+		device_create(devl_dev_class, NULL, pdev->dev.devt, NULL, PCIDEVL_DEV_FILE, next_minor_number);
 		pci_dev_sp[next_minor_number] = pdev;		/* GLOBAL */
 		next_minor_number++;
 	}

@@ -20,9 +20,11 @@
 # define IOCTL_RET_TYPE                       long
 #endif
 
+extern dev_t mu2e_dev_number;
+extern struct class *mu2e_dev_class;
+
 IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(  struct inode *inode, struct file *filp
 				     , unsigned int cmd,    unsigned long arg));
-int  mu2e_mmap( struct file *file, struct vm_area_struct *vma );
 int  mu2e_fs_up( void );
 
 void mu2e_fs_down( void );

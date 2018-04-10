@@ -14,7 +14,7 @@
 #include <chrono>
 #include "mu2edev.h"
 
-mu2edev::mu2edev() : devfd_(0), buffers_held_(0), simulator_(nullptr), deviceTime_(0LL), writeSize_(0), readSize_(0)
+mu2edev::mu2edev() : devfd_(0), buffers_held_(0), simulator_(nullptr),activeDTC_(0), deviceTime_(0LL), writeSize_(0), readSize_(0)
 {
 	//TRACE_CNTL( "lvlmskM", 0x3 );
 	//TRACE_CNTL( "lvlmskS", 0x3 );
@@ -25,7 +25,7 @@ mu2edev::~mu2edev()
 	delete simulator_;
 }
 
-int mu2edev::init(DTCLib::DTC_SimMode simMode)
+int mu2edev::init(DTCLib::DTC_SimMode simMode, int dtc)
 {
 	auto start = std::chrono::steady_clock::now();
 	if (simMode != DTCLib::DTC_SimMode_Disabled && simMode != DTCLib::DTC_SimMode_NoCFO
@@ -41,11 +41,14 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode)
 			delete simulator_;
 			simulator_ = nullptr;
 		}
+
+		activeDTC_ = dtc;
+		std::string devfile = "/dev/" + std::string(MU2E_DEV_FILE) + std::to_string(activeDTC_);
 		int sts;
-		devfd_ = open("/dev/" MU2E_DEV_FILE, O_RDWR);
+		devfd_ = open(devfile.c_str(), O_RDWR);
 		if (devfd_ == -1 || devfd_ == 0)
 		{
-			perror("open /dev/" MU2E_DEV_FILE);
+			perror(("open " + devfile).c_str());
 			TRACE(1, "mu2e Device file not found and DTCLIB_SIM_ENABLE not set! Exiting.");
 			exit(1);
 		}
@@ -57,12 +60,12 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode)
 				TRACE(17, "mu2edev::init before ioctl( devfd_, M_IOC_GET_INFO, &get_info ) chn=%u dir=%u", chn, dir);
 				sts = ioctl(devfd_, M_IOC_GET_INFO, &get_info);
 				if (sts != 0) { perror("M_IOC_GET_INFO"); exit(1); }
-				mu2e_channel_info_[chn][dir] = get_info;
-				TRACE(4, "mu2edev::init %u:%u - num=%u size=%u hwIdx=%u, swIdx=%u delta=%u"
-					  , chn, dir
+				mu2e_channel_info_[activeDTC_][chn][dir] = get_info;
+				TRACE(4, "mu2edev::init %d %u:%u - num=%u size=%u hwIdx=%u, swIdx=%u delta=%u"
+					  , activeDTC_, chn, dir
 					  , get_info.num_buffs, get_info.buff_size
 					  , get_info.hwIdx, get_info.swIdx
-					  , mu2e_chn_info_delta_(chn, dir, &mu2e_channel_info_));
+					  , mu2e_chn_info_delta_(activeDTC_, chn, dir, &mu2e_channel_info_));
 				for (unsigned map = 0; map < 2; ++map)
 				{
 					size_t length = get_info.num_buffs * ((map == MU2E_MAP_BUFF)
@@ -71,17 +74,17 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode)
 					//int prot = (((dir == S2C) && (map == MU2E_MAP_BUFF))? PROT_WRITE : PROT_READ);
 					int prot = (((map == MU2E_MAP_BUFF)) ? PROT_WRITE : PROT_READ);
 					off64_t offset = chnDirMap2offset(chn, dir, map);
-					mu2e_mmap_ptrs_[chn][dir][map]
+					mu2e_mmap_ptrs_[activeDTC_][chn][dir][map]
 						= mmap(0 /* hint address */
 							   , length, prot, MAP_SHARED, devfd_, offset);
-					if (mu2e_mmap_ptrs_[chn][dir][map] == MAP_FAILED)
+					if (mu2e_mmap_ptrs_[activeDTC_][chn][dir][map] == MAP_FAILED)
 					{
 						perror("mmap"); exit(1);
 					}
 					TRACE(4, "mu2edev::init chnDirMap2offset=%lu mu2e_mmap_ptrs_[%d][%d][%d]=%p p=%c l=%lu"
 						  , offset
 						  , chn, dir, map
-						  , mu2e_mmap_ptrs_[chn][dir][map]
+						  , mu2e_mmap_ptrs_[activeDTC_][chn][dir][map]
 						  , prot == PROT_READ ? 'R' : 'W'
 						  , length);
 				}
@@ -131,26 +134,26 @@ int mu2edev::read_data(int chn, void** buffer, int tmo_ms)
 		retsts = 0;
 		unsigned has_recv_data;
 		TRACE(18, "mu2edev::read_data before (mu2e_mmap_ptrs_[0][0][0]!=NULL) || ((retsts=init())==0)");
-		if ((mu2e_mmap_ptrs_[0][0][0] != NULL) || ((retsts = init()) == 0))
+		if ((mu2e_mmap_ptrs_[activeDTC_][0][0][0] != NULL) || ((retsts = init()) == 0))
 		{
-			has_recv_data = mu2e_chn_info_delta_(chn, C2S, &mu2e_channel_info_);
+			has_recv_data = mu2e_chn_info_delta_(activeDTC_, chn, C2S, &mu2e_channel_info_);
 			TRACE(18, "mu2edev::read_data after %u=has_recv_data = delta_( chn, C2S )", has_recv_data);
-			mu2e_channel_info_[chn][C2S].tmo_ms = tmo_ms; // in case GET_INFO is called
+			mu2e_channel_info_[activeDTC_][chn][C2S].tmo_ms = tmo_ms; // in case GET_INFO is called
 			if ((has_recv_data > buffers_held_)
-				|| ((retsts = ioctl(devfd_, M_IOC_GET_INFO, &mu2e_channel_info_[chn][C2S])) == 0
-					&& (has_recv_data = mu2e_chn_info_delta_(chn, C2S, &mu2e_channel_info_)) > buffers_held_))
+				|| ((retsts = ioctl(devfd_, M_IOC_GET_INFO, &mu2e_channel_info_[activeDTC_][chn][C2S])) == 0
+					&& (has_recv_data = mu2e_chn_info_delta_(activeDTC_, chn, C2S, &mu2e_channel_info_)) > buffers_held_))
 			{   // have data
 	// get byte count from new/next
-				unsigned newNxtIdx = idx_add(mu2e_channel_info_[chn][C2S].swIdx, (int)buffers_held_ + 1, chn, C2S);
-				int *    BC_p = (int*)mu2e_mmap_ptrs_[chn][C2S][MU2E_MAP_META];
+				unsigned newNxtIdx = idx_add(mu2e_channel_info_[activeDTC_][chn][C2S].swIdx, (int)buffers_held_ + 1, activeDTC_, chn, C2S);
+				int *    BC_p = (int*)mu2e_mmap_ptrs_[activeDTC_][chn][C2S][MU2E_MAP_META];
 				retsts = BC_p[newNxtIdx];
-				*buffer = ((mu2e_databuff_t*)(mu2e_mmap_ptrs_[chn][C2S][MU2E_MAP_BUFF]))[newNxtIdx];
+				*buffer = ((mu2e_databuff_t*)(mu2e_mmap_ptrs_[activeDTC_][chn][C2S][MU2E_MAP_BUFF]))[newNxtIdx];
 				TRACE(3, "mu2edev::read_data chn%d hIdx=%u, sIdx=%u "
 					  "%u hasRcvDat=%u %p[newNxtIdx=%d]=retsts=%d buf(%p)[0]=0x%08x"
 					  , chn
-					  , mu2e_channel_info_[chn][C2S].hwIdx
-					  , mu2e_channel_info_[chn][C2S].swIdx
-					  , mu2e_channel_info_[chn][C2S].num_buffs, has_recv_data
+					  , mu2e_channel_info_[activeDTC_][chn][C2S].hwIdx
+					  , mu2e_channel_info_[activeDTC_][chn][C2S].swIdx
+					  , mu2e_channel_info_[activeDTC_][chn][C2S].num_buffs, has_recv_data
 					  , (void*)BC_p, newNxtIdx, retsts, *buffer, *(uint32_t*)*buffer);
 				++buffers_held_;
 			}
@@ -183,7 +186,7 @@ int mu2edev::read_release(int chn, unsigned num)
 		retsts = 0;
 		unsigned long arg;
 		unsigned has_recv_data;
-		has_recv_data = mu2e_chn_info_delta_(chn, C2S, &mu2e_channel_info_);
+		has_recv_data = mu2e_chn_info_delta_(activeDTC_, chn, C2S, &mu2e_channel_info_);
 		if (num <= has_recv_data)
 		{
 			arg = (chn << 24) | (C2S << 16) | (num & 0xffff);// THIS OBIVOUSLY SHOULD BE A MACRO
@@ -191,8 +194,8 @@ int mu2edev::read_release(int chn, unsigned num)
 			if (retsts != 0) { perror("M_IOC_BUF_GIVE"); }//exit(1); } // Don't exit for now
 
 	// increment our cached info
-			mu2e_channel_info_[chn][C2S].swIdx
-				= idx_add(mu2e_channel_info_[chn][C2S].swIdx, (int)num, chn, C2S);
+			mu2e_channel_info_[activeDTC_][chn][C2S].swIdx
+				= idx_add(mu2e_channel_info_[activeDTC_][chn][C2S].swIdx, (int)num,activeDTC_, chn, C2S);
 			if (num <= buffers_held_)
 				buffers_held_ -= num;
 			else
@@ -251,11 +254,11 @@ void mu2edev::meta_dump(int chn, int dir)
 	if (simulator_ == nullptr)
 	{
 		int retsts = 0;
-		if ((mu2e_mmap_ptrs_[0][0][0] != NULL) || ((retsts = init()) == 0))
+		if ((mu2e_mmap_ptrs_[activeDTC_][0][0][0] != NULL) || ((retsts = init()) == 0))
 		{
-			for (unsigned buf = 0; buf < mu2e_channel_info_[chn][dir].num_buffs; ++buf)
+			for (unsigned buf = 0; buf < mu2e_channel_info_[activeDTC_][chn][dir].num_buffs; ++buf)
 			{
-				int *    BC_p = (int*)mu2e_mmap_ptrs_[chn][dir][MU2E_MAP_META];
+				int *    BC_p = (int*)mu2e_mmap_ptrs_[activeDTC_][chn][dir][MU2E_MAP_META];
 				printf("buf_%02d: %u\n", buf, BC_p[buf]);
 			}
 		}
@@ -276,7 +279,7 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 	{
 		int dir = S2C;
 		retsts = 0;
-		unsigned delta = mu2e_chn_info_delta_(chn, dir, &mu2e_channel_info_); // check cached info
+		unsigned delta = mu2e_chn_info_delta_(activeDTC_, chn, dir, &mu2e_channel_info_); // check cached info
 		TRACE(3, "write_data delta=%u chn=%d dir=S2C", delta, chn);
 		while (delta <= 1 && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() < 1000)
 		{
@@ -284,8 +287,8 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 			get_info.chn = chn; get_info.dir = dir; get_info.tmo_ms = 0;
 			int sts = ioctl(devfd_, M_IOC_GET_INFO, &get_info);
 			if (sts != 0) { perror("M_IOC_GET_INFO"); exit(1); }
-			mu2e_channel_info_[chn][dir] = get_info; // copy info struct
-			delta = mu2e_chn_info_delta_(chn, dir, &mu2e_channel_info_);
+			mu2e_channel_info_[activeDTC_][chn][dir] = get_info; // copy info struct
+			delta = mu2e_chn_info_delta_(activeDTC_, chn, dir, &mu2e_channel_info_);
 			usleep(1000);
 		}
 
@@ -297,8 +300,8 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 			exit(2);
 		}
 
-		unsigned idx = mu2e_channel_info_[chn][dir].swIdx;
-		void * data = ((mu2e_databuff_t*)(mu2e_mmap_ptrs_[chn][dir][MU2E_MAP_BUFF]))[idx];
+		unsigned idx = mu2e_channel_info_[activeDTC_][chn][dir].swIdx;
+		void * data = ((mu2e_databuff_t*)(mu2e_mmap_ptrs_[activeDTC_][chn][dir][MU2E_MAP_BUFF]))[idx];
 		memcpy(data, buffer, bytes);
 		unsigned long arg = (chn << 24) | (bytes & 0xffffff);// THIS OBIVOUSLY SHOULD BE A MACRO
 
@@ -317,8 +320,8 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 // increment our cached info
 		if (retsts == 0)
 		{
-			mu2e_channel_info_[chn][dir].swIdx
-				= idx_add(mu2e_channel_info_[chn][dir].swIdx, 1, chn, dir);
+			mu2e_channel_info_[activeDTC_][chn][dir].swIdx
+				= idx_add(mu2e_channel_info_[activeDTC_][chn][dir].swIdx, 1,activeDTC_, chn, dir);
 		}
 	}
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
@@ -338,7 +341,7 @@ int mu2edev::release_all(int chn)
 	}
 	else
 	{
-		auto has_recv_data = mu2e_chn_info_delta_(chn, C2S, &mu2e_channel_info_);
+		auto has_recv_data = mu2e_chn_info_delta_(activeDTC_, chn, C2S, &mu2e_channel_info_);
 		if (has_recv_data) read_release(chn, has_recv_data);
 	}
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
