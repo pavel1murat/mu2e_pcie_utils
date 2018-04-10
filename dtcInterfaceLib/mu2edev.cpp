@@ -43,12 +43,13 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode, int dtc)
 		}
 
 		activeDTC_ = dtc;
-		std::string devfile = "/dev/" + std::string(MU2E_DEV_FILE) + std::to_string(activeDTC_);
+		char devfile[11];
+		snprintf(devfile, 11, MU2E_DEV_FILE, activeDTC_);
 		int sts;
-		devfd_ = open(devfile.c_str(), O_RDWR);
+		devfd_ = open(devfile, O_RDWR);
 		if (devfd_ == -1 || devfd_ == 0)
 		{
-			perror(("open " + devfile).c_str());
+			perror(("open " + std::string(devfile)).c_str());
 			TRACE(1, "mu2e Device file not found and DTCLIB_SIM_ENABLE not set! Exiting.");
 			exit(1);
 		}

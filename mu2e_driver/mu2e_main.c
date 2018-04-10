@@ -656,6 +656,7 @@ static int __init init_mu2e(void)
 		goto out_pci;
 	}
 
+	TRACE(1, "init_mu2e completed with ret=%d", ret);
 	return (ret);
 
 out_pci:
