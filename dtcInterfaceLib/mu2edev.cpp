@@ -44,7 +44,7 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode, int dtc)
 
 		activeDTC_ = dtc;
 		char devfile[11];
-		snprintf(devfile, 11, MU2E_DEV_FILE, activeDTC_);
+		snprintf(devfile, 11, "/dev/" MU2E_DEV_FILE, activeDTC_);
 		int sts;
 		devfd_ = open(devfile, O_RDWR);
 		if (devfd_ == -1 || devfd_ == 0)

@@ -7,6 +7,11 @@
  # rev='$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $'
 set -u
 
+if [ $# -lt 2 ]; then
+	 echo "usage: `basename $0` <devicenum> <file>";
+	 exit
+fi
+
 devnum=$1; shift
 file=$1; shift
 
