@@ -80,7 +80,6 @@ int main(int argc, char* argv[])
 	unsigned address = 0;
 	unsigned data = 0;
 	unsigned block = 0;
-	std::string expectedDesignVersion = "";
 	std::string op = "";
 
 	for (auto optind = 1; optind < argc; ++optind)
@@ -111,9 +110,6 @@ int main(int argc, char* argv[])
 				quiet = true;
 				reallyQuiet = true;
 				break;
-			case 'v':
-				expectedDesignVersion = getOptionString(&optind, &argv);
-				break;
 			default:
 				std::cout << "Unknown option: " << argv[optind] << std::endl;
 				printHelpMsg();
@@ -142,7 +138,7 @@ int main(int argc, char* argv[])
 		<< std::endl;
 
 
-	auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO);
+	auto thisDTC = new DTC( DTC_SimMode_NoCFO, 0);
 	auto device = thisDTC->GetDevice();
 
 	if (op == "read_register")

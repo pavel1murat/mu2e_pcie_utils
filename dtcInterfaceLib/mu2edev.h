@@ -82,7 +82,8 @@ public:
 	/// <param name="simMode">Desired simulation mode</param>
 	/// <param name="dtc">Desired DTC card to use (/dev/mu2eX)</param>
 	/// <returns>0 on success</returns>
-	int init(DTCLib::DTC_SimMode simMode = DTCLib::DTC_SimMode_Disabled, int dtc = 0);
+	int init(DTCLib::DTC_SimMode simMode, int dtc);
+
 	/// <summary>
 	/// Reads data from the DTC.
 	/// Returns the number of bytes read. Negative values indicate errors.

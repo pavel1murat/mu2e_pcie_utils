@@ -29,7 +29,7 @@
 
 #include <unistd.h>
 
-DTCLib::DTC::DTC(std::string expectedDesignVersion, DTC_SimMode mode, unsigned rocMask) : DTC_Registers(expectedDesignVersion, mode, rocMask),
+DTCLib::DTC::DTC(DTC_SimMode mode, int dtc, unsigned rocMask, std::string expectedDesignVersion) : DTC_Registers(mode, dtc, rocMask, expectedDesignVersion),
 daqbuffer_(), dcsbuffer_(), lastDAQBufferActive_(false), lastDCSBufferActive_(false),
 bufferIndex_(0), first_read_(true), daqDMAByteCount_(0), dcsDMAByteCount_(0),
 lastReadPtr_(nullptr), nextReadPtr_(nullptr), dcsReadPtr_(nullptr)

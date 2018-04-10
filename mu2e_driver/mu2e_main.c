@@ -677,6 +677,8 @@ static void __exit exit_mu2e(void)
 	//free_mem();
 	mu2e_pci_down();
 	mu2e_fs_down();
+
+	printk("exit_mu2e complete\n");
 }   // exit_mu2e
 
 

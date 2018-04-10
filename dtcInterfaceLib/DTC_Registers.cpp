@@ -8,7 +8,7 @@
 # include <unistd.h>
 # include "trace.h"
 
-DTCLib::DTC_Registers::DTC_Registers(std::string expectedDesignVersion, DTC_SimMode mode, unsigned rocMask, bool skipInit) : device_(), simMode_(mode), dmaSize_(16)
+DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, int dtc, unsigned rocMask, std::string expectedDesignVersion, bool skipInit) : device_(), simMode_(mode), dmaSize_(16)
 {
 	for (auto ii = 0; ii < 6; ++ii)
 	{
@@ -66,7 +66,14 @@ DTCLib::DTC_Registers::DTC_Registers(std::string expectedDesignVersion, DTC_SimM
 			break;
 		}
 	}
-	SetSimMode(expectedDesignVersion, simMode_, rocMask, skipInit);
+
+	auto dtcE = getenv("DTCLIB_DTC");
+	if (dtcE != nullptr)
+	{
+		dtc = atoi(dtcE);
+	}
+
+	SetSimMode(expectedDesignVersion, simMode_,dtc, rocMask, skipInit);
 }
 
 DTCLib::DTC_Registers::~DTC_Registers()
@@ -78,10 +85,10 @@ DTCLib::DTC_Registers::~DTC_Registers()
 	device_.close();
 }
 
-DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(std::string expectedDesignVersion,DTC_SimMode mode, unsigned rocMask, bool skipInit)
+DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(std::string expectedDesignVersion,DTC_SimMode mode,int dtc, unsigned rocMask, bool skipInit)
 {
 	simMode_ = mode;
-	device_.init(simMode_);
+	device_.init(simMode_, dtc);
 	if (expectedDesignVersion != "" && expectedDesignVersion != ReadDesignVersion())
 	{
 		throw new DTC_WrongVersionException(expectedDesignVersion, ReadDesignVersion());

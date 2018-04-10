@@ -135,7 +135,7 @@ int mu2edev::read_data(int chn, void** buffer, int tmo_ms)
 		retsts = 0;
 		unsigned has_recv_data;
 		TRACE(18, "mu2edev::read_data before (mu2e_mmap_ptrs_[0][0][0]!=NULL) || ((retsts=init())==0)");
-		if ((mu2e_mmap_ptrs_[activeDTC_][0][0][0] != NULL) || ((retsts = init()) == 0))
+		if ((mu2e_mmap_ptrs_[activeDTC_][0][0][0] != NULL) || ((retsts = init(DTCLib::DTC_SimMode_Disabled, 0)) == 0)) //Default-init mu2edev if not given guidance
 		{
 			has_recv_data = mu2e_chn_info_delta_(activeDTC_, chn, C2S, &mu2e_channel_info_);
 			TRACE(18, "mu2edev::read_data after %u=has_recv_data = delta_( chn, C2S )", has_recv_data);
@@ -255,7 +255,7 @@ void mu2edev::meta_dump(int chn, int dir)
 	if (simulator_ == nullptr)
 	{
 		int retsts = 0;
-		if ((mu2e_mmap_ptrs_[activeDTC_][0][0][0] != NULL) || ((retsts = init()) == 0))
+		if ((mu2e_mmap_ptrs_[activeDTC_][0][0][0] != NULL) || ((retsts = init(DTCLib::DTC_SimMode_Disabled, 0)) == 0)) //Default-init mu2edev if not given guidance
 		{
 			for (unsigned buf = 0; buf < mu2e_channel_info_[activeDTC_][chn][dir].num_buffs; ++buf)
 			{

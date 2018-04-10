@@ -19,10 +19,11 @@ namespace DTCLib
 		/// <summary>
 		/// Construct an instance of the DTC class
 		/// </summary>
-		/// <param name="expectedDesignVersion">Expected DTC Firmware Design Version. If set, will throw an exception if the DTC firmware does not match (Default: "")</param>
 		/// <param name="mode">The desired simulation mode for the DTC (Default: Disabled)</param>
+		/// <param name="dtc">The DTC card to use</param>
 		/// <param name="rocMask">Which ROCs should be active. Each hex digit corresponds to a Ring, and the number indicates how many ROCs are active on that ring. (Default: 0x1)</param>
-		explicit DTC(std::string expectedDesignVersion = "", DTC_SimMode mode = DTC_SimMode_Disabled, unsigned rocMask = 0x1);
+		/// <param name="expectedDesignVersion">Expected DTC Firmware Design Version. If set, will throw an exception if the DTC firmware does not match (Default: "")</param>
+		explicit DTC(DTC_SimMode mode = DTC_SimMode_Disabled,int dtc = 0, unsigned rocMask = 0x1, std::string expectedDesignVersion = "");
 		virtual ~DTC();
 
 		//

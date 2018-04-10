@@ -60,6 +60,9 @@ unsigned rocMask = 0x1;
 unsigned targetFrequency = 166666667;
 int clockToProgram = 0;
 
+auto dtcE = getenv("DTCLIB_DTC");
+int dtc = dtcE != nullptr ? atoi(dtcE) : 0;
+
 
 unsigned getOptionValue(int* index, char** argv[])
 {
@@ -346,13 +349,14 @@ void printHelpMsg()
 		<< "    -v: Expected DTC Design version string (Default: \"\")" << std::endl
 		<< "    -V: Do NOT attempt to verify that the sim file landed in DTC memory correctly" << std::endl
 		<< "    --timestamp-list: Read <file> for timestamps to request (CFO will generate heartbeats for all timestamps in range spanned by file)" << std::endl
+		<< "    --dtc: Use dtc <num> (Overridden by DTCLIB_DTC, defaults to 0, see ls /dev/mu2e* for available DTCs)"
 		;
 	exit(0);
 }
 
 int
 main(int argc
-	, char* argv[])
+	 , char* argv[])
 {
 	for (auto optind = 1; optind < argc; ++optind)
 	{
@@ -465,6 +469,10 @@ main(int argc
 				{
 					timestampFile = getLongOptionString(&optind, &argv);
 				}
+				else if (option == "--dtc")
+				{
+					dtc = getLongOptionValue(&optind, &argv);
+				}
 				else if (option == "--help")
 				{
 					printHelpMsg();
@@ -489,6 +497,7 @@ main(int argc
 	std::cout.setf(std::ios_base::boolalpha);
 	std::cout << "Options are: "
 		<< "Operation: " << std::string(op)
+		<< ", DTC: " << dtc
 		<< ", Num: " << number
 		<< ", Delay: " << delay
 		<< ", CFO Delay: " << cfodelay
@@ -528,9 +537,10 @@ main(int argc
 	if (op == "read")
 	{
 		std::cout << "Operation \"read\"" << std::endl;
-		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, dtc, rocMask, expectedDesignVersion);
 		auto packet = thisDTC->ReadNextDAQPacket();
-		if (packet) {
+		if (packet)
+		{
 			if (!reallyQuiet) std::cout << packet->toJSON() << '\n';
 			if (rawOutput)
 			{
@@ -547,7 +557,7 @@ main(int argc
 	else if (op == "read_data")
 	{
 		std::cout << "Operation \"read_data\"" << std::endl;
-		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, dtc, rocMask, expectedDesignVersion);
 
 		auto device = thisDTC->GetDevice();
 		if (readGenerated)
@@ -596,7 +606,7 @@ main(int argc
 	else if (op == "toggle_serdes")
 	{
 		std::cout << "Swapping SERDES Oscillator Clock" << std::endl;
-		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO,dtc, rocMask,expectedDesignVersion);
 		auto clock = thisDTC->ReadSERDESOscillatorClock();
 		if (clock == DTC_SerdesClockSpeed_3125Gbps)
 		{
@@ -617,14 +627,14 @@ main(int argc
 	else if (op == "reset_ddrread")
 	{
 		std::cout << "Resetting DDR Read Address" << std::endl;
-		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, dtc, rocMask, expectedDesignVersion);
 		thisDTC->ResetDDRReadAddress();
 		delete thisDTC;
 	}
 	else if (op == "reset_detemu")
 	{
 		std::cout << "Resetting Detector Emulator" << std::endl;
-		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, dtc, rocMask, expectedDesignVersion);
 		thisDTC->ClearDetectorEmulatorInUse();
 		thisDTC->ResetDDR();
 		thisDTC->ResetDTC();
@@ -633,7 +643,7 @@ main(int argc
 	else if (op == "verify_simfile")
 	{
 		std::cout << "Operation \"verify_simfile\"" << std::endl;
-		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, dtc, rocMask, expectedDesignVersion);
 		auto device = thisDTC->GetDevice();
 
 		device->ResetDeviceTime();
@@ -649,7 +659,7 @@ main(int argc
 	{
 		std::cout << "Operation \"buffer_test\"" << std::endl;
 		auto startTime = std::chrono::steady_clock::now();
-		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, dtc, rocMask, expectedDesignVersion);
 		auto device = thisDTC->GetDevice();
 
 
@@ -793,7 +803,7 @@ main(int argc
 	else if (op == "read_release")
 	{
 		mu2edev device;
-		device.init();
+		device.init(DTCLib::DTC_SimMode_Disabled, dtc);
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
 			void* buffer;
@@ -808,7 +818,7 @@ main(int argc
 	else if (op == "DTC")
 	{
 		auto startTime = std::chrono::steady_clock::now();
-		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, dtc, rocMask, expectedDesignVersion);
 
 		auto initTime = thisDTC->GetDevice()->GetDeviceTime();
 		thisDTC->GetDevice()->ResetDeviceTime();
@@ -1002,7 +1012,7 @@ main(int argc
 	}
 	else if (op == "program_clock")
 	{
-		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, dtc, rocMask, expectedDesignVersion);
 		auto oscillator = clockToProgram == 0 ? DTC_OscillatorType_SERDES : DTC_OscillatorType_DDR;
 		thisDTC->SetNewOscillatorFrequency(oscillator, targetFrequency);
 		delete thisDTC;

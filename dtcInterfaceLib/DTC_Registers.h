@@ -160,11 +160,12 @@ namespace DTCLib
 		/// <summary>
 		/// Construct an instance of the DTC register map
 		/// </summary>
-		/// <param name="expectedDesignVersion">Expected DTC Firmware Design Version. If set, will throw an exception if the DTC firmware does not match (Default: "")</param>
 		/// <param name="mode">Default: DTC_SimMode_Disabled; The simulation mode of the DTC</param>
+		/// <param name="dtc">DTC card index to use</param>
 		/// <param name="rocMask">Default 0x1; The initially-enabled ROCs. Each digit corresponds to a ring, so all ROCs = 0x666666</param>
 		/// <param name="skipInit">Default: false; Whether to skip initializing the DTC using the SimMode. Used to read state.</param>
-		explicit DTC_Registers(std::string expectedDesignVersion = "", DTC_SimMode mode = DTC_SimMode_Disabled, unsigned rocMask = 0x1, bool skipInit = false);
+		/// <param name="expectedDesignVersion">Expected DTC Firmware Design Version. If set, will throw an exception if the DTC firmware does not match (Default: "")</param>
+		explicit DTC_Registers(DTC_SimMode mode, int dtc, unsigned rocMask = 0x1, std::string expectedDesignVersion = "", bool skipInit = false);
 		/// <summary>
 		/// DTC_Registers destructor
 		/// </summary>
@@ -192,14 +193,15 @@ namespace DTCLib
 		}
 
 		/// <summary>
-		/// Initialize the DTC in the given SimMode. 
+		/// Initialize the DTC in the given SimMode.
 		/// </summary>
 		/// <param name="expectedDesignVersion">Expected DTC Firmware Design Version. If set, will throw an exception if the DTC firmware does not match</param>
 		/// <param name="mode">Mode to set</param>
+		/// <param name="dtc">DTC card index to use</param>
 		/// <param name="rocMask">The initially-enabled ROCs. Each digit corresponds to a ring, so all ROCs = 0x666666</param>
 		/// <param name="skipInit">Whether to skip initializing the DTC using the SimMode. Used to read state.</param>
 		/// <returns></returns>
-		DTC_SimMode SetSimMode(std::string expectedDesignVersion, DTC_SimMode mode, unsigned rocMask, bool skipInit = false);
+		DTC_SimMode SetSimMode(std::string expectedDesignVersion, DTC_SimMode mode,int dtc, unsigned rocMask, bool skipInit = false);
 
 		//
 		// DTC Register Dumps
@@ -1275,7 +1277,7 @@ namespace DTCLib
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
 		DTC_RegisterFormatter FormatReceivePacketError();
 
-		// CFO Emulation Timestamp Registers 
+		// CFO Emulation Timestamp Registers
 		/// <summary>
 		/// Set the starting DTC_Timestamp for the CFO Emulator
 		/// </summary>
