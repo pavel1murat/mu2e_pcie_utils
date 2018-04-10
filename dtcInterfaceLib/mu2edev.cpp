@@ -82,9 +82,9 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode, int dtc)
 					{
 						perror("mmap"); exit(1);
 					}
-					TRACE(4, "mu2edev::init chnDirMap2offset=%lu mu2e_mmap_ptrs_[%d][%d][%d]=%p p=%c l=%lu"
+					TRACE(4, "mu2edev::init chnDirMap2offset=%lu mu2e_mmap_ptrs_[%d][%d][%d][%d]=%p p=%c l=%lu"
 						  , offset
-						  , chn, dir, map
+						  , dtc, chn, dir, map
 						  , mu2e_mmap_ptrs_[activeDTC_][chn][dir][map]
 						  , prot == PROT_READ ? 'R' : 'W'
 						  , length);
@@ -134,7 +134,7 @@ int mu2edev::read_data(int chn, void** buffer, int tmo_ms)
 	{
 		retsts = 0;
 		unsigned has_recv_data;
-		TRACE(18, "mu2edev::read_data before (mu2e_mmap_ptrs_[0][0][0]!=NULL) || ((retsts=init())==0)");
+		TRACE(18, "mu2edev::read_data before (mu2e_mmap_ptrs_[%d][0][0][0]!=NULL) || ((retsts=init())==0)", activeDTC_);
 		if ((mu2e_mmap_ptrs_[activeDTC_][0][0][0] != NULL) || ((retsts = init(DTCLib::DTC_SimMode_Disabled, 0)) == 0)) //Default-init mu2edev if not given guidance
 		{
 			has_recv_data = mu2e_chn_info_delta_(activeDTC_, chn, C2S, &mu2e_channel_info_);
