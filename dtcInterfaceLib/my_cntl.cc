@@ -36,6 +36,8 @@ main(  int	argc
   m_ioc_cmd_t        ioc_cmd;
   m_ioc_reg_access_t reg_access; 
   mu2edev            dev;
+  char devfile[11];
+  int dtc = -1;
 
   int         opt_v=0;
   int         opt;
@@ -56,6 +58,7 @@ main(  int	argc
         case 'V': printf("%s\n",rev);return(0);           break;
         case 'v': opt_v++;                                break;
 		case 'p': opt_packets=strtoul(optarg,NULL,0);     break;
+		case 'd': dtc = strtol(optarg, NULL, 0);          break;
         default:  printf ("?? getopt returned character code 0%o ??\n", opt);
         }
     }
@@ -67,8 +70,17 @@ main(  int	argc
   printf( "cmd=%s\n", cmd );
   printf( "opt_packets=%i\n", opt_packets);
 
-  fd = open( "/dev/" MU2E_DEV_FILE, O_RDONLY );
-  if (fd == -1) { perror("open /dev/" MU2E_DEV_FILE); return (1); }
+  if (dtc == -1)
+  {
+	  char* dtcE = getenv("DTCLIB_DTC");
+	  if (dtcE != NULL) dtc = strtol(dtcE, NULL, 0);
+	  else dtc = 0;
+  }
+
+  snprintf(devfile, 11, "/dev/" MU2E_DEV_FILE, dtc);
+
+  fd = open( devfile, O_RDONLY );
+  if (fd == -1) { perror("open"); return (1); }
 
   if      (strcmp(cmd,"start") == 0)
     {
