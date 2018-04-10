@@ -216,10 +216,10 @@ static int mu2e_pci_probe(  struct pci_dev             *pdev
 
 static void mu2e_pci_remove(struct pci_dev *pdev)
 {
-	printk("mu2e_pci_remove start\n ");
 	int dtc = MINOR(pdev->dev.devt);
 
 	if(mu2e_pci_dev[dtc] == 0) return;
+	printk("mu2e_pci_remove start dtc=%d\n ",dtc);
 
 	printk("mu2e_pci_remove dtc=%d disabling events\n", dtc);
 	mu2e_event_down(dtc);
