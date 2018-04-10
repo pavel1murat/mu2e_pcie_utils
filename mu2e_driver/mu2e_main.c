@@ -523,7 +523,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 # endif
 		desc_S2C_p->StartOfPkt = 1;
 		desc_S2C_p->EndOfPkt = 1;
-		{	void * data = ((mu2e_databuff_t*)(mu2e_mmap_ptrs[chn][dir][MU2E_MAP_BUFF]))[myIdx];
+		{	void * data = ((mu2e_databuff_t*)(mu2e_mmap_ptrs[dtc][chn][dir][MU2E_MAP_BUFF]))[myIdx];
 		TRACE(11, "ioctl BUF_XMIT myIdx=%u desc_S2C_p(%p)=%016llx ByteCnt=%d data(%p)[2-5]=%016llx %016llx %016llx %016llx"
 			  , myIdx, desc_S2C_p, *(u64*)desc_S2C_p, desc_S2C_p->ByteCnt, data, ((u64*)data)[2], ((u64*)data)[3], ((u64*)data)[4], ((u64*)data)[5]);
 		}

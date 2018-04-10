@@ -117,7 +117,7 @@ static void poll_packets(unsigned long dc)
 		// check just-read-HW-val (converted to idx) against "cached" copy
 		while (newCmpltIdx != mu2e_channel_info_[dtc][chn][dir].hwIdx/*ie.cachedCmplt*/)
 		{   // NEED TO UPDATE Receive Byte Counts
-			int * BC_p = (int*)mu2e_mmap_ptrs[chn][dir][MU2E_MAP_META];
+			int * BC_p = (int*)mu2e_mmap_ptrs[dtc][chn][dir][MU2E_MAP_META];
 			nxtCachedCmpltIdx = idx_add(mu2e_channel_info_[dtc][chn][dir].hwIdx, 1, dtc, chn, dir);
 			buffdesc_C2S_p = idx2descVirtAdr(nxtCachedCmpltIdx, dtc, chn, dir);
 			BC_p[nxtCachedCmpltIdx] = buffdesc_C2S_p->ByteCount;
