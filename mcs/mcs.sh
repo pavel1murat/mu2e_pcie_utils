@@ -5,12 +5,6 @@
  # contacting Ron or Fermi Lab in Batavia IL, 60510, phone: 630-840-3000.
  # $RCSfile: .emacs.gnu,v $
  # rev='$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $'
-set -u
-
-if [ $# -lt 2 ]; then
-	 echo "usage: `basename $0` <devicenum> <file>";
-	 exit
-fi
 
 devnum=$1; shift
 file=$1; shift
