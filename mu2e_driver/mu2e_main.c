@@ -28,18 +28,18 @@
 
 	/* GLOBALS */
 
-struct pci_dev *mu2e_pci_dev[MU2E_MAX_NUM_DTCS] = { 0, };
+struct pci_dev *mu2e_pci_dev[MU2E_MAX_NUM_DTCS] = { 0 };
 
-bar_info_t      mu2e_pcie_bar_info[MU2E_MAX_NUM_DTCS] = { {0}, };
+bar_info_t      mu2e_pcie_bar_info[MU2E_MAX_NUM_DTCS] = { {0} };
 
 dev_t         mu2e_dev_number;
 struct class *mu2e_dev_class;
 
 
 
-pci_sender_t mu2e_pci_sender[MU2E_MAX_NUM_DTCS][MU2E_NUM_SEND_CHANNELS] = { { {0}, } };
+pci_sender_t mu2e_pci_sender[MU2E_MAX_NUM_DTCS][MU2E_NUM_SEND_CHANNELS] = { { {0} } };
 
-pci_recver_t mu2e_pci_recver[MU2E_MAX_NUM_DTCS][MU2E_NUM_RECV_CHANNELS] = { { {0}, } };
+pci_recver_t mu2e_pci_recver[MU2E_MAX_NUM_DTCS][MU2E_NUM_RECV_CHANNELS] = { { {0} } };
 
 // This variable name is used in a macro that expects the same
 // variable name in the user-space "library"

@@ -25,7 +25,7 @@ static struct pci_device_id xilinx_ids[] = {
 	{ }     /* terminate list with empty entry */
 };
 
-int MSIEnabled[MU2E_MAX_NUM_DTCS] = {0,};
+int MSIEnabled[MU2E_MAX_NUM_DTCS] = {0};
 
 /* Return 0==SUCCESS, 1=FAIL
  */

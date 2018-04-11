@@ -20,7 +20,7 @@
 #define PACKET_POLL_HZ 1000
 
 struct timer_list packets_timer[MU2E_MAX_NUM_DTCS];
-int packets_timer_guard[MU2E_MAX_NUM_DTCS] = { 1, };
+int packets_timer_guard[MU2E_MAX_NUM_DTCS] = { 1 };
 
 extern int checkDmaEngine(int dtc, unsigned chn, unsigned dir);
 
@@ -51,12 +51,16 @@ irqreturn_t DmaInterrupt(int irq, void *dev_id)
 	if (mu2e_force_poll(dtc) == 0)
 #endif
 	{
+		TRACE(20, "DMAInterrupt: Marking Interrupt as acked");
 		Dma_mIntAck(base, DMA_ENG_ALLINT_MASK);
 		return IRQ_HANDLED;
 	}
 	else
 #endif
-		return IRQ_NONE;
+	{
+		TRACE(20, "DMAInterrupt: ERROR Processing interrupt or interrupts not enabled!");
+			return IRQ_NONE;
+	}
 }
 
 /* Poll for completed "read dma (C2S)" buffers.
@@ -179,6 +183,7 @@ int mu2e_event_up(int dtc)
 
 int mu2e_sched_poll(int dtc)
 {
+	TRACE(21, "mu2e_sched_poll dtc=%d packets_timer_guard[dtc]=%d", dtc, packets_timer_guard[dtc]);
 	if (packets_timer_guard[dtc])
 	{
 		packets_timer_guard[dtc] = 0;
@@ -195,6 +200,7 @@ int mu2e_sched_poll(int dtc)
 
 int mu2e_force_poll(int dtc)
 {
+	TRACE(21, "mu2e_force_poll dtc=%d packets_timer_guard[dtc]=%d", dtc, packets_timer_guard[dtc]);
 	if(packets_timer_guard[dtc])
 	{
 		packets_timer_guard[dtc] = 0;
