@@ -178,6 +178,7 @@ int mu2e_event_up(int dtc)
 	init_timer(&packets_timer[dtc]);
 	packets_timer[dtc].function = poll_packets;
 	packets_timer[dtc].data = dtc;
+	packets_timer_guard[dtc] = 1;
 	return mu2e_sched_poll(dtc);
 }
 
