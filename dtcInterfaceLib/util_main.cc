@@ -1018,6 +1018,17 @@ main(int argc
 	}
 	else if (op == "dma_info")
 	{
+
+		if (dtc == -1)
+		{
+			auto dtcE = getenv("DTCLIB_DTC");
+			if (dtcE != nullptr)
+			{
+				dtc = atoi(dtcE);
+			}
+			else dtc = 0;
+		}
+
 		mu2edev device;
 		device.init(DTCLib::DTC_SimMode_Disabled, dtc);
 		device.meta_dump();
@@ -1031,5 +1042,3 @@ main(int argc
 	if (rawOutput) outputStream.close();
 	return 0;
 } // main
-
-
