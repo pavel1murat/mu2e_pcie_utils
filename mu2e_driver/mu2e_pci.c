@@ -164,7 +164,7 @@ static int mu2e_pci_probe(  struct pci_dev             *pdev
 	/* Disable global interrupts */
 	Dma_mIntDisable( mu2e_pcie_bar_info[dtc].baseVAddr );
 
-	TRACE( 1, "mu2e_pci_probe read a channel reg to quite compiler 0x%x"
+	TRACE( 1, "mu2e_pci_probe read a channel reg to quiet compiler 0x%x"
 	  , Dma_mReadChnReg(dtc, 0,C2S,REG_HW_CMPLT_BD) );
 
 	// clear "App 0/1" registers
@@ -193,7 +193,7 @@ static int mu2e_pci_probe(  struct pci_dev             *pdev
 		MSIEnabled[dtc] = 1;
 	}
 
-	pciRet = request_irq(mu2e_pci_dev[dtc]->irq, DmaInterrupt, IRQF_SHARED, "mu2e", mu2e_pci_dev[dtc]);
+	pciRet = request_irq(mu2e_pci_dev[dtc]->irq, DmaInterrupt, IRQF_SHARED, "mu2e", &mu2e_pci_dev[dtc]->dev);
 	if (pciRet)
 	{
 		TRACE(0, "xdma could not allocate interrupt %d", mu2e_pci_dev[dtc]->irq);
