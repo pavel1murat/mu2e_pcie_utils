@@ -398,24 +398,16 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		mu2e_channel_info_[dtc][chn][dir].swIdx = myIdx;
 		break;
 	case M_IOC_DUMP:
-		TRACE(10, "SERDES LOOPBACK Enable 0x%x"
-			  , Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9108));
-		TRACE(10, "Ring Enable 0x%x"
-			  , Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9114));
-		TRACE(10, "SERDES Rx Disparity error (2 bits/link) 0x%x"
-			  , Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x911c));
-		TRACE(10, "SERDES Rx character not in table (2 bits/link) 0x%x"
-			  , Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9120));
-		TRACE(10, "SERDES unlock error 0x%x"
-			  , Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9124));
-		TRACE(10, "SERDES PLL lock 0x%x"
-			  , Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9128));
-		TRACE(10, "SERDES Tx buffer status (2 bits/link) 0x%x"
-			  , Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x912c));
-		TRACE(10, "SERDES Rx buffer status (3 bits/link) 0x%x"
-			  , Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9130));
-		TRACE(10, "SERDES Reset done 0x%x"
-			  , Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9138));
+		TRACE(10, "SERDES LOOPBACK Enable 0x%x", Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9108));
+		TRACE(10, "Ring Enable 0x%x", Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9114));
+		TRACE(10, "SERDES Rx Disparity error (2 bits/link) 0x%x", Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x911c));
+		TRACE(10, "SERDES Rx character not in table (2 bits/link) 0x%x", Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9120));
+		TRACE(10, "SERDES unlock error 0x%x", Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9124));
+		TRACE(10, "SERDES PLL lock 0x%x", Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9128));
+		TRACE(10, "SERDES Tx buffer status (2 bits/link) 0x%x", Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x912c));
+		TRACE(10, "SERDES Rx buffer status (3 bits/link) 0x%x", Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9130));
+		TRACE(10, "SERDES Reset done 0x%x", Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9138));
+
 		for (chn = 0; chn < 2; ++chn)
 			for (dir = 0; dir < 2; ++dir)
 			{
@@ -447,23 +439,21 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		TRACE(10, "RECV[0] BUFFS:");
 		for (jj = 0; jj < MU2E_NUM_RECV_BUFFS; ++jj)
 		{
-			TRACE(10, "%3u %2x 0x%08x", jj, 0
-				  , ((u32*)&(mu2e_pci_recver[dtc][0].buffdesc_ring[jj]))[0]);
-			TRACE(10, "%3u %2x 0x%016llx", jj, 4
-				  , mu2e_pci_recver[dtc][0].buffdesc_ring[jj]->UserStatus);
-			TRACE(10, "%3u %2x 0x%08x", jj, 12
-				  , mu2e_pci_recver[dtc][0].buffdesc_ring[jj]->CardAddress);
-			TRACE(10, "%3u %2x 0x%08x IrqComplete=%u", jj, 16
-				  , ((u32*)&(mu2e_pci_recver[dtc][0].buffdesc_ring[jj]))[4]
-				  , mu2e_pci_recver[dtc][0].buffdesc_ring[jj]->IrqComplete);
-			TRACE(10, "%3u %2x 0x%016llx", jj, 20
-				  , mu2e_pci_recver[dtc][0].buffdesc_ring[jj]->SystemAddress);
-			TRACE(10, "%3u %2x 0x%08x", jj, 28
-				  , mu2e_pci_recver[dtc][0].buffdesc_ring[jj]->NextDescPtr);
-			TRACE(10, "%3u meta@%p[%d]=%u", jj
-				  , mu2e_mmap_ptrs[dtc][0][C2S][MU2E_MAP_META], jj
-				  , ((u32*)(mu2e_mmap_ptrs[dtc][0][C2S][MU2E_MAP_META]))[jj]);
-			TRACE(10, "%3u 0x%08x 0x%08x 0x%08x 0x%08x", jj
+			TRACE(10, "%3u %2x 0x%08x (cmplt=%u, short=%u, err=%u)", jj, 0,
+				((u32*)&(mu2e_pci_recver[dtc][0].buffdesc_ring[jj]))[0],
+				  mu2e_pci_recver[dtc][0].buffdesc_ring[jj]->Complete,
+				  mu2e_pci_recver[dtc][0].buffdesc_ring[jj]->Short,
+				  mu2e_pci_recver[dtc][0].buffdesc_ring[jj]->Error);
+			TRACE(10, "%3u %2x 0x%016llx (UserStatus)", jj, 4, mu2e_pci_recver[dtc][0].buffdesc_ring[jj]->UserStatus);
+			TRACE(10, "%3u %2x 0x%08x (CardAddress)", jj, 12, mu2e_pci_recver[dtc][0].buffdesc_ring[jj]->CardAddress);
+			TRACE(10, "%3u %2x 0x%08x IrqComplete=%u, IrqError=%u", jj, 16,
+				((u32*)&(mu2e_pci_recver[dtc][0].buffdesc_ring[jj]))[4],
+				  mu2e_pci_recver[dtc][0].buffdesc_ring[jj]->IrqComplete,
+				  mu2e_pci_recver[dtc][0].buffdesc_ring[jj]->IrqError);
+			TRACE(10, "%3u %2x 0x%016llx (SystemAddress)", jj, 20, mu2e_pci_recver[dtc][0].buffdesc_ring[jj]->SystemAddress);
+			TRACE(10, "%3u %2x 0x%08x (NextDescPtr)", jj, 28, mu2e_pci_recver[dtc][0].buffdesc_ring[jj]->NextDescPtr);
+			TRACE(10, "%3u meta@%p[%d]=%u", jj, mu2e_mmap_ptrs[dtc][0][C2S][MU2E_MAP_META], jj, ((u32*)(mu2e_mmap_ptrs[dtc][0][C2S][MU2E_MAP_META]))[jj]);
+			TRACE(10, "%3u Raw Data: 0x%08x 0x%08x 0x%08x 0x%08x", jj
 				  , ((u32*)&(mu2e_pci_recver[dtc][0].databuffs[jj]))[0]
 				  , ((u32*)&(mu2e_pci_recver[dtc][0].databuffs[jj]))[1]
 				  , ((u32*)&(mu2e_pci_recver[dtc][0].databuffs[jj]))[2]
@@ -472,22 +462,20 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		TRACE(10, "SEND[0] BUFFS:");
 		for (jj = 0; jj < MU2E_NUM_SEND_BUFFS; ++jj)
 		{
-			TRACE(10, "%3u %2x 0x%08x", jj, 0
-				  , ((u32*)&(mu2e_pci_sender[dtc][0].buffdesc_ring[jj]))[0]);
-			TRACE(10, "%3u %2x 0x%016llx", jj, 4
-				  , mu2e_pci_sender[dtc][0].buffdesc_ring[jj].UserControl);
-			TRACE(10, "%3u %2x 0x%08x", jj, 12
-				  , ((u32*)&(mu2e_pci_sender[dtc][0].buffdesc_ring[jj]))[3]);
-			TRACE(10, "%3u %2x 0x%08x", jj, 16
-				  , ((u32*)&(mu2e_pci_sender[dtc][0].buffdesc_ring[jj]))[4]);
-			TRACE(10, "%3u %2x 0x%016llx", jj, 20
-				  , mu2e_pci_sender[dtc][0].buffdesc_ring[jj].SystemAddress);
-			TRACE(10, "%3u %2x 0x%08x", jj, 28
-				  , mu2e_pci_sender[dtc][0].buffdesc_ring[jj].NextDescPtr);
-			TRACE(10, "%3u meta@%p[%d]=%u", jj
-				  , mu2e_mmap_ptrs[dtc][0][S2C][MU2E_MAP_META], jj
-				  , ((u32*)(mu2e_mmap_ptrs[dtc][0][S2C][MU2E_MAP_META]))[jj]);
-			TRACE(10, "%3u 0x%08x 0x%08x 0x%08x 0x%08x", jj
+			TRACE(10, "%3u %2x 0x%08x (cmplt=%u, short=%u, error=%u)", jj, 0,
+				((u32*)&(mu2e_pci_sender[dtc][0].buffdesc_ring[jj]))[0],
+				  mu2e_pci_sender[dtc][0].buffdesc_ring[jj].Complete,
+				  mu2e_pci_sender[dtc][0].buffdesc_ring[jj].Short,
+				  mu2e_pci_sender[dtc][0].buffdesc_ring[jj].Error);
+			TRACE(10, "%3u %2x 0x%016llx (UserControl)", jj, 4, mu2e_pci_sender[dtc][0].buffdesc_ring[jj].UserControl);
+			TRACE(10, "%3u %2x 0x%08x (CardAddress)", jj, 12, ((u32*)&(mu2e_pci_sender[dtc][0].buffdesc_ring[jj]))[3]);
+			TRACE(10, "%3u %2x 0x%08x IrqComplete=%u, IrqError=%u", jj, 16, ((u32*)&(mu2e_pci_sender[dtc][0].buffdesc_ring[jj]))[4],
+				  mu2e_pci_sender[dtc][0].buffdesc_ring[jj].IrqComplete,
+				  mu2e_pci_sender[dtc][0].buffdesc_ring[jj].IrqError);
+			TRACE(10, "%3u %2x 0x%016llx (SystemAddress)", jj, 20, mu2e_pci_sender[dtc][0].buffdesc_ring[jj].SystemAddress);
+			TRACE(10, "%3u %2x 0x%08x (NextDescPtr)", jj, 28, mu2e_pci_sender[dtc][0].buffdesc_ring[jj].NextDescPtr);
+			TRACE(10, "%3u meta@%p[%d]=%u", jj, mu2e_mmap_ptrs[dtc][0][S2C][MU2E_MAP_META], jj, ((u32*)(mu2e_mmap_ptrs[dtc][0][S2C][MU2E_MAP_META]))[jj]);
+			TRACE(10, "%3u RawData: 0x%08x 0x%08x 0x%08x 0x%08x", jj
 				  , ((u32*)&(mu2e_pci_sender[dtc][0].databuffs[jj]))[0]
 				  , ((u32*)&(mu2e_pci_sender[dtc][0].databuffs[jj]))[1]
 				  , ((u32*)&(mu2e_pci_sender[dtc][0].databuffs[jj]))[2]
@@ -547,7 +535,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 
 		// Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9108); // DEBUG read "user" reg.
 		TRACE(22, "mu2e_ioctl BUF_XMIT b4 WriteChnReg REG_SW_NEXT_BD(idx=%u) TELLING DMA TO GO (DO THIS BD) hwIdx=%u ->Complete=%d [0].Complete=%d"
-			  , nxtIdx, hwIdx, ((mu2e_buffdesc_S2C_t*)idx2descVirtAdr(hwIdx,dtc, chn, dir))->Complete, ((mu2e_buffdesc_S2C_t*)idx2descVirtAdr(0, dtc, chn, dir))->Complete);
+			  , nxtIdx, hwIdx, ((mu2e_buffdesc_S2C_t*)idx2descVirtAdr(hwIdx, dtc, chn, dir))->Complete, ((mu2e_buffdesc_S2C_t*)idx2descVirtAdr(0, dtc, chn, dir))->Complete);
 		Dma_mWriteChnReg(dtc, chn, dir, REG_SW_NEXT_BD, descDmaAdr_swNxt);
 
 		mu2e_channel_info_[dtc][chn][dir].swIdx = nxtIdx;
