@@ -439,6 +439,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		TRACE(10, "RECV[0] BUFFS:");
 		for (jj = 0; jj < MU2E_NUM_RECV_BUFFS; ++jj)
 		{
+			TRACE(10, "%3u Addr=0x%p", jj, (void*)&mu2e_pci_recver[dtc][0].buffdesc_ring[jj]);
 			TRACE(10, "%3u %2x 0x%08x (cmplt=%u, short=%u, err=%u)", jj, 0,
 				((u32*)&(mu2e_pci_recver[dtc][0].buffdesc_ring[jj]))[0],
 				  mu2e_pci_recver[dtc][0].buffdesc_ring[jj]->Complete,
@@ -462,6 +463,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		TRACE(10, "SEND[0] BUFFS:");
 		for (jj = 0; jj < MU2E_NUM_SEND_BUFFS; ++jj)
 		{
+			TRACE(10, "%3u Addr=0x%p", jj, (void*)&mu2e_pci_sender[dtc][0].buffdesc_ring[jj]);
 			TRACE(10, "%3u %2x 0x%08x (cmplt=%u, short=%u, error=%u)", jj, 0,
 				((u32*)&(mu2e_pci_sender[dtc][0].buffdesc_ring[jj]))[0],
 				  mu2e_pci_sender[dtc][0].buffdesc_ring[jj].Complete,
@@ -496,7 +498,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 			TRACE(22, "ioctl BUF_XMIT -EAGAIN myIdx=%u err=%d desc_S2C_p=%p 0x%016llx counts(in,sts)=%u,%u"
 				  , myIdx, desc_S2C_p->Error, desc_S2C_p, *(u64*)desc_S2C_p, desc_S2C_p->ByteCount, desc_S2C_p->ByteCnt);
 			return -EAGAIN;
-		}
+	}
 		TRACE(22, "mu2e_ioctl: cmd=BUF_XMIT desc_S2C_p=%p 0x%016llx", desc_S2C_p, *(u64*)desc_S2C_p);
 
 		desc_S2C_p->Complete = 0; // FIX ME --- race condition
@@ -546,7 +548,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 	default:
 		TRACE(11, "mu2e_ioctl: unknown cmd");
 		return (-1); // some error
-	}
+}
 	TRACE(11, "mu2e_ioctl: end");
 	return (retval);
 }   // mu2e_ioctl
