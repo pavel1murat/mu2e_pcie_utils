@@ -156,10 +156,10 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 	switch (cmd)
 	{
 	case M_IOC_GET_TST_STATE:
-		TRACE(11, "mu2e_ioctl: cmd=GET_TST_STATE");
+		TRACE(12, "mu2e_ioctl: cmd=GET_TST_STATE");
 		break;
 	case M_IOC_TEST_START:
-		TRACE(11, "mu2e_ioctl: cmd=TEST_START");
+		TRACE(13, "mu2e_ioctl: cmd=TEST_START");
 		// enable dma ch0/C2S w/GENERATOR
 		Dma_mWriteChnReg(dtc, 0, C2S, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_ENABLE);
 		msleep(20);
@@ -169,12 +169,12 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		//Dma_mWriteReg( base, 0x9100, 1 );  // 1=enable generator
 		break;
 	case M_IOC_TEST_STOP:
-		TRACE(11, "mu2e_ioctl: cmd=TEST_STOP");
+		TRACE(14, "mu2e_ioctl: cmd=TEST_STOP");
 		break;
 		/* ------------------------------------------------------------------- */
 
 	case M_IOC_GET_PCI_STATE:	/* m_ioc_pcistate_t; formerly IGET_PCI_STATE      _IOR(XPMON_MAGIC,4,PCIState) */
-		TRACE(11, "mu2e_ioctl: cmd=GET_PCI_STATE");
+		TRACE(15, "mu2e_ioctl: cmd=GET_PCI_STATE");
 		ReadPCIState(mu2e_pci_dev[dtc], &pcistate);
 		if (copy_to_user((m_ioc_pcistate_t *)arg, &pcistate, sizeof(m_ioc_pcistate_t)))
 		{
@@ -184,7 +184,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		}
 		break;
 	case M_IOC_GET_ENG_STATE:	/* m_ioc_engstate_t; formerly IGET_ENG_STATE      _IOR(XPMON_MAGIC,5,EngState) */
-		TRACE(11, "mu2e_ioctl: cmd=GET_ENG_STATE");
+		TRACE(16, "mu2e_ioctl: cmd=GET_ENG_STATE");
 		if (copy_from_user(&eng, (m_ioc_engstate_t *)arg, sizeof(m_ioc_engstate_t)))
 		{
 			printk("\ncopy_from_user failed\n");
@@ -226,7 +226,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		}
 		break;
 	case M_IOC_GET_DMA_STATS:	/* m_ioc_engstats_t; formerly IGET_DMA_STATISTICS _IOR(XPMON_MAGIC,6,EngStatsArray) */
-		TRACE(11, "mu2e_ioctl: cmd=GET_DMA_STATS");
+		TRACE(17, "mu2e_ioctl: cmd=GET_DMA_STATS");
 		if (copy_from_user(&es, (m_ioc_engstats_t *)arg, sizeof(m_ioc_engstats_t)))
 		{
 			printk("copy_from_user failed\n");
@@ -278,7 +278,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		}
 		break;
 	case M_IOC_GET_TRN_STATS:   /* TRNStatsArray;    formerly IGET_TRN_STATISTICS _IOR(XPMON_MAGIC,7,TRNStatsArray) */
-		TRACE(11, "mu2e_ioctl: cmd=GET_TRN_STATS");
+		TRACE(18, "mu2e_ioctl: cmd=GET_TRN_STATS");
 		if (copy_from_user(&tsa, (TRNStatsArray *)arg, sizeof(TRNStatsArray)))
 		{
 			printk("copy_from_user failed\n");
@@ -330,12 +330,12 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		}
 		if (reg_access.access_type)
 		{
-			TRACE(11, "mu2e_ioctl: cmd=REG_ACCESS - write offset=0x%x, val=0x%x", reg_access.reg_offset, reg_access.val);
+			TRACE(19, "mu2e_ioctl: cmd=REG_ACCESS - write offset=0x%x, val=0x%x", reg_access.reg_offset, reg_access.val);
 			Dma_mWriteReg(base, reg_access.reg_offset, reg_access.val);
 		}
 		else
 		{
-			TRACE(11, "mu2e_ioctl: cmd=REG_ACCESS - read offset=0x%x", reg_access.reg_offset);
+			TRACE(19, "mu2e_ioctl: cmd=REG_ACCESS - read offset=0x%x", reg_access.reg_offset);
 			reg_access.val = Dma_mReadReg(base, reg_access.reg_offset);
 			if (copy_to_user((void*)arg, &reg_access, sizeof(reg_access)))
 			{
@@ -355,12 +355,12 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		{
 			if (!mu2e_chn_info_delta_(dtc, get_info.chn, C2S, &mu2e_channel_info_))
 			{
-				TRACE(11, "mu2e_ioctl: cmd=GET_INFO wait_event_interruptible_timeout jiffies=%u", tmo_jiffies);
+				TRACE(20, "mu2e_ioctl: cmd=GET_INFO wait_event_interruptible_timeout jiffies=%u", tmo_jiffies);
 				if (wait_event_interruptible_timeout(get_info_wait_queue
 													 , mu2e_chn_info_delta_(dtc, get_info.chn, C2S, &mu2e_channel_info_)
 													 , tmo_jiffies) == 0)
 				{
-					TRACE(16, "mu2e_ioctl: cmd=GET_INFO tmo");
+					TRACE(20, "mu2e_ioctl: cmd=GET_INFO tmo");
 				}
 			}
 		}
@@ -373,13 +373,13 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 				   && jj--)
 			{
 				hwIdx = idx_add(hwIdx, 1, dtc, chn, dir);
-				TRACE(11, "ioctl GET_INFO mu2e_channel_info_[dtc][chn][dir].hwIdx=%u swIdx=%u lps=%u"
+				TRACE(20, "ioctl GET_INFO mu2e_channel_info_[dtc][chn][dir].hwIdx=%u swIdx=%u lps=%u"
 					  , hwIdx, mu2e_channel_info_[dtc][chn][dir].swIdx, jj);
 			}
 			mu2e_channel_info_[dtc][chn][dir].hwIdx = hwIdx;
 		}
 		get_info = mu2e_channel_info_[dtc][get_info.chn][get_info.dir];
-		TRACE(11, "mu2e_ioctl: cmd=GET_INFO dir=%d get_info.dir=%u hwIdx=%u swIdx=%u"
+		TRACE(20, "mu2e_ioctl: cmd=GET_INFO dir=%d get_info.dir=%u hwIdx=%u swIdx=%u"
 			  , dir, get_info.dir, get_info.hwIdx, get_info.swIdx);
 		if (copy_to_user((void*)arg, &get_info, sizeof(m_ioc_get_info_t)))
 		{
@@ -387,11 +387,11 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		}
 		break;
 	case M_IOC_BUF_GIVE:
-		TRACE(11, "mu2e_ioctl: cmd=BUF_GIVE");
+		TRACE(21, "mu2e_ioctl: cmd=BUF_GIVE");
 		chn = arg >> 24;
 		dir = (arg >> 16) & 1;
 		num = arg & 0xffff;
-		TRACE(11, "mu2e_ioctl: BUF_GIVE chn:%u dir:%u num:%u", chn, dir, num);
+		TRACE(21, "mu2e_ioctl: BUF_GIVE chn:%u dir:%u num:%u", chn, dir, num);
 		myIdx = idx_add(mu2e_channel_info_[dtc][chn][dir].swIdx, num, dtc, chn, dir);
 		Dma_mWriteChnReg(dtc, chn, dir, REG_SW_NEXT_BD, idx2descDmaAdr(myIdx, dtc, chn, dir));
 		checkDmaEngine(dtc, chn, dir);
@@ -505,11 +505,11 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		desc_S2C_p = idx2descVirtAdr(myIdx, dtc, chn, dir);
 		if (desc_S2C_p->Complete != 1)
 		{
-			TRACE(11, "ioctl BUF_XMIT -EAGAIN myIdx=%u err=%d desc_S2C_p=%p 0x%016llx counts(in,sts)=%u,%u"
+			TRACE(22, "ioctl BUF_XMIT -EAGAIN myIdx=%u err=%d desc_S2C_p=%p 0x%016llx counts(in,sts)=%u,%u"
 				  , myIdx, desc_S2C_p->Error, desc_S2C_p, *(u64*)desc_S2C_p, desc_S2C_p->ByteCount, desc_S2C_p->ByteCnt);
 			return -EAGAIN;
 		}
-		TRACE(11, "mu2e_ioctl: cmd=BUF_XMIT desc_S2C_p=%p 0x%016llx", desc_S2C_p, *(u64*)desc_S2C_p);
+		TRACE(22, "mu2e_ioctl: cmd=BUF_XMIT desc_S2C_p=%p 0x%016llx", desc_S2C_p, *(u64*)desc_S2C_p);
 
 		desc_S2C_p->Complete = 0; // FIX ME --- race condition
 		desc_S2C_p->ByteCount = arg & 0xfffff; // 20 bits max
@@ -524,7 +524,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		desc_S2C_p->StartOfPkt = 1;
 		desc_S2C_p->EndOfPkt = 1;
 		{	void * data = ((mu2e_databuff_t*)(mu2e_mmap_ptrs[dtc][chn][dir][MU2E_MAP_BUFF]))[myIdx];
-		TRACE(11, "ioctl BUF_XMIT myIdx=%u desc_S2C_p(%p)=%016llx ByteCnt=%d data(%p)[2-5]=%016llx %016llx %016llx %016llx"
+		TRACE(22, "ioctl BUF_XMIT myIdx=%u desc_S2C_p(%p)=%016llx ByteCnt=%d data(%p)[2-5]=%016llx %016llx %016llx %016llx"
 			  , myIdx, desc_S2C_p, *(u64*)desc_S2C_p, desc_S2C_p->ByteCnt, data, ((u64*)data)[2], ((u64*)data)[3], ((u64*)data)[4], ((u64*)data)[5]);
 		}
 
@@ -540,23 +540,23 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 			   && hwIdx != myIdx && jj--)
 		{
 			hwIdx = idx_add(hwIdx, 1, dtc, chn, dir);
-			TRACE(11, "ioctl BUF_XMIT mu2e_channel_info_[dtc][chn][dir].hwIdx=%u swIdx=%u lps=%u"
+			TRACE(22, "ioctl BUF_XMIT mu2e_channel_info_[dtc][chn][dir].hwIdx=%u swIdx=%u lps=%u"
 				  , hwIdx, mu2e_channel_info_[dtc][chn][dir].swIdx, jj);
 		}
 		mu2e_channel_info_[dtc][chn][dir].hwIdx = hwIdx;
 
 		// Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9108); // DEBUG read "user" reg.
-		TRACE(11, "mu2e_ioctl BUF_XMIT b4 WriteChnReg REG_SW_NEXT_BD(idx=%u) TELLING DMA TO GO (DO THIS BD) hwIdx=%u ->Complete=%d [0].Complete=%d"
+		TRACE(22, "mu2e_ioctl BUF_XMIT b4 WriteChnReg REG_SW_NEXT_BD(idx=%u) TELLING DMA TO GO (DO THIS BD) hwIdx=%u ->Complete=%d [0].Complete=%d"
 			  , nxtIdx, hwIdx, ((mu2e_buffdesc_S2C_t*)idx2descVirtAdr(hwIdx,dtc, chn, dir))->Complete, ((mu2e_buffdesc_S2C_t*)idx2descVirtAdr(0, dtc, chn, dir))->Complete);
 		Dma_mWriteChnReg(dtc, chn, dir, REG_SW_NEXT_BD, descDmaAdr_swNxt);
 
 		mu2e_channel_info_[dtc][chn][dir].swIdx = nxtIdx;
-		TRACE(11, "mu2e_ioctl BUF_XMIT after WriteChnReg REG_SW_NEXT_BD swIdx=%u hwIdx=%u ->Complete=%d CmpltIdx=%u"
+		TRACE(22, "mu2e_ioctl BUF_XMIT after WriteChnReg REG_SW_NEXT_BD swIdx=%u hwIdx=%u ->Complete=%d CmpltIdx=%u"
 			  , nxtIdx, hwIdx, ((mu2e_buffdesc_S2C_t*)idx2descVirtAdr(hwIdx, dtc, chn, dir))->Complete
 			  , descDmaAdr2idx(Dma_mReadChnReg(dtc, chn, dir, REG_HW_NEXT_BD), dtc, chn, dir, 0));
 		break;
 	default:
-		TRACE(10, "mu2e_ioctl: unknown cmd");
+		TRACE(11, "mu2e_ioctl: unknown cmd");
 		return (-1); // some error
 	}
 	TRACE(11, "mu2e_ioctl: end");

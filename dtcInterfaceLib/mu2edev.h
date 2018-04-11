@@ -123,11 +123,9 @@ public:
 	/// <returns>0 on success</returns>
 	int write_register(uint16_t address, int tmo_ms, uint32_t data);
 	/// <summary>
-	/// Write out the DMA metadata for the given channel/direction to screen
+	/// Write out the DMA metadata to screen
 	/// </summary>
-	/// <param name="chn">Channel to dump (DAQ or DCS)</param>
-	/// <param name="dir">Direction to dump (C2S or S2C)</param>
-	void meta_dump(int chn, int dir);
+	void meta_dump();
 	/// <summary>
 	/// Write data to the DTC
 	/// </summary>

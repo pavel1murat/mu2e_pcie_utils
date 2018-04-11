@@ -14,7 +14,7 @@
 #include <chrono>
 #include "mu2edev.h"
 
-mu2edev::mu2edev() : devfd_(0), buffers_held_(0), simulator_(nullptr),activeDTC_(0), deviceTime_(0LL), writeSize_(0), readSize_(0)
+mu2edev::mu2edev() : devfd_(0), buffers_held_(0), simulator_(nullptr), activeDTC_(0), deviceTime_(0LL), writeSize_(0), readSize_(0)
 {
 	//TRACE_CNTL( "lvlmskM", 0x3 );
 	//TRACE_CNTL( "lvlmskS", 0x3 );
@@ -196,7 +196,7 @@ int mu2edev::read_release(int chn, unsigned num)
 
 	// increment our cached info
 			mu2e_channel_info_[activeDTC_][chn][C2S].swIdx
-				= idx_add(mu2e_channel_info_[activeDTC_][chn][C2S].swIdx, (int)num,activeDTC_, chn, C2S);
+				= idx_add(mu2e_channel_info_[activeDTC_][chn][C2S].swIdx, (int)num, activeDTC_, chn, C2S);
 			if (num <= buffers_held_)
 				buffers_held_ -= num;
 			else
@@ -248,21 +248,24 @@ int mu2edev::write_register(uint16_t address, int tmo_ms, uint32_t data)
 	return retsts;
 }
 
-void mu2edev::meta_dump(int chn, int dir)
+void mu2edev::meta_dump()
 {
-	TRACE(17, "mu2edev::meta_dump: chn=%i, dir=%i", chn, dir);
+	TRACE(10, "mu2edev::meta_dump");
 	auto start = std::chrono::steady_clock::now();
 	if (simulator_ == nullptr)
 	{
 		int retsts = 0;
-		if ((mu2e_mmap_ptrs_[activeDTC_][0][0][0] != NULL) || ((retsts = init(DTCLib::DTC_SimMode_Disabled, 0)) == 0)) //Default-init mu2edev if not given guidance
-		{
-			for (unsigned buf = 0; buf < mu2e_channel_info_[activeDTC_][chn][dir].num_buffs; ++buf)
-			{
-				int *    BC_p = (int*)mu2e_mmap_ptrs_[activeDTC_][chn][dir][MU2E_MAP_META];
-				printf("buf_%02d: %u\n", buf, BC_p[buf]);
-			}
-		}
+		for (int chn = 0; chn < 2; ++chn)
+			for (int dir = 0; dir < 2; ++dir)
+				if ((mu2e_mmap_ptrs_[activeDTC_][0][0][0] != NULL) || ((retsts = init(DTCLib::DTC_SimMode_Disabled, 0)) == 0)) //Default-init mu2edev if not given guidance
+				{
+					for (unsigned buf = 0; buf < mu2e_channel_info_[activeDTC_][chn][dir].num_buffs; ++buf)
+					{
+						int *    BC_p = (int*)mu2e_mmap_ptrs_[activeDTC_][chn][dir][MU2E_MAP_META];
+						printf("buf_%02d: %u\n", buf, BC_p[buf]);
+					}
+				}
+		retsts = ioctl(devfd_, M_IOC_DUMP);
 	}
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>
 		(std::chrono::steady_clock::now() - start).count();
@@ -295,7 +298,7 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 
 		if (delta <= 1)
 		{
-			TRACE( 0, "HW_NOT_READING_BUFS");
+			TRACE(0, "HW_NOT_READING_BUFS");
 			perror("HW_NOT_READING_BUFS");
 			kill(0, SIGUSR2);
 			exit(2);
@@ -312,17 +315,17 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 			retsts = ioctl(devfd_, M_IOC_BUF_XMIT, arg);
 			if (retsts != 0)
 			{
-			TRACE(3, "write_data ioctl returned %d, errno=%d (%s), retrying.", retsts,errno, strerror(errno));
+				TRACE(3, "write_data ioctl returned %d, errno=%d (%s), retrying.", retsts, errno, strerror(errno));
 				//perror("M_IOC_BUF_XMIT");
 				usleep(50000);
 			} // exit(1); } // Take out the exit call for now
 			retry--;
 		} while (retry > 0 && retsts != 0);
-// increment our cached info
+		// increment our cached info
 		if (retsts == 0)
 		{
 			mu2e_channel_info_[activeDTC_][chn][dir].swIdx
-				= idx_add(mu2e_channel_info_[activeDTC_][chn][dir].swIdx, 1,activeDTC_, chn, dir);
+				= idx_add(mu2e_channel_info_[activeDTC_][chn][dir].swIdx, 1, activeDTC_, chn, dir);
 		}
 	}
 	deviceTime_ += std::chrono::duration_cast<std::chrono::nanoseconds>

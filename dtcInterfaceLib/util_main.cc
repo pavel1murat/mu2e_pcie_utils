@@ -316,7 +316,7 @@ void WriteGeneratedData(DTC* thisDTC)
 
 void printHelpMsg()
 {
-	std::cout << "Usage: mu2eUtil [options] [read,read_data,reset_ddrread,reset_detemu,toggle_serdes,loopback,buffer_test,read_release,DTC,program_clock,verify_simfile]" << std::endl;
+	std::cout << "Usage: mu2eUtil [options] [read,read_data,reset_ddrread,reset_detemu,toggle_serdes,loopback,buffer_test,read_release,DTC,program_clock,verify_simfile,dma_info]" << std::endl;
 	std::cout << "Options are:" << std::endl
 		<< "    -h, --help: This message." << std::endl
 		<< "    -n: Number of times to repeat test. (Default: 1)" << std::endl
@@ -337,7 +337,7 @@ void printHelpMsg()
 		<< "    -t: Use DebugType flag (1st request gets ExternalDataWithFIFOReset, the rest get ExternalData)" << std::endl
 		<< "    -T: Set DebugType flag for ALL requests (0, 1, or 2)" << std::endl
 		<< "    -f: RAW Output file path" << std::endl
-		<< "    -H: Write DMA headers to raw output file (when -f is used with -g)"
+		<< "    -H: Write DMA headers to raw output file (when -f is used with -g)" << std::endl
 		<< "    -p: Send DTCLIB_SIM_FILE to DTC and enable Detector Emulator mode" << std::endl
 		<< "    -P: Send <file> to DTC and enable Detector Emulator mode (Default: \"\")" << std::endl
 		<< "    -g: Generate (and send) N DMA blocks for testing the Detector Emulator (Default: 0)" << std::endl
@@ -348,7 +348,7 @@ void printHelpMsg()
 		<< "    -v: Expected DTC Design version string (Default: \"\")" << std::endl
 		<< "    -V: Do NOT attempt to verify that the sim file landed in DTC memory correctly" << std::endl
 		<< "    --timestamp-list: Read <file> for timestamps to request (CFO will generate heartbeats for all timestamps in range spanned by file)" << std::endl
-		<< "    --dtc: Use dtc <num> (Defaults to DTCLIB_DTC if set, 0 otherwise, see ls /dev/mu2e* for available DTCs)"
+		<< "    --dtc: Use dtc <num> (Defaults to DTCLIB_DTC if set, 0 otherwise, see ls /dev/mu2e* for available DTCs)" << std::endl
 		;
 	exit(0);
 }
@@ -1015,6 +1015,12 @@ main(int argc
 		auto oscillator = clockToProgram == 0 ? DTC_OscillatorType_SERDES : DTC_OscillatorType_DDR;
 		thisDTC->SetNewOscillatorFrequency(oscillator, targetFrequency);
 		delete thisDTC;
+	}
+	else if (op == "dma_info")
+	{
+		mu2edev device;
+		device.init(DTCLib::DTC_SimMode_Disabled, dtc);
+		device.meta_dump();
 	}
 	else
 	{
