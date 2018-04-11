@@ -108,7 +108,7 @@ static int mu2e_pci_probe(  struct pci_dev             *pdev
 	}
 	pdev->dev.devt = MKDEV(MAJOR(mu2e_dev_number), dtc);
 
-	TRACE( 0, "mu2e_pci_probe" );
+	TRACE( 0, "mu2e_pci_probe dev=%p, MINOR(pdev->dev.devt)=%d",(void*)&pdev->dev, MINOR(pdev->dev.devt) );
 	/* Initialize device before it is used by driver. Ask low-level
 	 * code to enable I/O and memory. Wake up the device if it was
 	 * suspended. Beware, this function can fail.

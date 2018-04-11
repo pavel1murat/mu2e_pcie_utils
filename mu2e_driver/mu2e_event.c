@@ -31,7 +31,7 @@ irqreturn_t DmaInterrupt(int irq, void *dev_id)
 	unsigned chn;
 	int dtc = MINOR(((struct device*)dev_id)->devt);
 
-	TRACE(20, "DmaInterrrupt: start");
+	TRACE(20, "DmaInterrrupt: start irq=%d, dev=%p, dtc=%d",irq, dev_id, dtc);
 
 	base = (unsigned long)(mu2e_pcie_bar_info[dtc].baseVAddr);
 	Dma_mIntDisable(base);
