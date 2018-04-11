@@ -57,6 +57,7 @@ main(  int	argc
 	int	opt_just_erase=0;
 	int     opt_data_swap=0;
 extern  int     optind;         /* for getopt */
+char devfile[13]; /* /dev/pcidevX */
 
     while (1)
     {   int opt, option_index=0;
@@ -78,8 +79,8 @@ extern  int     optind;         /* for getopt */
         default:  printf ("?? getopt returned character code 0%o ??\n", opt);
         }
     }
-    if (argc - optind < 1)
-    {   printf( "Need mcs_file\n" );
+    if (argc - optind < 2)
+    {   printf( "Need mcs_file and device number\n" );
         printf( USAGE ); return (-1);
     }
 
@@ -88,8 +89,10 @@ extern  int     optind;         /* for getopt */
     TRACE_CNTL( "mode", 3ULL );
     TRACE( 1, "hello" );
 
-    int fd=open( "/dev/" PCIDEVL_DEV_FILE, O_RDONLY );
-    if (fd == -1) { perror("open /dev/" PCIDEVL_DEV_FILE ); /*return (1);*/ }
+	snprintf(devfile, 13, "/dev/" PCIDEVL_DEV_FILE, atoi(argv[optind++]));
+
+	int fd = open(devfile, O_RDONLY);
+    if (fd == -1) { perror("open" ); /*return (1);*/ }
     g_fd = fd;
 
     FILE *stream = fopen( argv[optind], "r" );

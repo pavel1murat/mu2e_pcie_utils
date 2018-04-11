@@ -9,49 +9,6 @@
 
 namespace CFOLib
 {
-	enum CFO_Subsystem : uint8_t
-	{
-		CFO_Subsystem_Tracker = 0,
-		CFO_Subsystem_Calorimeter = 1,
-		CFO_Subsystem_CRV = 2,
-		CFO_Subsystem_Other = 3
-	};
-
-	/// <summary>
-	/// The CFO_ID field is used to uniquely identify each CFO. The ID consists of 2 bits of Subsystem ID and 6 bits of CFO ID.
-	/// </summary>
-	class CFO_ID
-	{
-		uint8_t idData_;
-
-	public:
-		/// <summary>
-		/// CFO_ID default constructor
-		/// Initializes CFO_ID to 0
-		/// </summary>
-		CFO_ID() : idData_(0) {}
-		/// <summary>
-		/// CFO_ID constructor
-		/// </summary>
-		/// <param name="id">CFO_ID byte from data packet</param>
-		explicit CFO_ID(uint8_t id) : idData_(id) {}
-		/// <summary>
-		/// Get the CFO_Subsystem of the CFO_ID
-		/// </summary>
-		/// <returns>CFO_Subsystem of the CFO_ID instance</returns>
-		CFO_Subsystem GetSubsystem() const { return static_cast<CFO_Subsystem>(idData_ >> 6); }
-		/// <summary>
-		/// Return the CFO ID within the subsystem
-		/// </summary>
-		/// <returns>CFO ID</returns>
-		uint8_t GetID() const { return idData_ & 0x3F; }
-		/// <summary>
-		/// Return the whole CFO_ID word
-		/// </summary>
-		/// <returns>CFO_ID byte as seen in packet</returns>
-		uint8_t GetWord() const { return idData_; }
-	};
-
 	enum CFO_Ring_ID : uint8_t
 	{
 		CFO_Ring_0 = 0,
@@ -60,78 +17,13 @@ namespace CFOLib
 		CFO_Ring_3 = 3,
 		CFO_Ring_4 = 4,
 		CFO_Ring_5 = 5,
-		CFO_Ring_CFO = 6,
-		CFO_Ring_EVB = 7,
+		CFO_Ring_6 = 6,
+		CFO_Ring_7 = 7,
 		CFO_Ring_Unused,
 	};
 
-	static const std::vector<CFO_Ring_ID> CFO_Rings{ CFO_Ring_0, CFO_Ring_1, CFO_Ring_2, CFO_Ring_3, CFO_Ring_4, CFO_Ring_5 };
-
-	enum CFO_ROC_ID : uint8_t
-	{
-		CFO_ROC_0 = 0,
-		CFO_ROC_1 = 1,
-		CFO_ROC_2 = 2,
-		CFO_ROC_3 = 3,
-		CFO_ROC_4 = 4,
-		CFO_ROC_5 = 5,
-		CFO_ROC_Unused,
-	};
-
-	static const std::vector<CFO_ROC_ID> CFO_ROCS{ CFO_ROC_Unused, CFO_ROC_0, CFO_ROC_1, CFO_ROC_2, CFO_ROC_3, CFO_ROC_4, CFO_ROC_5 };
-
-	/// <summary>
-	/// The CFO_ROCIDConverter converts a CFO_ROC_ID enumeration value to string or JSON representation
-	/// </summary>
-	struct CFO_ROCIDConverter
-	{
-		CFO_ROC_ID roc_; ///< CFO_ROC_ID to convert
-
-		/// <summary>
-		/// Construct a CFO_ROCIDConverter instance using the given CFO_ROC_ID
-		/// </summary>
-		/// <param name="roc">CFO_ROC_ID to convert</param>
-		explicit CFO_ROCIDConverter(CFO_ROC_ID roc) : roc_(roc) {}
-
-		/// <summary>
-		/// Convert the CFO_ROC_ID to its string representation
-		/// </summary>
-		/// <returns>String representation of CFO_ROC_ID</returns>
-		std::string toString() const
-		{
-			switch (roc_)
-			{
-			case CFO_ROC_0:
-				return "ROC_0";
-			case CFO_ROC_1:
-				return "ROC_1";
-			case CFO_ROC_2:
-				return "ROC_2";
-			case CFO_ROC_3:
-				return "ROC_3";
-			case CFO_ROC_4:
-				return "ROC_4";
-			case CFO_ROC_5:
-				return "ROC_5";
-			case CFO_ROC_Unused:
-			default:
-				return "No ROCs";
-			}
-		}
-
-		/// <summary>
-		/// Write a CFO_ROCIDConverter in JSON format to the given stream
-		/// </summary>
-		/// <param name="stream">Stream to write</param>
-		/// <param name="roc">CFO_ROCIDConverter to serialize</param>
-		/// <returns>Stream reference for continued streaming</returns>
-		friend std::ostream& operator<<(std::ostream& stream, const CFO_ROCIDConverter& roc)
-		{
-			stream << "\"CFO_ROC_ID\":\"" << roc.toString() << "\"";
-			return stream;
-		}
-	};
-
+	static const std::vector<CFO_Ring_ID> CFO_Rings{ CFO_Ring_0, CFO_Ring_1, CFO_Ring_2, CFO_Ring_3, CFO_Ring_4, CFO_Ring_5, CFO_Ring_6, CFO_Ring_7 };
+	
 	enum CFO_OscillatorType
 	{
 		CFO_OscillatorType_SERDES,
@@ -143,66 +35,6 @@ namespace CFOLib
 		CFO_SerdesClockSpeed_25Gbps,
 		CFO_SerdesClockSpeed_3125Gbps,
 		CFO_SerdesClockSpeed_Unknown
-	};
-
-	enum CFO_DebugType
-	{
-		CFO_DebugType_SpecialSequence = 0,
-		CFO_DebugType_ExternalSerial = 1,
-		CFO_DebugType_ExternalSerialWithReset = 2,
-		CFO_DebugType_RAMTest = 3,
-		CFO_DebugType_DDRTest = 4,
-		CFO_DebugType_Invalid = 5,
-	};
-
-	/// <summary>
-	/// The CFO_DebugTypeConverter converts a CFO_DebugType enumeration value to string or JSON representation
-	/// </summary>
-	struct CFO_DebugTypeConverter
-	{
-		CFO_DebugType type_; ///< CFO_DebugType to convert
-
-		/// <summary>
-		/// Construct a CFO_DebugTypeConverter instance using the given CFO_DebugType
-		/// </summary>
-		/// <param name="type">CFO_DebugType to convert</param>
-		explicit CFO_DebugTypeConverter(CFO_DebugType type) : type_(type) {}
-
-		/// <summary>
-		/// Convert the CFO_DebugType to its string representation
-		/// </summary>
-		/// <returns>String representation of CFO_DebugType</returns>
-		std::string toString() const
-		{
-			switch (type_)
-			{
-			case CFO_DebugType_SpecialSequence:
-				return "Special Sequence";
-			case CFO_DebugType_ExternalSerial:
-				return "External Serial";
-			case CFO_DebugType_ExternalSerialWithReset:
-				return "External Serial with FIFO Reset";
-			case CFO_DebugType_RAMTest:
-				return "FPGA SRAM Error Checking";
-			case CFO_DebugType_DDRTest:
-				return "DDR3 Memory Error Checking";
-			case CFO_DebugType_Invalid:
-				return "INVALID!!!";
-			}
-			return "Unknown";
-		}
-
-		/// <summary>
-		/// Write a CFO_DebugTypeConverter in JSON format to the given stream
-		/// </summary>
-		/// <param name="stream">Stream to write</param>
-		/// <param name="type">CFO_DebugTypeConverter to serialize</param>
-		/// <returns>Stream reference for continued streaming</returns>
-		friend std::ostream& operator<<(std::ostream& stream, const CFO_DebugTypeConverter& type)
-		{
-			stream << "\"CFO_DebugType\":\"" << type.toString() << "\"";
-			return stream;
-		}
 	};
 
 	enum CFO_RXBufferStatus
@@ -1120,24 +952,6 @@ namespace CFOLib
 
 			return stream;
 		}
-	};
-
-	/// <summary>
-	/// A Data Block object (DataHeader packet plus associated Data Packets)
-	/// Constructed as a pointer to a region of memory
-	/// </summary>
-	struct CFO_DataBlock
-	{
-		typedef uint64_t pointer_t; ///< DataBlock pointers should be 64-bit aligned
-		pointer_t* blockPointer; ///< Pointer to DataBlock in Memeory
-		size_t byteSize; ///< Size of DataBlock
-
-		/// <summary>
-		/// Create a CFO_DataBlock pointing to the given location in memory with the given size
-		/// </summary>
-		/// <param name="ptr">Pointer to DataBlock in memory</param>
-		/// <param name="sz">Size of DataBlock</param>
-		CFO_DataBlock(pointer_t* ptr, size_t sz) : blockPointer(ptr), byteSize(sz) {}
 	};
 
 	/// <summary>

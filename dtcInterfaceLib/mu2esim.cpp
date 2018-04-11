@@ -9,6 +9,7 @@
  *    make mu2edev.o CFLAGS='-g -Wall -std=c++0x'
  */
 
+#define TRACE_NAME "mu2esim"
 #include "trace.h"
 #include "mu2esim.h"
 #include <vector>
@@ -31,7 +32,7 @@ mu2esim::mu2esim()
 	, currentEventSize_(0)
 	, eventBegin_(ddrFile_.tellp())
 {
-	TRACE(17, "mu2esim::mu2esim BEGIN");
+	TLOG(10) << "mu2esim::mu2esim BEGIN";
 	swIdx_[0] = 0;
 	swIdx_[1] = 0;
 	for (unsigned ii = 0; ii < SIM_BUFFCOUNT; ++ii)
@@ -58,7 +59,7 @@ mu2esim::mu2esim()
 		ddrFile_.open("mu2esim.bin", std::fstream::binary | std::fstream::in | std::fstream::out);
 	}
 
-	TRACE(17, "mu2esim::mu2esim END");
+	TLOG(10) << "mu2esim::mu2esim END";
 }
 
 mu2esim::~mu2esim()
@@ -75,10 +76,10 @@ mu2esim::~mu2esim()
 
 int mu2esim::init(DTCLib::DTC_SimMode mode)
 {
-	TRACE(17, "mu2e Simulator::init");
+	TLOG(11) << "mu2e Simulator::init";
 	mode_ = mode;
 
-	TRACE(17, "mu2esim::init Initializing registers");
+	TLOG(11) << "Initializing registers";
 	// Set initial register values...
 	registers_[DTCLib::DTC_Register_DesignVersion] = 0x00006363; // v99.99
 	registers_[DTCLib::DTC_Register_DesignDate] = 0x53494D44; // SIMD in ASCII
@@ -183,7 +184,7 @@ int mu2esim::init(DTCLib::DTC_SimMode mode)
 	registers_[DTCLib::DTC_Register_EventModeLookupTableStart] = 0;
 	registers_[DTCLib::DTC_Register_EventModeLookupTableEnd] = 0;
 
-	TRACE(17, "mu2esim::init finished");
+	TLOG(11) << "Initialize finished";
 	return 0;
 }
 
@@ -197,33 +198,33 @@ int mu2esim::read_data(int chn, void** buffer, int tmo_ms)
 	size_t bytesReturned = 0;
 	if (delta_(chn, C2S) == 0)
 	{
-		TRACE(17, "mu2esim::read_data: Clearing output buffer");
+		TLOG(12) << "mu2esim::read_data: Clearing output buffer";
 		clearBuffer_(chn, false);
 
 		if (chn == 0)
 		{
-			TRACE(17, "mu2esim::read_data: Reading size from memory file");
+			TLOG(12) << "mu2esim::read_data: Reading size from memory file";
 			uint64_t size;
 			ddrFile_.read(reinterpret_cast<char*>(&size), sizeof(uint64_t) / sizeof(char));
 
-			TRACE(17, "mu2esim::read_data: Size is %llu", (unsigned long long)size);
+			TLOG(12) << "mu2esim::read_data: Size is " << size;
 
 			if (ddrFile_.eof() || size == 0)
 			{
-				TRACE(17, "mu2esim::read_data: End of file reached, looping back to start");
+				TLOG(12) << "mu2esim::read_data: End of file reached, looping back to start";
 				ddrFile_.clear();
 				ddrFile_.seekg(std::ios::beg);
 
-				TRACE(17, " mu2esim::read_data: Re-reading size from memory file");
+				TLOG(12) << " mu2esim::read_data: Re-reading size from memory file";
 				ddrFile_.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
-				TRACE(17, "mu2esim::read_data: Size is %llu", (unsigned long long)size);
+				TLOG(12) << "mu2esim::read_data: Size is " << size;
 				if (ddrFile_.eof())
 				{
-					TRACE(17, "mu2esim::read_data: 0-size file detected!");
+					TLOG(12) << "mu2esim::read_data: 0-size file detected!";
 					return -1;
 				}
 			}
-			TRACE(17, "Size of data is %zu, reading into buffer %u, at %p", size, swIdx_[chn], (void*)dmaData_[chn][swIdx_[chn]]);
+			TLOG(12) << "Size of data is " << size << ", reading into buffer " << swIdx_[chn] << ", at " << (void*)dmaData_[chn][swIdx_[chn]];
 			memcpy(dmaData_[chn][swIdx_[chn]], &size, sizeof(uint64_t));
 			ddrFile_.read(reinterpret_cast<char*>(dmaData_[chn][swIdx_[chn]]) + sizeof(uint64_t), size);
 			bytesReturned = size + sizeof(uint64_t);
@@ -235,11 +236,11 @@ int mu2esim::read_data(int chn, void** buffer, int tmo_ms)
 	}
 
 	*buffer = dmaData_[chn][swIdx_[chn]];
-	TRACE(18, "mu2esim::read_data: *buffer (%p) should now be equal to dmaData_[%d][%u] (%p)", (void*)*buffer, chn, swIdx_[chn], (void*)dmaData_[chn][swIdx_[chn]]);
+	TLOG(13) << "mu2esim::read_data: *buffer (" << (void*)*buffer << ") should now be equal to dmaData_[" << chn << "][" << swIdx_[chn] << "] (" << (void*)dmaData_[chn][swIdx_[chn]] << ")";
 	swIdx_[chn] = (swIdx_[chn] + 1) % SIM_BUFFCOUNT;
 
 	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
-	TRACE(18, "mu2esim::read_data took %lli milliseconds out of tmo_ms=%i", static_cast<long long>(duration), tmo_ms);
+	TLOG(13) << "mu2esim::read_data took " << duration << " milliseconds out of tmo_ms=" << tmo_ms;
 	return static_cast<int>(bytesReturned);
 }
 
@@ -247,7 +248,7 @@ int mu2esim::write_data(int chn, void* buffer, size_t bytes)
 {
 	if (chn == 0)
 	{
-		TRACE(17, "mu2esim::write_data: adding buffer to simulated DDR memory sz=%llu, *buffer=%llu", (unsigned long long)bytes, (unsigned long long)*((uint64_t*)buffer));
+		TLOG(14) << "mu2esim::write_data: adding buffer to simulated DDR memory sz=" << bytes << ", *buffer=" << *((uint64_t*)buffer);
 		if (bytes <= sizeof(mu2e_databuff_t))
 		{
 			if (currentEventSize_ > 0) closeEvent_();
@@ -260,32 +261,32 @@ int mu2esim::write_data(int chn, void* buffer, size_t bytes)
 			ddrFile_.flush();
 			return 0;
 		}
-		TRACE(17, "mu2esim::write_data: I was asked to write more than one buffer's worth of data. Cowardly refusing.");
+		TLOG(14) << "mu2esim::write_data: I was asked to write more than one buffer's worth of data. Cowardly refusing.";
 	}
 	else if (chn == 1)
 	{
-		TRACE(17, "mu2esim::write_data start: chn=%i, buf=%p, bytes=%llu", chn, buffer, (unsigned long long)bytes);
+		TLOG(14) << "mu2esim::write_data start: chn=" << chn << ", buf=" << buffer << ", bytes=" << bytes;
 		uint32_t worda;
 		memcpy(&worda, buffer, sizeof worda);
 		auto word = static_cast<uint16_t>(worda >> 16);
-		TRACE(17, "mu2esim::write_data worda is 0x%x and word is 0x%x", worda, word);
+		TLOG(14) << "mu2esim::write_data worda is 0x" << std::hex << worda << " and word is 0x" << std::hex << word;
 		auto activeRing = static_cast<DTCLib::DTC_Ring_ID>((word & 0x0F00) >> 8);
 		auto activeROC = static_cast<DTCLib::DTC_ROC_ID>(word & 0xF);
 
 		DTCLib::DTC_Timestamp ts(reinterpret_cast<uint8_t*>(buffer) + 6);
 		if ((word & 0x8010) == 0x8010)
 		{
-			TRACE(17, "mu2esim::write_data: Readout Request: activeDAQRing=%u, ts=%llu", activeRing, (unsigned long long)ts.GetTimestamp(true));
+			TLOG(14) << "mu2esim::write_data: Readout Request: activeDAQRing=" << activeRing << ", ts=" << ts.GetTimestamp(true);
 			readoutRequestReceived_[ts.GetTimestamp(true)][activeRing] = true;
 		}
 		else if ((word & 0x8020) == 0x8020)
 		{
-			TRACE(17, "mu2esim::write_data: Data Request: activeDAQRing=%u, activeROC=%u, ts=%llu", activeRing, activeROC, (unsigned long long)ts.GetTimestamp(true));
+			TLOG(14) << "mu2esim::write_data: Data Request: activeDAQRing=" << activeRing << ", activeROC=" << activeROC << ", ts=" << ts.GetTimestamp(true);
 			if (activeRing != DTCLib::DTC_Ring_Unused)
 			{
 				if (!readoutRequestReceived_[ts.GetTimestamp(true)][activeRing])
 				{
-					TRACE(17, "mu2esim::write_data: Data Request Received but missing Readout Request!");
+					TLOG(14) << "mu2esim::write_data: Data Request Received but missing Readout Request!";
 				}
 				else if (activeROC < DTCLib::DTC_ROC_Unused)
 				{
@@ -295,7 +296,7 @@ int mu2esim::write_data(int chn, void* buffer, size_t bytes)
 					packetSimulator_(ts, activeRing, activeROC, packetCount);
 
 					readoutRequestReceived_[ts.GetTimestamp(true)][activeRing] = false;
-					if(readoutRequestReceived_[ts.GetTimestamp(true)].count() == 0)
+					if (readoutRequestReceived_[ts.GetTimestamp(true)].count() == 0)
 					{
 						closeEvent_();
 						readoutRequestReceived_.erase(ts.GetTimestamp(true));
@@ -305,7 +306,7 @@ int mu2esim::write_data(int chn, void* buffer, size_t bytes)
 		}
 		if ((word & 0x0080) == 0)
 		{
-			TRACE(17, "mu2esim::write_data activeDCSRing is %u, roc is %u", activeRing, activeROC);
+			TLOG(14) << "mu2esim::write_data activeDCSRing is " << activeRing << ", roc is " << activeROC ;
 			if (activeRing != DTCLib::DTC_Ring_Unused && activeROC != DTCLib::DTC_ROC_Unused)
 			{
 				DTCLib::DTC_DataPacket packet(buffer);
@@ -313,8 +314,8 @@ int mu2esim::write_data(int chn, void* buffer, size_t bytes)
 				if (thisPacket.GetType() == DTCLib::DTC_DCSOperationType_Read ||
 					thisPacket.GetType() == DTCLib::DTC_DCSOperationType_WriteWithAck)
 				{
-					TRACE(17, "mu2esim::write_data: Recieved DCS Request:");
-					TRACE(17, thisPacket.toJSON().c_str());
+					TLOG(14) << "mu2esim::write_data: Recieved DCS Request:";
+					TLOG(14) << thisPacket.toJSON().c_str();
 					dcsPacketSimulator_(thisPacket);
 				}
 			}
@@ -327,7 +328,7 @@ int mu2esim::write_data(int chn, void* buffer, size_t bytes)
 int mu2esim::read_release(int chn, unsigned num)
 {
 	//Always succeeds
-	TRACE(17, "mu2esim::read_release: Simulating a release of %u buffers of channel %i", num, chn);
+	TLOG(15) << "mu2esim::read_release: Simulating a release of " << num << "u buffers of channel " <<chn;
 	for (unsigned ii = 0; ii < num; ++ii)
 	{
 		if (delta_(chn, C2S) != 0) swIdx_[chn] = (swIdx_[chn] + 1) % SIM_BUFFCOUNT;
@@ -348,12 +349,12 @@ int mu2esim::read_register(uint16_t address, int tmo_ms, uint32_t* output)
 	*output = 0;
 	if (registers_.count(address) > 0)
 	{
-		TRACE(17, "mu2esim::read_register: Returning value 0x%x for address 0x%x", registers_[address], address);
+		TLOG(16) << "mu2esim::read_register: Returning value 0x" << std::hex << registers_[address] << " for address 0x" << std::hex << address;
 		*output = registers_[address];
 		return 0;
 	}
 	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
-	TRACE(18, "mu2esim::read_register took %lli milliseconds out of tmo_ms=%i", static_cast<long long>(duration), tmo_ms);
+	TLOG(17) << "mu2esim::read_register took " << duration << " milliseconds out of tmo_ms=" << tmo_ms;
 	return 1;
 }
 
@@ -361,17 +362,17 @@ int mu2esim::write_register(uint16_t address, int tmo_ms, uint32_t data)
 {
 	auto start = std::chrono::steady_clock::now();
 	// Write the register!!!
-	TRACE(17, "mu2esim::write_register: Writing value 0x%x into address 0x%x", data, address);
+	TLOG(18) << "mu2esim::write_register: Writing value 0x" << std::hex << data << " into address 0x" << std::hex << address;
 	registers_[address] = data;
 	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
-	TRACE(18, "mu2esim::write_register took %lli milliseconds out of tmo_ms=%i", static_cast<long long>(duration), tmo_ms);
+	TLOG(19) << "mu2esim::write_register took " << duration << " milliseconds out of tmo_ms=" << tmo_ms;
 	std::bitset<32> dataBS(data);
 	if (address == DTCLib::DTC_Register_DTCControl)
 	{
 		auto detectorEmulationMode = (registers_[DTCLib::DTC_Register_DetEmulationControl0] & 0x3) != 0;
 		if (dataBS[30] == 1 && !detectorEmulationMode)
 		{
-			TRACE(19, "mu2esim::write_register: CFO Emulator Enable Detected!");
+			TLOG(19) << "mu2esim::write_register: CFO Emulator Enable Detected!";
 			cancelCFO_ = true;
 			if (cfoEmulatorThread_.joinable()) cfoEmulatorThread_.join();
 			cancelCFO_ = false;
@@ -388,11 +389,11 @@ int mu2esim::write_register(uint16_t address, int tmo_ms, uint32_t data)
 		}
 		else if (dataBS[26] == 1 && detectorEmulationMode)
 		{
-			TRACE(19, "mu2esim::write_register: IGNORING CFO Emulator Enable because we're in Detector Simulator mode!");
+			TLOG(19) << "mu2esim::write_register: IGNORING CFO Emulator Enable because we're in Detector Simulator mode!";
 		}
 		if (dataBS[31] == 1)
 		{
-			TRACE(19, "mu2esim::write_register: RESETTING DTC EMULATOR!");
+			TLOG(19) << "mu2esim::write_register: RESETTING DTC EMULATOR!";
 			init(mode_);
 			ddrFile_.close();
 			ddrFile_.open("mu2esim.bin", std::ios::trunc | std::ios::binary | std::ios::out | std::ios::in);
@@ -427,7 +428,7 @@ void mu2esim::CFOEmulator_()
 	DTCLib::DTC_Timestamp start(registers_[DTCLib::DTC_Register_CFOEmulationTimestampLow], static_cast<uint16_t>(registers_[DTCLib::DTC_Register_CFOEmulationTimestampHigh]));
 	auto count = registers_[DTCLib::DTC_Register_CFOEmulationNumRequests];
 	auto ticksToWait = static_cast<long long>(registers_[DTCLib::DTC_Register_CFOEmulationRequestInterval] * 0.0064);
-	TRACE(19, "mu2esim::CFOEmulator_ start timestamp=%llu, count=%lu, delayBetween=%lli", (unsigned long long)start.GetTimestamp(true), (unsigned long)count, (long long)ticksToWait);
+	TLOG(20) << "mu2esim::CFOEmulator_ start timestamp=" << start.GetTimestamp(true) << ", count=" << count << ", delayBetween=" << ticksToWait;
 	DTCLib::DTC_ROC_ID numROCS[6]{ DTCLib::DTC_ROC_Unused, DTCLib::DTC_ROC_Unused,
 		DTCLib::DTC_ROC_Unused, DTCLib::DTC_ROC_Unused,
 		DTCLib::DTC_ROC_Unused, DTCLib::DTC_ROC_Unused };
@@ -436,7 +437,7 @@ void mu2esim::CFOEmulator_()
 		std::bitset<32> ringRocs(registers_[DTCLib::DTC_Register_NUMROCs]);
 		auto number = ringRocs[ring * 3] + (ringRocs[ring * 3 + 1] << 1) + (ringRocs[ring * 3 + 2] << 2);
 		numROCS[ring] = DTCLib::DTC_ROCS[number];
-		TRACE(19, "mu2esim::CFOEmulator_ ringRocs[%u]=%u", ring, numROCS[ring]);
+		TLOG(20) << "mu2esim::CFOEmulator_ ringRocs[" << ring << "]=" << numROCS[ring];
 	}
 	unsigned sentCount = 0;
 	while (sentCount < count && !cancelCFO_)
@@ -471,10 +472,10 @@ void mu2esim::CFOEmulator_()
 			}
 			if (numROCS[ring] != DTCLib::DTC_ROC_Unused)
 			{
-				TRACE(19, "mu2esim::CFOEmulator_ ringRocs[%u]=%u", ring, numROCS[ring]);
+				TLOG(20) << "mu2esim::CFOEmulator_ ringRocs[" << ring << "]=" << numROCS[ring];
 				for (uint8_t roc = 0; roc <= numROCS[ring]; ++roc)
 				{
-					TRACE(21, "mu2esim::CFOEmulator_ activating packet simulator, ring=%u, roc=%u, for timestamp=%llu", ring, roc, (unsigned long long)(start + sentCount).GetTimestamp(true));
+					TLOG(21) << "mu2esim::CFOEmulator_ activating packet simulator, ring=" << ring << ", roc=" << roc << ", for timestamp=" << (start + sentCount).GetTimestamp(true);
 					packetSimulator_(start + sentCount, ring, static_cast<DTCLib::DTC_ROC_ID>(roc), packetCount);
 				}
 			}
@@ -496,17 +497,16 @@ void mu2esim::CFOEmulator_()
 unsigned mu2esim::delta_(int chn, int dir)
 {
 	if (chn == 0) return 0;
-	TRACE(25, "delta_ %i %i = 0", chn, dir);
+	TLOG(25) << "delta_ " << chn << " " << dir << " = 0";
 	unsigned hw = hwIdx_[chn];
 	unsigned sw = swIdx_[chn];
-	TRACE(21, "mu2esim::delta_ chn=%i dir=%i hw=%u sw=%u num_buffs=%u"
-		  , chn, dir, hw, sw, SIM_BUFFCOUNT);
-	if (dir == C2S)
-		return ((hw >= sw)
+	TLOG(25) << "mu2esim::delta_ chn=" << chn << " dir=" << dir << " hw=" << hw << " sw=" << sw << " num_buffs=" << SIM_BUFFCOUNT;
+		if (dir == C2S)
+			return ((hw >= sw)
 				? hw - sw
 				: SIM_BUFFCOUNT + hw - sw);
-	else
-		return ((sw >= hw)
+		else
+			return ((sw >= hw)
 				? SIM_BUFFCOUNT - (sw - hw)
 				: hw - sw);
 }
@@ -515,51 +515,51 @@ void mu2esim::clearBuffer_(int chn, bool increment)
 {
 	// Clear the buffer:
 	/*
-	TRACE(17, "mu2esim::clearBuffer_: Clearing output buffer");
+	TLOG(17) << "mu2esim::clearBuffer_: Clearing output buffer";
 	if (increment)
 	{
-		hwIdx_[chn] = (hwIdx_[chn] + 1) % SIM_BUFFCOUNT;
+		hwIdx_[chn] = (hwIdx_[chn] + 1) " << << " SIM_BUFFCOUNT;
 	}
 	memset(dmaData_[chn][hwIdx_[chn]], 0, sizeof(mu2e_databuff_t));
 	*/
-	TRACE(17, "mu2esim::clearBuffer_(%i, %u): NOP", chn, increment);
+	TLOG(22) << "mu2esim::clearBuffer_(" << chn << ", " << increment << "): NOP";
 }
 
 void mu2esim::openEvent_(DTCLib::DTC_Timestamp ts)
 {
-	TRACE(18, "mu2esim::openEvent_ Checking timestamp %llu vs current timestamp %llu", (unsigned long long) ts.GetTimestamp(true), (unsigned long long)currentTimestamp_.GetTimestamp(true));
+	TLOG(23) << "mu2esim::openEvent_ Checking timestamp " << ts.GetTimestamp(true) << " vs current timestamp " << currentTimestamp_.GetTimestamp(true);
 	if (ts == currentTimestamp_) return;
 	if (currentEventSize_ > 0) closeEvent_();
 
-	TRACE(18, "mu2esim::openEvent_: Setting up initial buffer");
+	TLOG(23) << "mu2esim::openEvent_: Setting up initial buffer";
 	eventBegin_ = ddrFile_.tellp();
 	ddrFile_.write(reinterpret_cast<char*>(&currentEventSize_), sizeof(uint64_t) / sizeof(char));
 
-	TRACE(18, "mu2esim::openEvent_: updating current timestamp");
+	TLOG(23) << "mu2esim::openEvent_: updating current timestamp";
 	currentTimestamp_ = ts;
 }
 
 void mu2esim::closeEvent_()
 {
-	TRACE(18, "mu2esim::closeEvent_: Checking current event size %llu", (unsigned long long)currentEventSize_);
+	TLOG(24) << "mu2esim::closeEvent_: Checking current event size " << currentEventSize_;
 	if (currentEventSize_ > 0 && ddrFile_) {
 		auto currentPos = ddrFile_.tellp();
 		ddrFile_.seekp(eventBegin_);
-		TRACE(18, "mu2esim::closeEvent_: Writing event size word");
+		TLOG(24) << "mu2esim::closeEvent_: Writing event size word";
 		ddrFile_.write(reinterpret_cast<char*>(&currentEventSize_), sizeof(uint64_t) / sizeof(char));
 		ddrFile_.seekp(currentPos);
 		currentEventSize_ = 0;
 		ddrFile_.flush();
 	}
-	TRACE(18, "mu2esim::closeEvent_ FINISH");
+	TLOG(24) << "mu2esim::closeEvent_ FINISH";
 }
 
 void mu2esim::dcsPacketSimulator_(DTCLib::DTC_DCSRequestPacket in)
 {
-	TRACE(17, "mu2esim::dcsPacketSimulator_: Constructing DCS Response");
+	TLOG(26) << "mu2esim::dcsPacketSimulator_: Constructing DCS Response";
 	DTCLib::DTC_DCSReplyPacket packet(in.GetRingID(), 0, in.GetType(), in.GetAddress(), in.GetData(), true);
 
-	TRACE(17, "mu2esim::dcsPacketSimulator_: copying response into new buffer");
+	TLOG(26) << "mu2esim::dcsPacketSimulator_: copying response into new buffer";
 	auto dataPacket = packet.ConvertToDataPacket();
 	size_t packetSize = dataPacket.GetSize();
 	*reinterpret_cast<uint64_t*>(dmaData_[1][hwIdx_[1]]) = packetSize;
@@ -569,7 +569,7 @@ void mu2esim::dcsPacketSimulator_(DTCLib::DTC_DCSRequestPacket in)
 
 void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID ring, DTCLib::DTC_ROC_ID roc, uint16_t packetCount)
 {
-	TRACE(17, "mu2esim::packetSimulator_: Generating data for timestamp %llu", (unsigned long long)ts.GetTimestamp(true));
+	TLOG(27) << "mu2esim::packetSimulator_: Generating data for timestamp " << ts.GetTimestamp(true);
 
 	uint8_t packet[16];
 	auto packetSize = sizeof(packet) / sizeof(char);
@@ -609,7 +609,7 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 	packet[14] = 0;
 	packet[15] = 0;
 
-	TRACE(17, "mu2esim::packetSimulator_ Writing Data Header packet to memory file, chn=%i, packet=%p", 0, (void*)packet);
+	TLOG(27) << "mu2esim::packetSimulator_ Writing Data Header packet to memory file, chn=0, packet=" << (void*)packet;
 	ddrFile_.write(reinterpret_cast<char*>(packet), packetSize);
 
 	switch (mode_)
@@ -634,7 +634,7 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 		packet[14] = 0;
 		packet[15] = 0;
 
-		TRACE(17, "mu2esim::packetSimulator_ Writing Data packet to memory file, chn=%i, packet=%p", 0, (void*)packet);
+		TLOG(27) << "mu2esim::packetSimulator_ Writing Data packet to memory file, chn=0, packet=" << (void*)packet;
 		ddrFile_.write(reinterpret_cast<char*>(packet), packetSize);
 	}
 	break;
@@ -657,7 +657,7 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 		packet[14] = 4;
 		packet[15] = 4;
 
-		TRACE(17, "mu2esim::packetSimulator_ Writing Data packet to memory file, chn=%i, packet=%p", 0, (void*)packet);
+		TLOG(27) << "mu2esim::packetSimulator_ Writing Data packet to memory file, chn=0, packet=" << (void*)packet;
 		ddrFile_.write(reinterpret_cast<char*>(packet), packetSize);
 
 		auto samplesProcessed = 5;
@@ -681,7 +681,7 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 			packet[15] = static_cast<uint8_t>(samplesProcessed + 7);
 
 			samplesProcessed += 8;
-			TRACE(17, "mu2esim::packetSimulator_ Writing Data packet to memory file, chn=%i, packet=%p", 0, (void*)packet);
+			TLOG(27) << "mu2esim::packetSimulator_ Writing Data packet to memory file, chn=0, packet=" << (void*)packet;
 			ddrFile_.write(reinterpret_cast<char*>(packet), packetSize);
 		}
 	}
@@ -716,7 +716,7 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 		packet[14] = static_cast<uint8_t>((pattern6 >> 4) + (pattern7 << 6));
 		packet[15] = static_cast<uint8_t>((pattern7 >> 2));
 
-		TRACE(17, "mu2esim::packetSimulator_ Writing Data packet to memory file, chn=%i, packet=%p", 0, (void*)packet);
+		TLOG(27) << "mu2esim::packetSimulator_ Writing Data packet to memory file, chn=0, packet=" << (void*)packet;
 		ddrFile_.write(reinterpret_cast<char*>(packet), packetSize);
 	}
 	break;
@@ -740,7 +740,7 @@ void mu2esim::packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID rin
 			packet[14] = 0xee;
 			packet[15] = 0xff;
 
-			TRACE(17, "mu2esim::packetSimulator_ Writing Data packet to memory file, chn=%i, packet=%p", 0, (void*)packet);
+			TLOG(27) << "mu2esim::packetSimulator_ Writing Data packet to memory file, chn=0, packet=" <<  (void*)packet;
 			ddrFile_.write(reinterpret_cast<char*>(packet), packetSize);
 		}
 		break;

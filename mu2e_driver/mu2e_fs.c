@@ -14,6 +14,7 @@
 #include "trace.h"		/* TRACE */
 #include "mu2e_mmap_ioctl.h"	/* MU2E_DEV_FILE */
 #include "mu2e_fs.h"
+#include "mu2e_mem.h"
 
 
 static struct file_operations mu2e_file_ops =
@@ -35,29 +36,26 @@ static struct file_operations mu2e_file_ops =
     NULL                        /* lock         */
 };
 
-dev_t         mu2e_dev_number;
-struct class *mu2e_dev_class;
 struct cdev   mu2e_cdev;
 
 int mu2e_fs_up()
 {
     int sts;
-    sts = alloc_chrdev_region( &mu2e_dev_number, 0, 1, "mu2e_drv" );
+    sts = alloc_chrdev_region( &mu2e_dev_number, 0, MU2E_MAX_NUM_DTCS, "mu2e_drv" );
 
     if(sts < 0)
     {   TRACE( 3, "dcm_init(): Failed to get device numbers" );
         return (sts);
     }
-    
+
     mu2e_dev_class = class_create( THIS_MODULE, "mu2e_dev" );
-    
+
     cdev_init( &mu2e_cdev, &mu2e_file_ops );
 
     mu2e_cdev.owner = THIS_MODULE;
     mu2e_cdev.ops   = &mu2e_file_ops;
 
-    sts = cdev_add ( &mu2e_cdev, mu2e_dev_number, 1 );
-    device_create( mu2e_dev_class, NULL, mu2e_dev_number, NULL, MU2E_DEV_FILE );
+    sts = cdev_add ( &mu2e_cdev, mu2e_dev_number, MU2E_MAX_NUM_DTCS );
     // NOTE: permissions set -- use udev - i.e:
     // echo 'KERNEL=="mu2e", MODE="0666"' >/etc/udev/rules.d/98-mu2e.rules
 
@@ -67,7 +65,6 @@ int mu2e_fs_up()
 
 void mu2e_fs_down()
 {
-    device_destroy( mu2e_dev_class, mu2e_dev_number);
     cdev_del( &mu2e_cdev );
     class_destroy( mu2e_dev_class);
     unregister_chrdev_region( mu2e_dev_number, 1 );

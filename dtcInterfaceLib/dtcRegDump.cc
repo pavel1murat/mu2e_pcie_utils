@@ -15,25 +15,49 @@ void printHelpMsg()
 		<< "    -h: This message." << std::endl
 		<< "    -R: DON'T Print Register Dump." << std::endl
 		<< "    -s: Print SERDES Byte and Packet Counters." << std::endl
-		<< "    -p: Print Performance Counters." << std::endl;
-		
+		<< "    -p: Print Performance Counters." << std::endl
+		<< "    -d: DTC instance to use (defaults to DTCLIB_DTC if set, 0 otherwise)"  << std::endl
+		;
+
 	exit(0);
 }
 
+
+unsigned getOptionValue(int* index, char** argv[])
+{
+	auto arg = (*argv)[*index];
+	if (arg[2] == '\0')
+	{
+		(*index)++;
+		unsigned ret = strtoul((*argv)[*index], nullptr, 0);
+		if (ret == 0 && (*argv)[*index][0] != '0') // No option given 
+		{
+			(*index)--;
+		}
+		return ret;
+	}
+	auto offset = 2;
+	if (arg[2] == '=')
+	{
+		offset = 3;
+	}
+
+	return strtoul(&arg[offset], nullptr, 0);
+}
+
 int main(int argc
-	, char* argv[])
+		 , char* argv[])
 {
 	auto printPerformanceCounters = false;
 	auto printSERDESCounters = false;
 	auto printRegisterDump = true;
+	int dtc = -1;
 
 	for (auto optind = 1; optind < argc; ++optind)
 	{
 		if (argv[optind][0] == '-')
 		{
-			auto index = 1;
-			while (argv[optind][index] != '\0') {
-				switch (argv[optind][index])
+				switch (argv[optind][1])
 				{
 				case 's':
 					printSERDESCounters = true;
@@ -44,20 +68,21 @@ int main(int argc
 				case 'R':
 					printRegisterDump = false;
 					break;
+				case 'd':
+					dtc = getOptionValue(&optind, &argv);
+					break;
 				default:
-					std::cout << "Unknown option: " << argv[optind][index] << std::endl;
+					std::cout << "Unknown option: " << argv[optind] << std::endl;
 					printHelpMsg();
 					break;
 				case 'h':
 					printHelpMsg();
 					break;
 				}
-				index++;
-			}
 		}
 	}
 
-	auto thisDTC = new DTCLib::DTC_Registers("", DTCLib::DTC_SimMode_Disabled, 0x1, true);
+	auto thisDTC = new DTCLib::DTC_Registers(DTCLib::DTC_SimMode_Disabled, dtc, 0x1, "", true);
 
 	auto cols = 80;
 	auto lines = 24;
@@ -79,16 +104,19 @@ int main(int argc
 
 	if (cols > 400) { cols = 120; }
 
-	if (printRegisterDump) {
+	if (printRegisterDump)
+	{
 		std::cout << thisDTC->FormattedRegDump(cols) << std::endl;
 	}
 
-	if (printSERDESCounters) {
+	if (printSERDESCounters)
+	{
 		std::cout << std::endl << std::endl;
 		std::cout << thisDTC->RingCountersRegDump(cols);
 	}
 
-	if (printPerformanceCounters) {
+	if (printPerformanceCounters)
+	{
 		std::cout << std::endl << std::endl;
 		std::cout << thisDTC->PerformanceMonitorRegDump(cols);
 	}

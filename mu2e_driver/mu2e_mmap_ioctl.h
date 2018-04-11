@@ -20,8 +20,9 @@
 #endif
 
 
-#define MU2E_DEV_FILE       "mu2e"
+#define MU2E_DEV_FILE       "mu2e%d" /* %d => minor number */
 #define MU2E_MAX_CHANNELS	2
+#define MU2E_MAX_NUM_DTCS   2 /* Keep resonable...shouldn't ever need more than 4...*/
 
 /// <summary>
 /// Data Header Packet definition, hardware view
@@ -132,8 +133,8 @@ struct DataPacket
 	 +sysconf(_SC_PAGE_SIZE)*((dir&1)*2)	\
 	 +sysconf(_SC_PAGE_SIZE)*(map&1) )
 
-#define idx_add( idx, add, chn, dir )				 \
-	__extension__ ({unsigned num_buffs=mu2e_channel_info_[chn][dir].num_buffs; \
+#define idx_add( idx, add, dtc, chn, dir )				 \
+	__extension__ ({unsigned num_buffs=mu2e_channel_info_[dtc][chn][dir].num_buffs; \
 	(add<0)								\
 		?(((unsigned)-add>idx)					\
 		  ?(num_buffs-(-add-idx))%num_buffs		\
@@ -320,22 +321,22 @@ typedef struct
    userspace and kernel land. For userspace the variable is defined in
    the mu2edev class (and therefore the using namsspace
  */
-static inline unsigned mu2e_chn_info_delta_(int chn, int dir, m_ioc_get_info_t(*mu2e_channel_info_)[MU2E_MAX_CHANNELS][2])
+static inline unsigned mu2e_chn_info_delta_(int dtc, int chn, int dir, m_ioc_get_info_t(*mu2e_channel_info_)[MU2E_MAX_NUM_DTCS][MU2E_MAX_CHANNELS][2])
 {
-	unsigned hw = (*mu2e_channel_info_)[chn][dir].hwIdx;
-	unsigned sw = (*mu2e_channel_info_)[chn][dir].swIdx;
+	unsigned hw = (*mu2e_channel_info_)[dtc][chn][dir].hwIdx;
+	unsigned sw = (*mu2e_channel_info_)[dtc][chn][dir].swIdx;
 	unsigned retval;
 	if (dir == C2S)
 		retval = ((hw >= sw)
 			? hw - sw
-			: (*mu2e_channel_info_)[chn][dir].num_buffs + hw - sw);
+			: (*mu2e_channel_info_)[dtc][chn][dir].num_buffs + hw - sw);
 	else
 		retval = ((sw >= hw)
-			? (*mu2e_channel_info_)[chn][dir].num_buffs - (sw - hw)
+			? (*mu2e_channel_info_)[dtc][chn][dir].num_buffs - (sw - hw)
 			: hw - sw);
 
-	TRACE(21, "mu2e_mmap_ioctl::delta_ chn=%d dir=%d hw=%u sw=%u num_buffs=%u delta=%u"
-		, chn, dir, hw, sw, (*mu2e_channel_info_)[chn][dir].num_buffs, retval);
+	TRACE(21, "mu2e_mmap_ioctl::delta_ dtc=%d chn=%d dir=%d hw=%u sw=%u num_buffs=%u delta=%u"
+		,dtc, chn, dir, hw, sw, (*mu2e_channel_info_)[dtc][chn][dir].num_buffs, retval);
 	return retval;
 }
 

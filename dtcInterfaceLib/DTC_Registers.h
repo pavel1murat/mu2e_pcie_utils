@@ -72,6 +72,7 @@ namespace DTCLib
 		DTC_Register_CFOEmulationNumPacketsRings10 = 0x91B0,
 		DTC_Register_CFOEmulationNumPacketsRings32 = 0x91B4,
 		DTC_Register_CFOEmulationNumPacketsRings54 = 0x91B8,
+		DTC_Register_CFOEmulationNumNullHeartbeats = 0x91BC,
 		DTC_Register_CFOEmulationEventMode1 = 0x91C0,
 		DTC_Register_CFOEmulationEventMode2 = 0x91C4,
 		DTC_Register_CFOEmulationDebugPacketType = 0x91C8,
@@ -159,11 +160,12 @@ namespace DTCLib
 		/// <summary>
 		/// Construct an instance of the DTC register map
 		/// </summary>
-		/// <param name="expectedDesignVersion">Expected DTC Firmware Design Version. If set, will throw an exception if the DTC firmware does not match (Default: "")</param>
 		/// <param name="mode">Default: DTC_SimMode_Disabled; The simulation mode of the DTC</param>
+		/// <param name="dtc">DTC card index to use</param>
 		/// <param name="rocMask">Default 0x1; The initially-enabled ROCs. Each digit corresponds to a ring, so all ROCs = 0x666666</param>
 		/// <param name="skipInit">Default: false; Whether to skip initializing the DTC using the SimMode. Used to read state.</param>
-		explicit DTC_Registers(std::string expectedDesignVersion = "", DTC_SimMode mode = DTC_SimMode_Disabled, unsigned rocMask = 0x1, bool skipInit = false);
+		/// <param name="expectedDesignVersion">Expected DTC Firmware Design Version. If set, will throw an exception if the DTC firmware does not match (Default: "")</param>
+		explicit DTC_Registers(DTC_SimMode mode, int dtc, unsigned rocMask = 0x1, std::string expectedDesignVersion = "", bool skipInit = false);
 		/// <summary>
 		/// DTC_Registers destructor
 		/// </summary>
@@ -191,14 +193,15 @@ namespace DTCLib
 		}
 
 		/// <summary>
-		/// Initialize the DTC in the given SimMode. 
+		/// Initialize the DTC in the given SimMode.
 		/// </summary>
 		/// <param name="expectedDesignVersion">Expected DTC Firmware Design Version. If set, will throw an exception if the DTC firmware does not match</param>
 		/// <param name="mode">Mode to set</param>
+		/// <param name="dtc">DTC card index to use</param>
 		/// <param name="rocMask">The initially-enabled ROCs. Each digit corresponds to a ring, so all ROCs = 0x666666</param>
 		/// <param name="skipInit">Whether to skip initializing the DTC using the SimMode. Used to read state.</param>
 		/// <returns></returns>
-		DTC_SimMode SetSimMode(std::string expectedDesignVersion, DTC_SimMode mode, unsigned rocMask, bool skipInit = false);
+		DTC_SimMode SetSimMode(std::string expectedDesignVersion, DTC_SimMode mode,int dtc, unsigned rocMask, bool skipInit = false);
 
 		//
 		// DTC Register Dumps
@@ -1274,7 +1277,7 @@ namespace DTCLib
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
 		DTC_RegisterFormatter FormatReceivePacketError();
 
-		// CFO Emulation Timestamp Registers 
+		// CFO Emulation Timestamp Registers
 		/// <summary>
 		/// Set the starting DTC_Timestamp for the CFO Emulator
 		/// </summary>
@@ -1362,6 +1365,23 @@ namespace DTCLib
 		/// </summary>
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
 		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing45();
+
+		// CFO Emulation Number of Null Heartbeats Register
+		/// <summary>
+		/// Set the number of null heartbeats the CFO Emulator will generate following the requested ones
+		/// </summary>
+		/// <param name="numPackets">Number of null heartbeats to generate</param>
+		void SetCFOEmulationNumNullHeartbeats(const uint32_t& count);
+		/// <summary>
+		/// Read the requested number of null heartbeats that will follow the configured heartbeats from the CFO Emulator
+		/// </summary>
+		/// <returns>Number of null heartbeats to follow "live" heartbeats</returns>
+		uint32_t ReadCFOEmulationNumNullHeartbeats();
+		/// <summary>
+		/// Formats the register's current value for register dumps
+		/// </summary>
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatCFOEmulationNumNullHeartbeats();
 
 		// CFO Emulation Event Mode Bytes Registers
 		/// <summary>
@@ -2267,6 +2287,7 @@ namespace DTCLib
 			[this]() { return this->FormatCFOEmulationNumPacketsRing01(); },
 			[this]() { return this->FormatCFOEmulationNumPacketsRing23(); },
 			[this]() { return this->FormatCFOEmulationNumPacketsRing45(); },
+			[this]() { return this->FormatCFOEmulationNumNullHeartbeats(); },
 			[this]() { return this->FormatCFOEmulationModeBytes03(); },
 			[this]() { return this->FormatCFOEmulationModeBytes45(); },
 			[this]() { return this->FormatCFOEmulationDebugPacketType(); },

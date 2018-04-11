@@ -56,7 +56,7 @@ add_subdirectory(mu2e_driver)
 add_subdirectory(cfo_driver)
 add_subdirectory(mcs)
 add_subdirectory(dtcInterfaceLib)
-add_subdirectory(cfoInterfaceLib)
+#add_subdirectory(cfoInterfaceLib)
 
 # tools
 add_subdirectory(tools)
@@ -65,7 +65,7 @@ add_subdirectory(tools)
 add_subdirectory(ups)
 
 # doc - Doxygen documentation
-add_subdirectory(doc)
+#add_subdirectory(doc)
 
 # packaging utility
 include(UseCPack)

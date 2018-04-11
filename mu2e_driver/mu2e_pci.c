@@ -7,11 +7,14 @@
 	*/
 
 #include <linux/pci.h>		/* pci_* */
+#include <linux/fs.h>		/* struct inode */
 
 #include "trace.h"		/* TRACE */
-#include "mu2e_mmap_ioctl.h"	/* C2S */
+#include "mu2e_proto_globals.h"	/* C2S */
 #include "xdma_hw.h"		/* Dma_mIntDisable nests xio.h -> xbasic_types.h */
 #include "mu2e_pci.h"
+#include "mu2e_event.h"
+#include "mu2e_mem.h"
 
 
 #define DRIVER_NAME      "mu2e_driver"
@@ -22,6 +25,7 @@ static struct pci_device_id xilinx_ids[] = {
 	{ }     /* terminate list with empty entry */
 };
 
+int MSIEnabled[MU2E_MAX_NUM_DTCS] = {0};
 
 /* Return 0==SUCCESS, 1=FAIL
  */
@@ -33,9 +37,11 @@ static int ReadDMAEngineConfiguration(  struct pci_dev * pdev
 	int           ii;
 	//    Dma_Engine *  eptr;
 	u32		  Hardware_design_version;
+	int dtc = MINOR(pdev->dev.devt);
+	TRACE(19, "ReadDMAEngineConfiguration MINOR(pdev->dev.devt)=%d", dtc);
 
 	/* DMA registers are offset from BAR0 */
-	base = (unsigned long)(mu2e_pcie_bar_info.baseVAddr);
+	base = (unsigned long)(mu2e_pcie_bar_info[dtc].baseVAddr);
 
 	Hardware_design_version = XIo_In32(base+0x9000);
 	printk(KERN_INFO "Hardware design version %x from %lx\n", Hardware_design_version, base );
@@ -89,8 +95,20 @@ static int mu2e_pci_probe(  struct pci_dev             *pdev
 	int pciRet;
 	int bar=0;
 	u32 size;
+	int dtc;
+	for (dtc = 0; dtc < MU2E_MAX_NUM_DTCS;)
+	{
+		if (!mu2e_pci_dev[dtc]) break;
+		++dtc;
+	}
+	if (dtc == MU2E_MAX_NUM_DTCS)
+	{
+		TRACE(0, "mu2e_pci_probe: TOO MANY DTCS!!!");
+		return -2;
+	}
+	pdev->dev.devt = MKDEV(MAJOR(mu2e_dev_number), dtc);
 
-	TRACE( 0, "mu2e_pci_probe" );
+	TRACE( 0, "mu2e_pci_probe pdev=%p, MINOR(pdev->dev.devt)=%d",pdev, MINOR(pdev->dev.devt) );
 	/* Initialize device before it is used by driver. Ask low-level
 	 * code to enable I/O and memory. Wake up the device if it was
 	 * suspended. Beware, this function can fail.
@@ -134,32 +152,57 @@ static int mu2e_pci_probe(  struct pci_dev             *pdev
 	goto out2;
 	}
 
-	mu2e_pcie_bar_info.basePAddr = pci_resource_start( pdev, bar );
-	mu2e_pcie_bar_info.baseLen   = size;
+	mu2e_pcie_bar_info[dtc].basePAddr = pci_resource_start( pdev, bar );
+	mu2e_pcie_bar_info[dtc].baseLen   = size;
 
-	mu2e_pcie_bar_info.baseVAddr = ioremap( mu2e_pcie_bar_info.basePAddr,size );
-	if (mu2e_pcie_bar_info.baseVAddr == 0UL)
+	mu2e_pcie_bar_info[dtc].baseVAddr = ioremap( mu2e_pcie_bar_info[dtc].basePAddr,size );
+	if (mu2e_pcie_bar_info[dtc].baseVAddr == 0UL)
 	{   printk(KERN_ERR "Cannot map BAR %d space, invalidating.\n", bar );
 	goto out2;
 	}
 
 	/* Disable global interrupts */
-	Dma_mIntDisable( mu2e_pcie_bar_info.baseVAddr );
+	Dma_mIntDisable( mu2e_pcie_bar_info[dtc].baseVAddr );
 
-	TRACE( 1, "mu2e_pci_probe read a channel reg to quite compiler 0x%x"
-	  , Dma_mReadChnReg(0,C2S,REG_HW_CMPLT_BD) );
+	TRACE( 1, "mu2e_pci_probe read a channel reg to quiet compiler 0x%x"
+	  , Dma_mReadChnReg(dtc, 0,C2S,REG_HW_CMPLT_BD) );
 
 	// clear "App 0/1" registers
-	Dma_mWriteReg( mu2e_pcie_bar_info.baseVAddr, 0x9100, 0 );
-	Dma_mWriteReg( mu2e_pcie_bar_info.baseVAddr, 0x9108, 0 );
-	Dma_mWriteReg( mu2e_pcie_bar_info.baseVAddr, 0x9200, 0 );
-	Dma_mWriteReg( mu2e_pcie_bar_info.baseVAddr, 0x9208, 0 );
+	Dma_mWriteReg( mu2e_pcie_bar_info[dtc].baseVAddr, 0x9100, 0 );
+	Dma_mWriteReg( mu2e_pcie_bar_info[dtc].baseVAddr, 0x9108, 0 );
+	Dma_mWriteReg( mu2e_pcie_bar_info[dtc].baseVAddr, 0x9200, 0 );
+	Dma_mWriteReg( mu2e_pcie_bar_info[dtc].baseVAddr, 0x9208, 0 );
 
 	/* Read DMA engine configuration and initialise data structures */
 	if (ReadDMAEngineConfiguration( pdev/*, dmaData*/ ) != 0)
 	goto out2;
 
-	mu2e_pci_dev = pdev;   /* GLOBAL */
+	mu2e_pci_dev[dtc] = pdev;   /* GLOBAL */
+
+	if (alloc_mem(dtc) != 0) goto out2;
+
+	device_create(mu2e_dev_class, NULL, pdev->dev.devt, NULL, MU2E_DEV_FILE, dtc);
+
+	mu2e_event_up(dtc);
+
+# if MU2E_RECV_INTER_ENABLED
+						   /* Now enable interrupts using MSI mode */
+	if (!pci_enable_msi(mu2e_pci_dev[dtc]))
+	{
+		TRACE(1, "MSI enabled");
+		MSIEnabled[dtc] = 1;
+	}
+
+	pciRet = request_irq(mu2e_pci_dev[dtc]->irq, DmaInterrupt, IRQF_SHARED, "mu2e", mu2e_pci_dev[dtc]);
+	if (pciRet)
+	{
+		TRACE(0, "xdma could not allocate interrupt %d", mu2e_pci_dev[dtc]->irq);
+		TRACE(0, "Unload driver and try running with polled mode instead");
+		goto out2;
+	}
+	Dma_mIntEnable((unsigned long)mu2e_pcie_bar_info[dtc].baseVAddr);
+# endif
+
 
 	return (0);			/* SUCCESS */
 
@@ -173,13 +216,36 @@ static int mu2e_pci_probe(  struct pci_dev             *pdev
 
 static void mu2e_pci_remove(struct pci_dev *pdev)
 {
-	printk( "mu2e_pci_remove start\n ");
+	int dtc = MINOR(pdev->dev.devt);
+
+	if(mu2e_pci_dev[dtc] == 0) return;
+	printk("mu2e_pci_remove start dtc=%d\n ",dtc);
+
+	printk("mu2e_pci_remove dtc=%d disabling events\n", dtc);
+	mu2e_event_down(dtc);
+
+	printk("mu2e_pci_remove dtc=%d freeing memory\n", dtc);
+	free_mem(dtc);
+
+	printk("mu2e_pci_remove dtc=%d destroying device\n", dtc);
+	device_destroy(mu2e_dev_class, pdev->dev.devt);
+
+	printk("mu2e_pci_remove dtc=%d disabling interrupts\n", dtc);
+	Dma_mIntDisable((unsigned long)mu2e_pcie_bar_info[dtc].baseVAddr);
+
+	printk("mu2e_pci_remove dtc=%d freeing IRQ %d\n", dtc, pdev->irq);
+	free_irq(pdev->irq,pdev);
+
+	printk("mu2e_pci_remove dtc=%d disabling MSI (enabled=%d)\n", dtc, MSIEnabled[dtc]);
+	if (MSIEnabled[dtc]) pci_disable_msi(pdev);
+
 	pci_release_regions( pdev );
-	printk( "mu2e_pci_remove after release_regions, before disable_device\n" );
+	printk( "mu2e_pci_remove dtc=%d after release_regions, before disable_device\n", dtc );
 	pci_disable_device( pdev );
-	printk( "mu2e_pci_remove after disable_device, before set_drvdata\n" );
+	printk( "mu2e_pci_remove dtc=%d after disable_device, before set_drvdata\n",dtc );
 	pci_set_drvdata( pdev, NULL );
-	printk( "mu2e_pci_remove complete\n" );
+	printk( "mu2e_pci_remove dtc=%d complete\n",dtc );
+	mu2e_pci_dev[dtc] = 0;
 }   // mu2e_remove
 
 
@@ -200,7 +266,9 @@ int mu2e_pci_up( void )
 
 void mu2e_pci_down( void )
 {
+	printk("mu2e_pci_down BEGIN\n");
 	pci_unregister_driver( &mu2e_driver );
+	printk("mu2e_pci_down END\n");
 }   // mu2e_pci_down
 
 

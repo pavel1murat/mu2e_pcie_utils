@@ -21,6 +21,7 @@
 #include "DTCSoftwareCFO.h"
 #include "trace.h"
 #include <unistd.h>		// usleep
+#include <set>
 
 using namespace DTCLib;
 
@@ -34,10 +35,12 @@ bool rawOutput = false;
 bool skipVerify = false;
 bool writeDMAHeadersToOutput = false;
 bool useCFOEmulator = true;
+bool forceNoDebug = false;
 unsigned genDMABlocks = 0;
 std::string rawOutputFile = "/tmp/mu2eUtil.raw";
 std::string expectedDesignVersion = "";
 std::string simFile = "";
+std::string timestampFile = "";
 bool useSimFile = false;
 unsigned delay = 0;
 unsigned cfodelay = 1000;
@@ -56,6 +59,8 @@ std::ofstream outputStream;
 unsigned rocMask = 0x1;
 unsigned targetFrequency = 166666667;
 int clockToProgram = 0;
+
+int dtc = -1;
 
 
 unsigned getOptionValue(int* index, char** argv[])
@@ -116,6 +121,73 @@ std::string getOptionString(int* index, char** argv[])
 	}
 
 	return std::string(&arg[offset]);
+}
+
+unsigned getLongOptionValue(int* index, char** argv[])
+{
+	auto arg = std::string((*argv)[*index]);
+	auto pos = arg.find('=');
+
+	if (pos == std::string::npos)
+	{
+		(*index)++;
+		unsigned ret = strtoul((*argv)[*index], nullptr, 0);
+		if (ret == 0 && (*argv)[*index][0] != '0') // No option given 
+		{
+			(*index)--;
+		}
+		return ret;
+	}
+
+	return strtoul(&arg[++pos], nullptr, 0);
+}
+unsigned long long getLongOptionValueLong(int* index, char** argv[])
+{
+	auto arg = std::string((*argv)[*index]);
+	auto pos = arg.find('=');
+
+
+	if (pos == std::string::npos)
+	{
+		(*index)++;
+		unsigned long long ret = strtoull((*argv)[*index], nullptr, 0);
+		if (ret == 0 && (*argv)[*index][0] != '0') // No option given 
+		{
+			(*index)--;
+		}
+		return ret;
+	}
+
+	return strtoull(&arg[++pos], nullptr, 0);
+}
+
+std::string getLongOptionOption(int* index, char** argv[])
+{
+	auto arg = std::string((*argv)[*index]);
+	auto pos = arg.find('=');
+
+	if (pos == std::string::npos)
+	{
+		return arg;
+	}
+	else
+	{
+		return arg.substr(0, pos - 1);
+	}
+}
+
+std::string getLongOptionString(int* index, char** argv[])
+{
+	auto arg = std::string((*argv)[*index]);
+
+	if (arg.find('=') == std::string::npos)
+	{
+		return std::string((*argv)[++(*index)]);
+	}
+	else
+	{
+		return arg.substr(arg.find('='));
+	}
 }
 
 void WriteGeneratedData(DTC* thisDTC)
@@ -193,8 +265,8 @@ void WriteGeneratedData(DTC* thisDTC)
 					dataPacket[1] = 0x4154;
 					dataPacket[2] = 0x4144;
 					dataPacket[3] = 0x4154;
-                                        packetCounter += 1;
-                                        memcpy(&dataPacket[4], &packetCounter, sizeof(uint32_t));
+					packetCounter += 1;
+					memcpy(&dataPacket[4], &packetCounter, sizeof(uint32_t));
 					uint32_t tmp = jj + 1;
 					memcpy(&dataPacket[6], &tmp, sizeof(uint32_t));
 
@@ -244,9 +316,9 @@ void WriteGeneratedData(DTC* thisDTC)
 
 void printHelpMsg()
 {
-	std::cout << "Usage: mu2eUtil [options] [read,read_data,reset_ddrread,reset_detemu,toggle_serdes,loopback,buffer_test,read_release,DTC,program_clock,verify_simfile]" << std::endl;
+	std::cout << "Usage: mu2eUtil [options] [read,read_data,reset_ddrread,reset_detemu,toggle_serdes,loopback,buffer_test,read_release,DTC,program_clock,verify_simfile,dma_info]" << std::endl;
 	std::cout << "Options are:" << std::endl
-		<< "    -h: This message." << std::endl
+		<< "    -h, --help: This message." << std::endl
 		<< "    -n: Number of times to repeat test. (Default: 1)" << std::endl
 		<< "    -o: Starting Timestamp offest. (Default: 1)." << std::endl
 		<< "    -i: Do not increment Timestamps." << std::endl
@@ -254,6 +326,7 @@ void printHelpMsg()
 		<< "    -d: Delay between tests, in us (Default: 0)." << std::endl
 		<< "    -D: CFO Request delay interval (Default: 1000 (minimum)." << std::endl
 		<< "    -c: Number of Debug Packets to request (Default: 0)." << std::endl
+		<< "    -N: Do NOT set the Debug flag in generated Data Request packets" << std::endl
 		<< "    -b: Number of Data Blocks to generate per Event (Default: 1)." << std::endl
 		<< "    -E: Number of Events to generate per DMA block (Default: 1)." << std::endl
 		<< "    -a: Number of Readout Request/Data Requests to send before starting to read data (Default: 0)." << std::endl
@@ -264,7 +337,7 @@ void printHelpMsg()
 		<< "    -t: Use DebugType flag (1st request gets ExternalDataWithFIFOReset, the rest get ExternalData)" << std::endl
 		<< "    -T: Set DebugType flag for ALL requests (0, 1, or 2)" << std::endl
 		<< "    -f: RAW Output file path" << std::endl
-		<< "    -H: Write DMA headers to raw output file (when -f is used with -g)"
+		<< "    -H: Write DMA headers to raw output file (when -f is used with -g)" << std::endl
 		<< "    -p: Send DTCLIB_SIM_FILE to DTC and enable Detector Emulator mode" << std::endl
 		<< "    -P: Send <file> to DTC and enable Detector Emulator mode (Default: \"\")" << std::endl
 		<< "    -g: Generate (and send) N DMA blocks for testing the Detector Emulator (Default: 0)" << std::endl
@@ -274,6 +347,8 @@ void printHelpMsg()
 		<< "    -C: Clock to program (0: SERDES, 1: DDR, Default 0)" << std::endl
 		<< "    -v: Expected DTC Design version string (Default: \"\")" << std::endl
 		<< "    -V: Do NOT attempt to verify that the sim file landed in DTC memory correctly" << std::endl
+		<< "    --timestamp-list: Read <file> for timestamps to request (CFO will generate heartbeats for all timestamps in range spanned by file)" << std::endl
+		<< "    --dtc: Use dtc <num> (Defaults to DTCLIB_DTC if set, 0 otherwise, see ls /dev/mu2e* for available DTCs)" << std::endl
 		;
 	exit(0);
 }
@@ -308,6 +383,9 @@ main(int argc
 				break;
 			case 'c':
 				packetCount = getOptionValue(&optind, &argv);
+				break;
+			case 'N':
+				forceNoDebug = true;
 				break;
 			case 'b':
 				blockCount = getOptionValue(&optind, &argv);
@@ -383,6 +461,23 @@ main(int argc
 			case 'V':
 				skipVerify = true;
 				break;
+			case '-': // Long option
+			{
+				auto option = getLongOptionOption(&optind, &argv);
+				if (option == "--timestamp-list")
+				{
+					timestampFile = getLongOptionString(&optind, &argv);
+				}
+				else if (option == "--dtc")
+				{
+					dtc = getLongOptionValue(&optind, &argv);
+				}
+				else if (option == "--help")
+				{
+					printHelpMsg();
+				}
+				break;
+			}
 			default:
 				std::cout << "Unknown option: " << argv[optind] << std::endl;
 				printHelpMsg();
@@ -401,11 +496,13 @@ main(int argc
 	std::cout.setf(std::ios_base::boolalpha);
 	std::cout << "Options are: "
 		<< "Operation: " << std::string(op)
+		<< ", DTC: " << dtc
 		<< ", Num: " << number
 		<< ", Delay: " << delay
 		<< ", CFO Delay: " << cfodelay
 		<< ", TS Offset: " << timestampOffset
 		<< ", PacketCount: " << packetCount
+		<< ", Force NO Debug Flag: " << forceNoDebug
 		<< ", DataBlock Count: " << blockCount
 		<< ", Event Count: " << eventCount
 		<< ", Requests Ahead of Reads: " << requestsAhead
@@ -439,16 +536,19 @@ main(int argc
 	if (op == "read")
 	{
 		std::cout << "Operation \"read\"" << std::endl;
-		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, dtc, rocMask, expectedDesignVersion);
 		auto packet = thisDTC->ReadNextDAQPacket();
-		if (!reallyQuiet) std::cout << packet->toJSON() << '\n';
-		if (rawOutput)
+		if (packet)
 		{
-			auto rawPacket = packet->ConvertToDataPacket();
-			for (auto ii = 0; ii < 16; ++ii)
+			if (!reallyQuiet) std::cout << packet->toJSON() << '\n';
+			if (rawOutput)
 			{
-				auto word = rawPacket.GetWord(ii);
-				outputStream.write(reinterpret_cast<char*>(&word), sizeof(uint8_t));
+				auto rawPacket = packet->ConvertToDataPacket();
+				for (auto ii = 0; ii < 16; ++ii)
+				{
+					auto word = rawPacket.GetWord(ii);
+					outputStream.write(reinterpret_cast<char*>(&word), sizeof(uint8_t));
+				}
 			}
 		}
 		delete thisDTC;
@@ -456,7 +556,7 @@ main(int argc
 	else if (op == "read_data")
 	{
 		std::cout << "Operation \"read_data\"" << std::endl;
-		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, dtc, rocMask, expectedDesignVersion);
 
 		auto device = thisDTC->GetDevice();
 		if (readGenerated)
@@ -505,7 +605,7 @@ main(int argc
 	else if (op == "toggle_serdes")
 	{
 		std::cout << "Swapping SERDES Oscillator Clock" << std::endl;
-		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO,dtc, rocMask,expectedDesignVersion);
 		auto clock = thisDTC->ReadSERDESOscillatorClock();
 		if (clock == DTC_SerdesClockSpeed_3125Gbps)
 		{
@@ -526,14 +626,14 @@ main(int argc
 	else if (op == "reset_ddrread")
 	{
 		std::cout << "Resetting DDR Read Address" << std::endl;
-		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, dtc, rocMask, expectedDesignVersion);
 		thisDTC->ResetDDRReadAddress();
 		delete thisDTC;
 	}
 	else if (op == "reset_detemu")
 	{
 		std::cout << "Resetting Detector Emulator" << std::endl;
-		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, dtc, rocMask, expectedDesignVersion);
 		thisDTC->ClearDetectorEmulatorInUse();
 		thisDTC->ResetDDR();
 		thisDTC->ResetDTC();
@@ -542,7 +642,7 @@ main(int argc
 	else if (op == "verify_simfile")
 	{
 		std::cout << "Operation \"verify_simfile\"" << std::endl;
-		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, dtc, rocMask, expectedDesignVersion);
 		auto device = thisDTC->GetDevice();
 
 		device->ResetDeviceTime();
@@ -558,14 +658,15 @@ main(int argc
 	{
 		std::cout << "Operation \"buffer_test\"" << std::endl;
 		auto startTime = std::chrono::steady_clock::now();
-		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, dtc, rocMask, expectedDesignVersion);
 		auto device = thisDTC->GetDevice();
+
 
 		auto initTime = device->GetDeviceTime();
 		device->ResetDeviceTime();
 		auto afterInit = std::chrono::steady_clock::now();
 
-		DTCSoftwareCFO cfo(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet, false);
+		DTCSoftwareCFO cfo(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet, false, forceNoDebug);
 
 		if (genDMABlocks > 0)
 		{
@@ -589,7 +690,20 @@ main(int argc
 			thisDTC->EnableDetectorEmulator();
 		}
 
-		if (thisDTC->ReadSimMode() != DTC_SimMode_Loopback && !syncRequests)
+		if (thisDTC->ReadSimMode() != DTC_SimMode_Loopback && timestampFile != "")
+		{
+			syncRequests = false;
+			std::set<DTC_Timestamp> timestamps;
+			std::ifstream is(timestampFile);
+			uint64_t a;
+			while (is >> a)
+			{
+				timestamps.insert(DTC_Timestamp(a));
+			}
+			number = timestamps.size();
+			cfo.SendRequestsForList(timestamps, cfodelay);
+		}
+		else if (thisDTC->ReadSimMode() != DTC_SimMode_Loopback && !syncRequests)
 		{
 			cfo.SendRequestsForRange(number, DTC_Timestamp(timestampOffset), incrementTimestamp, cfodelay, requestsAhead);
 		}
@@ -688,7 +802,7 @@ main(int argc
 	else if (op == "read_release")
 	{
 		mu2edev device;
-		device.init();
+		device.init(DTCLib::DTC_SimMode_Disabled, dtc);
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
 			void* buffer;
@@ -703,13 +817,13 @@ main(int argc
 	else if (op == "DTC")
 	{
 		auto startTime = std::chrono::steady_clock::now();
-		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, dtc, rocMask, expectedDesignVersion);
 
 		auto initTime = thisDTC->GetDevice()->GetDeviceTime();
 		thisDTC->GetDevice()->ResetDeviceTime();
 		auto afterInit = std::chrono::steady_clock::now();
 
-		DTCSoftwareCFO theCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet);
+		DTCSoftwareCFO theCFO(thisDTC, useCFOEmulator, packetCount, debugType, stickyDebugType, quiet, forceNoDebug);
 
 		if (genDMABlocks > 0)
 		{
@@ -897,10 +1011,27 @@ main(int argc
 	}
 	else if (op == "program_clock")
 	{
-		auto thisDTC = new DTC(expectedDesignVersion, DTC_SimMode_NoCFO, rocMask);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, dtc, rocMask, expectedDesignVersion);
 		auto oscillator = clockToProgram == 0 ? DTC_OscillatorType_SERDES : DTC_OscillatorType_DDR;
 		thisDTC->SetNewOscillatorFrequency(oscillator, targetFrequency);
 		delete thisDTC;
+	}
+	else if (op == "dma_info")
+	{
+
+		if (dtc == -1)
+		{
+			auto dtcE = getenv("DTCLIB_DTC");
+			if (dtcE != nullptr)
+			{
+				dtc = atoi(dtcE);
+			}
+			else dtc = 0;
+		}
+
+		mu2edev device;
+		device.init(DTCLib::DTC_SimMode_Disabled, dtc);
+		device.meta_dump();
 	}
 	else
 	{
@@ -911,5 +1042,3 @@ main(int argc
 	if (rawOutput) outputStream.close();
 	return 0;
 } // main
-
-

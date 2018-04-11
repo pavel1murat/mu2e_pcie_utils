@@ -80,8 +80,10 @@ public:
 	/// Initialize the simulator if simMode requires it, otherwise set up DMA engines
 	/// </summary>
 	/// <param name="simMode">Desired simulation mode</param>
+	/// <param name="dtc">Desired DTC card to use (/dev/mu2eX)</param>
 	/// <returns>0 on success</returns>
-	int init(DTCLib::DTC_SimMode simMode = DTCLib::DTC_SimMode_Disabled);
+	int init(DTCLib::DTC_SimMode simMode, int dtc);
+
 	/// <summary>
 	/// Reads data from the DTC.
 	/// Returns the number of bytes read. Negative values indicate errors.
@@ -121,11 +123,9 @@ public:
 	/// <returns>0 on success</returns>
 	int write_register(uint16_t address, int tmo_ms, uint32_t data);
 	/// <summary>
-	/// Write out the DMA metadata for the given channel/direction to screen
+	/// Write out the DMA metadata to screen
 	/// </summary>
-	/// <param name="chn">Channel to dump (DAQ or DCS)</param>
-	/// <param name="dir">Direction to dump (C2S or S2C)</param>
-	void meta_dump(int chn, int dir);
+	void meta_dump();
 	/// <summary>
 	/// Write data to the DTC
 	/// </summary>
@@ -140,7 +140,7 @@ public:
 	void close();
 
 	/// <summary>
-	/// Gets the file descriptor for the mu2e block device (/dev/mu2e)
+	/// Gets the file descriptor for the mu2e block device (/dev/mu2eX)
 	/// </summary>
 	/// <returns>File descriptor for the mu2e block device</returns>
 	int get_devfd_() const
@@ -159,10 +159,11 @@ private:
 	//unsigned delta_(int chn, int dir);
 
 	int devfd_;
-	volatile void* mu2e_mmap_ptrs_[MU2E_MAX_CHANNELS][2][2];
-	m_ioc_get_info_t mu2e_channel_info_[MU2E_MAX_CHANNELS][2];
+	volatile void* mu2e_mmap_ptrs_[MU2E_MAX_NUM_DTCS][MU2E_MAX_CHANNELS][2][2];
+	m_ioc_get_info_t mu2e_channel_info_[MU2E_MAX_NUM_DTCS][MU2E_MAX_CHANNELS][2];
 	unsigned buffers_held_;
 	mu2esim* simulator_;
+	int activeDTC_;
 	std::atomic<long long> deviceTime_;
 	std::atomic<size_t> writeSize_;
 	std::atomic<size_t> readSize_;

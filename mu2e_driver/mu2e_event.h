@@ -9,11 +9,14 @@
 #define MU2E_EVENT_H
 
 #include <linux/wait.h>		// wait_queue_head_t
+#include <linux/interrupt.h>	/* request_irq */
 extern wait_queue_head_t get_info_wait_queue;
 
-int  mu2e_sched_poll( void );
-int mu2e_force_poll(void);
-int  mu2e_event_up( void );
-void mu2e_event_down( void );
+irqreturn_t DmaInterrupt(int irq, void *dev_id);
+
+int  mu2e_sched_poll( int dtc );
+int mu2e_force_poll(int dtc);
+int  mu2e_event_up(int dtc);
+void mu2e_event_down(int dtc);
 
 #endif // MU2E_EVENT_H

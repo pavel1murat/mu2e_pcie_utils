@@ -8,7 +8,7 @@
 # include <unistd.h>
 # include "trace.h"
 
-DTCLib::DTC_Registers::DTC_Registers(std::string expectedDesignVersion, DTC_SimMode mode, unsigned rocMask, bool skipInit) : device_(), simMode_(mode), dmaSize_(16)
+DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, int dtc, unsigned rocMask, std::string expectedDesignVersion, bool skipInit) : device_(), simMode_(mode), dmaSize_(16)
 {
 	for (auto ii = 0; ii < 6; ++ii)
 	{
@@ -66,7 +66,18 @@ DTCLib::DTC_Registers::DTC_Registers(std::string expectedDesignVersion, DTC_SimM
 			break;
 		}
 	}
-	SetSimMode(expectedDesignVersion, simMode_, rocMask, skipInit);
+
+	if (dtc == -1)
+	{
+		auto dtcE = getenv("DTCLIB_DTC");
+		if (dtcE != nullptr)
+		{
+			dtc = atoi(dtcE);
+		}
+		else dtc = 0;
+	}
+
+	SetSimMode(expectedDesignVersion, simMode_,dtc, rocMask, skipInit);
 }
 
 DTCLib::DTC_Registers::~DTC_Registers()
@@ -78,10 +89,10 @@ DTCLib::DTC_Registers::~DTC_Registers()
 	device_.close();
 }
 
-DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(std::string expectedDesignVersion,DTC_SimMode mode, unsigned rocMask, bool skipInit)
+DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(std::string expectedDesignVersion,DTC_SimMode mode,int dtc, unsigned rocMask, bool skipInit)
 {
 	simMode_ = mode;
-	device_.init(simMode_);
+	device_.init(simMode_, dtc);
 	if (expectedDesignVersion != "" && expectedDesignVersion != ReadDesignVersion())
 	{
 		throw new DTC_WrongVersionException(expectedDesignVersion, ReadDesignVersion());
@@ -2152,6 +2163,27 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatCFOEmulationNumPacket
 	form.vals.push_back(o.str());
 	return form;
 }
+
+
+// CFO Emulation Number of Null Heartbeats Register
+void DTCLib::DTC_Registers::SetCFOEmulationNumNullHeartbeats(const uint32_t& count)
+{
+	WriteRegister_(count, DTC_Register_CFOEmulationNumNullHeartbeats);
+}
+
+uint32_t DTCLib::DTC_Registers::ReadCFOEmulationNumNullHeartbeats()
+{
+	return ReadRegister_(DTC_Register_CFOEmulationNumNullHeartbeats);
+}
+
+DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatCFOEmulationNumNullHeartbeats()
+{
+	auto form = CreateFormatter(DTC_Register_CFOEmulationNumNullHeartbeats);
+	form.description = "CFO Emulator Num Null Heartbeats";
+	form.vals.push_back(std::to_string(ReadCFOEmulationNumNullHeartbeats()));
+	return form;
+}
+
 
 // CFO Emulation Event Mode Bytes Registers
 void DTCLib::DTC_Registers::SetCFOEmulationModeByte(const uint8_t& byteNum, uint8_t data)

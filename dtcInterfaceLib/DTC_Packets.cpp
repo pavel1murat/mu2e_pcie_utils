@@ -141,7 +141,7 @@ DTCLib::DTC_DMAPacket::DTC_DMAPacket(const DTC_DataPacket in)
 	ringID_ = static_cast<DTC_Ring_ID>(ringID);
 	rocID_ = static_cast<DTC_ROC_ID>(roc);
 	packetType_ = static_cast<DTC_PacketType>(packetType);
-	TRACE(20, headerJSON().c_str());
+	TLOG_ARB(20, "DTC_DMAPacket") << headerJSON();
 }
 
 std::string DTCLib::DTC_DMAPacket::headerJSON() const

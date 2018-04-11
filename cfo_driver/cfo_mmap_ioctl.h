@@ -21,7 +21,7 @@
 
 
 #define CFO_DEV_FILE       "mu2ecfo"
-#define CFO_MAX_CHANNELS	2
+#define CFO_MAX_CHANNELS	1
 
 /// <summary>
 /// Data Header Packet definition, hardware view
@@ -284,8 +284,7 @@ typedef unsigned char cfo_databuff_t[0x10000];
 
 
 typedef enum {
-	CFO_DMA_Engine_DAQ = 0,
-	CFO_DMA_Engine_DCS = 1,
+	CFO_DMA_Engine_EventTable = 0,
 	CFO_DMA_Engine_Invalid,
 } CFO_DMA_Engine;
 

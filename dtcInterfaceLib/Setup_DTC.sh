@@ -28,12 +28,12 @@ if [ $ROOT_MODE -eq 1 ]; then
   lsmod | grep TRACE -q || insmod $TRACE_KO_PATH trace_allow_printk=1
   lsmod | grep mu2e -q || insmod $PCIE_KO_PATH
   source $TRACE_DIR/script/trace.sh.functions  || source $TRACE_FQ_DIR/bin/trace.sh.functions
-  chmod 666 /dev/mu2e
+  chmod 666 /dev/mu2e*
 fi
 
 MU2EHOST=`hostname|grep -v mu2edaq01|grep -c mu2edaq`
 if [ $MU2EHOST -gt 0 ];then
-  test -e /dev/mu2e || { echo 'DTC device file not found. Please re-run this script as root!'; return; }
+  test -e /dev/mu2e0 || { echo 'DTC device file not found. Please re-run this script as root!'; return; }
 
   echo "Setting up TRACE module"
   export TRACE_FILE=/proc/trace/buffer;tonM -nKERNEL 0-19;toffM -nKERNEL 4  # poll noise is on lvls 22-23
