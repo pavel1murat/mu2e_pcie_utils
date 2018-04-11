@@ -29,7 +29,7 @@ irqreturn_t DmaInterrupt(int irq, void *dev_id)
 #if MU2E_RECV_INTER_ENABLED
 	unsigned long base;
 	unsigned chn;
-	int dtc = MINOR(((struct device*)dev_id)->devt);
+	int dtc = MINOR(((struct pci_dev*)dev_id)->dev.devt);
 
 	TRACE(20, "DmaInterrrupt: start irq=%d, dev=%p, dtc=%d",irq, dev_id, dtc);
 

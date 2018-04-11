@@ -108,7 +108,7 @@ static int mu2e_pci_probe(  struct pci_dev             *pdev
 	}
 	pdev->dev.devt = MKDEV(MAJOR(mu2e_dev_number), dtc);
 
-	TRACE( 0, "mu2e_pci_probe dev=%p, MINOR(pdev->dev.devt)=%d",(void*)&pdev->dev, MINOR(pdev->dev.devt) );
+	TRACE( 0, "mu2e_pci_probe pdev=%p, MINOR(pdev->dev.devt)=%d",pdev, MINOR(pdev->dev.devt) );
 	/* Initialize device before it is used by driver. Ask low-level
 	 * code to enable I/O and memory. Wake up the device if it was
 	 * suspended. Beware, this function can fail.
@@ -193,7 +193,7 @@ static int mu2e_pci_probe(  struct pci_dev             *pdev
 		MSIEnabled[dtc] = 1;
 	}
 
-	pciRet = request_irq(mu2e_pci_dev[dtc]->irq, DmaInterrupt, IRQF_SHARED, "mu2e", &mu2e_pci_dev[dtc]->dev);
+	pciRet = request_irq(mu2e_pci_dev[dtc]->irq, DmaInterrupt, IRQF_SHARED, "mu2e", mu2e_pci_dev[dtc]);
 	if (pciRet)
 	{
 		TRACE(0, "xdma could not allocate interrupt %d", mu2e_pci_dev[dtc]->irq);
