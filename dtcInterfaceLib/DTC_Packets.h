@@ -91,14 +91,14 @@ namespace DTCLib
 	  switch (type.type_)
 		{
 		case DTC_DCSOperationType_Read:
-		  stream << "\"Read\"";
+		  stream << "\"Read\"";break;
 		case DTC_DCSOperationType_Write:
-		  stream << "\"Write\"";
+		  stream << "\"Write\"";break;
 		case DTC_DCSOperationType_WriteWithAck:
-		  stream << "\"WriteWithAck\"";
+		  stream << "\"WriteWithAck\"";break;
 		case DTC_DCSOperationType_Unknown:
 		default:
-		  stream << "\"Unknown\"";
+		  stream << "\"Unknown\"";break;
 		}
 	  return stream;
 	}
