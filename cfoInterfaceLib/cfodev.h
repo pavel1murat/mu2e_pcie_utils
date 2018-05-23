@@ -8,7 +8,6 @@
 #include "cfo_driver/cfo_mmap_ioctl.h" //
 
 #include <atomic>
-#include "cfosim.h"
 
 /// <summary>
 /// This class handles the raw interaction with the cfo device driver
@@ -81,7 +80,7 @@ public:
 	/// </summary>
 	/// <param name="simMode">Desired simulation mode</param>
 	/// <returns>0 on success</returns>
-	int init(CFOLib::CFO_SimMode simMode = CFOLib::CFO_SimMode_Disabled);
+	int init();
 	/// <summary>
 	/// Reads data from the CFO.
 	/// Returns the number of bytes read. Negative values indicate errors.
@@ -162,7 +161,6 @@ private:
 	volatile void* cfo_mmap_ptrs_[CFO_MAX_CHANNELS][2][2];
 	m_ioc_get_info_t cfo_channel_info_[CFO_MAX_CHANNELS][2];
 	unsigned buffers_held_;
-	cfosim* simulator_;
 	std::atomic<long long> deviceTime_;
 	std::atomic<size_t> writeSize_;
 	std::atomic<size_t> readSize_;
