@@ -159,6 +159,7 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatDesignVersion()
 	auto form = CreateFormatter(CFO_Register_DesignVersion);
 	form.description = "CFO Firmware Design Version";
 	form.vals.push_back(ReadDesignVersion());
+	form.vals.push_back(std::string("Intrinsic Clock Speed: ") + (ReadSERDESVersion() == CFO_SerdesClockSpeed_3125Gbps ? "3.125 Gbps" : "4.8 Gbps"));
 	return form;
 }
 
