@@ -12,6 +12,7 @@
 
 #define XILINX_VENDOR_ID 0x10EE
 #define XILINX_DEVICE_ID 0x7042
+#define XILINX_DEVICE_ID_2 0x7043
 
 extern int             mu2e_dtc_num;
 extern dev_t           mu2e_dev_number;

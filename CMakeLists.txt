@@ -53,10 +53,8 @@ include(NodeJSAddon)
 
 # source
 add_subdirectory(mu2e_driver)
-add_subdirectory(cfo_driver)
 add_subdirectory(mcs)
 add_subdirectory(dtcInterfaceLib)
-add_subdirectory(cfoInterfaceLib)
 
 # tools
 add_subdirectory(tools)
