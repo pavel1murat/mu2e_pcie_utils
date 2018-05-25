@@ -342,7 +342,7 @@ namespace CFOLib
 	/// </summary>
 	  /// <param name="link">Destination Link</param>
 	/// <param name="timestamp">Timestamp of request</param>
-	  /// <param name="maxROC">Number of "hops" along the Link the packet will travel (Default: 0)</param>
+	  /// <param name="dtc">Number of "hops" along the Link the packet will travel (Default: 0)</param>
 	/// <param name="eventMode">Debug event mode bytes (Default: nullptr) If not null, must be 6 bytes long</param>
 	CFO_HeartbeatPacket(CFO_Link_ID link, CFO_Timestamp timestamp, uint8_t dtc = 0, uint8_t* eventMode = nullptr);
 	/// <summary>

@@ -64,7 +64,7 @@ add_subdirectory(tools)
 add_subdirectory(ups)
 
 # doc - Doxygen documentation
-#add_subdirectory(doc)
+add_subdirectory(doc)
 
 # packaging utility
 include(UseCPack)

@@ -1370,7 +1370,7 @@ namespace DTCLib
 		/// <summary>
 		/// Set the number of null heartbeats the CFO Emulator will generate following the requested ones
 		/// </summary>
-		/// <param name="numPackets">Number of null heartbeats to generate</param>
+		/// <param name="count">Number of null heartbeats to generate</param>
 		void SetCFOEmulationNumNullHeartbeats(const uint32_t& count);
 		/// <summary>
 		/// Read the requested number of null heartbeats that will follow the configured heartbeats from the CFO Emulator
