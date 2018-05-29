@@ -714,7 +714,7 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatBeamOnMode()
 	form.description = "Enable Beam On Mode Register";
 	for (auto r : CFO_Links)
 	{
-		form.vals.push_back(std::string("Link ") + std::to_string(r) + ": [" + (ReadSERDESRXCDRLock(r) ? "x" : " ") + "]");
+		form.vals.push_back(std::string("Link ") + std::to_string(r) + ": [" + (ReadBeamOnMode(r) ? "x" : " ") + "]");
 	}
 	return form;
 }
@@ -745,7 +745,7 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatBeamOffMode()
 	form.description = "Enable Beam Off Mode Register";
 	for (auto r : CFO_Links)
 	{
-		form.vals.push_back(std::string("Link ") + std::to_string(r) + ": [" + (ReadSERDESRXCDRLock(r) ? "x" : " ") + "]");
+		form.vals.push_back(std::string("Link ") + std::to_string(r) + ": [" + (ReadBeamOffMode(r) ? "x" : " ") + "]");
 	}
 	return form;
 }
@@ -1008,7 +1008,7 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatFIFOFullErrorFlag0()
 {
 	auto form = CreateFormatter(CFO_Register_FIFOFullErrorFlag0);
 	form.description = "FIFO Full Error Flags 0";
-	form.vals.push_back("       ([DataRequest, ReadoutRequest, CFOLink, OutputData])");
+	form.vals.push_back("       ([CFO Link Output])");
 	for (auto r : CFO_Links)
 	{
 		auto re = ReadFIFOFullErrorFlags(r);
@@ -1119,7 +1119,7 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatEventWindowHoldoffTim
 {
 	auto form = CreateFormatter(CFO_Register_EventWindowHoldoffTime);
 	form.description = "Event Window Holdoff Time";
-	form.vals.push_back(std::to_string(ReadEventWindowEmulatorInterval()));
+	form.vals.push_back(std::to_string(ReadEventWindowHoldoffTime()));
 	return form;
 }
 
