@@ -354,13 +354,13 @@ namespace CFOLib
 		/// </summary>
 		/// <param name="Link">Link to set for</param>
 		/// <param name="mode">CFO_SERDESLoopbackMode to set</param>
-		void SetSERDESLoopbackMode(const CFO_Link_ID& Link, const CFO_SERDESLoopbackMode& mode);
+		void SetSERDESLoopbackMode(const CFO_Link_ID& link, const CFO_SERDESLoopbackMode& mode);
 		/// <summary>
 		/// Read the SERDES Loopback mode for the given Link
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <returns>CFO_SERDESLoopbackMode of the Link</returns>
-		CFO_SERDESLoopbackMode ReadSERDESLoopback(const CFO_Link_ID& Link);
+		CFO_SERDESLoopbackMode ReadSERDESLoopback(const CFO_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -402,20 +402,20 @@ namespace CFOLib
 		/// <param name="Link">Link to enable</param>
 		/// <param name="mode">Link enable bits to set (Default: All)</param>
 		/// <param name="dtcCount">Number of DTCs in the Link (Default: 0)</param>
-		void EnableLink(const CFO_Link_ID& Link, const CFO_LinkEnableMode& mode = CFO_LinkEnableMode(), const uint8_t& dtcCount = 0);
+		void EnableLink(const CFO_Link_ID& link, const CFO_LinkEnableMode& mode = CFO_LinkEnableMode(), const uint8_t& dtcCount = 0);
 		/// <summary>
 		/// Disable a SERDES Link
 		/// The given mode bits will be UNSET
 		/// </summary>
 		/// <param name="Link">Link to disable</param>
 		/// <param name="mode">Link enable bits to unset (Default: All)</param>
-		void DisableLink(const CFO_Link_ID& Link, const CFO_LinkEnableMode& mode = CFO_LinkEnableMode());
+		void DisableLink(const CFO_Link_ID& link, const CFO_LinkEnableMode& mode = CFO_LinkEnableMode());
 		/// <summary>
 		/// Read the Link Enable bits for a given SERDES Link
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <returns>CFO_LinkEnableMode containing TX, RX, and CFO bits</returns>
-		CFO_LinkEnableMode ReadLinkEnabled(const CFO_Link_ID& Link);
+		CFO_LinkEnableMode ReadLinkEnabled(const CFO_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -429,13 +429,13 @@ namespace CFOLib
 		/// </summary>
 		/// <param name="Link">Link to reset</param>
 		/// <param name="interval">Pollint interval, in microseconds</param>
-		void ResetSERDES(const CFO_Link_ID& Link, int interval = 100);
+		void ResetSERDES(const CFO_Link_ID& link, int interval = 100);
 		/// <summary>
 		/// Read if a SERDES reset is currently in progress
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <returns>True if a SERDES reset is in progress</returns>
-		bool ReadResetSERDES(const CFO_Link_ID& Link);
+		bool ReadResetSERDES(const CFO_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -448,7 +448,7 @@ namespace CFOLib
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <returns>CFO_SERDESRXDisparityError object with error bits</returns>
-		CFO_SERDESRXDisparityError ReadSERDESRXDisparityError(const CFO_Link_ID& Link);
+		CFO_SERDESRXDisparityError ReadSERDESRXDisparityError(const CFO_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -461,7 +461,7 @@ namespace CFOLib
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <returns>CFO_CharacterNotInTableError object with error bits</returns>
-		CFO_CharacterNotInTableError ReadSERDESRXCharacterNotInTableError(const CFO_Link_ID& Link);
+		CFO_CharacterNotInTableError ReadSERDESRXCharacterNotInTableError(const CFO_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -474,7 +474,7 @@ namespace CFOLib
 		/// </summary>
 		/// <param name="Link">Link to check</param>
 		/// <returns>True if the SERDES Unlock Error bit is set on the given Link</returns>
-		bool ReadSERDESUnlockError(const CFO_Link_ID& Link);
+		bool ReadSERDESUnlockError(const CFO_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -487,7 +487,7 @@ namespace CFOLib
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <returns>True if the PLL is locked, false otherwise</returns>
-		bool ReadSERDESPLLLocked(const CFO_Link_ID& Link);
+		bool ReadSERDESPLLLocked(const CFO_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -500,7 +500,7 @@ namespace CFOLib
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <returns>CFO_RXStatus object</returns>
-		CFO_RXStatus ReadSERDESRXStatus(const CFO_Link_ID& Link);
+		CFO_RXStatus ReadSERDESRXStatus(const CFO_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -513,7 +513,7 @@ namespace CFOLib
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <returns>True if the SERDES Reset is done, false otherwise</returns>
-		bool ReadResetSERDESDone(const CFO_Link_ID& Link);
+		bool ReadResetSERDESDone(const CFO_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -527,7 +527,7 @@ namespace CFOLib
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <returns>True if the SERDES CDR Lock bit is set</returns>
-		bool ReadSERDESRXCDRLock(const CFO_Link_ID& Link);
+		bool ReadSERDESRXCDRLock(const CFO_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -722,14 +722,14 @@ namespace CFOLib
 		/// </summary>
 		/// <param name="Link">Link to set</param>
 		/// <param name="dtcCount">Number of DTCs on the link</param>
-		void SetMaxDTCNumber(const CFO_Link_ID& Link, const uint8_t& dtcCount);
+		void SetMaxDTCNumber(const CFO_Link_ID& link, const uint8_t& dtcCount);
 		/// <summary>
 		/// Read the number of ROCs configured on the given Link
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <param name="local">Whether to use the NUMDTCs virtual register or perform a register access (Default: true, use virtual register)</param>
 		/// <returns>Number of DTCs on the link</returns>
-		uint8_t ReadLinkDTCCount(const CFO_Link_ID& Link, bool local = true);
+		uint8_t ReadLinkDTCCount(const CFO_Link_ID& link, bool local = true);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -741,13 +741,13 @@ namespace CFOLib
 		/// Clear all FIFO Full Error Flags for the given Link
 		/// </summary>
 		/// <param name="Link">Link to clear</param>
-		void ClearFIFOFullErrorFlags(const CFO_Link_ID& Link);
+		void ClearFIFOFullErrorFlags(const CFO_Link_ID& link);
 		/// <summary>
 		/// Read the FIFO Full Error/Status Flags for the given Link
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <returns>CFO_FIFOFullErrorFlags object</returns>
-		CFO_FIFOFullErrorFlags ReadFIFOFullErrorFlags(const CFO_Link_ID& Link);
+		CFO_FIFOFullErrorFlags ReadFIFOFullErrorFlags(const CFO_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -759,46 +759,46 @@ namespace CFOLib
 		/// Clear the RX Elastic Buffer Underrun Error Flag for the given Link
 		/// </summary>
 		/// <param name="Link">Link to clear</param>
-		void ClearRXElasticBufferUnderrun(const CFO_Link_ID& Link);
+		void ClearRXElasticBufferUnderrun(const CFO_Link_ID& link);
 		/// <summary>
 		/// Read the RX Elastic Buffer Underrun Error Flag for the given Link
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <returns>True if the RX Elastic Buffer Underrun Error Flag is set</returns>
-		bool ReadRXElasticBufferUnderrun(const CFO_Link_ID& Link);
+		bool ReadRXElasticBufferUnderrun(const CFO_Link_ID& link);
 		/// <summary>
 		/// Clear the RX Elastic Buffer Overrun Error Flag for the given Link
 		/// </summary>
 		/// <param name="Link">Link to clear</param>
-		void ClearRXElasticBufferOverrun(const CFO_Link_ID& Link);
+		void ClearRXElasticBufferOverrun(const CFO_Link_ID& link);
 		/// <summary>
 		/// Read the RX Elastic Buffer Overrun Error Flag for the given Link
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <returns>True if the RX Elastic Buffer Overrun Error Flag is set</returns>
-		bool ReadRXElasticBufferOverrun(const CFO_Link_ID& Link);
+		bool ReadRXElasticBufferOverrun(const CFO_Link_ID& link);
 		/// <summary>
 		/// Clear the Packet Error Flag for the given Link
 		/// </summary>
 		/// <param name="Link">Link to clear</param>
-		void ClearPacketError(const CFO_Link_ID& Link);
+		void ClearPacketError(const CFO_Link_ID& link);
 		/// <summary>
 		/// Read the Packet Error Flag for the given Link
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <returns>True if the Packet Error Flag is set</returns>
-		bool ReadPacketError(const CFO_Link_ID& Link);
+		bool ReadPacketError(const CFO_Link_ID& link);
 		/// <summary>
 		/// Clear the Packet CRC Error Flag for the given Link
 		/// </summary>
 		/// <param name="Link">Link to clear</param>
-		void ClearPacketCRCError(const CFO_Link_ID& Link);
+		void ClearPacketCRCError(const CFO_Link_ID& link);
 		/// <summary>
 		/// Read the Packet CRC Error Flag for the given Link
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <returns>True if the Packet CRC Error Flag is set</returns>
-		bool ReadPacketCRCError(const CFO_Link_ID& Link);
+		bool ReadPacketCRCError(const CFO_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -878,46 +878,46 @@ namespace CFOLib
 		/// Clear the value of the Receive byte counter
 		/// </summary>
 		/// <param name="Link">Link to clear counter for</param>
-		void ClearReceiveByteCount(const CFO_Link_ID& Link);
+		void ClearReceiveByteCount(const CFO_Link_ID& link);
 		/// <summary>
 		/// Read the value of the Receive byte counter
 		/// </summary>
 		/// <param name="Link">Link to read counter for</param>
 		/// <returns>Current value of the Receive byte counter on the given Link</returns>
-		uint32_t ReadReceiveByteCount(const CFO_Link_ID& Link);
+		uint32_t ReadReceiveByteCount(const CFO_Link_ID& link);
 		/// <summary>
 		/// Clear the value of the Receive Packet counter
 		/// </summary>
 		/// <param name="Link">Link to clear counter for</param>
-		void ClearReceivePacketCount(const CFO_Link_ID& Link);
+		void ClearReceivePacketCount(const CFO_Link_ID& link);
 		/// <summary>
 		/// Read the value of the Receive Packet counter
 		/// </summary>
 		/// <param name="Link">Link to read counter for</param>
 		/// <returns>Current value of the Receive Packet counter on the given Link</returns>
-		uint32_t ReadReceivePacketCount(const CFO_Link_ID& Link);
+		uint32_t ReadReceivePacketCount(const CFO_Link_ID& link);
 		/// <summary>
 		/// Clear the value of the Transmit byte counter
 		/// </summary>
 		/// <param name="Link">Link to clear counter for</param>
-		void ClearTransmitByteCount(const CFO_Link_ID& Link);
+		void ClearTransmitByteCount(const CFO_Link_ID& link);
 		/// <summary>
 		/// Read the value of the Transmit byye counter
 		/// </summary>
 		/// <param name="Link">Link to read counter for</param>
 		/// <returns>Current value of the Transmit byte counter on the given Link</returns>
-		uint32_t ReadTransmitByteCount(const CFO_Link_ID& Link);
+		uint32_t ReadTransmitByteCount(const CFO_Link_ID& link);
 		/// <summary>
 		/// Clear the value of the Transmit Packet counter
 		/// </summary>
 		/// <param name="Link">Link to clear counter for</param>
-		void ClearTransmitPacketCount(const CFO_Link_ID& Link);
+		void ClearTransmitPacketCount(const CFO_Link_ID& link);
 		/// <summary>
 		/// Read the value of the Transmit Packet counter
 		/// </summary>
 		/// <param name="Link">Link to read counter for</param>
 		/// <returns>Current value of the Transmit Packet counter on the given Link</returns>
-		uint32_t ReadTransmitPacketCount(const CFO_Link_ID& Link);
+		uint32_t ReadTransmitPacketCount(const CFO_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>

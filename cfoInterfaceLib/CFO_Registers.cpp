@@ -386,19 +386,19 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatDMATransferLength()
 }
 
 // SERDES Loopback Enable Register
-void CFOLib::CFO_Registers::SetSERDESLoopbackMode(const CFO_Link_ID& Link, const CFO_SERDESLoopbackMode& mode)
+void CFOLib::CFO_Registers::SetSERDESLoopbackMode(const CFO_Link_ID& link, const CFO_SERDESLoopbackMode& mode)
 {
 	std::bitset<32> data = ReadRegister_(CFO_Register_SERDESLoopbackEnable);
 	std::bitset<3> modeSet = mode;
-	data[3 * Link] = modeSet[0];
-	data[3 * Link + 1] = modeSet[1];
-	data[3 * Link + 2] = modeSet[2];
+	data[3 * link] = modeSet[0];
+	data[3 * link + 1] = modeSet[1];
+	data[3 * link + 2] = modeSet[2];
 	WriteRegister_(data.to_ulong(), CFO_Register_SERDESLoopbackEnable);
 }
 
-CFOLib::CFO_SERDESLoopbackMode CFOLib::CFO_Registers::ReadSERDESLoopback(const CFO_Link_ID& Link)
+CFOLib::CFO_SERDESLoopbackMode CFOLib::CFO_Registers::ReadSERDESLoopback(const CFO_Link_ID& link)
 {
-	std::bitset<3> dataSet = ReadRegister_(CFO_Register_SERDESLoopbackEnable) >> 3 * Link;
+	std::bitset<3> dataSet = ReadRegister_(CFO_Register_SERDESLoopbackEnable) >> (3 * link);
 	return static_cast<CFO_SERDESLoopbackMode>(dataSet.to_ulong());
 }
 
@@ -455,27 +455,27 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatClockOscillatorStatus
 }
 
 // Link Enable Register
-void CFOLib::CFO_Registers::EnableLink(const CFO_Link_ID& Link, const CFO_LinkEnableMode& mode, const uint8_t& dtcCount)
+void CFOLib::CFO_Registers::EnableLink(const CFO_Link_ID& link, const CFO_LinkEnableMode& mode, const uint8_t& dtcCount)
 {
 	std::bitset<32> data = ReadRegister_(CFO_Register_LinkEnable);
-	data[Link] = mode.TransmitEnable;
-	data[Link + 8] = mode.ReceiveEnable;
+	data[link] = mode.TransmitEnable;
+	data[link + 8] = mode.ReceiveEnable;
 	WriteRegister_(data.to_ulong(), CFO_Register_LinkEnable);
-	SetMaxDTCNumber(Link, dtcCount);
+	SetMaxDTCNumber(link, dtcCount);
 }
 
-void CFOLib::CFO_Registers::DisableLink(const CFO_Link_ID& Link, const CFO_LinkEnableMode& mode)
+void CFOLib::CFO_Registers::DisableLink(const CFO_Link_ID& link, const CFO_LinkEnableMode& mode)
 {
 	std::bitset<32> data = ReadRegister_(CFO_Register_LinkEnable);
-	data[Link] = data[Link] && !mode.TransmitEnable;
-	data[Link + 8] = data[Link + 8] && !mode.ReceiveEnable;
+	data[link] = data[link] && !mode.TransmitEnable;
+	data[link + 8] = data[link + 8] && !mode.ReceiveEnable;
 	WriteRegister_(data.to_ulong(), CFO_Register_LinkEnable);
 }
 
-CFOLib::CFO_LinkEnableMode CFOLib::CFO_Registers::ReadLinkEnabled(const CFO_Link_ID& Link)
+CFOLib::CFO_LinkEnableMode CFOLib::CFO_Registers::ReadLinkEnabled(const CFO_Link_ID& link)
 {
 	std::bitset<32> dataSet = ReadRegister_(CFO_Register_LinkEnable);
-	return CFO_LinkEnableMode(dataSet[Link], dataSet[Link + 8]);
+	return CFO_LinkEnableMode(dataSet[link], dataSet[link + 8]);
 }
 
 CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatLinkEnable()
@@ -494,33 +494,33 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatLinkEnable()
 }
 
 // SERDES Reset Register
-void CFOLib::CFO_Registers::ResetSERDES(const CFO_Link_ID& Link, int interval)
+void CFOLib::CFO_Registers::ResetSERDES(const CFO_Link_ID& link, int interval)
 {
 	auto resetDone = false;
 	while (!resetDone)
 	{
-		TRACE(0, "EnteLink SERDES Reset Loop for Link %u", Link);
+		TRACE(0, "EnteLink SERDES Reset Loop for Link %u", link);
 		std::bitset<32> data = ReadRegister_(CFO_Register_SERDESReset);
-		data[Link] = 1;
+		data[link] = 1;
 		WriteRegister_(data.to_ulong(), CFO_Register_SERDESReset);
 
 		usleep(interval);
 
 		data = ReadRegister_(CFO_Register_SERDESReset);
-		data[Link] = 0;
+		data[link] = 0;
 		WriteRegister_(data.to_ulong(), CFO_Register_SERDESReset);
 
 		usleep(interval);
 
-		resetDone = ReadResetSERDESDone(Link);
+		resetDone = ReadResetSERDESDone(link);
 		TRACE(0, "End of SERDES Reset loop, done=%s", (resetDone ? "true" : "false"));
 	}
 }
 
-bool CFOLib::CFO_Registers::ReadResetSERDES(const CFO_Link_ID& Link)
+bool CFOLib::CFO_Registers::ReadResetSERDES(const CFO_Link_ID& link)
 {
 	std::bitset<32> dataSet = ReadRegister_(CFO_Register_SERDESReset);
-	return dataSet[Link];
+	return dataSet[link];
 }
 
 CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESReset()
@@ -535,9 +535,9 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESReset()
 }
 
 // SERDES RX Disparity Error Register
-CFOLib::CFO_SERDESRXDisparityError CFOLib::CFO_Registers::ReadSERDESRXDisparityError(const CFO_Link_ID& Link)
+CFOLib::CFO_SERDESRXDisparityError CFOLib::CFO_Registers::ReadSERDESRXDisparityError(const CFO_Link_ID& link)
 {
-	return CFO_SERDESRXDisparityError(ReadRegister_(CFO_Register_SERDESRXDisparityError), Link);
+	return CFO_SERDESRXDisparityError(ReadRegister_(CFO_Register_SERDESRXDisparityError), link);
 }
 
 CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESRXDisparityError()
@@ -554,9 +554,9 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESRXDisparityErro
 }
 
 // SERDES RX Character Not In Table Error Register
-CFOLib::CFO_CharacterNotInTableError CFOLib::CFO_Registers::ReadSERDESRXCharacterNotInTableError(const CFO_Link_ID& Link)
+CFOLib::CFO_CharacterNotInTableError CFOLib::CFO_Registers::ReadSERDESRXCharacterNotInTableError(const CFO_Link_ID& link)
 {
-	return CFO_CharacterNotInTableError(ReadRegister_(CFO_Register_SERDESRXCharacterNotInTableError), Link);
+	return CFO_CharacterNotInTableError(ReadRegister_(CFO_Register_SERDESRXCharacterNotInTableError), link);
 }
 
 CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESRXCharacterNotInTableError()
@@ -573,10 +573,10 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESRXCharacterNotI
 }
 
 // SERDES Unlock Error Register
-bool CFOLib::CFO_Registers::ReadSERDESUnlockError(const CFO_Link_ID& Link)
+bool CFOLib::CFO_Registers::ReadSERDESUnlockError(const CFO_Link_ID& link)
 {
 	std::bitset<32> dataSet = ReadRegister_(CFO_Register_SERDESUnlockError);
-	return dataSet[Link];
+	return dataSet[link];
 }
 
 CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESUnlockError()
@@ -591,10 +591,10 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESUnlockError()
 }
 
 // SERDES PLL Locked Register
-bool CFOLib::CFO_Registers::ReadSERDESPLLLocked(const CFO_Link_ID& Link)
+bool CFOLib::CFO_Registers::ReadSERDESPLLLocked(const CFO_Link_ID& link)
 {
 	std::bitset<32> dataSet = ReadRegister_(CFO_Register_SERDESPLLLocked);
-	return dataSet[Link];
+	return dataSet[link];
 }
 
 CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESPLLLocked()
@@ -610,10 +610,11 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESPLLLocked()
 
 
 // SERDES RX Status Register
-CFOLib::CFO_RXStatus CFOLib::CFO_Registers::ReadSERDESRXStatus(const CFO_Link_ID& Link)
+CFOLib::CFO_RXStatus CFOLib::CFO_Registers::ReadSERDESRXStatus(const CFO_Link_ID& link)
 {
-	std::bitset<3> dataSet = ReadRegister_(CFO_Register_SERDESRXStatus) >> 3 * Link;
-	return static_cast<CFO_RXStatus>(dataSet.to_ulong());
+	auto data = ReadRegister_(CFO_Register_SERDESRXStatus);
+	data = (data >> (3 * link)) & 0x7;
+	return static_cast<CFO_RXStatus>(data);
 }
 
 CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESRXStatus()
@@ -630,10 +631,10 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESRXStatus()
 }
 
 // SERDES Reset Done Register
-bool CFOLib::CFO_Registers::ReadResetSERDESDone(const CFO_Link_ID& Link)
+bool CFOLib::CFO_Registers::ReadResetSERDESDone(const CFO_Link_ID& link)
 {
 	std::bitset<32> dataSet = ReadRegister_(CFO_Register_SERDESResetDone);
-	return dataSet[Link];
+	return dataSet[link];
 }
 
 CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESResetDone()
@@ -650,10 +651,10 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESResetDone()
 // SFP / SERDES Status Register
 
 
-bool CFOLib::CFO_Registers::ReadSERDESRXCDRLock(const CFO_Link_ID& Link)
+bool CFOLib::CFO_Registers::ReadSERDESRXCDRLock(const CFO_Link_ID& link)
 {
 	std::bitset<32> dataSet = ReadRegister_(CFO_Register_SFPSERDESStatus);
-	return dataSet[Link];
+	return dataSet[link];
 }
 
 CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESRXCDRLock()
@@ -983,22 +984,22 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatNUMDTCs()
 }
 
 // FIFO Full Error Flags Registers
-void CFOLib::CFO_Registers::ClearFIFOFullErrorFlags(const CFO_Link_ID& Link)
+void CFOLib::CFO_Registers::ClearFIFOFullErrorFlags(const CFO_Link_ID& link)
 {
-	auto flags = ReadFIFOFullErrorFlags(Link);
+	auto flags = ReadFIFOFullErrorFlags(link);
 	std::bitset<32> data0 = 0;
 
-	data0[Link] = flags.CFOLinkOutput;
+	data0[link] = flags.CFOLinkOutput;
 
 	WriteRegister_(data0.to_ulong(), CFO_Register_FIFOFullErrorFlag0);
 }
 
-CFOLib::CFO_FIFOFullErrorFlags CFOLib::CFO_Registers::ReadFIFOFullErrorFlags(const CFO_Link_ID& Link)
+CFOLib::CFO_FIFOFullErrorFlags CFOLib::CFO_Registers::ReadFIFOFullErrorFlags(const CFO_Link_ID& link)
 {
 	std::bitset<32> data0 = ReadRegister_(CFO_Register_FIFOFullErrorFlag0);
 	CFO_FIFOFullErrorFlags flags;
 
-	flags.CFOLinkOutput = data0[Link];
+	flags.CFOLinkOutput = data0[link];
 
 	return flags;
 }
@@ -1018,56 +1019,56 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatFIFOFullErrorFlag0()
 }
 
 // Receive Packet Error Register
-void CFOLib::CFO_Registers::ClearRXElasticBufferUnderrun(const CFO_Link_ID& Link)
+void CFOLib::CFO_Registers::ClearRXElasticBufferUnderrun(const CFO_Link_ID& link)
 {
 	std::bitset<32> data = ReadRegister_(CFO_Register_ReceivePacketError);
-	data[static_cast<int>(Link) + 24] = 0;
+	data[static_cast<int>(link) + 24] = 0;
 	WriteRegister_(data.to_ulong(), CFO_Register_ReceivePacketError);
 }
 
-bool CFOLib::CFO_Registers::ReadRXElasticBufferUnderrun(const CFO_Link_ID& Link)
+bool CFOLib::CFO_Registers::ReadRXElasticBufferUnderrun(const CFO_Link_ID& link)
 {
 	std::bitset<32> data = ReadRegister_(CFO_Register_ReceivePacketError);
-	return data[static_cast<int>(Link) + 24];
+	return data[static_cast<int>(link) + 24];
 }
 
-void CFOLib::CFO_Registers::ClearRXElasticBufferOverrun(const CFO_Link_ID& Link)
+void CFOLib::CFO_Registers::ClearRXElasticBufferOverrun(const CFO_Link_ID& link)
 {
 	std::bitset<32> data = ReadRegister_(CFO_Register_ReceivePacketError);
-	data[static_cast<int>(Link) + 16] = 0;
+	data[static_cast<int>(link) + 16] = 0;
 	WriteRegister_(data.to_ulong(), CFO_Register_ReceivePacketError);
 }
 
-bool CFOLib::CFO_Registers::ReadRXElasticBufferOverrun(const CFO_Link_ID& Link)
+bool CFOLib::CFO_Registers::ReadRXElasticBufferOverrun(const CFO_Link_ID& link)
 {
 	std::bitset<32> data = ReadRegister_(CFO_Register_ReceivePacketError);
-	return data[static_cast<int>(Link) + 16];
+	return data[static_cast<int>(link) + 16];
 }
 
-void CFOLib::CFO_Registers::ClearPacketError(const CFO_Link_ID& Link)
+void CFOLib::CFO_Registers::ClearPacketError(const CFO_Link_ID& link)
 {
 	std::bitset<32> data = ReadRegister_(CFO_Register_ReceivePacketError);
-	data[static_cast<int>(Link) + 8] = 0;
+	data[static_cast<int>(link) + 8] = 0;
 	WriteRegister_(data.to_ulong(), CFO_Register_ReceivePacketError);
 }
 
-bool CFOLib::CFO_Registers::ReadPacketError(const CFO_Link_ID& Link)
+bool CFOLib::CFO_Registers::ReadPacketError(const CFO_Link_ID& link)
 {
 	std::bitset<32> data = ReadRegister_(CFO_Register_ReceivePacketError);
-	return data[static_cast<int>(Link) + 8];
+	return data[static_cast<int>(link) + 8];
 }
 
-void CFOLib::CFO_Registers::ClearPacketCRCError(const CFO_Link_ID& Link)
+void CFOLib::CFO_Registers::ClearPacketCRCError(const CFO_Link_ID& link)
 {
 	std::bitset<32> data = ReadRegister_(CFO_Register_ReceivePacketError);
-	data[static_cast<int>(Link)] = 0;
+	data[static_cast<int>(link)] = 0;
 	WriteRegister_(data.to_ulong(), CFO_Register_ReceivePacketError);
 }
 
-bool CFOLib::CFO_Registers::ReadPacketCRCError(const CFO_Link_ID& Link)
+bool CFOLib::CFO_Registers::ReadPacketCRCError(const CFO_Link_ID& link)
 {
 	std::bitset<32> data = ReadRegister_(CFO_Register_ReceivePacketError);
-	return data[static_cast<int>(Link)];
+	return data[static_cast<int>(link)];
 }
 
 CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatReceivePacketError()
@@ -1165,10 +1166,10 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatEventWindowTimeoutInt
 }
 
 // SERDES Counter Registers
-void CFOLib::CFO_Registers::ClearReceiveByteCount(const CFO_Link_ID& Link)
+void CFOLib::CFO_Registers::ClearReceiveByteCount(const CFO_Link_ID& link)
 {
 	CFO_Register reg;
-	switch (Link)
+	switch (link)
 	{
 	case CFO_Link_0:
 		reg = CFO_Register_ReceiveByteCountDataLink0;
@@ -1200,9 +1201,9 @@ void CFOLib::CFO_Registers::ClearReceiveByteCount(const CFO_Link_ID& Link)
 	WriteRegister_(0, reg);
 }
 
-uint32_t CFOLib::CFO_Registers::ReadReceiveByteCount(const CFO_Link_ID& Link)
+uint32_t CFOLib::CFO_Registers::ReadReceiveByteCount(const CFO_Link_ID& link)
 {
-	switch (Link)
+	switch (link)
 	{
 	case CFO_Link_0:
 		return ReadRegister_(CFO_Register_ReceiveByteCountDataLink0);
@@ -1225,10 +1226,10 @@ uint32_t CFOLib::CFO_Registers::ReadReceiveByteCount(const CFO_Link_ID& Link)
 	}
 }
 
-void CFOLib::CFO_Registers::ClearReceivePacketCount(const CFO_Link_ID& Link)
+void CFOLib::CFO_Registers::ClearReceivePacketCount(const CFO_Link_ID& link)
 {
 	CFO_Register reg;
-	switch (Link)
+	switch (link)
 	{
 	case CFO_Link_0:
 		reg = CFO_Register_ReceivePacketCountDataLink0;
@@ -1260,9 +1261,9 @@ void CFOLib::CFO_Registers::ClearReceivePacketCount(const CFO_Link_ID& Link)
 	WriteRegister_(0, reg);
 }
 
-uint32_t CFOLib::CFO_Registers::ReadReceivePacketCount(const CFO_Link_ID& Link)
+uint32_t CFOLib::CFO_Registers::ReadReceivePacketCount(const CFO_Link_ID& link)
 {
-	switch (Link)
+	switch (link)
 	{
 	case CFO_Link_0:
 		return ReadRegister_(CFO_Register_ReceivePacketCountDataLink0);
@@ -1285,10 +1286,10 @@ uint32_t CFOLib::CFO_Registers::ReadReceivePacketCount(const CFO_Link_ID& Link)
 	}
 }
 
-void CFOLib::CFO_Registers::ClearTransmitByteCount(const CFO_Link_ID& Link)
+void CFOLib::CFO_Registers::ClearTransmitByteCount(const CFO_Link_ID& link)
 {
 	CFO_Register reg;
-	switch (Link)
+	switch (link)
 	{
 	case CFO_Link_0:
 		reg = CFO_Register_TransmitByteCountDataLink0;
@@ -1320,9 +1321,9 @@ void CFOLib::CFO_Registers::ClearTransmitByteCount(const CFO_Link_ID& Link)
 	WriteRegister_(0, reg);
 }
 
-uint32_t CFOLib::CFO_Registers::ReadTransmitByteCount(const CFO_Link_ID& Link)
+uint32_t CFOLib::CFO_Registers::ReadTransmitByteCount(const CFO_Link_ID& link)
 {
-	switch (Link)
+	switch (link)
 	{
 	case CFO_Link_0:
 		return ReadRegister_(CFO_Register_TransmitByteCountDataLink0);
@@ -1345,10 +1346,10 @@ uint32_t CFOLib::CFO_Registers::ReadTransmitByteCount(const CFO_Link_ID& Link)
 	}
 }
 
-void CFOLib::CFO_Registers::ClearTransmitPacketCount(const CFO_Link_ID& Link)
+void CFOLib::CFO_Registers::ClearTransmitPacketCount(const CFO_Link_ID& link)
 {
 	CFO_Register reg;
-	switch (Link)
+	switch (link)
 	{
 	case CFO_Link_0:
 		reg = CFO_Register_TransmitPacketCountDataLink0;
@@ -1380,9 +1381,9 @@ void CFOLib::CFO_Registers::ClearTransmitPacketCount(const CFO_Link_ID& Link)
 	WriteRegister_(0, reg);
 }
 
-uint32_t CFOLib::CFO_Registers::ReadTransmitPacketCount(const CFO_Link_ID& Link)
+uint32_t CFOLib::CFO_Registers::ReadTransmitPacketCount(const CFO_Link_ID& link)
 {
-	switch (Link)
+	switch (link)
 	{
 	case CFO_Link_0:
 		return ReadRegister_(CFO_Register_TransmitPacketCountDataLink0);
