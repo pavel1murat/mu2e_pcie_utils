@@ -22,7 +22,7 @@
 
 #define MU2E_DEV_FILE       "mu2e%d" /* %d => minor number */
 #define MU2E_MAX_CHANNELS	2
-#define MU2E_MAX_NUM_DTCS   2 /* Keep resonable...shouldn't ever need more than 4...*/
+#define MU2E_MAX_NUM_DTCS   4 /* Keep resonable...shouldn't ever need more than 4...*/
 
 /// <summary>
 /// Data Header Packet definition, hardware view
