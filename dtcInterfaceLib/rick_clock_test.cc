@@ -41,11 +41,13 @@ void write_and_check(unsigned long addr, int fd)
 	reg_access.access_type = 1;
 	reg_access.val = 1;
 	int sts = ioctl(fd, M_IOC_REG_ACCESS, &reg_access);
+	if (sts) { perror("ioctl M_IOC_REG_ACCESS write"); return; }
 
 	while (reg_access.val == 1)
 	{
 		reg_access.access_type = 0;
 		sts = ioctl(fd, M_IOC_REG_ACCESS, &reg_access);
+		if (sts) { perror("ioctl M_IOC_REG_ACCESS read"); return; }
 	}
 }
 
