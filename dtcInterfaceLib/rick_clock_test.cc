@@ -31,7 +31,7 @@ void write(unsigned long addr, unsigned long val, int fd)
 	reg_access.access_type = 1;
 	reg_access.val = val;
 	int sts = ioctl(fd, M_IOC_REG_ACCESS, &reg_access);
-	if (sts) { perror("ioctl M_IOC_REG_ACCESS write"); return; }
+	if (sts) { perror("ioctl M_IOC_REG_ACCESS write"); exit(1); }
 }
 
 void write_and_check(unsigned long addr, int fd)
@@ -41,13 +41,14 @@ void write_and_check(unsigned long addr, int fd)
 	reg_access.access_type = 1;
 	reg_access.val = 1;
 	int sts = ioctl(fd, M_IOC_REG_ACCESS, &reg_access);
-	if (sts) { perror("ioctl M_IOC_REG_ACCESS write"); return; }
+	if (sts) { perror("ioctl M_IOC_REG_ACCESS write"); exit(1); }
 
 	while (reg_access.val == 1)
 	{
 		reg_access.access_type = 0;
 		sts = ioctl(fd, M_IOC_REG_ACCESS, &reg_access);
-		if (sts) { perror("ioctl M_IOC_REG_ACCESS read"); return; }
+		if (sts) { perror("ioctl M_IOC_REG_ACCESS read"); exit(1); }
+		usleep(100);
 	}
 }
 
