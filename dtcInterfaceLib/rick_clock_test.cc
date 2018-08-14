@@ -34,6 +34,21 @@ void write(unsigned long addr, unsigned long val, int fd)
 	if (sts) { perror("ioctl M_IOC_REG_ACCESS write"); return; }
 }
 
+void write_and_check(unsigned long addr, int fd)
+{
+	m_ioc_reg_access_t reg_access;
+	reg_access.reg_offset = addr;
+	reg_access.access_type = 1;
+	reg_access.val = 1;
+	int sts = ioctl(fd, M_IOC_REG_ACCESS, &reg_access);
+
+	while (reg_access.val == 1)
+	{
+		reg_access.access_type = 0;
+		sts = ioctl(fd, M_IOC_REG_ACCESS, &reg_access);
+	}
+}
+
 int
 main(int	argc
 	, char	*argv[])
@@ -82,34 +97,34 @@ main(int	argc
 	//set xtal on timing card to 200mhz
 		//freeze DCO
 	write(0x9168, 0x5d891000, fd);
-	write(0x916c, 0x00000001, fd);
+	write_and_check(0x916c, fd);
 
 	//write new values for FRREQ, HS_DIV, N1
 	write(0x9168, 0x5d076000, fd);
-	write(0x916c, 0x00000001, fd);
+	write_and_check(0x916c, fd);
 
 	write(0x9168, 0x5d08c300, fd);
-	write(0x916c, 0x00000001, fd);
+	write_and_check(0x916c,  fd);
 
 	write(0x9168, 0x5d091000, fd);
-	write(0x916c, 0x00000001, fd);
+	write_and_check(0x916c,  fd);
 
 	write(0x9168, 0x5d0a6900, fd);
-	write(0x916c, 0x00000001, fd);
+	write_and_check(0x916c,  fd);
 
 	write(0x9168, 0x5d0b8d00, fd);
-	write(0x916c, 0x00000001, fd);
+	write_and_check(0x916c,  fd);
 
 	write(0x9168, 0x5d0c7700, fd);
-	write(0x916c, 0x00000001, fd);
+	write_and_check(0x916c,  fd);
 
 	//unfreeze DCO
 	write(0x9168, 0x5d890000, fd);
-	write(0x916c, 0x00000001, fd);
+	write_and_check(0x916c,  fd);
 
 	//Set NewFreq bit
 	write(0x9168, 0x5d874000, fd);
-	write(0x916c, 0x00000001, fd);
+	write_and_check(0x916c,  fd);
 
 
 	printf("sts=%d\n", sts);
