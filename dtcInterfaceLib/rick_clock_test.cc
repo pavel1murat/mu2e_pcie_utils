@@ -40,8 +40,6 @@ main(int	argc
 {
 	int                sts = 0;
 	int                fd;
-	char              *cmd;
-	m_ioc_cmd_t        ioc_cmd;
 	mu2edev            dev;
 	char devfile[11];
 	int dtc = -1;
@@ -68,13 +66,6 @@ main(int	argc
 		default:  printf("?? getopt returned character code 0%o ??\n", opt);
 		}
 	}
-	if (argc - optind < 1)
-	{
-		printf("Need cmd\n");
-		printf(USAGE); exit(0);
-	}
-	cmd = argv[optind++];
-	printf("cmd=%s\n", cmd);
 
 	if (dtc == -1)
 	{
