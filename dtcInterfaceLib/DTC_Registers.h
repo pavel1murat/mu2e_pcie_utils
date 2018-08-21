@@ -49,14 +49,14 @@ namespace DTCLib
 		DTC_Register_EVBPartitionID = 0x9154,
 		DTC_Register_EVBDestCount = 0x9158,
 		DTC_Register_HeartbeatErrorFlags = 0x915c,
-		DTC_Register_SERDESOscillatorFrequency = 0x9160,
-		DTC_Register_SERDESOscillatorControl = 0x9164,
-		DTC_Register_SERDESOscillatorParameterLow = 0x9168,
-		DTC_Register_SERDESOscillatorParameterHigh = 0x916C,
-		DTC_Register_DDROscillatorFrequency = 0x9170,
-		DTC_Register_DDROscillatorControl = 0x9174,
-		DTC_Register_DDROscillatorParameterLow = 0x9178,
-		DTC_Register_DDROscillatorParameterHigh = 0x917C,
+		DTC_Register_SERDESOscillatorReferenceFrequency = 0x9160,
+		DTC_Register_SERDESOscillatorIICBusControl = 0x9164,
+		DTC_Register_SERDESOscillatorIICBusLow = 0x9168,
+		DTC_Register_SERDESOscillatorIICBusHigh = 0x916C,
+		DTC_Register_DDROscillatorReferenceFrequency = 0x9170,
+		DTC_Register_DDROscillatorIICBusControl = 0x9174,
+		DTC_Register_DDROscillatorIICBusLow = 0x9178,
+		DTC_Register_DDROscillatorIICBusHigh = 0x917C,
 		DTC_Register_TimestampPreset0 = 0x9180,
 		DTC_Register_TimestampPreset1 = 0x9184,
 		DTC_Register_DataPendingTimer = 0x9188,
@@ -85,6 +85,8 @@ namespace DTCLib
 		DTC_Register_DetEmulationDataEndAddress = 0x91E4,
 		DTC_Register_ROCDRPDataSyncError = 0x91E8,
 		DTC_Register_EthernetFramePayloadSize = 0x91EC,
+		DTC_Register_CFOEmulationEventStartMarkerInterval = 0x91F0,
+		DTC_Register_CFOEmulation40MHzClockMarkerInterval = 0x91F4,
 		DTC_Register_ReceiveByteCountDataRing0 = 0x9200,
 		DTC_Register_ReceiveByteCountDataRing1 = 0x9204,
 		DTC_Register_ReceiveByteCountDataRing2 = 0x9208,
@@ -133,7 +135,10 @@ namespace DTCLib
 		DTC_Register_EventBuilderBufferEmptyFlags2 = 0x92E4,
 		DTC_Register_EventBuilderBufferHalfFullFlags1 = 0x92E8,
 		DTC_Register_EventBuilderBufferHalfFullFlags2 = 0x92EC,
+		DTC_Register_SERDESTXRXInvertEnable = 0x9300,
+		DTC_Register_JitterAttenuatorCSR = 0x9308,
 		DTC_Register_EVBSERDESPRBSControlStatus = 0x9330,
+		DTC_Register_EventPadBytes = 0x9334,
 		DTC_Register_MissedCFOPacketCountRing0 = 0x9340,
 		DTC_Register_MissedCFOPacketCountRing1 = 0x9344,
 		DTC_Register_MissedCFOPacketCountRing2 = 0x9348,
@@ -141,6 +146,20 @@ namespace DTCLib
 		DTC_Register_MissedCFOPacketCountRing4 = 0x9350,
 		DTC_Register_MissedCFOPacketCountRing5 = 0x9354,
 		DTC_Register_LocalFragmentDropCount = 0x9360,
+		DTC_Register_EventBuilderErrorFlags = 0x9370,
+		DTC_Register_InputBufferErrorFlags = 0x9374,
+		DTC_Register_OutputBufferErrorFlags = 0x9378,
+		DTC_Register_Link0ErrorFlags = 0x937C,
+		DTC_Register_Link1ErrorFlags = 0x9380,
+		DTC_Register_Link2ErrorFlags = 0x9384,
+		DTC_Register_Link3ErrorFlags = 0x9388,
+		DTC_Register_Link4ErrorFlags = 0x938C,
+		DTC_Register_Link5ErrorFlags = 0x9390,
+		DTC_Register_Link6ErrorFlags = 0x9394,
+		DTC_Register_CFOLinkErrorFlags = 0x9398,
+		DTC_Register_LinkControllerErrorFlags = 0x939C,
+		DTC_Register_FireFlyControlStatus = 0x93A0,
+		DTC_Register_JitterAttenuatorControlStatus = 0x93A4,
 		DTC_Register_FPGAProgramData = 0x9400,
 		DTC_Register_FPGAPROMProgramStatus = 0x9404,
 		DTC_Register_FPGACoreAccess = 0x9408,
@@ -201,7 +220,7 @@ namespace DTCLib
 		/// <param name="rocMask">The initially-enabled ROCs. Each digit corresponds to a ring, so all ROCs = 0x666666</param>
 		/// <param name="skipInit">Whether to skip initializing the DTC using the SimMode. Used to read state.</param>
 		/// <returns></returns>
-		DTC_SimMode SetSimMode(std::string expectedDesignVersion, DTC_SimMode mode,int dtc, unsigned rocMask, bool skipInit = false);
+		DTC_SimMode SetSimMode(std::string expectedDesignVersion, DTC_SimMode mode, int dtc, unsigned rocMask, bool skipInit = false);
 
 		//
 		// DTC Register Dumps
@@ -993,51 +1012,41 @@ namespace DTCLib
 
 		// SERDES Oscillator Registers
 		/// <summary>
-		/// Read the current SERDES Oscillator frequency, in Hz
+		/// Read the current SERDES Oscillator reference frequency, in Hz
 		/// </summary>
-		/// <returns>Current SERDES Oscillator frequency, in Hz</returns>
-		uint32_t ReadSERDESOscillatorFrequency();
+		/// <returns>Current SERDES Oscillator reference frequency, in Hz</returns>
+		uint32_t ReadSERDESOscillatorReferenceFrequency();
 		/// <summary>
-		/// Set the SERDES Oscillator frequency
+		/// Set the SERDES Oscillator reference frequency
 		/// </summary>
-		/// <param name="freq">New frequency, in Hz</param>
-		void SetSERDESOscillatorFrequency(uint32_t freq);
+		/// <param name="freq">New reference frequency, in Hz</param>
+		void SetSERDESOscillatorReferenceFrequency(uint32_t freq);
+
 		/// <summary>
-		/// Read the SERDES Oscillator IIC FSM bit
+		/// Read the Reset bit of the SERDES IIC Bus
 		/// </summary>
-		/// <returns>True if the Oscillator IIC FSM bit is set</returns>
-		bool ReadSERDESOscillaotrIICFSMEnable();
+		/// <returns>Reset bit value</returns>
+		bool ReadSERDESOscillatorIICInterfaceReset();
 		/// <summary>
-		/// Enable the SERDES Oscillator IIC FSM
+		/// Reset the SERDES IIC Bus
 		/// </summary>
-		void EnableSERDESOscillatorIICFSM();
+		void ResetSERDESOscillatorIICInterface();
+
 		/// <summary>
-		/// Disable the SERDES Oscillator IIC FSM
+		/// Write a value to the SERDES IIC Bus
 		/// </summary>
-		void DisableSERDESOscillatorIICFSM();
+		/// <param name="device">Device address</param>
+		/// <param name="address">Register address</param>
+		/// <param name="data">Data to write</param>
+		void WriteSERDESIICInterface(DTC_IICSERDESBusAddress device, uint8_t address, uint8_t data);
 		/// <summary>
-		/// Returns the current mode of the SERDES Oscillator Parameter register
+		/// Read a value from the SERDES IIC Bus
 		/// </summary>
-		/// <returns>True if the Oscillator is in Write mode, false for Read mode</returns>
-		bool ReadSERDESOscillatorReadWriteMode();
-		/// <summary>
-		/// Set the SERDES Oscillator to Write mode
-		/// </summary>
-		void SetSERDESOscillatorWriteMode();
-		/// <summary>
-		/// Set the SERDES Oscillator to Read mode
-		/// </summary>
-		void SetSERDESOscillatorReadMode();
-		/// <summary>
-		/// Read the current Oscillator program for the SERDES Oscillator
-		/// </summary>
-		/// <returns>SERDES Oscillator Program</returns>
-		uint64_t ReadSERDESOscillatorParameters();
-		/// <summary>
-		/// Set the SERDES Oscillator program
-		/// </summary>
-		/// <param name="parameters">New program for the SERDES Oscillator</param>
-		void SetSERDESOscillatorParameters(uint64_t parameters);
+		/// <param name="device">Device address</param>
+		/// <param name="address">Register address</param>
+		/// <returns>Value of register</returns>
+		uint8_t ReadSERDESIICInterface(DTC_IICSERDESBusAddress device, uint8_t address);
+
 		/// <summary>
 		/// Read the current SERDES Oscillator clock speed
 		/// </summary>
@@ -1074,48 +1083,37 @@ namespace DTCLib
 		/// Read the current DDR Oscillator frequency, in Hz
 		/// </summary>
 		/// <returns>Current DDR Oscillator frequency, in Hz</returns>
-		uint32_t ReadDDROscillatorFrequency();
+		uint32_t ReadDDROscillatorReferenceFrequency();
 		/// <summary>
 		/// Set the DDR Oscillator frequency
 		/// </summary>
 		/// <param name="freq">New frequency, in Hz</param>
-		void SetDDROscillatorFrequency(uint32_t freq);
+		void SetDDROscillatorReferenceFrequency(uint32_t freq);
 		/// <summary>
-		/// Read the DDR Oscillator IIC FSM bit
+		/// Read the Reset bit of the DDR IIC Bus
 		/// </summary>
-		/// <returns>True if the Oscillator IIC FSM bit is set</returns>
-		bool ReadDDROscillaotrIICFSMEnable();
+		/// <returns>Reset bit value</returns>
+		bool ReadDDROscillatorIICInterfaceReset();
 		/// <summary>
-		/// Enable the DDR Oscillator IIC FSM
+		/// Reset the DDR IIC Bus
 		/// </summary>
-		void EnableDDROscillatorIICFSM();
+		void ResetDDROscillatorIICInterface();
+
 		/// <summary>
-		/// Disable the DDR Oscillator IIC FSM
+		/// Write a value to the DDR IIC Bus
 		/// </summary>
-		void DisableDDROscillatorIICFSM();
+		/// <param name="device">Device address</param>
+		/// <param name="address">Register address</param>
+		/// <param name="data">Data to write</param>
+		void WriteDDRIICInterface(DTC_IICDDRBusAddress device, uint8_t address, uint8_t data);
 		/// <summary>
-		/// Returns the current mode of the DDR Oscillator Parameter register
+		/// Read a value from the DDR IIC Bus
 		/// </summary>
-		/// <returns>True if the Oscillator is in Write mode, false for Read mode</returns>
-		bool ReadDDROscillatorReadWriteMode();
-		/// <summary>
-		/// Set the DDR Oscillator to Write mode
-		/// </summary>
-		void SetDDROscillatorWriteMode();
-		/// <summary>
-		/// Set the DDR Oscillator to Read mode
-		/// </summary>
-		void SetDDROscillatorReadMode();
-		/// <summary>
-		/// Read the current Oscillator program for the DDR Oscillator
-		/// </summary>
-		/// <returns>DDR Oscillator Program</returns>
-		uint64_t ReadDDROscillatorParameters();
-		/// <summary>
-		/// Set the DDR Oscillator program
-		/// </summary>
-		/// <param name="parameters">New program for the DDR Oscillator</param>
-		void SetDDROscillatorParameters(uint64_t parameters);
+		/// <param name="device">Device address</param>
+		/// <param name="address">Register address</param>
+		/// <returns>Value of register</returns>
+		uint8_t ReadDDRIICInterface(DTC_IICDDRBusAddress device, uint8_t address);
+
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -2223,6 +2221,10 @@ namespace DTCLib
 		static int EncodeOutputDivider_(int input);
 		static uint64_t EncodeRFREQ_(double input) { return static_cast<uint64_t>(input * 268435456) & 0x3FFFFFFFFF; }
 		static uint64_t CalculateFrequencyForProgramming_(double targetFrequency, double currentFrequency, uint64_t currentProgram);
+		uint64_t ReadSERDESOscillatorParameters_();
+		uint64_t ReadDDROscillatorParameters_();
+		void SetSERDESOscillatorParameters_(uint64_t program);
+		void SetDDROscillatorParameters_(uint64_t program);
 
 
 	protected:
