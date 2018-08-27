@@ -390,9 +390,9 @@ namespace DTCLib
 
 	/// <summary>
 	/// The DTC_SimMode enumeration is used to control the behavior of the DTC class.
-	/// 
+	///
 	/// DTC_SimMode_Tracker, Calorimeter, CosmicVeto, Performance, and LargeFile activate the mu2esim DTC emulator
-	/// in the corresponding mode. 
+	/// in the corresponding mode.
 	/// DTC_SimMode_Disabled does nothing to set up the DTC beyond basic initialization.
 	/// DTC_SimMode_NoCFO enables the DTC CFO Emulator to send ReadoutRequest and DataRequest packets.
 	/// DTC_SimMode_ROCEmulator enables the DTC ROC Emulator
@@ -427,7 +427,7 @@ namespace DTCLib
 
 		/// <summary>
 		/// Parse a string and return the DTC_SimMode which corresponds to it
-		/// 
+		///
 		/// Will search for SimMode name (see DTC_SimModeConverter::toString(),), or integer value (i.e. 1 = DTC_SimMode_Tracker, see enumeration definition)
 		/// </summary>
 		/// <param name="s">String to parse</param>
@@ -973,6 +973,18 @@ namespace DTCLib
 		{
 			return !(left == right);
 		}
+	};
+
+	enum DTC_IICSERDESBusAddress : uint8_t
+	{
+		DTC_IICSERDESBusAddress_EVB = 0x55,
+		DTC_IICSERDESBusAddress_CFO = 0x5d,
+		DTC_IICSERDESBusAddress_JitterAttenuator = 0x68,
+	};
+
+	enum DTC_IICDDRBusAddress : uint8_t
+	{
+		DTC_IICDDRBusAddress_DDROscillator = 0x59,
 	};
 
 	/// <summary>

@@ -1,4 +1,4 @@
-#include "CFO_Types.h"
+#include "cfoInterfaceLib/CFO_Types.h"
 #include <sstream>
 #include <iomanip>
 
@@ -10,37 +10,13 @@ CFOLib::CFO_SimMode CFOLib::CFO_SimModeConverter::ConvertToSimMode(std::string m
 	{
 		return CFO_SimMode_Disabled;
 	}
-	if (modeName.find("racker") != std::string::npos)
-	{
-		return CFO_SimMode_Tracker;
-	}
-	if (modeName.find("alorimeter") != std::string::npos)
-	{
-		return CFO_SimMode_Calorimeter;
-	}
-	if (modeName.find("osmic") != std::string::npos)
-	{
-		return CFO_SimMode_CosmicVeto;
-	}
 	if (modeName.find("oopback") != std::string::npos)
 	{
 		return CFO_SimMode_Loopback;
 	}
-	if (modeName.find("CFO") != std::string::npos || modeName.find("cfo") != std::string::npos)
+	if (modeName.find("nabled") != std::string::npos)
 	{
-		return CFO_SimMode_NoCFO;
-	}
-	if (modeName.find("mulator") != std::string::npos)
-	{
-		return CFO_SimMode_ROCEmulator;
-	}
-	if (modeName.find("erformance") != std::string::npos)
-	{
-		return CFO_SimMode_Performance;
-	}
-	if(modeName.find("arge") != std::string::npos)
-	{
-		return CFO_SimMode_LargeFile;
+		return CFO_SimMode_Enabled;
 	}
 
 	try
@@ -124,28 +100,28 @@ CFOLib::CFO_SERDESRXDisparityError::CFO_SERDESRXDisparityError() : data_(0) {}
 
 CFOLib::CFO_SERDESRXDisparityError::CFO_SERDESRXDisparityError(std::bitset<2> data) : data_(data) {}
 
-CFOLib::CFO_SERDESRXDisparityError::CFO_SERDESRXDisparityError(uint32_t data, CFO_Ring_ID ring)
+CFOLib::CFO_SERDESRXDisparityError::CFO_SERDESRXDisparityError(uint32_t data, CFO_Link_ID Link)
 {
 	std::bitset<32> dataSet = data;
-	uint32_t ringBase = static_cast<uint8_t>(ring) * 2;
-	data_[0] = dataSet[ringBase];
-	data_[1] = dataSet[ringBase + 1];
+	uint32_t LinkBase = static_cast<uint8_t>(Link) * 2;
+	data_[0] = dataSet[LinkBase];
+	data_[1] = dataSet[LinkBase + 1];
 }
 
 CFOLib::CFO_CharacterNotInTableError::CFO_CharacterNotInTableError() : data_(0) {}
 
 CFOLib::CFO_CharacterNotInTableError::CFO_CharacterNotInTableError(std::bitset<2> data) : data_(data) {}
 
-CFOLib::CFO_CharacterNotInTableError::CFO_CharacterNotInTableError(uint32_t data, CFO_Ring_ID ring)
+CFOLib::CFO_CharacterNotInTableError::CFO_CharacterNotInTableError(uint32_t data, CFO_Link_ID Link)
 {
 	std::bitset<32> dataSet = data;
-	uint32_t ringBase = static_cast<uint8_t>(ring) * 2;
-	data_[0] = dataSet[ringBase];
-	data_[1] = dataSet[ringBase + 1];
+	uint32_t LinkBase = static_cast<uint8_t>(Link) * 2;
+	data_[0] = dataSet[LinkBase];
+	data_[1] = dataSet[LinkBase + 1];
 }
 
 
-std::string CFOLib::Utilities::FormatByteString(double bytes, std::string extraUnit)
+std::string CFOLib::Utilities::FormatByteStLink(double bytes, std::string extraUnit)
 {
 	auto res = FormatBytes(bytes);
 	std::stringstream s;
@@ -197,7 +173,7 @@ std::pair<double, std::string> CFOLib::Utilities::FormatBytes(double bytes)
 	return std::make_pair(val, unit);
 }
 
-std::string CFOLib::Utilities::FormatTimeString(double seconds)
+std::string CFOLib::Utilities::FormatTimeStLink(double seconds)
 {
 	auto res = FormatTime(seconds);
 	std::stringstream s;

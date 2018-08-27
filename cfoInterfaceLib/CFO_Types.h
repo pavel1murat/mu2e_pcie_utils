@@ -9,92 +9,27 @@
 
 namespace CFOLib
 {
-	enum CFO_Ring_ID : uint8_t
+	enum CFO_Link_ID : uint8_t
 	{
-		CFO_Ring_0 = 0,
-		CFO_Ring_1 = 1,
-		CFO_Ring_2 = 2,
-		CFO_Ring_3 = 3,
-		CFO_Ring_4 = 4,
-		CFO_Ring_5 = 5,
-		CFO_Ring_6 = 6,
-		CFO_Ring_7 = 7,
-		CFO_Ring_Unused,
+		CFO_Link_0 = 0,
+		CFO_Link_1 = 1,
+		CFO_Link_2 = 2,
+		CFO_Link_3 = 3,
+		CFO_Link_4 = 4,
+		CFO_Link_5 = 5,
+		CFO_Link_6 = 6,
+		CFO_Link_7 = 7,
+		CFO_Link_Unused,
 	};
 
-	static const std::vector<CFO_Ring_ID> CFO_Rings{ CFO_Ring_0, CFO_Ring_1, CFO_Ring_2, CFO_Ring_3, CFO_Ring_4, CFO_Ring_5, CFO_Ring_6, CFO_Ring_7 };
-	
-	enum CFO_OscillatorType
-	{
-		CFO_OscillatorType_SERDES,
-		CFO_OscillatorType_DDR,
-	};
+	static const std::vector<CFO_Link_ID> CFO_Links{ CFO_Link_0, CFO_Link_1, CFO_Link_2, CFO_Link_3, CFO_Link_4, CFO_Link_5, CFO_Link_6, CFO_Link_7 };
 
 	enum CFO_SerdesClockSpeed
 	{
 		CFO_SerdesClockSpeed_25Gbps,
 		CFO_SerdesClockSpeed_3125Gbps,
+		CFO_SerdesClockSpeed_48Gbps,
 		CFO_SerdesClockSpeed_Unknown
-	};
-
-	enum CFO_RXBufferStatus
-	{
-		CFO_RXBufferStatus_Nominal = 0,
-		CFO_RXBufferStatus_BufferEmpty = 1,
-		CFO_RXBufferStatus_BufferFull = 2,
-		CFO_RXBufferStatus_Underflow = 5,
-		CFO_RXBufferStatus_Overflow = 6,
-		CFO_RXBufferStatus_Unknown = 0x10,
-	};
-
-	/// <summary>
-	/// The CFO_RXBufferStatusConverter converts a CFO_RXBufferStatus enumeration value to string or JSON representation
-	/// </summary>
-	struct CFO_RXBufferStatusConverter
-	{
-		CFO_RXBufferStatus status_; ///< CFO_RXBufferStatus to convert
-
-		/// <summary>
-		/// Construct a CFO_RXBufferStatusConverter instance using the given CFO_RXBufferStatus
-		/// </summary>
-		/// <param name="status">CFO_RXBufferStatus to convert</param>
-		explicit CFO_RXBufferStatusConverter(CFO_RXBufferStatus status) : status_(status) {}
-
-		/// <summary>
-		/// Convert the CFO_RXBufferStatus to its string representation
-		/// </summary>
-		/// <returns>String representation of CFO_RXBufferStatus</returns>
-		std::string toString() const
-		{
-			switch (status_)
-			{
-			case CFO_RXBufferStatus_Nominal:
-				return "Nominal";
-			case CFO_RXBufferStatus_BufferEmpty:
-				return "BufferEmpty";
-			case CFO_RXBufferStatus_BufferFull:
-				return "BufferFull";
-			case CFO_RXBufferStatus_Overflow:
-				return "Overflow";
-			case CFO_RXBufferStatus_Underflow:
-				return "Underflow";
-			case CFO_RXBufferStatus_Unknown:
-			default:
-				return "Unknown";
-			}
-		}
-
-		/// <summary>
-		/// Write a CFO_RXBufferStatusConverter in JSON format to the given stream
-		/// </summary>
-		/// <param name="stream">Stream to write</param>
-		/// <param name="status">CFO_RXBufferStatusConverter to serialize</param>
-		/// <returns>Stream reference for continued streaming</returns>
-		friend std::ostream& operator<<(std::ostream& stream, const CFO_RXBufferStatusConverter& status)
-		{
-			stream << "\"CFO_RXBufferStatus\":\"" << status.toString() << "\"";
-			return stream;
-		}
 	};
 
 	enum CFO_RXStatus
@@ -110,7 +45,7 @@ namespace CFOLib
 	};
 
 	/// <summary>
-	/// The CFO_RXStatusConverter converts a CFO_RXStatus enumeration value to string or JSON representation
+	/// The CFO_RXStatusConverter converts a CFO_RXStatus enumeration value to stLink or JSON representation
 	/// </summary>
 	struct CFO_RXStatusConverter
 	{
@@ -123,9 +58,9 @@ namespace CFOLib
 		explicit CFO_RXStatusConverter(CFO_RXStatus status);
 
 		/// <summary>
-		/// Convert the CFO_RXStatus to its string representation
+		/// Convert the CFO_RXStatus to its stLink representation
 		/// </summary>
-		/// <returns>String representation of CFO_RXStatus</returns>
+		/// <returns>StLink representation of CFO_RXStatus</returns>
 		std::string toString() const
 		{
 			switch (status_)
@@ -173,7 +108,7 @@ namespace CFOLib
 	};
 
 	/// <summary>
-	/// The CFO_SERDESLoopbackModeConverter converts a CFO_SERDESLoopbackMode enumeration value to string or JSON representation
+	/// The CFO_SERDESLoopbackModeConverter converts a CFO_SERDESLoopbackMode enumeration value to stLink or JSON representation
 	/// </summary>
 	struct CFO_SERDESLoopbackModeConverter
 	{
@@ -186,9 +121,9 @@ namespace CFOLib
 		explicit CFO_SERDESLoopbackModeConverter(CFO_SERDESLoopbackMode mode) : mode_(mode) {}
 
 		/// <summary>
-		/// Convert the CFO_SERDESLoopbackMode to its string representation
+		/// Convert the CFO_SERDESLoopbackMode to its stLink representation
 		/// </summary>
-		/// <returns>String representation of CFO_SERDESLoopbackMode</returns>
+		/// <returns>StLink representation of CFO_SERDESLoopbackMode</returns>
 		std::string toString() const
 		{
 			switch (mode_)
@@ -222,34 +157,21 @@ namespace CFOLib
 
 	/// <summary>
 	/// The CFO_SimMode enumeration is used to control the behavior of the CFO class.
-	/// 
-	/// CFO_SimMode_Tracker, Calorimeter, CosmicVeto, Performance, and LargeFile activate the cfosim CFO emulator
-	/// in the corresponding mode. 
-	/// CFO_SimMode_Disabled does nothing to set up the CFO beyond basic initialization.
-	/// CFO_SimMode_NoCFO enables the CFO CFO Emulator to send ReadoutRequest and DataRequest packets.
-	/// CFO_SimMode_ROCEmulator enables the CFO ROC Emulator
-	/// CFO_SimMode_Loopback enables the SERDES loopback on the CFO
 	/// </summary>
 	enum CFO_SimMode
 	{
 		CFO_SimMode_Disabled = 0,
-		CFO_SimMode_Tracker = 1,
-		CFO_SimMode_Calorimeter = 2,
-		CFO_SimMode_CosmicVeto = 3,
-		CFO_SimMode_NoCFO = 4,
-		CFO_SimMode_ROCEmulator = 5,
-		CFO_SimMode_Loopback = 6,
-		CFO_SimMode_Performance = 7,
-		CFO_SimMode_LargeFile = 8,
+		CFO_SimMode_Enabled = 1,
+		CFO_SimMode_Loopback =2,
 		CFO_SimMode_Invalid,
 	};
 
 	/// <summary>
-	/// The CFO_SimModeConverter converts a CFO_SimMode enumeration value to string or JSON representation
+	/// The CFO_SimModeConverter converts a CFO_SimMode enumeration value to stLink or JSON representation
 	/// </summary>
 	struct CFO_SimModeConverter
 	{
-		CFO_SimMode mode_; ///< CFO_SimMode to convert to string
+		CFO_SimMode mode_; ///< CFO_SimMode to convert to stLink
 
 		/// <summary>
 		/// Construct a CFO_SimModeConverter instance using the given CFO_SimMode
@@ -258,38 +180,26 @@ namespace CFOLib
 		explicit CFO_SimModeConverter(CFO_SimMode mode) : mode_(mode) {}
 
 		/// <summary>
-		/// Parse a string and return the CFO_SimMode which corresponds to it
-		/// 
+		/// Parse a stLink and return the CFO_SimMode which corresponds to it
+		///
 		/// Will search for SimMode name (see CFO_SimModeConverter::toString(),), or integer value (i.e. 1 = CFO_SimMode_Tracker, see enumeration definition)
 		/// </summary>
-		/// <param name="s">String to parse</param>
-		/// <returns>CFO_SimMode corresponding to string</returns>
+		/// <param name="s">StLink to parse</param>
+		/// <returns>CFO_SimMode corresponding to stLink</returns>
 		static CFO_SimMode ConvertToSimMode(std::string s);
 
 		/// <summary>
-		/// Convert the CFO_SimMode to its string representation
+		/// Convert the CFO_SimMode to its stLink representation
 		/// </summary>
-		/// <returns>String representation of CFO_SimMode</returns>
+		/// <returns>StLink representation of CFO_SimMode</returns>
 		std::string toString() const
 		{
 			switch (mode_)
 			{
-			case CFO_SimMode_Tracker:
-				return "Tracker";
-			case CFO_SimMode_Calorimeter:
-				return "Calorimeter";
-			case CFO_SimMode_CosmicVeto:
-				return "CosmicVeto";
-			case CFO_SimMode_NoCFO:
-				return "NoCFO";
-			case CFO_SimMode_ROCEmulator:
-				return "ROCEmulator";
+			case CFO_SimMode_Enabled:
+				return "Enabled";
 			case CFO_SimMode_Loopback:
 				return "Loopback";
-			case CFO_SimMode_Performance:
-				return "Performance";
-			case CFO_SimMode_LargeFile:
-				return "LargeFile";
 			case CFO_SimMode_Disabled:
 			default:
 				return "Disabled";
@@ -318,19 +228,19 @@ namespace CFOLib
 		/// <summary>
 		/// A CFO_WrongVersionException is thrown when an attempt is made to construct a CFO packet with data that does not match the packet type
 		/// </summary>
-		/// <param name="expected">Expected firmware version string</param>
-		/// <param name="encountered">Encountered firmware version string</param>
+		/// <param name="expected">Expected firmware version stLink</param>
+		/// <param name="encountered">Encountered firmware version stLink</param>
 		CFO_WrongVersionException(std::string expected, std::string encountered) : expected_(expected), encountered_(encountered) {}
 		/// <summary>
 		/// Describe the exception
 		/// </summary>
-		/// <returns>String describing the exception</returns>
+		/// <returns>StLink describing the exception</returns>
 		const char* what() const throw()
 		{
 			return ("Unexpected firmware version encountered: " + encountered_ + " != " + expected_ + " (expected)").c_str();
 		}
-		std::string expected_; ///< Expected Firmware version string
-		std::string encountered_; ///< Firmware version string of CFO
+		std::string expected_; ///< Expected Firmware version stLink
+		std::string encountered_; ///< Firmware version stLink of CFO
 	};
 
 	/// <summary>
@@ -348,7 +258,7 @@ namespace CFOLib
 		/// <summary>
 		/// Describe the exception
 		/// </summary>
-		/// <returns>String describing the exception</returns>
+		/// <returns>StLink describing the exception</returns>
 		const char* what() const throw()
 		{
 			return ("Unexpected packet type encountered: " + std::to_string(encountered_) + " != " + std::to_string(expected_) + " (expected)").c_str();
@@ -366,7 +276,7 @@ namespace CFOLib
 		/// <summary>
 		/// Describe the exception
 		/// </summary>
-		/// <returns>String describing the exception</returns>
+		/// <returns>StLink describing the exception</returns>
 		const char* what() const throw()
 		{
 			return "Unable to communicate with the CFO";
@@ -382,7 +292,7 @@ namespace CFOLib
 		/// <summary>
 		/// Describe the exception
 		/// </summary>
-		/// <returns>String describing the exception</returns>
+		/// <returns>StLink describing the exception</returns>
 		const char* what() const throw()
 		{
 			return "Corruption detected in data stream from CFO";
@@ -551,7 +461,7 @@ namespace CFOLib
 		/// Convert the timestamp to a JSON representation
 		/// </summary>
 		/// <param name="arrayMode">(Default: false) If true, will create a JSON array of the 6 bytes. Otherwise, represents timestamp as a single number</param>
-		/// <returns>JSON-formatted string containing timestamp</returns>
+		/// <returns>JSON-formatted stLink containing timestamp</returns>
 		std::string toJSON(bool arrayMode = false) const;
 
 		/// <summary>
@@ -560,7 +470,7 @@ namespace CFOLib
 		/// Byte 3 | Byte 2
 		/// Byte 5 | Byte 4
 		/// </summary>
-		/// <returns>String representing timestamp in "packet format"</returns>
+		/// <returns>StLink representing timestamp in "packet format"</returns>
 		std::string toPacketFormat() const;
 	};
 
@@ -582,11 +492,11 @@ namespace CFOLib
 		/// <param name="data">Bits to use for initialization</param>
 		explicit CFO_SERDESRXDisparityError(std::bitset<2> data);
 		/// <summary>
-		/// Construct a CFO_SERDESRXDisparityError using the register value and a Ring ID
+		/// Construct a CFO_SERDESRXDisparityError using the register value and a Link ID
 		/// </summary>
 		/// <param name="data">Register value to read error bits from</param>
-		/// <param name="ring">Ring to read</param>
-		CFO_SERDESRXDisparityError(uint32_t data, CFO_Ring_ID ring);
+		/// <param name="Link">Link to read</param>
+		CFO_SERDESRXDisparityError(uint32_t data, CFO_Link_ID Link);
 		/// <summary>
 		/// Default Copy Constructor
 		/// </summary>
@@ -676,8 +586,8 @@ namespace CFOLib
 		/// CFO_CharacterNotInTableError Constructor
 		/// </summary>
 		/// <param name="data">Register value</param>
-		/// <param name="ring">Specific ring to read</param>
-		CFO_CharacterNotInTableError(uint32_t data, CFO_Ring_ID ring);
+		/// <param name="Link">Specific Link to read</param>
+		CFO_CharacterNotInTableError(uint32_t data, CFO_Link_ID Link);
 		/// <summary>
 		/// Default Copy Constructor
 		/// </summary>
@@ -746,62 +656,60 @@ namespace CFOLib
 	};
 
 	/// <summary>
-	/// This structure is used to decode the RingEnable register value
+	/// This structure is used to decode the LinkEnable register value
 	/// </summary>
-	struct CFO_RingEnableMode
+	struct CFO_LinkEnableMode
 	{
 		bool TransmitEnable; ///< Whether transmit is enabled on this link
 		bool ReceiveEnable; ///< Whether receive is enabled on this link
-		bool TimingEnable; ///< Whether timing is enabled on this link
 
 		/// <summary>
 		/// Default constructor. Sets all enable bits to true.
 		/// </summary>
-		CFO_RingEnableMode() : TransmitEnable(true), ReceiveEnable(true), TimingEnable(true) {}
+		CFO_LinkEnableMode() : TransmitEnable(true), ReceiveEnable(true) {}
 
 		/// <summary>
-		/// Construct a CFO_RingEnableMode instance with the given flags
+		/// Construct a CFO_LinkEnableMode instance with the given flags
 		/// </summary>
 		/// <param name="transmit">Enable TX</param>
 		/// <param name="receive">Enable RX</param>
-		/// <param name="timing">Enable CFO</param>
-		CFO_RingEnableMode(bool transmit, bool receive, bool timing) : TransmitEnable(transmit), ReceiveEnable(receive), TimingEnable(timing) {}
+		CFO_LinkEnableMode(bool transmit, bool receive) : TransmitEnable(transmit), ReceiveEnable(receive) {}
 
 		/// <summary>
-		/// Write the CFO_RingEnableMode to stream in JSON format.
+		/// Write the CFO_LinkEnableMode to stream in JSON format.
 		/// Note that the JSON represents an object, calling code should add a key if there's other objects to stream
 		/// </summary>
 		/// <param name="stream">Stream to write to</param>
-		/// <param name="mode">CFO_RingEnableMode to parse</param>
+		/// <param name="mode">CFO_LinkEnableMode to parse</param>
 		/// <returns>Stream object for continued streaming</returns>
-		friend std::ostream& operator<<(std::ostream& stream, const CFO_RingEnableMode& mode)
+		friend std::ostream& operator<<(std::ostream& stream, const CFO_LinkEnableMode& mode)
 		{
 			auto formatSet = (stream.flags() & std::ios_base::boolalpha) != 0;
 			stream.setf(std::ios_base::boolalpha);
-			stream << "{\"TransmitEnable\":" << mode.TransmitEnable << ",\"ReceiveEnable\":" << mode.ReceiveEnable << ",\"TimingEnable\":" << mode.TimingEnable << "}";
+			stream << "{\"TransmitEnable\":" << mode.TransmitEnable << ",\"ReceiveEnable\":" << mode.ReceiveEnable << "}";
 			if (!formatSet) stream.unsetf(std::ios_base::boolalpha);
 			return stream;
 		}
 
 		/// <summary>
-		/// Determine if two CFO_RingEnableMode objects are equal
+		/// Determine if two CFO_LinkEnableMode objects are equal
 		/// They are equal if TX, RX and Timing bits are all equal
 		/// </summary>
 		/// <param name="left">LHS of compare</param>
 		/// <param name="right">RHS of compare</param>
 		/// <returns>Whether all three bits of both sides are equal</returns>
-		friend bool operator==(const CFO_RingEnableMode& left, const CFO_RingEnableMode& right)
+		friend bool operator==(const CFO_LinkEnableMode& left, const CFO_LinkEnableMode& right)
 		{
-			return left.TransmitEnable == right.TransmitEnable && left.ReceiveEnable == right.ReceiveEnable && left.TimingEnable == right.TimingEnable;
+			return left.TransmitEnable == right.TransmitEnable && left.ReceiveEnable == right.ReceiveEnable;
 		}
 
 		/// <summary>
-		/// Determine if two CFO_RingEnableMode objects are not equal
+		/// Determine if two CFO_LinkEnableMode objects are not equal
 		/// </summary>
 		/// <param name="left">LHS of compare</param>
 		/// <param name="right">RHS of compare</param>
 		/// <returns>!(left == right)</returns>
-		friend bool operator!=(const CFO_RingEnableMode& left, const CFO_RingEnableMode& right)
+		friend bool operator!=(const CFO_LinkEnableMode& left, const CFO_LinkEnableMode& right)
 		{
 			return !(left == right);
 		}
@@ -812,54 +720,21 @@ namespace CFOLib
 	/// </summary>
 	struct CFO_FIFOFullErrorFlags
 	{
-		bool OutputData; ///< Output Data FIFO Full
-		bool CFOLinkInput; ///< CFO Link Input FIFO Full
-		bool ReadoutRequestOutput; ///< Readout Request Output FIFO Full
-		bool DataRequestOutput; ///< Data Request Output FIFO Full
-		bool OtherOutput; ///< Other Output FIFO Full
-		bool OutputDCS; ///< Output DCS FIFO Full
-		bool OutputDCSStage2; ///< Output DCS Stage 2 FIFO Full
-		bool DataInput; ///< Data Input FIFO Full
-		bool DCSStatusInput; ///< DCS Status Input FIFO Full
+		bool CFOLinkOutput; ///< CFO Link Input FIFO Full
 
 		/// <summary>
 		/// Default Constructor, sets all flags to false
 		/// </summary>
 		CFO_FIFOFullErrorFlags()
-			: OutputData(false)
-			, CFOLinkInput(false)
-			, ReadoutRequestOutput(false)
-			, DataRequestOutput(false)
-			, OtherOutput(false)
-			, OutputDCS(false)
-			, OutputDCSStage2(false)
-			, DataInput(false)
-			, DCSStatusInput(false)
+			: CFOLinkOutput(false)
 		{}
 
 		/// <summary>
 		/// Construct a CFO_FIFOFUllErrorFlags instance with the given values
 		/// </summary>
-		/// <param name="outputData">Output Data FIFO Full</param>
-		/// <param name="cfoLinkInput">CFO Link Input FIFO Full</param>
-		/// <param name="readoutRequest">Readout Request FIFO Full</param>
-		/// <param name="dataRequest">Data Request FIFO Full</param>
-		/// <param name="otherOutput"> Other Output FIFO Full</param>
-		/// <param name="outputDCS">Output DCS FIFO Full</param>
-		/// <param name="outputDCS2">Output DCS Stage 2 FIFO Full</param>
-		/// <param name="dataInput">Data Input FIFO Full</param>
-		/// <param name="dcsInput">DCS Status Input FIFO Full</param>
-		CFO_FIFOFullErrorFlags(bool outputData, bool cfoLinkInput, bool readoutRequest, bool dataRequest,
-							   bool otherOutput, bool outputDCS, bool outputDCS2, bool dataInput, bool dcsInput)
-			: OutputData(outputData)
-			, CFOLinkInput(cfoLinkInput)
-			, ReadoutRequestOutput(readoutRequest)
-			, DataRequestOutput(dataRequest)
-			, OtherOutput(otherOutput)
-			, OutputDCS(outputDCS)
-			, OutputDCSStage2(outputDCS2)
-			, DataInput(dataInput)
-			, DCSStatusInput(dcsInput)
+		/// <param name="cfoLinkOutput">CFO Link Output FIFO Full</param>
+		CFO_FIFOFullErrorFlags(bool cfoLinkOutput)
+			: CFOLinkOutput(cfoLinkOutput)
 		{}
 
 		/// <summary>
@@ -873,15 +748,7 @@ namespace CFOLib
 		{
 			auto formatSet = (stream.flags() & std::ios_base::boolalpha) != 0;
 			stream.setf(std::ios_base::boolalpha);
-			stream << "{\"OutputData\":" << flags.OutputData
-				<< ",\"CFOLinkInput\":" << flags.CFOLinkInput
-				<< ",\"ReadoutRequestOutput\":" << flags.ReadoutRequestOutput
-				<< ",\"DataRequestOutput\":" << flags.DataRequestOutput
-				<< ",\"OtherOutput\":" << flags.OtherOutput
-				<< ",\"OutputDCS\":" << flags.OutputDCS
-				<< ",\"OutputDCSStage2\":" << flags.OutputDCSStage2
-				<< ",\"DataInput\":" << flags.DataInput
-				<< ",\"DCSStatusInput\":" << flags.DCSStatusInput << "}";
+			stream << "{\"CFOLinkOutput\":" << flags.CFOLinkOutput << "}";
 			if (!formatSet) stream.unsetf(std::ios_base::boolalpha);
 			return stream;
 		}
@@ -960,32 +827,32 @@ namespace CFOLib
 	struct Utilities
 	{
 		/// <summary>
-		/// Create a string with "[value] [unit]" for a given number of bytes, using FormatBytes(bytes)
+		/// Create a stLink with "[value] [unit]" for a given number of bytes, using FormatBytes(bytes)
 		/// </summary>
-		/// <param name="bytes">Number of bytes to convert to string</param>
+		/// <param name="bytes">Number of bytes to convert to stLink</param>
 		/// <param name="extraUnit">Extra units to be applied after converted byte unit (i.e. "/s")</param>
-		/// <returns>String with converted value</returns>
-		static std::string FormatByteString(double bytes, std::string extraUnit);
+		/// <returns>StLink with converted value</returns>
+		static std::string FormatByteStLink(double bytes, std::string extraUnit);
 		/// <summary>
 		/// Determine the best units for describing a given number of bytes.
 		/// Algorithm will divide by 1024, and if the result is greater than 1 and less than 1024, use that unit.
 		/// Maximum unit is TB.
 		/// </summary>
 		/// <param name="bytes">Number of bytes to format</param>
-		/// <returns>Pair of Value in "best unit" and string representation of unit (i.e. "KB", "MB", etc)</returns>
+		/// <returns>Pair of Value in "best unit" and stLink representation of unit (i.e. "KB", "MB", etc)</returns>
 		static std::pair<double, std::string> FormatBytes(double bytes);
 		/// <summary>
-		/// Create a string with "[value] [unit]" for a given number of seconds, using FormatTime(seconds)
+		/// Create a stLink with "[value] [unit]" for a given number of seconds, using FormatTime(seconds)
 		/// </summary>
-		/// <param name="seconds">Number of seconds to convert to string</param>
-		/// <returns>String with converted value</returns>
-		static std::string FormatTimeString(double seconds);
+		/// <param name="seconds">Number of seconds to convert to stLink</param>
+		/// <returns>StLink with converted value</returns>
+		static std::string FormatTimeStLink(double seconds);
 		/// <summary>
 		/// Determine the best units for describing a given number of seconds.
 		/// Will find largest time span which has unit greater than 1, up to days, down to ns.
 		/// </summary>
 		/// <param name="seconds">Number of seconds to convert</param>
-		/// <returns>Pair of Value in "best unit" and string representation of unit (i.e. "ns", "us", "hours", etc)</returns>
+		/// <returns>Pair of Value in "best unit" and stLink representation of unit (i.e. "ns", "us", "hours", etc)</returns>
 		static std::pair<double, std::string> FormatTime(double seconds);
 	};
 }

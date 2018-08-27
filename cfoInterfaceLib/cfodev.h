@@ -5,13 +5,13 @@
 // $RCSfile: .emacs.gnu,v $
 // rev="$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
 
-#include "cfo_driver/cfo_mmap_ioctl.h" //
+#include "mu2e_driver/mu2e_mmap_ioctl.h" //
 
 #include <atomic>
-#include "cfosim.h"
+#include "cfoInterfaceLib/CFO_Types.h"
 
 /// <summary>
-/// This class handles the raw interaction with the cfo device driver
+/// This class handles the raw interaction with the mu2e device driver
 /// It also will pass through device commands to the cfosim class if it is active.
 /// </summary>
 class cfodev
@@ -80,8 +80,10 @@ public:
 	/// Initialize the simulator if simMode requires it, otherwise set up DMA engines
 	/// </summary>
 	/// <param name="simMode">Desired simulation mode</param>
+	/// <param name="CFO">Desired CFO card to use (/dev/mu2eX)</param>
 	/// <returns>0 on success</returns>
-	int init(CFOLib::CFO_SimMode simMode = CFOLib::CFO_SimMode_Disabled);
+	int init(CFOLib::CFO_SimMode simMode, int CFO);
+
 	/// <summary>
 	/// Reads data from the CFO.
 	/// Returns the number of bytes read. Negative values indicate errors.
@@ -121,11 +123,9 @@ public:
 	/// <returns>0 on success</returns>
 	int write_register(uint16_t address, int tmo_ms, uint32_t data);
 	/// <summary>
-	/// Write out the DMA metadata for the given channel/direction to screen
+	/// Write out the DMA metadata to screen
 	/// </summary>
-	/// <param name="chn">Channel to dump (DAQ or DCS)</param>
-	/// <param name="dir">Direction to dump (C2S or S2C)</param>
-	void meta_dump(int chn, int dir);
+	void meta_dump();
 	/// <summary>
 	/// Write data to the CFO
 	/// </summary>
@@ -140,9 +140,9 @@ public:
 	void close();
 
 	/// <summary>
-	/// Gets the file descriptor for the cfo block device (/dev/cfo)
+	/// Gets the file descriptor for the mu2e block device (/dev/mu2eX)
 	/// </summary>
-	/// <returns>File descriptor for the cfo block device</returns>
+	/// <returns>File descriptor for the mu2e block device</returns>
 	int get_devfd_() const
 	{
 		return devfd_;
@@ -159,10 +159,10 @@ private:
 	//unsigned delta_(int chn, int dir);
 
 	int devfd_;
-	volatile void* cfo_mmap_ptrs_[CFO_MAX_CHANNELS][2][2];
-	m_ioc_get_info_t cfo_channel_info_[CFO_MAX_CHANNELS][2];
+	volatile void* mu2e_mmap_ptrs_[MU2E_MAX_NUM_DTCS][MU2E_MAX_CHANNELS][2][2];
+	m_ioc_get_info_t mu2e_channel_info_[MU2E_MAX_NUM_DTCS][MU2E_MAX_CHANNELS][2];
 	unsigned buffers_held_;
-	cfosim* simulator_;
+	int activeCFO_;
 	std::atomic<long long> deviceTime_;
 	std::atomic<size_t> writeSize_;
 	std::atomic<size_t> readSize_;

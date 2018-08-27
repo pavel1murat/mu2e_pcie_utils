@@ -18,7 +18,7 @@ IF (NOT CETBUILDTOOLS_VERSION)
     MESSAGE (FATAL_ERROR "ERROR: setup cetbuildtools to get the cmake modules")
 ENDIF()
 
-set(CMAKE_MODULE_PATH 
+set(CMAKE_MODULE_PATH
         ${CMAKE_CURRENT_SOURCE_DIR}/Modules
         $ENV{CETBUILDTOOLS_DIR}/Modules
         ${CMAKE_MODULE_PATH})
@@ -53,10 +53,9 @@ include(NodeJSAddon)
 
 # source
 add_subdirectory(mu2e_driver)
-add_subdirectory(cfo_driver)
 add_subdirectory(mcs)
 add_subdirectory(dtcInterfaceLib)
-#add_subdirectory(cfoInterfaceLib)
+add_subdirectory(cfoInterfaceLib)
 
 # tools
 add_subdirectory(tools)
@@ -65,7 +64,7 @@ add_subdirectory(tools)
 add_subdirectory(ups)
 
 # doc - Doxygen documentation
-#add_subdirectory(doc)
+add_subdirectory(doc)
 
 # packaging utility
 include(UseCPack)

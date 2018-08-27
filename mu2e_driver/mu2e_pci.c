@@ -22,6 +22,7 @@
 /** PCI device structure which probes for targeted design */
 static struct pci_device_id xilinx_ids[] = {
 	{ XILINX_VENDOR_ID, XILINX_DEVICE_ID, PCI_ANY_ID,PCI_ANY_ID,0,0,0UL },
+	{ XILINX_VENDOR_ID, XILINX_DEVICE_ID_2, PCI_ANY_ID,PCI_ANY_ID,0,0,0UL },
 	{ }     /* terminate list with empty entry */
 };
 

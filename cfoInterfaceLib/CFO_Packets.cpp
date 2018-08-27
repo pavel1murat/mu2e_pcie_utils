@@ -1,4 +1,4 @@
-#include "CFO_Packets.h"
+#include "cfoInterfaceLib/CFO_Packets.h"
 #include <sstream>
 #include <iomanip>
 #include <cstring>
@@ -95,7 +95,7 @@ bool CFOLib::CFO_DataPacket::Equals(const CFO_DataPacket& other) const
 	auto equal = true;
 	for (uint16_t ii = 2; ii < 16; ++ii)
 	{
-		//TRACE(21, "CFO_DataPacket::Equals: Comparing %u to %u", GetWord(ii), other.GetWord(ii));
+		//TRACE(21, "CFO_DataPacket::Equals: CompaLink %u to %u", GetWord(ii), other.GetWord(ii));
 		if (other.GetWord(ii) != GetWord(ii))
 		{
 			equal = false;
@@ -106,8 +106,8 @@ bool CFOLib::CFO_DataPacket::Equals(const CFO_DataPacket& other) const
 	return equal;
 }
 
-CFOLib::CFO_DMAPacket::CFO_DMAPacket(CFO_PacketType type, CFO_Ring_ID ring, CFO_ROC_ID roc, uint16_t byteCount, bool valid)
-	: byteCount_(byteCount < 64 ? 64 : byteCount), valid_(valid), ringID_(ring), packetType_(type), rocID_(roc) {}
+CFOLib::CFO_DMAPacket::CFO_DMAPacket(CFO_PacketType type, CFO_Link_ID Link, uint8_t dtc, uint16_t byteCount, bool valid)
+	: byteCount_(byteCount < 64 ? 64 : byteCount), valid_(valid), linkID_(Link), packetType_(type), hopCount_(dtc) {}
 
 CFOLib::CFO_DataPacket CFOLib::CFO_DMAPacket::ConvertToDataPacket() const
 {
@@ -116,9 +116,9 @@ CFOLib::CFO_DataPacket CFOLib::CFO_DMAPacket::ConvertToDataPacket() const
 	auto word0B = static_cast<uint8_t>(byteCount_ >> 8);
 	output.SetWord(0, word0A);
 	output.SetWord(1, word0B);
-	auto word1A = static_cast<uint8_t>(rocID_);
+	auto word1A = static_cast<uint8_t>(hopCount_ & 0xF);
 	word1A += static_cast<uint8_t>(packetType_) << 4;
-	uint8_t word1B = static_cast<uint8_t>(ringID_) + (valid_ ? 0x80 : 0x0);
+	uint8_t word1B = static_cast<uint8_t>(linkID_) + (valid_ ? 0x80 : 0x0);
 	output.SetWord(2, word1A);
 	output.SetWord(3, word1B);
 	for (uint16_t i = 4; i < 16; ++i)
@@ -131,17 +131,16 @@ CFOLib::CFO_DataPacket CFOLib::CFO_DMAPacket::ConvertToDataPacket() const
 CFOLib::CFO_DMAPacket::CFO_DMAPacket(const CFO_DataPacket in)
 {
 	auto word2 = in.GetData()[2];
-	uint8_t roc = word2 & 0xF;
+	hopCount_ = word2 & 0xF;
 	uint8_t packetType = word2 >> 4;
 	auto word3 = in.GetData()[3];
-	uint8_t ringID = word3 & 0xF;
+	uint8_t LinkID = word3 & 0xF;
 	valid_ = (word3 & 0x80) == 0x80;
 
 	byteCount_ = in.GetData()[0] + (in.GetData()[1] << 8);
-	ringID_ = static_cast<CFO_Ring_ID>(ringID);
-	rocID_ = static_cast<CFO_ROC_ID>(roc);
+	linkID_ = static_cast<CFO_Link_ID>(LinkID);
 	packetType_ = static_cast<CFO_PacketType>(packetType);
-	TRACE(20, headerJSON().c_str());
+	TLOG_ARB(20, "CFO_DMAPacket") << headerJSON();
 }
 
 std::string CFOLib::CFO_DMAPacket::headerJSON() const
@@ -149,9 +148,9 @@ std::string CFOLib::CFO_DMAPacket::headerJSON() const
 	std::stringstream ss;
 	ss << "\"isValid\": " << valid_ << ",";
 	ss << "\"byteCount\": " << std::hex << "0x" << byteCount_ << ",";
-	ss << "\"ringID\": " << std::dec << ringID_ << ",";
+	ss << "\"linkID\": " << std::dec << linkID_ << ",";
 	ss << "\"packetType\": " << packetType_ << ",";
-	ss << "\"rocID\": " << rocID_;
+	ss << "\"hopCount\": " << hopCount_;
 	return ss.str();
 }
 
@@ -160,8 +159,8 @@ std::string CFOLib::CFO_DMAPacket::headerPacketFormat() const
 	std::stringstream ss;
 	ss << std::setfill('0') << std::hex;
 	ss << "0x" << std::setw(6) << ((byteCount_ & 0xFF00) >> 8) << "\t" << "0x" << std::setw(6) << (byteCount_ & 0xFF) << std::endl;
-	ss << std::setw(1) << static_cast<int>(valid_) << "   " << "0x" << std::setw(2) << ringID_ << "\t";
-	ss << "0x" << std::setw(2) << packetType_ << "0x" << std::setw(2) << rocID_ << std::endl;
+	ss << std::setw(1) << static_cast<int>(valid_) << "   " << "0x" << std::setw(2) << linkID_ << "\t";
+	ss << "0x" << std::setw(2) << packetType_ << "0x" << std::setw(2) << hopCount_ << std::endl;
 	return ss.str();
 }
 
@@ -179,8 +178,8 @@ std::string CFOLib::CFO_DMAPacket::toPacketFormat()
 	return headerPacketFormat();
 }
 
-CFOLib::CFO_HeartbeatPacket::CFO_HeartbeatPacket(CFO_Ring_ID ring, CFO_ROC_ID maxROC)
-	: CFO_DMAPacket(CFO_PacketType_Heartbeat, ring, maxROC), timestamp_(), eventMode_()
+CFOLib::CFO_HeartbeatPacket::CFO_HeartbeatPacket(CFO_Link_ID Link, uint8_t dtc)
+	: CFO_DMAPacket(CFO_PacketType_Heartbeat, Link, dtc), timestamp_(), eventMode_()
 {
 	eventMode_[0] = 0;
 	eventMode_[1] = 0;
@@ -190,8 +189,8 @@ CFOLib::CFO_HeartbeatPacket::CFO_HeartbeatPacket(CFO_Ring_ID ring, CFO_ROC_ID ma
 	eventMode_[5] = 0;
 }
 
-CFOLib::CFO_HeartbeatPacket::CFO_HeartbeatPacket(CFO_Ring_ID ring, CFO_Timestamp timestamp, CFO_ROC_ID maxROC, uint8_t* eventMode)
-	: CFO_DMAPacket(CFO_PacketType_Heartbeat, ring, maxROC), timestamp_(timestamp), eventMode_()
+CFOLib::CFO_HeartbeatPacket::CFO_HeartbeatPacket(CFO_Link_ID Link, CFO_Timestamp timestamp, uint8_t dtc, uint8_t* eventMode)
+	: CFO_DMAPacket(CFO_PacketType_Heartbeat, Link, dtc), timestamp_(timestamp), eventMode_()
 {
 	if (eventMode != nullptr)
 	{
