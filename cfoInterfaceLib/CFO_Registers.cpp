@@ -957,7 +957,7 @@ CFOLib::CFO_RegisterFormatter CFOLib::CFO_Registers::FormatTimestampPreset1()
 void CFOLib::CFO_Registers::SetMaxDTCNumber(const CFO_Link_ID & Link, const uint8_t & dtcCount)
 {
 	ReadLinkDTCCount(Link, false);
-	auto mask = !(0xF << (Link * 4));
+	uint32_t mask = ~(0xF << (Link * 4));
 	maxDTCs_ = (maxDTCs_ & mask) + ((dtcCount & 0xF) << (Link * 4));
 	WriteRegister_(maxDTCs_, CFO_Register_NUMDTCs);
 }

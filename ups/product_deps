@@ -1,7 +1,6 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent pcie_linux_kernel_module	v1_11_01
-#defaultqual	e10
+parent pcie_linux_kernel_module	v1_11_02
 defaultqual	e15
 
 # These optional lines define the installed directories where
@@ -20,8 +19,6 @@ fcldir      -
 #
 product		 version	optional
 TRACE            v3_13_09
-gcc              v4_9_3a        e10
-gcc              v6_3_0         e14
 gcc              v6_4_0         e15
 gcc              v7_3_0         e17
 swig             v3_0_12c        -       optional
@@ -37,10 +34,6 @@ e17:prof    -nq-      -nq-      e17:prof 	-nq-	-std=c++17
 e17:debug   -nq-      -nq-      e17:debug	-nq- 	-std=c++17
 e15:prof    -nq-      -nq-	e15:prof  	-nq-    -std=c++14
 e15:debug   -nq-      -nq-	e15:debug 	-nq-    -std=c++14
-e14:prof    -nq-      -nq-	e14:prof	-nq-	-std=c++14
-e14:debug   -nq-      -nq-	e14:debug	-nq-	-std=c++14
-e10:prof    -nq-      -nq-	e10:prof	-nq-	-std=c++14
-e10:debug   -nq-      -nq-	e10:debug	-nq-	-std=c++14
 end_qualifier_list
 #e14:s50:prof    -nq-      e14:prof	-nq-	-std=c++14
 
