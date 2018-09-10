@@ -334,7 +334,7 @@ void printHelpMsg()
 		<< "    -G: Read out generated data, but don't write new. With -g, will exit after writing data" << std::endl
 		<< "    -r: # of rocs to enable. Hexadecimal, each digit corresponds to a link. ROC_0: 1, ROC_1: 3, ROC_2: 5, ROC_3: 7, ROC_4: 9, ROC_5: B (Default 0x1, All possible: 0xBBBBBB)" << std::endl
 		<< "    -F: Frequency to program (in Hz, sorry...Default 166666667 Hz)" << std::endl
-		<< "    -C: Clock to program (0: SERDES, 1: DDR, Default 0)" << std::endl
+		<< "    -C: Clock to program (0: SERDES, 1: DDR, 2: Timing, Default 0)" << std::endl
 		<< "    -v: Expected DTC Design version string (Default: \"\")" << std::endl
 		<< "    -V: Do NOT attempt to verify that the sim file landed in DTC memory correctly" << std::endl
 		<< "    --timestamp-list: Read <file> for timestamps to request (CFO will generate heartbeats for all timestamps in range spanned by file)" << std::endl
@@ -440,7 +440,7 @@ main(int argc
 				rocMask = getOptionValue(&optind, &argv);
 				break;
 			case 'C':
-				clockToProgram = getOptionValue(&optind, &argv) % 2;
+				clockToProgram = getOptionValue(&optind, &argv) % 3;
 				break;
 			case 'F':
 				targetFrequency = getOptionValue(&optind, &argv);
@@ -509,7 +509,7 @@ main(int argc
 		<< ", ROC Mask: " << std::hex << rocMask
 		<< ", Debug Type: " << DTC_DebugTypeConverter(debugType).toString()
 		<< ", Target Frequency: " << std::dec << targetFrequency
-		<< ", Clock To Program: " << (clockToProgram == 0 ? "SERDES" : "DDR")
+		<< ", Clock To Program: " << (clockToProgram == 0 ? "SERDES" : (clockToProgram == 1 ? "DDR" : "Timing"))
 		<< ", Expected Design Version: " << expectedDesignVersion
 		;
 	if (rawOutput)
@@ -986,7 +986,7 @@ main(int argc
 	else if (op == "program_clock")
 	{
 		auto thisDTC = new DTC(DTC_SimMode_NoCFO, dtc, rocMask, expectedDesignVersion);
-		auto oscillator = clockToProgram == 0 ? DTC_OscillatorType_SERDES : DTC_OscillatorType_DDR;
+		auto oscillator = clockToProgram == 0 ? DTC_OscillatorType_SERDES : (clockToProgram == 1 ? DTC_OscillatorType_DDR : DTC_OscillatorType_Timing);
 		thisDTC->SetNewOscillatorFrequency(oscillator, targetFrequency);
 		delete thisDTC;
 	}
