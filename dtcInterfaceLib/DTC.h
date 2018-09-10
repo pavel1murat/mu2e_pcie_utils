@@ -66,46 +66,41 @@ namespace DTCLib
 		/// This function reads from the main ROC register space, use ReadExtROCRegister to access other firmware blocks' register spaces.
 		/// </summary>
 		/// <param name="link">Link of the ROC to read</param>
-		/// <param name="roc">ROC ID of the ROC to read</param>
 		/// <param name="address">Address of the register</param>
 		/// <returns>Value of the ROC register from a DCS Reply packet</returns>
-		uint16_t ReadROCRegister(const DTC_Link_ID& link, const DTC_ROC_ID& roc, const uint8_t address);
+		uint16_t ReadROCRegister(const DTC_Link_ID& link, const uint8_t address);
 		/// <summary>
 		/// Sends a DCS Request Packet with the fields filled in such that the given ROC register will be written.
 		/// This function writes to the main ROC register space, use WriteExtROCRegister to access other firmware blocks' register spaces.
 		/// </summary>
 		/// <param name="link">Link of the ROC to write to</param>
-		/// <param name="roc">ROC ID of the ROC to write to</param>
 		/// <param name="address">Address of the register</param>
 		/// <param name="data">Value to write</param>
-		void WriteROCRegister(const DTC_Link_ID& link, const DTC_ROC_ID& roc, const uint8_t address, const uint16_t data);
+		void WriteROCRegister(const DTC_Link_ID& link,  const uint8_t address, const uint16_t data);
 		/// <summary>
 		/// Sends a DCS Request Packet with fields filled in such that the given ROC firmware block register will be read out.
 		/// This funcion reads from firmware blocks' register spaces.
 		/// </summary>
 		/// <param name="link">Link of the ROC to read</param>
-		/// <param name="roc">ROC ID of the ROC to read</param>
 		/// <param name="block">Block ID to read from</param>
 		/// <param name="address">Address of the register</param>
 		/// <returns>Value of the ROC register from a DCS Reply packet</returns>
-		uint16_t ReadExtROCRegister(const DTC_Link_ID& link, const DTC_ROC_ID& roc, const uint8_t block, const uint16_t address);
+		uint16_t ReadExtROCRegister(const DTC_Link_ID& link, const uint8_t block, const uint16_t address);
 		/// <summary>
 		/// Sends a DCS Request Packet with fields filled in such that the given ROC firmware block register will be written.
 		/// This funcion writes to firmware blocks' register spaces.
 		/// </summary>
 		/// <param name="link">Link of the ROC to write to</param>
-		/// <param name="roc">ROC ID of the ROC to write to</param>
 		/// <param name="block">Block ID to write to</param>
 		/// <param name="address">Address of the register</param>
 		/// <param name="data">Value to write</param>
-		void WriteExtROCRegister(const DTC_Link_ID& link, const DTC_ROC_ID& roc, const uint8_t block, const uint8_t address, const uint16_t data);
+		void WriteExtROCRegister(const DTC_Link_ID& link, const uint8_t block, const uint8_t address, const uint16_t data);
 		/// <summary>
 		/// Dump all known registers from the given ROC, via DCS Request packets.
 		/// </summary>
 		/// <param name="link">Link of the ROC</param>
-		/// <param name="roc">ROC ID of the ROC</param>
 		/// <returns>JSON-formatted register dump</returns>
-		std::string ROCRegDump(const DTC_Link_ID& link, const DTC_ROC_ID& roc);
+		std::string ROCRegDump(const DTC_Link_ID& link);
 
 		// Broadcast Readout
 		/// <summary>
@@ -120,12 +115,11 @@ namespace DTCLib
 		/// Send a DCS Request Packet to the given ROC. Use the Read/Write ROC Register functions for more convinient register access.
 		/// </summary>
 		/// <param name="link">Link of the ROC</param>
-		/// <param name="roc">ROC ID of the ROC</param>
 		/// <param name="type">Operation to perform</param>
 		/// <param name="address">Target address</param>
 		/// <param name="data">Data to write, if operation is write</param>
 		/// <param name="quiet">Whether to not print the JSON representation of the Readout Request (Default: true, no JSON printed)</param>
-		void SendDCSRequestPacket(const DTC_Link_ID& link, const DTC_ROC_ID& roc, const DTC_DCSOperationType type, const uint8_t address, const uint16_t data = 0x0, bool quiet = true);
+		void SendDCSRequestPacket(const DTC_Link_ID& link,  const DTC_DCSOperationType type, const uint8_t address, const uint16_t data = 0x0, bool quiet = true);
 
 		// For loopback testing...
 		/// <summary>

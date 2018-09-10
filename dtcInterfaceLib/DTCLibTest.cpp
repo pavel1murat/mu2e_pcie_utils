@@ -124,7 +124,7 @@ void DTCLib::DTCLibTest::doTests()
 	std::cout << "DEBUG 1" << std::endl;
 	running_ = true;
 	// Make sure that the link is enabled before the tests.
-	thisDTC_->EnableLink(DTC_Link_0, DTC_LinkEnableMode(true, true, false), DTC_ROC_0);
+	thisDTC_->EnableLink(DTC_Link_0, DTC_LinkEnableMode(true, true, false));
 
 	auto testCount = 0;
 	while (testCount < nTests_ || nTests_ < 0)
@@ -366,7 +366,7 @@ void DTCLib::DTCLibTest::doRegTest()
 			std::cout << "Value after: " << link0New << std::endl;
 		}
 		// Make sure that the link is enabled after the test.
-		thisDTC_->EnableLink(DTC_Link_0, DTC_LinkEnableMode(true, true, false), DTC_ROC_0);
+		thisDTC_->EnableLink(DTC_Link_0, DTC_LinkEnableMode(true, true, false));
 		if (link0New != link0Value)
 		{
 			if (printMessages_)
@@ -456,10 +456,10 @@ void DTCLib::DTCLibTest::doDAQTest()
 	}
 	try
 	{
-		thisDTC_->EnableLink(DTC_Link_0, DTC_LinkEnableMode(true, true, false), DTC_ROC_0);
+		thisDTC_->EnableLink(DTC_Link_0, DTC_LinkEnableMode(true, true, false));
 		thisDTC_->SetInternalSystemClock();
 		thisDTC_->DisableTiming();
-		thisDTC_->SetMaxROCNumber(DTC_Link_0, DTC_ROC_0);
+		thisDTC_->SetMaxROCNumber(DTC_Link_0, 1);
 
 		DTCSoftwareCFO theCFO(thisDTC_, true, 0, DTC_DebugType_SpecialSequence, true, !printMessages_);
 		theCFO.SendRequestForTimestamp();
@@ -493,22 +493,6 @@ void DTCLib::DTCLibTest::doDAQTest()
 
 		auto disparity = thisDTC_->ReadSERDESRXDisparityError(DTC_Link_0);
 		auto cnit = thisDTC_->ReadSERDESRXCharacterNotInTableError(DTC_Link_0);
-		auto rxBufferStatus = thisDTC_->ReadSERDESRXBufferStatus(DTC_Link_0);
-		auto eyescan = thisDTC_->ReadSERDESEyescanError(DTC_Link_0);
-		if (eyescan)
-		{
-			TRACE_CNTL("modeM", 0L);
-			std::cout << "SERDES Eyescan Error Detected" << std::endl;
-			++daqFailed_;
-			return;
-		}
-		if (static_cast<int>(rxBufferStatus) > 2)
-		{
-			TRACE_CNTL("modeM", 0L);
-			std::cout << "Bad Buffer status detected: " << rxBufferStatus << std::endl;
-			++daqFailed_;
-			return;
-		}
 		if (cnit.GetData()[0] || cnit.GetData()[1])
 		{
 			TRACE_CNTL("modeM", 0L);

@@ -233,21 +233,11 @@ void WriteGeneratedData(DTC* thisDTC)
 			currentOffset += sizeof(uint64_t);
 
 			if (incrementTimestamp) ++ts;
-
-			std::vector<std::pair<DTC_Link_ID, DTC_ROC_ID>> ids;
-			for (auto link : DTC_Links)
-			{
-				for (auto roc : DTC_ROCS)
-				{
-					if (roc == DTC_ROC_Unused) continue;
-					ids.emplace_back(std::make_pair(link, roc));
-				}
-			}
-
+			
 			for (unsigned kk = 0; kk < blockCount; ++kk)
 			{
-				auto index = kk % ids.size();
-				DTC_DataHeaderPacket header(ids[index].first, ids[index].second, static_cast<uint16_t>(packetCount), DTC_DataStatus_Valid, static_cast<uint8_t>(kk / ids.size()), 0, DTC_Timestamp(ts));
+				auto index = kk % DTC_Links.size();
+				DTC_DataHeaderPacket header(DTC_Links[index], static_cast<uint16_t>(packetCount), DTC_DataStatus_Valid, static_cast<uint8_t>(kk / DTC_Links.size()), 0, DTC_Timestamp(ts));
 				auto packet = header.ConvertToDataPacket();
 				memcpy(reinterpret_cast<uint8_t*>(buf) + currentOffset, packet.GetData(), sizeof(uint8_t) * 16);
 				if (rawOutput) outputStream << packet;
@@ -710,7 +700,7 @@ main(int argc
 		else if (thisDTC->ReadSimMode() == DTC_SimMode_Loopback)
 		{
 			uint64_t ts = timestampOffset;
-			DTC_DataHeaderPacket header(DTC_Link_0, DTC_ROC_0, static_cast<uint16_t>(0), DTC_DataStatus_Valid, 0, 0, DTC_Timestamp(ts));
+			DTC_DataHeaderPacket header(DTC_Link_0, static_cast<uint16_t>(0), DTC_DataStatus_Valid, 0, 0, DTC_Timestamp(ts));
 			std::cout << "Request: " << header.toJSON() << std::endl;
 			thisDTC->WriteDMAPacket(header);
 		}
@@ -949,22 +939,6 @@ main(int argc
 			{
 				auto disparity = thisDTC->ReadSERDESRXDisparityError(DTC_Link_0);
 				auto cnit = thisDTC->ReadSERDESRXCharacterNotInTableError(DTC_Link_0);
-				auto rxBufferStatus = thisDTC->ReadSERDESRXBufferStatus(DTC_Link_0);
-				auto eyescan = thisDTC->ReadSERDESEyescanError(DTC_Link_0);
-				if (eyescan)
-				{
-					//TRACE_CNTL("modeM", 0L);
-					std::cout << "SERDES Eyescan Error Detected" << std::endl;
-					//return 0;
-					break;
-				}
-				if (static_cast<int>(rxBufferStatus) > 2)
-				{
-					//TRACE_CNTL("modeM", 0L);
-					std::cout << "Bad Buffer status detected: " << rxBufferStatus << std::endl;
-					//return 0;
-					break;
-				}
 				if (cnit.GetData()[0] || cnit.GetData()[1])
 				{
 					//TRACE_CNTL("modeM", 0L);

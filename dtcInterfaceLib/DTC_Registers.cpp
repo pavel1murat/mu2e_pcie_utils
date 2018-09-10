@@ -668,10 +668,6 @@ void DTCLib::DTC_Registers::EnableLink(const DTC_Link_ID& link, const DTC_LinkEn
 	WriteRegister_(data.to_ulong(), DTC_Register_LinkEnable);
 }
 
-void DTCLib::DTC_Registers::EnableLink(const DTC_Link_ID & link, const DTC_LinkEnableMode & mode)
-{
-}
-
 void DTCLib::DTC_Registers::DisableLink(const DTC_Link_ID& link, const DTC_LinkEnableMode& mode)
 {
 	std::bitset<32> data = ReadRegister_(DTC_Register_LinkEnable);
@@ -1119,6 +1115,8 @@ uint32_t DTCLib::DTC_Registers::ReadSERDESOscillatorReferenceFrequency(DTCLib::D
 		return ReadRegister_(DTC_Register_SERDESTimingCardOscillatorFrequency);
 	case DTC_IICSERDESBusAddress_EVB:
 		return ReadRegister_(DTC_Register_SERDESMainBoardOscillatorFrequency);
+	default:
+		return 0;
 	}
 	return 0;
 }
@@ -1130,6 +1128,8 @@ void DTCLib::DTC_Registers::SetSERDESOscillatorReferenceFrequency(DTCLib::DTC_II
 		return WriteRegister_(freq, DTC_Register_SERDESTimingCardOscillatorFrequency);
 	case DTC_IICSERDESBusAddress_EVB:
 		return WriteRegister_(freq, DTC_Register_SERDESMainBoardOscillatorFrequency);
+	default:
+		return;
 	}
 	return;
 }
@@ -3022,6 +3022,8 @@ DTCLib::DTC_DDRFlags DTCLib::DTC_Registers::ReadDDRFlags(uint8_t buffer_id)
 	output.OutputEventBufferEmpty = ebe[buffer_id];
 	auto ebhf = ReadDDREventBuilderBufferHalfFullFlags();
 	output.OutputEventBufferHalfFull = ebhf[buffer_id];
+
+	return output;
 }
 
 std::bitset<64> DTCLib::DTC_Registers::ReadDDRLinkBufferFullFlags()

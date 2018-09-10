@@ -48,7 +48,6 @@ unsigned getOptionValue(int* index, char** argv[])
 int main(int argc
 		 , char* argv[])
 {
-	auto printPerformanceCounters = false;
 	auto printSERDESCounters = false;
 	auto printRegisterDump = true;
 	int dtc = -1;
@@ -61,9 +60,6 @@ int main(int argc
 				{
 				case 's':
 					printSERDESCounters = true;
-					break;
-				case 'p':
-					printPerformanceCounters = true;
 					break;
 				case 'R':
 					printRegisterDump = false;

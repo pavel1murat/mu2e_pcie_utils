@@ -290,13 +290,12 @@ namespace DTCLib
 	bool valid_; ///< Whether the DTC believes the packet to be valid
 	DTC_Link_ID linkID_; ///< Link identifier of packet
 	DTC_PacketType packetType_; ///< Packet type
-	DTC_ROC_ID rocID_; ///< ROC identifier of the packet
 
   public:
 	  /// <summary>
 	  /// DTC_DMAPacket default constructor. Fills in header fields with default (invalid) values.
 	  /// </summary>
-	DTC_DMAPacket() : byteCount_(0), valid_(false), linkID_(DTC_Link_Unused), packetType_(DTC_PacketType_Invalid), rocID_(DTC_ROC_Unused) { }
+	DTC_DMAPacket() : byteCount_(0), valid_(false), linkID_(DTC_Link_Unused), packetType_(DTC_PacketType_Invalid) { }
 
 	/// <summary>
 	/// Create a DTC_DMAPacket with the given parameters
@@ -306,7 +305,7 @@ namespace DTCLib
 	/// <param name="roc">ROC ID</param>
 	/// <param name="byteCount">Block byte count. Default is the minimum value, 64 bytes</param>
 	/// <param name="valid">Valid flag for packet, default true</param>
-	DTC_DMAPacket(DTC_PacketType type, DTC_Link_ID link, DTC_ROC_ID roc, uint16_t byteCount = 64, bool valid = true);
+	DTC_DMAPacket(DTC_PacketType type, DTC_Link_ID link, uint16_t byteCount = 64, bool valid = true);
 
 	/// <summary>
 	/// Construct a DTC_DMAPacket using the data in the given DataPacket
@@ -421,17 +420,15 @@ namespace DTCLib
 	/// DCSRequestPacket constructor, using given link and roc
 	/// </summary>
 	/// <param name="link">Link ID for packet</param>
-	/// <param name="roc">ROC ID for packet</param>
-	DTC_DCSRequestPacket(DTC_Link_ID link, DTC_ROC_ID roc);
+	DTC_DCSRequestPacket(DTC_Link_ID link);
 	/// <summary>
 	/// Create a DTC_DCSRequestPacket instance with the given fields filled in
 	/// </summary>
 	/// <param name="link">Link ID for packet</param>
-	/// <param name="roc">ROC ID for packet</param>
 	/// <param name="type">OpCode of packet</param>
 	/// <param name="address">Target address</param>
 	/// <param name="data">Data (for write)</param>
-	DTC_DCSRequestPacket(DTC_Link_ID link, DTC_ROC_ID roc, DTC_DCSOperationType type, uint8_t address, uint16_t data);
+	DTC_DCSRequestPacket(DTC_Link_ID link, DTC_DCSOperationType type, uint8_t address, uint16_t data);
 	/// <summary>
 	/// Default Copy Constructor
 	/// </summary>
@@ -547,16 +544,14 @@ namespace DTCLib
 	  /// Construct a DTC_HeartbeatPacket
 	  /// </summary>
 	  /// <param name="link">Destination Link</param>
-	  /// <param name="maxROC">Number of "hops" along the link the packet will travel (Default: DTC_ROC_5)</param>
-	explicit DTC_HeartbeatPacket(DTC_Link_ID link, DTC_ROC_ID maxROC = DTC_ROC_5);
+	explicit DTC_HeartbeatPacket(DTC_Link_ID link);
 	/// <summary>
 	/// Construct a DTC_HeartbeatPacket
 	/// </summary>
 	  /// <param name="link">Destination Link</param>
 	/// <param name="timestamp">Timestamp of request</param>
-	  /// <param name="maxROC">Number of "hops" along the link the packet will travel (Default: DTC_ROC_5)</param>
 	/// <param name="eventMode">Debug event mode bytes (Default: nullptr) If not null, must be 6 bytes long</param>
-	DTC_HeartbeatPacket(DTC_Link_ID link, DTC_Timestamp timestamp, DTC_ROC_ID maxROC = DTC_ROC_5, uint8_t* eventMode = nullptr);
+	DTC_HeartbeatPacket(DTC_Link_ID link, DTC_Timestamp timestamp, uint8_t* eventMode = nullptr);
 	/// <summary>
 	/// Default Copy Constructor
 	/// </summary>
@@ -626,21 +621,19 @@ namespace DTCLib
 	  /// Construct a DTC_DataRequestPacket
 	  /// </summary>
 	  /// <param name="link">Destination Link</param>
-	  /// <param name="roc">Destination ROC</param>
 	  /// <param name="debug">Debug Mode flag (Default: true)</param>
 	  /// <param name="debugPacketCount">Debug Packet Count (Default: 0)</param>
 	  /// <param name="type">Debug Type (Default: DTC_DebugType_SpecialSequence</param>
-	DTC_DataRequestPacket(DTC_Link_ID link, DTC_ROC_ID roc, bool debug = true, uint16_t debugPacketCount = 0, DTC_DebugType type = DTC_DebugType_SpecialSequence);
+	DTC_DataRequestPacket(DTC_Link_ID link,  bool debug = true, uint16_t debugPacketCount = 0, DTC_DebugType type = DTC_DebugType_SpecialSequence);
 	/// <summary>
 	/// Construct a DTC_DataRequestPacket
 	/// </summary>
 	/// <param name="link">Destination Link</param>
-	/// <param name="roc">Destination ROC</param>
 	/// <param name="timestamp">Timestamp to request data for</param>
 	/// <param name="debug">Debug Mode flag (Default: true)</param>
 	/// <param name="debugPacketCount">Debug Packet Count (Default: 0)</param>
 	/// <param name="type">Debug Type (Default: DTC_DebugType_SpecialSequence</param>
-	DTC_DataRequestPacket(DTC_Link_ID link, DTC_ROC_ID roc, DTC_Timestamp timestamp, bool debug = true, uint16_t debugPacketCount = 0, DTC_DebugType type = DTC_DebugType_SpecialSequence);
+	DTC_DataRequestPacket(DTC_Link_ID link,  DTC_Timestamp timestamp, bool debug = true, uint16_t debugPacketCount = 0, DTC_DebugType type = DTC_DebugType_SpecialSequence);
 	/// <summary>
 	/// Default Copy Constructor
 	/// </summary>
@@ -836,14 +829,13 @@ namespace DTCLib
 	  /// Construct a DTC_DataHeaderPacket
 	  /// </summary>
 	  /// <param name="link">Link from which packet came</param>
-	  /// <param name="roc">ROC from which packet came</param>
 	  /// <param name="packetCount">Number of DTC_DataPackets in Data Block</param>
 	  /// <param name="status">Status of Data Block</param>
 	  /// <param name="dtcid">DTC ID from which packet came</param>
 	  /// <param name="packetVersion">Version of data format</param>
 	  /// <param name="timestamp">Timestamp of Data Packet (Default: DTC_Timetstamp())</param>
 	  /// <param name="evbMode">EVB Mode byte (Default: 0)</param>
-	DTC_DataHeaderPacket(DTC_Link_ID link, DTC_ROC_ID roc, uint16_t packetCount, DTC_DataStatus status, uint8_t dtcid, uint8_t packetVersion, DTC_Timestamp timestamp = DTC_Timestamp(), uint8_t evbMode = 0);
+	DTC_DataHeaderPacket(DTC_Link_ID link,  uint16_t packetCount, DTC_DataStatus status, uint8_t dtcid, uint8_t packetVersion, DTC_Timestamp timestamp = DTC_Timestamp(), uint8_t evbMode = 0);
 	/// <summary>
 	/// Default Copy Constructor
 	/// </summary>

@@ -63,12 +63,12 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 				TLOG(11) << "SendRequestForTimestamp before SendReadoutRequestPacket";
 				theDTC_->SendReadoutRequestPacket(link, ts, quiet_);
 				int maxRoc;
-				if ((maxRoc = theDTC_->ReadLinkROCCount(link)) != DTC_ROC_Unused)
+				if ((maxRoc = theDTC_->ReadLinkROCCount(link)) != 0)
 				{
 					for (uint8_t roc = 0; roc <= maxRoc; ++roc)
 					{
 						TLOG(11) << "SendRequestForTimestamp before DTC_DataRequestPacket req";
-						DTC_DataRequestPacket req(link, static_cast<DTC_ROC_ID>(roc), ts, !forceNoDebug_,
+						DTC_DataRequestPacket req(link,  ts, !forceNoDebug_,
 							debugPacketCount_, debugType_);
 						if (debugType_ == DTC_DebugType_ExternalSerialWithReset && !stickyDebugType_)
 						{
@@ -272,12 +272,12 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync(DTC_Timestamp start, 
 				if (linkMode_[link].TransmitEnable)
 				{
 					int maxRoc;
-					if ((maxRoc = theDTC_->ReadLinkROCCount(link)) != DTC_ROC_Unused)
+					if ((maxRoc = theDTC_->ReadLinkROCCount(link)) != 0)
 					{
 						for (uint8_t roc = 0; roc <= maxRoc; ++roc)
 						{
 							TLOG(15) << "SendRequestsForRangeImpl before DTC_DataRequestPacket req";
-							DTC_DataRequestPacket req(link, static_cast<DTC_ROC_ID>(roc), ts, !forceNoDebug_,
+							DTC_DataRequestPacket req(link, ts, !forceNoDebug_,
 								static_cast<uint16_t>(debugPacketCount_), debugType_);
 							if (debugType_ == DTC_DebugType_ExternalSerialWithReset && !stickyDebugType_)
 							{

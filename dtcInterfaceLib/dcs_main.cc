@@ -144,33 +144,33 @@ int main(int argc, char* argv[])
 	if (op == "read_register")
 	{
 		std::cout << "Operation \"read_register\"" << std::endl;
-		auto rocdata = thisDTC->ReadROCRegister(DTC_Link_0, DTC_ROC_0, address);
+		auto rocdata = thisDTC->ReadROCRegister(DTC_Link_0, address);
 		if (!reallyQuiet) std::cout << rocdata << '\n';
 	}
 	else if (op == "reset_roc")
 	{
 		std::cout << "Operation \"reset_roc\"" << std::endl;
-		thisDTC->WriteExtROCRegister(DTC_Link_0, DTC_ROC_0, 12, 1, 0x11);
-		thisDTC->WriteExtROCRegister(DTC_Link_0, DTC_ROC_0, 11, 1, 0x11);
-		thisDTC->WriteExtROCRegister(DTC_Link_0, DTC_ROC_0, 10, 1, 0x11);
-		thisDTC->WriteExtROCRegister(DTC_Link_0, DTC_ROC_0, 9, 1, 0x11);
-		thisDTC->WriteExtROCRegister(DTC_Link_0, DTC_ROC_0, 8, 1, 0x11);
+		thisDTC->WriteExtROCRegister(DTC_Link_0,  12, 1, 0x11);
+		thisDTC->WriteExtROCRegister(DTC_Link_0,  11, 1, 0x11);
+		thisDTC->WriteExtROCRegister(DTC_Link_0,  10, 1, 0x11);
+		thisDTC->WriteExtROCRegister(DTC_Link_0,  9, 1, 0x11);
+		thisDTC->WriteExtROCRegister(DTC_Link_0,  8, 1, 0x11);
 	}
 	else if (op == "write_register")
 	{
 		std::cout << "Operation \"write_register\"" << std::endl;
-		thisDTC->WriteROCRegister(DTC_Link_0, DTC_ROC_0, address, data);
+		thisDTC->WriteROCRegister(DTC_Link_0,  address, data);
 	}
 	else if (op == "write_extregister")
 	{
 		std::cout << "Operation \"write_extregister\"" << std::endl;
-		thisDTC->WriteExtROCRegister(DTC_Link_0, DTC_ROC_0, block, address, data);
+		thisDTC->WriteExtROCRegister(DTC_Link_0,  block, address, data);
 	}
 	else if (op == "test_read")
 	{
 		std::cout << "Operation \"test_read\"" << std::endl;
 
-		thisDTC->SendDCSRequestPacket(DTC_Link_0, DTC_ROC_0, DTC_DCSOperationType_Read, address, quiet);
+		thisDTC->SendDCSRequestPacket(DTC_Link_0,  DTC_DCSOperationType_Read, address, quiet);
 
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
