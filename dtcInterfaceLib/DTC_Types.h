@@ -71,6 +71,7 @@ namespace DTCLib
 	{
 		DTC_OscillatorType_SERDES,
 		DTC_OscillatorType_DDR,
+		DTC_OscillatorType_Timing,
 	};
 
 	enum DTC_SerdesClockSpeed

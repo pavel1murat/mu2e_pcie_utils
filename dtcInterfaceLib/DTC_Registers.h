@@ -875,6 +875,7 @@ namespace DTCLib
 		/// </summary>
 		/// <param name="speed">Clock speed to set</param>
 		void SetSERDESOscillatorClock(DTC_SerdesClockSpeed speed);
+		void SetTimingOscillatorClock(uint32_t freq);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -2237,8 +2238,10 @@ namespace DTCLib
 		static uint64_t EncodeRFREQ_(double input) { return static_cast<uint64_t>(input * 268435456) & 0x3FFFFFFFFF; }
 		static uint64_t CalculateFrequencyForProgramming_(double targetFrequency, double currentFrequency, uint64_t currentProgram);
 		uint64_t ReadSERDESOscillatorParameters_();
+		uint64_t ReadTimingOscillatorParameters_();
 		uint64_t ReadDDROscillatorParameters_();
 		void SetSERDESOscillatorParameters_(uint64_t program);
+		void SetTimingOscillatorParameters_(uint64_t program);
 		void SetDDROscillatorParameters_(uint64_t program);
 
 
