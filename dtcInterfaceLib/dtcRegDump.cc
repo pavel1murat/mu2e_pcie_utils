@@ -112,13 +112,7 @@ int main(int argc
 	if (printSERDESCounters)
 	{
 		std::cout << std::endl << std::endl;
-		std::cout << thisDTC->RingCountersRegDump(cols);
-	}
-
-	if (printPerformanceCounters)
-	{
-		std::cout << std::endl << std::endl;
-		std::cout << thisDTC->PerformanceMonitorRegDump(cols);
+		std::cout << thisDTC->LinkCountersRegDump(cols);
 	}
 
 	delete thisDTC;

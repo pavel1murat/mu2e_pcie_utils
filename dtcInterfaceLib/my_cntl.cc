@@ -128,9 +128,9 @@ main(  int	argc
   // 		  sts = ioctl( fd, M_IOC_REG_ACCESS, &reg_access );
   // 		  if (sts) { perror("ioctl M_IOC_REG_ACCESS write"); return (1); }
   // 		}
-  // 	  reg_access.reg_offset  = 0x9114;  // ring enable register
+  // 	  reg_access.reg_offset  = 0x9114;  // link enable register
   // 	  reg_access.access_type = 1;//wr
-  // 	  reg_access.val         = 0x101; // Ring 0 - both xmit and recv
+  // 	  reg_access.val         = 0x101; // Link 0 - both xmit and recv
   // 	  sts = ioctl( fd, M_IOC_REG_ACCESS, &reg_access );
   // 	  if (sts) { perror("ioctl M_IOC_REG_ACCESS write"); return (1); }
 
@@ -151,7 +151,7 @@ main(  int	argc
   // 	  if (argc > 2) data.hdr.s.TransferByteCount = strtoul( argv[2],NULL,0 );
   // 	  data.hdr.s.Valid = 1;
   // 	  data.hdr.s.PacketType = 5;  // could be overwritten below
-  // 	  data.hdr.s.RingID = 0;
+  // 	  data.hdr.s.LinkID = 0;
   // 	  data.hdr.s.PacketCount = (data.hdr.s.TransferByteCount-16)/16;// minus header, / packet size
   // 	  //data.hdr.s.ts10 = 0x3210;
   // 	  data.hdr.s.ts32 = 0x7654;

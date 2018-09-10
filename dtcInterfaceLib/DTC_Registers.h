@@ -15,41 +15,30 @@ namespace DTCLib
 	{
 		DTC_Register_DesignVersion = 0x9000,
 		DTC_Register_DesignDate = 0x9004,
-		DTC_Register_PerfMonTXByteCount = 0x900C,
-		DTC_Register_PerfMonRXByteCount = 0x9010,
-		DTC_Register_PerfMonTXPayloadCount = 0x9014,
-		DTC_Register_PerfMonRXPayloadCount = 0x9018,
-		DTC_Register_PerfMonInitCDC = 0x901C,
-		DTC_Register_PerfMonInitCHC = 0x9020,
-		DTC_Register_PerfMonInitNPDC = 0x9024,
-		DTC_Register_PerfMonInitNPHC = 0x9028,
-		DTC_Register_PerfMonInitPDC = 0x902C,
-		DTC_Register_PerfMonInitPHC = 0x9030,
+		DTC_Register_DesignStatus = 0x9008,
+		DTC_Register_VivadoVersion = 0x900C,
 		DTC_Register_DTCControl = 0x9100,
 		DTC_Register_DMATransferLength = 0x9104,
 		DTC_Register_SERDESLoopbackEnable = 0x9108,
 		DTC_Register_ClockOscillatorStatus = 0x910C,
 		DTC_Register_ROCEmulationEnable = 0x9110,
-		DTC_Register_RingEnable = 0x9114,
+		DTC_Register_LinkEnable = 0x9114,
 		DTC_Register_SERDESReset = 0x9118,
 		DTC_Register_SERDESRXDisparityError = 0x911C,
 		DTC_Register_SERDESRXCharacterNotInTableError = 0x9120,
 		DTC_Register_SERDESUnlockError = 0x9124,
 		DTC_Register_SERDESPLLLocked = 0x9128,
-		DTC_Register_SERDESTXBufferStatus = 0x912C,
-		DTC_Register_SERDESRXBufferStatus = 0x9130,
 		DTC_Register_SERDESRXStatus = 0x9134,
 		DTC_Register_SERDESResetDone = 0x9138,
-		DTC_Register_SERDESEyescanData = 0x913C,
 		DTC_Register_SFPSERDESStatus = 0x9140,
 		DTC_Register_DMATimeoutPreset = 0x9144,
 		DTC_Register_ROCReplyTimeout = 0x9148,
 		DTC_Register_ROCReplyTimeoutError = 0x914C,
-		DTC_Register_RingPacketLength = 0x9150,
+		DTC_Register_LinkPacketLength = 0x9150,
 		DTC_Register_EVBPartitionID = 0x9154,
 		DTC_Register_EVBDestCount = 0x9158,
-		DTC_Register_HeartbeatErrorFlags = 0x915c,
-		DTC_Register_SERDESOscillatorReferenceFrequency = 0x9160,
+		DTC_Register_SERDESTimingCardOscillatorFrequency = 0x915C,
+		DTC_Register_SERDESMainBoardOscillatorFrequency = 0x9160,
 		DTC_Register_SERDESOscillatorIICBusControl = 0x9164,
 		DTC_Register_SERDESOscillatorIICBusLow = 0x9168,
 		DTC_Register_SERDESOscillatorIICBusHigh = 0x916C,
@@ -69,9 +58,9 @@ namespace DTCLib
 		DTC_Register_CFOEmulationTimestampHigh = 0x91A4,
 		DTC_Register_CFOEmulationRequestInterval = 0x91A8,
 		DTC_Register_CFOEmulationNumRequests = 0x91AC,
-		DTC_Register_CFOEmulationNumPacketsRings10 = 0x91B0,
-		DTC_Register_CFOEmulationNumPacketsRings32 = 0x91B4,
-		DTC_Register_CFOEmulationNumPacketsRings54 = 0x91B8,
+		DTC_Register_CFOEmulationNumPacketsLinks10 = 0x91B0,
+		DTC_Register_CFOEmulationNumPacketsLinks32 = 0x91B4,
+		DTC_Register_CFOEmulationNumPacketsLinks54 = 0x91B8,
 		DTC_Register_CFOEmulationNumNullHeartbeats = 0x91BC,
 		DTC_Register_CFOEmulationEventMode1 = 0x91C0,
 		DTC_Register_CFOEmulationEventMode2 = 0x91C4,
@@ -87,46 +76,56 @@ namespace DTCLib
 		DTC_Register_EthernetFramePayloadSize = 0x91EC,
 		DTC_Register_CFOEmulationEventStartMarkerInterval = 0x91F0,
 		DTC_Register_CFOEmulation40MHzClockMarkerInterval = 0x91F4,
-		DTC_Register_ReceiveByteCountDataRing0 = 0x9200,
-		DTC_Register_ReceiveByteCountDataRing1 = 0x9204,
-		DTC_Register_ReceiveByteCountDataRing2 = 0x9208,
-		DTC_Register_ReceiveByteCountDataRing3 = 0x920C,
-		DTC_Register_ReceiveByteCountDataRing4 = 0x9210,
-		DTC_Register_ReceiveByteCountDataRing5 = 0x9214,
+		DTC_Register_CFOMarkerEnables = 0x91F8,
+		DTC_Register_ReceiveByteCountDataLink0 = 0x9200,
+		DTC_Register_ReceiveByteCountDataLink1 = 0x9204,
+		DTC_Register_ReceiveByteCountDataLink2 = 0x9208,
+		DTC_Register_ReceiveByteCountDataLink3 = 0x920C,
+		DTC_Register_ReceiveByteCountDataLink4 = 0x9210,
+		DTC_Register_ReceiveByteCountDataLink5 = 0x9214,
 		DTC_Register_ReceiveByteCountDataCFO = 0x9218,
 		DTC_Register_ReceiveByteCountDataEVB = 0x921C,
-		DTC_Register_ReceivePacketCountDataRing0 = 0x9220,
-		DTC_Register_ReceivePacketCountDataRing1 = 0x9224,
-		DTC_Register_ReceivePacketCountDataRing2 = 0x9228,
-		DTC_Register_ReceivePacketCountDataRing3 = 0x922C,
-		DTC_Register_ReceivePacketCountDataRing4 = 0x9230,
-		DTC_Register_ReceivePacketCountDataRing5 = 0x9234,
+		DTC_Register_ReceivePacketCountDataLink0 = 0x9220,
+		DTC_Register_ReceivePacketCountDataLink1 = 0x9224,
+		DTC_Register_ReceivePacketCountDataLink2 = 0x9228,
+		DTC_Register_ReceivePacketCountDataLink3 = 0x922C,
+		DTC_Register_ReceivePacketCountDataLink4 = 0x9230,
+		DTC_Register_ReceivePacketCountDataLink5 = 0x9234,
 		DTC_Register_ReceivePacketCountDataCFO = 0x9238,
 		DTC_Register_ReceivePacketCountDataEVB = 0x923C,
-		DTC_Register_TransmitByteCountDataRing0 = 0x9240,
-		DTC_Register_TransmitByteCountDataRing1 = 0x9244,
-		DTC_Register_TransmitByteCountDataRing2 = 0x9248,
-		DTC_Register_TransmitByteCountDataRing3 = 0x924C,
-		DTC_Register_TransmitByteCountDataRing4 = 0x9250,
-		DTC_Register_TransmitByteCountDataRing5 = 0x9254,
+		DTC_Register_TransmitByteCountDataLink0 = 0x9240,
+		DTC_Register_TransmitByteCountDataLink1 = 0x9244,
+		DTC_Register_TransmitByteCountDataLink2 = 0x9248,
+		DTC_Register_TransmitByteCountDataLink3 = 0x924C,
+		DTC_Register_TransmitByteCountDataLink4 = 0x9250,
+		DTC_Register_TransmitByteCountDataLink5 = 0x9254,
 		DTC_Register_TransmitByteCountDataCFO = 0x9258,
 		DTC_Register_TransmitByteCountDataEVB = 0x925C,
-		DTC_Register_TransmitPacketCountDataRing0 = 0x9260,
-		DTC_Register_TransmitPacketCountDataRing1 = 0x9264,
-		DTC_Register_TransmitPacketCountDataRing2 = 0x9268,
-		DTC_Register_TransmitPacketCountDataRing3 = 0x926C,
-		DTC_Register_TransmitPacketCountDataRing4 = 0x9270,
-		DTC_Register_TransmitPacketCountDataRing5 = 0x9274,
+		DTC_Register_TransmitPacketCountDataLink0 = 0x9260,
+		DTC_Register_TransmitPacketCountDataLink1 = 0x9264,
+		DTC_Register_TransmitPacketCountDataLink2 = 0x9268,
+		DTC_Register_TransmitPacketCountDataLink3 = 0x926C,
+		DTC_Register_TransmitPacketCountDataLink4 = 0x9270,
+		DTC_Register_TransmitPacketCountDataLink5 = 0x9274,
 		DTC_Register_TransmitPacketCountDataCFO = 0x9278,
 		DTC_Register_TransmitPacketCountDataEVB = 0x927C,
-		DTC_Register_DDRRingBufferFullFlags1 = 0x92B0,
-		DTC_Register_DDRRingBufferFullFlags2 = 0x92B4,
-		DTC_Register_DDRRingBufferFullErrorFlags1 = 0x92B8,
-		DTC_Register_DDRRingBufferFullErrorFlags2 = 0x92BC,
-		DTC_Register_DDRRingBufferEmptyFlags1 = 0x92C0,
-		DTC_Register_DDRRingBufferEmptyFlags2 = 0x92C4,
-		DTC_Register_DDRRingBufferHalfFullFlags1 = 0x92C8,
-		DTC_Register_DDRRingBufferHalfFullFlags2 = 0x92CC,
+		DTC_Register_FireflyTXIICBusControl = 0x9284,
+		DTC_Register_FireflyTXIICBusConfigLow = 0x9288,
+		DTC_Register_FireflyTXIICBusConfigHigh = 0x928C,
+		DTC_Register_FireflyRXIICBusControl = 0x9294,
+		DTC_Register_FireflyRXIICBusConfigLow = 0x9298,
+		DTC_Register_FireflyRXIICBusConfigHigh = 0x929C,
+		DTC_Register_FireflyTXRXIICBusControl = 0x92A4,
+		DTC_Register_FireflyTXRXIICBusConfigLow = 0x92A8,
+		DTC_Register_FireflyTXRXIICBusConfigHigh = 0x92AC,
+		DTC_Register_DDRLinkBufferFullFlags1 = 0x92B0,
+		DTC_Register_DDRLinkBufferFullFlags2 = 0x92B4,
+		DTC_Register_DDRLinkBufferFullErrorFlags1 = 0x92B8,
+		DTC_Register_DDRLinkBufferFullErrorFlags2 = 0x92BC,
+		DTC_Register_DDRLinkBufferEmptyFlags1 = 0x92C0,
+		DTC_Register_DDRLinkBufferEmptyFlags2 = 0x92C4,
+		DTC_Register_DDRLinkBufferHalfFullFlags1 = 0x92C8,
+		DTC_Register_DDRLinkBufferHalfFullFlags2 = 0x92CC,
 		DTC_Register_EventBuilderBufferFullFlags1 = 0x92D0,
 		DTC_Register_EventBuilderBufferFullFlags2 = 0x92D4,
 		DTC_Register_EventBuilderBufferFullErrorFlags1 = 0x92D8,
@@ -157,9 +156,8 @@ namespace DTCLib
 		DTC_Register_Link5ErrorFlags = 0x9390,
 		DTC_Register_Link6ErrorFlags = 0x9394,
 		DTC_Register_CFOLinkErrorFlags = 0x9398,
-		DTC_Register_LinkControllerErrorFlags = 0x939C,
+		DTC_Register_LinkMuxErrorFlags = 0x939C,
 		DTC_Register_FireFlyControlStatus = 0x93A0,
-		DTC_Register_JitterAttenuatorControlStatus = 0x93A4,
 		DTC_Register_FPGAProgramData = 0x9400,
 		DTC_Register_FPGAPROMProgramStatus = 0x9404,
 		DTC_Register_FPGACoreAccess = 0x9408,
@@ -181,10 +179,10 @@ namespace DTCLib
 		/// </summary>
 		/// <param name="mode">Default: DTC_SimMode_Disabled; The simulation mode of the DTC</param>
 		/// <param name="dtc">DTC card index to use</param>
-		/// <param name="rocMask">Default 0x1; The initially-enabled ROCs. Each digit corresponds to a ring, so all ROCs = 0x666666</param>
+		/// <param name="linkMask">Default 0x1; The initially-enabled links. Each digit corresponds to a link, so all links = 0x111111</param>
 		/// <param name="skipInit">Default: false; Whether to skip initializing the DTC using the SimMode. Used to read state.</param>
 		/// <param name="expectedDesignVersion">Expected DTC Firmware Design Version. If set, will throw an exception if the DTC firmware does not match (Default: "")</param>
-		explicit DTC_Registers(DTC_SimMode mode, int dtc, unsigned rocMask = 0x1, std::string expectedDesignVersion = "", bool skipInit = false);
+		explicit DTC_Registers(DTC_SimMode mode, int dtc, unsigned linkMask = 0x1, std::string expectedDesignVersion = "", bool skipInit = false);
 		/// <summary>
 		/// DTC_Registers destructor
 		/// </summary>
@@ -217,10 +215,10 @@ namespace DTCLib
 		/// <param name="expectedDesignVersion">Expected DTC Firmware Design Version. If set, will throw an exception if the DTC firmware does not match</param>
 		/// <param name="mode">Mode to set</param>
 		/// <param name="dtc">DTC card index to use</param>
-		/// <param name="rocMask">The initially-enabled ROCs. Each digit corresponds to a ring, so all ROCs = 0x666666</param>
+		/// <param name="linkMask">Default 0x1; The initially-enabled links. Each digit corresponds to a link, so all links = 0x111111</param>
 		/// <param name="skipInit">Whether to skip initializing the DTC using the SimMode. Used to read state.</param>
 		/// <returns></returns>
-		DTC_SimMode SetSimMode(std::string expectedDesignVersion, DTC_SimMode mode, int dtc, unsigned rocMask, bool skipInit = false);
+		DTC_SimMode SetSimMode(std::string expectedDesignVersion, DTC_SimMode mode, int dtc, unsigned linkMask, bool skipInit = false);
 
 		//
 		// DTC Register Dumps
@@ -232,17 +230,11 @@ namespace DTCLib
 		/// <returns>String containing all registers, with their human-readable representations</returns>
 		std::string FormattedRegDump(int width);
 		/// <summary>
-		/// Dump the Performance Monitor registers
+		/// Dump the link byte/packet counters
 		/// </summary>
 		/// <param name="width">Printable width of description fields</param>
-		/// <returns>String containing the performance monitor registers, with their human-readable representations</returns>
-		std::string PerformanceMonitorRegDump(int width);
-		/// <summary>
-		/// Dump the ring byte/packet counters
-		/// </summary>
-		/// <param name="width">Printable width of description fields</param>
-		/// <returns>String containing the ring counter registers, with their human-readable representations</returns>
-		std::string RingCountersRegDump(int width);
+		/// <returns>String containing the link counter registers, with their human-readable representations</returns>
+		std::string LinkCountersRegDump(int width);
 
 		/// <summary>
 		/// Initializes a DTC_RegisterFormatter for the given DTC_Register
@@ -289,107 +281,19 @@ namespace DTCLib
 		/// <returns>The design version number, in vMM.mm format</returns>
 		std::string ReadDesignVersionNumber();
 
-		// PCIE Performance Monitor Registers
-		/// <summary>
-		/// Read the TX Byte count for the PCIe bus
-		/// </summary>
-		/// <returns>The TX byte count</returns>
-		uint32_t ReadPerfMonTXByteCount();
-		/// <summary>
-		/// Formats the register's current value for register dumps
-		/// </summary>
-		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatPerfMonTXByteCount();
-		/// <summary>
-		/// Read the RX Byte count for the PCIe bus
-		/// </summary>
-		/// <returns>The RX byte count</returns>
-		uint32_t ReadPerfMonRXByteCount();
-		/// <summary>
-		/// Formats the register's current value for register dumps
-		/// </summary>
-		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatPerfMonRXByteCount();
-		/// <summary>
-		/// Read the TX Payload count for the PCIe bus
-		/// </summary>
-		/// <returns>The TX payload count</returns>
-		uint32_t ReadPerfMonTXPayloadCount();
-		/// <summary>
-		/// Formats the register's current value for register dumps
-		/// </summary>
-		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatPerfMonTXPayloadCount();
-		/// <summary>
-		/// Read the RX Payload count for the PCIe bus
-		/// </summary>
-		/// <returns>The RX payload count</returns>
-		uint32_t ReadPerfMonRXPayloadCount();
-		/// <summary>
-		/// Formats the register's current value for register dumps
-		/// </summary>
-		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatPerfMonRXPayloadCount();
-		/// <summary>
-		/// Read the Initial Complete Data Credits counter
-		/// </summary>
-		/// <returns>the Initial Complete Data Credits counter</returns>
-		uint16_t ReadPerfMonInitCDC();
-		/// <summary>
-		/// Formats the register's current value for register dumps
-		/// </summary>
-		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatPerfMonInitCDC();
-		/// <summary>
-		/// Read the Initial Complete Header Credits counter
-		/// </summary>
-		/// <returns>the Initial Complete Header Credits counter</returns>
-		uint8_t ReadPerfMonInitCHC();
-		/// <summary>
-		/// Formats the register's current value for register dumps
-		/// </summary>
-		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatPerfMonInitCHC();
-		/// <summary>
-		/// Read the Initial Non-posted Data Credits counter
-		/// </summary>
-		/// <returns>the Initial Non-posted Data Credits counter</returns>
-		uint16_t ReadPerfMonInitNPDC();
-		/// <summary>
-		/// Formats the register's current value for register dumps
-		/// </summary>
-		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatPerfMonInitNPDC();
-		/// <summary>
-		/// Read the Initial Non-posted Header Credits counter
-		/// </summary>
-		/// <returns>the Initial Non-posted Header Credits counter</returns>
-		uint8_t ReadPerfMonInitNPHC();
-		/// <summary>
-		/// Formats the register's current value for register dumps
-		/// </summary>
-		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatPerfMonInitNPHC();
-		/// <summary>
-		/// Read the Initial Posted Data Credits counter
-		/// </summary>
-		/// <returns>the Initial Posted Data Credits counter</returns>
-		uint16_t ReadPerfMonInitPDC();
-		/// <summary>
-		/// Formats the register's current value for register dumps
-		/// </summary>
-		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatPerfMonInitPDC();
-		/// <summary>
-		/// Read the Initial Posted Header Credits counter
-		/// </summary>
-		/// <returns>the Initial Posted Header Credits counter</returns>
-		uint8_t ReadPerfMonInitPHC();
-		/// <summary>
-		/// Formats the register's current value for register dumps
-		/// </summary>
-		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatPerfMonInitPHC();
+		// Design Status Register
+		bool ReadDDRInterfaceReset();
+		void SetDDRInterfaceReset(bool reset);
+		void ResetDDRInterface();
+
+		bool ReadDDRAutoCalibrationDone();
+
+		DTC_RegisterFormatter FormatDesignStatus();
+
+		// Vivado Version Register
+		std::string ReadVivadoVersionNumber();
+		DTC_RegisterFormatter FormatVivadoVersion();
+
 
 		// DTC Control Register
 		/// <summary>
@@ -485,6 +389,11 @@ namespace DTCLib
 		/// </summary>
 		/// <returns>True if receiving Data Request Packets from the DTCLib on DMA Channel 0 is enabled, false otherwise</returns>
 		bool ReadSoftwareDRP();
+
+		void EnableLED6();
+		void DisableLED6();
+		bool ReadLED6State();
+
 		/// <summary>
 		/// Enalbe receiving DCS packets.
 		/// </summary>
@@ -560,17 +469,17 @@ namespace DTCLib
 
 		// SERDES Loopback Enable Register
 		/// <summary>
-		/// Set the SERDES Loopback mode for the given ring
+		/// Set the SERDES Loopback mode for the given link
 		/// </summary>
-		/// <param name="ring">Ring to set for</param>
+		/// <param name="link">Link to set for</param>
 		/// <param name="mode">DTC_SERDESLoopbackMode to set</param>
-		void SetSERDESLoopbackMode(const DTC_Ring_ID& ring, const DTC_SERDESLoopbackMode& mode);
+		void SetSERDESLoopbackMode(const DTC_Link_ID& link, const DTC_SERDESLoopbackMode& mode);
 		/// <summary>
-		/// Read the SERDES Loopback mode for the given ring
+		/// Read the SERDES Loopback mode for the given link
 		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <returns>DTC_SERDESLoopbackMode of the ring</returns>
-		DTC_SERDESLoopbackMode ReadSERDESLoopback(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to read</param>
+		/// <returns>DTC_SERDESLoopbackMode of the link</returns>
+		DTC_SERDESLoopbackMode ReadSERDESLoopback(const DTC_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -584,32 +493,10 @@ namespace DTCLib
 		/// <returns>True if the SERDES Oscillator IIC Error is set</returns>
 		bool ReadSERDESOscillatorIICError();
 		/// <summary>
-		/// Read the SERDES Oscillator Initalization Complete flag
-		/// </summary>
-		/// <returns>Whether the SERDES Oscillator has completed initialization</returns>
-		bool ReadSERDESOscillatorInitializationComplete();
-		/// <summary>
-		/// Wait for the SERDES Oscillator to initialize, up to max_wait seconds
-		/// </summary>
-		/// <param name="max_wait">Seconds to wait</param>
-		/// <returns>Whether the SERDES OScillator Completed initialization in the timeout</returns>
-		bool WaitForSERDESOscillatorInitializationComplete(double max_wait = 1.0);
-		/// <summary>
 		/// Read the DDR Oscillator IIC Error Bit
 		/// </summary>
 		/// <returns>True if the DDR Oscillator IIC Error is set</returns>
 		bool ReadDDROscillatorIICError();
-		/// <summary>
-		/// Read the DDR Oscillator Initalization Complete flag
-		/// </summary>
-		/// <returns>Whether the DDR Oscillator has completed initialization</returns>
-		bool ReadDDROscillatorInitializationComplete();
-		/// <summary>
-		/// Wait for the DDR Oscillator to initialize, up to max_wait seconds
-		/// </summary>
-		/// <param name="max_wait">Seconds to wait</param>
-		/// <returns>Whether the DDR OScillator Completed initialization in the timeout</returns>
-		bool WaitForDDROscillatorInitializationComplete(double max_wait = 1.0);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -618,49 +505,48 @@ namespace DTCLib
 
 		// ROC Emulation Enable Register
 		/// <summary>
-		/// Enable the ROC emulator on the given ring
+		/// Enable the ROC emulator on the given link
 		/// Note that the ROC Emulator will use the NUMROCs register to determine how many ROCs to emulate
 		/// </summary>
-		/// <param name="ring">Ring to enable</param>
-		void EnableROCEmulator(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to enable</param>
+		void EnableROCEmulator(const DTC_Link_ID& link);
 		/// <summary>
-		/// Disable the ROC emulator on the given ring
+		/// Disable the ROC emulator on the given link
 		/// </summary>
-		/// <param name="ring">Ring to disable</param>
-		void DisableROCEmulator(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to disable</param>
+		void DisableROCEmulator(const DTC_Link_ID& link);
 		/// <summary>
-		/// Read the state of the ROC emulator on the given ring
+		/// Read the state of the ROC emulator on the given link
 		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <returns>True if the ROC Emulator is enabled on the ring</returns>
-		bool ReadROCEmulator(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to read</param>
+		/// <returns>True if the ROC Emulator is enabled on the link</returns>
+		bool ReadROCEmulator(const DTC_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
 		DTC_RegisterFormatter FormatROCEmulationEnable();
 
-		// Ring Enable Register
+		// Link Enable Register
 		/// <summary>
-		/// Enable a SERDES Ring
+		/// Enable a SERDES Link
 		/// </summary>
-		/// <param name="ring">Ring to enable</param>
-		/// <param name="mode">Ring enable bits to set (Default: All)</param>
-		/// <param name="lastRoc">Number of ROCs in the Ring (Default: Invalid value)</param>
-		void EnableRing(const DTC_Ring_ID& ring, const DTC_RingEnableMode& mode = DTC_RingEnableMode(), const DTC_ROC_ID& lastRoc = DTC_ROC_Unused);
+		/// <param name="link">Link to enable</param>
+		/// <param name="mode">Link enable bits to set (Default: All)</param>
+		void EnableLink(const DTC_Link_ID& link, const DTC_LinkEnableMode& mode = DTC_LinkEnableMode());
 		/// <summary>
-		/// Disable a SERDES Ring
+		/// Disable a SERDES Link
 		/// The given mode bits will be UNSET
 		/// </summary>
-		/// <param name="ring">Ring to disable</param>
-		/// <param name="mode">Ring enable bits to unset (Default: All)</param>
-		void DisableRing(const DTC_Ring_ID& ring, const DTC_RingEnableMode& mode = DTC_RingEnableMode());
+		/// <param name="link">Link to disable</param>
+		/// <param name="mode">Link enable bits to unset (Default: All)</param>
+		void DisableLink(const DTC_Link_ID& link, const DTC_LinkEnableMode& mode = DTC_LinkEnableMode());
 		/// <summary>
-		/// Read the Ring Enable bits for a given SERDES ring
+		/// Read the Link Enable bits for a given SERDES link
 		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <returns>DTC_RingEnableMode containing TX, RX, and CFO bits</returns>
-		DTC_RingEnableMode ReadRingEnabled(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to read</param>
+		/// <returns>DTC_LinkEnableMode containing TX, RX, and CFO bits</returns>
+		DTC_LinkEnableMode ReadLinkEnabled(const DTC_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -669,18 +555,44 @@ namespace DTCLib
 
 		// SERDES Reset Register
 		/// <summary>
+		/// Reset the SERDES TX side
+		/// Will poll the Reset SERDES TX Done flag until the SERDES reset is complete
+		/// </summary>
+		/// <param name="link">Link to reset</param>
+		/// <param name="interval">Pollint interval, in microseconds</param>
+		void ResetSERDESTX(const DTC_Link_ID& link, int interval = 100);
+		/// <summary>
+		/// Read if a SERDES TX reset is currently in progress
+		/// </summary>
+		/// <param name="link">Link to read</param>
+		/// <returns>True if a SERDES TX reset is in progress</returns>
+		bool ReadResetSERDESTX(const DTC_Link_ID& link);
+		/// <summary>
+		/// Reset the SERDES RX side
+		/// Will poll the Reset SERDES RX Done flag until the SERDES reset is complete
+		/// </summary>
+		/// <param name="link">Link to reset</param>
+		/// <param name="interval">Pollint interval, in microseconds</param>
+		void ResetSERDESRX(const DTC_Link_ID& link, int interval = 100);
+		/// <summary>
+		/// Read if a SERDES RX reset is currently in progress
+		/// </summary>
+		/// <param name="link">Link to read</param>
+		/// <returns>True if a SERDES reset is in progress</returns>
+		bool ReadResetSERDESRX(const DTC_Link_ID& link);
+		/// <summary>
 		/// Reset the SERDES
 		/// Will poll the Reset SERDES Done flag until the SERDES reset is complete
 		/// </summary>
-		/// <param name="ring">Ring to reset</param>
+		/// <param name="link">Link to reset</param>
 		/// <param name="interval">Pollint interval, in microseconds</param>
-		void ResetSERDES(const DTC_Ring_ID& ring, int interval = 100);
+		void ResetSERDES(const DTC_Link_ID& link, int interval = 100);
 		/// <summary>
 		/// Read if a SERDES reset is currently in progress
 		/// </summary>
-		/// <param name="ring">Ring to read</param>
+		/// <param name="link">Link to read</param>
 		/// <returns>True if a SERDES reset is in progress</returns>
-		bool ReadResetSERDES(const DTC_Ring_ID& ring);
+		bool ReadResetSERDES(const DTC_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -691,9 +603,9 @@ namespace DTCLib
 		/// <summary>
 		/// Read the SERDES RX Dispatity Error bits
 		/// </summary>
-		/// <param name="ring">Ring to read</param>
+		/// <param name="link">Link to read</param>
 		/// <returns>DTC_SERDESRXDisparityError object with error bits</returns>
-		DTC_SERDESRXDisparityError ReadSERDESRXDisparityError(const DTC_Ring_ID& ring);
+		DTC_SERDESRXDisparityError ReadSERDESRXDisparityError(const DTC_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -704,9 +616,9 @@ namespace DTCLib
 		/// <summary>
 		/// Read the SERDES Character Not In Table Error bits
 		/// </summary>
-		/// <param name="ring">Ring to read</param>
+		/// <param name="link">Link to read</param>
 		/// <returns>DTC_CharacterNotInTableError object with error bits</returns>
-		DTC_CharacterNotInTableError ReadSERDESRXCharacterNotInTableError(const DTC_Ring_ID& ring);
+		DTC_CharacterNotInTableError ReadSERDESRXCharacterNotInTableError(const DTC_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -717,9 +629,9 @@ namespace DTCLib
 		/// <summary>
 		/// Read whether the SERDES Unlock Error bit is set
 		/// </summary>
-		/// <param name="ring">Ring to check</param>
-		/// <returns>True if the SERDES Unlock Error bit is set on the given ring</returns>
-		bool ReadSERDESUnlockError(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to check</param>
+		/// <returns>True if the SERDES Unlock Error bit is set on the given link</returns>
+		bool ReadSERDESUnlockError(const DTC_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -728,56 +640,24 @@ namespace DTCLib
 
 		// SERDES PLL Locked Register
 		/// <summary>
-		/// Read if the SERDES PLL is locked for the given SERDES ring
+		/// Read if the SERDES PLL is locked for the given SERDES link
 		/// </summary>
-		/// <param name="ring">Ring to read</param>
+		/// <param name="link">Link to read</param>
 		/// <returns>True if the PLL is locked, false otherwise</returns>
-		bool ReadSERDESPLLLocked(const DTC_Ring_ID& ring);
+		bool ReadSERDESPLLLocked(const DTC_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
 		DTC_RegisterFormatter FormatSERDESPLLLocked();
 
-		// SERDES TX Buffer Status Register
-		/// <summary>
-		/// Read the Overflow or Underflow error bit for the given ring
-		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <returns>True if the Overflow or Underflow Error bit is set</returns>
-		bool ReadSERDESOverflowOrUnderflow(const DTC_Ring_ID& ring);
-		/// <summary>
-		/// Read the SERDES Buffer FIFO Half Full status bit for the given ring
-		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <returns>True if the SERDES buffer FIFO is half-full</returns>
-		bool ReadSERDESBufferFIFOHalfFull(const DTC_Ring_ID& ring);
-		/// <summary>
-		/// Formats the register's current value for register dumps
-		/// </summary>
-		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatSERDESTXBufferStatus();
-
-		// SERDES RX Buffer Status Register
-		/// <summary>
-		/// Read the SERDES RX Buffer Status for the given SERDES Ring
-		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <returns>DTC_RXBufferStatus object</returns>
-		DTC_RXBufferStatus ReadSERDESRXBufferStatus(const DTC_Ring_ID& ring);
-		/// <summary>
-		/// Formats the register's current value for register dumps
-		/// </summary>
-		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatSERDESRXBufferStatus();
-
 		// SERDES RX Status Register
 		/// <summary>
-		/// Read the SERDES RX Status for the given SERDES Ring
+		/// Read the SERDES RX Status for the given SERDES Link
 		/// </summary>
-		/// <param name="ring">Ring to read</param>
+		/// <param name="link">Link to read</param>
 		/// <returns>DTC_RXStatus object</returns>
-		DTC_RXStatus ReadSERDESRXStatus(const DTC_Ring_ID& ring);
+		DTC_RXStatus ReadSERDESRXStatus(const DTC_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -786,55 +666,24 @@ namespace DTCLib
 
 		// SERDES Reset Done Register
 		/// <summary>
-		/// Read if the SERDES reset is complete on the given SERDES ring
+		/// Read if the SERDES reset is complete on the given SERDES link
 		/// </summary>
-		/// <param name="ring">Ring to read</param>
+		/// <param name="link">Link to read</param>
 		/// <returns>True if the SERDES Reset is done, false otherwise</returns>
-		bool ReadResetSERDESDone(const DTC_Ring_ID& ring);
+		bool ReadResetSERDESDone(const DTC_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
 		DTC_RegisterFormatter FormatSERDESResetDone();
 
-		// Eyescan Data Error Register
-		/// <summary>
-		/// Read if the Eyescan Data Error flag is set on the given SERDES ring
-		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <returns>True if the Eyescan Error Bit is set, false otherwise</returns>
-		bool ReadSERDESEyescanError(const DTC_Ring_ID& ring);
-		/// <summary>
-		/// Formats the register's current value for register dumps
-		/// </summary>
-		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatSERDESEyescanData();
-
 		// SFP / SERDES Status Register
 		/// <summary>
-		/// Read the SERDES SFP Present bit for the given SERDES Ring
+		/// Read the SERDES CDR Lock bit for the given SERDES Link
 		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <returns>True if the SERDES SFP Present bit is set</returns>
-		bool ReadSERDESSFPPresent(const DTC_Ring_ID& ring);
-		/// <summary>
-		/// Read the SERDES SFP Loss-of-Signal bit for the given SERDES Ring
-		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <returns>True if the SERDES SFP Loss-of-Signal bit is set</returns>
-		bool ReadSERDESSFPLOS(const DTC_Ring_ID& ring);
-		/// <summary>
-		/// Read the SERDES SFP TX Fault bit for the given SERDES Ring
-		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <returns>True if the SERDES SFP TX Fault bit is set</returns>
-		bool ReadSERDESSFPTXFault(const DTC_Ring_ID& ring);
-		/// <summary>
-		/// Read the SERDES CDR Lock bit for the given SERDES Ring
-		/// </summary>
-		/// <param name="ring">Ring to read</param>
+		/// <param name="link">Link to read</param>
 		/// <returns>True if the SERDES CDR Lock bit is set</returns>
-		bool ReadSERDESRXCDRLock(const DTC_Ring_ID& ring);
+		bool ReadSERDESRXCDRLock(const DTC_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -881,23 +730,23 @@ namespace DTCLib
 
 		// ROC Timeout Error Register
 		/// <summary>
-		/// Clear the ROC Data Packet timeout error flag for the given SERDES ring
+		/// Clear the ROC Data Packet timeout error flag for the given SERDES link
 		/// </summary>
-		/// <param name="ring">Ring to clear</param>
-		void ClearROCTimeoutError(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to clear</param>
+		void ClearROCTimeoutError(const DTC_Link_ID& link);
 		/// <summary>
-		/// Read the ROC Data Packet Timeout Error Flag for the given SERDES ring
+		/// Read the ROC Data Packet Timeout Error Flag for the given SERDES link
 		/// </summary>
-		/// <param name="ring">Ring to read</param>
+		/// <param name="link">Link to read</param>
 		/// <returns>True if the error flag is set, false otherwise</returns>
-		bool ReadROCTimeoutError(const DTC_Ring_ID& ring);
+		bool ReadROCTimeoutError(const DTC_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
 		DTC_RegisterFormatter FormatROCReplyTimeoutError();
 
-		// Ring Packet Length Register
+		// Link Packet Length Register
 		/// <summary>
 		/// Set the size of DTC SERDES packets. Default is 16 bytes
 		/// This value should most likely never be changed.
@@ -979,48 +828,17 @@ namespace DTCLib
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
 		DTC_RegisterFormatter FormatEVBNumberOfDestinationNodes();
 
-		// Heartbeat Error Register
-		/// <summary>
-		/// Read the Heartbeat Timeout Error Flag for the given ring
-		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <returns>True if the Heartbeat Timeout Error Flag is set</returns>
-		bool ReadHeartbeatTimeout(const DTC_Ring_ID& ring);
-		/// <summary>
-		/// Read the Heartbeat 2-0 Mismatch Error Flag for the given ring
-		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <returns>True if the Heartbeat 2-0 Mismatch Error Flag is set</returns>
-		bool ReadHeartbeat20Mismatch(const DTC_Ring_ID& ring);
-		/// <summary>
-		/// Read the Heartbeat 1-2 Mismatch Error Flag for the given ring
-		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <returns>True if the Heartbeat 1-2 Mismatch Error Flag is set</returns>
-		bool ReadHeartbeat12Mismatch(const DTC_Ring_ID& ring);
-		/// <summary>
-		/// Read the Heartbeat 0-1 Mismatch Error Flag for the given ring
-		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <returns>True if the Heartbeat 0-1 Mismatch Error Flag is set</returns>
-		bool ReadHeartbeat01Mismatch(const DTC_Ring_ID& ring);
-		/// <summary>
-		/// Formats the register's current value for register dumps
-		/// </summary>
-		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatHeartbeatError();
-
 		// SERDES Oscillator Registers
 		/// <summary>
 		/// Read the current SERDES Oscillator reference frequency, in Hz
 		/// </summary>
 		/// <returns>Current SERDES Oscillator reference frequency, in Hz</returns>
-		uint32_t ReadSERDESOscillatorReferenceFrequency();
+		uint32_t ReadSERDESOscillatorReferenceFrequency(DTC_IICSERDESBusAddress device);
 		/// <summary>
 		/// Set the SERDES Oscillator reference frequency
 		/// </summary>
 		/// <param name="freq">New reference frequency, in Hz</param>
-		void SetSERDESOscillatorReferenceFrequency(uint32_t freq);
+		void SetSERDESOscillatorReferenceFrequency(DTC_IICSERDESBusAddress device, uint32_t freq);
 
 		/// <summary>
 		/// Read the Reset bit of the SERDES IIC Bus
@@ -1061,7 +879,12 @@ namespace DTCLib
 		/// Formats the register's current value for register dumps
 		/// </summary>
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatSERDESOscillatorFrequency();
+		DTC_RegisterFormatter FormatTimingSERDESOscillatorFrequency();
+		/// <summary>
+		/// Formats the register's current value for register dumps
+		/// </summary>
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatMainBoardSERDESOscillatorFrequency();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -1178,18 +1001,17 @@ namespace DTCLib
 
 		// NUMROCs Register
 		/// <summary>
-		/// Set the maximum ROC ID for the given ring
+		/// Set the maximum ROC ID for the given link
 		/// </summary>
-		/// <param name="ring">Ring to set</param>
-		/// <param name="lastRoc">ID of the last ROC in the ring</param>
-		void SetMaxROCNumber(const DTC_Ring_ID& ring, const DTC_ROC_ID& lastRoc);
+		/// <param name="link">Link to set</param>
+		/// <param name="lastRoc">ID of the last ROC in the link</param>
+		void SetMaxROCNumber(const DTC_Link_ID& link, const uint8_t& lastRoc);
 		/// <summary>
-		/// Read the number of ROCs configured on the given ring
+		/// Read the number of ROCs configured on the given link
 		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <param name="local">Whether to use the NUMROCs virtual register or perform a register access (Default: true, use virtual register)</param>
-		/// <returns>ID of last ROC on ring</returns>
-		DTC_ROC_ID ReadRingROCCount(const DTC_Ring_ID& ring, bool local = true);
+		/// <param name="link">Link to read</param>
+		/// <returns>ID of last ROC on link</returns>
+		uint8_t ReadLinkROCCount(const DTC_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -1198,16 +1020,16 @@ namespace DTCLib
 
 		// FIFO Full Error Flags Registers
 		/// <summary>
-		/// Clear all FIFO Full Error Flags for the given ring
+		/// Clear all FIFO Full Error Flags for the given link
 		/// </summary>
-		/// <param name="ring">Ring to clear</param>
-		void ClearFIFOFullErrorFlags(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to clear</param>
+		void ClearFIFOFullErrorFlags(const DTC_Link_ID& link);
 		/// <summary>
-		/// Read the FIFO Full Error/Status Flags for the given ring
+		/// Read the FIFO Full Error/Status Flags for the given link
 		/// </summary>
-		/// <param name="ring">Ring to read</param>
+		/// <param name="link">Link to read</param>
 		/// <returns>DTC_FIFOFullErrorFlags object</returns>
-		DTC_FIFOFullErrorFlags ReadFIFOFullErrorFlags(const DTC_Ring_ID& ring);
+		DTC_FIFOFullErrorFlags ReadFIFOFullErrorFlags(const DTC_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -1226,49 +1048,27 @@ namespace DTCLib
 
 		// Receive Packet Error Register
 		/// <summary>
-		/// Clear the RX Elastic Buffer Underrun Error Flag for the given ring
+		/// Clear the Packet Error Flag for the given link
 		/// </summary>
-		/// <param name="ring">Ring to clear</param>
-		void ClearRXElasticBufferUnderrun(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to clear</param>
+		void ClearPacketError(const DTC_Link_ID& link);
 		/// <summary>
-		/// Read the RX Elastic Buffer Underrun Error Flag for the given ring
+		/// Read the Packet Error Flag for the given link
 		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <returns>True if the RX Elastic Buffer Underrun Error Flag is set</returns>
-		bool ReadRXElasticBufferUnderrun(const DTC_Ring_ID& ring);
-		/// <summary>
-		/// Clear the RX Elastic Buffer Overrun Error Flag for the given ring
-		/// </summary>
-		/// <param name="ring">Ring to clear</param>
-		void ClearRXElasticBufferOverrun(const DTC_Ring_ID& ring);
-		/// <summary>
-		/// Read the RX Elastic Buffer Overrun Error Flag for the given ring
-		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <returns>True if the RX Elastic Buffer Overrun Error Flag is set</returns>
-		bool ReadRXElasticBufferOverrun(const DTC_Ring_ID& ring);
-		/// <summary>
-		/// Clear the Packet Error Flag for the given ring
-		/// </summary>
-		/// <param name="ring">Ring to clear</param>
-		void ClearPacketError(const DTC_Ring_ID& ring);
-		/// <summary>
-		/// Read the Packet Error Flag for the given ring
-		/// </summary>
-		/// <param name="ring">Ring to read</param>
+		/// <param name="link">Link to read</param>
 		/// <returns>True if the Packet Error Flag is set</returns>
-		bool ReadPacketError(const DTC_Ring_ID& ring);
+		bool ReadPacketError(const DTC_Link_ID& link);
 		/// <summary>
-		/// Clear the Packet CRC Error Flag for the given ring
+		/// Clear the Packet CRC Error Flag for the given link
 		/// </summary>
-		/// <param name="ring">Ring to clear</param>
-		void ClearPacketCRCError(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to clear</param>
+		void ClearPacketCRCError(const DTC_Link_ID& link);
 		/// <summary>
-		/// Read the Packet CRC Error Flag for the given ring
+		/// Read the Packet CRC Error Flag for the given link
 		/// </summary>
-		/// <param name="ring">Ring to read</param>
+		/// <param name="link">Link to read</param>
 		/// <returns>True if the Packet CRC Error Flag is set</returns>
-		bool ReadPacketCRCError(const DTC_Ring_ID& ring);
+		bool ReadPacketCRCError(const DTC_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -1337,32 +1137,32 @@ namespace DTCLib
 
 		// CFO Emulation Number of Packets Registers
 		/// <summary>
-		/// Set the number of packets the CFO Emulator will request from the ring
+		/// Set the number of packets the CFO Emulator will request from the link
 		/// </summary>
-		/// <param name="ring">Ring to set</param>
+		/// <param name="link">Link to set</param>
 		/// <param name="numPackets">Number of packets to request</param>
-		void SetCFOEmulationNumPackets(const DTC_Ring_ID& ring, uint16_t numPackets);
+		void SetCFOEmulationNumPackets(const DTC_Link_ID& link, uint16_t numPackets);
 		/// <summary>
-		/// Read the requested number of packets the CFO Emulator will request from the given ring
+		/// Read the requested number of packets the CFO Emulator will request from the given link
 		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <returns>Number of packets requested from the ring</returns>
-		uint16_t ReadCFOEmulationNumPackets(const DTC_Ring_ID& ring);
-		/// <summary>
-		/// Formats the register's current value for register dumps
-		/// </summary>
-		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing01();
+		/// <param name="link">Link to read</param>
+		/// <returns>Number of packets requested from the link</returns>
+		uint16_t ReadCFOEmulationNumPackets(const DTC_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing23();
+		DTC_RegisterFormatter FormatCFOEmulationNumPacketsLink01();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatCFOEmulationNumPacketsRing45();
+		DTC_RegisterFormatter FormatCFOEmulationNumPacketsLink23();
+		/// <summary>
+		/// Formats the register's current value for register dumps
+		/// </summary>
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatCFOEmulationNumPacketsLink45();
 
 		// CFO Emulation Number of Null Heartbeats Register
 		/// <summary>
@@ -1437,16 +1237,16 @@ namespace DTCLib
 
 		// RX Packet Count Error Flags Register
 		/// <summary>
-		/// Read the RX Packet Count Error flag for the given ring
+		/// Read the RX Packet Count Error flag for the given link
 		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <returns>Whether the RX Packet Count Error flag is set on the ring</returns>
-		bool ReadRXPacketCountErrorFlags(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to read</param>
+		/// <returns>Whether the RX Packet Count Error flag is set on the link</returns>
+		bool ReadRXPacketCountErrorFlags(const DTC_Link_ID& link);
 		/// <summary>
-		/// Clear the RX Packet Count Error flag for the given ring
+		/// Clear the RX Packet Count Error flag for the given link
 		/// </summary>
-		/// <param name="ring">Ring to clear</param>
-		void ClearRXPacketCountErrorFlags(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to clear</param>
+		void ClearRXPacketCountErrorFlags(const DTC_Link_ID& link);
 		/// <summary>
 		/// Clear all RX Packet Count Error Flags
 		/// </summary>
@@ -1551,7 +1351,6 @@ namespace DTCLib
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
 		DTC_RegisterFormatter FormatDetectorEmulationControl1();
 
-		// SERDES Counter Registers
 		// DDR Event Data Local Start Address Register
 		/// <summary>
 		/// Set the DDR Data Start Address
@@ -1590,16 +1389,16 @@ namespace DTCLib
 
 		// ROC DRP Sync Error Register
 		/// <summary>
-		/// Read the ROC DRP Sync Error Flag for the given ring
+		/// Read the ROC DRP Sync Error Flag for the given link
 		/// </summary>
-		/// <param name="ring">Ring to read</param>
-		/// <returns>True if the ROC DRP Sync Error Flag is set on the given ring, false otherwise</returns>
-		bool ReadROCDRPSyncErrors(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to read</param>
+		/// <returns>True if the ROC DRP Sync Error Flag is set on the given link, false otherwise</returns>
+		bool ReadROCDRPSyncErrors(const DTC_Link_ID& link);
 		/// <summary>
-		/// Clear ROC DRP Sync Errors for the given ring
+		/// Clear ROC DRP Sync Errors for the given link
 		/// </summary>
-		/// <param name="ring">Ring to clear</param>
-		void ClearROCDRPSyncErrors(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to clear</param>
+		void ClearROCDRPSyncErrors(const DTC_Link_ID& link);
 		/// <summary>
 		/// Clears all ROC DRP Sync Errors
 		/// </summary>
@@ -1628,50 +1427,51 @@ namespace DTCLib
 		DTC_RegisterFormatter FormatEthernetPayloadSize();
 
 
+		// SERDES Counter Registers
 		/// <summary>
 		/// Clear the value of the Receive byte counter
 		/// </summary>
-		/// <param name="ring">Ring to clear counter for</param>
-		void ClearReceiveByteCount(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to clear counter for</param>
+		void ClearReceiveByteCount(const DTC_Link_ID& link);
 		/// <summary>
 		/// Read the value of the Receive byte counter
 		/// </summary>
-		/// <param name="ring">Ring to read counter for</param>
-		/// <returns>Current value of the Receive byte counter on the given ring</returns>
-		uint32_t ReadReceiveByteCount(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to read counter for</param>
+		/// <returns>Current value of the Receive byte counter on the given link</returns>
+		uint32_t ReadReceiveByteCount(const DTC_Link_ID& link);
 		/// <summary>
 		/// Clear the value of the Receive Packet counter
 		/// </summary>
-		/// <param name="ring">Ring to clear counter for</param>
-		void ClearReceivePacketCount(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to clear counter for</param>
+		void ClearReceivePacketCount(const DTC_Link_ID& link);
 		/// <summary>
 		/// Read the value of the Receive Packet counter
 		/// </summary>
-		/// <param name="ring">Ring to read counter for</param>
-		/// <returns>Current value of the Receive Packet counter on the given ring</returns>
-		uint32_t ReadReceivePacketCount(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to read counter for</param>
+		/// <returns>Current value of the Receive Packet counter on the given link</returns>
+		uint32_t ReadReceivePacketCount(const DTC_Link_ID& link);
 		/// <summary>
 		/// Clear the value of the Transmit byte counter
 		/// </summary>
-		/// <param name="ring">Ring to clear counter for</param>
-		void ClearTransmitByteCount(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to clear counter for</param>
+		void ClearTransmitByteCount(const DTC_Link_ID& link);
 		/// <summary>
 		/// Read the value of the Transmit byye counter
 		/// </summary>
-		/// <param name="ring">Ring to read counter for</param>
-		/// <returns>Current value of the Transmit byte counter on the given ring</returns>
-		uint32_t ReadTransmitByteCount(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to read counter for</param>
+		/// <returns>Current value of the Transmit byte counter on the given link</returns>
+		uint32_t ReadTransmitByteCount(const DTC_Link_ID& link);
 		/// <summary>
 		/// Clear the value of the Transmit Packet counter
 		/// </summary>
-		/// <param name="ring">Ring to clear counter for</param>
-		void ClearTransmitPacketCount(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to clear counter for</param>
+		void ClearTransmitPacketCount(const DTC_Link_ID& link);
 		/// <summary>
 		/// Read the value of the Transmit Packet counter
 		/// </summary>
-		/// <param name="ring">Ring to read counter for</param>
-		/// <returns>Current value of the Transmit Packet counter on the given ring</returns>
-		uint32_t ReadTransmitPacketCount(const DTC_Ring_ID& ring);
+		/// <param name="link">Link to read counter for</param>
+		/// <returns>Current value of the Transmit Packet counter on the given link</returns>
+		uint32_t ReadTransmitPacketCount(const DTC_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -1833,27 +1633,155 @@ namespace DTCLib
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
 		DTC_RegisterFormatter FormatTransmitPacketCountEVB();
 
-		// DDR Memory Flags Registers
+
+		// Firefly TX IIC Registers
 		/// <summary>
-		/// Read the DDR Ring Buffer Full Flags for each of the 64 DDR buffers
+		/// Read the Reset bit of the Firefly TX IIC Bus
+		/// </summary>
+		/// <returns>Reset bit value</returns>
+		bool ReadFireflyTXIICInterfaceReset();
+		/// <summary>
+		/// Reset the Firefly TX IIC Bus
+		/// </summary>
+		void ResetFireflyTXIICInterface();
+
+		/// <summary>
+		/// Write a value to the Firefly TX IIC Bus
+		/// </summary>
+		/// <param name="device">Device address</param>
+		/// <param name="address">Register address</param>
+		/// <param name="data">Data to write</param>
+		void WriteFireflyTXIICInterface(uint8_t device, uint8_t address, uint8_t data);
+		/// <summary>
+		/// Read a value from the Firefly TX IIC Bus
+		/// </summary>
+		/// <param name="device">Device address</param>
+		/// <param name="address">Register address</param>
+		/// <returns>Value of register</returns>
+		uint8_t ReadFireflyTXIICInterface(uint8_t device, uint8_t address);
+
+		/// <summary>
+		/// Formats the register's current value for register dumps
+		/// </summary>
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatFireflyTXIICControl();
+		/// <summary>
+		/// Formats the register's current value for register dumps
+		/// </summary>
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatFireflyTXIICParameterLow();
+		/// <summary>
+		/// Formats the register's current value for register dumps
+		/// </summary>
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatFireflyTXIICParameterHigh();
+
+		// Firefly RX IIC Registers
+		/// <summary>
+		/// Read the Reset bit of the Firefly RX IIC Bus
+		/// </summary>
+		/// <returns>Reset bit value</returns>
+		bool ReadFireflyRXIICInterfaceReset();
+		/// <summary>
+		/// Reset the Firefly RX IIC Bus
+		/// </summary>
+		void ResetFireflyRXIICInterface();
+
+		/// <summary>
+		/// Write a value to the Firefly RX IIC Bus
+		/// </summary>
+		/// <param name="device">Device address</param>
+		/// <param name="address">Register address</param>
+		/// <param name="data">Data to write</param>
+		void WriteFireflyRXIICInterface(uint8_t device, uint8_t address, uint8_t data);
+		/// <summary>
+		/// Read a value from the Firefly RX IIC Bus
+		/// </summary>
+		/// <param name="device">Device address</param>
+		/// <param name="address">Register address</param>
+		/// <returns>Value of register</returns>
+		uint8_t ReadFireflyRXIICInterface(uint8_t device, uint8_t address);
+
+		/// <summary>
+		/// Formats the register's current value for register dumps
+		/// </summary>
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatFireflyRXIICControl();
+		/// <summary>
+		/// Formats the register's current value for register dumps
+		/// </summary>
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatFireflyRXIICParameterLow();
+		/// <summary>
+		/// Formats the register's current value for register dumps
+		/// </summary>
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatFireflyRXIICParameterHigh();
+
+		// Firefly TXRX IIC Registers
+		/// <summary>
+		/// Read the Reset bit of the Firefly TXRX IIC Bus
+		/// </summary>
+		/// <returns>Reset bit value</returns>
+		bool ReadFireflyTXRXIICInterfaceReset();
+		/// <summary>
+		/// Reset the Firefly TXRX IIC Bus
+		/// </summary>
+		void ResetFireflyTXRXIICInterface();
+
+		/// <summary>
+		/// Write a value to the Firefly TXRX IIC Bus
+		/// </summary>
+		/// <param name="device">Device address</param>
+		/// <param name="address">Register address</param>
+		/// <param name="data">Data to write</param>
+		void WriteFireflyTXRXIICInterface(uint8_t device, uint8_t address, uint8_t data);
+		/// <summary>
+		/// Read a value from the Firefly TXRX IIC Bus
+		/// </summary>
+		/// <param name="device">Device address</param>
+		/// <param name="address">Register address</param>
+		/// <returns>Value of register</returns>
+		uint8_t ReadFireflyTXRXIICInterface(uint8_t device, uint8_t address);
+
+		/// <summary>
+		/// Formats the register's current value for register dumps
+		/// </summary>
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatFireflyTXRXIICControl();
+		/// <summary>
+		/// Formats the register's current value for register dumps
+		/// </summary>
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatFireflyTXRXIICParameterLow();
+		/// <summary>
+		/// Formats the register's current value for register dumps
+		/// </summary>
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatFireflyTXRXIICParameterHigh();
+
+		// DDR Memory Flags Registers
+		DTC_DDRFlags ReadDDRFlags(uint8_t buffer_id);
+		/// <summary>
+		/// Read the DDR Link Buffer Full Flags for each of the 64 DDR buffers
 		/// </summary>
 		/// <returns>64-bit bitset with full status of each of the buffers</returns>
-		std::bitset<64> ReadDDRRingBufferFullFlags();
+		std::bitset<64> ReadDDRLinkBufferFullFlags();
 		/// <summary>
-		/// Read the DDR Ring Buffer Full Error Flags for each of the 64 DDR buffers
+		/// Read the DDR Link Buffer Full Error Flags for each of the 64 DDR buffers
 		/// </summary>
 		/// <returns>64-bit bitset with full error status of each of the buffers</returns>
-		std::bitset<64> ReadDDRRingBufferFullErrorFlags();
+		std::bitset<64> ReadDDRLinkBufferFullErrorFlags();
 		/// <summary>
-		/// Read the DDR Ring Buffer Empty Flags for each of the 64 DDR buffers
+		/// Read the DDR Link Buffer Empty Flags for each of the 64 DDR buffers
 		/// </summary>
 		/// <returns>64-bit bitset with empty status of each of the buffers</returns>
-		std::bitset<64> ReadDDRRingBufferEmptyFlags();
+		std::bitset<64> ReadDDRLinkBufferEmptyFlags();
 		/// <summary>
-		/// Read the DDR Ring Buffer Half-Full Flags for each of the 64 DDR buffers
+		/// Read the DDR Link Buffer Half-Full Flags for each of the 64 DDR buffers
 		/// </summary>
 		/// <returns>64-bit bitset with half-full status of each of the buffers</returns>
-		std::bitset<64> ReadDDRRingBufferHalfFullFlags();
+		std::bitset<64> ReadDDRLinkBufferHalfFullFlags();
 		/// <summary>
 		/// Read the DDR EVB Buffer Full Flags for each of the 64 DDR buffers
 		/// </summary>
@@ -1878,22 +1806,22 @@ namespace DTCLib
 		/// Formats the register's current value for register dumps
 		/// </summary>
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatDDRRingBufferFullFlagsLow();
+		DTC_RegisterFormatter FormatDDRLinkBufferFullFlagsLow();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatDDRRingBufferFullErrorFlagsLow();
+		DTC_RegisterFormatter FormatDDRLinkBufferFullErrorFlagsLow();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatDDRRingBufferEmptyFlagsLow();
+		DTC_RegisterFormatter FormatDDRLinkBufferEmptyFlagsLow();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatDDRRingBufferHalfFullFlagsLow();
+		DTC_RegisterFormatter FormatDDRLinkBufferHalfFullFlagsLow();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -1918,22 +1846,22 @@ namespace DTCLib
 		/// Formats the register's current value for register dumps
 		/// </summary>
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatDDRRingBufferFullFlagsHigh();
+		DTC_RegisterFormatter FormatDDRLinkBufferFullFlagsHigh();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatDDRRingBufferFullErrorFlagsHigh();
+		DTC_RegisterFormatter FormatDDRLinkBufferFullErrorFlagsHigh();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatDDRRingBufferEmptyFlagsHigh();
+		DTC_RegisterFormatter FormatDDRLinkBufferEmptyFlagsHigh();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
-		DTC_RegisterFormatter FormatDDRRingBufferHalfFullFlagsHigh();
+		DTC_RegisterFormatter FormatDDRLinkBufferHalfFullFlagsHigh();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
@@ -1954,6 +1882,21 @@ namespace DTCLib
 		/// </summary>
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
 		DTC_RegisterFormatter FormatDDREventBuilderBufferHalfFullFlagsHigh();
+
+		// SERDES Serial Inversion Enable Register
+		bool ReadInvertSERDESRXInput(DTC_Link_ID link);
+		void SetInvertSERDESRXInput(DTC_Link_ID link, bool invert);
+		bool ReadInvertSERDESTXOutput(DTC_Link_ID link);
+		void SetInvertSERDESTXOutput(DTC_Link_ID link, bool invert);
+		DTC_RegisterFormatter FormatSERDESSerialInversionEnable();
+
+		// Jitter Attenuator CSR Register
+		std::bitset<2> ReadJitterAttenuatorSelect();
+		void SetJitterAttenuatorSelect(std::bitset<2> data);
+		bool ReadJitterAttenuatorReset();
+		void ResetJitterAttenuator();
+		DTC_RegisterFormatter FormatJitterAttenuatorCSR();
+
 
 		// EVB SERDES PRBS Control / Status Register
 		/// <summary>
@@ -2017,57 +1960,57 @@ namespace DTCLib
 
 		// Missed CFO Packet Count Registers
 		/// <summary>
-		/// Reads the current value of the Missed CFO Packet Counter for Ring 0
+		/// Reads the current value of the Missed CFO Packet Counter for Link 0
 		/// </summary>
-		/// <returns>the current value of the Missed CFO Packet Counter for Ring 0</returns>
+		/// <returns>the current value of the Missed CFO Packet Counter for Link 0</returns>
 		uint32_t ReadMissedCFOPacketCountRing0();
 		/// <summary>
-		/// Reads the current value of the Missed CFO Packet Counter for Ring 1
+		/// Reads the current value of the Missed CFO Packet Counter for Link 1
 		/// </summary>
-		/// <returns>the current value of the Missed CFO Packet Counter for Ring 1</returns>
+		/// <returns>the current value of the Missed CFO Packet Counter for Link 1</returns>
 		uint32_t ReadMissedCFOPacketCountRing1();
 		/// <summary>
-		/// Reads the current value of the Missed CFO Packet Counter for Ring 2
+		/// Reads the current value of the Missed CFO Packet Counter for Link 2
 		/// </summary>
-		/// <returns>the current value of the Missed CFO Packet Counter for Ring 2</returns>
+		/// <returns>the current value of the Missed CFO Packet Counter for Link 2</returns>
 		uint32_t ReadMissedCFOPacketCountRing2();
 		/// <summary>
-		/// Reads the current value of the Missed CFO Packet Counter for Ring 3
+		/// Reads the current value of the Missed CFO Packet Counter for Link 3
 		/// </summary>
-		/// <returns>the current value of the Missed CFO Packet Counter for Ring 3</returns>
+		/// <returns>the current value of the Missed CFO Packet Counter for Link 3</returns>
 		uint32_t ReadMissedCFOPacketCountRing3();
 		/// <summary>
-		/// Reads the current value of the Missed CFO Packet Counter for Ring 4
+		/// Reads the current value of the Missed CFO Packet Counter for Link 4
 		/// </summary>
-		/// <returns>the current value of the Missed CFO Packet Counter for Ring 4</returns>
+		/// <returns>the current value of the Missed CFO Packet Counter for Link 4</returns>
 		uint32_t ReadMissedCFOPacketCountRing4();
 		/// <summary>
-		/// Reads the current value of the Missed CFO Packet Counter for Ring 5
+		/// Reads the current value of the Missed CFO Packet Counter for Link 5
 		/// </summary>
-		/// <returns>the current value of the Missed CFO Packet Counter for Ring 5</returns>
+		/// <returns>the current value of the Missed CFO Packet Counter for Link 5</returns>
 		uint32_t ReadMissedCFOPacketCountRing5();
 		/// <summary>
-		/// Clears the Missed CFO Packet Count for Ring 0
+		/// Clears the Missed CFO Packet Count for Link 0
 		/// </summary>
 		void ClearMissedCFOPacketCountRing0();
 		/// <summary>
-		/// Clears the Missed CFO Packet Count for Ring 1
+		/// Clears the Missed CFO Packet Count for Link 1
 		/// </summary>
 		void ClearMissedCFOPacketCountRing1();
 		/// <summary>
-		/// Clears the Missed CFO Packet Count for Ring 2
+		/// Clears the Missed CFO Packet Count for Link 2
 		/// </summary>
 		void ClearMissedCFOPacketCountRing2();
 		/// <summary>
-		/// Clears the Missed CFO Packet Count for Ring 3
+		/// Clears the Missed CFO Packet Count for Link 3
 		/// </summary>
 		void ClearMissedCFOPacketCountRing3();
 		/// <summary>
-		/// Clears the Missed CFO Packet Count for Ring 4
+		/// Clears the Missed CFO Packet Count for Link 4
 		/// </summary>
 		void ClearMissedCFOPacketCountRing4();
 		/// <summary>
-		/// Clears the Missed CFO Packet Count for Ring 5
+		/// Clears the Missed CFO Packet Count for Link 5
 		/// </summary>
 		void ClearMissedCFOPacketCountRing5();
 		/// <summary>
@@ -2116,6 +2059,78 @@ namespace DTCLib
 		/// </summary>
 		/// <returns>DTC_RegisterFormatter object containing register information</returns>
 		DTC_RegisterFormatter FormatLocalFragmentDropCount();
+
+		// Event Builder Error Register
+		bool ReadEventBuilder_SubEventReceiverFlagsBufferError();
+		bool ReadEventBuilder_EthernetInputFIFOFull();
+		bool ReadEventBuilder_LinkError();
+		bool ReadEventBuilder_TXPacketError();
+		bool ReadEventBuilder_LocalDataPointerFIFOQueueError();
+		bool ReadEventBuilder_TransmitDMAByteCountFIFOFull();
+		DTC_RegisterFormatter FormatEventBuilderErrorRegister();
+
+		// SERDES VFIFO Error Register
+		bool ReadSERDESVFIFO_EgressFIFOFull();
+		bool ReadSERDESVFIFO_IngressFIFOFull();
+		bool ReadSERDESVFIFO_EventByteCountTotalError();
+		bool ReadSERDESVFIFO_LastWordWrittenTimeoutError();
+		bool ReadSERDESVFIFO_FragmentCountError();
+		bool ReadSERDESVFIFO_DDRFullError();
+		DTC_RegisterFormatter FormatSERDESVFIFOError();
+
+		// PCI VFIFO Error Register
+		bool ReadPCIVFIFO_DDRFull();
+		bool ReadPCIVFIFO_MemoryMappedWriteCompleteFIFOFull();
+		bool ReadPCIVFIFO_PCIWriteEventFIFOFull();
+		bool ReadPCIVFIFO_LocalDataPointerFIFOFull();
+		bool ReadPCIVFIFO_EgressFIFOFull();
+		bool ReadPCIVFIFO_RXBufferSelectFIFOFull();
+		bool ReadPCIVFIFO_IngressFIFOFull();
+		bool ReadPCIVFIFO_EventByteCountTotalError();
+		DTC_RegisterFormatter FormatPCIVFIFOError();
+
+		// ROC Link Error Registers
+		bool ReadROCLink_ROCDataRequestSyncError(DTC_Link_ID link);
+		bool ReadROCLink_RXPacketCountError(DTC_Link_ID link);
+		bool ReadROCLink_RXPacketError(DTC_Link_ID link);
+		bool ReadROCLink_RXPacketCRCError(DTC_Link_ID link);
+		bool ReadROCLink_DataPendingTimeoutError(DTC_Link_ID link);
+		bool ReadROCLink_ReceiveDataPacketCountError(DTC_Link_ID link);
+		DTC_RegisterFormatter FormatRocLink0Error();
+		DTC_RegisterFormatter FormatRocLink1Error();
+		DTC_RegisterFormatter FormatRocLink2Error();
+		DTC_RegisterFormatter FormatRocLink3Error();
+		DTC_RegisterFormatter FormatRocLink4Error();
+		DTC_RegisterFormatter FormatRocLink5Error();
+
+		// CFO Link Error Register
+		DTC_RegisterFormatter FormatCFOLinkError();
+
+		// Link Mux Error Register
+		bool ReadDCSMuxDecodeError();
+		bool ReadDataMuxDecodeError();
+		DTC_RegisterFormatter FormatLinkMuxError();
+
+		// Firefly CSR Register
+		bool ReadTXRXFireflyPresent();
+		bool ReadRXFireflyPresent();
+		bool ReadTXFireflyPresent();
+		bool ReadTXRXFireflyInterrupt();
+		bool ReadRXFireflyInterrupt();
+		bool ReadTXFireflyInterrupt();
+		bool ReadTXRXFireflySelect();
+		void SetTXRXFireflySelect(bool select);
+		bool ReadTXFireflySelect();
+		void SetTXFireflySelect(bool select);
+		bool ReadRXFireflySelect();
+		void SetRXFireflySelect(bool select);
+		bool ReadResetTXRXFirefly();
+		void ResetTXRXFirefly();
+		bool ReadResetTXFirefly();
+		void ResetTXFirefly();
+		bool ReadResetRXFirefly();
+		void ResetRXFirefly();
+		DTC_RegisterFormatter FormatFireflyCSR();
 
 		// FPGA PROM Program Data Register
 
@@ -2230,7 +2245,6 @@ namespace DTCLib
 	protected:
 		mu2edev device_; ///< Device handle
 		DTC_SimMode simMode_; ///< Simulation mode
-		DTC_ROC_ID maxROCs_[6]; ///< Map of active ROCs
 		bool usingDetectorEmulator_; ///< Whether Detector Emulation mode is enabled
 		uint16_t dmaSize_; ///< Size of DMAs, in bytes (default 32k)
 		int formatterWidth_; ///< Description field width, in characters
@@ -2242,6 +2256,8 @@ namespace DTCLib
 		{
 			[this]() { return this->FormatDesignVersion(); },
 			[this]() { return this->FormatDesignDate(); },
+			[this]() { return this->FormatDesignStatus(); },
+			[this]() { return this->FormatVivadoVersion(); },
 			[this]() { return this->FormatDTCControl(); },
 			[this]() { return this->FormatDMATransferLength(); },
 			[this]() { return this->FormatSERDESLoopbackEnable(); },
@@ -2253,11 +2269,8 @@ namespace DTCLib
 			[this]() { return this->FormatSERDESRXCharacterNotInTableError(); },
 			[this]() { return this->FormatSERDESUnlockError(); },
 			[this]() { return this->FormatSERDESPLLLocked(); },
-			[this]() { return this->FormatSERDESTXBufferStatus(); },
-			[this]() { return this->FormatSERDESRXBufferStatus(); },
 			[this]() { return this->FormatSERDESRXStatus(); },
 			[this]() { return this->FormatSERDESResetDone(); },
-			[this]() { return this->FormatSERDESEyescanData(); },
 			[this]() { return this->FormatSFPSERDESStatus(); },
 			[this]() { return this->FormatDMATimeoutPreset(); },
 			[this]() { return this->FormatROCReplyTimeout(); },
@@ -2265,8 +2278,8 @@ namespace DTCLib
 			[this]() { return this->FormatRingPacketLength(); },
 			[this]() { return this->FormatEVBLocalParitionIDMACIndex(); },
 			[this]() { return this->FormatEVBNumberOfDestinationNodes(); },
-			[this]() { return this->FormatHeartbeatError(); },
-			[this]() { return this->FormatSERDESOscillatorFrequency(); },
+			[this]() { return this->FormatTimingSERDESOscillatorFrequency(); },
+			[this]() { return this->FormatMainBoardSERDESOscillatorFrequency(); },
 			[this]() { return this->FormatSERDESOscillatorControl(); },
 			[this]() { return this->FormatSERDESOscillatorParameterLow(); },
 			[this]() { return this->FormatSERDESOscillatorParameterHigh(); },
@@ -2286,13 +2299,14 @@ namespace DTCLib
 			[this]() { return this->FormatCFOEmulationTimestampHigh(); },
 			[this]() { return this->FormatCFOEmulationRequestInterval(); },
 			[this]() { return this->FormatCFOEmulationNumRequests(); },
-			[this]() { return this->FormatCFOEmulationNumPacketsRing01(); },
-			[this]() { return this->FormatCFOEmulationNumPacketsRing23(); },
-			[this]() { return this->FormatCFOEmulationNumPacketsRing45(); },
+			[this]() { return this->FormatCFOEmulationNumPacketsLink01(); },
+			[this]() { return this->FormatCFOEmulationNumPacketsLink23(); },
+			[this]() { return this->FormatCFOEmulationNumPacketsLink45(); },
 			[this]() { return this->FormatCFOEmulationNumNullHeartbeats(); },
 			[this]() { return this->FormatCFOEmulationModeBytes03(); },
 			[this]() { return this->FormatCFOEmulationModeBytes45(); },
 			[this]() { return this->FormatCFOEmulationDebugPacketType(); },
+			[this]() { return this->FormatRXPacketCountErrorFlags(); },
 			[this]() { return this->FormatDetectorEmulationDMACount(); },
 			[this]() { return this->FormatDetectorEmulationDMADelayCount(); },
 			[this]() { return this->FormatDetectorEmulationControl0(); },
@@ -2301,14 +2315,23 @@ namespace DTCLib
 			[this]() { return this->FormatDDRDataLocalEndAddress(); },
 			[this]() { return this->FormatROCDRPSyncError(); },
 			[this]() { return this->FormatEthernetPayloadSize(); },
-			[this]() { return this->FormatDDRRingBufferFullFlagsLow(); },
-			[this]() { return this->FormatDDRRingBufferFullFlagsHigh(); },
-			[this]() { return this->FormatDDRRingBufferFullErrorFlagsLow(); },
-			[this]() { return this->FormatDDRRingBufferFullErrorFlagsHigh(); },
-			[this]() { return this->FormatDDRRingBufferEmptyFlagsLow(); },
-			[this]() { return this->FormatDDRRingBufferEmptyFlagsHigh(); },
-			[this]() { return this->FormatDDRRingBufferHalfFullFlagsLow(); },
-			[this]() { return this->FormatDDRRingBufferHalfFullFlagsHigh(); },
+			[this]() { return this->FormatFireflyTXIICControl(); },
+			[this]() { return this->FormatFireflyTXIICParameterLow(); },
+			[this]() { return this->FormatFireflyTXIICParameterHigh(); },
+			[this]() { return this->FormatFireflyRXIICControl(); },
+			[this]() { return this->FormatFireflyRXIICParameterLow(); },
+			[this]() { return this->FormatFireflyRXIICParameterHigh(); },
+			[this]() { return this->FormatFireflyTXRXIICControl(); },
+			[this]() { return this->FormatFireflyTXRXIICParameterLow(); },
+			[this]() { return this->FormatFireflyTXRXIICParameterHigh(); },
+			[this]() { return this->FormatDDRLinkBufferFullFlagsLow(); },
+			[this]() { return this->FormatDDRLinkBufferFullFlagsHigh(); },
+			[this]() { return this->FormatDDRLinkBufferFullErrorFlagsLow(); },
+			[this]() { return this->FormatDDRLinkBufferFullErrorFlagsHigh(); },
+			[this]() { return this->FormatDDRLinkBufferEmptyFlagsLow(); },
+			[this]() { return this->FormatDDRLinkBufferEmptyFlagsHigh(); },
+			[this]() { return this->FormatDDRLinkBufferHalfFullFlagsLow(); },
+			[this]() { return this->FormatDDRLinkBufferHalfFullFlagsHigh(); },
 			[this]() { return this->FormatDDREventBuilderBufferFullFlagsLow(); },
 			[this]() { return this->FormatDDREventBuilderBufferFullFlagsHigh(); },
 			[this]() { return this->FormatDDREventBuilderBufferFullErrorFlagsLow(); },
@@ -2317,6 +2340,8 @@ namespace DTCLib
 			[this]() { return this->FormatDDREventBuilderBufferEmptyFlagsHigh(); },
 			[this]() { return this->FormatDDREventBuilderBufferHalfFullFlagsLow(); },
 			[this]() { return this->FormatDDREventBuilderBufferHalfFullFlagsHigh(); },
+			[this]() { return this->FormatSERDESSerialInversionEnable(); },
+			[this]() { return this->FormatJitterAttenuatorCSR(); },
 			[this]() { return this->FormatEVBSERDESPRBSControl(); },
 			[this]() { return this->FormatMissedCFOPacketCountRing0(); },
 			[this]() { return this->FormatMissedCFOPacketCountRing1(); },
@@ -2325,25 +2350,20 @@ namespace DTCLib
 			[this]() { return this->FormatMissedCFOPacketCountRing4(); },
 			[this]() { return this->FormatMissedCFOPacketCountRing5(); },
 			[this]() { return this->FormatLocalFragmentDropCount(); },
+			[this]() { return this->FormatEventBuilderErrorRegister(); },
+			[this]() { return this->FormatSERDESVFIFOError(); },
+			[this]() { return this->FormatPCIVFIFOError(); },
+			[this]() { return this->FormatRocLink0Error(); },
+			[this]() { return this->FormatRocLink1Error(); },
+			[this]() { return this->FormatRocLink2Error(); },
+			[this]() { return this->FormatRocLink3Error(); },
+			[this]() { return this->FormatRocLink4Error(); },
+			[this]() { return this->FormatRocLink5Error(); },
+			[this]() { return this->FormatCFOLinkError(); },
+			[this]() { return this->FormatLinkMuxError(); },
+			[this]() { return this->FormatFireflyCSR(); },
 			[this]() { return this->FormatFPGAPROMProgramStatus(); },
 			[this]() { return this->FormatFPGACoreAccess(); }
-		};
-
-		/// <summary>
-		/// Dump Monitor Performance Registers
-		/// </summary>
-		const std::vector<std::function<DTC_RegisterFormatter()>> formattedPerfMonFunctions_
-		{
-			[this]() { return this->FormatPerfMonTXByteCount(); },
-			[this]() { return this->FormatPerfMonRXByteCount(); },
-			[this]() { return this->FormatPerfMonTXPayloadCount(); },
-			[this]() { return this->FormatPerfMonRXPayloadCount(); },
-			[this]() { return this->FormatPerfMonInitCDC(); },
-			[this]() { return this->FormatPerfMonInitCHC(); },
-			[this]() { return this->FormatPerfMonInitNPDC(); },
-			[this]() { return this->FormatPerfMonInitNPHC(); },
-			[this]() { return this->FormatPerfMonInitPDC(); },
-			[this]() { return this->FormatPerfMonInitPHC(); }
 		};
 
 		/// <summary>

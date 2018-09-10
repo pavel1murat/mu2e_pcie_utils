@@ -399,7 +399,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp
 		break;
 	case M_IOC_DUMP:
 		TRACE(10, "SERDES LOOPBACK Enable 0x%x", Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9108));
-		TRACE(10, "Ring Enable 0x%x", Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9114));
+		TRACE(10, "Link Enable 0x%x", Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9114));
 		TRACE(10, "SERDES Rx Disparity error (2 bits/link) 0x%x", Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x911c));
 		TRACE(10, "SERDES Rx character not in table (2 bits/link) 0x%x", Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9120));
 		TRACE(10, "SERDES unlock error 0x%x", Dma_mReadReg(mu2e_pcie_bar_info[dtc].baseVAddr, 0x9124));

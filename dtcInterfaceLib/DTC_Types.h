@@ -52,85 +52,20 @@ namespace DTCLib
 		uint8_t GetWord() const { return idData_; }
 	};
 
-	enum DTC_Ring_ID : uint8_t
+	enum DTC_Link_ID : uint8_t
 	{
-		DTC_Ring_0 = 0,
-		DTC_Ring_1 = 1,
-		DTC_Ring_2 = 2,
-		DTC_Ring_3 = 3,
-		DTC_Ring_4 = 4,
-		DTC_Ring_5 = 5,
-		DTC_Ring_CFO = 6,
-		DTC_Ring_EVB = 7,
-		DTC_Ring_Unused,
+		DTC_Link_0 = 0,
+		DTC_Link_1 = 1,
+		DTC_Link_2 = 2,
+		DTC_Link_3 = 3,
+		DTC_Link_4 = 4,
+		DTC_Link_5 = 5,
+		DTC_Link_CFO = 6,
+		DTC_Link_EVB = 7,
+		DTC_Link_Unused,
 	};
 
-	static const std::vector<DTC_Ring_ID> DTC_Rings{ DTC_Ring_0, DTC_Ring_1, DTC_Ring_2, DTC_Ring_3, DTC_Ring_4, DTC_Ring_5 };
-
-	enum DTC_ROC_ID : uint8_t
-	{
-		DTC_ROC_0 = 0,
-		DTC_ROC_1 = 1,
-		DTC_ROC_2 = 2,
-		DTC_ROC_3 = 3,
-		DTC_ROC_4 = 4,
-		DTC_ROC_5 = 5,
-		DTC_ROC_Unused,
-	};
-
-	static const std::vector<DTC_ROC_ID> DTC_ROCS{ DTC_ROC_Unused, DTC_ROC_0, DTC_ROC_1, DTC_ROC_2, DTC_ROC_3, DTC_ROC_4, DTC_ROC_5 };
-
-	/// <summary>
-	/// The DTC_ROCIDConverter converts a DTC_ROC_ID enumeration value to string or JSON representation
-	/// </summary>
-	struct DTC_ROCIDConverter
-	{
-		DTC_ROC_ID roc_; ///< DTC_ROC_ID to convert
-
-		/// <summary>
-		/// Construct a DTC_ROCIDConverter instance using the given DTC_ROC_ID
-		/// </summary>
-		/// <param name="roc">DTC_ROC_ID to convert</param>
-		explicit DTC_ROCIDConverter(DTC_ROC_ID roc) : roc_(roc) {}
-
-		/// <summary>
-		/// Convert the DTC_ROC_ID to its string representation
-		/// </summary>
-		/// <returns>String representation of DTC_ROC_ID</returns>
-		std::string toString() const
-		{
-			switch (roc_)
-			{
-			case DTC_ROC_0:
-				return "ROC_0";
-			case DTC_ROC_1:
-				return "ROC_1";
-			case DTC_ROC_2:
-				return "ROC_2";
-			case DTC_ROC_3:
-				return "ROC_3";
-			case DTC_ROC_4:
-				return "ROC_4";
-			case DTC_ROC_5:
-				return "ROC_5";
-			case DTC_ROC_Unused:
-			default:
-				return "No ROCs";
-			}
-		}
-
-		/// <summary>
-		/// Write a DTC_ROCIDConverter in JSON format to the given stream
-		/// </summary>
-		/// <param name="stream">Stream to write</param>
-		/// <param name="roc">DTC_ROCIDConverter to serialize</param>
-		/// <returns>Stream reference for continued streaming</returns>
-		friend std::ostream& operator<<(std::ostream& stream, const DTC_ROCIDConverter& roc)
-		{
-			stream << "\"DTC_ROC_ID\":\"" << roc.toString() << "\"";
-			return stream;
-		}
-	};
+	static const std::vector<DTC_Link_ID> DTC_Links{ DTC_Link_0, DTC_Link_1, DTC_Link_2, DTC_Link_3, DTC_Link_4, DTC_Link_5 };
 
 	enum DTC_OscillatorType
 	{
@@ -750,11 +685,11 @@ namespace DTCLib
 		/// <param name="data">Bits to use for initialization</param>
 		explicit DTC_SERDESRXDisparityError(std::bitset<2> data);
 		/// <summary>
-		/// Construct a DTC_SERDESRXDisparityError using the register value and a Ring ID
+		/// Construct a DTC_SERDESRXDisparityError using the register value and a Link ID
 		/// </summary>
 		/// <param name="data">Register value to read error bits from</param>
-		/// <param name="ring">Ring to read</param>
-		DTC_SERDESRXDisparityError(uint32_t data, DTC_Ring_ID ring);
+		/// <param name="link">Link to read</param>
+		DTC_SERDESRXDisparityError(uint32_t data, DTC_Link_ID link);
 		/// <summary>
 		/// Default Copy Constructor
 		/// </summary>
@@ -844,8 +779,8 @@ namespace DTCLib
 		/// DTC_CharacterNotInTableError Constructor
 		/// </summary>
 		/// <param name="data">Register value</param>
-		/// <param name="ring">Specific ring to read</param>
-		DTC_CharacterNotInTableError(uint32_t data, DTC_Ring_ID ring);
+		/// <param name="link">Specific link to read</param>
+		DTC_CharacterNotInTableError(uint32_t data, DTC_Link_ID link);
 		/// <summary>
 		/// Default Copy Constructor
 		/// </summary>
@@ -914,9 +849,9 @@ namespace DTCLib
 	};
 
 	/// <summary>
-	/// This structure is used to decode the RingEnable register value
+	/// This structure is used to decode the LinkEnable register value
 	/// </summary>
-	struct DTC_RingEnableMode
+	struct DTC_LinkEnableMode
 	{
 		bool TransmitEnable; ///< Whether transmit is enabled on this link
 		bool ReceiveEnable; ///< Whether receive is enabled on this link
@@ -925,24 +860,24 @@ namespace DTCLib
 		/// <summary>
 		/// Default constructor. Sets all enable bits to true.
 		/// </summary>
-		DTC_RingEnableMode() : TransmitEnable(true), ReceiveEnable(true), TimingEnable(true) {}
+		DTC_LinkEnableMode() : TransmitEnable(true), ReceiveEnable(true), TimingEnable(true) {}
 
 		/// <summary>
-		/// Construct a DTC_RingEnableMode instance with the given flags
+		/// Construct a DTC_LinkEnableMode instance with the given flags
 		/// </summary>
 		/// <param name="transmit">Enable TX</param>
 		/// <param name="receive">Enable RX</param>
 		/// <param name="timing">Enable CFO</param>
-		DTC_RingEnableMode(bool transmit, bool receive, bool timing) : TransmitEnable(transmit), ReceiveEnable(receive), TimingEnable(timing) {}
+		DTC_LinkEnableMode(bool transmit, bool receive, bool timing) : TransmitEnable(transmit), ReceiveEnable(receive), TimingEnable(timing) {}
 
 		/// <summary>
-		/// Write the DTC_RingEnableMode to stream in JSON format.
+		/// Write the DTC_LinkEnableMode to stream in JSON format.
 		/// Note that the JSON represents an object, calling code should add a key if there's other objects to stream
 		/// </summary>
 		/// <param name="stream">Stream to write to</param>
-		/// <param name="mode">DTC_RingEnableMode to parse</param>
+		/// <param name="mode">DTC_LinkEnableMode to parse</param>
 		/// <returns>Stream object for continued streaming</returns>
-		friend std::ostream& operator<<(std::ostream& stream, const DTC_RingEnableMode& mode)
+		friend std::ostream& operator<<(std::ostream& stream, const DTC_LinkEnableMode& mode)
 		{
 			auto formatSet = (stream.flags() & std::ios_base::boolalpha) != 0;
 			stream.setf(std::ios_base::boolalpha);
@@ -952,24 +887,24 @@ namespace DTCLib
 		}
 
 		/// <summary>
-		/// Determine if two DTC_RingEnableMode objects are equal
+		/// Determine if two DTC_LinkEnableMode objects are equal
 		/// They are equal if TX, RX and Timing bits are all equal
 		/// </summary>
 		/// <param name="left">LHS of compare</param>
 		/// <param name="right">RHS of compare</param>
 		/// <returns>Whether all three bits of both sides are equal</returns>
-		friend bool operator==(const DTC_RingEnableMode& left, const DTC_RingEnableMode& right)
+		friend bool operator==(const DTC_LinkEnableMode& left, const DTC_LinkEnableMode& right)
 		{
 			return left.TransmitEnable == right.TransmitEnable && left.ReceiveEnable == right.ReceiveEnable && left.TimingEnable == right.TimingEnable;
 		}
 
 		/// <summary>
-		/// Determine if two DTC_RingEnableMode objects are not equal
+		/// Determine if two DTC_LinkEnableMode objects are not equal
 		/// </summary>
 		/// <param name="left">LHS of compare</param>
 		/// <param name="right">RHS of compare</param>
 		/// <returns>!(left == right)</returns>
-		friend bool operator!=(const DTC_RingEnableMode& left, const DTC_RingEnableMode& right)
+		friend bool operator!=(const DTC_LinkEnableMode& left, const DTC_LinkEnableMode& right)
 		{
 			return !(left == right);
 		}
@@ -1062,6 +997,82 @@ namespace DTCLib
 				<< ",\"OutputDCSStage2\":" << flags.OutputDCSStage2
 				<< ",\"DataInput\":" << flags.DataInput
 				<< ",\"DCSStatusInput\":" << flags.DCSStatusInput << "}";
+			if (!formatSet) stream.unsetf(std::ios_base::boolalpha);
+			return stream;
+		}
+	};
+
+
+	/// <summary>
+	/// This structure is used to decode the DDR Flags register values
+	/// </summary>
+	struct DTC_DDRFlags
+	{
+		bool InputFragmentBufferFull;
+		bool InputFragmentBufferFullError;
+		bool InputFragmentBufferEmpty;
+		bool InputFragmentBufferHalfFull;
+		bool OutputEventBufferFull;
+		bool OutputEventBufferFullError;
+		bool OutputEventBufferEmpty;
+		bool OutputEventBufferHalfFull;
+
+		/// <summary>
+		/// Default Constructor, sets all flags to false
+		/// </summary>
+		DTC_DDRFlags()
+			: InputFragmentBufferFull(false)
+			, InputFragmentBufferFullError(false)
+			, InputFragmentBufferEmpty(false)
+			, InputFragmentBufferHalfFull(false)
+			, OutputEventBufferFull(false)
+			, OutputEventBufferFullError(false)
+			, OutputEventBufferEmpty(false)
+			, OutputEventBufferHalfFull(false)
+		{}
+
+		/// <summary>
+		/// Construct a DTC_DDRFlags instance with the given values
+		/// </summary>
+		/// <param name="ifbf">InputFragmentBufferFull value</param>
+		/// <param name="ifbfe">InputFragmentBufferFullError</param>
+		/// <param name="ifbe">InputFragmentBufferEmpty</param>
+		/// <param name="ifbhf">InputFragmentBufferHalfFull</param>
+		/// <param name="ofbf">OutputEventBufferFull</param>
+		/// <param name="ofbfe">OutputEventBufferFullError</param>
+		/// <param name="ofbe">OutputEventBufferEmpty</param>
+		/// <param name="ofbhf">OutputEventBufferHalfFull</param>
+		DTC_DDRFlags(bool ifbf, bool ifbfe, bool ifbe, bool ifbhf,
+			bool ofbf, bool ofbfe, bool ofbe, bool ofbhf)
+			: InputFragmentBufferFull(ifbf)
+			, InputFragmentBufferFullError(ifbfe)
+			, InputFragmentBufferEmpty(ifbe)
+			, InputFragmentBufferHalfFull(ifbhf)
+			, OutputEventBufferFull(ofbf)
+			, OutputEventBufferFullError(ofbfe)
+			, OutputEventBufferEmpty(ofbe)
+			, OutputEventBufferHalfFull(ofbhf)
+		{}
+
+		/// <summary>
+		/// Write the DTC_DDRFlags to stream in JSON format.
+		/// Note that the JSON represents an object, calling code should add a key if there's other objects to stream
+		/// </summary>
+		/// <param name="stream">Stream to write to</param>
+		/// <param name="flags">Flags to parse</param>
+		/// <returns>Stream object for continued streaming</returns>
+		friend std::ostream& operator<<(std::ostream& stream, const DTC_DDRFlags& flags)
+		{
+			auto formatSet = (stream.flags() & std::ios_base::boolalpha) != 0;
+			stream.setf(std::ios_base::boolalpha);
+			stream << "{\"InputFragmentBufferFull\":" << flags.InputFragmentBufferFull
+				<< ",\"InputFragmentBufferFullError\":" << flags.InputFragmentBufferFullError
+				<< ",\"InputFragmentBufferEmpty\":" << flags.InputFragmentBufferEmpty
+				<< ",\"InputFragmentBufferHalfFull\":" << flags.InputFragmentBufferHalfFull
+				<< ",\"OutputEventBufferFull\":" << flags.OutputEventBufferFull
+				<< ",\"OutputEventBufferFullError\":" << flags.OutputEventBufferFullError
+				<< ",\"OutputEventBufferEmpty\":" << flags.OutputEventBufferEmpty
+				<< ",\"OutputEventBufferHalfFull\":" << flags.OutputEventBufferHalfFull << "}";
 			if (!formatSet) stream.unsetf(std::ios_base::boolalpha);
 			return stream;
 		}

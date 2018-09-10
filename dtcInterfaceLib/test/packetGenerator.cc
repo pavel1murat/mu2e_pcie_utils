@@ -20,7 +20,7 @@ struct calhit {
 	std::vector<double> waveform; ///< Reconstructed waveform
 
 	int rocID; ///< ROC ID of CAL digit
-	int ringID; ///< Ring ID of CAL digit
+	int linkID; ///< Link ID of CAL digit
 	int apdID; ///< APD ID of CAL digit
 
 };
@@ -35,7 +35,7 @@ struct trkhit {
 	std::vector<double> waveform; ///< Reconstructed waveform
 
 	int rocID; ///< ROC ID of TRK digit
-	int ringID; ///< Ring ID of TRK digit
+	int linkID; ///< Link ID of TRK digit
 };
 
 
@@ -121,7 +121,7 @@ int main(int argc, char** argv)
 	std::ifstream inputCalDigiStream;
 	std::vector<calhit> calHitVector; // Vector of cal hit digi data
 	std::vector< std::vector<calhit> > calEventVector; // Vector of vectors of cal hit digi data for each event
-	// For now, crystal IDs start at minCrystalID and end at minCrystalID+number_of_rings*rocs_per_ring-1
+	// For now, crystal IDs start at minCrystalID and end at minCrystalID+number_of_links*rocs_per_link-1
 	size_t number_of_crystals_per_roc = 10; // 20 channels, 2 APDs per crystal
 	size_t minCrystalID = 200;
 
@@ -130,7 +130,7 @@ int main(int argc, char** argv)
 	std::ifstream inputTrkDigiStream;
 	std::vector<trkhit> trkHitVector; // Vector of trk hit digi data
 	std::vector< std::vector<trkhit> > trkEventVector; // Vector of vectors of cal hit digi data for each event
-	// For now, crystal IDs start at minCrystalID and end at minCrystalID+number_of_rings*rocs_per_ring-1
+	// For now, crystal IDs start at minCrystalID and end at minCrystalID+number_of_links*rocs_per_link-1
 	size_t number_of_straws_per_roc = 96; // Each panel in the tracker has 96 straws
 	size_t minStrawID = 960;
 
@@ -214,8 +214,8 @@ int main(int argc, char** argv)
 		binFile.open(outputFile, std::ios::out | std::ios::app | std::ios::binary);
 	}
 
-	int number_of_rings = 6;
-	int rocs_per_ring = 5;
+	int number_of_links = 6;
+	int rocs_per_link = 5;
 
 
 
@@ -238,8 +238,8 @@ int main(int argc, char** argv)
 				curHit.waveform.push_back(curSample);
 			}
 
-			curHit.ringID = int((curHit.crystalId - minCrystalID) / (rocs_per_ring * number_of_crystals_per_roc));
-			curHit.rocID = ((curHit.crystalId - minCrystalID) - (rocs_per_ring * number_of_crystals_per_roc) * curHit.ringID) / number_of_crystals_per_roc;
+			curHit.linkID = int((curHit.crystalId - minCrystalID) / (rocs_per_link * number_of_crystals_per_roc));
+			curHit.rocID = ((curHit.crystalId - minCrystalID) - (rocs_per_link * number_of_crystals_per_roc) * curHit.linkID) / number_of_crystals_per_roc;
 			curHit.apdID = curHit.recoDigiId % 2; // Even is APD 0, Odd is APD 1
 
 			calHitVector.push_back(curHit);
@@ -306,8 +306,8 @@ int main(int argc, char** argv)
 				curHit.waveform.push_back(curSample);
 			}
 
-			curHit.ringID = int((curHit.strawIdx - minStrawID) / (rocs_per_ring * number_of_straws_per_roc));
-			curHit.rocID = ((curHit.strawIdx - minStrawID) - (rocs_per_ring * number_of_straws_per_roc) * curHit.ringID) / number_of_straws_per_roc;
+			curHit.linkID = int((curHit.strawIdx - minStrawID) / (rocs_per_link * number_of_straws_per_roc));
+			curHit.rocID = ((curHit.strawIdx - minStrawID) - (rocs_per_link * number_of_straws_per_roc) * curHit.linkID) / number_of_straws_per_roc;
 
 			trkHitVector.push_back(curHit);
 		}
@@ -455,37 +455,37 @@ int main(int argc, char** argv)
 
 	for (size_t eventNum = 0; eventNum < nevents; eventNum++)
 	{
-		// Create a vector to hold all Ring ID / ROC ID combinations to simulate
-		std::vector< std::pair<int, int> > rocRingVector;
-		for (auto curRingID = 0; curRingID < number_of_rings; curRingID++)
+		// Create a vector to hold all Link ID / ROC ID combinations to simulate
+		std::vector< std::pair<int, int> > rocLinkVector;
+		for (auto curLinkID = 0; curLinkID < number_of_links; curLinkID++)
 		{
-			for (auto curROCID = 0; curROCID < rocs_per_ring; curROCID++)
+			for (auto curROCID = 0; curROCID < rocs_per_link; curROCID++)
 			{
-				std::pair<int, int> curPair(curRingID, curROCID);
-				rocRingVector.push_back(curPair);
+				std::pair<int, int> curPair(curLinkID, curROCID);
+				rocLinkVector.push_back(curPair);
 			}
 		}
-		// // Randomize the order in which the Rings and ROCs are received
-		// std::shuffle(rocRingVector.begin(),rocRingVector.end(),generator);
+		// // Randomize the order in which the Links and ROCs are received
+		// std::shuffle(rocLinkVector.begin(),rocLinkVector.end(),generator);
 
 	// Vector to hold all the DataBlocks for this event
 		std::vector< std::vector<adc_t> > curDataBlockVector;
 
-		// Loop over the ROC/ring pairs and generate datablocks for each ROC on
-		// all the rings
-		auto targetNumROCs = rocRingVector.size();
+		// Loop over the ROC/link pairs and generate datablocks for each ROC on
+		// all the links
+		auto targetNumROCs = rocLinkVector.size();
 		for (size_t curPairNum = 0; curPairNum < targetNumROCs; curPairNum++)
 		{
-			size_t ringID = rocRingVector[curPairNum].first;
-			size_t rocID = rocRingVector[curPairNum].second;
+			size_t linkID = rocLinkVector[curPairNum].first;
+			size_t rocID = rocLinkVector[curPairNum].second;
 
 			if (read_cal_digis_from_file && packetType == PacketType_CAL)
 			{
 				std::vector<calhit> curHitVector;
-				// Find all hits for this event coming from the specified Ring/ROC
+				// Find all hits for this event coming from the specified Link/ROC
 				for (size_t curHitIdx = 0; curHitIdx < calEventVector[eventNum].size(); curHitIdx++)
 				{
-					if (calEventVector[eventNum][curHitIdx].rocID == static_cast<int>(rocID) && calEventVector[eventNum][curHitIdx].ringID == static_cast<int>(ringID))
+					if (calEventVector[eventNum][curHitIdx].rocID == static_cast<int>(rocID) && calEventVector[eventNum][curHitIdx].linkID == static_cast<int>(linkID))
 					{
 						curHitVector.push_back(calEventVector[eventNum][curHitIdx]);
 					}
@@ -500,13 +500,13 @@ int main(int argc, char** argv)
 					adc_t null_adc = 0;
 					// First 16 bits of header (reserved values)
 					curDataBlock.push_back(null_adc);
-					// Second 16 bits of header (ROC ID, packet type, and ring ID):
+					// Second 16 bits of header (ROC ID, packet type, and link ID):
 					std::bitset<16> curROCID = rocID; // 4 bit ROC ID
 					std::bitset<16> headerPacketType = 5; // 4 bit Data packet header type is 5
 					headerPacketType <<= 4; // Shift left by 4
-					std::bitset<16> curRingID = ringID; // 3 bit ring ID
-					curRingID <<= 8; // Shift left by 8
-					std::bitset<16> secondEntry = (curROCID | headerPacketType | curRingID);
+					std::bitset<16> curLinkID = linkID; // 3 bit link ID
+					curLinkID <<= 8; // Shift left by 8
+					std::bitset<16> secondEntry = (curROCID | headerPacketType | curLinkID);
 					secondEntry[15] = 1; // valid bit
 					curDataBlock.push_back((adc_t)secondEntry.to_ulong());
 					// Third 16 bits of header (number of data packets is 0)
@@ -543,13 +543,13 @@ int main(int argc, char** argv)
 						adc_t null_adc = 0;
 						// First 16 bits of header (reserved values)
 						curDataBlock.push_back(null_adc);
-						// Second 16 bits of header (ROC ID, packet type, and ring ID):
+						// Second 16 bits of header (ROC ID, packet type, and link ID):
 						std::bitset<16> curROCID = rocID; // 4 bit ROC ID
 						std::bitset<16> headerPacketType = 5; // 4 bit Data packet header type is 5
 						headerPacketType <<= 4; // Shift left by 4
-						std::bitset<16> curRingID = ringID; // 3 bit ring ID
-						curRingID <<= 8; // Shift left by 8
-						auto secondEntry = (curROCID | headerPacketType | curRingID);
+						std::bitset<16> curLinkID = linkID; // 3 bit link ID
+						curLinkID <<= 8; // Shift left by 8
+						auto secondEntry = (curROCID | headerPacketType | curLinkID);
 						secondEntry[15] = 1; // valid bit
 						curDataBlock.push_back(static_cast<adc_t>(secondEntry.to_ulong()));
 						// Third 16 bits of header (number of data packets is 0)
@@ -613,10 +613,10 @@ int main(int argc, char** argv)
 			else if (read_trk_digis_from_file && packetType == PacketType_TRK)
 			{
 				std::vector<trkhit> curHitVector;
-				// Find all hits for this event coming from the specified Ring/ROC
+				// Find all hits for this event coming from the specified Link/ROC
 				for (size_t curHitIdx = 0; curHitIdx < trkEventVector[eventNum].size(); curHitIdx++)
 				{
-					if (trkEventVector[eventNum][curHitIdx].rocID == (int)rocID && trkEventVector[eventNum][curHitIdx].ringID == (int)ringID)
+					if (trkEventVector[eventNum][curHitIdx].rocID == (int)rocID && trkEventVector[eventNum][curHitIdx].linkID == (int)linkID)
 					{
 						curHitVector.push_back(trkEventVector[eventNum][curHitIdx]);
 					}
@@ -631,13 +631,13 @@ int main(int argc, char** argv)
 					adc_t null_adc = 0;
 					// First 16 bits of header (reserved values)
 					curDataBlock.push_back(null_adc);
-					// Second 16 bits of header (ROC ID, packet type, and ring ID):
+					// Second 16 bits of header (ROC ID, packet type, and link ID):
 					std::bitset<16> curROCID = rocID; // 4 bit ROC ID
 					std::bitset<16> headerPacketType = 5; // 4 bit Data packet header type is 5
 					headerPacketType <<= 4; // Shift left by 4
-					std::bitset<16> curRingID = ringID; // 3 bit ring ID
-					curRingID <<= 8; // Shift left by 8
-					std::bitset<16> secondEntry = (curROCID | headerPacketType | curRingID);
+					std::bitset<16> curLinkID = linkID; // 3 bit link ID
+					curLinkID <<= 8; // Shift left by 8
+					std::bitset<16> secondEntry = (curROCID | headerPacketType | curLinkID);
 					secondEntry[15] = 1; // valid bit
 					curDataBlock.push_back((adc_t)secondEntry.to_ulong());
 					// Third 16 bits of header (number of data packets is 0)
@@ -674,13 +674,13 @@ int main(int argc, char** argv)
 						adc_t null_adc = 0;
 						// First 16 bits of header (reserved values)
 						curDataBlock.push_back(null_adc);
-						// Second 16 bits of header (ROC ID, packet type, and ring ID):
+						// Second 16 bits of header (ROC ID, packet type, and link ID):
 						std::bitset<16> curROCID = rocID; // 4 bit ROC ID
 						std::bitset<16> headerPacketType = 5; // 4 bit Data packet header type is 5
 						headerPacketType <<= 4; // Shift left by 4
-						std::bitset<16> curRingID = ringID; // 3 bit ring ID
-						curRingID <<= 8; // Shift left by 8
-						std::bitset<16> secondEntry = (curROCID | headerPacketType | curRingID);
+						std::bitset<16> curLinkID = linkID; // 3 bit link ID
+						curLinkID <<= 8; // Shift left by 8
+						std::bitset<16> secondEntry = (curROCID | headerPacketType | curLinkID);
 						secondEntry[15] = 1; // valid bit
 						curDataBlock.push_back((adc_t)secondEntry.to_ulong());
 						// Third 16 bits of header (number of data packets is 0)
@@ -760,13 +760,13 @@ int main(int argc, char** argv)
 				adc_t null_adc = 0;
 				// First 16 bits of header (reserved values)
 				curDataBlock.push_back(null_adc);
-				// Second 16 bits of header (ROC ID, packet type, and ring ID):
+				// Second 16 bits of header (ROC ID, packet type, and link ID):
 				std::bitset<16> curROCID = rocID; // 4 bit ROC ID
 				std::bitset<16> headerPacketType = 5; // 4 bit Data packet header type is 5
 				headerPacketType <<= 4; // Shift left by 4
-				std::bitset<16> curRingID = ringID; // 3 bit ring ID
-				curRingID <<= 8; // Shift left by 8
-				std::bitset<16> secondEntry = (curROCID | headerPacketType | curRingID);
+				std::bitset<16> curLinkID = linkID; // 3 bit link ID
+				curLinkID <<= 8; // Shift left by 8
+				std::bitset<16> secondEntry = (curROCID | headerPacketType | curLinkID);
 				secondEntry[15] = 1; // valid bit
 				curDataBlock.push_back((adc_t)secondEntry.to_ulong());
 				// Third 16 bits of header (number of data packets is 0)

@@ -52,7 +52,7 @@ union DataHeaderPacket
 
 		uint16_t Resv1 : 4; ///< Reserved
 		uint16_t PacketType : 4; ///< Type of packet
-		uint16_t RingID : 4; ///< Ring ID of packet
+		uint16_t LinkID : 4; ///< Link ID of packet
 		uint16_t Resv0 : 3; ///< Reserved
 		uint16_t Valid : 1; ///< Is the packet valid?
 
@@ -93,7 +93,7 @@ union DataRequestPacket
 
 		uint16_t Resv1 : 4; ///< Reserved
 		uint16_t PacketType : 4; ///< Type of packet
-		uint16_t RingID : 4; ///< Ring ID of packet
+		uint16_t LinkID : 4; ///< Link ID of packet
 		uint16_t Resv0 : 3; ///< Reserved
 		uint16_t Valid : 1; ///< Is the packet valid?
 

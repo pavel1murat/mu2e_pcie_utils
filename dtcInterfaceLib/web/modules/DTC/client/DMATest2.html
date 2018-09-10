@@ -141,37 +141,37 @@
                 <legend>ROC Emulator</legend>
                 <table>
                     <tr>
-                        <th>Ring 0</th>
-                        <th>Ring 1</th>
-                        <th>Ring 2</th>
-                        <th>Ring 3</th>
-                        <th>Ring 4</th>
-                        <th>Ring 5</th>
+                        <th>Link 0</th>
+                        <th>Link 1</th>
+                        <th>Link 2</th>
+                        <th>Link 3</th>
+                        <th>Link 4</th>
+                        <th>Link 5</th>
                     </tr>
                     <tr>
                         <td>
-                            <canvas id="ROCEmulatorEnabledRing0LED" width="20" height="10" onclick="LEDAction('/DTC/toggleROCEmulator', 0, 'ROCEmulatorEnabledRing0LED')"></canvas>
+                            <canvas id="ROCEmulatorEnabledLink0LED" width="20" height="10" onclick="LEDAction('/DTC/toggleROCEmulator', 0, 'ROCEmulatorEnabledLink0LED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="ROCEmulatorEnabledRing1LED" width="20" height="10" onclick="LEDAction('/DTC/toggleROCEmulator', 1, 'ROCEmulatorEnabledRing1LED')"></canvas>
+                            <canvas id="ROCEmulatorEnabledLink1LED" width="20" height="10" onclick="LEDAction('/DTC/toggleROCEmulator', 1, 'ROCEmulatorEnabledLink1LED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="ROCEmulatorEnabledRing2LED" width="20" height="10" onclick="LEDAction('/DTC/toggleROCEmulator', 2, 'ROCEmulatorEnabledRing2LED')"></canvas>
+                            <canvas id="ROCEmulatorEnabledLink2LED" width="20" height="10" onclick="LEDAction('/DTC/toggleROCEmulator', 2, 'ROCEmulatorEnabledLink2LED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="ROCEmulatorEnabledRing3LED" width="20" height="10" onclick="LEDAction('/DTC/toggleROCEmulator', 3, 'ROCEmulatorEnabledRing3LED')"></canvas>
+                            <canvas id="ROCEmulatorEnabledLink3LED" width="20" height="10" onclick="LEDAction('/DTC/toggleROCEmulator', 3, 'ROCEmulatorEnabledLink3LED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="ROCEmulatorEnabledRing4LED" width="20" height="10" onclick="LEDAction('/DTC/toggleROCEmulator', 4, 'ROCEmulatorEnabledRing4LED')"></canvas>
+                            <canvas id="ROCEmulatorEnabledLink4LED" width="20" height="10" onclick="LEDAction('/DTC/toggleROCEmulator', 4, 'ROCEmulatorEnabledLink4LED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="ROCEmulatorEnabledRing5LED" width="20" height="10" onclick="LEDAction('/DTC/toggleROCEmulator', 5, 'ROCEmulatorEnabledRing5LED')"></canvas>
+                            <canvas id="ROCEmulatorEnabledLink5LED" width="20" height="10" onclick="LEDAction('/DTC/toggleROCEmulator', 5, 'ROCEmulatorEnabledLink5LED')"></canvas>
                         </td>
                     </tr>
                 </table>
             </fieldset>
             <fieldset>
-                <legend>Ring Enable</legend>
+                <legend>Link Enable</legend>
                 <table>
                     <tr>
                         <th></th>
@@ -180,91 +180,91 @@
                         <th>Timing Link Enabled</th>
                     </tr>
                     <tr>
-                        <td>Ring 0</td>
+                        <td>Link 0</td>
                         <td>
-                            <canvas id="Ring0TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 0, 0, 'Ring0TxEnabledLED')"></canvas>
+                            <canvas id="Link0TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 0, 0, 'Link0TxEnabledLED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="Ring0RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 0, 1, 'Ring0RxEnabledLED')"></canvas>
+                            <canvas id="Link0RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 0, 1, 'Link0RxEnabledLED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="Ring0TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 0, 2, 'Ring0TimingEnabledLED')"></canvas>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Ring 1</td>
-                        <td>
-                            <canvas id="Ring1TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 1, 0, 'Ring1TxEnabledLED')"></canvas>
-                        </td>
-                        <td>
-                            <canvas id="Ring1RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 1, 1, 'Ring1RxEnabledLED')"></canvas>
-                        </td>
-                        <td>
-                            <canvas id="Ring1TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 1, 2, 'Ring1TimingEnabledLED')"></canvas>
+                            <canvas id="Link0TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 0, 2, 'Link0TimingEnabledLED')"></canvas>
                         </td>
                     </tr>
                     <tr>
-                        <td>Ring 2</td>
+                        <td>Link 1</td>
                         <td>
-                            <canvas id="Ring2TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 2, 0, 'Ring2TxEnabledLED')"></canvas>
+                            <canvas id="Link1TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 1, 0, 'Link1TxEnabledLED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="Ring2RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 2, 1, 'Ring2RxEnabledLED')"></canvas>
+                            <canvas id="Link1RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 1, 1, 'Link1RxEnabledLED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="Ring2TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 2, 2, 'Ring2TimingEnabledLED')"></canvas>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Ring 3</td>
-                        <td>
-                            <canvas id="Ring3TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 3, 0, 'Ring3TxEnabledLED')"></canvas>
-                        </td>
-                        <td>
-                            <canvas id="Ring3RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 3, 1, 'Ring3RxEnabledLED')"></canvas>
-                        </td>
-                        <td>
-                            <canvas id="Ring3TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 3, 2, 'Ring3TimingEnabledLED')"></canvas>
+                            <canvas id="Link1TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 1, 2, 'Link1TimingEnabledLED')"></canvas>
                         </td>
                     </tr>
                     <tr>
-                        <td>Ring 4</td>
+                        <td>Link 2</td>
                         <td>
-                            <canvas id="Ring4TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 4, 0, 'Ring4TxEnabledLED')"></canvas>
+                            <canvas id="Link2TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 2, 0, 'Link2TxEnabledLED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="Ring4RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 4, 1, 'Ring4RxEnabledLED')"></canvas>
+                            <canvas id="Link2RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 2, 1, 'Link2RxEnabledLED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="Ring4TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 4, 2, 'Ring4TimingEnabledLED')"></canvas>
+                            <canvas id="Link2TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 2, 2, 'Link2TimingEnabledLED')"></canvas>
                         </td>
                     </tr>
                     <tr>
-                        <td>Ring 5</td>
+                        <td>Link 3</td>
                         <td>
-                            <canvas id="Ring5TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 5, 0, 'Ring5TxEnabledLED')"></canvas>
+                            <canvas id="Link3TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 3, 0, 'Link3TxEnabledLED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="Ring5RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 5, 1, 'Ring5RxEnabledLED')"></canvas>
+                            <canvas id="Link3RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 3, 1, 'Link3RxEnabledLED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="Ring5TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 5, 2, 'Ring5TimingEnabledLED')"></canvas>
+                            <canvas id="Link3TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 3, 2, 'Link3TimingEnabledLED')"></canvas>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Link 4</td>
+                        <td>
+                            <canvas id="Link4TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 4, 0, 'Link4TxEnabledLED')"></canvas>
+                        </td>
+                        <td>
+                            <canvas id="Link4RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 4, 1, 'Link4RxEnabledLED')"></canvas>
+                        </td>
+                        <td>
+                            <canvas id="Link4TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 4, 2, 'Link4TimingEnabledLED')"></canvas>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Link 5</td>
+                        <td>
+                            <canvas id="Link5TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 5, 0, 'Link5TxEnabledLED')"></canvas>
+                        </td>
+                        <td>
+                            <canvas id="Link5RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 5, 1, 'Link5RxEnabledLED')"></canvas>
+                        </td>
+                        <td>
+                            <canvas id="Link5TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 5, 2, 'Link5TimingEnabledLED')"></canvas>
                         </td>
                     </tr>
                     <tr>
                         <td>CFO</td>
                         <td>
-                            <canvas id="CFOTxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 6, 0, 'CFOTxEnabledLED')"></canvas>
+                            <canvas id="CFOTxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 6, 0, 'CFOTxEnabledLED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="CFORxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleRingEnabled', 6, 1, 'CFORxEnabledLED')"></canvas>
+                            <canvas id="CFORxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 6, 1, 'CFORxEnabledLED')"></canvas>
                         </td>
                         <td></td>
                     </tr>
                 </table>
             </fieldset>
             <fieldset>
-                <legend>Ring ROC Count</legend>
+                <legend>Link ROC Count</legend>
                 <table>
                     <tr>
                         <th></th>
@@ -276,7 +276,7 @@
                         <th>ROC 5</th>
                     </tr>
                     <tr>
-                        <td>Ring 0</td>
+                        <td>Link 0</td>
                         <td>
                             <canvas id="R0ROC0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 0, 0, 'R0ROC0LED')"></canvas>
                         </td>
@@ -297,7 +297,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td>Ring 1</td>
+                        <td>Link 1</td>
                         <td>
                             <canvas id="R1ROC0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 1, 0, 'R1ROC0LED')"></canvas>
                         </td>
@@ -318,7 +318,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td>Ring 2</td>
+                        <td>Link 2</td>
                         <td>
                             <canvas id="R2ROC0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 2, 0, 'R2ROC0LED')"></canvas>
                         </td>
@@ -339,7 +339,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td>Ring 3</td>
+                        <td>Link 3</td>
                         <td>
                             <canvas id="R3ROC0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 3, 0, 'R3ROC0LED')"></canvas>
                         </td>
@@ -360,7 +360,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td>Ring 4</td>
+                        <td>Link 4</td>
                         <td>
                             <canvas id="R4ROC0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 4, 0, 'R4ROC0LED')"></canvas>
                         </td>
@@ -381,7 +381,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td>Ring 5</td>
+                        <td>Link 5</td>
                         <td>
                             <canvas id="R5ROC0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 5, 0, 'R5ROC0LED')"></canvas>
                         </td>
@@ -414,108 +414,108 @@
                         <th>Far-End PCS</th>
                     </tr>
                     <tr>
-                        <td>Ring 0</td>
+                        <td>Link 0</td>
                         <td>
-                            <canvas id="SERDESLoopbackNEPCSRing0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 0, 1, 'SERDESLoopbackNEPCSRing0LED')"></canvas>
+                            <canvas id="SERDESLoopbackNEPCSLink0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 0, 1, 'SERDESLoopbackNEPCSLink0LED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="SERDESLoopbackNEPMARing0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 0, 2, 'SERDESLoopbackNEPMARing0LED')"></canvas>
+                            <canvas id="SERDESLoopbackNEPMALink0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 0, 2, 'SERDESLoopbackNEPMALink0LED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="SERDESLoopbackFEPMARing0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 0, 4, 'SERDESLoopbackFEPMARing0LED')"></canvas>
+                            <canvas id="SERDESLoopbackFEPMALink0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 0, 4, 'SERDESLoopbackFEPMALink0LED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="SERDESLoopbackFEPCSRing0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 0, 6, 'SERDESLoopbackFEPCSRing0LED')"></canvas>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Ring 1</td>
-                        <td>
-                            <canvas id="SERDESLoopbackNEPCSRing1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 1, 1, 'SERDESLoopbackNEPCSRing1LED')"></canvas>
-                        </td>
-                        <td>
-                            <canvas id="SERDESLoopbackNEPMARing1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 1, 2, 'SERDESLoopbackNEPMARing1LED')"></canvas>
-                        </td>
-                        <td>
-                            <canvas id="SERDESLoopbackFEPMARing1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 1, 4, 'SERDESLoopbackFEPMARing1LED')"></canvas>
-                        </td>
-                        <td>
-                            <canvas id="SERDESLoopbackFEPCSRing1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 1, 6, 'SERDESLoopbackFEPCSRing1LED')"></canvas>
+                            <canvas id="SERDESLoopbackFEPCSLink0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 0, 6, 'SERDESLoopbackFEPCSLink0LED')"></canvas>
                         </td>
                     </tr>
                     <tr>
-                        <td>Ring 2</td>
+                        <td>Link 1</td>
                         <td>
-                            <canvas id="SERDESLoopbackNEPCSRing2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 2, 1, 'SERDESLoopbackNEPCSRing2LED')"></canvas>
+                            <canvas id="SERDESLoopbackNEPCSLink1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 1, 1, 'SERDESLoopbackNEPCSLink1LED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="SERDESLoopbackNEPMARing2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 2, 2, 'SERDESLoopbackNEPMARing2LED')"></canvas>
+                            <canvas id="SERDESLoopbackNEPMALink1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 1, 2, 'SERDESLoopbackNEPMALink1LED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="SERDESLoopbackFEPMARing2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 2, 4, 'SERDESLoopbackFEPMARing2LED')"></canvas>
+                            <canvas id="SERDESLoopbackFEPMALink1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 1, 4, 'SERDESLoopbackFEPMALink1LED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="SERDESLoopbackFEPCSRing2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 2, 6, 'SERDESLoopbackFEPCSRing2LED')"></canvas>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Ring 3</td>
-                        <td>
-                            <canvas id="SERDESLoopbackNEPCSRing3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 3, 1, 'SERDESLoopbackNEPCSRing3LED')"></canvas>
-                        </td>
-                        <td>
-                            <canvas id="SERDESLoopbackNEPMARing3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 3, 2, 'SERDESLoopbackNEPMARing3LED')"></canvas>
-                        </td>
-                        <td>
-                            <canvas id="SERDESLoopbackFEPMARing3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 3, 4, 'SERDESLoopbackFEPMARing3LED')"></canvas>
-                        </td>
-                        <td>
-                            <canvas id="SERDESLoopbackFEPCSRing3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 3, 6, 'SERDESLoopbackFEPCSRing3LED')"></canvas>
+                            <canvas id="SERDESLoopbackFEPCSLink1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 1, 6, 'SERDESLoopbackFEPCSLink1LED')"></canvas>
                         </td>
                     </tr>
                     <tr>
-                        <td>Ring 4</td>
+                        <td>Link 2</td>
                         <td>
-                            <canvas id="SERDESLoopbackNEPCSRing4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 4, 1, 'SERDESLoopbackNEPCSRing4LED')"></canvas>
+                            <canvas id="SERDESLoopbackNEPCSLink2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 2, 1, 'SERDESLoopbackNEPCSLink2LED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="SERDESLoopbackNEPMARing4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 4, 2, 'SERDESLoopbackNEPMARing4LED')"></canvas>
+                            <canvas id="SERDESLoopbackNEPMALink2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 2, 2, 'SERDESLoopbackNEPMALink2LED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="SERDESLoopbackFEPMARing4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 4, 4, 'SERDESLoopbackFEPMARing4LED')"></canvas>
+                            <canvas id="SERDESLoopbackFEPMALink2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 2, 4, 'SERDESLoopbackFEPMALink2LED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="SERDESLoopbackFEPCSRing4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 4, 6, 'SERDESLoopbackFEPCSRing4LED')"></canvas>
+                            <canvas id="SERDESLoopbackFEPCSLink2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 2, 6, 'SERDESLoopbackFEPCSLink2LED')"></canvas>
                         </td>
                     </tr>
                     <tr>
-                        <td>Ring 5</td>
+                        <td>Link 3</td>
                         <td>
-                            <canvas id="SERDESLoopbackNEPCSRing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5, 1, 'SERDESLoopbackNEPCSRing5LED')"></canvas>
+                            <canvas id="SERDESLoopbackNEPCSLink3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 3, 1, 'SERDESLoopbackNEPCSLink3LED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="SERDESLoopbackNEPMARing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5, 2, 'SERDESLoopbackNEPMARing5LED')"></canvas>
+                            <canvas id="SERDESLoopbackNEPMALink3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 3, 2, 'SERDESLoopbackNEPMALink3LED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="SERDESLoopbackFEPMARing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5, 4, 'SERDESLoopbackFEPMARing5LED')"></canvas>
+                            <canvas id="SERDESLoopbackFEPMALink3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 3, 4, 'SERDESLoopbackFEPMALink3LED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="SERDESLoopbackFEPCSRing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5, 6, 'SERDESLoopbackFEPCSRing5LED')"></canvas>
+                            <canvas id="SERDESLoopbackFEPCSLink3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 3, 6, 'SERDESLoopbackFEPCSLink3LED')"></canvas>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Link 4</td>
+                        <td>
+                            <canvas id="SERDESLoopbackNEPCSLink4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 4, 1, 'SERDESLoopbackNEPCSLink4LED')"></canvas>
+                        </td>
+                        <td>
+                            <canvas id="SERDESLoopbackNEPMALink4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 4, 2, 'SERDESLoopbackNEPMALink4LED')"></canvas>
+                        </td>
+                        <td>
+                            <canvas id="SERDESLoopbackFEPMALink4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 4, 4, 'SERDESLoopbackFEPMALink4LED')"></canvas>
+                        </td>
+                        <td>
+                            <canvas id="SERDESLoopbackFEPCSLink4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 4, 6, 'SERDESLoopbackFEPCSLink4LED')"></canvas>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Link 5</td>
+                        <td>
+                            <canvas id="SERDESLoopbackNEPCSLink5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5, 1, 'SERDESLoopbackNEPCSLink5LED')"></canvas>
+                        </td>
+                        <td>
+                            <canvas id="SERDESLoopbackNEPMALink5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5, 2, 'SERDESLoopbackNEPMALink5LED')"></canvas>
+                        </td>
+                        <td>
+                            <canvas id="SERDESLoopbackFEPMALink5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5, 4, 'SERDESLoopbackFEPMALink5LED')"></canvas>
+                        </td>
+                        <td>
+                            <canvas id="SERDESLoopbackFEPCSLink5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5, 6, 'SERDESLoopbackFEPCSLink5LED')"></canvas>
                         </td>
                     </tr>
                     <tr>
                         <td>CFO</td>
                         <td>
-                            <canvas id="SERDESLoopbackNEPCSCFOLED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6, 1, 'SERDESLoopbackNEPCSRing5LED')"></canvas>
+                            <canvas id="SERDESLoopbackNEPCSCFOLED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6, 1, 'SERDESLoopbackNEPCSLink5LED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="SERDESLoopbackNEPMARing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6, 2, 'SERDESLoopbackNEPMARing5LED')"></canvas>
+                            <canvas id="SERDESLoopbackNEPMALink5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6, 2, 'SERDESLoopbackNEPMALink5LED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="SERDESLoopbackFEPMARing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6, 4, 'SERDESLoopbackFEPMARing5LED')"></canvas>
+                            <canvas id="SERDESLoopbackFEPMALink5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6, 4, 'SERDESLoopbackFEPMALink5LED')"></canvas>
                         </td>
                         <td>
-                            <canvas id="SERDESLoopbackFEPCSRing5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6, 6, 'SERDESLoopbackFEPCSRing5LED')"></canvas>
+                            <canvas id="SERDESLoopbackFEPCSLink5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6, 6, 'SERDESLoopbackFEPCSLink5LED')"></canvas>
                         </td>
                     </tr>
                 </table>

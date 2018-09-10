@@ -123,8 +123,8 @@ void DTCLib::DTCLibTest::doTests()
 	}
 	std::cout << "DEBUG 1" << std::endl;
 	running_ = true;
-	// Make sure that the ring is enabled before the tests.
-	thisDTC_->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
+	// Make sure that the link is enabled before the tests.
+	thisDTC_->EnableLink(DTC_Link_0, DTC_LinkEnableMode(true, true, false), DTC_ROC_0);
 
 	auto testCount = 0;
 	while (testCount < nTests_ || nTests_ < 0)
@@ -351,23 +351,23 @@ void DTCLib::DTCLibTest::doRegTest()
 		{
 			std::cout << "Reading Design Version: " << designVersion << std::endl;
 			std::cout << "If simulated, result will be v99.99_2053-49-53-44 (SIMD in ASCII)" << std::endl;
-			std::cout << "Attempting to Disable Ring 0." << std::endl;
+			std::cout << "Attempting to Disable Link 0." << std::endl;
 		}
-		auto ring0Value = thisDTC_->ReadRingEnabled(DTC_Ring_0);
+		auto link0Value = thisDTC_->ReadLinkEnabled(DTC_Link_0);
 		if (printMessages_)
 		{
-			std::cout << "Value before: " << ring0Value << std::endl;
+			std::cout << "Value before: " << link0Value << std::endl;
 		}
-		thisDTC_->DisableRing(DTC_Ring_0);
-		auto ring0New = thisDTC_->ReadRingEnabled(DTC_Ring_0);
+		thisDTC_->DisableLink(DTC_Link_0);
+		auto link0New = thisDTC_->ReadLinkEnabled(DTC_Link_0);
 
 		if (printMessages_)
 		{
-			std::cout << "Value after: " << ring0New << std::endl;
+			std::cout << "Value after: " << link0New << std::endl;
 		}
-		// Make sure that the ring is enabled after the test.
-		thisDTC_->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
-		if (ring0New != ring0Value)
+		// Make sure that the link is enabled after the test.
+		thisDTC_->EnableLink(DTC_Link_0, DTC_LinkEnableMode(true, true, false), DTC_ROC_0);
+		if (link0New != link0Value)
 		{
 			if (printMessages_)
 			{
@@ -421,7 +421,7 @@ void DTCLib::DTCLibTest::doDCSTest()
 			std::cout << std::endl;
 		}
 		std::cout << "TEST DISABLED FOR NOW!!!" << std::endl;
-		//thisDTC_->DCSRequestReply(DTC_Ring_0, DTC_ROC_0, testData);
+		//thisDTC_->DCSRequestReply(DTC_Link_0, DTC_ROC_0, testData);
 		if (printMessages_)
 		{
 			std::cout << "Data out: ";
@@ -456,10 +456,10 @@ void DTCLib::DTCLibTest::doDAQTest()
 	}
 	try
 	{
-		thisDTC_->EnableRing(DTC_Ring_0, DTC_RingEnableMode(true, true, false), DTC_ROC_0);
+		thisDTC_->EnableLink(DTC_Link_0, DTC_LinkEnableMode(true, true, false), DTC_ROC_0);
 		thisDTC_->SetInternalSystemClock();
 		thisDTC_->DisableTiming();
-		thisDTC_->SetMaxROCNumber(DTC_Ring_0, DTC_ROC_0);
+		thisDTC_->SetMaxROCNumber(DTC_Link_0, DTC_ROC_0);
 
 		DTCSoftwareCFO theCFO(thisDTC_, true, 0, DTC_DebugType_SpecialSequence, true, !printMessages_);
 		theCFO.SendRequestForTimestamp();
@@ -491,10 +491,10 @@ void DTCLib::DTCLibTest::doDAQTest()
 			return;
 		}
 
-		auto disparity = thisDTC_->ReadSERDESRXDisparityError(DTC_Ring_0);
-		auto cnit = thisDTC_->ReadSERDESRXCharacterNotInTableError(DTC_Ring_0);
-		auto rxBufferStatus = thisDTC_->ReadSERDESRXBufferStatus(DTC_Ring_0);
-		auto eyescan = thisDTC_->ReadSERDESEyescanError(DTC_Ring_0);
+		auto disparity = thisDTC_->ReadSERDESRXDisparityError(DTC_Link_0);
+		auto cnit = thisDTC_->ReadSERDESRXCharacterNotInTableError(DTC_Link_0);
+		auto rxBufferStatus = thisDTC_->ReadSERDESRXBufferStatus(DTC_Link_0);
+		auto eyescan = thisDTC_->ReadSERDESEyescanError(DTC_Link_0);
 		if (eyescan)
 		{
 			TRACE_CNTL("modeM", 0L);

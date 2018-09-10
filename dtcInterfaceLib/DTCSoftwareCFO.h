@@ -74,7 +74,7 @@ namespace DTCLib
 
 		/// <summary>
 		/// Enable quiet mode.
-		/// 
+		///
 		/// When in quiet mode, DTCSoftwareCFO will not print ReadoutRequest packets or DataRequest packets to screen.
 		/// </summary>
 		/// <param name="quiet">Whether to enable quiet mode.</param>
@@ -125,7 +125,7 @@ namespace DTCLib
 
 		// Object basic properties (not accessible)
 		DTC* theDTC_;
-		DTC_RingEnableMode ringMode_[6];
+		DTC_LinkEnableMode linkMode_[6];
 		std::unique_ptr<std::thread> theThread_;
 		std::atomic<bool> requestsSent_;
 		std::atomic<bool> abort_;

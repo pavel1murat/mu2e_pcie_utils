@@ -95,7 +95,7 @@ bool DTCLib::DTC_DataPacket::Equals(const DTC_DataPacket& other) const
 	auto equal = true;
 	for (uint16_t ii = 2; ii < 16; ++ii)
 	{
-		//TRACE(21, "DTC_DataPacket::Equals: Comparing %u to %u", GetWord(ii), other.GetWord(ii));
+		//TRACE(21, "DTC_DataPacket::Equals: Compalink %u to %u", GetWord(ii), other.GetWord(ii));
 		if (other.GetWord(ii) != GetWord(ii))
 		{
 			equal = false;
@@ -106,8 +106,8 @@ bool DTCLib::DTC_DataPacket::Equals(const DTC_DataPacket& other) const
 	return equal;
 }
 
-DTCLib::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t byteCount, bool valid)
-	: byteCount_(byteCount < 64 ? 64 : byteCount), valid_(valid), ringID_(ring), packetType_(type), rocID_(roc) {}
+DTCLib::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Link_ID link, DTC_ROC_ID roc, uint16_t byteCount, bool valid)
+	: byteCount_(byteCount < 64 ? 64 : byteCount), valid_(valid), linkID_(link), packetType_(type), rocID_(roc) {}
 
 DTCLib::DTC_DataPacket DTCLib::DTC_DMAPacket::ConvertToDataPacket() const
 {
@@ -118,7 +118,7 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DMAPacket::ConvertToDataPacket() const
 	output.SetWord(1, word0B);
 	auto word1A = static_cast<uint8_t>(rocID_);
 	word1A += static_cast<uint8_t>(packetType_) << 4;
-	uint8_t word1B = static_cast<uint8_t>(ringID_) + (valid_ ? 0x80 : 0x0);
+	uint8_t word1B = static_cast<uint8_t>(linkID_) + (valid_ ? 0x80 : 0x0);
 	output.SetWord(2, word1A);
 	output.SetWord(3, word1B);
 	for (uint16_t i = 4; i < 16; ++i)
@@ -134,11 +134,11 @@ DTCLib::DTC_DMAPacket::DTC_DMAPacket(const DTC_DataPacket in)
 	uint8_t roc = word2 & 0xF;
 	uint8_t packetType = word2 >> 4;
 	auto word3 = in.GetData()[3];
-	uint8_t ringID = word3 & 0xF;
+	uint8_t linkID = word3 & 0xF;
 	valid_ = (word3 & 0x80) == 0x80;
 
 	byteCount_ = in.GetData()[0] + (in.GetData()[1] << 8);
-	ringID_ = static_cast<DTC_Ring_ID>(ringID);
+	linkID_ = static_cast<DTC_Link_ID>(linkID);
 	rocID_ = static_cast<DTC_ROC_ID>(roc);
 	packetType_ = static_cast<DTC_PacketType>(packetType);
 	TLOG_ARB(20, "DTC_DMAPacket") << headerJSON();
@@ -149,7 +149,7 @@ std::string DTCLib::DTC_DMAPacket::headerJSON() const
 	std::stringstream ss;
 	ss << "\"isValid\": " << valid_ << ",";
 	ss << "\"byteCount\": " << std::hex << "0x" << byteCount_ << ",";
-	ss << "\"ringID\": " << std::dec << ringID_ << ",";
+	ss << "\"linkID\": " << std::dec << linkID_ << ",";
 	ss << "\"packetType\": " << packetType_ << ",";
 	ss << "\"rocID\": " << rocID_;
 	return ss.str();
@@ -160,7 +160,7 @@ std::string DTCLib::DTC_DMAPacket::headerPacketFormat() const
 	std::stringstream ss;
 	ss << std::setfill('0') << std::hex;
 	ss << "0x" << std::setw(6) << ((byteCount_ & 0xFF00) >> 8) << "\t" << "0x" << std::setw(6) << (byteCount_ & 0xFF) << std::endl;
-	ss << std::setw(1) << static_cast<int>(valid_) << "   " << "0x" << std::setw(2) << ringID_ << "\t";
+	ss << std::setw(1) << static_cast<int>(valid_) << "   " << "0x" << std::setw(2) << linkID_ << "\t";
 	ss << "0x" << std::setw(2) << packetType_ << "0x" << std::setw(2) << rocID_ << std::endl;
 	return ss.str();
 }
@@ -180,13 +180,13 @@ std::string DTCLib::DTC_DMAPacket::toPacketFormat()
 }
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket()
-	: DTC_DMAPacket(DTC_PacketType_DCSRequest, DTC_Ring_Unused, DTC_ROC_Unused), type_(), address_(0), data_(0) {}
+	: DTC_DMAPacket(DTC_PacketType_DCSRequest, DTC_Link_Unused, DTC_ROC_Unused), type_(), address_(0), data_(0) {}
 
-DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc)
-	: DTC_DMAPacket(DTC_PacketType_DCSRequest, ring, roc), type_(), address_(0), data_(0) {}
+DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Link_ID link, DTC_ROC_ID roc)
+	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link, roc), type_(), address_(0), data_(0) {}
 
-DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_DCSOperationType type, uint8_t address, uint16_t data)
-	: DTC_DMAPacket(DTC_PacketType_DCSRequest, ring, roc)
+DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Link_ID link, DTC_ROC_ID roc, DTC_DCSOperationType type, uint8_t address, uint16_t data)
+	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link, roc)
 	  , type_(type)
 	  , address_(address & 0x1F)
 	  , data_(data) {}
@@ -237,8 +237,8 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSRequestPacket::ConvertToDataPacket() const
 	return output;
 }
 
-DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC)
-	: DTC_DMAPacket(DTC_PacketType_Heartbeat, ring, maxROC), timestamp_(), eventMode_()
+DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(DTC_Link_ID link, DTC_ROC_ID maxROC)
+	: DTC_DMAPacket(DTC_PacketType_Heartbeat, link, maxROC), timestamp_(), eventMode_()
 {
 	eventMode_[0] = 0;
 	eventMode_[1] = 0;
@@ -248,8 +248,8 @@ DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(DTC_Ring_ID ring, DTC_ROC_ID ma
 	eventMode_[5] = 0;
 }
 
-DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC, uint8_t* eventMode)
-	: DTC_DMAPacket(DTC_PacketType_Heartbeat, ring, maxROC), timestamp_(timestamp), eventMode_()
+DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(DTC_Link_ID link, DTC_Timestamp timestamp, DTC_ROC_ID maxROC, uint8_t* eventMode)
+	: DTC_DMAPacket(DTC_PacketType_Heartbeat, link, maxROC), timestamp_(timestamp), eventMode_()
 {
 	if (eventMode != nullptr)
 	{
@@ -314,11 +314,11 @@ DTCLib::DTC_DataPacket DTCLib::DTC_HeartbeatPacket::ConvertToDataPacket() const
 	return output;
 }
 
-DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, bool debug, uint16_t debugPacketCount, DTC_DebugType type)
-	: DTC_DMAPacket(DTC_PacketType_DataRequest, ring, roc), timestamp_(), debug_(debug), debugPacketCount_(debugPacketCount), type_(type) {}
+DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Link_ID link, DTC_ROC_ID roc, bool debug, uint16_t debugPacketCount, DTC_DebugType type)
+	: DTC_DMAPacket(DTC_PacketType_DataRequest, link, roc), timestamp_(), debug_(debug), debugPacketCount_(debugPacketCount), type_(type) {}
 
-DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp timestamp, bool debug, uint16_t debugPacketCount, DTC_DebugType type)
-	: DTC_DMAPacket(DTC_PacketType_DataRequest, ring, roc), timestamp_(timestamp), debug_(debug), debugPacketCount_(debugPacketCount), type_(type) {}
+DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Link_ID link, DTC_ROC_ID roc, DTC_Timestamp timestamp, bool debug, uint16_t debugPacketCount, DTC_DebugType type)
+	: DTC_DMAPacket(DTC_PacketType_DataRequest, link, roc), timestamp_(timestamp), debug_(debug), debugPacketCount_(debugPacketCount), type_(type) {}
 
 DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
 {
@@ -379,11 +379,11 @@ void DTCLib::DTC_DataRequestPacket::SetDebugPacketCount(uint16_t count)
 	debugPacketCount_ = count;
 }
 
-DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring)
-	: DTC_DMAPacket(DTC_PacketType_DCSReply, ring, DTC_ROC_Unused), requestCounter_(0), type_(), dcsReceiveFIFOEmpty_(false), address_(0), data_(0) {}
+DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Link_ID link)
+	: DTC_DMAPacket(DTC_PacketType_DCSReply, link, DTC_ROC_Unused), requestCounter_(0), type_(), dcsReceiveFIFOEmpty_(false), address_(0), data_(0) {}
 
-DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t counter, DTC_DCSOperationType type, uint8_t address, uint16_t data, bool fifoEmpty)
-	: DTC_DMAPacket(DTC_PacketType_DCSReply, ring, DTC_ROC_Unused)
+DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_Link_ID link, uint8_t counter, DTC_DCSOperationType type, uint8_t address, uint16_t data, bool fifoEmpty)
+	: DTC_DMAPacket(DTC_PacketType_DCSReply, link, DTC_ROC_Unused)
 	  , requestCounter_(counter)
 	  , type_(type)
 	  , dcsReceiveFIFOEmpty_(fifoEmpty)
@@ -444,9 +444,9 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSReplyPacket::ConvertToDataPacket() const
 	return output;
 }
 
-DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t packetCount, DTC_DataStatus status, uint8_t dtcid, 
+DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Link_ID link, DTC_ROC_ID roc, uint16_t packetCount, DTC_DataStatus status, uint8_t dtcid,
 	uint8_t packetVersion, DTC_Timestamp timestamp, uint8_t evbMode)
-	: DTC_DMAPacket(DTC_PacketType_DataHeader, ring, roc, (1 + packetCount) * 16)
+	: DTC_DMAPacket(DTC_PacketType_DataHeader, link, roc, (1 + packetCount) * 16)
 	, packetCount_(packetCount)
 	, timestamp_(timestamp)
 	, status_(status)

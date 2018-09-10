@@ -15,9 +15,9 @@ function addPacket(type, id, packet) {
 
 function setPixel(led, bit, modestring) {
     var ctx = led.getContext("2d");
-    
+
     ctx.lineWidth = 2;
-    
+
     if (modestring === "RO") {
         ctx.strokeStyle = "darkgreen";
         if (bit) {
@@ -142,23 +142,23 @@ function GetRegDump() {
     });
 }
 
-function LEDAction(url, ring, id) {
-    AjaxPost(url, ring, function (output) {
+function LEDAction(url, link, id) {
+    AjaxPost(url, link, function (output) {
         setPixel(document.getElementById(id), output.Value1, "RW");
     });
 }
 
-function LEDExtAction(url, ring, val, id) {
+function LEDExtAction(url, link, val, id) {
     var post = {};
-    post.ring = ring;
+    post.link = link;
     post.val = val;
     AjaxPost(url, post, function (output) {
         setPixel(document.getElementById(id), output.Value1, "RW");
     });
 }
 
-function LEDObjAction(url, ring, idlo, idhi) {
-    AjaxPost(url, ring, function (output) {
+function LEDObjAction(url, link, idlo, idhi) {
+    AjaxPost(url, link, function (output) {
         setPixel(document.getElementById(idlo), output.Value1.Low, "RW");
         setPixel(document.getElementById(idhi), output.Value1.High, "RW");
     });
@@ -191,30 +191,30 @@ function RunScript() {
 }
 
 (function ($, sr) {
-    
+
     // debouncing function from John Hann
     // http://unscriptable.com/index.php/2009/03/20/debouncing-javascript-methods/
     var debounce = function (func, threshold, execAsap) {
         var timeout;
-        
+
         return function debounced() {
             var obj = this, args = arguments;
-            
+
             function delayed() {
                 if (!execAsap)
                     func.apply(obj, args);
                 timeout = null;
             };
-            
+
             if (timeout)
                 clearTimeout(timeout);
             else if (execAsap)
                 func.apply(obj, args);
-            
+
             timeout = setTimeout(delayed, threshold || 100);
         };
     };
-    // smartresize 
+    // smartresize
     jQuery.fn[sr] = function (fn) { return fn ? this.bind("resize", debounce(fn)) : this.trigger(sr); };
 
 })(jQuery, "smartresize");
@@ -227,12 +227,12 @@ function PopulateLEDS(dtcregdump) {
     setPixel(document.getElementById("SERDESOscillatorClockLED"), dtcregdump.SERDESOscillatorClock, "RW");
     setPixel(document.getElementById("SystemClockLED"), dtcregdump.SystemClock, "RW");
     setPixel(document.getElementById("TimingEnabledLED"), dtcregdump.TimingEnable, "RW");
-    setPixel(document.getElementById("ROCEmulatorEnabledRing0LED"), dtcregdump.Ring0.ROCEmulator, "RW");
-    setPixel(document.getElementById("ROCEmulatorEnabledRing1LED"), dtcregdump.Ring1.ROCEmulator, "RW");
-    setPixel(document.getElementById("ROCEmulatorEnabledRing2LED"), dtcregdump.Ring2.ROCEmulator, "RW");
-    setPixel(document.getElementById("ROCEmulatorEnabledRing3LED"), dtcregdump.Ring3.ROCEmulator, "RW");
-    setPixel(document.getElementById("ROCEmulatorEnabledRing4LED"), dtcregdump.Ring4.ROCEmulator, "RW");
-    setPixel(document.getElementById("ROCEmulatorEnabledRing5LED"), dtcregdump.Ring5.ROCEmulator, "RW");
+    setPixel(document.getElementById("ROCEmulatorEnabledLink0LED"), dtcregdump.Link0.ROCEmulator, "RW");
+    setPixel(document.getElementById("ROCEmulatorEnabledLink1LED"), dtcregdump.Link1.ROCEmulator, "RW");
+    setPixel(document.getElementById("ROCEmulatorEnabledLink2LED"), dtcregdump.Link2.ROCEmulator, "RW");
+    setPixel(document.getElementById("ROCEmulatorEnabledLink3LED"), dtcregdump.Link3.ROCEmulator, "RW");
+    setPixel(document.getElementById("ROCEmulatorEnabledLink4LED"), dtcregdump.Link4.ROCEmulator, "RW");
+    setPixel(document.getElementById("ROCEmulatorEnabledLink5LED"), dtcregdump.Link5.ROCEmulator, "RW");
     $("#triggerDMALength").val(dtcregdump.TriggerDMALength);
     $("#minDMALength").val(dtcregdump.MinDMALength);
     $("#dmaTimeoutPreset").val(dtcregdump.DMATimeout);
@@ -243,86 +243,86 @@ function PopulateLEDS(dtcregdump) {
     setPixel(document.getElementById("simModeCalorimeterLED"), dtcregdump.SimMode.Calorimeter, "RW");
     setPixel(document.getElementById("simModeCRVLED"), dtcregdump.SimMode.CosmicVeto, "RW");
     setPixel(document.getElementById("simModeHardwareLED"), dtcregdump.SimMode.Hardware, "RW");
-    setPixel(document.getElementById("Ring0TxEnabledLED"), dtcregdump.Ring0.TxEnabled, "RW");
-    setPixel(document.getElementById("Ring1TxEnabledLED"), dtcregdump.Ring1.TxEnabled, "RW");
-    setPixel(document.getElementById("Ring2TxEnabledLED"), dtcregdump.Ring2.TxEnabled, "RW");
-    setPixel(document.getElementById("Ring3TxEnabledLED"), dtcregdump.Ring3.TxEnabled, "RW");
-    setPixel(document.getElementById("Ring4TxEnabledLED"), dtcregdump.Ring4.TxEnabled, "RW");
-    setPixel(document.getElementById("Ring5TxEnabledLED"), dtcregdump.Ring5.TxEnabled, "RW");
+    setPixel(document.getElementById("Link0TxEnabledLED"), dtcregdump.Link0.TxEnabled, "RW");
+    setPixel(document.getElementById("Link1TxEnabledLED"), dtcregdump.Link1.TxEnabled, "RW");
+    setPixel(document.getElementById("Link2TxEnabledLED"), dtcregdump.Link2.TxEnabled, "RW");
+    setPixel(document.getElementById("Link3TxEnabledLED"), dtcregdump.Link3.TxEnabled, "RW");
+    setPixel(document.getElementById("Link4TxEnabledLED"), dtcregdump.Link4.TxEnabled, "RW");
+    setPixel(document.getElementById("Link5TxEnabledLED"), dtcregdump.Link5.TxEnabled, "RW");
     setPixel(document.getElementById("CFOTxEnabledLED"), dtcregdump.CFO.TxEnabled, "RW");
-    setPixel(document.getElementById("Ring0RxEnabledLED"), dtcregdump.Ring0.RxEnabled, "RW");
-    setPixel(document.getElementById("Ring1RxEnabledLED"), dtcregdump.Ring1.RxEnabled, "RW");
-    setPixel(document.getElementById("Ring2RxEnabledLED"), dtcregdump.Ring2.RxEnabled, "RW");
-    setPixel(document.getElementById("Ring3RxEnabledLED"), dtcregdump.Ring3.RxEnabled, "RW");
-    setPixel(document.getElementById("Ring4RxEnabledLED"), dtcregdump.Ring4.RxEnabled, "RW");
-    setPixel(document.getElementById("Ring5RxEnabledLED"), dtcregdump.Ring5.RxEnabled, "RW");
+    setPixel(document.getElementById("Link0RxEnabledLED"), dtcregdump.Link0.RxEnabled, "RW");
+    setPixel(document.getElementById("Link1RxEnabledLED"), dtcregdump.Link1.RxEnabled, "RW");
+    setPixel(document.getElementById("Link2RxEnabledLED"), dtcregdump.Link2.RxEnabled, "RW");
+    setPixel(document.getElementById("Link3RxEnabledLED"), dtcregdump.Link3.RxEnabled, "RW");
+    setPixel(document.getElementById("Link4RxEnabledLED"), dtcregdump.Link4.RxEnabled, "RW");
+    setPixel(document.getElementById("Link5RxEnabledLED"), dtcregdump.Link5.RxEnabled, "RW");
     setPixel(document.getElementById("CFORxEnabledLED"), dtcregdump.CFO.RxEnabled, "RW");
-    setPixel(document.getElementById("Ring0TimingEnabledLED"), dtcregdump.Ring0.TimingEnabled, "RW");
-    setPixel(document.getElementById("Ring1TimingEnabledLED"), dtcregdump.Ring1.TimingEnabled, "RW");
-    setPixel(document.getElementById("Ring2TimingEnabledLED"), dtcregdump.Ring2.TimingEnabled, "RW");
-    setPixel(document.getElementById("Ring3TimingEnabledLED"), dtcregdump.Ring3.TimingEnabled, "RW");
-    setPixel(document.getElementById("Ring4TimingEnabledLED"), dtcregdump.Ring4.TimingEnabled, "RW");
-    setPixel(document.getElementById("Ring5TimingEnabledLED"), dtcregdump.Ring5.TimingEnabled, "RW");
-    setPixel(document.getElementById("R0ROC0LED"), dtcregdump.Ring0.ROC0Enabled, "RW");
-    setPixel(document.getElementById("R0ROC1LED"), dtcregdump.Ring0.ROC1Enabled, "RW");
-    setPixel(document.getElementById("R0ROC2LED"), dtcregdump.Ring0.ROC2Enabled, "RW");
-    setPixel(document.getElementById("R0ROC3LED"), dtcregdump.Ring0.ROC3Enabled, "RW");
-    setPixel(document.getElementById("R0ROC4LED"), dtcregdump.Ring0.ROC4Enabled, "RW");
-    setPixel(document.getElementById("R0ROC5LED"), dtcregdump.Ring0.ROC5Enabled, "RW");
-    setPixel(document.getElementById("R1ROC0LED"), dtcregdump.Ring1.ROC0Enabled, "RW");
-    setPixel(document.getElementById("R1ROC1LED"), dtcregdump.Ring1.ROC1Enabled, "RW");
-    setPixel(document.getElementById("R1ROC2LED"), dtcregdump.Ring1.ROC2Enabled, "RW");
-    setPixel(document.getElementById("R1ROC3LED"), dtcregdump.Ring1.ROC3Enabled, "RW");
-    setPixel(document.getElementById("R1ROC4LED"), dtcregdump.Ring1.ROC4Enabled, "RW");
-    setPixel(document.getElementById("R1ROC5LED"), dtcregdump.Ring1.ROC5Enabled, "RW");
-    setPixel(document.getElementById("R2ROC0LED"), dtcregdump.Ring2.ROC0Enabled, "RW");
-    setPixel(document.getElementById("R2ROC1LED"), dtcregdump.Ring2.ROC1Enabled, "RW");
-    setPixel(document.getElementById("R2ROC2LED"), dtcregdump.Ring2.ROC2Enabled, "RW");
-    setPixel(document.getElementById("R2ROC3LED"), dtcregdump.Ring2.ROC3Enabled, "RW");
-    setPixel(document.getElementById("R2ROC4LED"), dtcregdump.Ring2.ROC4Enabled, "RW");
-    setPixel(document.getElementById("R2ROC5LED"), dtcregdump.Ring2.ROC5Enabled, "RW");
-    setPixel(document.getElementById("R3ROC0LED"), dtcregdump.Ring3.ROC0Enabled, "RW");
-    setPixel(document.getElementById("R3ROC1LED"), dtcregdump.Ring3.ROC1Enabled, "RW");
-    setPixel(document.getElementById("R3ROC2LED"), dtcregdump.Ring3.ROC2Enabled, "RW");
-    setPixel(document.getElementById("R3ROC3LED"), dtcregdump.Ring3.ROC3Enabled, "RW");
-    setPixel(document.getElementById("R3ROC4LED"), dtcregdump.Ring3.ROC4Enabled, "RW");
-    setPixel(document.getElementById("R3ROC5LED"), dtcregdump.Ring3.ROC5Enabled, "RW");
-    setPixel(document.getElementById("R4ROC0LED"), dtcregdump.Ring4.ROC0Enabled, "RW");
-    setPixel(document.getElementById("R4ROC1LED"), dtcregdump.Ring4.ROC1Enabled, "RW");
-    setPixel(document.getElementById("R4ROC2LED"), dtcregdump.Ring4.ROC2Enabled, "RW");
-    setPixel(document.getElementById("R4ROC3LED"), dtcregdump.Ring4.ROC3Enabled, "RW");
-    setPixel(document.getElementById("R4ROC4LED"), dtcregdump.Ring4.ROC4Enabled, "RW");
-    setPixel(document.getElementById("R4ROC5LED"), dtcregdump.Ring4.ROC5Enabled, "RW");
-    setPixel(document.getElementById("R5ROC0LED"), dtcregdump.Ring5.ROC0Enabled, "RW");
-    setPixel(document.getElementById("R5ROC1LED"), dtcregdump.Ring5.ROC1Enabled, "RW");
-    setPixel(document.getElementById("R5ROC2LED"), dtcregdump.Ring5.ROC2Enabled, "RW");
-    setPixel(document.getElementById("R5ROC3LED"), dtcregdump.Ring5.ROC3Enabled, "RW");
-    setPixel(document.getElementById("R5ROC4LED"), dtcregdump.Ring5.ROC4Enabled, "RW");
-    setPixel(document.getElementById("R5ROC5LED"), dtcregdump.Ring5.ROC5Enabled, "RW");
-    setPixel(document.getElementById("SERDESLoopbackNEPCSRing0LED"), dtcregdump.Ring0.SERDESLoopback.NEPCS, "RW");
-    setPixel(document.getElementById("SERDESLoopbackNEPMARing0LED"), dtcregdump.Ring0.SERDESLoopback.NEPMA, "RW");
-    setPixel(document.getElementById("SERDESLoopbackFEPMARing0LED"), dtcregdump.Ring0.SERDESLoopback.FEPMA, "RW");
-    setPixel(document.getElementById("SERDESLoopbackFEPCSRing0LED"), dtcregdump.Ring0.SERDESLoopback.FEPCS, "RW");
-    setPixel(document.getElementById("SERDESLoopbackNEPCSRing1LED"), dtcregdump.Ring1.SERDESLoopback.NEPCS, "RW");
-    setPixel(document.getElementById("SERDESLoopbackNEPMARing1LED"), dtcregdump.Ring1.SERDESLoopback.NEPMA, "RW");
-    setPixel(document.getElementById("SERDESLoopbackFEPMARing1LED"), dtcregdump.Ring1.SERDESLoopback.FEPMA, "RW");
-    setPixel(document.getElementById("SERDESLoopbackFEPCSRing1LED"), dtcregdump.Ring1.SERDESLoopback.FEPCS, "RW");
-    setPixel(document.getElementById("SERDESLoopbackNEPCSRing2LED"), dtcregdump.Ring2.SERDESLoopback.NEPCS, "RW");
-    setPixel(document.getElementById("SERDESLoopbackNEPMARing2LED"), dtcregdump.Ring2.SERDESLoopback.NEPMA, "RW");
-    setPixel(document.getElementById("SERDESLoopbackFEPMARing2LED"), dtcregdump.Ring2.SERDESLoopback.FEPMA, "RW");
-    setPixel(document.getElementById("SERDESLoopbackFEPCSRing2LED"), dtcregdump.Ring2.SERDESLoopback.FEPCS, "RW");
-    setPixel(document.getElementById("SERDESLoopbackNEPCSRing3LED"), dtcregdump.Ring3.SERDESLoopback.NEPCS, "RW");
-    setPixel(document.getElementById("SERDESLoopbackNEPMARing3LED"), dtcregdump.Ring3.SERDESLoopback.NEPMA, "RW");
-    setPixel(document.getElementById("SERDESLoopbackFEPMARing3LED"), dtcregdump.Ring3.SERDESLoopback.FEPMA, "RW");
-    setPixel(document.getElementById("SERDESLoopbackFEPCSRing3LED"), dtcregdump.Ring3.SERDESLoopback.FEPCS, "RW");
-    setPixel(document.getElementById("SERDESLoopbackNEPCSRing4LED"), dtcregdump.Ring4.SERDESLoopback.NEPCS, "RW");
-    setPixel(document.getElementById("SERDESLoopbackNEPMARing4LED"), dtcregdump.Ring4.SERDESLoopback.NEPMA, "RW");
-    setPixel(document.getElementById("SERDESLoopbackFEPMARing4LED"), dtcregdump.Ring4.SERDESLoopback.FEPMA, "RW");
-    setPixel(document.getElementById("SERDESLoopbackFEPCSRing4LED"), dtcregdump.Ring4.SERDESLoopback.FEPCS, "RW");
-    setPixel(document.getElementById("SERDESLoopbackNEPCSRing5LED"), dtcregdump.Ring5.SERDESLoopback.NEPCS, "RW");
-    setPixel(document.getElementById("SERDESLoopbackNEPMARing5LED"), dtcregdump.Ring5.SERDESLoopback.NEPMA, "RW");
-    setPixel(document.getElementById("SERDESLoopbackFEPMARing5LED"), dtcregdump.Ring5.SERDESLoopback.FEPMA, "RW");
-    setPixel(document.getElementById("SERDESLoopbackFEPCSRing5LED"), dtcregdump.Ring5.SERDESLoopback.FEPCS, "RW");
+    setPixel(document.getElementById("Link0TimingEnabledLED"), dtcregdump.Link0.TimingEnabled, "RW");
+    setPixel(document.getElementById("Link1TimingEnabledLED"), dtcregdump.Link1.TimingEnabled, "RW");
+    setPixel(document.getElementById("Link2TimingEnabledLED"), dtcregdump.Link2.TimingEnabled, "RW");
+    setPixel(document.getElementById("Link3TimingEnabledLED"), dtcregdump.Link3.TimingEnabled, "RW");
+    setPixel(document.getElementById("Link4TimingEnabledLED"), dtcregdump.Link4.TimingEnabled, "RW");
+    setPixel(document.getElementById("Link5TimingEnabledLED"), dtcregdump.Link5.TimingEnabled, "RW");
+    setPixel(document.getElementById("R0ROC0LED"), dtcregdump.Link0.ROC0Enabled, "RW");
+    setPixel(document.getElementById("R0ROC1LED"), dtcregdump.Link0.ROC1Enabled, "RW");
+    setPixel(document.getElementById("R0ROC2LED"), dtcregdump.Link0.ROC2Enabled, "RW");
+    setPixel(document.getElementById("R0ROC3LED"), dtcregdump.Link0.ROC3Enabled, "RW");
+    setPixel(document.getElementById("R0ROC4LED"), dtcregdump.Link0.ROC4Enabled, "RW");
+    setPixel(document.getElementById("R0ROC5LED"), dtcregdump.Link0.ROC5Enabled, "RW");
+    setPixel(document.getElementById("R1ROC0LED"), dtcregdump.Link1.ROC0Enabled, "RW");
+    setPixel(document.getElementById("R1ROC1LED"), dtcregdump.Link1.ROC1Enabled, "RW");
+    setPixel(document.getElementById("R1ROC2LED"), dtcregdump.Link1.ROC2Enabled, "RW");
+    setPixel(document.getElementById("R1ROC3LED"), dtcregdump.Link1.ROC3Enabled, "RW");
+    setPixel(document.getElementById("R1ROC4LED"), dtcregdump.Link1.ROC4Enabled, "RW");
+    setPixel(document.getElementById("R1ROC5LED"), dtcregdump.Link1.ROC5Enabled, "RW");
+    setPixel(document.getElementById("R2ROC0LED"), dtcregdump.Link2.ROC0Enabled, "RW");
+    setPixel(document.getElementById("R2ROC1LED"), dtcregdump.Link2.ROC1Enabled, "RW");
+    setPixel(document.getElementById("R2ROC2LED"), dtcregdump.Link2.ROC2Enabled, "RW");
+    setPixel(document.getElementById("R2ROC3LED"), dtcregdump.Link2.ROC3Enabled, "RW");
+    setPixel(document.getElementById("R2ROC4LED"), dtcregdump.Link2.ROC4Enabled, "RW");
+    setPixel(document.getElementById("R2ROC5LED"), dtcregdump.Link2.ROC5Enabled, "RW");
+    setPixel(document.getElementById("R3ROC0LED"), dtcregdump.Link3.ROC0Enabled, "RW");
+    setPixel(document.getElementById("R3ROC1LED"), dtcregdump.Link3.ROC1Enabled, "RW");
+    setPixel(document.getElementById("R3ROC2LED"), dtcregdump.Link3.ROC2Enabled, "RW");
+    setPixel(document.getElementById("R3ROC3LED"), dtcregdump.Link3.ROC3Enabled, "RW");
+    setPixel(document.getElementById("R3ROC4LED"), dtcregdump.Link3.ROC4Enabled, "RW");
+    setPixel(document.getElementById("R3ROC5LED"), dtcregdump.Link3.ROC5Enabled, "RW");
+    setPixel(document.getElementById("R4ROC0LED"), dtcregdump.Link4.ROC0Enabled, "RW");
+    setPixel(document.getElementById("R4ROC1LED"), dtcregdump.Link4.ROC1Enabled, "RW");
+    setPixel(document.getElementById("R4ROC2LED"), dtcregdump.Link4.ROC2Enabled, "RW");
+    setPixel(document.getElementById("R4ROC3LED"), dtcregdump.Link4.ROC3Enabled, "RW");
+    setPixel(document.getElementById("R4ROC4LED"), dtcregdump.Link4.ROC4Enabled, "RW");
+    setPixel(document.getElementById("R4ROC5LED"), dtcregdump.Link4.ROC5Enabled, "RW");
+    setPixel(document.getElementById("R5ROC0LED"), dtcregdump.Link5.ROC0Enabled, "RW");
+    setPixel(document.getElementById("R5ROC1LED"), dtcregdump.Link5.ROC1Enabled, "RW");
+    setPixel(document.getElementById("R5ROC2LED"), dtcregdump.Link5.ROC2Enabled, "RW");
+    setPixel(document.getElementById("R5ROC3LED"), dtcregdump.Link5.ROC3Enabled, "RW");
+    setPixel(document.getElementById("R5ROC4LED"), dtcregdump.Link5.ROC4Enabled, "RW");
+    setPixel(document.getElementById("R5ROC5LED"), dtcregdump.Link5.ROC5Enabled, "RW");
+    setPixel(document.getElementById("SERDESLoopbackNEPCSLink0LED"), dtcregdump.Link0.SERDESLoopback.NEPCS, "RW");
+    setPixel(document.getElementById("SERDESLoopbackNEPMALink0LED"), dtcregdump.Link0.SERDESLoopback.NEPMA, "RW");
+    setPixel(document.getElementById("SERDESLoopbackFEPMALink0LED"), dtcregdump.Link0.SERDESLoopback.FEPMA, "RW");
+    setPixel(document.getElementById("SERDESLoopbackFEPCSLink0LED"), dtcregdump.Link0.SERDESLoopback.FEPCS, "RW");
+    setPixel(document.getElementById("SERDESLoopbackNEPCSLink1LED"), dtcregdump.Link1.SERDESLoopback.NEPCS, "RW");
+    setPixel(document.getElementById("SERDESLoopbackNEPMALink1LED"), dtcregdump.Link1.SERDESLoopback.NEPMA, "RW");
+    setPixel(document.getElementById("SERDESLoopbackFEPMALink1LED"), dtcregdump.Link1.SERDESLoopback.FEPMA, "RW");
+    setPixel(document.getElementById("SERDESLoopbackFEPCSLink1LED"), dtcregdump.Link1.SERDESLoopback.FEPCS, "RW");
+    setPixel(document.getElementById("SERDESLoopbackNEPCSLink2LED"), dtcregdump.Link2.SERDESLoopback.NEPCS, "RW");
+    setPixel(document.getElementById("SERDESLoopbackNEPMALink2LED"), dtcregdump.Link2.SERDESLoopback.NEPMA, "RW");
+    setPixel(document.getElementById("SERDESLoopbackFEPMALink2LED"), dtcregdump.Link2.SERDESLoopback.FEPMA, "RW");
+    setPixel(document.getElementById("SERDESLoopbackFEPCSLink2LED"), dtcregdump.Link2.SERDESLoopback.FEPCS, "RW");
+    setPixel(document.getElementById("SERDESLoopbackNEPCSLink3LED"), dtcregdump.Link3.SERDESLoopback.NEPCS, "RW");
+    setPixel(document.getElementById("SERDESLoopbackNEPMALink3LED"), dtcregdump.Link3.SERDESLoopback.NEPMA, "RW");
+    setPixel(document.getElementById("SERDESLoopbackFEPMALink3LED"), dtcregdump.Link3.SERDESLoopback.FEPMA, "RW");
+    setPixel(document.getElementById("SERDESLoopbackFEPCSLink3LED"), dtcregdump.Link3.SERDESLoopback.FEPCS, "RW");
+    setPixel(document.getElementById("SERDESLoopbackNEPCSLink4LED"), dtcregdump.Link4.SERDESLoopback.NEPCS, "RW");
+    setPixel(document.getElementById("SERDESLoopbackNEPMALink4LED"), dtcregdump.Link4.SERDESLoopback.NEPMA, "RW");
+    setPixel(document.getElementById("SERDESLoopbackFEPMALink4LED"), dtcregdump.Link4.SERDESLoopback.FEPMA, "RW");
+    setPixel(document.getElementById("SERDESLoopbackFEPCSLink4LED"), dtcregdump.Link4.SERDESLoopback.FEPCS, "RW");
+    setPixel(document.getElementById("SERDESLoopbackNEPCSLink5LED"), dtcregdump.Link5.SERDESLoopback.NEPCS, "RW");
+    setPixel(document.getElementById("SERDESLoopbackNEPMALink5LED"), dtcregdump.Link5.SERDESLoopback.NEPMA, "RW");
+    setPixel(document.getElementById("SERDESLoopbackFEPMALink5LED"), dtcregdump.Link5.SERDESLoopback.FEPMA, "RW");
+    setPixel(document.getElementById("SERDESLoopbackFEPCSLink5LED"), dtcregdump.Link5.SERDESLoopback.FEPCS, "RW");
     setPixel(document.getElementById("SERDESLoopbackNEPCSCFOLED"), dtcregdump.CFO.SERDESLoopback.NEPCS, "RW");
     setPixel(document.getElementById("SERDESLoopbackNEPMACFOLED"), dtcregdump.CFO.SERDESLoopback.NEPMA, "RW");
     setPixel(document.getElementById("SERDESLoopbackFEPMACFOLED"), dtcregdump.CFO.SERDESLoopback.FEPMA, "RW");
@@ -344,28 +344,28 @@ function SetSimMode(id) {
 $(function () {
     GetRegDump();
     setInterval(function () { GetRegDump(); }, 1500);
-    
+
     $("#addDCSPacket").click(function () {
         addPacket("DCSRequestPacket.html", numPackets);
     });
-    
+
     $("#addDataRequestPacket").click(function () {
         addPacket("DataRequestPacket.html", numPackets);
     });
-    
+
     $("#addReadoutRequestPacket").click(function () {
         addPacket("ReadoutRequestPacket.html", numPackets);
     });
-    
+
     $("#sendPackets").click(function () {
         var packets = [];
-        
+
         $("#packets").children().each(function (index, element) {
             var packet = {};
             packet.transferCountHigh = parseInt($("#transferCountHigh", this).val());
             packet.transferCountLow = parseInt($("#transferCountLow", this).val());
             packet.isValid = parseInt($("#validBit", this).val());
-            packet.ringID = parseInt($("#ringID", this).val());
+            packet.linkID = parseInt($("#linkID", this).val());
             packet.type = parseInt($("#packetType", this).val());
             packet.hopCount = parseInt($("#hopCount", this).val());
             switch (packet.type) {
@@ -401,15 +401,15 @@ $(function () {
                     packet.timestamp.push(parseInt($("#timestamp5", this).val()));
                     break;
             }
-            
+
             packets.push(packet);
         });
-        
+
         AjaxPost("/DTC/DMAIO", { 'packets': JSON.stringify(packets) }, function (data) {
             $("#response").val(data);
         });
     });
-    
+
     var dma0 = {
         dma0TX: { data: [{ time: 0, value: 0 }], color: "red", jsonPath: "/DTC/DMA0Transmit" },
         dma0RX: { data: [{ time: 0, value: 0 }], color: "blue", jsonPath: "/DTC/DMA0Receive" },
@@ -420,7 +420,7 @@ $(function () {
         dma1RX: { data: [{ time: 0, value: 0 }], color: "blue", jsonPath: "/DTC/DMA1Receive" },
     };
     //makeGraph("#dma1", dma1);
-    
+
     $(window).smartresize(function () {
         $("#dma0").empty();
         $("#dma1").empty();

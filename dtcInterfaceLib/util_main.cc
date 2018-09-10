@@ -234,13 +234,13 @@ void WriteGeneratedData(DTC* thisDTC)
 
 			if (incrementTimestamp) ++ts;
 
-			std::vector<std::pair<DTC_Ring_ID, DTC_ROC_ID>> ids;
-			for (auto ring : DTC_Rings)
+			std::vector<std::pair<DTC_Link_ID, DTC_ROC_ID>> ids;
+			for (auto link : DTC_Links)
 			{
 				for (auto roc : DTC_ROCS)
 				{
 					if (roc == DTC_ROC_Unused) continue;
-					ids.emplace_back(std::make_pair(ring, roc));
+					ids.emplace_back(std::make_pair(link, roc));
 				}
 			}
 
@@ -342,7 +342,7 @@ void printHelpMsg()
 		<< "    -P: Send <file> to DTC and enable Detector Emulator mode (Default: \"\")" << std::endl
 		<< "    -g: Generate (and send) N DMA blocks for testing the Detector Emulator (Default: 0)" << std::endl
 		<< "    -G: Read out generated data, but don't write new. With -g, will exit after writing data" << std::endl
-		<< "    -r: # of rocs to enable. Hexadecimal, each digit corresponds to a ring. ROC_0: 1, ROC_1: 3, ROC_2: 5, ROC_3: 7, ROC_4: 9, ROC_5: B (Default 0x1, All possible: 0xBBBBBB)" << std::endl
+		<< "    -r: # of rocs to enable. Hexadecimal, each digit corresponds to a link. ROC_0: 1, ROC_1: 3, ROC_2: 5, ROC_3: 7, ROC_4: 9, ROC_5: B (Default 0x1, All possible: 0xBBBBBB)" << std::endl
 		<< "    -F: Frequency to program (in Hz, sorry...Default 166666667 Hz)" << std::endl
 		<< "    -C: Clock to program (0: SERDES, 1: DDR, Default 0)" << std::endl
 		<< "    -v: Expected DTC Design version string (Default: \"\")" << std::endl
@@ -710,7 +710,7 @@ main(int argc
 		else if (thisDTC->ReadSimMode() == DTC_SimMode_Loopback)
 		{
 			uint64_t ts = timestampOffset;
-			DTC_DataHeaderPacket header(DTC_Ring_0, DTC_ROC_0, static_cast<uint16_t>(0), DTC_DataStatus_Valid, 0, 0, DTC_Timestamp(ts));
+			DTC_DataHeaderPacket header(DTC_Link_0, DTC_ROC_0, static_cast<uint16_t>(0), DTC_DataStatus_Valid, 0, 0, DTC_Timestamp(ts));
 			std::cout << "Request: " << header.toJSON() << std::endl;
 			thisDTC->WriteDMAPacket(header);
 		}
@@ -947,10 +947,10 @@ main(int argc
 
 			if (checkSERDES)
 			{
-				auto disparity = thisDTC->ReadSERDESRXDisparityError(DTC_Ring_0);
-				auto cnit = thisDTC->ReadSERDESRXCharacterNotInTableError(DTC_Ring_0);
-				auto rxBufferStatus = thisDTC->ReadSERDESRXBufferStatus(DTC_Ring_0);
-				auto eyescan = thisDTC->ReadSERDESEyescanError(DTC_Ring_0);
+				auto disparity = thisDTC->ReadSERDESRXDisparityError(DTC_Link_0);
+				auto cnit = thisDTC->ReadSERDESRXCharacterNotInTableError(DTC_Link_0);
+				auto rxBufferStatus = thisDTC->ReadSERDESRXBufferStatus(DTC_Link_0);
+				auto eyescan = thisDTC->ReadSERDESEyescanError(DTC_Link_0);
 				if (eyescan)
 				{
 					//TRACE_CNTL("modeM", 0L);

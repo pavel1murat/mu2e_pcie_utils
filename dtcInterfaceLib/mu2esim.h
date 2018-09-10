@@ -88,7 +88,7 @@ private:
 	void openEvent_(DTCLib::DTC_Timestamp ts);
 	void closeEvent_();
 	void CFOEmulator_();
-	void packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID ring, DTCLib::DTC_ROC_ID roc, uint16_t packetCount);
+	void packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Link_ID link, uint16_t packetCount);
 	void dcsPacketSimulator_(DTCLib::DTC_DCSRequestPacket in);
 
 	std::unordered_map<uint16_t, uint32_t> registers_;
@@ -98,13 +98,13 @@ private:
 	mu2e_databuff_t* dmaData_[MU2E_MAX_CHANNELS][SIM_BUFFCOUNT];
 	std::fstream ddrFile_;
 	DTCLib::DTC_SimMode mode_;
-	uint16_t simIndex_[6][6];
+	uint16_t simIndex_[6];
 	std::thread cfoEmulatorThread_;
 	bool cancelCFO_;
 
 	typedef std::bitset<6> readoutRequestData;
 	std::map<uint64_t, readoutRequestData> readoutRequestReceived_;
-	
+
 	DTCLib::DTC_Timestamp currentTimestamp_;
 	uint64_t currentEventSize_;
 	std::streampos eventBegin_;

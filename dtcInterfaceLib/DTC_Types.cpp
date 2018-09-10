@@ -124,24 +124,24 @@ DTCLib::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError() : data_(0) {}
 
 DTCLib::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError(std::bitset<2> data) : data_(data) {}
 
-DTCLib::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError(uint32_t data, DTC_Ring_ID ring)
+DTCLib::DTC_SERDESRXDisparityError::DTC_SERDESRXDisparityError(uint32_t data, DTC_Link_ID link)
 {
 	std::bitset<32> dataSet = data;
-	uint32_t ringBase = static_cast<uint8_t>(ring) * 2;
-	data_[0] = dataSet[ringBase];
-	data_[1] = dataSet[ringBase + 1];
+	uint32_t linkBase = static_cast<uint8_t>(link) * 2;
+	data_[0] = dataSet[linkBase];
+	data_[1] = dataSet[linkBase + 1];
 }
 
 DTCLib::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError() : data_(0) {}
 
 DTCLib::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError(std::bitset<2> data) : data_(data) {}
 
-DTCLib::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError(uint32_t data, DTC_Ring_ID ring)
+DTCLib::DTC_CharacterNotInTableError::DTC_CharacterNotInTableError(uint32_t data, DTC_Link_ID link)
 {
 	std::bitset<32> dataSet = data;
-	uint32_t ringBase = static_cast<uint8_t>(ring) * 2;
-	data_[0] = dataSet[ringBase];
-	data_[1] = dataSet[ringBase + 1];
+	uint32_t linkBase = static_cast<uint8_t>(link) * 2;
+	data_[0] = dataSet[linkBase];
+	data_[1] = dataSet[linkBase + 1];
 }
 
 

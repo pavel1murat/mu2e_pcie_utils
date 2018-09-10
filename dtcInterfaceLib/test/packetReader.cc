@@ -114,18 +114,18 @@ int main()
 				size_t ts = timestamp.to_ulong();
 				std::cout << "\tTimestamp: " << ts << std::endl;
 
-				std::bitset<16> rocring = packetVector[1];
-				std::bitset<4> ring;
+				std::bitset<16> roclink = packetVector[1];
+				std::bitset<4> link;
 				std::bitset<4> roc;
 				for (size_t i = 0; i < 4; i++)
 				{
-					roc[i] = rocring[i];
-					ring[i] = rocring[i + 8];
+					roc[i] = roclink[i];
+					link[i] = roclink[i + 8];
 				}
 				size_t ROC_ID = roc.to_ulong();
-				size_t Ring_ID = ring.to_ulong();
+				size_t Link_ID = link.to_ulong();
 				std::cout << "\tROC ID: " << ROC_ID << std::endl;
-				std::cout << "\tRing ID: " << Ring_ID << std::endl;
+				std::cout << "\tRing ID: " << Link_ID << std::endl;
 
 				std::cout << "\tNumber of non-header data packets: " << packetVector.size() / 8 - 1 << std::endl;
 
