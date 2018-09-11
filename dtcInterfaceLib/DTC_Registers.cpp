@@ -4454,7 +4454,7 @@ void DTCLib::DTC_Registers::SetSERDESOscillatorParameters_(uint64_t program)
 	WriteSERDESIICInterface(DTC_IICSERDESBusAddress_EVB, 12, static_cast<uint8_t>(program));
 
 	WriteSERDESIICInterface(DTC_IICSERDESBusAddress_EVB, 0x89, 0);
-	WriteSERDESIICInterface(DTC_IICSERDESBusAddress_EVB, 0x87, 1);
+	WriteSERDESIICInterface(DTC_IICSERDESBusAddress_EVB, 0x87, 0x40);
 }
 
 void DTCLib::DTC_Registers::SetTimingOscillatorParameters_(uint64_t program)
@@ -4469,7 +4469,7 @@ void DTCLib::DTC_Registers::SetTimingOscillatorParameters_(uint64_t program)
 	WriteSERDESIICInterface(DTC_IICSERDESBusAddress_CFO, 12, static_cast<uint8_t>(program));
 
 	WriteSERDESIICInterface(DTC_IICSERDESBusAddress_CFO, 0x89, 0);
-	WriteSERDESIICInterface(DTC_IICSERDESBusAddress_CFO, 0x87, 1);
+	WriteSERDESIICInterface(DTC_IICSERDESBusAddress_CFO, 0x87, 0x40);
 }
 
 void DTCLib::DTC_Registers::SetDDROscillatorParameters_(uint64_t program)
@@ -4484,6 +4484,6 @@ void DTCLib::DTC_Registers::SetDDROscillatorParameters_(uint64_t program)
 	WriteDDRIICInterface(DTC_IICDDRBusAddress_DDROscillator, 12, static_cast<uint8_t>(program));
 
 	WriteDDRIICInterface(DTC_IICDDRBusAddress_DDROscillator, 0x89, 0);
-	WriteDDRIICInterface(DTC_IICDDRBusAddress_DDROscillator, 0x87, 1);
+	WriteDDRIICInterface(DTC_IICDDRBusAddress_DDROscillator, 0x87, 0x40);
 }
 
