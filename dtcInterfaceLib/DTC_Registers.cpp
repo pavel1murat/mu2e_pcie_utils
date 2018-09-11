@@ -4192,12 +4192,21 @@ void DTCLib::DTC_Registers::SetNewOscillatorFrequency(DTC_OscillatorType oscilla
 {
 	auto currentFrequency = ReadCurrentFrequency(oscillator);
 	auto currentProgram = ReadCurrentProgram(oscillator);
+	TLOG(TLVL_DEBUG) << "Target Frequency: " << targetFrequency << ", Current Frequency: " << currentFrequency << ", Current Program: " << currentProgram;
 
 	// Check if targetFrequency is essentially the same as the current frequency...
-	if (fabs(currentFrequency - targetFrequency) < targetFrequency * 30 / 1000000) return;
+	if (fabs(currentFrequency - targetFrequency) < targetFrequency * 30 / 1000000)
+	{
+		TLOG(TLVL_WARNING) << "New frequency and old frequency are within 30 ppm of each other, not reprogramming!";
+		return;
+	}
 
 	auto newParameters = CalculateFrequencyForProgramming_(targetFrequency, currentFrequency, currentProgram);
-	if (newParameters == 0) return;
+	if (newParameters == 0)
+	{
+		TLOG(TLVL_WARNING) << "New program calculated as 0! Check parameters!";
+		return;
+	}
 	WriteCurrentProgram(newParameters, oscillator);
 	WriteCurrentFrequency(targetFrequency, oscillator);
 }
