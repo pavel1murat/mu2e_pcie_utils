@@ -4197,7 +4197,7 @@ void DTCLib::DTC_Registers::SetNewOscillatorFrequency(DTC_OscillatorType oscilla
 	// Check if targetFrequency is essentially the same as the current frequency...
 	if (fabs(currentFrequency - targetFrequency) < targetFrequency * 30 / 1000000)
 	{
-		TLOG(TLVL_WARNING) << "New frequency and old frequency are within 30 ppm of each other, not reprogramming!";
+		TLOG(TLVL_INFO) << "New frequency and old frequency are within 30 ppm of each other, not reprogramming!";
 		return;
 	}
 
