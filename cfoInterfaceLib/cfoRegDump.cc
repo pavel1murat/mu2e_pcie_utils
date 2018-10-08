@@ -78,7 +78,7 @@ int main(int argc
 		}
 	}
 
-	auto thisCFO = new CFOLib::CFO_Registers(CFOLib::CFO_SimMode_Disabled, CFO, 0x1, "", true);
+	auto thisCFO = new CFOLib::CFO_Registers(DTCLib::DTC_SimMode_Disabled, CFO, 0x1, "", true);
 
 	auto cols = 80;
 	auto lines = 24;

@@ -6,11 +6,29 @@
 #include <functional> // std::bind, std::function
 #include <vector> // std::vector
 
-#include "cfoInterfaceLib/CFO_Types.h"
-#include "cfoInterfaceLib/cfodev.h"
+#include "dtcInterfaceLib/DTC_Types.h"
+#include "dtcInterfaceLib/mu2edev.h"
+
+using namespace DTCLib;
 
 namespace CFOLib
 {
+
+	enum CFO_Link_ID : uint8_t
+	{
+		CFO_Link_0 = 0,
+		CFO_Link_1 = 1,
+		CFO_Link_2 = 2,
+		CFO_Link_3 = 3,
+		CFO_Link_4 = 4,
+		CFO_Link_5 = 5,
+		CFO_Link_6 = 6,
+		CFO_Link_7 = 7,
+		CFO_Link_Unused,
+	};
+
+	static const std::vector<CFO_Link_ID> CFO_Links{ CFO_Link_0, CFO_Link_1, CFO_Link_2, CFO_Link_3, CFO_Link_4, CFO_Link_5, CFO_Link_6, CFO_Link_7 };
+
 	enum CFO_Register : uint16_t
 	{
 		CFO_Register_DesignVersion = 0x9000,
@@ -110,7 +128,7 @@ namespace CFOLib
 
 	/// <summary>
 	/// The CFO_Registers class represents the CFO Register space, and all the methods necessary to read and write those registers.
-	/// Each register has, at the very least, a read method, a write method, and a CFO_RegisterFormatter method which
+	/// Each register has, at the very least, a read method, a write method, and a DTC_RegisterFormatter method which
 	/// formats the register value in a human-readable way.
 	/// </summary>
 	class CFO_Registers
@@ -124,7 +142,7 @@ namespace CFOLib
 		/// <param name="dtcMask">The initially-enabled DTCs. Each digit corresponds to a Link, so all DTCs = 0xFFFFFFFF</param>
 		/// <param name="skipInit">Default: false; Whether to skip initializing the CFO using the SimMode. Used to read state.</param>
 		/// <param name="expectedDesignVersion">Expected CFO Firmware Design Version. If set, will throw an exception if the CFO firmware does not match (Default: "")</param>
-		explicit CFO_Registers(CFO_SimMode mode, int CFO, unsigned dtcMask = 0, std::string expectedDesignVersion = "", bool skipInit = false);
+		explicit CFO_Registers(DTC_SimMode mode, int CFO, unsigned dtcMask = 0, std::string expectedDesignVersion = "", bool skipInit = false);
 		/// <summary>
 		/// CFO_Registers destructor
 		/// </summary>
@@ -134,7 +152,7 @@ namespace CFOLib
 		/// Get a pointer to the device handle
 		/// </summary>
 		/// <returns>cfodev* pointer</returns>
-		cfodev* GetDevice()
+		mu2edev* GetDevice()
 		{
 			return &device_;
 		}
@@ -146,7 +164,7 @@ namespace CFOLib
 		/// Get the current CFO_SimMode of this CFO_Registers object
 		/// </summary>
 		/// <returns></returns>
-		CFO_SimMode ReadSimMode() const
+		DTC_SimMode ReadSimMode() const
 		{
 			return simMode_;
 		}
@@ -159,7 +177,7 @@ namespace CFOLib
 		/// <param name="CFO">CFO/DTC card instance to use</param>
 		/// <param name="skipInit">Whether to skip initializing the CFO using the SimMode. Used to read state.</param>
 		/// <returns></returns>
-		CFO_SimMode SetSimMode(std::string expectedDesignVersion, CFO_SimMode mode, int CFO, bool skipInit = false);
+		DTC_SimMode SetSimMode(std::string expectedDesignVersion, DTC_SimMode mode, int CFO, bool skipInit = false);
 
 		//
 		// CFO Register Dumps
@@ -178,13 +196,13 @@ namespace CFOLib
 		std::string LinkCountersRegDump(int width);
 
 		/// <summary>
-		/// Initializes a CFO_RegisterFormatter for the given CFO_Register
+		/// Initializes a DTC_RegisterFormatter for the given CFO_Register
 		/// </summary>
 		/// <param name="address">Address of register to format</param>
-		/// <returns>CFO_RegisterFormatter with address and raw value set</returns>
-		CFO_RegisterFormatter CreateFormatter(const CFO_Register& address)
+		/// <returns>DTC_RegisterFormatter with address and raw value set</returns>
+		DTC_RegisterFormatter CreateFormatter(const CFO_Register& address)
 		{
-			CFO_RegisterFormatter form;
+			DTC_RegisterFormatter form;
 			form.descWidth = formatterWidth_;
 			form.address = address;
 			form.value = ReadRegister_(address);
@@ -205,12 +223,12 @@ namespace CFOLib
 		/// Determine the native clock speed for the SERDES in the loaded firmware
 		/// </summary>
 		/// <returns>Either CFO_SerdesClockSpeed_48Gbps or CFO_SerdesClockSpeed_3125Gbps</returns>
-		CFO_SerdesClockSpeed ReadSERDESVersion();
+		DTC_SerdesClockSpeed ReadSERDESVersion();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatDesignVersion();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatDesignVersion();
 
 		/// <summary>
 		/// Read the modification date of the CFO firmware
@@ -220,8 +238,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatDesignDate();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatDesignDate();
 
 		// Design Status Register
 		/// <summary>
@@ -237,8 +255,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatDesignStatus();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatDesignStatus();
 
 		// Vivado Version Register
 		/// <summary>
@@ -249,8 +267,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatVivadoVersion();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatVivadoVersion();
 
 		// CFO Control Register
 		/// <summary>
@@ -317,8 +335,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatCFOControl();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatCFOControl();
 
 		// DMA Transfer Length Register
 		/// <summary>
@@ -345,8 +363,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatDMATransferLength();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatDMATransferLength();
 
 		// SERDES Loopback Enable Register
 		/// <summary>
@@ -354,18 +372,18 @@ namespace CFOLib
 		/// </summary>
 		/// <param name="Link">Link to set for</param>
 		/// <param name="mode">CFO_SERDESLoopbackMode to set</param>
-		void SetSERDESLoopbackMode(const CFO_Link_ID& link, const CFO_SERDESLoopbackMode& mode);
+		void SetSERDESLoopbackMode(const CFO_Link_ID& link, const DTC_SERDESLoopbackMode& mode);
 		/// <summary>
 		/// Read the SERDES Loopback mode for the given Link
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <returns>CFO_SERDESLoopbackMode of the Link</returns>
-		CFO_SERDESLoopbackMode ReadSERDESLoopback(const CFO_Link_ID& link);
+		DTC_SERDESLoopbackMode ReadSERDESLoopback(const CFO_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESLoopbackEnable();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESLoopbackEnable();
 
 		// Clock Status Register
 		/// <summary>
@@ -392,8 +410,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatClockOscillatorStatus();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatClockOscillatorStatus();
 
 		// Link Enable Register
 		/// <summary>
@@ -402,25 +420,25 @@ namespace CFOLib
 		/// <param name="Link">Link to enable</param>
 		/// <param name="mode">Link enable bits to set (Default: All)</param>
 		/// <param name="dtcCount">Number of DTCs in the Link (Default: 0)</param>
-		void EnableLink(const CFO_Link_ID& link, const CFO_LinkEnableMode& mode = CFO_LinkEnableMode(), const uint8_t& dtcCount = 0);
+		void EnableLink(const CFO_Link_ID& link, const DTC_RingEnableMode& mode = DTC_RingEnableMode(), const uint8_t& dtcCount = 0);
 		/// <summary>
 		/// Disable a SERDES Link
 		/// The given mode bits will be UNSET
 		/// </summary>
 		/// <param name="Link">Link to disable</param>
 		/// <param name="mode">Link enable bits to unset (Default: All)</param>
-		void DisableLink(const CFO_Link_ID& link, const CFO_LinkEnableMode& mode = CFO_LinkEnableMode());
+		void DisableLink(const CFO_Link_ID& link, const DTC_RingEnableMode& mode = DTC_RingEnableMode());
 		/// <summary>
 		/// Read the Link Enable bits for a given SERDES Link
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <returns>CFO_LinkEnableMode containing TX, RX, and CFO bits</returns>
-		CFO_LinkEnableMode ReadLinkEnabled(const CFO_Link_ID& link);
+		DTC_RingEnableMode ReadLinkEnabled(const CFO_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatLinkEnable();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatLinkEnable();
 
 		// SERDES Reset Register
 		/// <summary>
@@ -439,8 +457,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESReset();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESReset();
 
 		// SERDES RX Disparity Error Register
 		/// <summary>
@@ -448,12 +466,12 @@ namespace CFOLib
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <returns>CFO_SERDESRXDisparityError object with error bits</returns>
-		CFO_SERDESRXDisparityError ReadSERDESRXDisparityError(const CFO_Link_ID& link);
+		DTC_SERDESRXDisparityError ReadSERDESRXDisparityError(const CFO_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESRXDisparityError();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESRXDisparityError();
 
 		// SERDES Character Not In Table Error Register
 		/// <summary>
@@ -461,12 +479,12 @@ namespace CFOLib
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <returns>CFO_CharacterNotInTableError object with error bits</returns>
-		CFO_CharacterNotInTableError ReadSERDESRXCharacterNotInTableError(const CFO_Link_ID& link);
+		DTC_CharacterNotInTableError ReadSERDESRXCharacterNotInTableError(const CFO_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESRXCharacterNotInTableError();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESRXCharacterNotInTableError();
 
 		// SERDES Unlock Error Register
 		/// <summary>
@@ -478,8 +496,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESUnlockError();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESUnlockError();
 
 		// SERDES PLL Locked Register
 		/// <summary>
@@ -491,8 +509,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESPLLLocked();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESPLLLocked();
 
 		// SERDES RX Status Register
 		/// <summary>
@@ -500,12 +518,12 @@ namespace CFOLib
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <returns>CFO_RXStatus object</returns>
-		CFO_RXStatus ReadSERDESRXStatus(const CFO_Link_ID& link);
+		DTC_RXStatus ReadSERDESRXStatus(const CFO_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESRXStatus();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESRXStatus();
 
 		// SERDES Reset Done Register
 		/// <summary>
@@ -517,8 +535,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESResetDone();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESResetDone();
 
 
 		// SERDES RX CDR Lock Register
@@ -531,8 +549,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESRXCDRLock();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESRXCDRLock();
 
 		// Beam On Timer Preset Regsiter
 		/// <summary>
@@ -550,8 +568,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatBeamOnTimerPreset();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatBeamOnTimerPreset();
 
 		// Enable Beam On Mode Register
 		/// <summary>
@@ -573,8 +591,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatBeamOnMode();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatBeamOnMode();
 
 		// Enable Beam Off Mode Register
 		/// <summary>
@@ -596,8 +614,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatBeamOffMode();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatBeamOffMode();
 
 		// 40 MHz Clock Marker Interval Count Register
 		/// <summary>
@@ -613,8 +631,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatClockMarkerIntervalCount();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatClockMarkerIntervalCount();
 
 		// SERDES Oscillator Registers
 		/// <summary>
@@ -667,54 +685,54 @@ namespace CFOLib
 		/// Read the current SERDES Oscillator clock speed
 		/// </summary>
 		/// <returns>Current SERDES clock speed</returns>
-		CFO_SerdesClockSpeed ReadSERDESOscillatorClock();
+		DTC_SerdesClockSpeed ReadSERDESOscillatorClock();
 		/// <summary>
 		/// Set the SERDES Oscillator clock speed for the given SERDES transfer rate
 		/// </summary>
 		/// <param name="speed">Clock speed to set</param>
-		void SetSERDESOscillatorClock(CFO_SerdesClockSpeed speed);
+		void SetSERDESOscillatorClock(DTC_SerdesClockSpeed speed);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESOscillatorFrequency();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESOscillatorFrequency();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESOscillatorControl();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESOscillatorControl();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESOscillatorParameterLow();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESOscillatorParameterLow();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESOscillatorParameterHigh();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESOscillatorParameterHigh();
 
 		// Timestamp Preset Registers
 		/// <summary>
 		/// Set the Timestamp preset for Timing system emulation mode
 		/// </summary>
 		/// <param name="preset">Timestamp for Timing emulation</param>
-		void SetTimestampPreset(const CFO_Timestamp& preset);
+		void SetTimestampPreset(const DTC_Timestamp& preset);
 		/// <summary>
 		/// Read the Timestamp preset for Timing system emulation mode
 		/// </summary>
 		/// <returns>Timestamp preset</returns>
-		CFO_Timestamp ReadTimestampPreset();
+		DTC_Timestamp ReadTimestampPreset();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatTimestampPreset0();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatTimestampPreset0();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatTimestampPreset1();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatTimestampPreset1();
 
 		// NUMDTCs Register
 		/// <summary>
@@ -733,8 +751,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatNUMDTCs();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatNUMDTCs();
 
 		// FIFO Full Error Flags Registers
 		/// <summary>
@@ -747,12 +765,12 @@ namespace CFOLib
 		/// </summary>
 		/// <param name="Link">Link to read</param>
 		/// <returns>CFO_FIFOFullErrorFlags object</returns>
-		CFO_FIFOFullErrorFlags ReadFIFOFullErrorFlags(const CFO_Link_ID& link);
+		DTC_FIFOFullErrorFlags ReadFIFOFullErrorFlags(const CFO_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatFIFOFullErrorFlag0();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatFIFOFullErrorFlag0();
 
 		// Receive Packet Error Register
 		/// <summary>
@@ -802,8 +820,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatReceivePacketError();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatReceivePacketError();
 
 		// Event Window Emulator (Beam Off) Interval Time Register
 		/// <summary>
@@ -819,8 +837,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatEventWindowEmulatorIntervalTime();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatEventWindowEmulatorIntervalTime();
 
 		// Event Window Holdoff Time Register
 		/// <summary>
@@ -836,8 +854,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatEventWindowHoldoffTime();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatEventWindowHoldoffTime();
 
 		// Event Window Timeout Error Register
 		/// <summary>
@@ -854,8 +872,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatEventWindowTimeoutError();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatEventWindowTimeoutError();
 
 		// Event Window Timeout Interval Register
 		/// <summary>
@@ -871,8 +889,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatEventWindowTimeoutInterval();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatEventWindowTimeoutInterval();
 
 		/// <summary>
 		/// Clear the value of the Receive byte counter
@@ -921,163 +939,163 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatReceiveByteCountLink0();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatReceiveByteCountLink0();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatReceiveByteCountLink1();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatReceiveByteCountLink1();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatReceiveByteCountLink2();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatReceiveByteCountLink2();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatReceiveByteCountLink3();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatReceiveByteCountLink3();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatReceiveByteCountLink4();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatReceiveByteCountLink4();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatReceiveByteCountLink5();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatReceiveByteCountLink5();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatReceiveByteCountLink6();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatReceiveByteCountLink6();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatReceiveByteCountLink7();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatReceiveByteCountLink7();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatReceivePacketCountLink0();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatReceivePacketCountLink0();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatReceivePacketCountLink1();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatReceivePacketCountLink1();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatReceivePacketCountLink2();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatReceivePacketCountLink2();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatReceivePacketCountLink3();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatReceivePacketCountLink3();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatReceivePacketCountLink4();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatReceivePacketCountLink4();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatReceivePacketCountLink5();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatReceivePacketCountLink5();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatReceivePacketCountLink6();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatReceivePacketCountLink6();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatReceivePacketCountLink7();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatReceivePacketCountLink7();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatTramsitByteCountLink0();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatTramsitByteCountLink0();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatTramsitByteCountLink1();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatTramsitByteCountLink1();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatTramsitByteCountLink2();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatTramsitByteCountLink2();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatTramsitByteCountLink3();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatTramsitByteCountLink3();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatTramsitByteCountLink4();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatTramsitByteCountLink4();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatTramsitByteCountLink5();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatTramsitByteCountLink5();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatTramsitByteCountLink6();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatTramsitByteCountLink6();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatTramsitByteCountLink7();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatTramsitByteCountLink7();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatTransmitPacketCountLink0();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatTransmitPacketCountLink0();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatTransmitPacketCountLink1();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatTransmitPacketCountLink1();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatTransmitPacketCountLink2();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatTransmitPacketCountLink2();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatTransmitPacketCountLink3();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatTransmitPacketCountLink3();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatTransmitPacketCountLink4();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatTransmitPacketCountLink4();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatTransmitPacketCountLink5();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatTransmitPacketCountLink5();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatTransmitPacketCountLink6();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatTransmitPacketCountLink6();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatTransmitPacketCountLink7();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatTransmitPacketCountLink7();
 
 
 		// DDR3 Memory DMA Write Start Address Register
@@ -1094,8 +1112,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatDMAWriteStartAddress();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatDMAWriteStartAddress();
 
 		// DDR3 Memory DMA Read Start Address Register
 		/// <summary>
@@ -1111,8 +1129,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatDMAReadStartAddress();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatDMAReadStartAddress();
 
 		// DDR3 Memory DMA Read Byte Count / Start Read DMA Register
 		/// <summary>
@@ -1132,8 +1150,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatDMAReadByteCount();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatDMAReadByteCount();
 
 		// DDR3 Beam On Base Address Register
 		/// <summary>
@@ -1149,8 +1167,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatDDRBeamOnBaseAddress();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatDDRBeamOnBaseAddress();
 
 		// DDR3 Beam Off Base Address Register
 		/// <summary>
@@ -1166,8 +1184,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatDDRBeamOffBaseAddress();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatDDRBeamOffBaseAddress();
 
 		// Firefly CSR Register
 		/// <summary>
@@ -1263,8 +1281,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatFireflyCSR();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatFireflyCSR();
 
 		// SERDES PRBS Control Registers
 		/// <summary>
@@ -1334,43 +1352,43 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESPRBSControlLink0();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESPRBSControlLink0();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESPRBSControlLink1();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESPRBSControlLink1();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESPRBSControlLink2();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESPRBSControlLink2();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESPRBSControlLink3();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESPRBSControlLink3();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESPRBSControlLink4();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESPRBSControlLink4();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESPRBSControlLink5();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESPRBSControlLink5();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESPRBSControlLink6();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESPRBSControlLink6();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatSERDESPRBSControlLink7();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatSERDESPRBSControlLink7();
 
 		// Cable Delays
 		/// <summary>
@@ -1388,43 +1406,43 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatCableDelayValueLink0();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatCableDelayValueLink0();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatCableDelayValueLink1();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatCableDelayValueLink1();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatCableDelayValueLink2();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatCableDelayValueLink2();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatCableDelayValueLink3();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatCableDelayValueLink3();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatCableDelayValueLink4();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatCableDelayValueLink4();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatCableDelayValueLink5();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatCableDelayValueLink5();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatCableDelayValueLink6();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatCableDelayValueLink6();
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatCableDelayValueLink7();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatCableDelayValueLink7();
 
 		// Cable Delay Control And Status Register
 		/// <summary>
@@ -1478,8 +1496,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatCableDelayControl();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatCableDelayControl();
 
 		// FPGA PROM Program Data Register
 
@@ -1497,8 +1515,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatFPGAPROMProgramStatus();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatFPGAPROMProgramStatus();
 
 		// FPGA Core Access Register
 		/// <summary>
@@ -1518,8 +1536,8 @@ namespace CFOLib
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
-		/// <returns>CFO_RegisterFormatter object containing register information</returns>
-		CFO_RegisterFormatter FormatFPGACoreAccess();
+		/// <returns>DTC_RegisterFormatter object containing register information</returns>
+		DTC_RegisterFormatter FormatFPGACoreAccess();
 
 		// Oscillator Programming (DDR and SERDES)
 		/// <summary>
@@ -1542,8 +1560,8 @@ namespace CFOLib
 
 
 	protected:
-		cfodev device_; ///< Device handle
-		CFO_SimMode simMode_; ///< Simulation mode
+		mu2edev device_; ///< Device handle
+		DTC_SimMode simMode_; ///< Simulation mode
 		uint32_t maxDTCs_; ///< Map of active DTCs
 		bool usingDetectorEmulator_; ///< Whether Detector Emulation mode is enabled
 		uint16_t dmaSize_; ///< Size of DMAs, in bytes (default 32k)
@@ -1552,7 +1570,7 @@ namespace CFOLib
 		/// <summary>
 		/// Functions needed to print regular register map
 		/// </summary>
-		const std::vector<std::function<CFO_RegisterFormatter()>> formattedDumpFunctions_
+		const std::vector<std::function<DTC_RegisterFormatter()>> formattedDumpFunctions_
 		{
 			[this]() { return this->FormatDesignVersion(); },
 			[this]() { return this->FormatDesignDate(); },
@@ -1619,7 +1637,7 @@ namespace CFOLib
 		/// <summary>
 		/// Dump Byte/Packet Counter Registers
 		/// </summary>
-		const std::vector<std::function<CFO_RegisterFormatter()>> formattedCounterFunctions_
+		const std::vector<std::function<DTC_RegisterFormatter()>> formattedCounterFunctions_
 		{
 			[this]() { return this->FormatReceiveByteCountLink0(); },
 			[this]() { return this->FormatReceiveByteCountLink1(); },

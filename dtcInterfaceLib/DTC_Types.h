@@ -78,6 +78,7 @@ namespace DTCLib
 	{
 		DTC_SerdesClockSpeed_25Gbps,
 		DTC_SerdesClockSpeed_3125Gbps,
+		DTC_SerdesClockSpeed_48Gbps,
 		DTC_SerdesClockSpeed_Unknown
 	};
 

@@ -1,0 +1,27 @@
+//Plan X
+//By J. Berlioz
+
+DATA_REQUEST 12
+LOOP 3 
+INC 3
+INC
+INC event_tag
+//SET
+SET 5
+LOOP 5
+DO_LOOP //Comment
+REPEAT 3
+
+START event_mode= 23
+DATA_REQUEST request_tag=15
+DATA_REQUEST CURRENT
+DO_LOOP
+START 22
+WAIT 202352
+WAIT period=500 cycles  //Comment
+WAIT 3000000 sec
+WAIT NEXT
+END         //Comment
+START 212514
+SLICE bitposition= 46 bitwidth=3 event_tag=5
+SLICE bitposition= 2 bitwidth=3 event_tag=5
