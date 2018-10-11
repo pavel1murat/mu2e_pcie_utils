@@ -8,6 +8,7 @@ cet_make_library(LIBRARY_NAME CFOInterface SOURCE
 
 cet_make_exec(CFORegDump SOURCE cfoRegDump.cc LIBRARIES CFOInterface)
 cet_make_exec(mu2eCompiler SOURCE mu2eCompiler.cc LIBRARIES CFOInterface)
+cet_make_exec(cfoUtil SOURCE util_main.cc LIBRARIES CFOInterface)
 
 # Install_headers MUST BE FIRST...for some reason
 install_headers()

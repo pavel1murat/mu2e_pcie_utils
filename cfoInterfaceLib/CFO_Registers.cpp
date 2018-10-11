@@ -68,7 +68,7 @@ DTCLib::DTC_SimMode CFOLib::CFO_Registers::SetSimMode(std::string expectedDesign
 		else
 		{
 			int rocCount = (maxDTCs_ >> (link * 4)) & 0xF;
-			EnableLink(link, DTC_RingEnableMode(true, true, false), rocCount);
+			EnableLink(link, DTC_LinkEnableMode(true, true, false), rocCount);
 		}
 		if (!LinkEnabled)  SetSERDESLoopbackMode(link, DTC_SERDESLoopbackMode_Disabled);
 	}
@@ -455,7 +455,7 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatClockOscillatorStatus
 }
 
 // Link Enable Register
-void CFOLib::CFO_Registers::EnableLink(const CFO_Link_ID& link, const DTC_RingEnableMode& mode, const uint8_t& dtcCount)
+void CFOLib::CFO_Registers::EnableLink(const CFO_Link_ID& link, const DTC_LinkEnableMode& mode, const uint8_t& dtcCount)
 {
 	std::bitset<32> data = ReadRegister_(CFO_Register_LinkEnable);
 	data[link] = mode.TransmitEnable;
@@ -464,7 +464,7 @@ void CFOLib::CFO_Registers::EnableLink(const CFO_Link_ID& link, const DTC_RingEn
 	SetMaxDTCNumber(link, dtcCount);
 }
 
-void CFOLib::CFO_Registers::DisableLink(const CFO_Link_ID& link, const DTC_RingEnableMode& mode)
+void CFOLib::CFO_Registers::DisableLink(const CFO_Link_ID& link, const DTC_LinkEnableMode& mode)
 {
 	std::bitset<32> data = ReadRegister_(CFO_Register_LinkEnable);
 	data[link] = data[link] && !mode.TransmitEnable;
@@ -472,10 +472,10 @@ void CFOLib::CFO_Registers::DisableLink(const CFO_Link_ID& link, const DTC_RingE
 	WriteRegister_(data.to_ulong(), CFO_Register_LinkEnable);
 }
 
-DTCLib::DTC_RingEnableMode CFOLib::CFO_Registers::ReadLinkEnabled(const CFO_Link_ID& link)
+DTCLib::DTC_LinkEnableMode CFOLib::CFO_Registers::ReadLinkEnabled(const CFO_Link_ID& link)
 {
 	std::bitset<32> dataSet = ReadRegister_(CFO_Register_LinkEnable);
-	return DTC_RingEnableMode(dataSet[link], dataSet[link + 8], false);
+	return DTC_LinkEnableMode(dataSet[link], dataSet[link + 8], false);
 }
 
 DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatLinkEnable()
@@ -537,7 +537,7 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESReset()
 // SERDES RX Disparity Error Register
 DTCLib::DTC_SERDESRXDisparityError CFOLib::CFO_Registers::ReadSERDESRXDisparityError(const CFO_Link_ID& link)
 {
-	return DTC_SERDESRXDisparityError(ReadRegister_(CFO_Register_SERDESRXDisparityError), static_cast<DTC_Ring_ID>(link));
+	return DTC_SERDESRXDisparityError(ReadRegister_(CFO_Register_SERDESRXDisparityError), static_cast<DTC_Link_ID>(link));
 }
 
 DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESRXDisparityError()
@@ -556,7 +556,7 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESRXDisparityErro
 // SERDES RX Character Not In Table Error Register
 DTCLib::DTC_CharacterNotInTableError CFOLib::CFO_Registers::ReadSERDESRXCharacterNotInTableError(const CFO_Link_ID& link)
 {
-	return DTC_CharacterNotInTableError(ReadRegister_(CFO_Register_SERDESRXCharacterNotInTableError), static_cast<DTC_Ring_ID>(link));
+	return DTC_CharacterNotInTableError(ReadRegister_(CFO_Register_SERDESRXCharacterNotInTableError), static_cast<DTC_Link_ID>(link));
 }
 
 DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESRXCharacterNotInTableError()

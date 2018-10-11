@@ -420,20 +420,20 @@ namespace CFOLib
 		/// <param name="Link">Link to enable</param>
 		/// <param name="mode">Link enable bits to set (Default: All)</param>
 		/// <param name="dtcCount">Number of DTCs in the Link (Default: 0)</param>
-		void EnableLink(const CFO_Link_ID& link, const DTC_RingEnableMode& mode = DTC_RingEnableMode(), const uint8_t& dtcCount = 0);
+		void EnableLink(const CFO_Link_ID& link, const DTC_LinkEnableMode& mode = DTC_LinkEnableMode(), const uint8_t& dtcCount = 0);
 		/// <summary>
 		/// Disable a SERDES Link
 		/// The given mode bits will be UNSET
 		/// </summary>
 		/// <param name="Link">Link to disable</param>
 		/// <param name="mode">Link enable bits to unset (Default: All)</param>
-		void DisableLink(const CFO_Link_ID& link, const DTC_RingEnableMode& mode = DTC_RingEnableMode());
+		void DisableLink(const CFO_Link_ID& link, const DTC_LinkEnableMode& mode = DTC_LinkEnableMode());
 		/// <summary>
 		/// Read the Link Enable bits for a given SERDES Link
 		/// </summary>
 		/// <param name="Link">Link to read</param>
-		/// <returns>CFO_LinkEnableMode containing TX, RX, and CFO bits</returns>
-		DTC_RingEnableMode ReadLinkEnabled(const CFO_Link_ID& link);
+		/// <returns>DTC_LinkEnableMode containing TX, RX, and CFO bits</returns>
+		DTC_LinkEnableMode ReadLinkEnabled(const CFO_Link_ID& link);
 		/// <summary>
 		/// Formats the register's current value for register dumps
 		/// </summary>
