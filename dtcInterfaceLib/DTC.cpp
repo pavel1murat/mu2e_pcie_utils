@@ -644,7 +644,9 @@ DTCLib::DTC_DCSReplyPacket* DTCLib::DTC::ReadNextDCSPacket()
 
 	//Read the next packet
 	TLOG(TLVL_ReadNextDCSPacket) << "ReadNextDCSPacket Reading packet from buffer: dcsReadPtr_=" << (void*)dcsReadPtr_;
-	auto output = new DTC_DCSReplyPacket(DTC_DataPacket(dcsReadPtr_));
+	auto dataPacket = DTC_DataPacket(dcsReadPtr_);
+	TLOG(TLVL_ReadNextDCSPacket) << "ReadNextDCSPacket: DTC_DataPacket: " << dataPacket.toJSON();
+	auto output = new DTC_DCSReplyPacket(dataPacket);
 	TLOG(TLVL_ReadNextDCSPacket) << output->toJSON();
 
 	// Update the packet pointer
