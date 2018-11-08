@@ -51,6 +51,7 @@ uint8_t DTCLib::DTC_DataPacket::GetWord(uint16_t index) const
 
 bool DTCLib::DTC_DataPacket::Resize(const uint16_t dmaSize)
 {
+  
 	if (!memPacket_ && dmaSize > dataSize_)
 	{
 		vals_.resize(dmaSize);

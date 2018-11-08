@@ -59,6 +59,7 @@ void printHelpMsg()
 	std::cout << "Usage: rocUtil [options] [read_register,reset_roc,write_register,write_extregister,test_read,read_release,toggle_serdes]" << std::endl;
 	std::cout << "Options are:" << std::endl
 		<< "    -h: This message." << std::endl
+		<< "    -l: Link to send requests on (Default: 0)" << std::endl
 		<< "    -n: Number of times to repeat test. (Default: 1)" << std::endl
 		<< "    -d: Delay between tests, in us (Default: 0)." << std::endl
 		<< "    -w: Data to write to address" << std::endl
@@ -75,6 +76,7 @@ int main(int argc, char* argv[])
 {
 	auto quiet = false;
 	auto reallyQuiet = false;
+	unsigned link = 0;
 	unsigned delay = 0;
 	unsigned number = 1;
 	unsigned address = 0;
@@ -88,6 +90,9 @@ int main(int argc, char* argv[])
 		{
 			switch (argv[optind][1])
 			{
+			case 'l':
+				link = getOptionValue(&optind, &argv);
+				break;
 			case 'd':
 				delay = getOptionValue(&optind, &argv);
 				break;
@@ -129,6 +134,7 @@ int main(int argc, char* argv[])
 	std::cout << "Options are: "
 		<< "Operation: " << std::string(op)
 		<< ", Num: " << number
+		<< ", Link: " << link
 		<< ", Delay: " << delay
 		<< ", Address: " << address
 		<< ", Data: " << data
@@ -137,40 +143,40 @@ int main(int argc, char* argv[])
 		<< ", Really Quiet Mode: " << reallyQuiet
 		<< std::endl;
 
-
-	auto thisDTC = new DTC( DTC_SimMode_NoCFO, 0);
+	auto dtc_link = static_cast<DTC_Link_ID>(link);
+	auto thisDTC = new DTC(DTC_SimMode_NoCFO, -1, (0x1 << link));
 	auto device = thisDTC->GetDevice();
 
 	if (op == "read_register")
 	{
 		std::cout << "Operation \"read_register\"" << std::endl;
-		auto rocdata = thisDTC->ReadROCRegister(DTC_Link_0, address);
+		auto rocdata = thisDTC->ReadROCRegister(dtc_link, address);
 		if (!reallyQuiet) std::cout << rocdata << '\n';
 	}
 	else if (op == "reset_roc")
 	{
 		std::cout << "Operation \"reset_roc\"" << std::endl;
-		thisDTC->WriteExtROCRegister(DTC_Link_0,  12, 1, 0x11);
-		thisDTC->WriteExtROCRegister(DTC_Link_0,  11, 1, 0x11);
-		thisDTC->WriteExtROCRegister(DTC_Link_0,  10, 1, 0x11);
-		thisDTC->WriteExtROCRegister(DTC_Link_0,  9, 1, 0x11);
-		thisDTC->WriteExtROCRegister(DTC_Link_0,  8, 1, 0x11);
+		thisDTC->WriteExtROCRegister(dtc_link,  12, 1, 0x11);
+		thisDTC->WriteExtROCRegister(dtc_link,  11, 1, 0x11);
+		thisDTC->WriteExtROCRegister(dtc_link,  10, 1, 0x11);
+		thisDTC->WriteExtROCRegister(dtc_link,  9, 1, 0x11);
+		thisDTC->WriteExtROCRegister(dtc_link,  8, 1, 0x11);
 	}
 	else if (op == "write_register")
 	{
 		std::cout << "Operation \"write_register\"" << std::endl;
-		thisDTC->WriteROCRegister(DTC_Link_0,  address, data);
+		thisDTC->WriteROCRegister(dtc_link,  address, data);
 	}
 	else if (op == "write_extregister")
 	{
 		std::cout << "Operation \"write_extregister\"" << std::endl;
-		thisDTC->WriteExtROCRegister(DTC_Link_0,  block, address, data);
+		thisDTC->WriteExtROCRegister(dtc_link,  block, address, data);
 	}
 	else if (op == "test_read")
 	{
 		std::cout << "Operation \"test_read\"" << std::endl;
 
-		thisDTC->SendDCSRequestPacket(DTC_Link_0,  DTC_DCSOperationType_Read, address, quiet);
+		thisDTC->SendDCSRequestPacket(dtc_link,  DTC_DCSOperationType_Read, address, quiet);
 
 		for (unsigned ii = 0; ii < number; ++ii)
 		{

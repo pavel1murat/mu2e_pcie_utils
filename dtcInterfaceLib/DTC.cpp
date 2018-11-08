@@ -713,38 +713,27 @@ int DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
 
 void DTCLib::DTC::WriteDataPacket(const DTC_DataPacket& packet)
 {
-	if (packet.GetSize() < dmaSize_)
-	{
-		auto thisPacket(packet);
-		thisPacket.Resize(dmaSize_);
+			TLOG(TLVL_WriteDataPacket) << "WriteDataPacket: Writing packet: " << packet.toJSON();
+  mu2e_databuff_t buf;
+  uint64_t size = packet.GetSize() + sizeof(uint64_t);
+  uint64_t packetSize = packet.GetSize();
+  if(size < static_cast<uint64_t>(dmaSize_)) size = dmaSize_;
+
+  memcpy(&buf[0], &packetSize, sizeof(uint64_t));
+  memcpy(&buf[8], packet.GetData(), packet.GetSize() * sizeof(uint8_t));
+
+
 		auto retry = 3;
 		int errorCode;
 		do
 		{
-			TLOG(TLVL_WriteDataPacket) << "WriteDataPacket: Writing packet: " << packet.toJSON();
-			errorCode = device_.write_data(DTC_DMA_Engine_DCS, const_cast<uint8_t*>(thisPacket.GetData()), thisPacket.GetSize() * sizeof(uint8_t));
+		  errorCode = device_.write_data(DTC_DMA_Engine_DCS, &buf, size);
 			retry--;
 		} while (retry > 0 && errorCode != 0);
 		if (errorCode != 0)
 		{
 			throw DTC_IOErrorException();
 		}
-	}
-	else
-	{
-		auto retry = 3;
-		int errorCode;
-		do
-		{
-			TLOG(TLVL_WriteDataPacket) << "WriteDataPacket: Writing packet: " << packet.toJSON();
-			errorCode = device_.write_data(DTC_DMA_Engine_DCS, const_cast<uint8_t*>(packet.GetData()), packet.GetSize() * sizeof(uint8_t));
-			retry--;
-		} while (retry > 0 && errorCode != 0);
-		if (errorCode != 0)
-		{
-			throw DTC_IOErrorException();
-		}
-	}
 }
 
 void DTCLib::DTC::WriteDMAPacket(const DTC_DMAPacket& packet)

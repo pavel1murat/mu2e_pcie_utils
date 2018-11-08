@@ -284,7 +284,7 @@ int mu2edev::write_data(int chn, void* buffer, size_t bytes)
 		int dir = S2C;
 		retsts = 0;
 		unsigned delta = mu2e_chn_info_delta_(activeDTC_, chn, dir, &mu2e_channel_info_); // check cached info
-		TRACE(3, "write_data delta=%u chn=%d dir=S2C", delta, chn);
+		TRACE(3, "write_data delta=%u chn=%d dir=S2C, sz=%zu", delta, chn, bytes);
 		while (delta <= 1 && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() < 1000)
 		{
 			m_ioc_get_info_t get_info;

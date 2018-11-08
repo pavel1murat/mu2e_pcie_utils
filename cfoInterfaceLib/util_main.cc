@@ -274,7 +274,9 @@ main(int argc
 			else
 			{
 				size_t offset = 8;
-				*reinterpret_cast<uint64_t*>(inputData) = inputBytes.size();
+				auto inputSize = input.size();
+				//*reinterpret_cast<uint64_t*>(inputData) = inputBytes.size();
+			        memcpy(&inputData[0], &inputSize, sizeof(uint64_t));
 				for (auto ch : inputBytes)
 				{
 					inputData[offset++] = ch;
@@ -284,7 +286,9 @@ main(int argc
 		}
 		else
 		{
-			*reinterpret_cast<uint64_t*>(inputData) = input.size();
+			auto inputSize = input.size();
+			//*reinterpret_cast<uint64_t*>(inputData) = input.size();
+			memcpy(&inputData[0], &inputSize, sizeof(uint64_t));
 			memcpy(&inputData[8], &input[0], input.size());
 		}
 

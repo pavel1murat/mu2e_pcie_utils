@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include "trace.h"
 
-DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, int dtc, unsigned rocMask, std::string expectedDesignVersion, bool skipInit) : device_(), simMode_(mode), dmaSize_(16)
+DTCLib::DTC_Registers::DTC_Registers(DTC_SimMode mode, int dtc, unsigned rocMask, std::string expectedDesignVersion, bool skipInit) : device_(), simMode_(mode), dmaSize_(64)
 {
 	auto sim = getenv("DTCLIB_SIM_ENABLE");
 	if (sim != nullptr)
