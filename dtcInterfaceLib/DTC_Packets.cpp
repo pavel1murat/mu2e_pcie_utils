@@ -70,11 +70,13 @@ std::string DTCLib::DTC_DataPacket::toJSON() const
 	ss << "\"DataPacket\": {";
 	ss << "\"data\": [";
 	ss << std::hex << std::setfill('0');
-	for (uint16_t ii = 0; ii < dataSize_ - 1; ++ii)
+	uint16_t jj = 0;
+	for (uint16_t ii = 0; ii < dataSize_ - 2; ii += 2)
 	{
-		ss << "0x" << std::setw(2) << static_cast<int>(dataPtr_[ii]) << ",";
+		ss << "0x" << std::setw(4) << static_cast<int>(reinterpret_cast<uint16_t const*>(dataPtr_)[jj]) << ",";
+		++jj;
 	}
-	ss << "0x" << std::setw(2) << static_cast<int>(dataPtr_[dataSize_ - 1]) << "]";
+	ss << "0x" << std::setw(4) << static_cast<int>(reinterpret_cast<uint16_t const*>(dataPtr_)[dataSize_ - 2]) << "]";
 	ss << "}";
 	return ss.str();
 }
