@@ -642,6 +642,9 @@ DTCLib::DTC_DCSReplyPacket* DTCLib::DTC::ReadNextDCSPacket()
 		}
 	}
 
+	// Move past DMA byte count
+	dcsReadPtr_ = static_cast<char*>(dcsReadPtr_) + 8;
+
 	//Read the next packet
 	TLOG(TLVL_ReadNextDCSPacket) << "ReadNextDCSPacket Reading packet from buffer: dcsReadPtr_=" << (void*)dcsReadPtr_;
 	auto dataPacket = DTC_DataPacket(dcsReadPtr_);
