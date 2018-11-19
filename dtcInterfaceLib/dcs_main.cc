@@ -56,7 +56,7 @@ std::string getOptionString(int* index, char** argv[])
 
 void printHelpMsg()
 {
-	std::cout << "Usage: rocUtil [options] [read_register,reset_roc,write_register,write_extregister,test_read,read_release,toggle_serdes]" << std::endl;
+	std::cout << "Usage: rocUtil [options] [read_register,reset_roc,write_register,read_extregister,write_extregister,test_read,read_release,toggle_serdes]" << std::endl;
 	std::cout << "Options are:" << std::endl
 		<< "    -h: This message." << std::endl
 		<< "    -l: Link to send requests on (Default: 0)" << std::endl
@@ -149,9 +149,12 @@ int main(int argc, char* argv[])
 
 	if (op == "read_register")
 	{
-		std::cout << "Operation \"read_register\"" << std::endl;
-		auto rocdata = thisDTC->ReadROCRegister(dtc_link, address);
-		if (!reallyQuiet) std::cout << rocdata << '\n';
+		for (unsigned ii = 0; ii < number; ++ii)
+		{
+			std::cout << "Operation \"read_register\"" << std::endl;
+			auto rocdata = thisDTC->ReadROCRegister(dtc_link, address);
+			if (!reallyQuiet) std::cout << rocdata << '\n';
+		}
 	}
 	else if (op == "reset_roc")
 	{
@@ -164,13 +167,28 @@ int main(int argc, char* argv[])
 	}
 	else if (op == "write_register")
 	{
-		std::cout << "Operation \"write_register\"" << std::endl;
-		thisDTC->WriteROCRegister(dtc_link,  address, data);
+		for (unsigned ii = 0; ii < number; ++ii)
+		{
+			std::cout << "Operation \"write_register\"" << std::endl;
+			thisDTC->WriteROCRegister(dtc_link, address, data);
+		}
+	}
+	else if (op == "read_extregister")
+	{
+		for (unsigned ii = 0; ii < number; ++ii)
+		{
+			std::cout << "Operation \"read_register\"" << std::endl;
+			auto rocdata = thisDTC->ReadExtROCRegister(dtc_link, block, address);
+			if (!reallyQuiet) std::cout << rocdata << '\n';
+		}
 	}
 	else if (op == "write_extregister")
 	{
-		std::cout << "Operation \"write_extregister\"" << std::endl;
-		thisDTC->WriteExtROCRegister(dtc_link,  block, address, data);
+		for (unsigned ii = 0; ii < number; ++ii)
+		{
+			std::cout << "Operation \"write_extregister\"" << std::endl;
+			thisDTC->WriteExtROCRegister(dtc_link, block, address, data);
+		}
 	}
 	else if (op == "test_read")
 	{
