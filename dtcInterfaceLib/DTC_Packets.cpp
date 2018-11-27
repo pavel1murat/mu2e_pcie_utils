@@ -193,6 +193,8 @@ DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Link_ID link, DTC_DCSOper
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
 {
+	
+	std::cout << std::hex << "packet type 0x" << packetType_ << " match 0x" << DTC_PacketType_DCSRequest << std::dec << std::endl;
 	if (packetType_ != DTC_PacketType_DCSRequest)
 	{
 		throw DTC_WrongPacketTypeException(DTC_PacketType_DCSRequest, packetType_);

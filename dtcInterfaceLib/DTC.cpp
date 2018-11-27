@@ -460,7 +460,7 @@ uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint8_t add
 	auto reply = ReadNextDCSPacket();
 	if (reply != nullptr)
 	{
-		return reply->GetData();
+	  return reply->GetData();
 	}
 	return 0;
 }
@@ -521,6 +521,9 @@ void DTCLib::DTC::SendDCSRequestPacket(const DTC_Link_ID& link, const DTC_DCSOpe
 	DTC_DCSRequestPacket req(link,  type, address, data);
 	TLOG(TLVL_SendDCSRequestPacket) << "SendDCSRequestPacket before WriteDMADCSPacket - DTC_DCSRequestPacket";
 	if (!quiet) std::cout << req.toJSON() << std::endl;
+
+	if (!ReadDCSReception()) EnableDCSReception();
+
 	WriteDMAPacket(req);
 	TLOG(TLVL_SendDCSRequestPacket) << "SendDCSRequestPacket after  WriteDMADCSPacket - DTC_DCSRequestPacket";
 }
@@ -626,31 +629,37 @@ DTCLib::DTC_DataHeaderPacket* DTCLib::DTC::ReadNextDAQPacket(int tmo_ms)
 DTCLib::DTC_DCSReplyPacket* DTCLib::DTC::ReadNextDCSPacket()
 {
 	TLOG(TLVL_ReadNextDCSPacket) << "ReadNextDCSPacket BEGIN";
-	if (dcsReadPtr_ == nullptr || dcsReadPtr_ >= reinterpret_cast<uint8_t*>(dcsbuffer_.back()) + sizeof(mu2e_databuff_t) || *static_cast<uint16_t*>(dcsReadPtr_) == 0)
+	if (dcsReadPtr_ == nullptr || dcsReadPtr_ >= reinterpret_cast<uint8_t*>(dcsbuffer_.back()) + sizeof(mu2e_databuff_t) || *reinterpret_cast<uint16_t*>(dcsReadPtr_) == 0 || *reinterpret_cast<uint16_t*>(dcsReadPtr_) == 0xcafe )
 	{
 		TLOG(TLVL_ReadNextDCSPacket) << "ReadNextDCSPacket Obtaining new DCS Buffer";
+		std::cout << "ReadNextDCSPacket Obtaining new DCS Buffer " << std::endl;
 		auto retsts = ReadBuffer(DTC_DMA_Engine_DCS);
 		if (retsts > 0)
 		{
 			dcsReadPtr_ = &dcsbuffer_.back()[0];
 			TLOG(TLVL_ReadNextDCSPacket) << "ReadNextDCSPacket dcsReadPtr_=" << (void*)dcsReadPtr_ << " dcsBuffer_=" << (void*)dcsbuffer_.back();
+			std::cout << "ReadNextDCSPacket dcsReadPtr_=" << (void*)dcsReadPtr_ << " dcsBuffer_=" << (void*)dcsbuffer_.back() << std::endl;
+
+			  // Move past DMA byte count
+			  dcsReadPtr_ = static_cast<char*>(dcsReadPtr_) + 8;
 		}
 		else
 		{
 			TLOG(TLVL_ReadNextDCSPacket) << "ReadNextDCSPacket ReadBuffer returned " << retsts;
+			std::cout << "ReadNextDCSPacket ReadBuffer returned " << retsts << std::endl;
 			return nullptr;
 		}
 	}
 
-	// Move past DMA byte count
-	dcsReadPtr_ = static_cast<char*>(dcsReadPtr_) + 8;
 
 	//Read the next packet
 	TLOG(TLVL_ReadNextDCSPacket) << "ReadNextDCSPacket Reading packet from buffer: dcsReadPtr_=" << (void*)dcsReadPtr_;
 	auto dataPacket = DTC_DataPacket(dcsReadPtr_);
 	TLOG(TLVL_ReadNextDCSPacket) << "ReadNextDCSPacket: DTC_DataPacket: " << dataPacket.toJSON();
+	std::cout << "ReadNextDCSPacket: DTC_DataPacket: " << dataPacket.toJSON() << std::endl;
 	auto output = new DTC_DCSReplyPacket(dataPacket);
 	TLOG(TLVL_ReadNextDCSPacket) << output->toJSON();
+	std::cout << "Converted to DCS: " << output->toJSON() << std::endl;
 
 	// Update the packet pointer
 
