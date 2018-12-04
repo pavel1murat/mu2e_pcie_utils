@@ -454,26 +454,31 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file, std::string rawOutputFile
 }
 
 // ROC Register Functions
-uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint8_t address)
+uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint8_t address, int retries)
 {
 	SendDCSRequestPacket(link, DTC_DCSOperationType_Read, address);
-	bool done = false;
-	uint16_t data = 0;
-	while (!done) {
+	uint16_t data = 0xFFFF;
+	while (retries > 0) {
 		auto reply = ReadNextDCSPacket();
 		if (reply != nullptr)
 		{
-			TLOG(TLVL_TRACE) << "Got packet, link=" << static_cast<int>(reply->GetRingID()) << ", address=" << static_cast<int>(reply->GetAddress()) << ", data=" << static_cast<int>(reply->GetData());
-
+			auto addresstmp = reply->GetAddress();
+			auto linktmp = reply->GetRingID();
 			auto datatmp = reply->GetData();
+			TLOG(TLVL_TRACE) << "Got packet, link=" << static_cast<int>(linktmp) << ", address=" << static_cast<int>(addresstmp) << ", data=" << static_cast<int>(datatmp);
+
 			delete reply;
 			reply = nullptr;
-			if (reply->GetAddress() != address || reply->GetRingID() != link) continue;
+			if (addresstmp != address || linktmp != link) continue;
 
 			data = datatmp;
-			done = true;
+			retries = 0;
 
 		}
+		else {
+			SendDCSRequestPacket(link, DTC_DCSOperationType_Read, address);
+		}
+		retries--;
 	}
 	return data;
 }

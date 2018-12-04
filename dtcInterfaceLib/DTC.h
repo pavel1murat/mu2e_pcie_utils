@@ -67,8 +67,9 @@ namespace DTCLib
 		/// </summary>
 		/// <param name="link">Link of the ROC to read</param>
 		/// <param name="address">Address of the register</param>
+ 		/// <param name="retries">Numberof times to retry when packet address or link does not match request</param>
 		/// <returns>Value of the ROC register from a DCS Reply packet</returns>
-		uint16_t ReadROCRegister(const DTC_Link_ID& link, const uint8_t address);
+		uint16_t ReadROCRegister(const DTC_Link_ID& link, const uint8_t address, int retries = 10);
 		/// <summary>
 		/// Sends a DCS Request Packet with the fields filled in such that the given ROC register will be written.
 		/// This function writes to the main ROC register space, use WriteExtROCRegister to access other firmware blocks' register spaces.
