@@ -457,16 +457,25 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file, std::string rawOutputFile
 uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint8_t address)
 {
 	SendDCSRequestPacket(link, DTC_DCSOperationType_Read, address);
-	auto reply = ReadNextDCSPacket();
-	if (reply != nullptr)
-	{
-		TLOG(TLVL_TRACE) << "Got packet, link=" << static_cast<int>(reply->GetRingID()) <<  ", address=" << static_cast<int>(reply->GetAddress()) << ", data=" << static_cast<int>(reply->GetData());
-		auto data = reply->GetData();
-		delete reply;
-		reply = nullptr;
-	  return data;
+	bool done = false;
+	uint16_t data = 0;
+	while (!done) {
+		auto reply = ReadNextDCSPacket();
+		if (reply != nullptr)
+		{
+			TLOG(TLVL_TRACE) << "Got packet, link=" << static_cast<int>(reply->GetRingID()) << ", address=" << static_cast<int>(reply->GetAddress()) << ", data=" << static_cast<int>(reply->GetData());
+
+			auto datatmp = reply->GetData();
+			delete reply;
+			reply = nullptr;
+			if (reply->GetAddress() != address || reply->GetRingID() != link) continue;
+
+			data = datatmp;
+			done = true;
+
+		}
 	}
-	return 0;
+	return data;
 }
 
 void DTCLib::DTC::WriteROCRegister(const DTC_Link_ID& link, const uint8_t address, const uint16_t data)
