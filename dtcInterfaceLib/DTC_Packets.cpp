@@ -410,12 +410,12 @@ DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_DataPacket in) : DTC_DMAPacke
 std::string DTCLib::DTC_DCSReplyPacket::toJSON()
 {
 	std::stringstream ss;
-	ss << "\"DCSRequestPacket\": {";
-	ss << headerJSON() << ",";
-	ss << "\"Operation Type\":" << DTC_DCSOperationTypeConverter(type_) << ",";
-	ss << "\"Address\": " << static_cast<int>(address_) << ",";
-	ss << "\"Data\": " << static_cast<int>(data_);
-	ss << "\"Request Counter\": " << static_cast<int>(requestCounter_) << ",";
+	ss << "\"DCSReplyPacket\": {";
+	ss << headerJSON() << ", ";
+	ss << "\"Operation Type\":" << DTC_DCSOperationTypeConverter(type_) << ", ";
+	ss << "\"Address\": " << static_cast<int>(address_) << ", ";
+	ss << "\"Data\": " << static_cast<int>(data_) << ", ";
+	ss << "\"Request Counter\": " << static_cast<int>(requestCounter_) << ", ";
 	ss << "\"DCS Request FIFO Empty\": " << (dcsReceiveFIFOEmpty_ ? "\"true\"" : "\"false\"");
 	ss << "}";
 	return ss.str();

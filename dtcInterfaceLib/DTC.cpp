@@ -460,7 +460,11 @@ uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint8_t add
 	auto reply = ReadNextDCSPacket();
 	if (reply != nullptr)
 	{
-	  return reply->GetData();
+		TLOG(TLVL_TRACE) << "Got packet, link=" << static_cast<int>(reply->GetRingID()) <<  ", address=" << static_cast<int>(reply->GetAddress()) << ", data=" << static_cast<int>(reply->GetData());
+		auto data = reply->GetData();
+		delete reply;
+		reply = nullptr;
+	  return data;
 	}
 	return 0;
 }
