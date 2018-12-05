@@ -594,7 +594,7 @@ std::unique_ptr<DTCLib::DTC_DataPacket> DTCLib::DTC::ReadNextPacket(const DTC_DM
 		{
 			info->lastReadPtr = nullptr;
 		}
-		TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket Obtaining new DAQ Buffer";
+		TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket Obtaining new " << (engine == DTC_DMA_Engine_DAQ ? "DAQ" : "DCS") << " Buffer";
 		void* oldBufferPtr = &info->buffer.back()[0];
 		auto sts = ReadBuffer(engine, tmo_ms); // does return code
 		if (sts <= 0)
