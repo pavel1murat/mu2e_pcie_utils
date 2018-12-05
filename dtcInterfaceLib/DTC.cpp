@@ -460,8 +460,10 @@ uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint8_t add
 	uint16_t data = 0xFFFF;
 	while (retries > 0) {
 		auto reply = ReadNextDCSPacket();
-		if (reply != nullptr)
+		auto count = 0;
+		while (reply != nullptr)
 		{
+			count++;
 			auto addresstmp = reply->GetAddress();
 			auto linktmp = reply->GetRingID();
 			auto datatmp = reply->GetData();
@@ -475,7 +477,8 @@ uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint8_t add
 			retries = 0;
 
 		}
-		else {
+		if(count == 0)
+		{
 			SendDCSRequestPacket(link, DTC_DCSOperationType_Read, address);
 		}
 		retries--;
@@ -759,7 +762,9 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DataPacket& packet)
 		int errorCode;
 		do
 		{
+			TLOG(TLVL_WriteDataPacket) << "Attempting to write data...";
 		  errorCode = device_.write_data(DTC_DMA_Engine_DCS, &buf, size);
+		  TLOG(TLVL_WriteDataPacket) << "Attempted to write data, errorCode=" << errorCode << ", retries=" << retry;
 			retry--;
 		} while (retry > 0 && errorCode != 0);
 		if (errorCode != 0)
