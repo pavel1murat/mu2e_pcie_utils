@@ -448,6 +448,7 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file, std::string rawOutputFile
 uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint8_t address, int retries)
 {
 	SendDCSRequestPacket(link, DTC_DCSOperationType_Read, address);
+	usleep(2500);
 	uint16_t data = 0xFFFF;
 	while (retries > 0) {
 		TLOG(TLVL_TRACE) << "ReadROCRegister: Loop start, retries=" << retries;
@@ -471,9 +472,11 @@ uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint8_t add
 		if(count == 0)
 		{
 			SendDCSRequestPacket(link, DTC_DCSOperationType_Read, address);
+			usleep(2500);
 		}
 		retries--;
 	}
+	TLOG(TLVL_TRACE) << "ReadROCRegister returning " << static_cast<int>(data) << " for link " << static_cast<int>(link) << ", address " << static_cast<int>(address);
 	return data;
 }
 
