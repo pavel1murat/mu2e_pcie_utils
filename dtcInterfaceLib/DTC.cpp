@@ -633,6 +633,9 @@ std::unique_ptr<DTCLib::DTC_DataPacket> DTCLib::DTC::ReadNextPacket(const DTC_DM
 	{
 		TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket: blockByteCount is invalid, returning NULL!";
 		info->currentReadPtr = nullptr;
+		//This buffer is invalid, release it!
+		//Try and see if we're merely stuck...hopefully, all the data is out of the buffers...
+		device_.read_release(engine, 1);
 		return nullptr;
 	}
 
