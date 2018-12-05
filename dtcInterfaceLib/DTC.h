@@ -126,10 +126,12 @@ namespace DTCLib
 		/// <summary>
 		/// The "first read" flag resets the cached data, allowing the DTC class to recover from invalid data from the DTC
 		/// </summary>
+		/// <param name="engine">Engine to reset</param>
 		/// <param name="read">Value of the flag</param>
-		void SetFirstRead(bool read)
+		void SetFirstRead(DTC_DMA_Engine engine, bool read)
 		{
-			first_read_ = read;
+			if(engine == DTC_DMA_Engine_DAQ) daqDMAInfo_.first_read = read;
+			else if (engine == DTC_DMA_Engine_DCS) dcsDMAInfo_.first_read = read;
 		}
 
 		/// <summary>
@@ -149,12 +151,12 @@ namespace DTCLib
 		/// </summary>
 		/// <param name="tmo_ms">Timeout before returning nullptr. Default: 0, no timeout</param>
 		/// <returns>Pointer to DataHeaderPacket. Will be nullptr if no data available.</returns>
-		DTC_DataHeaderPacket* ReadNextDAQPacket(int tmo_ms = 0);
+		std::unique_ptr<DTC_DataHeaderPacket> ReadNextDAQPacket(int tmo_ms = 0);
 		/// <summary>
 		/// DCS packets are read one-at-a-time, this function reads the next one from the DTC
 		/// </summary>
 		/// <returns>Pointer to read DCSReplyPacket. Will be nullptr if no data available.</returns>
-		DTC_DCSReplyPacket* ReadNextDCSPacket();
+		std::unique_ptr<DTC_DCSReplyPacket> ReadNextDCSPacket();
 
 		/// <summary>
 		/// Releases all buffers to the hardware, from both the DAQ and DCS channels
@@ -171,26 +173,33 @@ namespace DTCLib
 		/// <param name="channel">Channel to release</param>
 		void ReleaseAllBuffers(const DTC_DMA_Engine& channel)
 		{
-			if (channel == DTC_DMA_Engine_DAQ) daqbuffer_.clear();
-			else if (channel == DTC_DMA_Engine_DCS) dcsbuffer_.clear();
+			if (channel == DTC_DMA_Engine_DAQ) daqDMAInfo_.buffer.clear();
+			else if (channel == DTC_DMA_Engine_DCS) dcsDMAInfo_.buffer.clear();
 			device_.release_all(channel);
 		}
 
 	private:
+		std::unique_ptr<DTC_DataPacket> ReadNextPacket(const DTC_DMA_Engine& channel, int tmo_ms = 0);
 		int ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms = 0);
 		void WriteDataPacket(const DTC_DataPacket& packet);
 
-		std::list<mu2e_databuff_t*> daqbuffer_;
-		std::list<mu2e_databuff_t*> dcsbuffer_;
-		bool lastDAQBufferActive_;
-		bool lastDCSBufferActive_;
-		uint32_t bufferIndex_;
-		bool first_read_;
-		uint16_t daqDMAByteCount_;
-		uint16_t dcsDMAByteCount_;
-		void* lastReadPtr_;
-		void* nextReadPtr_;
-		void* dcsReadPtr_;
+		struct DMAInfo {
+			std::list<mu2e_databuff_t*> buffer;
+			bool lastBufferActive;
+			uint32_t bufferIndex;
+			bool first_read;
+			uint16_t dmaByteCount;
+			void* currentReadPtr;
+			void* lastReadPtr;
+			DMAInfo() : buffer(), lastBufferActive(false), bufferIndex(0), first_read(true), dmaByteCount(0), currentReadPtr(nullptr), lastReadPtr(nullptr) {}
+			~DMAInfo() {
+				buffer.clear();
+				currentReadPtr = nullptr;
+				lastReadPtr = nullptr;
+			}
+		};
+		DMAInfo daqDMAInfo_;
+		DMAInfo dcsDMAInfo_;
 	};
 }
 #endif
