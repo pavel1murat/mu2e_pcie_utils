@@ -459,6 +459,7 @@ uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint8_t add
 	SendDCSRequestPacket(link, DTC_DCSOperationType_Read, address);
 	uint16_t data = 0xFFFF;
 	while (retries > 0) {
+		TLOG(TLVL_TRACE) << "ReadROCRegister: Loop start, retries=" << retries;
 		auto reply = ReadNextDCSPacket();
 		auto count = 0;
 		while (reply != nullptr)
