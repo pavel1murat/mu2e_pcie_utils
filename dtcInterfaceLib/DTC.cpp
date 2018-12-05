@@ -632,6 +632,7 @@ std::unique_ptr<DTCLib::DTC_DataPacket> DTCLib::DTC::ReadNextPacket(const DTC_DM
 	if ((engine == DTC_DMA_Engine_DAQ && blockByteCount == 0) || blockByteCount == 0xcafe)
 	{
 		TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket: blockByteCount is invalid, returning NULL!";
+		info->currentReadPtr = nullptr;
 		return nullptr;
 	}
 
