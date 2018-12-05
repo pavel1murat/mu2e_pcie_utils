@@ -598,6 +598,12 @@ std::unique_ptr<DTCLib::DTC_DataPacket> DTCLib::DTC::ReadNextPacket(const DTC_DM
 			info->lastReadPtr = nullptr;
 		}
 		TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket Obtaining new " << (engine == DTC_DMA_Engine_DAQ ? "DAQ" : "DCS") << " Buffer";
+
+		if (engine == DTC_DMA_Engine_DCS) {
+			TLOG(TLVL_GetData) << "ReadNextPacket: Releasing " << info->buffer.size() << " DCS buffers";
+			device_.read_release(DTC_DMA_Engine_DAQ, static_cast<unsigned>(info->buffer.size()));
+		}
+
 		void* oldBufferPtr = &info->buffer.back()[0];
 		auto sts = ReadBuffer(engine, tmo_ms); // does return code
 		if (sts <= 0)
