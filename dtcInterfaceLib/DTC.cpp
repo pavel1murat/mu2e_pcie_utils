@@ -435,6 +435,7 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file, std::string rawOutputFile
 // ROC Register Functions
 uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint8_t address, int retries)
 {
+	dcsDMAInfo_.currentReadPtr = nullptr;
 	ReleaseBuffers(DTC_DMA_Engine_DCS);
 	SendDCSRequestPacket(link, DTC_DCSOperationType_Read, address);
 	usleep(2500);
@@ -452,7 +453,10 @@ uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint8_t add
 			TLOG(TLVL_TRACE) << "Got packet, link=" << static_cast<int>(linktmp) << ", address=" << static_cast<int>(addresstmp) << ", data=" << static_cast<int>(datatmp);
 
 			reply.reset(nullptr);
-			if (addresstmp != address || linktmp != link) continue;
+			if (addresstmp != address || linktmp != link) {
+				reply = ReadNextDCSPacket(); // Read the next packet
+				continue;
+			}
 
 			data = datatmp;
 			retries = 0;
