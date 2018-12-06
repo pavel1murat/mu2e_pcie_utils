@@ -122,18 +122,6 @@ namespace DTCLib
 		/// <param name="quiet">Whether to not print the JSON representation of the Readout Request (Default: true, no JSON printed)</param>
 		void SendDCSRequestPacket(const DTC_Link_ID& link,  const DTC_DCSOperationType type, const uint8_t address, const uint16_t data = 0x0, bool quiet = true);
 
-		// For loopback testing...
-		/// <summary>
-		/// The "first read" flag resets the cached data, allowing the DTC class to recover from invalid data from the DTC
-		/// </summary>
-		/// <param name="engine">Engine to reset</param>
-		/// <param name="read">Value of the flag</param>
-		void SetFirstRead(DTC_DMA_Engine engine, bool read)
-		{
-			if(engine == DTC_DMA_Engine_DAQ) daqDMAInfo_.first_read = read;
-			else if (engine == DTC_DMA_Engine_DCS) dcsDMAInfo_.first_read = read;
-		}
-
 		/// <summary>
 		/// Writes a packet to the DTC on the DCS channel
 		/// </summary>
@@ -181,23 +169,27 @@ namespace DTCLib
 	private:
 		std::unique_ptr<DTC_DataPacket> ReadNextPacket(const DTC_DMA_Engine& channel, int tmo_ms = 0);
 		int ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms = 0);
+		/// <summary>
+		/// This function releases all buffers except for the one containing currentReadPtr. Should only be called when done with data in other buffers!
+		/// </summary>
+		/// <param name="channel">Channel to release</param>
+		void ReleaseBuffers(const DTC_DMA_Engine& channel);
 		void WriteDataPacket(const DTC_DataPacket& packet);
 
 		struct DMAInfo {
-			std::list<mu2e_databuff_t*> buffer;
-			bool lastBufferActive;
+			std::vector<mu2e_databuff_t*> buffer;
 			uint32_t bufferIndex;
-			bool first_read;
-			uint16_t dmaByteCount;
 			void* currentReadPtr;
 			void* lastReadPtr;
-			DMAInfo() : buffer(), lastBufferActive(false), bufferIndex(0), first_read(true), dmaByteCount(0), currentReadPtr(nullptr), lastReadPtr(nullptr) {}
+			DMAInfo() : buffer(), bufferIndex(0), currentReadPtr(nullptr), lastReadPtr(nullptr) {}
 			~DMAInfo() {
 				buffer.clear();
 				currentReadPtr = nullptr;
 				lastReadPtr = nullptr;
 			}
 		};
+		int GetCurrentBuffer(DMAInfo* info);
+		uint16_t GetBufferByteCount(DMAInfo* info, size_t index);
 		DMAInfo daqDMAInfo_;
 		DMAInfo dcsDMAInfo_;
 	};

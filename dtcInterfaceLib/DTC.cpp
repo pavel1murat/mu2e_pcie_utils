@@ -16,6 +16,7 @@
 #define TLVL_WriteSimFileToDTC3 22
 #define TLVL_WriteDetectorEmulatorData 23
 #define TLVL_WriteDataPacket 24
+#define TLVL_ReleaseBuffers 25
 
 
 
@@ -50,21 +51,8 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 {
 	TLOG(TLVL_GetData) << "GetData begin";
 	std::vector<DTC_DataBlock> output;
-
-	daqDMAInfo_.first_read = true;
-	TLOG(TLVL_GetData) << "GetData: Releasing " << daqDMAInfo_.buffer.size() + (daqDMAInfo_.lastBufferActive ? -1 : 0) << " buffers";
-	device_.read_release(DTC_DMA_Engine_DAQ, static_cast<unsigned>(daqDMAInfo_.buffer.size() + (daqDMAInfo_.lastBufferActive ? -1 : 0)));
-
-	mu2e_databuff_t* last = daqDMAInfo_.buffer.back();
-	daqDMAInfo_.buffer.clear();
-	if (daqDMAInfo_.lastBufferActive)
-	{
-		daqDMAInfo_.buffer.push_back(last);
-	}
-	last = nullptr;
-	daqDMAInfo_.lastBufferActive = false;
-
 	std::unique_ptr<DTC_DataHeaderPacket> packet = nullptr;
+	ReleaseBuffers(DTC_DMA_Engine_DAQ);
 
 	try
 	{
@@ -74,7 +62,7 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 		while (packet == nullptr && tries < 3)
 		{
 			TLOG(TLVL_GetData) << "GetData before ReadNextDAQPacket, tries=" << tries;
-			packet = ReadNextDAQPacket(daqDMAInfo_.first_read ? 100 : 1);
+			packet = ReadNextDAQPacket(100);
 			if (packet != nullptr)
 			{
 				TLOG(TLVL_GetData) << "GetData after ReadDMADAQPacket, ts=0x" << std::hex << packet->GetTimestamp().GetTimestamp(true);
@@ -92,7 +80,7 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 		{
 			TLOG(TLVL_ERROR) << "GetData: Error: Lead packet has wrong timestamp! 0x" << std::hex << when.GetTimestamp(true) << "(expected) != 0x" << std::hex << packet->GetTimestamp().GetTimestamp(true);
 			packet.reset(nullptr);
-			daqDMAInfo_.lastBufferActive = true;
+			daqDMAInfo_.currentReadPtr = daqDMAInfo_.lastReadPtr;
 			return output;
 		}
 
@@ -121,7 +109,6 @@ std::vector<DTCLib::DTC_DataBlock> DTCLib::DTC::GetData(DTC_Timestamp when)
 				TLOG(TLVL_GetData) << "GetData: Next packet has ts=0x" << std::hex << packet->GetTimestamp().GetTimestamp(true) << ", not 0x" << std::hex << when.GetTimestamp(true) << "; we're done";
 				done = true;
 				daqDMAInfo_.currentReadPtr = daqDMAInfo_.lastReadPtr;
-				daqDMAInfo_.lastBufferActive = true;
 			}
 			else
 			{
@@ -447,6 +434,7 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file, std::string rawOutputFile
 // ROC Register Functions
 uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint8_t address, int retries)
 {
+	ReleaseBuffers(DTC_DMA_Engine_DCS);
 	SendDCSRequestPacket(link, DTC_DCSOperationType_Read, address);
 	usleep(2500);
 	uint16_t data = 0xFFFF;
@@ -469,7 +457,7 @@ uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint8_t add
 			retries = 0;
 
 		}
-		if(count == 0)
+		if (count == 0)
 		{
 			SendDCSRequestPacket(link, DTC_DCSOperationType_Read, address);
 			usleep(2500);
@@ -533,7 +521,7 @@ void DTCLib::DTC::SendReadoutRequestPacket(const DTC_Link_ID& link, const DTC_Ti
 
 void DTCLib::DTC::SendDCSRequestPacket(const DTC_Link_ID& link, const DTC_DCSOperationType type, const uint8_t address, const uint16_t data, bool quiet)
 {
-	DTC_DCSRequestPacket req(link,  type, address, data);
+	DTC_DCSRequestPacket req(link, type, address, data);
 	TLOG(TLVL_SendDCSRequestPacket) << "SendDCSRequestPacket before WriteDMADCSPacket - DTC_DCSRequestPacket";
 	if (!quiet) std::cout << req.toJSON() << std::endl;
 
@@ -585,24 +573,13 @@ std::unique_ptr<DTCLib::DTC_DataPacket> DTCLib::DTC::ReadNextPacket(const DTC_DM
 	{
 		TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket BEFORE BUFFER CHECK info->currentReadPtr=nullptr";
 	}
-	auto newBuffer = false;
-	// Check if the nextReadPtr has been initialized, and if its pointing to a valid location
-	if (info->currentReadPtr == nullptr
-		|| info->currentReadPtr >= reinterpret_cast<uint8_t*>(info->buffer.back()) + sizeof(mu2e_databuff_t)
-		|| info->currentReadPtr >= reinterpret_cast<uint8_t*>(info->buffer.back()) + info->dmaByteCount
-		|| *static_cast<uint16_t*>(info->currentReadPtr) == 0)
-	{
-		newBuffer = true;
-		if (info->first_read)
-		{
-			info->lastReadPtr = nullptr;
-		}
-		TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket Obtaining new " << (engine == DTC_DMA_Engine_DAQ ? "DAQ" : "DCS") << " Buffer";
 
-		if (engine == DTC_DMA_Engine_DCS) {
-			TLOG(TLVL_GetData) << "ReadNextPacket: Releasing " << info->buffer.size() << " DCS buffers";
-			device_.read_release(DTC_DMA_Engine_DAQ, static_cast<unsigned>(info->buffer.size()));
-		}
+	auto index = GetCurrentBuffer(info);
+
+	// Need new buffer if GetCurrentBuffer returns -1 (no buffers) or -2 (done with all held buffers)
+	if (index < 0)
+	{
+		TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket Obtaining new " << (engine == DTC_DMA_Engine_DAQ ? "DAQ" : "DCS") << " Buffer";
 
 		void* oldBufferPtr = &info->buffer.back()[0];
 		auto sts = ReadBuffer(engine, tmo_ms); // does return code
@@ -617,7 +594,7 @@ std::unique_ptr<DTCLib::DTC_DataPacket> DTCLib::DTC::ReadNextPacket(const DTC_DM
 		void* bufferIndexPointer = static_cast<uint8_t*>(info->currentReadPtr) + 2;
 		if (info->currentReadPtr == oldBufferPtr && info->bufferIndex == *static_cast<uint32_t*>(bufferIndexPointer))
 		{
-			TLOG(TLVL_ReadNextDAQPacket) << "New buffer is the same as old. Releasing buffer and retrying";
+			TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket: New buffer is the same as old. Releasing buffer and returning nullptr";
 			info->currentReadPtr = nullptr;
 			//We didn't actually get a new buffer...this probably means there's no more data
 			//Try and see if we're merely stuck...hopefully, all the data is out of the buffers...
@@ -625,42 +602,51 @@ std::unique_ptr<DTCLib::DTC_DataPacket> DTCLib::DTC::ReadNextPacket(const DTC_DM
 			return nullptr;
 		}
 		info->bufferIndex++;
-	}
-	//Read the next packet
-	TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket reading next packet from buffer: info->currentReadPtr=" << (void*)info->currentReadPtr;
-	if (newBuffer)
-	{
-		info->dmaByteCount = static_cast<uint16_t>(*static_cast<uint16_t*>(info->currentReadPtr));
+
 		info->currentReadPtr = reinterpret_cast<uint8_t*>(info->currentReadPtr) + 2;
 		*static_cast<uint32_t*>(info->currentReadPtr) = info->bufferIndex;
 		info->currentReadPtr = reinterpret_cast<uint8_t*>(info->currentReadPtr) + 6;
+
+		index = info->buffer.size() - 1;
 	}
+
+	//Read the next packet
+	TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket reading next packet from buffer: info->currentReadPtr=" << (void*)info->currentReadPtr;
+
 	auto blockByteCount = *reinterpret_cast<uint16_t*>(info->currentReadPtr);
-	TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket: blockByteCount=" << blockByteCount << ", daqDMAByteCount=" << info->dmaByteCount
-		<< ", info->currentReadPtr=" << (void*)info->currentReadPtr << ", *nextReadPtr=" << (int)*((uint16_t*)info->currentReadPtr);
+	TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket: blockByteCount=" << blockByteCount << ", info->currentReadPtr=" << (void*)info->currentReadPtr << ", *nextReadPtr=" << (int)*((uint16_t*)info->currentReadPtr);
 	if ((engine == DTC_DMA_Engine_DAQ && blockByteCount == 0) || blockByteCount == 0xcafe)
 	{
-		TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket: blockByteCount is invalid, returning NULL!";
-		info->currentReadPtr = nullptr;
-		//This buffer is invalid, release it!
-		//Try and see if we're merely stuck...hopefully, all the data is out of the buffers...
-		device_.read_release(engine, 1);
-		return nullptr;
+		if (static_cast<size_t>(index) < info->buffer.size() - 1)
+		{
+			TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket: blockByteCount is invalid, moving to next buffer";
+			auto nextBufferPtr = *info->buffer[index + 1];
+			info->currentReadPtr = nextBufferPtr + 8; // Offset past DMA header
+			return ReadNextPacket(engine, tmo_ms); // Recursion
+		}
+		else
+		{
+			TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket: blockByteCount is invalid, and this is the last buffer! Returning nullptr!";
+			info->currentReadPtr = nullptr;
+			//This buffer is invalid, release it!
+			//Try and see if we're merely stuck...hopefully, all the data is out of the buffers...
+			device_.read_release(engine, 1);
+			return nullptr;
+		}
 	}
 
 	auto test = std::make_unique<DTC_DataPacket>(info->currentReadPtr);
 	TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket: current+blockByteCount=" << (void*)(reinterpret_cast<uint8_t*>(info->currentReadPtr) + blockByteCount)
-		<< ", end of dma buffer=" << (void*)(info->buffer.back()[0] + info->dmaByteCount + 8); // +8 because first 8 bytes are not included in byte count
-	if (reinterpret_cast<uint8_t*>(info->currentReadPtr) + blockByteCount > info->buffer.back()[0] + info->dmaByteCount + 8)
+		<< ", end of dma buffer=" << (void*)(info->buffer[index][0] + GetBufferByteCount(info,index) + 8); // +8 because first 8 bytes are not included in byte count
+	if (reinterpret_cast<uint8_t*>(info->currentReadPtr) + blockByteCount > info->buffer[index][0] + GetBufferByteCount(info, index) + 8)
 	{
-		blockByteCount = static_cast<uint16_t>(info->buffer.back()[0] + info->dmaByteCount + 8 - reinterpret_cast<uint8_t*>(info->currentReadPtr));// +8 because first 8 bytes are not included in byte count
-		TLOG(TLVL_ReadNextDAQPacket) << "Adjusting blockByteCount to " << blockByteCount << " due to end-of-DMA condition";
+		blockByteCount = static_cast<uint16_t>(info->buffer[index][0] + GetBufferByteCount(info, index) + 8 - reinterpret_cast<uint8_t*>(info->currentReadPtr));// +8 because first 8 bytes are not included in byte count
+		TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket: Adjusting blockByteCount to " << blockByteCount << " due to end-of-DMA condition";
 		test->SetWord(0, blockByteCount & 0xFF);
 		test->SetWord(1, (blockByteCount >> 8));
 	}
 
 	TLOG(TLVL_ReadNextDAQPacket) << test->toJSON();
-	info->first_read = false;
 
 	// Update the packet pointers
 
@@ -670,7 +656,7 @@ std::unique_ptr<DTCLib::DTC_DataPacket> DTCLib::DTC::ReadNextPacket(const DTC_DM
 	// Increment by the size of the data block
 	info->currentReadPtr = reinterpret_cast<char*>(info->currentReadPtr) + blockByteCount;
 
-	TLOG(TLVL_ReadNextDAQPacket) << "ReadNextDAQPacket RETURN";
+	TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket: RETURN";
 	return test;
 }
 
@@ -716,7 +702,7 @@ int DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
 	else if (errorCode < 0) throw DTC_IOErrorException();
 	else
 	{
-		TLOG(TLVL_ReadBuffer) << "ReadDataPacket buffer_=" << (void*)buffer << " errorCode=" << errorCode << " *buffer_=0x" << std::hex << *(unsigned*)buffer;
+		TLOG(TLVL_ReadBuffer) << "ReadBuffer buffer_=" << (void*)buffer << " errorCode=" << errorCode << " *buffer_=0x" << std::hex << *(unsigned*)buffer;
 		if (channel == DTC_DMA_Engine_DAQ)
 		{
 			daqDMAInfo_.buffer.push_back(buffer);
@@ -729,31 +715,69 @@ int DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
 	return errorCode;
 }
 
+void DTCLib::DTC::ReleaseBuffers(const DTC_DMA_Engine& channel)
+{
+	TLOG(TLVL_ReleaseBuffers) << "ReleaseBuffers BEGIN";
+	DMAInfo* info;
+	if (channel == DTC_DMA_Engine_DAQ) info = &daqDMAInfo_;
+	else if (channel == DTC_DMA_Engine_DCS) info = &dcsDMAInfo_;
+	else {
+		TLOG(TLVL_ERROR) << "ReadNextPacket: Invalid DMA Engine specified!";
+		throw new DTC_DataCorruptionException();
+	}
+
+	size_t releaseBufferCount = GetCurrentBuffer(info);
+	if (releaseBufferCount > 0) {
+		TLOG(TLVL_ReleaseBuffers) << "ReleaseBuffers releasing " << releaseBufferCount << (channel == DTC_DMA_Engine_DAQ ? "DAQ" : "DCS") << " buffers.";
+		device_.read_release(channel, releaseBufferCount);
+	}
+}
+
+int DTCLib::DTC::GetCurrentBuffer(DMAInfo* info)
+{
+	if (info->currentReadPtr == nullptr || info->buffer.size() == 0) return -1;
+
+	for (size_t ii = 0; ii < info->buffer.size(); ++ii)
+	{
+		auto bufferptr = *info->buffer[ii];
+		uint16_t bufferSize = *reinterpret_cast<uint16_t*>(bufferptr);
+		if (info->currentReadPtr > bufferptr && info->currentReadPtr < bufferptr + bufferSize + 8) return ii; // +8 because first 8 bytes are not included in byte count
+	}
+	return -2;
+}
+
+uint16_t DTCLib::DTC::GetBufferByteCount(DMAInfo* info, size_t index)
+{
+	if (index >= info->buffer.size()) return 0;
+	auto bufferptr = *info->buffer[index];
+	uint16_t bufferSize = *reinterpret_cast<uint16_t*>(bufferptr);
+	return bufferSize;
+}
+
 void DTCLib::DTC::WriteDataPacket(const DTC_DataPacket& packet)
 {
-			TLOG(TLVL_WriteDataPacket) << "WriteDataPacket: Writing packet: " << packet.toJSON();
-  mu2e_databuff_t buf;
-  uint64_t size = packet.GetSize() + sizeof(uint64_t);
-  uint64_t packetSize = packet.GetSize();
-  if(size < static_cast<uint64_t>(dmaSize_)) size = dmaSize_;
+	TLOG(TLVL_WriteDataPacket) << "WriteDataPacket: Writing packet: " << packet.toJSON();
+	mu2e_databuff_t buf;
+	uint64_t size = packet.GetSize() + sizeof(uint64_t);
+	uint64_t packetSize = packet.GetSize();
+	if (size < static_cast<uint64_t>(dmaSize_)) size = dmaSize_;
 
-  memcpy(&buf[0], &packetSize, sizeof(uint64_t));
-  memcpy(&buf[8], packet.GetData(), packet.GetSize() * sizeof(uint8_t));
+	memcpy(&buf[0], &packetSize, sizeof(uint64_t));
+	memcpy(&buf[8], packet.GetData(), packet.GetSize() * sizeof(uint8_t));
 
-
-		auto retry = 3;
-		int errorCode;
-		do
-		{
-			TLOG(TLVL_WriteDataPacket) << "Attempting to write data...";
-		  errorCode = device_.write_data(DTC_DMA_Engine_DCS, &buf, size);
-		  TLOG(TLVL_WriteDataPacket) << "Attempted to write data, errorCode=" << errorCode << ", retries=" << retry;
-			retry--;
-		} while (retry > 0 && errorCode != 0);
-		if (errorCode != 0)
-		{
-			throw DTC_IOErrorException();
-		}
+	auto retry = 3;
+	int errorCode;
+	do
+	{
+		TLOG(TLVL_WriteDataPacket) << "Attempting to write data...";
+		errorCode = device_.write_data(DTC_DMA_Engine_DCS, &buf, size);
+		TLOG(TLVL_WriteDataPacket) << "Attempted to write data, errorCode=" << errorCode << ", retries=" << retry;
+		retry--;
+	} while (retry > 0 && errorCode != 0);
+	if (errorCode != 0)
+	{
+		throw DTC_IOErrorException();
+	}
 }
 
 void DTCLib::DTC::WriteDMAPacket(const DTC_DMAPacket& packet)
