@@ -17,6 +17,7 @@
 #define TLVL_WriteDetectorEmulatorData 23
 #define TLVL_WriteDataPacket 24
 #define TLVL_ReleaseBuffers 25
+#define TLVL_GetCurrentBuffer 26
 
 
 
@@ -581,7 +582,8 @@ std::unique_ptr<DTCLib::DTC_DataPacket> DTCLib::DTC::ReadNextPacket(const DTC_DM
 	{
 		TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket Obtaining new " << (engine == DTC_DMA_Engine_DAQ ? "DAQ" : "DCS") << " Buffer";
 
-		void* oldBufferPtr = &info->buffer.back()[0];
+		void* oldBufferPtr = nullptr;
+		if(info->buffer.size() > 0 ) oldBufferPtr = &info->buffer.back()[0];
 		auto sts = ReadBuffer(engine, tmo_ms); // does return code
 		if (sts <= 0)
 		{
@@ -637,7 +639,7 @@ std::unique_ptr<DTCLib::DTC_DataPacket> DTCLib::DTC::ReadNextPacket(const DTC_DM
 
 	auto test = std::make_unique<DTC_DataPacket>(info->currentReadPtr);
 	TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket: current+blockByteCount=" << (void*)(reinterpret_cast<uint8_t*>(info->currentReadPtr) + blockByteCount)
-		<< ", end of dma buffer=" << (void*)(info->buffer[index][0] + GetBufferByteCount(info,index) + 8); // +8 because first 8 bytes are not included in byte count
+		<< ", end of dma buffer=" << (void*)(info->buffer[index][0] + GetBufferByteCount(info, index) + 8); // +8 because first 8 bytes are not included in byte count
 	if (reinterpret_cast<uint8_t*>(info->currentReadPtr) + blockByteCount > info->buffer[index][0] + GetBufferByteCount(info, index) + 8)
 	{
 		blockByteCount = static_cast<uint16_t>(info->buffer[index][0] + GetBufferByteCount(info, index) + 8 - reinterpret_cast<uint8_t*>(info->currentReadPtr));// +8 because first 8 bytes are not included in byte count
@@ -731,18 +733,28 @@ void DTCLib::DTC::ReleaseBuffers(const DTC_DMA_Engine& channel)
 		TLOG(TLVL_ReleaseBuffers) << "ReleaseBuffers releasing " << releaseBufferCount << " " << (channel == DTC_DMA_Engine_DAQ ? "DAQ" : "DCS") << " buffers.";
 		device_.read_release(channel, releaseBufferCount);
 	}
+	TLOG(TLVL_ReleaseBuffers) << "ReleaseBuffers END";
 }
 
 int DTCLib::DTC::GetCurrentBuffer(DMAInfo* info)
 {
-	if (info->currentReadPtr == nullptr || info->buffer.size() == 0) return -1;
+	TLOG(TLVL_GetCurrentBuffer) << "GetCurrentBuffer BEGIN";
+	if (info->currentReadPtr == nullptr || info->buffer.size() == 0)
+	{
+		TLOG(TLVL_GetCurrentBuffer) << "GetCurrentBuffer returning -1 because not currently reading a buffer";
+		return -1;
+	}
 
 	for (size_t ii = 0; ii < info->buffer.size(); ++ii)
 	{
 		auto bufferptr = *info->buffer[ii];
 		uint16_t bufferSize = *reinterpret_cast<uint16_t*>(bufferptr);
-		if (info->currentReadPtr > bufferptr && info->currentReadPtr < bufferptr + bufferSize + 8) return ii; // +8 because first 8 bytes are not included in byte count
+		if (info->currentReadPtr > bufferptr && info->currentReadPtr < bufferptr + bufferSize + 8) {// +8 because first 8 bytes are not included in byte count
+			TLOG(TLVL_GetCurrentBuffer) << "Found matching buffer at index " << ii << ".";
+			return ii;
+		}
 	}
+	TLOG(TLVL_GetCurrentBuffer) << "GetCurrentBuffer returning -2: Have buffers but none match, need new";
 	return -2;
 }
 
