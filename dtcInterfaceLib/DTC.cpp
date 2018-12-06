@@ -726,9 +726,9 @@ void DTCLib::DTC::ReleaseBuffers(const DTC_DMA_Engine& channel)
 		throw new DTC_DataCorruptionException();
 	}
 
-	size_t releaseBufferCount = GetCurrentBuffer(info);
+	auto releaseBufferCount = GetCurrentBuffer(info);
 	if (releaseBufferCount > 0) {
-		TLOG(TLVL_ReleaseBuffers) << "ReleaseBuffers releasing " << releaseBufferCount << (channel == DTC_DMA_Engine_DAQ ? "DAQ" : "DCS") << " buffers.";
+		TLOG(TLVL_ReleaseBuffers) << "ReleaseBuffers releasing " << releaseBufferCount << " " << (channel == DTC_DMA_Engine_DAQ ? "DAQ" : "DCS") << " buffers.";
 		device_.read_release(channel, releaseBufferCount);
 	}
 }
