@@ -460,6 +460,7 @@ uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint8_t add
 
 			data = datatmp;
 			retries = 0;
+			reply = ReadNextDCSPacket(); // Read the next packet
 
 		}
 		if (count == 0)
