@@ -144,7 +144,7 @@ int main(int argc, char* argv[])
 		<< std::endl;
 
 	auto dtc_link = static_cast<DTC_Link_ID>(link);
-	auto thisDTC = new DTC(DTC_SimMode_NoCFO, -1, (0x1 << link));
+	auto thisDTC = new DTC(DTC_SimMode_NoCFO, -1, (0x1 << (link * 4))); // rocMask is in hex, not binary
 	auto device = thisDTC->GetDevice();
 
 	if (op == "read_register")
