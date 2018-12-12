@@ -450,10 +450,14 @@ uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint8_t add
 			auto addresstmp = reply->GetAddress();
 			auto linktmp = reply->GetRingID();
 			auto datatmp = reply->GetData();
-			TLOG(TLVL_TRACE) << "Got packet, link=" << static_cast<int>(linktmp) << ", address=" << static_cast<int>(addresstmp) << ", data=" << static_cast<int>(datatmp);
+			TLOG(TLVL_TRACE) << "Got packet, "
+				<< "link=" << static_cast<int>(linktmp) << " (expected " << static_cast<int>(link) << "), "
+				<< "address=" << static_cast<int>(addresstmp) << " (expected " << static_cast<int>(address) << "), "
+				<< "data=" << static_cast<int>(datatmp);
 
 			reply.reset(nullptr);
 			if (addresstmp != address || linktmp != link) {
+				TLOG(TLVL_TRACE) << "Address or link did not match, reading next packet!";
 				reply = ReadNextDCSPacket(); // Read the next packet
 				continue;
 			}
@@ -588,7 +592,7 @@ std::unique_ptr<DTCLib::DTC_DataPacket> DTCLib::DTC::ReadNextPacket(const DTC_DM
 		TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket Obtaining new " << (engine == DTC_DMA_Engine_DAQ ? "DAQ" : "DCS") << " Buffer";
 
 		void* oldBufferPtr = nullptr;
-		if(info->buffer.size() > 0 ) oldBufferPtr = &info->buffer.back()[0];
+		if (info->buffer.size() > 0) oldBufferPtr = &info->buffer.back()[0];
 		auto sts = ReadBuffer(engine, tmo_ms); // does return code
 		if (sts <= 0)
 		{
