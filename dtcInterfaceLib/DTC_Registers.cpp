@@ -4140,7 +4140,7 @@ void DTCLib::DTC_Registers::SetAllEventModeWords(uint32_t data)
 		} while (retry > 0 && errorCode != 0);
 		if (errorCode != 0)
 		{
-			throw DTC_IOErrorException();
+			throw DTC_IOErrorException(errorCode);
 		}
 	}
 }
@@ -4159,7 +4159,7 @@ void DTCLib::DTC_Registers::SetEventModeWord(uint8_t which, uint32_t data)
 		} while (retry > 0 && errorCode != 0);
 		if (errorCode != 0)
 		{
-			throw DTC_IOErrorException();
+			throw DTC_IOErrorException(errorCode);
 		}
 	}
 }
@@ -4179,7 +4179,7 @@ uint32_t DTCLib::DTC_Registers::ReadEventModeWord(uint8_t which)
 		} while (retry > 0 && errorCode != 0);
 		if (errorCode != 0)
 		{
-			throw DTC_IOErrorException();
+			throw DTC_IOErrorException(errorCode);
 		}
 
 		return data;
@@ -4282,7 +4282,7 @@ void DTCLib::DTC_Registers::WriteRegister_(uint32_t data, const DTC_Register& ad
 	} while (retry > 0 && errorCode != 0);
 	if (errorCode != 0)
 	{
-		throw DTC_IOErrorException();
+		throw DTC_IOErrorException(errorCode);
 	}
 }
 
@@ -4298,7 +4298,7 @@ uint32_t DTCLib::DTC_Registers::ReadRegister_(const DTC_Register& address)
 	} while (retry > 0 && errorCode != 0);
 	if (errorCode != 0)
 	{
-		throw DTC_IOErrorException();
+		throw DTC_IOErrorException(errorCode);
 	}
 
 	return data;
