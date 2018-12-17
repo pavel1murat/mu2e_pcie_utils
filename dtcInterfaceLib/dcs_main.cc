@@ -151,7 +151,7 @@ int main(int argc, char* argv[])
 	{
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
-			std::cout << "Operation \"read_register\"" << std::endl;
+			std::cout << "Operation \"read_register\" " << ii << std::endl;
 			auto rocdata = thisDTC->ReadROCRegister(dtc_link, address);
 			if (!reallyQuiet) std::cout << rocdata << '\n';
 		}
@@ -169,7 +169,7 @@ int main(int argc, char* argv[])
 	{
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
-			std::cout << "Operation \"write_register\"" << std::endl;
+			std::cout << "Operation \"write_register\" " << ii << std::endl;
 			thisDTC->WriteROCRegister(dtc_link, address, data);
 		}
 	}
@@ -177,7 +177,7 @@ int main(int argc, char* argv[])
 	{
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
-			std::cout << "Operation \"read_register\"" << std::endl;
+			std::cout << "Operation \"read_register\" " << ii << std::endl;
 			auto rocdata = thisDTC->ReadExtROCRegister(dtc_link, block, address);
 			if (!reallyQuiet) std::cout << rocdata << '\n';
 		}
@@ -186,7 +186,7 @@ int main(int argc, char* argv[])
 	{
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
-			std::cout << "Operation \"write_extregister\"" << std::endl;
+			std::cout << "Operation \"write_extregister\" " << ii << std::endl;
 			thisDTC->WriteExtROCRegister(dtc_link, block, address, data);
 		}
 	}
