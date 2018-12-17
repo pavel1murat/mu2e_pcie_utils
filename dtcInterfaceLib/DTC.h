@@ -177,7 +177,7 @@ namespace DTCLib
 		void WriteDataPacket(const DTC_DataPacket& packet);
 
 		struct DMAInfo {
-			std::vector<mu2e_databuff_t*> buffer;
+			std::deque<mu2e_databuff_t*> buffer;
 			uint32_t bufferIndex;
 			void* currentReadPtr;
 			void* lastReadPtr;
