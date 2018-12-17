@@ -561,6 +561,16 @@ std::unique_ptr<DTCLib::DTC_DCSReplyPacket> DTCLib::DTC::ReadNextDCSPacket()
 	auto test = ReadNextPacket(DTC_DMA_Engine_DCS);
 	if (test == nullptr) return nullptr; // Couldn't read new block
 	auto output = std::make_unique<DTC_DCSReplyPacket>(*test.get());
+
+	auto thisCounter = output->GetRequestCounter();
+	auto lastCounter = lastDCSRequest_[output->GetRingID()];
+
+	if (lastCounter >= thisCounter && thisCounter > 5) {
+		TLOG(TLVL_ReadNextDAQPacket) << "Request ID of this DCS packet is lower than expected! Returning nullptr! (ex: " << static_cast<int>(lastCounter) << ", this: " << static_cast<int>(thisCounter) << ")";
+		return nullptr;
+	}
+	lastDCSRequest_[output->GetRingID()] = thisCounter;
+
 	return output;
 }
 
