@@ -727,10 +727,12 @@ int DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
 		if (channel == DTC_DMA_Engine_DAQ)
 		{
 			daqDMAInfo_.buffer.push_back(buffer);
+			TLOG(TLVL_ReadBuffer) << "ReadBuffer: There are now " << daqDMAInfo_.buffer.size() << " DAQ buffers held in the DTC Library";
 		}
 		else if (channel == DTC_DMA_Engine_DCS)
 		{
 			dcsDMAInfo_.buffer.push_back(buffer);
+			TLOG(TLVL_ReadBuffer) << "ReadBuffer: There are now " << dcsDMAInfo_.buffer.size() << " DCS buffers held in the DTC Library";
 		}
 	}
 	return errorCode;
