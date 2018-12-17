@@ -697,7 +697,8 @@ void DTCLib::DTC::WriteDetectorEmulatorData(mu2e_databuff_t* buf, size_t sz)
 	} while (retry > 0 && errorCode != 0);
 	if (errorCode != 0)
 	{
-		throw DTC_IOErrorException();
+		TLOG(TLVL_ERROR) << "WriteDetectorEmulatorData: write_data returned " << errorCode << ", throwing DTC_IOErrorException!";
+		throw DTC_IOErrorException(errorCode);
 	}
 }
 
@@ -720,7 +721,10 @@ int DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
 	{
 		TLOG(TLVL_ReadBuffer) << "ReadBuffer: Device timeout occurred! ec=" << errorCode << ", rt=" << retry;
 	}
-	else if (errorCode < 0) throw DTC_IOErrorException();
+	else if (errorCode < 0) {
+		TLOG(TLVL_ERROR) << "ReadBuffer: read_data returned " << errorCode << ", throwing DTC_IOErrorException!";
+		throw DTC_IOErrorException(errorCode);
+	}
 	else
 	{
 		TLOG(TLVL_ReadBuffer) << "ReadBuffer buffer_=" << (void*)buffer << " errorCode=" << errorCode << " *buffer_=0x" << std::hex << *(unsigned*)buffer;
@@ -817,7 +821,8 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DataPacket& packet)
 	} while (retry > 0 && errorCode != 0);
 	if (errorCode != 0)
 	{
-		throw DTC_IOErrorException();
+		TLOG(TLVL_ERROR) << "WriteDataPacket: write_data returned " << errorCode << ", throwing DTC_IOErrorException!";
+		throw DTC_IOErrorException(errorCode);
 	}
 }
 

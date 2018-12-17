@@ -469,13 +469,21 @@ namespace DTCLib
 	{
 	public:
 		/// <summary>
+		/// A DTC_IOErrorException is thrown when an attempt is made to read or write from the DTC, and an unexpected status results
+		/// </summary>
+		/// <param name="retcode">Return code from IO operation</param>
+		DTC_IOErrorException(int retcode) : retCode_(retcode) {}
+		/// <summary>
 		/// Describe the exception
 		/// </summary>
 		/// <returns>String describing the exception</returns>
 		const char* what() const throw()
 		{
-			return "Unable to communicate with the DTC";
+			return (std::string("Unable to communicate with the DTC: Error Code: ") + std::to_string(retCode_)).c_str();
 		}
+
+	private:
+		int retCode_;
 	};
 
 	/// <summary>

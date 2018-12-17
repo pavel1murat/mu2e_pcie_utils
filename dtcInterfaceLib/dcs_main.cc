@@ -194,7 +194,7 @@ int main(int argc, char* argv[])
 	{
 		std::cout << "Operation \"test_read\"" << std::endl;
 
-		thisDTC->SendDCSRequestPacket(dtc_link,  DTC_DCSOperationType_Read, address, quiet);
+		//thisDTC->SendDCSRequestPacket(dtc_link,  DTC_DCSOperationType_Read, address, quiet);
 
 		for (unsigned ii = 0; ii < number; ++ii)
 		{

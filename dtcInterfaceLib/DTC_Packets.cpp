@@ -51,7 +51,7 @@ uint8_t DTCLib::DTC_DataPacket::GetWord(uint16_t index) const
 
 bool DTCLib::DTC_DataPacket::Resize(const uint16_t dmaSize)
 {
-  
+
 	if (!memPacket_ && dmaSize > dataSize_)
 	{
 		vals_.resize(dmaSize);
@@ -193,11 +193,11 @@ DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Link_ID link, DTC_DCSOper
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in) : DTC_DMAPacket(in)
 {
-	
-	std::cout << std::hex << "packet type 0x" << packetType_ << " match 0x" << DTC_PacketType_DCSRequest << std::dec << std::endl;
 	if (packetType_ != DTC_PacketType_DCSRequest)
 	{
-		throw DTC_WrongPacketTypeException(DTC_PacketType_DCSRequest, packetType_);
+		auto ex = DTC_WrongPacketTypeException(DTC_PacketType_DCSRequest, packetType_);
+		TLOG(TLVL_ERROR) << ex.what();
+		throw ex;
 	}
 	type_ = static_cast<DTC_DCSOperationType>(in.GetData()[4]);
 	address_ = in.GetData()[6] & 0x1F;
@@ -266,7 +266,9 @@ DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(const DTC_DataPacket in) : DTC_
 {
 	if (packetType_ != DTC_PacketType_Heartbeat)
 	{
-		throw DTC_WrongPacketTypeException(DTC_PacketType_Heartbeat, packetType_);
+		auto ex = DTC_WrongPacketTypeException(DTC_PacketType_Heartbeat, packetType_);
+		TLOG(TLVL_ERROR) << ex.what();
+		throw ex;
 	}
 	auto arr = in.GetData();
 	eventMode_[0] = arr[10];
@@ -326,7 +328,9 @@ DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DataPacket in) : DTC_DM
 {
 	if (packetType_ != DTC_PacketType_DataRequest)
 	{
-	  throw DTC_WrongPacketTypeException(DTC_PacketType_DataRequest, packetType_);
+	  auto ex = DTC_WrongPacketTypeException(DTC_PacketType_DataRequest, packetType_);
+	  TLOG(TLVL_ERROR) << ex.what();
+	  throw ex;
 	}
 	timestamp_ = DTC_Timestamp(in.GetData(), 4);
 	debug_ = (in.GetData()[12] & 0x1) == 1;
@@ -397,7 +401,9 @@ DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_DataPacket in) : DTC_DMAPacke
 	TRACE(20, "DTC_DCSReplyPacket::DTC_DCSReplyPacket Before packetType test");
 	if (packetType_ != DTC_PacketType_DCSReply)
 	{
-	  throw DTC_WrongPacketTypeException(DTC_PacketType_DCSReply, packetType_);
+	  auto ex = DTC_WrongPacketTypeException(DTC_PacketType_DCSReply, packetType_);
+	  TLOG(TLVL_ERROR) << ex.what();
+	  throw ex;
 	}
 
 	type_ = static_cast<DTC_DCSOperationType>(in.GetData()[4]);
@@ -461,7 +467,9 @@ DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket in) : DTC_DMAP
 {
 	if (packetType_ != DTC_PacketType_DataHeader)
 	{
-		throw DTC_WrongPacketTypeException(DTC_PacketType_DataHeader, packetType_);
+		auto ex = DTC_WrongPacketTypeException(DTC_PacketType_DataHeader, packetType_);
+		TLOG(TLVL_ERROR) << ex.what();
+		throw ex;
 	}
 	auto arr = in.GetData();
 	packetCount_ = arr[4] + (arr[5] << 8);
