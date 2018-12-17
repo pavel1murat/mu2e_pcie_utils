@@ -758,6 +758,10 @@ void DTCLib::DTC::ReleaseBuffers(const DTC_DMA_Engine& channel)
 			info->buffer.pop_front();
 		}
 	}
+	else {
+		TLOG(TLVL_ReleaseBuffers) << "ReleaseBuffers releasing ALL " << (channel == DTC_DMA_Engine_DAQ ? "DAQ" : "DCS") << " buffers.";
+		ReleaseAllBuffers(channel);
+	}
 	TLOG(TLVL_ReleaseBuffers) << "ReleaseBuffers END";
 }
 
