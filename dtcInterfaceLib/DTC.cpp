@@ -626,7 +626,7 @@ std::unique_ptr<DTCLib::DTC_DataPacket> DTCLib::DTC::ReadNextPacket(const DTC_DM
 
 	auto blockByteCount = *reinterpret_cast<uint16_t*>(info->currentReadPtr);
 	TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket: blockByteCount=" << blockByteCount << ", info->currentReadPtr=" << (void*)info->currentReadPtr << ", *nextReadPtr=" << (int)*((uint16_t*)info->currentReadPtr);
-	if ((engine == DTC_DMA_Engine_DAQ && blockByteCount == 0) || blockByteCount == 0xcafe)
+	if (blockByteCount == 0 || blockByteCount == 0xcafe)
 	{
 		if (static_cast<size_t>(index) < info->buffer.size() - 1)
 		{
