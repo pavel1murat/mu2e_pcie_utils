@@ -807,7 +807,7 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DataPacket& packet)
 	uint64_t packetSize = packet.GetSize();
 	if (size < static_cast<uint64_t>(dmaSize_)) size = dmaSize_;
 
-	memcpy(&buf[0], &packetSize, sizeof(uint64_t));
+	memcpy(&buf[0], &size, sizeof(uint64_t));
 	memcpy(&buf[8], packet.GetData(), packet.GetSize() * sizeof(uint8_t));
 
 	auto retry = 3;
