@@ -32,10 +32,11 @@ end_product_list
 qualifier   TRACE     gcc	swig		nodejs	notes
 e17:prof    -nq-      -nq-      e17:prof 	-nq-	-std=c++17
 e17:debug   -nq-      -nq-      e17:debug	-nq- 	-std=c++17
+e15:s64:prof    -nq-      -nq-	e15:prof  	-nq-    -std=c++14
 e15:prof    -nq-      -nq-	e15:prof  	-nq-    -std=c++14
 e15:debug   -nq-      -nq-	e15:debug 	-nq-    -std=c++14
 end_qualifier_list
-#e14:s50:prof    -nq-      e14:prof	-nq-	-std=c++14
+
 
 # Preserve tabs and formatting in emacs and vi / vim:
 
