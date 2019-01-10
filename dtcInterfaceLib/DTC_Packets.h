@@ -303,9 +303,9 @@ namespace DTCLib
 	/// <param name="type">Packet Type</param>
 	/// <param name="link">Link ID</param>
 	/// <param name="roc">ROC ID</param>
-	/// <param name="byteCount">Block byte count. Default is the minimum value, 64 bytes</param>
+	/// <param name="byteCount">Block byte count. Default is one packet, 16 bytes</param>
 	/// <param name="valid">Valid flag for packet, default true</param>
-	DTC_DMAPacket(DTC_PacketType type, DTC_Link_ID link, uint16_t byteCount = 64, bool valid = true);
+	DTC_DMAPacket(DTC_PacketType type, DTC_Link_ID link, uint16_t byteCount = 16, bool valid = true);
 
 	/// <summary>
 	/// Construct a DTC_DMAPacket using the data in the given DataPacket

@@ -110,7 +110,7 @@ bool DTCLib::DTC_DataPacket::Equals(const DTC_DataPacket& other) const
 }
 
 DTCLib::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Link_ID link, uint16_t byteCount, bool valid)
-	: byteCount_(byteCount < 64 ? 64 : byteCount), valid_(valid), linkID_(link), packetType_(type) {}
+	: byteCount_(byteCount), valid_(valid), linkID_(link), packetType_(type) {}
 
 DTCLib::DTC_DataPacket DTCLib::DTC_DMAPacket::ConvertToDataPacket() const
 {
