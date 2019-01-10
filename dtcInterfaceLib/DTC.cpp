@@ -804,7 +804,7 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DataPacket& packet)
 	TLOG(TLVL_WriteDataPacket) << "WriteDataPacket: Writing packet: " << packet.toJSON();
 	mu2e_databuff_t buf;
 	uint64_t size = packet.GetSize() + sizeof(uint64_t);
-	uint64_t packetSize = packet.GetSize();
+//	uint64_t packetSize = packet.GetSize();
 	if (size < static_cast<uint64_t>(dmaSize_)) size = dmaSize_;
 
 	memcpy(&buf[0], &size, sizeof(uint64_t));
