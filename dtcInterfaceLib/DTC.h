@@ -192,7 +192,6 @@ namespace DTCLib
 		uint16_t GetBufferByteCount(DMAInfo* info, size_t index);
 		DMAInfo daqDMAInfo_;
 		DMAInfo dcsDMAInfo_;
-		std::map<DTC_Link_ID, uint8_t> lastDCSRequest_;
 	};
 }
 #endif
