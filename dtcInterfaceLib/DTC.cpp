@@ -21,12 +21,10 @@
 
 #include "DTC.h"
 
-#include <sstream>  // Convert uint to hex string
-
+#include <unistd.h>
 #include <fstream>
 #include <iostream>
-
-#include <unistd.h>
+#include <sstream>  // Convert uint to hex string
 
 DTCLib::DTC::DTC(DTC_SimMode mode, int dtc, unsigned rocMask, std::string expectedDesignVersion)
     : DTC_Registers(mode, dtc, rocMask, expectedDesignVersion), daqDMAInfo_(), dcsDMAInfo_() {

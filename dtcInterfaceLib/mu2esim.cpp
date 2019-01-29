@@ -11,9 +11,11 @@
 
 #define TRACE_NAME "mu2esim"
 #include "mu2esim.h"
+#include "DTC_Registers.h"
+
 #include <cmath>
 #include <vector>
-#include "DTC_Registers.h"
+
 #include "trace.h"
 
 #define THREADED_CFO_EMULATOR 1
