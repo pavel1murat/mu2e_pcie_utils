@@ -136,7 +136,7 @@ static void poll_packets(unsigned long dc) {
 
 #if MU2E_RECV_INTER_ENABLED == 1
   if (did_work) {
-    // Reschedule immediately
+  // Reschedule immediately
 #if 1
     packets_timer[dtc].expires = jiffies + 1;
     add_timer(&packets_timer[dtc]);
