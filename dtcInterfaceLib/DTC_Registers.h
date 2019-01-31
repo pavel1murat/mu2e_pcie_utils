@@ -274,16 +274,43 @@ class DTC_Registers {
   std::string ReadDesignVersionNumber();
 
   // Design Status Register
+  /// <summary>
+  /// Read the DDR interface reset bit
+  /// </summary>
+  /// <returns>The current value of the DDR interface reset bit</returns>
   bool ReadDDRInterfaceReset();
+  /// <summary>
+  /// Set the Reset bit in the Design Status register
+  /// </summary>
+  /// <param name="reset"></param>
   void SetDDRInterfaceReset(bool reset);
+  /// <summary>
+  /// Resets the DDR interface in the firmware
+  /// </summary>
   void ResetDDRInterface();
 
+  /// <summary>
+  /// Read the DDR Auto Calibration Done bit of the Design status register
+  /// </summary>
+  /// <returns>Whether the DDR Auto Calibration is done</returns>
   bool ReadDDRAutoCalibrationDone();
 
+  /// <summary>
+  /// Formats the register's current value for register dumps
+  /// </summary>
+  /// <returns>DTC_RegisterFormatter object containing register information</returns>
   DTC_RegisterFormatter FormatDesignStatus();
 
   // Vivado Version Register
+  /// <summary>
+  /// Read the Vivado Version Number
+  /// </summary>
+  /// <returns>The Vivado Version number</returns>
   std::string ReadVivadoVersionNumber();
+  /// <summary>
+  /// Formats the register's current value for register dumps
+  /// </summary>
+  /// <returns>DTC_RegisterFormatter object containing register information</returns>
   DTC_RegisterFormatter FormatVivadoVersion();
 
   // DTC Control Register
@@ -383,8 +410,18 @@ class DTC_Registers {
   /// otherwise</returns>
   bool ReadSoftwareDRP();
 
+  /// <summary>
+  /// Enable the LED6 Control register bit
+  /// </summary>
   void EnableLED6();
+  /// <summary>
+  /// Disable the LED6 Control register bit
+  /// </summary>
   void DisableLED6();
+  /// <summary>
+  /// Read the state of the LED6 Control register bit
+  /// </summary>
+  /// <returns>Whether the LED6 bit is set</returns>
   bool ReadLED6State();
 
   /// <summary>
@@ -825,11 +862,13 @@ class DTC_Registers {
   /// <summary>
   /// Read the current SERDES Oscillator reference frequency, in Hz
   /// </summary>
+  /// <param name="device">Device to set oscillator for</param>
   /// <returns>Current SERDES Oscillator reference frequency, in Hz</returns>
   uint32_t ReadSERDESOscillatorReferenceFrequency(DTC_IICSERDESBusAddress device);
   /// <summary>
   /// Set the SERDES Oscillator reference frequency
   /// </summary>
+  /// <param name="device">Device to set oscillator for</param>
   /// <param name="freq">New reference frequency, in Hz</param>
   void SetSERDESOscillatorReferenceFrequency(DTC_IICSERDESBusAddress device, uint32_t freq);
 
@@ -868,6 +907,10 @@ class DTC_Registers {
   /// </summary>
   /// <param name="speed">Clock speed to set</param>
   void SetSERDESOscillatorClock(DTC_SerdesClockSpeed speed);
+  /// <summary>
+  /// Set the Timing Oscillator clock to a given frequency
+  /// </summary>
+  /// <param name="freq">Frequency to set the Timing card Oscillator clock</param>
   void SetTimingOscillatorClock(uint32_t freq);
   /// <summary>
   /// Formats the register's current value for register dumps
@@ -1750,6 +1793,11 @@ class DTC_Registers {
   DTC_RegisterFormatter FormatFireflyTXRXIICParameterHigh();
 
   // DDR Memory Flags Registers
+  /// <summary>
+  /// Read the DDR Flags for the given buffer
+  /// </summary>
+  /// <param name="buffer_id">Buffer number to read (0-63)</param>
+  /// <returns>Value of the DDR Flags for the given buffer</returns>
   DTC_DDRFlags ReadDDRFlags(uint8_t buffer_id);
   /// <summary>
   /// Read the DDR Link Buffer Full Flags for each of the 64 DDR buffers
@@ -1873,17 +1921,60 @@ class DTC_Registers {
   DTC_RegisterFormatter FormatDDREventBuilderBufferHalfFullFlagsHigh();
 
   // SERDES Serial Inversion Enable Register
+  /// <summary>
+  /// Read the Invert SERDES RX Input bit
+  /// </summary>
+  /// <param name="link">Link to read</param>
+  /// <returns>Whether the Invert SERDES RX Input bit is set</returns>
   bool ReadInvertSERDESRXInput(DTC_Link_ID link);
+  /// <summary>
+  /// Set the Invert SERDES RX Input bit
+  /// </summary>
+  /// <param name="link">Link to set</param>
+  /// <param name="invert">Whether to invert</param>
   void SetInvertSERDESRXInput(DTC_Link_ID link, bool invert);
+  /// <summary>
+  /// Read the Invert SERDES TX Output bit
+  /// </summary>
+  /// <param name="link">Link to read</param>
+  /// <returns>Whether the Invert SERDES TX Output bit is set</returns>
   bool ReadInvertSERDESTXOutput(DTC_Link_ID link);
+  /// <summary>
+  /// Set the Invert SERDES TX Output bit
+  /// </summary>
+  /// <param name="link">Link to set</param>
+  /// <param name="invert">Whether to invert</param>
   void SetInvertSERDESTXOutput(DTC_Link_ID link, bool invert);
+  /// <summary>
+  /// Formats the register's current value for register dumps
+  /// </summary>
+  /// <returns>DTC_RegisterFormatter object containing register information</returns>
   DTC_RegisterFormatter FormatSERDESSerialInversionEnable();
 
   // Jitter Attenuator CSR Register
+  /// <summary>
+  /// Read the value of the Jitter Attenuator Select
+  /// </summary>
+  /// <returns>Jitter Attenuator Select value</returns>
   std::bitset<2> ReadJitterAttenuatorSelect();
+  /// <summary>
+  /// Set the Jitter Attenuator Select bits
+  /// </summary>
+  /// <param name="data">Value to set</param>
   void SetJitterAttenuatorSelect(std::bitset<2> data);
+  /// <summary>
+  /// Read the Jitter Attenuator Reset bit
+  /// </summary>
+  /// <returns>Value of the Jitter Attenuator Reset bit</returns>
   bool ReadJitterAttenuatorReset();
+  /// <summary>
+  /// Reset the Jitter Attenuator
+  /// </summary>
   void ResetJitterAttenuator();
+  /// <summary>
+  /// Formats the register's current value for register dumps
+  /// </summary>
+  /// <returns>DTC_RegisterFormatter object containing register information</returns>
   DTC_RegisterFormatter FormatJitterAttenuatorCSR();
 
   // EVB SERDES PRBS Control / Status Register
@@ -2049,75 +2140,301 @@ class DTC_Registers {
   DTC_RegisterFormatter FormatLocalFragmentDropCount();
 
   // Event Builder Error Register
+  /// <summary>
+  /// Read the Event Builder SubEvent Receiver Flags Buffer Error bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadEventBuilder_SubEventReceiverFlagsBufferError();
+  /// <summary>
+  /// Read the Event Builder Ethernet Input FIFO Full bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadEventBuilder_EthernetInputFIFOFull();
+  /// <summary>
+  /// Read the Event Builder Link Error bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadEventBuilder_LinkError();
+  /// <summary>
+  /// Read the Event Builder TX Packet Error bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadEventBuilder_TXPacketError();
+  /// <summary>
+  /// Read the Event Builder Local Data Pointer FIFO Queue Error bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadEventBuilder_LocalDataPointerFIFOQueueError();
+  /// <summary>
+  /// Read the Event Builder Transmit DMA Byte Count FIFO Full bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadEventBuilder_TransmitDMAByteCountFIFOFull();
+  /// <summary>
+  /// Formats the register's current value for register dumps
+  /// </summary>
+  /// <returns>DTC_RegisterFormatter object containing register information</returns>
   DTC_RegisterFormatter FormatEventBuilderErrorRegister();
 
   // SERDES VFIFO Error Register
+  /// <summary>
+  /// Read the SERDES VFIFO Egress FIFO Full bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadSERDESVFIFO_EgressFIFOFull();
+  /// <summary>
+  /// Read the SERDES VFIFO Ingress FIFO Full bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadSERDESVFIFO_IngressFIFOFull();
+  /// <summary>
+  /// Read the SERDES VFIFO Event Byte Count Total Error bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadSERDESVFIFO_EventByteCountTotalError();
+  /// <summary>
+  /// Read the SERDES VFIFO Last Word Written Timeout Error bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadSERDESVFIFO_LastWordWrittenTimeoutError();
+  /// <summary>
+  /// Read the SERDES VFIFO Fragment Count Error bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadSERDESVFIFO_FragmentCountError();
+  /// <summary>
+  /// Read the SERDES VFIFO DDR Full Error bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadSERDESVFIFO_DDRFullError();
+  /// <summary>
+  /// Formats the register's current value for register dumps
+  /// </summary>
+  /// <returns>DTC_RegisterFormatter object containing register information</returns>
   DTC_RegisterFormatter FormatSERDESVFIFOError();
 
   // PCI VFIFO Error Register
+  /// <summary>
+  /// Read the PCI VIFO DDR Full bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadPCIVFIFO_DDRFull();
+  /// <summary>
+  /// Read the PCI VIFO Memmory Mapped Write Complete FIFO Full bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadPCIVFIFO_MemoryMappedWriteCompleteFIFOFull();
+  /// <summary>
+  /// Read the PCI VIFO PCI Write Event FIFO Full bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadPCIVFIFO_PCIWriteEventFIFOFull();
+  /// <summary>
+  /// Read the PCI VIFO Local Data Pointer FIFO Full bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadPCIVFIFO_LocalDataPointerFIFOFull();
+  /// <summary>
+  /// Read the PCI VIFO Egress FIFO Full bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadPCIVFIFO_EgressFIFOFull();
+  /// <summary>
+  /// Read the PCI VIFO RX Buffer Select FIFO Full bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadPCIVFIFO_RXBufferSelectFIFOFull();
+  /// <summary>
+  /// Read the PCI VIFO Ingress FIFO Full bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadPCIVFIFO_IngressFIFOFull();
+  /// <summary>
+  /// Read the PCI VIFO Event Byte Count Total Error bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadPCIVFIFO_EventByteCountTotalError();
+  /// <summary>
+  /// Formats the register's current value for register dumps
+  /// </summary>
+  /// <returns>DTC_RegisterFormatter object containing register information</returns>
   DTC_RegisterFormatter FormatPCIVFIFOError();
 
   // ROC Link Error Registers
+  /// <summary>
+  /// Read the Receive Data Request Sync Error bit for the given link
+  /// </summary>
+  /// <param name="link">Link to read</param>
+  /// <returns>Value of the bit</returns>
   bool ReadROCLink_ROCDataRequestSyncError(DTC_Link_ID link);
+  /// <summary>
+  /// Read the Receive RX Packet Count Error bit for the given link
+  /// </summary>
+  /// <param name="link">Link to read</param>
+  /// <returns>Value of the bit</returns>
   bool ReadROCLink_RXPacketCountError(DTC_Link_ID link);
+  /// <summary>
+  /// Read the Receive RX Packet Error bit for the given link
+  /// </summary>
+  /// <param name="link">Link to read</param>
+  /// <returns>Value of the bit</returns>
   bool ReadROCLink_RXPacketError(DTC_Link_ID link);
+  /// <summary>
+  /// Read the Receive RX Packet CRC Error bit for the given link
+  /// </summary>
+  /// <param name="link">Link to read</param>
+  /// <returns>Value of the bit</returns>
   bool ReadROCLink_RXPacketCRCError(DTC_Link_ID link);
+  /// <summary>
+  /// Read the Receive Data Pending Timeout Error bit for the given link
+  /// </summary>
+  /// <param name="link">Link to read</param>
+  /// <returns>Value of the bit</returns>
   bool ReadROCLink_DataPendingTimeoutError(DTC_Link_ID link);
+  /// <summary>
+  /// Read the Receive Data Packet Count Error bit for the given link
+  /// </summary>
+  /// <param name="link">Link to read</param>
+  /// <returns>Value of the bit</returns>
   bool ReadROCLink_ReceiveDataPacketCountError(DTC_Link_ID link);
+  /// <summary>
+  /// Formats the register's current value for register dumps
+  /// </summary>
+  /// <returns>DTC_RegisterFormatter object containing register information</returns>
   DTC_RegisterFormatter FormatRocLink0Error();
+  /// <summary>
+  /// Formats the register's current value for register dumps
+  /// </summary>
+  /// <returns>DTC_RegisterFormatter object containing register information</returns>
   DTC_RegisterFormatter FormatRocLink1Error();
+  /// <summary>
+  /// Formats the register's current value for register dumps
+  /// </summary>
+  /// <returns>DTC_RegisterFormatter object containing register information</returns>
   DTC_RegisterFormatter FormatRocLink2Error();
+  /// <summary>
+  /// Formats the register's current value for register dumps
+  /// </summary>
+  /// <returns>DTC_RegisterFormatter object containing register information</returns>
   DTC_RegisterFormatter FormatRocLink3Error();
+  /// <summary>
+  /// Formats the register's current value for register dumps
+  /// </summary>
+  /// <returns>DTC_RegisterFormatter object containing register information</returns>
   DTC_RegisterFormatter FormatRocLink4Error();
+  /// <summary>
+  /// Formats the register's current value for register dumps
+  /// </summary>
+  /// <returns>DTC_RegisterFormatter object containing register information</returns>
   DTC_RegisterFormatter FormatRocLink5Error();
 
   // CFO Link Error Register
+  /// <summary>
+  /// Formats the register's current value for register dumps
+  /// </summary>
+  /// <returns>DTC_RegisterFormatter object containing register information</returns>
   DTC_RegisterFormatter FormatCFOLinkError();
 
   // Link Mux Error Register
+  /// <summary>
+  /// Read the DCS Mux Decode Error bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadDCSMuxDecodeError();
+  /// <summary>
+  /// Read the Data Mux Decode Error bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadDataMuxDecodeError();
+  /// <summary>
+  /// Formats the register's current value for register dumps
+  /// </summary>
+  /// <returns>DTC_RegisterFormatter object containing register information</returns>
   DTC_RegisterFormatter FormatLinkMuxError();
 
   // Firefly CSR Register
+  /// <summary>
+  /// Read the TXRX Firefly Present bit
+  /// </summary>
+  /// <returns>Value of bit</returns>
   bool ReadTXRXFireflyPresent();
+  /// <summary>
+  /// Read the RX Firefly Present bit
+  /// </summary>
+  /// <returns>Value of bit</returns>
   bool ReadRXFireflyPresent();
+  /// <summary>
+  /// Read the TX Firefly Present bit
+  /// </summary>
+  /// <returns>Value of bit</returns>
   bool ReadTXFireflyPresent();
+  /// <summary>
+  /// Read the TXRX Firefly Interrupt bit
+  /// </summary>
+  /// <returns>Value of bit</returns>
   bool ReadTXRXFireflyInterrupt();
+  /// <summary>
+  /// Read the RX Firefly Interrupt bit
+  /// </summary>
+  /// <returns>Value of bit</returns>
   bool ReadRXFireflyInterrupt();
+  /// <summary>
+  /// Read the TX Firefly Interrupt bit
+  /// </summary>
+  /// <returns>Value of bit</returns>
   bool ReadTXFireflyInterrupt();
+  /// <summary>
+  /// Read the TXRX Firefly Select bit
+  /// </summary>
+  /// <returns>Value of bit</returns>
   bool ReadTXRXFireflySelect();
+  /// <summary>
+  /// Set the TXRX Firefly Select bit
+  /// </summary>
+  /// <param name="select">Value to write</param>
   void SetTXRXFireflySelect(bool select);
+  /// <summary>
+  /// Read the TX Firefly Select bit
+  /// </summary>
+  /// <returns>Value of bit</returns>
   bool ReadTXFireflySelect();
+  /// <summary>
+  /// Set the TX Firefly Select bit
+  /// </summary>
+  /// <param name="select">Value to write</param>
   void SetTXFireflySelect(bool select);
+  /// <summary>
+  /// Read the RX Firefly Select bit
+  /// </summary>
+  /// <returns>Value of bit</returns>
   bool ReadRXFireflySelect();
+  /// <summary>
+  /// Set the RX Firefly Select bit
+  /// </summary>
+  /// <param name="select">Value to write</param>
   void SetRXFireflySelect(bool select);
+  /// <summary>
+  /// Read the TXRX Firefly Reset bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadResetTXRXFirefly();
-  void ResetTXRXFirefly();
+  void ResetTXRXFirefly();  ///< Reset the TXRX Firefly
+  /// <summary>
+  /// Read the TX Firefly Reset bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadResetTXFirefly();
-  void ResetTXFirefly();
+  void ResetTXFirefly();  ///< Reset the TX Firefly
+  /// <summary>
+  /// Read the RX Firefly Reset bit
+  /// </summary>
+  /// <returns>Value of the bit</returns>
   bool ReadResetRXFirefly();
-  void ResetRXFirefly();
+  void ResetRXFirefly();  ///< Reset the RX Firefly
+  /// <summary>
+  /// Formats the register's current value for register dumps
+  /// </summary>
+  /// <returns>DTC_RegisterFormatter object containing register information</returns>
   DTC_RegisterFormatter FormatFireflyCSR();
 
   // FPGA PROM Program Data Register

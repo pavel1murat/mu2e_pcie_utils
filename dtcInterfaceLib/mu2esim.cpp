@@ -499,22 +499,20 @@ void mu2esim::dcsPacketSimulator_(DTCLib::DTC_DCSRequestPacket in) {
                             ((packetCount & 0x2) << 6));
   dataPacket.SetWord(5, (packetCount & 0x3FC) >> 2);
 
+  auto request1 = in.GetRequest(false);
+  dataPacket.SetWord(6, request1.first & 0xFF);
+  dataPacket.SetWord(7, (request1.first & 0xFF00) >> 8);
+  dataPacket.SetWord(8, request1.second & 0xFF);
+  dataPacket.SetWord(9, (request1.second & 0xFF00) >> 8);
+
   if (in.GetType() != DTCLib::DTC_DCSOperationType_BlockRead) {
-    auto request1 = in.GetRequest(false);
     auto request2 = in.GetRequest(true);
-    dataPacket.SetWord(6, request1.first & 0xFF);
-    dataPacket.SetWord(7, (request1.first & 0xFF00) >> 8);
-    dataPacket.SetWord(8, request1.second & 0xFF);
-    dataPacket.SetWord(9, (request1.second & 0xFF00) >> 8);
     dataPacket.SetWord(10, request2.first & 0xFF);
     dataPacket.SetWord(11, (request2.first & 0xFF00) >> 8);
     dataPacket.SetWord(12, request2.second & 0xFF);
     dataPacket.SetWord(13, (request2.second & 0xFF00) >> 8);
   } else {
-    auto address = in.GetBlockAddress();
-    dataPacket.SetWord(6, address & 0xFF);
-    dataPacket.SetWord(7, (address & 0xFF00) >> 8);
-    for (int ii = 8; ii < dataPacket.GetSize(); ++ii) {
+    for (int ii = 10; ii < dataPacket.GetSize(); ++ii) {
       dataPacket.SetWord(ii, ii);
     }
   }

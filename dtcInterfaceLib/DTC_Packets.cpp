@@ -1,5 +1,6 @@
 #include "DTC_Packets.h"
 
+#include <cassert>
 #include <cstring>
 #include <iomanip>
 #include <sstream>
@@ -183,17 +184,15 @@ DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in) : DTC_DMAP
 
   packetCount_ = (in.GetData()[4] >> 6) + (in.GetData()[5] << 2);
   address1_ = in.GetData()[6] + (in.GetData()[7] << 8);
+  data1_ = in.GetData()[8] + (in.GetData()[9] << 8);
 
   if (type_ == DTC_DCSOperationType_BlockWrite) {
-    data1_ = 0;
     address2_ = 0;
     data2_ = 0;
-    blockWriteData_.push_back(in.GetData()[8] + (in.GetData()[9] << 8));
     blockWriteData_.push_back(in.GetData()[10] + (in.GetData()[11] << 8));
     blockWriteData_.push_back(in.GetData()[12] + (in.GetData()[13] << 8));
     blockWriteData_.push_back(in.GetData()[14] + (in.GetData()[15] << 8));
   } else {
-    data1_ = in.GetData()[8] + (in.GetData()[9] << 8);
     address2_ = in.GetData()[10] + (in.GetData()[11] << 8);
     data2_ = in.GetData()[12] + (in.GetData()[13] << 8);
   }
@@ -206,13 +205,14 @@ std::string DTCLib::DTC_DCSRequestPacket::toJSON() {
   ss << "\"Operation Type\":" << DTC_DCSOperationTypeConverter(type_) << ", ";
   ss << "\"Double Operation\":" << (doubleOp_ ? "\"true\"" : "\"false\"") << ", ";
   ss << "\"Request Acknowledgement\":" << (requestAck_ ? "\"true\"" : "\"false\"") << ", ";
-  ss << "\"Address1\": " << static_cast<int>(address1_);
+  ss << "\"Address1\": " << static_cast<int>(address1_) << ", ";
   if (type_ != DTC_DCSOperationType_BlockWrite) {
-    ss << ", \"Data1\": " << static_cast<int>(data1_) << ", ";
+    ss << "\"Data1\": " << static_cast<int>(data1_) << ", ";
     ss << "\"Address2\": " << static_cast<int>(address2_) << ", ";
     ss << "\"Data2\": " << static_cast<int>(data2_);
   } else {
     auto counter = 0;
+    ss << ", \"Block Word Count\": " << static_cast<int>(data1_);
     for (auto& word : blockWriteData_) {
       ss << ", "
          << "\"Block Write word " << counter << "\":" << static_cast<int>(word);
@@ -233,8 +233,8 @@ std::string DTCLib::DTC_DCSRequestPacket::toPacketFormat() {
   ss << std::setw(8) << firstWord << "\t" << secondWord << std::endl;
 
   ss << std::setw(8) << ((address1_ & 0xFF00) >> 8) << "\t" << (address1_ & 0xFF) << std::endl;
+  ss << std::setw(8) << ((data1_ & 0xFF00) >> 8) << "\t" << (data1_ & 0xFF) << std::endl;
   if (type_ != DTC_DCSOperationType_BlockWrite) {
-    ss << std::setw(8) << ((data1_ & 0xFF00) >> 8) << "\t" << (data1_ & 0xFF) << std::endl;
     ss << std::setw(8) << ((address2_ & 0xFF00) >> 8) << "\t" << (address2_ & 0xFF) << std::endl;
     ss << std::setw(8) << ((data2_ & 0xFF00) >> 8) << "\t" << (data2_ & 0xFF) << std::endl;
     ss << "        \t        " << std::endl;
@@ -251,11 +251,6 @@ std::string DTCLib::DTC_DCSRequestPacket::toPacketFormat() {
     }
     if (blockWriteData_.size() > 2) {
       ss << std::setw(8) << ((blockWriteData_[2] & 0xFF00) >> 8) << "\t" << (blockWriteData_[2] & 0xFF) << std::endl;
-    } else {
-      ss << "        \t        " << std::endl;
-    }
-    if (blockWriteData_.size() > 3) {
-      ss << std::setw(8) << ((blockWriteData_[3] & 0xFF00) >> 8) << "\t" << (blockWriteData_[3] & 0xFF) << std::endl;
     } else {
       ss << "        \t        " << std::endl;
     }
@@ -279,6 +274,17 @@ void DTCLib::DTC_DCSRequestPacket::AddRequest(uint16_t address, uint16_t data) {
   data2_ = data;
 }
 
+void DTCLib::DTC_DCSRequestPacket::UpdatePacketAndWordCounts() {
+  assert(blockWriteData_.size() < 0x10000);
+
+  if (type_ == DTC_DCSOperationType_BlockWrite) {
+    data1_ = blockWriteData_.size();
+    packetCount_ = (data1_ - 3) / 8 + ((data1_ - 3) % 8 ? 1 : 0);
+  } else {
+    packetCount_ = 0;
+  }
+}
+
 DTCLib::DTC_DataPacket DTCLib::DTC_DCSRequestPacket::ConvertToDataPacket() const {
   auto output = DTC_DMAPacket::ConvertToDataPacket();
 
@@ -290,17 +296,17 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSRequestPacket::ConvertToDataPacket() const
 
   output.SetWord(6, static_cast<uint8_t>(address1_ & 0xFF));
   output.SetWord(7, static_cast<uint8_t>(((address1_ & 0xFF00) >> 8)));
+  output.SetWord(8, static_cast<uint8_t>(data1_ & 0xFF));
+  output.SetWord(9, static_cast<uint8_t>(((data1_ & 0xFF00) >> 8)));
 
   if (type_ != DTC_DCSOperationType_BlockWrite) {
-    output.SetWord(8, static_cast<uint8_t>(data1_ & 0xFF));
-    output.SetWord(9, static_cast<uint8_t>(((data1_ & 0xFF00) >> 8)));
     output.SetWord(10, static_cast<uint8_t>(address2_ & 0xFF));
     output.SetWord(11, static_cast<uint8_t>(((address2_ & 0xFF00) >> 8)));
     output.SetWord(12, static_cast<uint8_t>(data2_ & 0xFF));
     output.SetWord(13, static_cast<uint8_t>(((data2_ & 0xFF00) >> 8)));
   } else {
     output.Resize((1 + packetCount_) * 16);
-    size_t wordCounter = 8;
+    size_t wordCounter = 10;
     for (auto& word : blockWriteData_) {
       output.SetWord(wordCounter, word & 0xFF);
       output.SetWord(wordCounter + 1, (word & 0xFF00) >> 8);
@@ -468,15 +474,20 @@ DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_DataPacket in) : DTC_DMAPacke
 
   packetCount_ = (in.GetData()[4] >> 6) + (in.GetData()[5] << 2);
   address1_ = in.GetData()[6] + (in.GetData()[7] << 8);
+  data1_ = in.GetData()[8] + (in.GetData()[9] << 8);
 
   if (type_ == DTC_DCSOperationType_BlockRead) {
-    data1_ = 0;
     address2_ = 0;
     data2_ = 0;
-    blockReadData_.push_back(in.GetData()[8] + (in.GetData()[9] << 8));
-    blockReadData_.push_back(in.GetData()[10] + (in.GetData()[11] << 8));
-    blockReadData_.push_back(in.GetData()[12] + (in.GetData()[13] << 8));
-    blockReadData_.push_back(in.GetData()[14] + (in.GetData()[15] << 8));
+    if (data1_ > 0) {
+      blockReadData_.push_back(in.GetData()[10] + (in.GetData()[11] << 8));
+    }
+    if (data1_ > 1) {
+      blockReadData_.push_back(in.GetData()[12] + (in.GetData()[13] << 8));
+    }
+    if (data1_ > 2) {
+      blockReadData_.push_back(in.GetData()[14] + (in.GetData()[15] << 8));
+    }
 
     if (in.GetSize() > 16) {
       size_t wordCounter = 16;
@@ -486,7 +497,6 @@ DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_DataPacket in) : DTC_DMAPacke
       }
     }
   } else {
-    data1_ = in.GetData()[8] + (in.GetData()[9] << 8);
     address2_ = in.GetData()[10] + (in.GetData()[11] << 8);
     data2_ = in.GetData()[12] + (in.GetData()[13] << 8);
   }
@@ -499,14 +509,15 @@ std::string DTCLib::DTC_DCSReplyPacket::toJSON() {
   ss << "\"Operation Type\":" << DTC_DCSOperationTypeConverter(type_) << ", ";
   ss << "\"Double Operation\":" << (doubleOp_ ? "\"true\"" : "\"false\"") << ", ";
   ss << "\"Request Acknowledgement\":" << (requestAck_ ? "\"true\"" : "\"false\"") << ", ";
-  ss << "\"DCS Request FIFO Empty\": " << (dcsReceiveFIFOEmpty_ ? "\"true\"" : "\"false\"");
-  ss << "\"Corrupt Flag\": " << (corruptFlag_ ? "\"true\"" : "\"false\"");
-  ss << "\"Address1\": " << static_cast<int>(address1_);
+  ss << "\"DCS Request FIFO Empty\": " << (dcsReceiveFIFOEmpty_ ? "\"true\"" : "\"false\"") << ", ";
+  ss << "\"Corrupt Flag\": " << (corruptFlag_ ? "\"true\"" : "\"false\"") << ", ";
+  ss << "\"Address1\": " << static_cast<int>(address1_) << ", ";
   if (type_ != DTC_DCSOperationType_BlockRead) {
-    ss << ", \"Data1\": " << static_cast<int>(data1_) << ", ";
+    ss << "\"Data1\": " << static_cast<int>(data1_) << ", ";
     ss << "\"Address2\": " << static_cast<int>(address2_) << ", ";
     ss << "\"Data2\": " << static_cast<int>(data2_);
   } else {
+    ss << "\"Block Word Count\": " << static_cast<int>(data1_);
     auto counter = 0;
     for (auto& word : blockReadData_) {
       ss << ", "
@@ -528,8 +539,8 @@ std::string DTCLib::DTC_DCSReplyPacket::toPacketFormat() {
   ss << std::setw(8) << firstWord << "\t" << secondWord << std::endl;
 
   ss << std::setw(8) << ((address1_ & 0xFF00) >> 8) << "\t" << (address1_ & 0xFF) << std::endl;
+  ss << std::setw(8) << ((data1_ & 0xFF00) >> 8) << "\t" << (data1_ & 0xFF) << std::endl;
   if (type_ != DTC_DCSOperationType_BlockRead) {
-    ss << std::setw(8) << ((data1_ & 0xFF00) >> 8) << "\t" << (data1_ & 0xFF) << std::endl;
     ss << std::setw(8) << ((address2_ & 0xFF00) >> 8) << "\t" << (address2_ & 0xFF) << std::endl;
     ss << std::setw(8) << ((data2_ & 0xFF00) >> 8) << "\t" << (data2_ & 0xFF) << std::endl;
     ss << "        \t        " << std::endl;
@@ -549,11 +560,6 @@ std::string DTCLib::DTC_DCSReplyPacket::toPacketFormat() {
     } else {
       ss << "        \t        " << std::endl;
     }
-    if (blockReadData_.size() > 3) {
-      ss << std::setw(8) << ((blockReadData_[3] & 0xFF00) >> 8) << "\t" << (blockReadData_[3] & 0xFF) << std::endl;
-    } else {
-      ss << "        \t        " << std::endl;
-    }
   }
   return ss.str();
 }
@@ -569,17 +575,17 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSReplyPacket::ConvertToDataPacket() const {
 
   output.SetWord(6, static_cast<uint8_t>(address1_ & 0xFF));
   output.SetWord(7, static_cast<uint8_t>(((address1_ & 0xFF00) >> 8)));
+  output.SetWord(8, static_cast<uint8_t>(data1_ & 0xFF));
+  output.SetWord(9, static_cast<uint8_t>(((data1_ & 0xFF00) >> 8)));
 
   if (type_ != DTC_DCSOperationType_BlockRead) {
-    output.SetWord(8, static_cast<uint8_t>(data1_ & 0xFF));
-    output.SetWord(9, static_cast<uint8_t>(((data1_ & 0xFF00) >> 8)));
     output.SetWord(10, static_cast<uint8_t>(address2_ & 0xFF));
     output.SetWord(11, static_cast<uint8_t>(((address2_ & 0xFF00) >> 8)));
     output.SetWord(12, static_cast<uint8_t>(data2_ & 0xFF));
     output.SetWord(13, static_cast<uint8_t>(((data2_ & 0xFF00) >> 8)));
   } else {
     output.Resize((1 + packetCount_) * 16);
-    size_t wordCounter = 8;
+    size_t wordCounter = 10;
     for (auto& word : blockReadData_) {
       output.SetWord(wordCounter, word & 0xFF);
       output.SetWord(wordCounter + 1, (word & 0xFF00) >> 8);

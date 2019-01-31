@@ -288,7 +288,6 @@ class DTC_DMAPacket {
   /// </summary>
   /// <param name="type">Packet Type</param>
   /// <param name="link">Link ID</param>
-  /// <param name="roc">ROC ID</param>
   /// <param name="byteCount">Block byte count. Default is one packet, 16 bytes</param>
   /// <param name="valid">Valid flag for packet, default true</param>
   DTC_DMAPacket(DTC_PacketType type, DTC_Link_ID link, uint16_t byteCount = 16, bool valid = true);
@@ -401,6 +400,9 @@ class DTC_DCSRequestPacket : public DTC_DMAPacket {
   /// </summary>
   /// <param name="link">Link ID for packet</param>
   /// <param name="type">OpCode of packet</param>
+  /// <param name="requestAck">Whether to request acknowledement of this operation</param>
+  /// <param name="address">Address of ROC register</param>
+  /// <param name="data">Data/wordCount for operation</param>
   DTC_DCSRequestPacket(DTC_Link_ID link, DTC_DCSOperationType type, bool requestAck, uint16_t address,
                        uint16_t data = 0x0);
   /// <summary>
@@ -440,23 +442,52 @@ class DTC_DCSRequestPacket : public DTC_DMAPacket {
   /// <returns>Current Opcode of the DCS Request Packet</returns>
   DTC_DCSOperationType GetType() const { return type_; }
 
+  /// <summary>
+  /// Read the double operation bit from the DCS Request packet
+  /// </summary>
+  /// <returns>Whether the Double operation bit is set</returns>
   bool IsDoubleOp() const { return doubleOp_; }
 
+  /// <summary>
+  /// Read the request acknowledement bit from the DCS Request Packet
+  /// </summary>
+  /// <returns>Whether the request acknowledement bit is set</returns>
   bool RequestsAck() const { return requestAck_; }
 
-  uint16_t GetBlockAddress() const { return address1_; }
-  std::pair<uint16_t, uint16_t> GetRequest(bool secondOp) {
+  /// <summary>
+  /// Get the request from the DCS Request Packet
+  /// </summary>
+  /// <param name="secondOp">Whether to read the second request</param>
+  /// <returns>Pair of address, data from the given request</returns>
+  std::pair<uint16_t, uint16_t> GetRequest(bool secondOp = false) {
     if (!secondOp) return std::make_pair(address1_, data1_);
     return std::make_pair(address2_, data2_);
   }
 
+  /// <summary>
+  /// Add a second request to the DCS Request Packet
+  /// </summary>
+  /// <param name="address">Address of the second request</param>
+  /// <param name="data">Data for the second request</param>
   void AddRequest(uint16_t address, uint16_t data = 0x0);
-  void SetBlockWriteData(std::vector<uint16_t> data) { blockWriteData_ = data; }
+  /// <summary>
+  /// Set the block write data
+  /// </summary>
+  /// <param name="data">Vector of 16-bit words to write to the ROC</param>
+  void SetBlockWriteData(std::vector<uint16_t> data) {
+    blockWriteData_ = data;
+    UpdatePacketAndWordCounts();
+  }
+  /// <summary>
+  /// Update the packetCount and data_ (Block word count) words in the DCS request packet, based on the type of operation and blockWriteData
+  /// </summary>
+  void UpdatePacketAndWordCounts();
 
   /// <summary>
   /// Sets the opcode of the DCS Request Packet
   /// </summary>
   /// <param name="type">Opcode to set</param>
+  /// <param name="reqAck">Whether to request acknowledement of this operation</param>
   void SetType(DTC_DCSOperationType type, bool reqAck) {
     requestAck_ = reqAck;
     type_ = type;
@@ -680,7 +711,11 @@ class DTC_DCSReplyPacket : public DTC_DMAPacket {
   /// </summary>
   /// <returns>DTC_DCSOperationType enumeration value</returns>
   DTC_DCSOperationType GetType() const { return type_; }
-
+  
+  /// <summary>
+  /// Read the double operation bit from the DCS reply packet
+  /// </summary>
+  /// <returns>Whether the double operation bit is set</returns>
   bool IsDoubleOperation() const { return doubleOp_; }
 
   /// <summary>
@@ -695,15 +730,32 @@ class DTC_DCSReplyPacket : public DTC_DMAPacket {
   /// <returns>Value of DCS Receive FIFO Empty flag</returns>
   bool DCSReceiveFIFOEmpty() const { return dcsReceiveFIFOEmpty_; }
 
+  /// <summary>
+  /// Get the corrupt flag from the status word
+  /// </summary>
+  /// <returns>Whether the corrupt bit is set</returns>
   bool ROCIsCorrupt() const { return corruptFlag_; }
 
+  /// <summary>
+  /// Get the value packet count field
+  /// </summary>
+  /// <returns>The number of packets in the block read</returns>
   uint16_t GetBlockPacketCount() const { return packetCount_; }
 
-  std::pair<uint16_t, uint16_t> GetReply(bool secondOp) {
+  /// <summary>
+  /// Get the reply from the DCSReplyPacket
+  /// </summary>
+  /// <param name="secondOp">Whether to read the second operation</param>
+  /// <returns>Pair of address, data from the reply packet</returns>
+  std::pair<uint16_t, uint16_t> GetReply(bool secondOp = false) {
     if (!secondOp) return std::make_pair(address1_, data1_);
     return std::make_pair(address2_, data2_);
   }
 
+  /// <summary>
+  /// Get the block read data, if any
+  /// </summary>
+  /// <returns>Vector of 16-bit words</returns>
   std::vector<uint16_t> GetBlockReadData() const { return blockReadData_; }
 
   /// <summary>

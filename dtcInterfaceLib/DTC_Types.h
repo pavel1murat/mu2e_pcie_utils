@@ -931,14 +931,14 @@ struct DTC_FIFOFullErrorFlags {
 /// This structure is used to decode the DDR Flags register values
 /// </summary>
 struct DTC_DDRFlags {
-  bool InputFragmentBufferFull;
-  bool InputFragmentBufferFullError;
-  bool InputFragmentBufferEmpty;
-  bool InputFragmentBufferHalfFull;
-  bool OutputEventBufferFull;
-  bool OutputEventBufferFullError;
-  bool OutputEventBufferEmpty;
-  bool OutputEventBufferHalfFull;
+  bool InputFragmentBufferFull; ///< The input fragment buffer is full
+  bool InputFragmentBufferFullError; ///< The input fragment buffer is full and in error state
+  bool InputFragmentBufferEmpty; ///< The input fragment buffer is empty
+  bool InputFragmentBufferHalfFull; ///< The input fragment buffer is at least half full
+  bool OutputEventBufferFull; ///< The output event buffer is full
+  bool OutputEventBufferFullError; ///< The output event buffer is full and in error state
+  bool OutputEventBufferEmpty; ///< The output event buffer is empty
+  bool OutputEventBufferHalfFull; ///< The output event buffer is at least half full
 
   /// <summary>
   /// Default Constructor, sets all flags to false

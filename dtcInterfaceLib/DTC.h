@@ -73,7 +73,7 @@ class DTC : public DTC_Registers {
   /// <param name="address">Address of the register</param>
   /// <param name="retries">Numberof times to retry when packet address or link does not match request</param>
   /// <returns>Value of the ROC register from a DCS Reply packet</returns>
-  uint16_t ReadROCRegister(const DTC_Link_ID& link, const uint8_t address, int retries = 10);
+  uint16_t ReadROCRegister(const DTC_Link_ID& link, const uint16_t address, int retries = 10);
   /// <summary>
   /// Sends a DCS Request Packet with the fields filled in such that the given ROC register will be written.
   /// This function writes to the main ROC register space, use WriteExtROCRegister to access other firmware blocks'
@@ -82,7 +82,44 @@ class DTC : public DTC_Registers {
   /// <param name="link">Link of the ROC to write to</param>
   /// <param name="address">Address of the register</param>
   /// <param name="data">Value to write</param>
-  void WriteROCRegister(const DTC_Link_ID& link, const uint8_t address, const uint16_t data);
+  void WriteROCRegister(const DTC_Link_ID& link, const uint16_t address, const uint16_t data);
+
+  /// <summary>
+  /// Perform a "double operation" read of ROC registers
+  /// </summary>
+  /// <param name="link">Link of the ROC to read</param>
+  /// <param name="address1">First address to read</param>
+  /// <param name="address2">Second address to read</param>
+  /// <param name="retries">Numberof times to retry when packet address or link does not match request</param>
+  /// <returns>Pair of register values, first is from the first address, second from the second</returns>
+  std::pair<uint16_t, uint16_t> ReadROCRegisters(const DTC_Link_ID& link, const uint16_t address1,
+                                                 const uint16_t address2, int retries = 10);
+  /// <summary>
+  /// Perform a "double operation" write to ROC registers
+  /// </summary>
+  /// <param name="link">Link of the ROC to write to</param>
+  /// <param name="address1">First address to write</param>
+  /// <param name="data1">Value to write to first register</param>
+  /// <param name="address2">Second address to write</param>
+  /// <param name="data2">Value to write to second register</param>
+  void WriteROCRegisters(const DTC_Link_ID& link, const uint16_t address1, const uint16_t data1,
+                         const uint16_t address2, const uint16_t data2);
+  /// <summary>
+  /// Perform a ROC block read
+  /// </summary>
+  /// <param name="link">Link of the ROC to read</param>
+  /// <param name="address">Address of the block</param>
+  /// <param name="wordCount">Number of words to read</param>
+  /// <returns>Vector of words returned by block read</returns>
+  std::vector<uint16_t> ReadROCBlock(const DTC_Link_ID& link, const uint16_t address, const uint16_t wordCount);
+  /// <summary>
+  /// Perform a ROC block write
+  /// </summary>
+  /// <param name="link">Link of the ROC to write</param>
+  /// <param name="address">Address of the block</param>
+  /// <param name="blockData">Vector of words to write</param>
+  void WriteROCBlock(const DTC_Link_ID& link, const uint16_t address, const std::vector<uint16_t>& blockData);
+
   /// <summary>
   /// Sends a DCS Request Packet with fields filled in such that the given ROC firmware block register will be read out.
   /// This funcion reads from firmware blocks' register spaces.
@@ -91,7 +128,7 @@ class DTC : public DTC_Registers {
   /// <param name="block">Block ID to read from</param>
   /// <param name="address">Address of the register</param>
   /// <returns>Value of the ROC register from a DCS Reply packet</returns>
-  uint16_t ReadExtROCRegister(const DTC_Link_ID& link, const uint8_t block, const uint16_t address);
+  uint16_t ReadExtROCRegister(const DTC_Link_ID& link, const uint16_t block, const uint16_t address);
   /// <summary>
   /// Sends a DCS Request Packet with fields filled in such that the given ROC firmware block register will be written.
   /// This funcion writes to firmware blocks' register spaces.
@@ -100,7 +137,7 @@ class DTC : public DTC_Registers {
   /// <param name="block">Block ID to write to</param>
   /// <param name="address">Address of the register</param>
   /// <param name="data">Value to write</param>
-  void WriteExtROCRegister(const DTC_Link_ID& link, const uint8_t block, const uint8_t address, const uint16_t data);
+  void WriteExtROCRegister(const DTC_Link_ID& link, const uint16_t block, const uint16_t address, const uint16_t data);
   /// <summary>
   /// Dump all known registers from the given ROC, via DCS Request packets.
   /// </summary>
@@ -126,10 +163,13 @@ class DTC : public DTC_Registers {
   /// <param name="type">Operation to perform</param>
   /// <param name="address">Target address</param>
   /// <param name="data">Data to write, if operation is write</param>
+  /// <param name="address2">Second Target address</param>
+  /// <param name="data2">Data to write to second address, if operation is write</param>
   /// <param name="quiet">Whether to not print the JSON representation of the Readout Request (Default: true, no JSON
   /// printed)</param>
-  void SendDCSRequestPacket(const DTC_Link_ID& link, const DTC_DCSOperationType type, const uint8_t address,
-                            const uint16_t data = 0x0, bool quiet = true);
+  void SendDCSRequestPacket(const DTC_Link_ID& link, const DTC_DCSOperationType type, const uint16_t address,
+                            const uint16_t data = 0x0, const uint16_t address2 = 0x0, const uint16_t data2 = 0,
+                            bool quiet = true);
 
   /// <summary>
   /// Writes a packet to the DTC on the DCS channel

@@ -388,7 +388,7 @@ bool DTCLib::DTC::VerifySimFileInDTC(std::string file, std::string rawOutputFile
 }
 
 // ROC Register Functions
-uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint8_t address, int retries) {
+uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint16_t address, int retries) {
   dcsDMAInfo_.currentReadPtr = nullptr;
   ReleaseBuffers(DTC_DMA_Engine_DCS);
   SendDCSRequestPacket(link, DTC_DCSOperationType_Read, address);
@@ -430,11 +430,140 @@ uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint8_t add
   return data;
 }
 
-void DTCLib::DTC::WriteROCRegister(const DTC_Link_ID& link, const uint8_t address, const uint16_t data) {
+void DTCLib::DTC::WriteROCRegister(const DTC_Link_ID& link, const uint16_t address, const uint16_t data) {
   SendDCSRequestPacket(link, DTC_DCSOperationType_Write, address, data);
 }
 
-uint16_t DTCLib::DTC::ReadExtROCRegister(const DTC_Link_ID& link, const uint8_t block, const uint16_t address) {
+std::pair<uint16_t, uint16_t> DTCLib::DTC::ReadROCRegisters(const DTC_Link_ID& link, const uint16_t address1,
+                                                            const uint16_t address2, int retries) {
+  dcsDMAInfo_.currentReadPtr = nullptr;
+  ReleaseBuffers(DTC_DMA_Engine_DCS);
+  SendDCSRequestPacket(link, DTC_DCSOperationType_Read, address1, 0, address2);
+  usleep(2500);
+  uint16_t data1 = 0xFFFF;
+  uint16_t data2 = 0xFFFF;
+  while (retries > 0) {
+    TLOG(TLVL_TRACE) << "ReadROCRegister: Loop start, retries=" << retries;
+    auto reply = ReadNextDCSPacket();
+    auto count = 0;
+    while (reply != nullptr) {
+      count++;
+      auto reply1tmp = reply->GetReply(false);
+      auto reply2tmp = reply->GetReply(true);
+      auto linktmp = reply->GetRingID();
+      TLOG(TLVL_TRACE) << "Got packet, "
+                       << "link=" << static_cast<int>(linktmp) << " (expected " << static_cast<int>(link) << "), "
+                       << "address1=" << static_cast<int>(reply1tmp.first) << " (expected "
+                       << static_cast<int>(address1) << "), "
+                       << "data1=" << static_cast<int>(reply1tmp.second)
+                       << "address2=" << static_cast<int>(reply2tmp.first) << " (expected "
+                       << static_cast<int>(address2) << "), "
+                       << "data2=" << static_cast<int>(reply2tmp.second);
+
+      reply.reset(nullptr);
+      if (reply1tmp.first != address1 || reply2tmp.first != address2 || linktmp != link) {
+        TLOG(TLVL_TRACE) << "Address or link did not match, reading next packet!";
+        reply = ReadNextDCSPacket();  // Read the next packet
+        continue;
+      }
+
+      data1 = reply1tmp.second;
+      data2 = reply2tmp.second;
+
+      retries = 0;
+      reply = ReadNextDCSPacket();  // Read the next packet
+    }
+    if (count == 0) {
+      SendDCSRequestPacket(link, DTC_DCSOperationType_Read, address1, 0, address2);
+      usleep(2500);
+    }
+    retries--;
+  }
+  TLOG(TLVL_TRACE) << "ReadROCRegister returning " << static_cast<int>(data1) << " for link " << static_cast<int>(link)
+                   << ", address " << static_cast<int>(address1) << ", " << static_cast<int>(data2) << ", address "
+                   << static_cast<int>(address2);
+  return std::make_pair(data1, data2);
+}
+
+void DTCLib::DTC::WriteROCRegisters(const DTC_Link_ID& link, const uint16_t address1, const uint16_t data1,
+                                    const uint16_t address2, const uint16_t data2) {
+  SendDCSRequestPacket(link, DTC_DCSOperationType_Write, address1, data1, address2, data2);
+}
+
+std::vector<uint16_t> DTCLib::DTC::ReadROCBlock(const DTC_Link_ID& link, const uint16_t address,
+                                                const uint16_t wordCount) {
+  DTC_DCSRequestPacket req(link, DTC_DCSOperationType_BlockRead, false, address, wordCount);
+
+  TLOG(TLVL_SendDCSRequestPacket) << "ReadROCBlock before WriteDMADCSPacket - DTC_DCSRequestPacket";
+
+  dcsDMAInfo_.currentReadPtr = nullptr;
+  ReleaseBuffers(DTC_DMA_Engine_DCS);
+
+  if (!ReadDCSReception()) EnableDCSReception();
+
+  WriteDMAPacket(req);
+  TLOG(TLVL_SendDCSRequestPacket) << "ReadROCBlock after  WriteDMADCSPacket - DTC_DCSRequestPacket";
+
+  usleep(2500);
+  std::vector<uint16_t> data;
+
+  auto reply = ReadNextDCSPacket();
+  while (reply != nullptr) {
+    auto replytmp = reply->GetReply(false);
+    auto linktmp = reply->GetRingID();
+    TLOG(TLVL_TRACE) << "Got packet, "
+                     << "link=" << static_cast<int>(linktmp) << " (expected " << static_cast<int>(link) << "), "
+                     << "address=" << static_cast<int>(replytmp.first) << " (expected " << static_cast<int>(address)
+                     << "), "
+                     << "wordCount=" << static_cast<int>(replytmp.second);
+
+    data = reply->GetBlockReadData();
+    auto packetCount = reply->GetBlockPacketCount();
+    reply.reset(nullptr);
+    if (replytmp.first != address || linktmp != link) {
+      TLOG(TLVL_TRACE) << "Address or link did not match, reading next packet!";
+      reply = ReadNextDCSPacket();  // Read the next packet
+      continue;
+    }
+
+    auto wordCount = replytmp.second;
+    auto processedWords = 3;
+    while (packetCount > 0) {
+      auto dataPacket = ReadNextPacket(DTC_DMA_Engine_DCS);
+      if (dataPacket == nullptr) break;
+      auto byteInPacket = 0;
+
+      while (wordCount - processedWords > 0 && byteInPacket < 16) {
+        uint16_t thisWord = dataPacket->GetWord(byteInPacket) + (dataPacket->GetWord(byteInPacket + 1) << 8);
+        byteInPacket += 2;
+        data.push_back(thisWord);
+        processedWords++;
+      }
+
+      packetCount--;
+    }
+  }
+
+  TLOG(TLVL_TRACE) << "ReadROCBlock returning " << static_cast<int>(data.size()) << " words for link " << static_cast<int>(link)
+                   << ", address " << static_cast<int>(address);
+  return data;
+}
+
+void DTCLib::DTC::WriteROCBlock(const DTC_Link_ID& link, const uint16_t address,
+                                const std::vector<uint16_t>& blockData) {
+  DTC_DCSRequestPacket req(link, DTC_DCSOperationType_BlockWrite, false, address);
+  req.SetBlockWriteData(blockData);
+  
+  TLOG(TLVL_SendDCSRequestPacket) << "WriteROCBlock before WriteDMADCSPacket - DTC_DCSRequestPacket";
+
+  if (!ReadDCSReception()) EnableDCSReception();
+
+  WriteDMAPacket(req);
+  TLOG(TLVL_SendDCSRequestPacket) << "WriteROCBlock after  WriteDMADCSPacket - DTC_DCSRequestPacket";
+
+}
+
+uint16_t DTCLib::DTC::ReadExtROCRegister(const DTC_Link_ID& link, const uint16_t block, const uint16_t address) {
   uint16_t addressT = address & 0x7FFF;
   WriteROCRegister(link, 12, block);
   WriteROCRegister(link, 13, addressT);
@@ -442,7 +571,7 @@ uint16_t DTCLib::DTC::ReadExtROCRegister(const DTC_Link_ID& link, const uint8_t 
   return ReadROCRegister(link, 22);
 }
 
-void DTCLib::DTC::WriteExtROCRegister(const DTC_Link_ID& link, const uint8_t block, const uint8_t address,
+void DTCLib::DTC::WriteExtROCRegister(const DTC_Link_ID& link, const uint16_t block, const uint16_t address,
                                       const uint16_t data) {
   uint16_t dataT = data & 0x7FFF;
   WriteROCRegister(link, 12, block + (address << 8));
@@ -477,9 +606,14 @@ void DTCLib::DTC::SendReadoutRequestPacket(const DTC_Link_ID& link, const DTC_Ti
   TLOG(TLVL_SendReadoutRequestPacket) << "SendReadoutRequestPacket after  WriteDMADAQPacket - DTC_HeartbeatPacket";
 }
 
-void DTCLib::DTC::SendDCSRequestPacket(const DTC_Link_ID& link, const DTC_DCSOperationType type, const uint8_t address,
-                                       const uint16_t data, bool quiet) {
-  DTC_DCSRequestPacket req(link, type, address, data);
+void DTCLib::DTC::SendDCSRequestPacket(const DTC_Link_ID& link, const DTC_DCSOperationType type, const uint16_t address,
+                                       const uint16_t data, const uint16_t address2, const uint16_t data2, bool quiet) {
+  DTC_DCSRequestPacket req(link, type, false, address, data);
+
+  if (address2 != 0) {
+    req.AddRequest(address2, data2);
+  }
+
   TLOG(TLVL_SendDCSRequestPacket) << "SendDCSRequestPacket before WriteDMADCSPacket - DTC_DCSRequestPacket";
   if (!quiet) std::cout << req.toJSON() << std::endl;
 
