@@ -40,15 +40,20 @@ NOTE: for _IOR, _IOW: the size is only for the data at the address used in the
 
 #define IOC_UINT32 _IOWR(DEVL_IOC_MAGIC, 18, uint32_t)
 
-enum ioc_ioop_ops { ioop_read = 0x1, ioop_write = 0x2 };
+enum ioc_ioop_ops
+{
+	ioop_read = 0x1,
+	ioop_write = 0x2
+};
 /// <summary>
 /// IOC I/O Operation definition
 /// </summary>
-struct ioc_ioop {
-  uint32_t offset;            /**< register offset */
-  enum ioc_ioop_ops ops_mask; /**< can do write then read to same offset */
-  uint32_t write_val;         ///< Value to write to register
-  uint32_t read_val;          ///< Value read from register
+struct ioc_ioop
+{
+	uint32_t offset;            /**< register offset */
+	enum ioc_ioop_ops ops_mask; /**< can do write then read to same offset */
+	uint32_t write_val;         ///< Value to write to register
+	uint32_t read_val;          ///< Value read from register
 };
 
 #define IOC_IOOP _IOWR(DEVL_IOC_MAGIC, 19, struct ioc_ioop)

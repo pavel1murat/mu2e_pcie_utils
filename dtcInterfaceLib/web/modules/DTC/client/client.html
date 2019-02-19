@@ -1,21 +1,24 @@
 ﻿<!DOCTYPE html>
-<html>
-<head>
-    <title>DTC Node.js Interface v1.02.01</title>
-    <meta charset="utf-8">
-    <style>
-        @import url(style.css);
+	<html>
+	<head>
+	<title> DTC Node.js Interface v1 .02.01 < / title >
+	<meta charset = "utf-8">
+	<style> @import url(style.css);
 
-        .send {
-            fill: none;
-            stroke-width: 0.75px;
-        }
+.send
+{
+fill:
+	none;
+	stroke - width : 0.75px;
+}
 
-        .receive {
-            fill: none;
-            stroke-width: 0.75px;
-        }
-    </style>
+.receive
+{
+fill:
+	none;
+	stroke - width : 0.75px;
+}
+	</style>
     <script src="/base/jquery.min.js"></script>
     <script src="/base/d3.v3.min.js"></script>
     <script src="/base/MakeGraph.js"></script>
@@ -146,1638 +149,1649 @@
             Script:<br>
             <textarea id="script" style="height: 200px; width: 100%;"></textarea>
 
-            <pre>Note: expects &lt;address&gt; &lt;value&gt; pairs, one per line</pre><input type="button" id="execScript" value="Run Script" onclick="RunScript()">
-        </fieldset>
-        <fieldset>
-            <legend>DTC Log</legend>
-            <textarea id="log" style="height: 200px; width: 100%;"></textarea>
-            <table>
-                <tr>
-                    <td>
-                        <input type="text" id="logMessage">
-                    </td>
-                    <td>
-                        <input type="button" id="postLog" value="Post" onclick="PostLogMessage()">
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
-        <fieldset>
-            <legend>DTC PCIe IO Statistics</legend>
-            Send:
-            <p class="p" id="send"></p>
-            Receive:
-            <p class="p" id="receive"></p>
-        </fieldset>
-        <fieldset>
-            <legend>DTC Parameters</legend>
-            <table>
-                <tr>
-                    <th>Firmware Version</th>
-                    <td>
-                        <input type="text" id="dtcVersion" size="20" value="">
-                    </td>
-                </tr>
-            </table><br><br>
-            <table>
-                <tr>
-                    <th></th>
-                    <th>Disabled</th>
-                    <th>Tracker</th>
-                    <th>Calorimeter</th>
-                    <th>Cosmic-Ray Veto</th>
-                    <th>Hardware Loopback</th>
-                </tr>
-                <tr>
-                    <th>Sim Mode:</th>
-                    <td>
-                        <canvas id="simModeDisabledLED" width="20" height="10" onclick="SetSimMode(0)"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="simModeTrackerLED" width="20" height="10" onclick="SetSimMode(1)"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="simModeCalorimeterLED" width="20" height="10" onclick="SetSimMode(2)"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="simModeCRVLED" width="20" height="10" onclick="SetSimMode(3)"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="simModeHardwareLED" width="20" height="10" onclick="SetSimMode(4)"></canvas>
-                    </td>
-                </tr>
-            </table><br><br>
-            <table>
-                <tr>
-                    <th>DTC Reset</th>
-                    <th>SERDES Oscillator Reset</th>
-                </tr>
-                <tr>
-                    <td>
-                        <canvas id="dtcResetLED" width="20" height="10" onclick="LEDAction('/DTC/resetDTC', null, 'dtcResetLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="serdesResetLED" width="20" height="10" onclick="LEDAction('/DTC/resetSERDESOscillator', null, 'serdesResetLED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <th>SERDES Oscillator Clock Mode (0: 3.125Gbs, 1: 2.5Gbs)</th>
-                    <th>System Clock Enable</th>
-                    <th>Timing System Enable</th>
-                </tr>
-                <tr>
-                    <td>
-                        <canvas id="SERDESOscillatorClockLED" width="20" height="10" onclick="LEDAction('/DTC/toggleSERDESOscillatorClock', null, 'SERDESOscillatorClockLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SystemClockLED" width="20" height="10" onclick="LEDAction('/DTC/toggleSystemClock', null, 'SystemClockLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="TimingEnabledLED" width="20" height="10" onclick="LEDAction('/DTC/toggleTimingEnable', null, 'TimingEnabledLED')"></canvas>
-                    </td>
-                </tr>
-            </table><br><br>
-            <table>
-                <tr>
-                    <th>Trigger DMA Transfer Length</th>
-                    <td>
-                        <input type="number" id="triggerDMALength" min="0x80" max="0x8000" step="8" value="0x8000">
-                    </td>
-                    <td>
-                        <button type="button" id="setTriggerDMALength" onclick="SetNumericValue('#triggerDMALength', '/DTC/setTriggerDMATransferLength')">Set</button>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Min DMA Transfer Length</th>
-                    <td>
-                        <input type="number" id="minDMALength" min="0x40" max="0x7FC0" step="8" value="0x40">
-                    </td>
-                    <td>
-                        <button type="button" id="setMinDMALength" onclick="SetNumericValue('#minDMALength', '/DTC/setMinDMATransferLength')">Set</button>
-                    </td>
-                </tr>
-                <tr>
-                    <th>DMA Timeout Preset (x4 ns)</th>
-                    <td>
-                        <input type="number" id="dmaTimeoutPreset" min="0" max="0xFFFFFFFF" value="0x800">
-                    </td>
-                    <td>
-                        <button type="button" id="setDMATimeoutPreset" onclick="SetNumericValue('#dmaTimeoutPreset', '/DTC/writeDMATimeoutPreset')">Set</button>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Data Pending Timer (x6.4 ns)</th>
-                    <td>
-                        <input type="number" id="dataPendingTimer" min="0" max="0xFFFFFFFF" value="0x2000">
-                    </td>
-                    <td>
-                        <button type="button" id="setDataPendingTimer" onclick="SetNumericValue('#dataPendingTimer', '/DTC/writeDataPendingTimer')">Set</button>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Packet Size (bytes)</th>
-                    <td>
-                        <input type="number" id="packetSize" min="0" max="0xFFFF" value="0x10">
-                    </td>
-                    <td>
-                        <button type="button" id="setPacketSize" onclick="SetNumericValue('#packetSize', '/DTC/setPacketSize')">Set</button>
-                    </td>
-                </tr>
-            </table><br><br>
-            <table>
-                <tr>
-                    <th>SERDES Oscillator IIC Error</th>
-                    <th>SERDES Oscillator Initialization Complete</th>
-                </tr>
-                <tr>
-                    <td>
-                        <canvas id="SERDESOscillatorIICErrorLED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESOscillatorInitCompleteLED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
-        <fieldset>
-            <legend>ROC Emulation Enable</legend>
-            <table>
-                <tr>
-                    <th>Link 0</th>
-                    <th>Link 1</th>
-                    <th>Link 2</th>
-                    <th>Link 3</th>
-                    <th>Link 4</th>
-                    <th>Link 5</th>
-                </tr>
-                <tr>
-                    <td>
-                        <canvas id="ROCEmulatorEnabledLink0LED" width="20" height="10" onclick="LEDAction('./toggleROCEmulator', 0, 'ROCEmulatorEnabledLink0LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="ROCEmulatorEnabledLink1LED" width="20" height="10" onclick="LEDAction('./toggleROCEmulator', 1, 'ROCEmulatorEnabledLink1LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="ROCEmulatorEnabledLink2LED" width="20" height="10" onclick="LEDAction('./toggleROCEmulator', 2, 'ROCEmulatorEnabledLink2LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="ROCEmulatorEnabledLink3LED" width="20" height="10" onclick="LEDAction('./toggleROCEmulator', 3, 'ROCEmulatorEnabledLink3LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="ROCEmulatorEnabledLink4LED" width="20" height="10" onclick="LEDAction('./toggleROCEmulator', 4, 'ROCEmulatorEnabledLink4LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="ROCEmulatorEnabledLink5LED" width="20" height="10" onclick="LEDAction('./toggleROCEmulator', 5, 'ROCEmulatorEnabledLink5LED')"></canvas>
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
-        <fieldset>
-            <legend>Link Enable</legend>
-            <table>
-                <tr>
-                    <th></th>
-                    <th>Transmit Enabled</th>
-                    <th>Receive Enabled</th>
-                    <th>Timing Link Enabled</th>
-                </tr>
-                <tr>
-                    <td>Link 0</td>
-                    <td>
-                        <canvas id="Link0TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 0, 0, 'Link0TxEnabledLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="Link0RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 0, 1, 'Link0RxEnabledLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="Link0TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 0, 2, 'Link0TimingEnabledLED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 1</td>
-                    <td>
-                        <canvas id="Link1TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 1, 0, 'Link1TxEnabledLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="Link1RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 1, 1, 'Link1RxEnabledLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="Link1TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 1, 2, 'Link1TimingEnabledLED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 2</td>
-                    <td>
-                        <canvas id="Link2TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 2, 0, 'Link2TxEnabledLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="Link2RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 2, 1, 'Link2RxEnabledLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="Link2TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 2, 2, 'Link2TimingEnabledLED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 3</td>
-                    <td>
-                        <canvas id="Link3TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 3, 0, 'Link3TxEnabledLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="Link3RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 3, 1, 'Link3RxEnabledLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="Link3TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 3, 2, 'Link3TimingEnabledLED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 4</td>
-                    <td>
-                        <canvas id="Link4TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 4, 0, 'Link4TxEnabledLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="Link4RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 4, 1, 'Link4RxEnabledLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="Link4TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 4, 2, 'Link4TimingEnabledLED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 5</td>
-                    <td>
-                        <canvas id="Link5TxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 5, 0, 'Link5TxEnabledLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="Link5RxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 5, 1, 'Link5RxEnabledLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="Link5TimingEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 5, 2, 'Link5TimingEnabledLED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>CFO</td>
-                    <td>
-                        <canvas id="CFOTxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 6, 0, 'CFOTxEnabledLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="CFORxEnabledLED" width="20" height="10" onclick="LEDExtAction('/DTC/toggleLinkEnabled', 6, 1, 'CFORxEnabledLED')"></canvas>
-                    </td>
-                    <td></td>
-                </tr>
-            </table>
-        </fieldset>
-        <fieldset>
-            <legend>Link ROC Count</legend>
-            <table>
-                <tr>
-                    <th></th>
-                    <th>ROC 0</th>
-                    <th>ROC 1</th>
-                    <th>ROC 2</th>
-                    <th>ROC 3</th>
-                    <th>ROC 4</th>
-                    <th>ROC 5</th>
-                </tr>
-                <tr>
-                    <td>Link 0</td>
-                    <td>
-                        <canvas id="R0ROC0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 0, 0, 'R0ROC0LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R0ROC1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 0, 1, 'R0ROC1LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R0ROC2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 0, 2, 'R0ROC2LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R0ROC3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 0, 3, 'R0ROC3LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R0ROC4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 0, 4, 'R0ROC4LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R0ROC5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 0, 5, 'R0ROC5LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 1</td>
-                    <td>
-                        <canvas id="R1ROC0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 1, 0, 'R1ROC0LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R1ROC1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 1, 1, 'R1ROC1LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R1ROC2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 1, 2, 'R1ROC2LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R1ROC3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 1, 3, 'R1ROC3LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R1ROC4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 1, 4, 'R1ROC4LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R1ROC5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 1, 5, 'R1ROC5LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 2</td>
-                    <td>
-                        <canvas id="R2ROC0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 2, 0, 'R2ROC0LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R2ROC1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 2, 1, 'R2ROC1LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R2ROC2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 2, 2, 'R2ROC2LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R2ROC3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 2, 3, 'R2ROC3LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R2ROC4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 2, 4, 'R2ROC4LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R2ROC5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 2, 5, 'R2ROC5LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 3</td>
-                    <td>
-                        <canvas id="R3ROC0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 3, 0, 'R3ROC0LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R3ROC1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 3, 1, 'R3ROC1LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R3ROC2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 3, 2, 'R3ROC2LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R3ROC3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 3, 3, 'R3ROC3LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R3ROC4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 3, 4, 'R3ROC4LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R3ROC5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 3, 5, 'R3ROC5LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 4</td>
-                    <td>
-                        <canvas id="R4ROC0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 4, 0, 'R4ROC0LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R4ROC1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 4, 1, 'R4ROC1LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R4ROC2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 4, 2, 'R4ROC2LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R4ROC3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 4, 3, 'R4ROC3LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R4ROC4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 4, 4, 'R4ROC4LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R4ROC5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 4, 5, 'R4ROC5LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 5</td>
-                    <td>
-                        <canvas id="R5ROC0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 5, 0, 'R5ROC0LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R5ROC1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 5, 1, 'R5ROC1LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R5ROC2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 5, 2, 'R5ROC2LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R5ROC3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 5, 3, 'R5ROC3LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R5ROC4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 5, 4, 'R5ROC4LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="R5ROC5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setMaxROC', 5, 5, 'R5ROC5LED')"></canvas>
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
-        <fieldset>
-            <legend>SERDES Loopback Mode</legend>
-            <table>
-                <tr>
-                    <th></th>
-                    <th>Near-End PCS</th>
-                    <th>Near-End PMA</th>
-                    <th>Far-End PMA</th>
-                    <th>Far-End PCS</th>
-                </tr>
-                <tr>
-                    <td>Link 0</td>
-                    <td>
-                        <canvas id="SERDESLoopbackNEPCSLink0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 0, 1, 'SERDESLoopbackNEPCSLink0LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackNEPMALink0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 0, 2, 'SERDESLoopbackNEPMALink0LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackFEPMALink0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 0, 4, 'SERDESLoopbackFEPMALink0LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackFEPCSLink0LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 0, 6, 'SERDESLoopbackFEPCSLink0LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 1</td>
-                    <td>
-                        <canvas id="SERDESLoopbackNEPCSLink1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 1, 1, 'SERDESLoopbackNEPCSLink1LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackNEPMALink1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 1, 2, 'SERDESLoopbackNEPMALink1LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackFEPMALink1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 1, 4, 'SERDESLoopbackFEPMALink1LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackFEPCSLink1LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 1, 6, 'SERDESLoopbackFEPCSLink1LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 2</td>
-                    <td>
-                        <canvas id="SERDESLoopbackNEPCSLink2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 2, 1, 'SERDESLoopbackNEPCSLink2LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackNEPMALink2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 2, 2, 'SERDESLoopbackNEPMALink2LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackFEPMALink2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 2, 4, 'SERDESLoopbackFEPMALink2LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackFEPCSLink2LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 2, 6, 'SERDESLoopbackFEPCSLink2LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 3</td>
-                    <td>
-                        <canvas id="SERDESLoopbackNEPCSLink3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 3, 1, 'SERDESLoopbackNEPCSLink3LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackNEPMALink3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 3, 2, 'SERDESLoopbackNEPMALink3LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackFEPMALink3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 3, 4, 'SERDESLoopbackFEPMALink3LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackFEPCSLink3LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 3, 6, 'SERDESLoopbackFEPCSLink3LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 4</td>
-                    <td>
-                        <canvas id="SERDESLoopbackNEPCSLink4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 4, 1, 'SERDESLoopbackNEPCSLink4LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackNEPMALink4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 4, 2, 'SERDESLoopbackNEPMALink4LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackFEPMALink4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 4, 4, 'SERDESLoopbackFEPMALink4LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackFEPCSLink4LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 4, 6, 'SERDESLoopbackFEPCSLink4LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 5</td>
-                    <td>
-                        <canvas id="SERDESLoopbackNEPCSLink5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5, 1, 'SERDESLoopbackNEPCSLink5LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackNEPMALink5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5, 2, 'SERDESLoopbackNEPMALink5LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackFEPMALink5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5, 4, 'SERDESLoopbackFEPMALink5LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackFEPCSLink5LED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 5, 6, 'SERDESLoopbackFEPCSLink5LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>CFO</td>
-                    <td>
-                        <canvas id="SERDESLoopbackNEPCSCFOLED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6, 1, 'SERDESLoopbackNEPCSCFOLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackNEPMACFOLED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6, 2, 'SERDESLoopbackNEPMACFOLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackFEPMACFOLED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6, 4, 'SERDESLoopbackFEPMACFOLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESLoopbackFEPCSCFOLED" width="20" height="10" onclick="LEDExtAction('/DTC/setSERDESLoopback', 6, 6, 'SERDESLoopbackFEPCSCFOLED')"></canvas>
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
-        <fieldset>
-            <legend>SERDES Reset</legend>
-            <table>
-                <tr>
-                    <th></th>
-                    <th>Reset In Progress</th>
-                    <th>Reset Done</th>
-                </tr>
-                <tr>
-                    <td>Link 0</td>
-                    <td>
-                        <canvas id="SERDESResetRing0LED" width="20" height="10" onclick="LEDAction('/DTC/resetSERDES', 0, 'SERDESResetRing0LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESResetDoneLink0LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 1</td>
-                    <td>
-                        <canvas id="SERDESResetRing1LED" width="20" height="10" onclick="LEDAction('/DTC/resetSERDES', 1, 'SERDESResetRing1LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESResetDoneLink1LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 2</td>
-                    <td>
-                        <canvas id="SERDESResetRing2LED" width="20" height="10" onclick="LEDAction('/DTC/resetSERDES', 2, 'SERDESResetRing2LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESResetDoneLink2LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 3</td>
-                    <td>
-                        <canvas id="SERDESResetRing3LED" width="20" height="10" onclick="LEDAction('/DTC/resetSERDES', 3, 'SERDESResetRing3LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESResetDoneLink3LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 4</td>
-                    <td>
-                        <canvas id="SERDESResetRing4LED" width="20" height="10" onclick="LEDAction('/DTC/resetSERDES', 4, 'SERDESResetRing4LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESResetDoneLink4LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 5</td>
-                    <td>
-                        <canvas id="SERDESResetRing5LED" width="20" height="10" onclick="LEDAction('/DTC/resetSERDES', 5, 'SERDESResetRing5LED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESResetDoneLink5LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>CFO</td>
-                    <td>
-                        <canvas id="SERDESResetCFOLED" width="20" height="10" onclick="LEDAction('/DTC/resetSERDES', 6, 'SERDESResetCFOLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESResetDoneCFOLED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
-        <fieldset>
-            <legend>SERDES RX Disparity</legend>
-            <table>
-                <tr>
-                    <th></th>
-                    <th>High Bit</th>
-                    <th>Low Bit</th>
-                </tr>
-                <tr>
-                    <td>Link 0</td>
-                    <td>
-                        <canvas id="SERDESRXDisparityLink0HighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXDisparity', 0, 'SERDESRXDisparityLink0LowLED', 'SERDESRXDisparityLink0HighLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDisparityLink0LowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXDisparity', 0, 'SERDESRXDisparityLink0LowLED', 'SERDESRXDisparityLink0HighLED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 1</td>
-                    <td>
-                        <canvas id="SERDESRXDisparityLink1HighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXDisparity', 1, 'SERDESRXDisparityLink1LowLED', 'SERDESRXDisparityLink1HighLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDisparityLink1LowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXDisparity', 1, 'SERDESRXDisparityLink1LowLED', 'SERDESRXDisparityLink1HighLED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 2</td>
-                    <td>
-                        <canvas id="SERDESRXDisparityLink2HighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXDisparity', 2, 'SERDESRXDisparityLink2LowLED', 'SERDESRXDisparityLink2HighLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDisparityLink2LowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXDisparity', 2, 'SERDESRXDisparityLink2LowLED', 'SERDESRXDisparityLink2HighLED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 3</td>
-                    <td>
-                        <canvas id="SERDESRXDisparityLink3HighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXDisparity', 3, 'SERDESRXDisparityLink3LowLED', 'SERDESRXDisparityLink3HighLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDisparityLink3LowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXDisparity', 3, 'SERDESRXDisparityLink3LowLED', 'SERDESRXDisparityLink3HighLED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 4</td>
-                    <td>
-                        <canvas id="SERDESRXDisparityLink4HighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXDisparity', 4, 'SERDESRXDisparityLink4LowLED', 'SERDESRXDisparityLink4HighLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDisparityLink4LowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXDisparity', 4, 'SERDESRXDisparityLink4LowLED', 'SERDESRXDisparityLink4HighLED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 5</td>
-                    <td>
-                        <canvas id="SERDESRXDisparityLink5HighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXDisparity', 5, 'SERDESRXDisparityLink5LowLED', 'SERDESRXDisparityLink5HighLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDisparityLink5LowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXDisparity', 5, 'SERDESRXDisparityLink5LowLED', 'SERDESRXDisparityLink5HighLED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>CFO</td>
-                    <td>
-                        <canvas id="SERDESRXDisparityCFOHighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXDisparity', 6, 'SERDESRXDisparityCFOLowLED', 'SERDESRXDisparityCFOHighLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDisparityCFOLowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXDisparity', 6, 'SERDESRXDisparityCFOLowLED', 'SERDESRXDisparityCFOHighLED')"></canvas>
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
-        <fieldset>
-            <legend>SERDES RX Character Not In Table Error</legend>
-            <table>
-                <tr>
-                    <th></th>
-                    <th>High Bit</th>
-                    <th>Low Bit</th>
-                </tr>
-                <tr>
-                    <td>Link 0</td>
-                    <td>
-                        <canvas id="SERDESRXCNITRing0HighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 0, 'SERDESRXCNITRing0LowLED', 'SERDESRXCNITRing0HighLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXCNITRing0LowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 0, 'SERDESRXCNITRing0LowLED', 'SERDESRXCNITRing0HighLED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 1</td>
-                    <td>
-                        <canvas id="SERDESRXCNITRing1HighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 1, 'SERDESRXCNITRing1LowLED', 'SERDESRXCNITRing1HighLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXCNITRing1LowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 1, 'SERDESRXCNITRing1LowLED', 'SERDESRXCNITRing1HighLED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 2</td>
-                    <td>
-                        <canvas id="SERDESRXCNITRing2HighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 2, 'SERDESRXCNITRing2LowLED', 'SERDESRXCNITRing2HighLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXCNITRing2LowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 2, 'SERDESRXCNITRing2LowLED', 'SERDESRXCNITRing2HighLED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 3</td>
-                    <td>
-                        <canvas id="SERDESRXCNITRing3HighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 3, 'SERDESRXCNITRing3LowLED', 'SERDESRXCNITRing3HighLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXCNITRing3LowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 3, 'SERDESRXCNITRing3LowLED', 'SERDESRXCNITRing3HighLED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 4</td>
-                    <td>
-                        <canvas id="SERDESRXCNITRing4HighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 4, 'SERDESRXCNITRing4LowLED', 'SERDESRXCNITRing4HighLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXCNITRing4LowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 4, 'SERDESRXCNITRing4LowLED', 'SERDESRXCNITRing4HighLED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 5</td>
-                    <td>
-                        <canvas id="SERDESRXCNITRing5HighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 5, 'SERDESRXCNITRing5LowLED', 'SERDESRXCNITRing5HighLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXCNITRing5LowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 5, 'SERDESRXCNITRing5LowLED', 'SERDESRXCNITRing5HighLED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>CFO</td>
-                    <td>
-                        <canvas id="SERDESRXCNITCFOHighLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 6, 'SERDESRXCNITCFOLowLED', 'SERDESRXCNITCFOHighLED')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXCNITCFOLowLED" width="20" height="10" onclick="LEDObjAction('/DTC/clearSERDESRXCharacterError', 6, 'SERDESRXCNITCFOLowLED', 'SERDESRXCNITCFOHighLED')"></canvas>
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
-        <fieldset>
-            <legend>SERDES Unlock Error</legend>
-            <table>
-                <tr>
-                    <th></th>
-                    <th>In Error</th>
-                </tr>
-                <tr>
-                    <td>Link 0</td>
-                    <td>
-                        <canvas id="SERDESUnlockLink0LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESUnlockError', 0, 'SERDESUnlockLink0LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 1</td>
-                    <td>
-                        <canvas id="SERDESUnlockLink1LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESUnlockError', 1, 'SERDESUnlockLink1LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 2</td>
-                    <td>
-                        <canvas id="SERDESUnlockLink2LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESUnlockError', 2, 'SERDESUnlockLink2LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 3</td>
-                    <td>
-                        <canvas id="SERDESUnlockLink3LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESUnlockError', 3, 'SERDESUnlockLink3LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 4</td>
-                    <td>
-                        <canvas id="SERDESUnlockLink4LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESUnlockError', 4, 'SERDESUnlockLink4LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 5</td>
-                    <td>
-                        <canvas id="SERDESUnlockLink5LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESUnlockError', 5, 'SERDESUnlockLink5LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>CFO</td>
-                    <td>
-                        <canvas id="SERDESUnlockCFOLED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESUnlockError', 6, 'SERDESUnlockCFOLED')"></canvas>
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
-        <fieldset>
-            <legend>SERDES PLL Locked</legend>
-            <table>
-                <tr>
-                    <th></th>
-                    <th>Locked</th>
-                </tr>
-                <tr>
-                    <td>Link 0</td>
-                    <td>
-                        <canvas id="SERDESLockedLink0LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 1</td>
-                    <td>
-                        <canvas id="SERDESLockedLink1LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 2</td>
-                    <td>
-                        <canvas id="SERDESLockedLink2LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 3</td>
-                    <td>
-                        <canvas id="SERDESLockedLink3LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 4</td>
-                    <td>
-                        <canvas id="SERDESLockedLink4LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 5</td>
-                    <td>
-                        <canvas id="SERDESLockedLink5LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>CFO</td>
-                    <td>
-                        <canvas id="SERDESLockedCFOLED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
-        <fieldset>
-            <legend>SERDES TX Buffer Status</legend>
-            <table>
-                <tr>
-                    <th></th>
-                    <th>Overflow or Underflow</th>
-                    <th>FIFO Half Full</th>
-                </tr>
-                <tr>
-                    <td>Link 0</td>
-                    <td>
-                        <canvas id="SERDESTXUOFlowLink0LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESTXFIFOHFLink0LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 1</td>
-                    <td>
-                        <canvas id="SERDESTXUOFlowLink1LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESTXFIFOHFLink1LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 2</td>
-                    <td>
-                        <canvas id="SERDESTXUOFlowLink2LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESTXFIFOHFLink2LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 3</td>
-                    <td>
-                        <canvas id="SERDESTXUOFlowLink3LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESTXFIFOHFLink3LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 4</td>
-                    <td>
-                        <canvas id="SERDESTXUOFlowLink4LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESTXFIFOHFLink4LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 5</td>
-                    <td>
-                        <canvas id="SERDESTXUOFlowLink5LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESTXFIFOHFLink5LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>CFO</td>
-                    <td>
-                        <canvas id="SERDESTXUOFlowCFOLED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESTXFIFOHFCFOLED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
-        <fieldset>
-            <legend>SERDES RX Buffer Status</legend>
-            <table>
-                <tr>
-                    <th></th>
-                    <th>Nominal</th>
-                    <th>Buffer Empty</th>
-                    <th>Buffer Full</th>
-                    <th>Underflow</th>
-                    <th>Overflow</th>
-                </tr>
-                <tr>
-                    <td>Link 0</td>
-                    <td>
-                        <canvas id="SERDESRXBufferNominalLink0LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferEmptyLink0LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferFullLink0LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferUFLink0LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferOFLink0LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 1</td>
-                    <td>
-                        <canvas id="SERDESRXBufferNominalLink1LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferEmptyLink1LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferFullLink1LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferUFLink1LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferOFLink1LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 2</td>
-                    <td>
-                        <canvas id="SERDESRXBufferNominalLink2LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferEmptyLink2LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferFullLink2LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferUFLink2LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferOFLink2LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 3</td>
-                    <td>
-                        <canvas id="SERDESRXBufferNominalLink3LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferEmptyLink3LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferFullLink3LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferUFLink3LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferOFLink3LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 4</td>
-                    <td>
-                        <canvas id="SERDESRXBufferNominalLink4LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferEmptyLink4LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferFullLink4LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferUFLink4LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferOFLink4LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 5</td>
-                    <td>
-                        <canvas id="SERDESRXBufferNominalLink5LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferEmptyLink5LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferFullLink5LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferUFLink5LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferOFLink5LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>CFO</td>
-                    <td>
-                        <canvas id="SERDESRXBufferNominalCFOLED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferEmptyCFOLED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferFullCFOLED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferUFCFOLED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXBufferOFCFOLED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
-        <fieldset>
-            <legend>SERDES RX Status</legend>
-            <table>
-                <tr>
-                    <th></th>
-                    <th>Data OK</th>
-                    <th>Skip Added</th>
-                    <th>Skip Removed</th>
-                    <th>Receiver Detected</th>
-                    <th>Decode Error</th>
-                    <th>Elastic Overflow</th>
-                    <th>Elastic Underflow</th>
-                    <th>RX Disparity Error</th>
-                </tr>
-                <tr>
-                    <td>Link 0</td>
-                    <td>
-                        <canvas id="SERDESRXDataOKLink0LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXSKPAddedLink0LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXSKPRemovedLink0LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXReceiverDetectedLink0LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDecodeErrorLink0LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXEOFLink0LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXEUFLink0LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDisparityErrorLink0LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 1</td>
-                    <td>
-                        <canvas id="SERDESRXDataOKLink1LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXSKPAddedLink1LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXSKPRemovedLink1LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXReceiverDetectedLink1LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDecodeErrorLink1LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXEOFLink1LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXEUFLink1LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDisparityErrorLink1LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 2</td>
-                    <td>
-                        <canvas id="SERDESRXDataOKLink2LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXSKPAddedLink2LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXSKPRemovedLink2LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXReceiverDetectedLink2LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDecodeErrorLink2LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXEOFLink2LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXEUFLink2LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDisparityErrorLink2LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 3</td>
-                    <td>
-                        <canvas id="SERDESRXDataOKLink3LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXSKPAddedLink3LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXSKPRemovedLink3LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXReceiverDetectedLink3LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDecodeErrorLink3LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXEOFLink3LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXEUFLink3LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDisparityErrorLink3LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 4</td>
-                    <td>
-                        <canvas id="SERDESRXDataOKLink4LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXSKPAddedLink4LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXSKPRemovedLink4LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXReceiverDetectedLink4LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDecodeErrorLink4LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXEOFLink4LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXEUFLink4LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDisparityErrorLink4LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 5</td>
-                    <td>
-                        <canvas id="SERDESRXDataOKLink5LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXSKPAddedLink5LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXSKPRemovedLink5LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXReceiverDetectedLink5LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDecodeErrorLink5LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXEOFLink5LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXEUFLink5LED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDisparityErrorLink5LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>CFO</td>
-                    <td>
-                        <canvas id="SERDESRXDataOKCFOLED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXSKPAddedCFOLED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXSKPRemovedCFOLED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXReceiverDetectedCFOLED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDecodeErrorCFOLED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXEOFCFOLED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXEUFCFOLED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="SERDESRXDisparityErrorCFOLED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
-        <fieldset>
-            <legend>SERDES Eyescan Error</legend>
-            <table>
-                <tr>
-                    <th></th>
-                    <th>In Error</th>
-                </tr>
-                <tr>
-                    <td>Link 0</td>
-                    <td>
-                        <canvas id="SERDESEyescanLink0LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESEyescanError', 0, 'SERDESEyescanLink0LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 1</td>
-                    <td>
-                        <canvas id="SERDESEyescanLink1LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESEyescanError', 1, 'SERDESEyescanLink1LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 2</td>
-                    <td>
-                        <canvas id="SERDESEyescanLink2LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESEyescanError', 2, 'SERDESEyescanLink2LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 3</td>
-                    <td>
-                        <canvas id="SERDESEyescanLink3LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESEyescanError', 3, 'SERDESEyescanLink3LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 4</td>
-                    <td>
-                        <canvas id="SERDESEyescanLink4LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESEyescanError', 4, 'SERDESEyescanLink4LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 5</td>
-                    <td>
-                        <canvas id="SERDESEyescanLink5LED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESEyescanError', 5, 'SERDESEyescanLink5LED')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>CFO</td>
-                    <td>
-                        <canvas id="SERDESEyescanCFOLED" width="20" height="10" onclick="LEDAction('/DTC/clearSERDESEyescanError', 6, 'SERDESEyescanCFOLED')"></canvas>
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
-        <fieldset>
-            <legend>SERDES RX CDR Lock</legend>
-            <table>
-                <tr>
-                    <th></th>
-                    <th>Locked</th>
-                </tr>
-                <tr>
-                    <td>Link 0</td>
-                    <td>
-                        <canvas id="SERDESRXCDRLockLink0LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 1</td>
-                    <td>
-                        <canvas id="SERDESRXCDRLockLink1LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 2</td>
-                    <td>
-                        <canvas id="SERDESRXCDRLockLink2LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 3</td>
-                    <td>
-                        <canvas id="SERDESRXCDRLockLink3LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 4</td>
-                    <td>
-                        <canvas id="SERDESRXCDRLockLink4LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 5</td>
-                    <td>
-                        <canvas id="SERDESRXCDRLockLink5LED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>CFO</td>
-                    <td>
-                        <canvas id="SERDESRXCDRLockCFOLED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
-        <fieldset>
-            <legend>Timestamp Preset</legend>
-            <table>
-                <tr>
-                    <th>Timestamp Preset</th>
-                    <td>
-                        <input type="text" id="timestamp" width="12" value="">
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <input type="button" id="setTimestamp" value="Set Timestamp" onclick="SetNumericValue('#timestamp', '/DTC/setTimestampPreset')">
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
-        <fieldset>
-            <legend>FIFO Full Error Flags</legend>
-            <table>
-                <tr>
-                    <th></th>
-                    <th>Output Data</th>
-                    <th>CFO Link Input</th>
-                    <th>Readout Request Output</th>
-                    <th>Data Request Output</th>
-                    <th>Other Output</th>
-                    <th>Output DCS</th>
-                    <th>Output DCS Stage 2</th>
-                    <th>Data Input</th>
-                    <th>DCS Status Input</th>
-                </tr>
-                <tr>
-                    <td>Link 0</td>
-                    <td>
-                        <canvas id="OutputDataFIFOFullLink0LED" width="20" height="10" onclick="SetFIFOFlags(0, 'OutputData')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="CFOLinkFIFOFullLink0LED" width="20" height="10" onclick="SetFIFOFlags(0, 'CFOLink')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="ReadoutRequestFIFOFullLink0LED" width="20" height="10" onclick="SetFIFOFlags(0, 'ReadoutRequest')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="DataRequestFIFOFullLink0LED" width="20" height="10" onclick="SetFIFOFlags(0, 'DataRequest')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="OtherOutputFIFOFullLink0LED" width="20" height="10" onclick="SetFIFOFlags(0, 'OtherOutput')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="OutputDCSFIFOFullLink0LED" width="20" height="10" onclick="SetFIFOFlags(0, 'OutputDCS')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="OutputDCS2FIFOFullLink0LED" width="20" height="10" onclick="SetFIFOFlags(0, 'OutputDCS2')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="DataInputFIFOFullLink0LED" width="20" height="10" onclick="SetFIFOFlags(0, 'DataInput')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="DCSInputFIFOFullLink0LED" width="20" height="10" onclick="SetFIFOFlags(0, 'DCSInput')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 1</td>
-                    <td>
-                        <canvas id="OutputDataFIFOFullLink1LED" width="20" height="10" onclick="SetFIFOFlags(1, 'OutputData')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="CFOLinkFIFOFullLink1LED" width="20" height="10" onclick="SetFIFOFlags(1, 'CFOLink')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="ReadoutRequestFIFOFullLink1LED" width="20" height="10" onclick="SetFIFOFlags(1, 'ReadoutRequest')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="DataRequestFIFOFullLink1LED" width="20" height="10" onclick="SetFIFOFlags(1, 'DataRequest')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="OtherOutputFIFOFullLink1LED" width="20" height="10" onclick="SetFIFOFlags(1, 'OtherOutput')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="OutputDCSFIFOFullLink1LED" width="20" height="10" onclick="SetFIFOFlags(1, 'OutputDCS')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="OutputDCS2FIFOFullLink1LED" width="20" height="10" onclick="SetFIFOFlags(1, 'OutputDCS2')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="DataInputFIFOFullLink1LED" width="20" height="10" onclick="SetFIFOFlags(1, 'DataInput')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="DCSInputFIFOFullLink1LED" width="20" height="10" onclick="SetFIFOFlags(1, 'DCSInput')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 2</td>
-                    <td>
-                        <canvas id="OutputDataFIFOFullLink2LED" width="20" height="10" onclick="SetFIFOFlags(2, 'OutputData')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="CFOLinkFIFOFullLink2LED" width="20" height="10" onclick="SetFIFOFlags(2, 'CFOLinkInput')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="ReadoutRequestFIFOFullLink2LED" width="20" height="10" onclick="SetFIFOFlags(2, 'ReadoutRequestOutput')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="DataRequestFIFOFullLink2LED" width="20" height="10" onclick="SetFIFOFlags(2, 'DataRequestOutput')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="OtherOutputFIFOFullLink2LED" width="20" height="10" onclick="SetFIFOFlags(2, 'OtherOutput')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="OutputDCSFIFOFullLink2LED" width="20" height="10" onclick="SetFIFOFlags(2, 'OutputDCS')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="OutputDCS2FIFOFullLink2LED" width="20" height="10" onclick="SetFIFOFlags(2, 'OutputDCSStage2')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="DataInputFIFOFullLink2LED" width="20" height="10" onclick="SetFIFOFlags(2, 'DataInput')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="DCSInputFIFOFullLink2LED" width="20" height="10" onclick="SetFIFOFlags(2, 'DCSStatusInput')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 3</td>
-                    <td>
-                        <canvas id="OutputDataFIFOFullLink3LED" width="20" height="10" onclick="SetFIFOFlags(3, 'OutputData')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="CFOLinkFIFOFullLink3LED" width="20" height="10" onclick="SetFIFOFlags(3, 'CFOLink')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="ReadoutRequestFIFOFullLink3LED" width="20" height="10" onclick="SetFIFOFlags(3, 'ReadoutRequest')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="DataRequestFIFOFullLink3LED" width="20" height="10" onclick="SetFIFOFlags(3, 'DataRequest')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="OtherOutputFIFOFullLink3LED" width="20" height="10" onclick="SetFIFOFlags(3, 'OtherOutput')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="OutputDCSFIFOFullLink3LED" width="20" height="10" onclick="SetFIFOFlags(3, 'OutputDCS')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="OutputDCS2FIFOFullLink3LED" width="20" height="10" onclick="SetFIFOFlags(3, 'OutputDCS2')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="DataInputFIFOFullLink3LED" width="20" height="10" onclick="SetFIFOFlags(3, 'DataInput')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="DCSInputFIFOFullLink3LED" width="20" height="10" onclick="SetFIFOFlags(3, 'DCSInput')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 4</td>
-                    <td>
-                        <canvas id="OutputDataFIFOFullLink4LED" width="20" height="10" onclick="SetFIFOFlags(4, 'OutputData')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="CFOLinkFIFOFullLink4LED" width="20" height="10" onclick="SetFIFOFlags(4, 'CFOLink')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="ReadoutRequestFIFOFullLink4LED" width="20" height="10" onclick="SetFIFOFlags(4, 'ReadoutRequest')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="DataRequestFIFOFullLink4LED" width="20" height="10" onclick="SetFIFOFlags(4, 'DataRequest')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="OtherOutputFIFOFullLink4LED" width="20" height="10" onclick="SetFIFOFlags(4, 'OtherOutput')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="OutputDCSFIFOFullLink4LED" width="20" height="10" onclick="SetFIFOFlags(4, 'OutputDCS')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="OutputDCS2FIFOFullLink4LED" width="20" height="10" onclick="SetFIFOFlags(4, 'OutputDCS2')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="DataInputFIFOFullLink4LED" width="20" height="10" onclick="SetFIFOFlags(4, 'DataInput')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="DCSInputFIFOFullLink4LED" width="20" height="10" onclick="SetFIFOFlags(4, 'DCSInput')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Link 5</td>
-                    <td>
-                        <canvas id="OutputDataFIFOFullLink5LED" width="20" height="10" onclick="SetFIFOFlags(5, 'OutputData')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="CFOLinkFIFOFullLink5LED" width="20" height="10" onclick="SetFIFOFlags(5, 'CFOLink')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="ReadoutRequestFIFOFullLink5LED" width="20" height="10" onclick="SetFIFOFlags(5, 'ReadoutRequest')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="DataRequestFIFOFullLink5LED" width="20" height="10" onclick="SetFIFOFlags(5, 'DataRequest')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="OtherOutputFIFOFullLink5LED" width="20" height="10" onclick="SetFIFOFlags(5, 'OtherOutput')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="OutputDCSFIFOFullLink5LED" width="20" height="10" onclick="SetFIFOFlags(5, 'OutputDCS')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="OutputDCS2FIFOFullLink5LED" width="20" height="10" onclick="SetFIFOFlags(5, 'OutputDCS2')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="DataInputFIFOFullLink5LED" width="20" height="10" onclick="SetFIFOFlags(5, 'DataInput')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="DCSInputFIFOFullLink5LED" width="20" height="10" onclick="SetFIFOFlags(5, 'DCSInput')"></canvas>
-                    </td>
-                </tr>
-                <tr>
-                    <td>CFO</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td>
-                        <canvas id="OtherOutputFIFOFullCFOLED" width="20" height="10" onclick="SetFIFOFlags(6, 'OtherOutput')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="OutputDCSFIFOFullCFOLED" width="20" height="10" onclick="SetFIFOFlags(6, 'OutputDCS')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="OutputDCS2FIFOFullCFOLED" width="20" height="10" onclick="SetFIFOFlags(6, 'OutputDCS2')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="DataInputFIFOFullCFOLED" width="20" height="10" onclick="SetFIFOFlags(6, 'DataInput')"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="DCSInputFIFOFullCFOLED" width="20" height="10" onclick="SetFIFOFlags(6, 'DCSInput')"></canvas>
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
-        <fieldset>
-            <legend>FPGA PROM Registers</legend>
-            <table>
-                <tr>
-                    <th>FPGA PROM Program FIFO Full</th>
-                    <th>FPGA PROM Ready</th>
-                    <th>FPGA Core FIFO Full</th>
-                </tr>
-                <tr>
-                    <td>
-                        <canvas id="fpgapromfifofullLED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="fpgapromreadyLED" width="20" height="10"></canvas>
-                    </td>
-                    <td>
-                        <canvas id="fpgaCoreFIFOFullLED" width="20" height="10"></canvas>
-                    </td>
-                </tr>
-            </table>
-        </fieldset>
-    </form>
-</body>
-</html>
+            <pre>Note: expects &lt;
+	address& gt;
+	&lt;
+	value& gt;
+	pairs, one per line</ pre><input type = "button" id = "execScript" value = "Run Script" onclick = "RunScript()">
+					   </ fieldset>
+					   <fieldset>
+					   <legend> DTC Log</ legend>
+					   <textarea id = "log" style = "height: 200px; width: 100%;"></ textarea>
+					   <table>
+					   <tr>
+					   <td>
+					   <input type = "text" id = "logMessage">
+					   </ td>
+					   <td>
+					   <input type = "button" id = "postLog" value = "Post" onclick = "PostLogMessage()">
+					   </ td>
+					   </ tr>
+					   </ table>
+					   </ fieldset>
+					   <fieldset>
+					   <legend> DTC PCIe IO Statistics</ legend>
+						   Send : <p class = "p" id = "send"></ p>
+									  Receive : <p class = "p" id = "receive"></ p>
+												</ fieldset>
+												<fieldset>
+												<legend>
+													DTC Parameters</ legend>
+												<table>
+												<tr>
+												<th>
+													Firmware Version</ th>
+												<td>
+												<input type = "text" id = "dtcVersion" size = "20" value = "">
+												</ td>
+												</ tr>
+												</ table><br><br>
+												<table>
+												<tr>
+												<th></ th>
+												<th>
+													Disabled</ th>
+												<th>
+													Tracker</ th>
+												<th>
+													Calorimeter</ th>
+												<th>
+													Cosmic -
+												Ray Veto</ th>
+												<th>
+													Hardware Loopback</ th>
+												</ tr>
+												<tr>
+												<th>
+													Sim Mode : </ th>
+															   <td>
+															   <canvas id = "simModeDisabledLED" width = "20" height = "10" onclick = "SetSimMode(0)"></ canvas>
+															   </ td>
+															   <td>
+															   <canvas id = "simModeTrackerLED" width = "20" height = "10" onclick = "SetSimMode(1)"></ canvas>
+															   </ td>
+															   <td>
+															   <canvas id = "simModeCalorimeterLED" width = "20" height = "10" onclick = "SetSimMode(2)"></ canvas>
+															   </ td>
+															   <td>
+															   <canvas id = "simModeCRVLED" width = "20" height = "10" onclick = "SetSimMode(3)"></ canvas>
+															   </ td>
+															   <td>
+															   <canvas id = "simModeHardwareLED" width = "20" height = "10" onclick = "SetSimMode(4)"></ canvas>
+															   </ td>
+															   </ tr>
+															   </ table><br><br>
+															   <table>
+															   <tr>
+															   <th>
+																   DTC Reset</ th>
+															   <th>
+																   SERDES Oscillator Reset</ th>
+															   </ tr>
+															   <tr>
+															   <td>
+															   <canvas id = "dtcResetLED" width = "20" height = "10" onclick = "LEDAction('/DTC/resetDTC', null, 'dtcResetLED')"></ canvas>
+															   </ td>
+															   <td>
+															   <canvas id = "serdesResetLED" width = "20" height = "10" onclick = "LEDAction('/DTC/resetSERDESOscillator', null, 'serdesResetLED')"></ canvas>
+															   </ td>
+															   </ tr>
+															   <tr>
+															   <th>
+																   SERDES Oscillator Clock Mode(0 : 3.125Gbs, 1 : 2.5Gbs)</ th>
+															   <th> System Clock Enable</ th>
+															   <th> Timing System Enable</ th>
+															   </ tr>
+															   <tr>
+															   <td>
+															   <canvas id = "SERDESOscillatorClockLED" width = "20" height = "10" onclick = "LEDAction('/DTC/toggleSERDESOscillatorClock', null, 'SERDESOscillatorClockLED')"></ canvas>
+															   </ td>
+															   <td>
+															   <canvas id = "SystemClockLED" width = "20" height = "10" onclick = "LEDAction('/DTC/toggleSystemClock', null, 'SystemClockLED')"></ canvas>
+															   </ td>
+															   <td>
+															   <canvas id = "TimingEnabledLED" width = "20" height = "10" onclick = "LEDAction('/DTC/toggleTimingEnable', null, 'TimingEnabledLED')"></ canvas>
+															   </ td>
+															   </ tr>
+															   </ table><br><br>
+															   <table>
+															   <tr>
+															   <th> Trigger DMA Transfer Length</ th>
+															   <td>
+															   <input type = "number" id = "triggerDMALength" min = "0x80" max = "0x8000" step = "8" value = "0x8000">
+															   </ td>
+															   <td>
+															   <button type = "button" id = "setTriggerDMALength" onclick = "SetNumericValue('#triggerDMALength', '/DTC/setTriggerDMATransferLength')"> Set</ button>
+															   </ td>
+															   </ tr>
+															   <tr>
+															   <th> Min DMA Transfer Length</ th>
+															   <td>
+															   <input type = "number" id = "minDMALength" min = "0x40" max = "0x7FC0" step = "8" value = "0x40">
+															   </ td>
+															   <td>
+															   <button type = "button" id = "setMinDMALength" onclick = "SetNumericValue('#minDMALength', '/DTC/setMinDMATransferLength')"> Set</ button>
+															   </ td>
+															   </ tr>
+															   <tr>
+															   <th> DMA Timeout Preset(x4 ns)</ th>
+															   <td>
+															   <input type = "number" id = "dmaTimeoutPreset" min = "0" max = "0xFFFFFFFF" value = "0x800">
+															   </ td>
+															   <td>
+															   <button type = "button" id = "setDMATimeoutPreset" onclick = "SetNumericValue('#dmaTimeoutPreset', '/DTC/writeDMATimeoutPreset')"> Set</ button>
+															   </ td>
+															   </ tr>
+															   <tr>
+															   <th> Data Pending Timer(x6 .4 ns)</ th>
+															   <td>
+															   <input type = "number" id = "dataPendingTimer" min = "0" max = "0xFFFFFFFF" value = "0x2000">
+															   </ td>
+															   <td>
+															   <button type = "button" id = "setDataPendingTimer" onclick = "SetNumericValue('#dataPendingTimer', '/DTC/writeDataPendingTimer')"> Set</ button>
+															   </ td>
+															   </ tr>
+															   <tr>
+															   <th> Packet Size(bytes)</ th>
+															   <td>
+															   <input type = "number" id = "packetSize" min = "0" max = "0xFFFF" value = "0x10">
+															   </ td>
+															   <td>
+															   <button type = "button" id = "setPacketSize" onclick = "SetNumericValue('#packetSize', '/DTC/setPacketSize')"> Set</ button>
+															   </ td>
+															   </ tr>
+															   </ table><br><br>
+															   <table>
+															   <tr>
+															   <th> SERDES Oscillator IIC Error</ th>
+															   <th> SERDES Oscillator Initialization Complete</ th>
+															   </ tr>
+															   <tr>
+															   <td>
+															   <canvas id = "SERDESOscillatorIICErrorLED" width = "20" height = "10"></ canvas>
+															   </ td>
+															   <td>
+															   <canvas id = "SERDESOscillatorInitCompleteLED" width = "20" height = "10"></ canvas>
+															   </ td>
+															   </ tr>
+															   </ table>
+															   </ fieldset>
+															   <fieldset>
+															   <legend> ROC Emulation Enable</ legend>
+															   <table>
+															   <tr>
+															   <th> Link 0 <
+				   / th >
+				   <th> Link 1 < / th >
+				   <th> Link 2 < / th >
+				   <th> Link 3 < / th >
+				   <th> Link 4 < / th >
+				   <th> Link 5 < / th >
+				   </ tr>
+				   <tr>
+				   <td>
+				   <canvas id = "ROCEmulatorEnabledLink0LED" width = "20" height = "10" onclick = "LEDAction('./toggleROCEmulator', 0, 'ROCEmulatorEnabledLink0LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "ROCEmulatorEnabledLink1LED" width = "20" height = "10" onclick = "LEDAction('./toggleROCEmulator', 1, 'ROCEmulatorEnabledLink1LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "ROCEmulatorEnabledLink2LED" width = "20" height = "10" onclick = "LEDAction('./toggleROCEmulator', 2, 'ROCEmulatorEnabledLink2LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "ROCEmulatorEnabledLink3LED" width = "20" height = "10" onclick = "LEDAction('./toggleROCEmulator', 3, 'ROCEmulatorEnabledLink3LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "ROCEmulatorEnabledLink4LED" width = "20" height = "10" onclick = "LEDAction('./toggleROCEmulator', 4, 'ROCEmulatorEnabledLink4LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "ROCEmulatorEnabledLink5LED" width = "20" height = "10" onclick = "LEDAction('./toggleROCEmulator', 5, 'ROCEmulatorEnabledLink5LED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   </ table>
+				   </ fieldset>
+				   <fieldset>
+				   <legend> Link Enable</ legend>
+				   <table>
+				   <tr>
+				   <th></ th>
+				   <th> Transmit Enabled</ th>
+				   <th> Receive Enabled</ th>
+				   <th> Timing Link Enabled</ th>
+				   </ tr>
+				   <tr>
+				   <td> Link 0 < / td >
+				   <td>
+				   <canvas id = "Link0TxEnabledLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/toggleLinkEnabled', 0, 0, 'Link0TxEnabledLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "Link0RxEnabledLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/toggleLinkEnabled', 0, 1, 'Link0RxEnabledLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "Link0TimingEnabledLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/toggleLinkEnabled', 0, 2, 'Link0TimingEnabledLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 1 < / td >
+				   <td>
+				   <canvas id = "Link1TxEnabledLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/toggleLinkEnabled', 1, 0, 'Link1TxEnabledLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "Link1RxEnabledLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/toggleLinkEnabled', 1, 1, 'Link1RxEnabledLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "Link1TimingEnabledLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/toggleLinkEnabled', 1, 2, 'Link1TimingEnabledLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 2 < / td >
+				   <td>
+				   <canvas id = "Link2TxEnabledLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/toggleLinkEnabled', 2, 0, 'Link2TxEnabledLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "Link2RxEnabledLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/toggleLinkEnabled', 2, 1, 'Link2RxEnabledLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "Link2TimingEnabledLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/toggleLinkEnabled', 2, 2, 'Link2TimingEnabledLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 3 < / td >
+				   <td>
+				   <canvas id = "Link3TxEnabledLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/toggleLinkEnabled', 3, 0, 'Link3TxEnabledLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "Link3RxEnabledLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/toggleLinkEnabled', 3, 1, 'Link3RxEnabledLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "Link3TimingEnabledLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/toggleLinkEnabled', 3, 2, 'Link3TimingEnabledLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 4 < / td >
+				   <td>
+				   <canvas id = "Link4TxEnabledLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/toggleLinkEnabled', 4, 0, 'Link4TxEnabledLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "Link4RxEnabledLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/toggleLinkEnabled', 4, 1, 'Link4RxEnabledLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "Link4TimingEnabledLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/toggleLinkEnabled', 4, 2, 'Link4TimingEnabledLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 5 < / td >
+				   <td>
+				   <canvas id = "Link5TxEnabledLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/toggleLinkEnabled', 5, 0, 'Link5TxEnabledLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "Link5RxEnabledLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/toggleLinkEnabled', 5, 1, 'Link5RxEnabledLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "Link5TimingEnabledLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/toggleLinkEnabled', 5, 2, 'Link5TimingEnabledLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> CFO</ td>
+				   <td>
+				   <canvas id = "CFOTxEnabledLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/toggleLinkEnabled', 6, 0, 'CFOTxEnabledLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "CFORxEnabledLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/toggleLinkEnabled', 6, 1, 'CFORxEnabledLED')"></ canvas>
+				   </ td>
+				   <td></ td>
+				   </ tr>
+				   </ table>
+				   </ fieldset>
+				   <fieldset>
+				   <legend> Link ROC Count</ legend>
+				   <table>
+				   <tr>
+				   <th></ th>
+				   <th> ROC 0 < / th >
+				   <th> ROC 1 < / th >
+				   <th> ROC 2 < / th >
+				   <th> ROC 3 < / th >
+				   <th> ROC 4 < / th >
+				   <th> ROC 5 < / th >
+				   </ tr>
+				   <tr>
+				   <td> Link 0 < / td >
+				   <td>
+				   <canvas id = "R0ROC0LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 0, 0, 'R0ROC0LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R0ROC1LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 0, 1, 'R0ROC1LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R0ROC2LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 0, 2, 'R0ROC2LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R0ROC3LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 0, 3, 'R0ROC3LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R0ROC4LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 0, 4, 'R0ROC4LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R0ROC5LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 0, 5, 'R0ROC5LED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 1 < / td >
+				   <td>
+				   <canvas id = "R1ROC0LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 1, 0, 'R1ROC0LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R1ROC1LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 1, 1, 'R1ROC1LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R1ROC2LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 1, 2, 'R1ROC2LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R1ROC3LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 1, 3, 'R1ROC3LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R1ROC4LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 1, 4, 'R1ROC4LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R1ROC5LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 1, 5, 'R1ROC5LED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 2 < / td >
+				   <td>
+				   <canvas id = "R2ROC0LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 2, 0, 'R2ROC0LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R2ROC1LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 2, 1, 'R2ROC1LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R2ROC2LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 2, 2, 'R2ROC2LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R2ROC3LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 2, 3, 'R2ROC3LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R2ROC4LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 2, 4, 'R2ROC4LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R2ROC5LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 2, 5, 'R2ROC5LED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 3 < / td >
+				   <td>
+				   <canvas id = "R3ROC0LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 3, 0, 'R3ROC0LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R3ROC1LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 3, 1, 'R3ROC1LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R3ROC2LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 3, 2, 'R3ROC2LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R3ROC3LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 3, 3, 'R3ROC3LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R3ROC4LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 3, 4, 'R3ROC4LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R3ROC5LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 3, 5, 'R3ROC5LED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 4 < / td >
+				   <td>
+				   <canvas id = "R4ROC0LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 4, 0, 'R4ROC0LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R4ROC1LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 4, 1, 'R4ROC1LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R4ROC2LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 4, 2, 'R4ROC2LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R4ROC3LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 4, 3, 'R4ROC3LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R4ROC4LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 4, 4, 'R4ROC4LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "R4ROC5LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 4, 5, 'R4ROC5LED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 5 < / td >
+				   <td>
+					   <canvas id = "R5ROC0LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 5, 0, 'R5ROC0LED')"></ canvas>
+					   </ td>
+					   <td>
+					   <canvas id = "R5ROC1LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 5, 1, 'R5ROC1LED')"></ canvas>
+					   </ td>
+					   <td>
+					   <canvas id = "R5ROC2LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 5, 2, 'R5ROC2LED')"></ canvas>
+					   </ td>
+					   <td>
+					   <canvas id = "R5ROC3LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 5, 3, 'R5ROC3LED')"></ canvas>
+					   </ td>
+					   <td>
+					   <canvas id = "R5ROC4LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 5, 4, 'R5ROC4LED')"></ canvas>
+					   </ td>
+					   <td>
+					   <canvas id = "R5ROC5LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setMaxROC', 5, 5, 'R5ROC5LED')"></ canvas>
+					   </ td>
+					   </ tr>
+					   </ table>
+					   </ fieldset>
+					   <fieldset>
+					   <legend> SERDES Loopback Mode</ legend>
+					   <table>
+					   <tr>
+					   <th></ th>
+					   <th> Near - End PCS</ th><th> Near - End PMA</ th><th> Far - End PMA</ th><th> Far - End PCS</ th></ tr><tr><td> Link 0 <
+				   / td >
+				   <td>
+				   <canvas id = "SERDESLoopbackNEPCSLink0LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 0, 1, 'SERDESLoopbackNEPCSLink0LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackNEPMALink0LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 0, 2, 'SERDESLoopbackNEPMALink0LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackFEPMALink0LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 0, 4, 'SERDESLoopbackFEPMALink0LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackFEPCSLink0LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 0, 6, 'SERDESLoopbackFEPCSLink0LED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 1 < / td >
+				   <td>
+				   <canvas id = "SERDESLoopbackNEPCSLink1LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 1, 1, 'SERDESLoopbackNEPCSLink1LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackNEPMALink1LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 1, 2, 'SERDESLoopbackNEPMALink1LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackFEPMALink1LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 1, 4, 'SERDESLoopbackFEPMALink1LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackFEPCSLink1LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 1, 6, 'SERDESLoopbackFEPCSLink1LED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 2 < / td >
+				   <td>
+				   <canvas id = "SERDESLoopbackNEPCSLink2LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 2, 1, 'SERDESLoopbackNEPCSLink2LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackNEPMALink2LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 2, 2, 'SERDESLoopbackNEPMALink2LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackFEPMALink2LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 2, 4, 'SERDESLoopbackFEPMALink2LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackFEPCSLink2LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 2, 6, 'SERDESLoopbackFEPCSLink2LED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 3 < / td >
+				   <td>
+				   <canvas id = "SERDESLoopbackNEPCSLink3LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 3, 1, 'SERDESLoopbackNEPCSLink3LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackNEPMALink3LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 3, 2, 'SERDESLoopbackNEPMALink3LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackFEPMALink3LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 3, 4, 'SERDESLoopbackFEPMALink3LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackFEPCSLink3LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 3, 6, 'SERDESLoopbackFEPCSLink3LED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 4 < / td >
+				   <td>
+				   <canvas id = "SERDESLoopbackNEPCSLink4LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 4, 1, 'SERDESLoopbackNEPCSLink4LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackNEPMALink4LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 4, 2, 'SERDESLoopbackNEPMALink4LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackFEPMALink4LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 4, 4, 'SERDESLoopbackFEPMALink4LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackFEPCSLink4LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 4, 6, 'SERDESLoopbackFEPCSLink4LED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 5 < / td >
+				   <td>
+				   <canvas id = "SERDESLoopbackNEPCSLink5LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 5, 1, 'SERDESLoopbackNEPCSLink5LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackNEPMALink5LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 5, 2, 'SERDESLoopbackNEPMALink5LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackFEPMALink5LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 5, 4, 'SERDESLoopbackFEPMALink5LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackFEPCSLink5LED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 5, 6, 'SERDESLoopbackFEPCSLink5LED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> CFO</ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackNEPCSCFOLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 6, 1, 'SERDESLoopbackNEPCSCFOLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackNEPMACFOLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 6, 2, 'SERDESLoopbackNEPMACFOLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackFEPMACFOLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 6, 4, 'SERDESLoopbackFEPMACFOLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESLoopbackFEPCSCFOLED" width = "20" height = "10" onclick = "LEDExtAction('/DTC/setSERDESLoopback', 6, 6, 'SERDESLoopbackFEPCSCFOLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   </ table>
+				   </ fieldset>
+				   <fieldset>
+				   <legend> SERDES Reset</ legend>
+				   <table>
+				   <tr>
+				   <th></ th>
+				   <th> Reset In Progress</ th>
+				   <th> Reset Done</ th>
+				   </ tr>
+				   <tr>
+				   <td> Link 0 < / td >
+				   <td>
+				   <canvas id = "SERDESResetRing0LED" width = "20" height = "10" onclick = "LEDAction('/DTC/resetSERDES', 0, 'SERDESResetRing0LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESResetDoneLink0LED" width = "20" height = "10"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 1 < / td >
+				   <td>
+				   <canvas id = "SERDESResetRing1LED" width = "20" height = "10" onclick = "LEDAction('/DTC/resetSERDES', 1, 'SERDESResetRing1LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESResetDoneLink1LED" width = "20" height = "10"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 2 < / td >
+				   <td>
+				   <canvas id = "SERDESResetRing2LED" width = "20" height = "10" onclick = "LEDAction('/DTC/resetSERDES', 2, 'SERDESResetRing2LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESResetDoneLink2LED" width = "20" height = "10"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 3 < / td >
+				   <td>
+				   <canvas id = "SERDESResetRing3LED" width = "20" height = "10" onclick = "LEDAction('/DTC/resetSERDES', 3, 'SERDESResetRing3LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESResetDoneLink3LED" width = "20" height = "10"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 4 < / td >
+				   <td>
+				   <canvas id = "SERDESResetRing4LED" width = "20" height = "10" onclick = "LEDAction('/DTC/resetSERDES', 4, 'SERDESResetRing4LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESResetDoneLink4LED" width = "20" height = "10"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 5 < / td >
+				   <td>
+				   <canvas id = "SERDESResetRing5LED" width = "20" height = "10" onclick = "LEDAction('/DTC/resetSERDES', 5, 'SERDESResetRing5LED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESResetDoneLink5LED" width = "20" height = "10"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> CFO</ td>
+				   <td>
+				   <canvas id = "SERDESResetCFOLED" width = "20" height = "10" onclick = "LEDAction('/DTC/resetSERDES', 6, 'SERDESResetCFOLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESResetDoneCFOLED" width = "20" height = "10"></ canvas>
+				   </ td>
+				   </ tr>
+				   </ table>
+				   </ fieldset>
+				   <fieldset>
+				   <legend> SERDES RX Disparity</ legend>
+				   <table>
+				   <tr>
+				   <th></ th>
+				   <th> High Bit</ th>
+				   <th> Low Bit</ th>
+				   </ tr>
+				   <tr>
+				   <td> Link 0 < / td >
+				   <td>
+				   <canvas id = "SERDESRXDisparityLink0HighLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXDisparity', 0, 'SERDESRXDisparityLink0LowLED', 'SERDESRXDisparityLink0HighLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESRXDisparityLink0LowLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXDisparity', 0, 'SERDESRXDisparityLink0LowLED', 'SERDESRXDisparityLink0HighLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 1 < / td >
+				   <td>
+				   <canvas id = "SERDESRXDisparityLink1HighLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXDisparity', 1, 'SERDESRXDisparityLink1LowLED', 'SERDESRXDisparityLink1HighLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESRXDisparityLink1LowLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXDisparity', 1, 'SERDESRXDisparityLink1LowLED', 'SERDESRXDisparityLink1HighLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 2 < / td >
+				   <td>
+				   <canvas id = "SERDESRXDisparityLink2HighLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXDisparity', 2, 'SERDESRXDisparityLink2LowLED', 'SERDESRXDisparityLink2HighLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESRXDisparityLink2LowLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXDisparity', 2, 'SERDESRXDisparityLink2LowLED', 'SERDESRXDisparityLink2HighLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 3 < / td >
+				   <td>
+				   <canvas id = "SERDESRXDisparityLink3HighLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXDisparity', 3, 'SERDESRXDisparityLink3LowLED', 'SERDESRXDisparityLink3HighLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESRXDisparityLink3LowLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXDisparity', 3, 'SERDESRXDisparityLink3LowLED', 'SERDESRXDisparityLink3HighLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 4 < / td >
+				   <td>
+				   <canvas id = "SERDESRXDisparityLink4HighLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXDisparity', 4, 'SERDESRXDisparityLink4LowLED', 'SERDESRXDisparityLink4HighLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESRXDisparityLink4LowLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXDisparity', 4, 'SERDESRXDisparityLink4LowLED', 'SERDESRXDisparityLink4HighLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 5 < / td >
+				   <td>
+				   <canvas id = "SERDESRXDisparityLink5HighLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXDisparity', 5, 'SERDESRXDisparityLink5LowLED', 'SERDESRXDisparityLink5HighLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESRXDisparityLink5LowLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXDisparity', 5, 'SERDESRXDisparityLink5LowLED', 'SERDESRXDisparityLink5HighLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> CFO</ td>
+				   <td>
+				   <canvas id = "SERDESRXDisparityCFOHighLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXDisparity', 6, 'SERDESRXDisparityCFOLowLED', 'SERDESRXDisparityCFOHighLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESRXDisparityCFOLowLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXDisparity', 6, 'SERDESRXDisparityCFOLowLED', 'SERDESRXDisparityCFOHighLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   </ table>
+				   </ fieldset>
+				   <fieldset>
+				   <legend> SERDES RX Character Not In Table Error</ legend>
+				   <table>
+				   <tr>
+				   <th></ th>
+				   <th> High Bit</ th>
+				   <th> Low Bit</ th>
+				   </ tr>
+				   <tr>
+				   <td> Link 0 < / td >
+				   <td>
+				   <canvas id = "SERDESRXCNITRing0HighLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXCharacterError', 0, 'SERDESRXCNITRing0LowLED', 'SERDESRXCNITRing0HighLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESRXCNITRing0LowLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXCharacterError', 0, 'SERDESRXCNITRing0LowLED', 'SERDESRXCNITRing0HighLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 1 < / td >
+				   <td>
+				   <canvas id = "SERDESRXCNITRing1HighLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXCharacterError', 1, 'SERDESRXCNITRing1LowLED', 'SERDESRXCNITRing1HighLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESRXCNITRing1LowLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXCharacterError', 1, 'SERDESRXCNITRing1LowLED', 'SERDESRXCNITRing1HighLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 2 < / td >
+				   <td>
+				   <canvas id = "SERDESRXCNITRing2HighLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXCharacterError', 2, 'SERDESRXCNITRing2LowLED', 'SERDESRXCNITRing2HighLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESRXCNITRing2LowLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXCharacterError', 2, 'SERDESRXCNITRing2LowLED', 'SERDESRXCNITRing2HighLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 3 < / td >
+				   <td>
+				   <canvas id = "SERDESRXCNITRing3HighLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXCharacterError', 3, 'SERDESRXCNITRing3LowLED', 'SERDESRXCNITRing3HighLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESRXCNITRing3LowLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXCharacterError', 3, 'SERDESRXCNITRing3LowLED', 'SERDESRXCNITRing3HighLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 4 < / td >
+				   <td>
+				   <canvas id = "SERDESRXCNITRing4HighLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXCharacterError', 4, 'SERDESRXCNITRing4LowLED', 'SERDESRXCNITRing4HighLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESRXCNITRing4LowLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXCharacterError', 4, 'SERDESRXCNITRing4LowLED', 'SERDESRXCNITRing4HighLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 5 < / td >
+				   <td>
+				   <canvas id = "SERDESRXCNITRing5HighLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXCharacterError', 5, 'SERDESRXCNITRing5LowLED', 'SERDESRXCNITRing5HighLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESRXCNITRing5LowLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXCharacterError', 5, 'SERDESRXCNITRing5LowLED', 'SERDESRXCNITRing5HighLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> CFO</ td>
+				   <td>
+				   <canvas id = "SERDESRXCNITCFOHighLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXCharacterError', 6, 'SERDESRXCNITCFOLowLED', 'SERDESRXCNITCFOHighLED')"></ canvas>
+				   </ td>
+				   <td>
+				   <canvas id = "SERDESRXCNITCFOLowLED" width = "20" height = "10" onclick = "LEDObjAction('/DTC/clearSERDESRXCharacterError', 6, 'SERDESRXCNITCFOLowLED', 'SERDESRXCNITCFOHighLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   </ table>
+				   </ fieldset>
+				   <fieldset>
+				   <legend> SERDES Unlock Error</ legend>
+				   <table>
+				   <tr>
+				   <th></ th>
+				   <th> In Error</ th>
+				   </ tr>
+				   <tr>
+				   <td> Link 0 < / td >
+				   <td>
+				   <canvas id = "SERDESUnlockLink0LED" width = "20" height = "10" onclick = "LEDAction('/DTC/clearSERDESUnlockError', 0, 'SERDESUnlockLink0LED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 1 < / td >
+				   <td>
+				   <canvas id = "SERDESUnlockLink1LED" width = "20" height = "10" onclick = "LEDAction('/DTC/clearSERDESUnlockError', 1, 'SERDESUnlockLink1LED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 2 < / td >
+				   <td>
+				   <canvas id = "SERDESUnlockLink2LED" width = "20" height = "10" onclick = "LEDAction('/DTC/clearSERDESUnlockError', 2, 'SERDESUnlockLink2LED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 3 < / td >
+				   <td>
+				   <canvas id = "SERDESUnlockLink3LED" width = "20" height = "10" onclick = "LEDAction('/DTC/clearSERDESUnlockError', 3, 'SERDESUnlockLink3LED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 4 < / td >
+				   <td>
+				   <canvas id = "SERDESUnlockLink4LED" width = "20" height = "10" onclick = "LEDAction('/DTC/clearSERDESUnlockError', 4, 'SERDESUnlockLink4LED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 5 < / td >
+				   <td>
+				   <canvas id = "SERDESUnlockLink5LED" width = "20" height = "10" onclick = "LEDAction('/DTC/clearSERDESUnlockError', 5, 'SERDESUnlockLink5LED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> CFO</ td>
+				   <td>
+				   <canvas id = "SERDESUnlockCFOLED" width = "20" height = "10" onclick = "LEDAction('/DTC/clearSERDESUnlockError', 6, 'SERDESUnlockCFOLED')"></ canvas>
+				   </ td>
+				   </ tr>
+				   </ table>
+				   </ fieldset>
+				   <fieldset>
+				   <legend> SERDES PLL Locked</ legend>
+				   <table>
+				   <tr>
+				   <th></ th>
+				   <th> Locked</ th>
+				   </ tr>
+				   <tr>
+				   <td> Link 0 < / td >
+				   <td>
+				   <canvas id = "SERDESLockedLink0LED" width = "20" height = "10"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 1 < / td >
+				   <td>
+				   <canvas id = "SERDESLockedLink1LED" width = "20" height = "10"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 2 < / td >
+				   <td>
+				   <canvas id = "SERDESLockedLink2LED" width = "20" height = "10"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 3 < / td >
+				   <td>
+				   <canvas id = "SERDESLockedLink3LED" width = "20" height = "10"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 4 < / td >
+				   <td>
+				   <canvas id = "SERDESLockedLink4LED" width = "20" height = "10"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> Link 5 < / td >
+				   <td>
+				   <canvas id = "SERDESLockedLink5LED" width = "20" height = "10"></ canvas>
+				   </ td>
+				   </ tr>
+				   <tr>
+				   <td> CFO</ td>
+				   <td>
+				   <canvas id = "SERDESLockedCFOLED" width = "20" height = "10"></ canvas>
+				   </ td>
+				   </ tr>
+				   </ table>
+				   </ fieldset>
+				   <fieldset>
+				   <legend> SERDES TX Buffer Status</ legend>
+				   <table>
+				   <tr>
+				   <th></ th>
+				   <th> Overflow
+			   or Underflow</ th>
+					  <th> FIFO Half Full</ th>
+					  </ tr>
+					  <tr>
+					  <td> Link 0 < / td >
+					  <td>
+					  <canvas id = "SERDESTXUOFlowLink0LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESTXFIFOHFLink0LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 1 < / td >
+					  <td>
+					  <canvas id = "SERDESTXUOFlowLink1LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESTXFIFOHFLink1LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 2 < / td >
+					  <td>
+					  <canvas id = "SERDESTXUOFlowLink2LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESTXFIFOHFLink2LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 3 < / td >
+					  <td>
+					  <canvas id = "SERDESTXUOFlowLink3LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESTXFIFOHFLink3LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 4 < / td >
+					  <td>
+					  <canvas id = "SERDESTXUOFlowLink4LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESTXFIFOHFLink4LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 5 < / td >
+					  <td>
+					  <canvas id = "SERDESTXUOFlowLink5LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESTXFIFOHFLink5LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> CFO</ td>
+					  <td>
+					  <canvas id = "SERDESTXUOFlowCFOLED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESTXFIFOHFCFOLED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  </ table>
+					  </ fieldset>
+					  <fieldset>
+					  <legend> SERDES RX Buffer Status</ legend>
+					  <table>
+					  <tr>
+					  <th></ th>
+					  <th> Nominal</ th>
+					  <th> Buffer Empty</ th>
+					  <th> Buffer Full</ th>
+					  <th> Underflow</ th>
+					  <th> Overflow</ th>
+					  </ tr>
+					  <tr>
+					  <td> Link 0 < / td >
+					  <td>
+					  <canvas id = "SERDESRXBufferNominalLink0LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferEmptyLink0LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferFullLink0LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferUFLink0LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferOFLink0LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 1 < / td >
+					  <td>
+					  <canvas id = "SERDESRXBufferNominalLink1LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferEmptyLink1LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferFullLink1LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferUFLink1LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferOFLink1LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 2 < / td >
+					  <td>
+					  <canvas id = "SERDESRXBufferNominalLink2LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferEmptyLink2LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferFullLink2LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferUFLink2LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferOFLink2LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 3 < / td >
+					  <td>
+					  <canvas id = "SERDESRXBufferNominalLink3LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferEmptyLink3LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferFullLink3LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferUFLink3LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferOFLink3LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 4 < / td >
+					  <td>
+					  <canvas id = "SERDESRXBufferNominalLink4LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferEmptyLink4LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferFullLink4LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferUFLink4LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferOFLink4LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 5 < / td >
+					  <td>
+					  <canvas id = "SERDESRXBufferNominalLink5LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferEmptyLink5LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferFullLink5LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferUFLink5LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferOFLink5LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> CFO</ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferNominalCFOLED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferEmptyCFOLED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferFullCFOLED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferUFCFOLED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXBufferOFCFOLED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  </ table>
+					  </ fieldset>
+					  <fieldset>
+					  <legend> SERDES RX Status</ legend>
+					  <table>
+					  <tr>
+					  <th></ th>
+					  <th> Data OK</ th>
+					  <th> Skip Added</ th>
+					  <th> Skip Removed</ th>
+					  <th> Receiver Detected</ th>
+					  <th> Decode Error</ th>
+					  <th> Elastic Overflow</ th>
+					  <th> Elastic Underflow</ th>
+					  <th> RX Disparity Error</ th>
+					  </ tr>
+					  <tr>
+					  <td> Link 0 < / td >
+					  <td>
+					  <canvas id = "SERDESRXDataOKLink0LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXSKPAddedLink0LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXSKPRemovedLink0LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXReceiverDetectedLink0LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXDecodeErrorLink0LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXEOFLink0LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXEUFLink0LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXDisparityErrorLink0LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 1 < / td >
+					  <td>
+					  <canvas id = "SERDESRXDataOKLink1LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXSKPAddedLink1LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXSKPRemovedLink1LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXReceiverDetectedLink1LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXDecodeErrorLink1LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXEOFLink1LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXEUFLink1LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXDisparityErrorLink1LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 2 < / td >
+					  <td>
+					  <canvas id = "SERDESRXDataOKLink2LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXSKPAddedLink2LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXSKPRemovedLink2LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXReceiverDetectedLink2LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXDecodeErrorLink2LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXEOFLink2LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXEUFLink2LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXDisparityErrorLink2LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 3 < / td >
+					  <td>
+					  <canvas id = "SERDESRXDataOKLink3LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXSKPAddedLink3LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXSKPRemovedLink3LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXReceiverDetectedLink3LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXDecodeErrorLink3LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXEOFLink3LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXEUFLink3LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXDisparityErrorLink3LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 4 < / td >
+					  <td>
+					  <canvas id = "SERDESRXDataOKLink4LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXSKPAddedLink4LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXSKPRemovedLink4LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXReceiverDetectedLink4LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXDecodeErrorLink4LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXEOFLink4LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXEUFLink4LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXDisparityErrorLink4LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 5 < / td >
+					  <td>
+					  <canvas id = "SERDESRXDataOKLink5LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXSKPAddedLink5LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXSKPRemovedLink5LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXReceiverDetectedLink5LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXDecodeErrorLink5LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXEOFLink5LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXEUFLink5LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXDisparityErrorLink5LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> CFO</ td>
+					  <td>
+					  <canvas id = "SERDESRXDataOKCFOLED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXSKPAddedCFOLED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXSKPRemovedCFOLED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXReceiverDetectedCFOLED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXDecodeErrorCFOLED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXEOFCFOLED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXEUFCFOLED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "SERDESRXDisparityErrorCFOLED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  </ table>
+					  </ fieldset>
+					  <fieldset>
+					  <legend> SERDES Eyescan Error</ legend>
+					  <table>
+					  <tr>
+					  <th></ th>
+					  <th> In Error</ th>
+					  </ tr>
+					  <tr>
+					  <td> Link 0 < / td >
+					  <td>
+					  <canvas id = "SERDESEyescanLink0LED" width = "20" height = "10" onclick = "LEDAction('/DTC/clearSERDESEyescanError', 0, 'SERDESEyescanLink0LED')"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 1 < / td >
+					  <td>
+					  <canvas id = "SERDESEyescanLink1LED" width = "20" height = "10" onclick = "LEDAction('/DTC/clearSERDESEyescanError', 1, 'SERDESEyescanLink1LED')"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 2 < / td >
+					  <td>
+					  <canvas id = "SERDESEyescanLink2LED" width = "20" height = "10" onclick = "LEDAction('/DTC/clearSERDESEyescanError', 2, 'SERDESEyescanLink2LED')"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 3 < / td >
+					  <td>
+					  <canvas id = "SERDESEyescanLink3LED" width = "20" height = "10" onclick = "LEDAction('/DTC/clearSERDESEyescanError', 3, 'SERDESEyescanLink3LED')"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 4 < / td >
+					  <td>
+					  <canvas id = "SERDESEyescanLink4LED" width = "20" height = "10" onclick = "LEDAction('/DTC/clearSERDESEyescanError', 4, 'SERDESEyescanLink4LED')"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 5 < / td >
+					  <td>
+					  <canvas id = "SERDESEyescanLink5LED" width = "20" height = "10" onclick = "LEDAction('/DTC/clearSERDESEyescanError', 5, 'SERDESEyescanLink5LED')"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> CFO</ td>
+					  <td>
+					  <canvas id = "SERDESEyescanCFOLED" width = "20" height = "10" onclick = "LEDAction('/DTC/clearSERDESEyescanError', 6, 'SERDESEyescanCFOLED')"></ canvas>
+					  </ td>
+					  </ tr>
+					  </ table>
+					  </ fieldset>
+					  <fieldset>
+					  <legend> SERDES RX CDR Lock</ legend>
+					  <table>
+					  <tr>
+					  <th></ th>
+					  <th> Locked</ th>
+					  </ tr>
+					  <tr>
+					  <td> Link 0 < / td >
+					  <td>
+					  <canvas id = "SERDESRXCDRLockLink0LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 1 < / td >
+					  <td>
+					  <canvas id = "SERDESRXCDRLockLink1LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 2 < / td >
+					  <td>
+					  <canvas id = "SERDESRXCDRLockLink2LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 3 < / td >
+					  <td>
+					  <canvas id = "SERDESRXCDRLockLink3LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 4 < / td >
+					  <td>
+					  <canvas id = "SERDESRXCDRLockLink4LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 5 < / td >
+					  <td>
+					  <canvas id = "SERDESRXCDRLockLink5LED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> CFO</ td>
+					  <td>
+					  <canvas id = "SERDESRXCDRLockCFOLED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  </ table>
+					  </ fieldset>
+					  <fieldset>
+					  <legend> Timestamp Preset</ legend>
+					  <table>
+					  <tr>
+					  <th> Timestamp Preset</ th>
+					  <td>
+					  <input type = "text" id = "timestamp" width = "12" value = "">
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td>
+					  <input type = "button" id = "setTimestamp" value = "Set Timestamp" onclick = "SetNumericValue('#timestamp', '/DTC/setTimestampPreset')">
+					  </ td>
+					  </ tr>
+					  </ table>
+					  </ fieldset>
+					  <fieldset>
+					  <legend> FIFO Full Error Flags</ legend>
+					  <table>
+					  <tr>
+					  <th></ th>
+					  <th> Output Data</ th>
+					  <th> CFO Link Input</ th>
+					  <th> Readout Request Output</ th>
+					  <th> Data Request Output</ th>
+					  <th> Other Output</ th>
+					  <th> Output DCS</ th>
+					  <th> Output DCS Stage 2 < / th >
+					  <th> Data Input</ th>
+					  <th> DCS Status Input</ th>
+					  </ tr>
+					  <tr>
+					  <td> Link 0 < / td >
+					  <td>
+					  <canvas id = "OutputDataFIFOFullLink0LED" width = "20" height = "10" onclick = "SetFIFOFlags(0, 'OutputData')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "CFOLinkFIFOFullLink0LED" width = "20" height = "10" onclick = "SetFIFOFlags(0, 'CFOLink')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "ReadoutRequestFIFOFullLink0LED" width = "20" height = "10" onclick = "SetFIFOFlags(0, 'ReadoutRequest')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "DataRequestFIFOFullLink0LED" width = "20" height = "10" onclick = "SetFIFOFlags(0, 'DataRequest')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "OtherOutputFIFOFullLink0LED" width = "20" height = "10" onclick = "SetFIFOFlags(0, 'OtherOutput')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "OutputDCSFIFOFullLink0LED" width = "20" height = "10" onclick = "SetFIFOFlags(0, 'OutputDCS')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "OutputDCS2FIFOFullLink0LED" width = "20" height = "10" onclick = "SetFIFOFlags(0, 'OutputDCS2')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "DataInputFIFOFullLink0LED" width = "20" height = "10" onclick = "SetFIFOFlags(0, 'DataInput')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "DCSInputFIFOFullLink0LED" width = "20" height = "10" onclick = "SetFIFOFlags(0, 'DCSInput')"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 1 < / td >
+					  <td>
+					  <canvas id = "OutputDataFIFOFullLink1LED" width = "20" height = "10" onclick = "SetFIFOFlags(1, 'OutputData')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "CFOLinkFIFOFullLink1LED" width = "20" height = "10" onclick = "SetFIFOFlags(1, 'CFOLink')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "ReadoutRequestFIFOFullLink1LED" width = "20" height = "10" onclick = "SetFIFOFlags(1, 'ReadoutRequest')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "DataRequestFIFOFullLink1LED" width = "20" height = "10" onclick = "SetFIFOFlags(1, 'DataRequest')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "OtherOutputFIFOFullLink1LED" width = "20" height = "10" onclick = "SetFIFOFlags(1, 'OtherOutput')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "OutputDCSFIFOFullLink1LED" width = "20" height = "10" onclick = "SetFIFOFlags(1, 'OutputDCS')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "OutputDCS2FIFOFullLink1LED" width = "20" height = "10" onclick = "SetFIFOFlags(1, 'OutputDCS2')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "DataInputFIFOFullLink1LED" width = "20" height = "10" onclick = "SetFIFOFlags(1, 'DataInput')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "DCSInputFIFOFullLink1LED" width = "20" height = "10" onclick = "SetFIFOFlags(1, 'DCSInput')"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 2 < / td >
+					  <td>
+					  <canvas id = "OutputDataFIFOFullLink2LED" width = "20" height = "10" onclick = "SetFIFOFlags(2, 'OutputData')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "CFOLinkFIFOFullLink2LED" width = "20" height = "10" onclick = "SetFIFOFlags(2, 'CFOLinkInput')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "ReadoutRequestFIFOFullLink2LED" width = "20" height = "10" onclick = "SetFIFOFlags(2, 'ReadoutRequestOutput')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "DataRequestFIFOFullLink2LED" width = "20" height = "10" onclick = "SetFIFOFlags(2, 'DataRequestOutput')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "OtherOutputFIFOFullLink2LED" width = "20" height = "10" onclick = "SetFIFOFlags(2, 'OtherOutput')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "OutputDCSFIFOFullLink2LED" width = "20" height = "10" onclick = "SetFIFOFlags(2, 'OutputDCS')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "OutputDCS2FIFOFullLink2LED" width = "20" height = "10" onclick = "SetFIFOFlags(2, 'OutputDCSStage2')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "DataInputFIFOFullLink2LED" width = "20" height = "10" onclick = "SetFIFOFlags(2, 'DataInput')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "DCSInputFIFOFullLink2LED" width = "20" height = "10" onclick = "SetFIFOFlags(2, 'DCSStatusInput')"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 3 < / td >
+					  <td>
+					  <canvas id = "OutputDataFIFOFullLink3LED" width = "20" height = "10" onclick = "SetFIFOFlags(3, 'OutputData')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "CFOLinkFIFOFullLink3LED" width = "20" height = "10" onclick = "SetFIFOFlags(3, 'CFOLink')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "ReadoutRequestFIFOFullLink3LED" width = "20" height = "10" onclick = "SetFIFOFlags(3, 'ReadoutRequest')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "DataRequestFIFOFullLink3LED" width = "20" height = "10" onclick = "SetFIFOFlags(3, 'DataRequest')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "OtherOutputFIFOFullLink3LED" width = "20" height = "10" onclick = "SetFIFOFlags(3, 'OtherOutput')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "OutputDCSFIFOFullLink3LED" width = "20" height = "10" onclick = "SetFIFOFlags(3, 'OutputDCS')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "OutputDCS2FIFOFullLink3LED" width = "20" height = "10" onclick = "SetFIFOFlags(3, 'OutputDCS2')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "DataInputFIFOFullLink3LED" width = "20" height = "10" onclick = "SetFIFOFlags(3, 'DataInput')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "DCSInputFIFOFullLink3LED" width = "20" height = "10" onclick = "SetFIFOFlags(3, 'DCSInput')"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 4 < / td >
+					  <td>
+					  <canvas id = "OutputDataFIFOFullLink4LED" width = "20" height = "10" onclick = "SetFIFOFlags(4, 'OutputData')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "CFOLinkFIFOFullLink4LED" width = "20" height = "10" onclick = "SetFIFOFlags(4, 'CFOLink')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "ReadoutRequestFIFOFullLink4LED" width = "20" height = "10" onclick = "SetFIFOFlags(4, 'ReadoutRequest')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "DataRequestFIFOFullLink4LED" width = "20" height = "10" onclick = "SetFIFOFlags(4, 'DataRequest')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "OtherOutputFIFOFullLink4LED" width = "20" height = "10" onclick = "SetFIFOFlags(4, 'OtherOutput')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "OutputDCSFIFOFullLink4LED" width = "20" height = "10" onclick = "SetFIFOFlags(4, 'OutputDCS')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "OutputDCS2FIFOFullLink4LED" width = "20" height = "10" onclick = "SetFIFOFlags(4, 'OutputDCS2')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "DataInputFIFOFullLink4LED" width = "20" height = "10" onclick = "SetFIFOFlags(4, 'DataInput')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "DCSInputFIFOFullLink4LED" width = "20" height = "10" onclick = "SetFIFOFlags(4, 'DCSInput')"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> Link 5 < / td >
+					  <td>
+					  <canvas id = "OutputDataFIFOFullLink5LED" width = "20" height = "10" onclick = "SetFIFOFlags(5, 'OutputData')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "CFOLinkFIFOFullLink5LED" width = "20" height = "10" onclick = "SetFIFOFlags(5, 'CFOLink')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "ReadoutRequestFIFOFullLink5LED" width = "20" height = "10" onclick = "SetFIFOFlags(5, 'ReadoutRequest')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "DataRequestFIFOFullLink5LED" width = "20" height = "10" onclick = "SetFIFOFlags(5, 'DataRequest')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "OtherOutputFIFOFullLink5LED" width = "20" height = "10" onclick = "SetFIFOFlags(5, 'OtherOutput')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "OutputDCSFIFOFullLink5LED" width = "20" height = "10" onclick = "SetFIFOFlags(5, 'OutputDCS')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "OutputDCS2FIFOFullLink5LED" width = "20" height = "10" onclick = "SetFIFOFlags(5, 'OutputDCS2')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "DataInputFIFOFullLink5LED" width = "20" height = "10" onclick = "SetFIFOFlags(5, 'DataInput')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "DCSInputFIFOFullLink5LED" width = "20" height = "10" onclick = "SetFIFOFlags(5, 'DCSInput')"></ canvas>
+					  </ td>
+					  </ tr>
+					  <tr>
+					  <td> CFO</ td>
+					  <td></ td>
+					  <td></ td>
+					  <td></ td>
+					  <td></ td>
+					  <td>
+					  <canvas id = "OtherOutputFIFOFullCFOLED" width = "20" height = "10" onclick = "SetFIFOFlags(6, 'OtherOutput')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "OutputDCSFIFOFullCFOLED" width = "20" height = "10" onclick = "SetFIFOFlags(6, 'OutputDCS')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "OutputDCS2FIFOFullCFOLED" width = "20" height = "10" onclick = "SetFIFOFlags(6, 'OutputDCS2')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "DataInputFIFOFullCFOLED" width = "20" height = "10" onclick = "SetFIFOFlags(6, 'DataInput')"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "DCSInputFIFOFullCFOLED" width = "20" height = "10" onclick = "SetFIFOFlags(6, 'DCSInput')"></ canvas>
+					  </ td>
+					  </ tr>
+					  </ table>
+					  </ fieldset>
+					  <fieldset>
+					  <legend> FPGA PROM Registers</ legend>
+					  <table>
+					  <tr>
+					  <th> FPGA PROM Program FIFO Full</ th>
+					  <th> FPGA PROM Ready</ th>
+					  <th> FPGA Core FIFO Full</ th>
+					  </ tr>
+					  <tr>
+					  <td>
+					  <canvas id = "fpgapromfifofullLED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "fpgapromreadyLED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  <td>
+					  <canvas id = "fpgaCoreFIFOFullLED" width = "20" height = "10"></ canvas>
+					  </ td>
+					  </ tr>
+					  </ table>
+					  </ fieldset>
+					  </ form>
+					  </ body>
+					  </ html>
