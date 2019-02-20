@@ -22,12 +22,14 @@ using namespace DTCLib;
 unsigned getOptionValue(int* index, char** argv[])
 {
 	auto arg = (*argv)[*index];
-	if (arg[2] == '\0') {
+	if (arg[2] == '\0')
+	{
 		(*index)++;
 		return strtoul((*argv)[*index], nullptr, 0);
 	}
 	auto offset = 2;
-	if (arg[2] == '=') {
+	if (arg[2] == '=')
+	{
 		offset = 3;
 	}
 
@@ -37,12 +39,14 @@ unsigned getOptionValue(int* index, char** argv[])
 std::string getOptionString(int* index, char** argv[])
 {
 	auto arg = (*argv)[*index];
-	if (arg[2] == '\0') {
+	if (arg[2] == '\0')
+	{
 		(*index)++;
 		return std::string((*argv)[*index]);
 	}
 	auto offset = 2;
-	if (arg[2] == '=') {
+	if (arg[2] == '=')
+	{
 		offset = 3;
 	}
 
@@ -81,8 +85,10 @@ int main(int argc, char* argv[])
 	unsigned block = 0;
 	std::string op = "";
 
-	for (auto optind = 1; optind < argc; ++optind) {
-		if (argv[optind][0] == '-') {
+	for (auto optind = 1; optind < argc; ++optind)
+	{
+		if (argv[optind][0] == '-')
+		{
 			switch (argv[optind][1])
 			{
 				case 'l':
@@ -135,8 +141,10 @@ int main(int argc, char* argv[])
 	auto thisDTC = new DTC(DTC_SimMode_NoCFO, -1, (0x1 << (link * 4)));  // rocMask is in hex, not binary
 	auto device = thisDTC->GetDevice();
 
-	if (op == "read_register") {
-		for (unsigned ii = 0; ii < number; ++ii) {
+	if (op == "read_register")
+	{
+		for (unsigned ii = 0; ii < number; ++ii)
+		{
 			std::cout << "Operation \"read_register\" " << ii << std::endl;
 			auto rocdata = thisDTC->ReadROCRegister(dtc_link, address);
 			if (!reallyQuiet) std::cout << rocdata << '\n';
@@ -153,14 +161,16 @@ int main(int argc, char* argv[])
 	}
 	else if (op == "write_register")
 	{
-		for (unsigned ii = 0; ii < number; ++ii) {
+		for (unsigned ii = 0; ii < number; ++ii)
+		{
 			std::cout << "Operation \"write_register\" " << ii << std::endl;
 			thisDTC->WriteROCRegister(dtc_link, address, data);
 		}
 	}
 	else if (op == "read_extregister")
 	{
-		for (unsigned ii = 0; ii < number; ++ii) {
+		for (unsigned ii = 0; ii < number; ++ii)
+		{
 			std::cout << "Operation \"read_register\" " << ii << std::endl;
 			auto rocdata = thisDTC->ReadExtROCRegister(dtc_link, block, address);
 			if (!reallyQuiet) std::cout << rocdata << '\n';
@@ -168,7 +178,8 @@ int main(int argc, char* argv[])
 	}
 	else if (op == "write_extregister")
 	{
-		for (unsigned ii = 0; ii < number; ++ii) {
+		for (unsigned ii = 0; ii < number; ++ii)
+		{
 			std::cout << "Operation \"write_extregister\" " << ii << std::endl;
 			thisDTC->WriteExtROCRegister(dtc_link, block, address, data);
 		}
@@ -179,23 +190,29 @@ int main(int argc, char* argv[])
 
 		// thisDTC->SendDCSRequestPacket(dtc_link,  DTC_DCSOperationType_Read, address, quiet);
 
-		for (unsigned ii = 0; ii < number; ++ii) {
+		for (unsigned ii = 0; ii < number; ++ii)
+		{
 			if (!reallyQuiet) std::cout << "Buffer Read " << ii << std::endl;
 			mu2e_databuff_t* buffer;
 			auto tmo_ms = 1500;
 			auto sts = device->read_data(DTC_DMA_Engine_DCS, reinterpret_cast<void**>(&buffer), tmo_ms);
 
 			TRACE(1, "util - read for DCS - ii=%u sts=%d %p", ii, sts, static_cast<void*>(buffer));
-			if (sts > 0) {
+			if (sts > 0)
+			{
 				auto bufSize = *reinterpret_cast<uint64_t*>(&buffer[0]);
 				TRACE(1, "util - bufSize is %llu", static_cast<unsigned long long>(bufSize));
 
-				if (!reallyQuiet) {
-					for (unsigned line = 0; line < static_cast<unsigned>(ceil((bufSize - 8) / 16)); ++line) {
+				if (!reallyQuiet)
+				{
+					for (unsigned line = 0; line < static_cast<unsigned>(ceil((bufSize - 8) / 16)); ++line)
+					{
 						std::cout << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
 						// for (unsigned byte = 0; byte < 16; ++byte)
-						for (unsigned byte = 0; byte < 8; ++byte) {
-							if (line * 16 + 2 * byte < bufSize - 8u) {
+						for (unsigned byte = 0; byte < 8; ++byte)
+						{
+							if (line * 16 + 2 * byte < bufSize - 8u)
+							{
 								auto thisWord = reinterpret_cast<uint16_t*>(buffer)[4 + line * 8 + byte];
 								// uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
 								std::cout << std::setw(4) << static_cast<int>(thisWord) << " ";
@@ -213,7 +230,8 @@ int main(int argc, char* argv[])
 	}
 	else if (op == "toggle_serdes")
 	{
-		if (!thisDTC->ReadSERDESOscillatorClock()) {
+		if (!thisDTC->ReadSERDESOscillatorClock())
+		{
 			std::cout << "Setting SERDES Oscillator Clock to 2.5 Gbps" << std::endl;
 			thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_25Gbps);
 		}
@@ -225,7 +243,8 @@ int main(int argc, char* argv[])
 	}
 	else if (op == "read_release")
 	{
-		for (unsigned ii = 0; ii < number; ++ii) {
+		for (unsigned ii = 0; ii < number; ++ii)
+		{
 			void* buffer;
 			auto tmo_ms = 0;
 			auto stsRD = device->read_data(DTC_DMA_Engine_DCS, &buffer, tmo_ms);
