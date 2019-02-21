@@ -2,63 +2,63 @@
 #define DTC_PACKETS_H
 
 #include <bitset>
-#include <cstdint> // uint8_t, uint16_t
+#include <cstdint>  // uint8_t, uint16_t
 #include <vector>
 
 #include "DTC_Types.h"
 
 #include "mu2e_driver/mu2e_mmap_ioctl.h"
 
+namespace DTCLib {
 
-namespace DTCLib
+/// <summary>
+/// Defined Packet Types for the DTC DMA Protocol
+/// </summary>
+enum DTC_PacketType : uint8_t
 {
+	DTC_PacketType_DCSRequest = 0,
+	DTC_PacketType_Heartbeat = 1,
+	DTC_PacketType_DataRequest = 2,
+	DTC_PacketType_DCSReply = 4,
+	DTC_PacketType_DataHeader = 5,
+	DTC_PacketType_Invalid = 0x10,
+};
 
-  /// <summary>
-  /// Defined Packet Types for the DTC DMA Protocol
-  /// </summary>
-  enum DTC_PacketType : uint8_t
-	{
-	  DTC_PacketType_DCSRequest = 0,
-		DTC_PacketType_Heartbeat = 1,
-		DTC_PacketType_DataRequest = 2,
-		DTC_PacketType_DCSReply = 4,
-		DTC_PacketType_DataHeader = 5,
-		DTC_PacketType_Invalid = 0x10,
-		};
+/// <summary>
+/// Possible values for the Status word of the Data Header packet
+/// </summary>
+enum DTC_DataStatus
+{
+	DTC_DataStatus_Valid = 0,
+	DTC_DataStatus_NoValid = 1,
+	DTC_DataStatus_Invalid = 2,
+};
 
-  /// <summary>
-  /// Possible values for the Status word of the Data Header packet
-  /// </summary>
-  enum DTC_DataStatus
-	{
-	  DTC_DataStatus_Valid = 0,
-	  DTC_DataStatus_NoValid = 1,
-	  DTC_DataStatus_Invalid = 2,
-	};
+/// <summary>
+/// Possible values for the Op word of the DCS Reqeust packet.
+/// </summary>
+enum DTC_DCSOperationType : uint8_t
+{
+	DTC_DCSOperationType_Read = 0,
+	DTC_DCSOperationType_Write = 1,
+	DTC_DCSOperationType_BlockRead = 2,
+	DTC_DCSOperationType_BlockWrite = 3,
+	DTC_DCSOperationType_Unknown = 0xF
+};
 
-  /// <summary>
-  /// Possible values for the Op word of the DCS Reqeust packet.
-  /// </summary>
-  enum DTC_DCSOperationType : uint8_t
-	{
-	  DTC_DCSOperationType_Read = 0,
-		DTC_DCSOperationType_Write = 1,
-		DTC_DCSOperationType_WriteWithAck = 2,
-		DTC_DCSOperationType_Unknown = 255
-		};
-
-  /// <summary>
-  /// Convert a DTC_DCSOperationType eunumeration value to its string or JSON representation
-  /// </summary>
-  struct DTC_DCSOperationTypeConverter
-  {
-	DTC_DCSOperationType type_; ///< DTC)DCSOperationType to convert
+/// <summary>
+/// Convert a DTC_DCSOperationType eunumeration value to its string or JSON representation
+/// </summary>
+struct DTC_DCSOperationTypeConverter
+{
+	DTC_DCSOperationType type_;  ///< DTC)DCSOperationType to convert
 
 	/// <summary>
 	/// DTC_DCSOperationTypeConverter Constructor
 	/// </summary>
 	/// <param name="type">DTC_DCSOperationType to convert</param>
-	explicit DTC_DCSOperationTypeConverter(DTC_DCSOperationType type) : type_(type) { }
+	explicit DTC_DCSOperationTypeConverter(DTC_DCSOperationType type)
+		: type_(type) {}
 
 	/// <summary>
 	/// Convert the type to its string representation
@@ -66,17 +66,19 @@ namespace DTCLib
 	/// <returns></returns>
 	std::string toString() const
 	{
-	  switch (type_)
+		switch (type_)
 		{
-		case DTC_DCSOperationType_Read:
-		  return "Read";
-		case DTC_DCSOperationType_Write:
-		  return "Write";
-		case DTC_DCSOperationType_WriteWithAck:
-		  return "WriteWithAck";
-		case DTC_DCSOperationType_Unknown:
-		default:
-		  return "Unknown";
+			case DTC_DCSOperationType_Read:
+				return "Read";
+			case DTC_DCSOperationType_Write:
+				return "Write";
+			case DTC_DCSOperationType_BlockRead:
+				return "BlockRead";
+			case DTC_DCSOperationType_BlockWrite:
+				return "BlockWrite";
+			case DTC_DCSOperationType_Unknown:
+			default:
+				return "Unknown";
 		}
 	}
 
@@ -88,56 +90,68 @@ namespace DTCLib
 	/// <returns>Stream reference for continued streaming</returns>
 	friend std::ostream& operator<<(std::ostream& stream, const DTC_DCSOperationTypeConverter& type)
 	{
-	  switch (type.type_)
+		switch (type.type_)
 		{
-		case DTC_DCSOperationType_Read:
-		  stream << "\"Read\"";break;
-		case DTC_DCSOperationType_Write:
-		  stream << "\"Write\"";break;
-		case DTC_DCSOperationType_WriteWithAck:
-		  stream << "\"WriteWithAck\"";break;
-		case DTC_DCSOperationType_Unknown:
-		default:
-		  stream << "\"Unknown\"";break;
+			case DTC_DCSOperationType_Read:
+				stream << "\"Read\"";
+				break;
+			case DTC_DCSOperationType_Write:
+				stream << "\"Write\"";
+				break;
+			case DTC_DCSOperationType_BlockRead:
+				stream << "\"BlockRead\"";
+				break;
+			case DTC_DCSOperationType_BlockWrite:
+				stream << "\"BlockWrite\"";
+				break;
+			case DTC_DCSOperationType_Unknown:
+			default:
+				stream << "\"Unknown\"";
+				break;
 		}
-	  return stream;
+		return stream;
 	}
-  };
+};
 
-  /// <summary>
-  /// The DTC_DataPacket class represents the 16 bytes of raw data for all DTC packets.
-  /// The class works in two modes: "overlay" mode, where the data is in a fixed location in memory and modification is restricted, and
-  /// "owner" mode, where the DataPacket is a concrete instance.
-  /// </summary>
-  class DTC_DataPacket
-  {
-  public:
-	  /// <summary>
-	  /// Construct a DTC_DataPacket in owner mode
-	  /// </summary>
+/// <summary>
+/// The DTC_DataPacket class represents the 16 bytes of raw data for all DTC packets.
+/// The class works in two modes: "overlay" mode, where the data is in a fixed location in memory and modification is
+/// restricted, and "owner" mode, where the DataPacket is a concrete instance.
+/// </summary>
+class DTC_DataPacket
+{
+public:
+	/// <summary>
+	/// Construct a DTC_DataPacket in owner mode
+	/// </summary>
 	DTC_DataPacket();
 
 	/// <summary>
-	/// Construct a DTC_DataPacket in "overlay" mode using the given DMA buffer pointer. Flag will be set that the packet is read-only.
+	/// Construct a DTC_DataPacket in "overlay" mode using the given DMA buffer pointer. Flag will be set that the packet
+	/// is read-only.
 	/// </summary>
 	/// <param name="data">Pointer data</param>
-	explicit DTC_DataPacket(const mu2e_databuff_t* data) : dataPtr_(*data), dataSize_(16), memPacket_(true) { }
+	explicit DTC_DataPacket(const mu2e_databuff_t* data)
+		: dataPtr_(*data), dataSize_(16), memPacket_(true) {}
 
 	/// <summary>
 	/// Construct a DTC_DataPacket using a pointer to data. Flag will be set that the packet is read-only.
 	/// </summary>
 	/// <param name="data">Pointer to data</param>
-	explicit DTC_DataPacket(const void* data) : dataPtr_(static_cast<const uint8_t*>(data)), dataSize_(16), memPacket_(true) { }
+	explicit DTC_DataPacket(const void* data)
+		: dataPtr_(static_cast<const uint8_t*>(data)), dataSize_(16), memPacket_(true) {}
 
 	/// <summary>
-	/// Construct a DTC_DataPacket in "overlay" mode using the given byte pointer. Flag will be set that the packet is read-only.
+	/// Construct a DTC_DataPacket in "overlay" mode using the given byte pointer. Flag will be set that the packet is
+	/// read-only.
 	/// </summary>
 	/// <param name="data">Pointer to data</param>
-	explicit DTC_DataPacket(const uint8_t* data) : dataPtr_(data), dataSize_(16), memPacket_(true) { }
+	explicit DTC_DataPacket(const uint8_t* data)
+		: dataPtr_(data), dataSize_(16), memPacket_(true) {}
 
 	/// <summary>
-	/// Creates a copy of the DTC_DataPacket. Mode is preserved, if the existing DataPacket was in "owner" mode, a deep copy is made, otherwise
-	/// the reference to the read-only memory will be copied.
+	/// Creates a copy of the DTC_DataPacket. Mode is preserved, if the existing DataPacket was in "owner" mode, a deep
+	/// copy is made, otherwise the reference to the read-only memory will be copied.
 	/// </summary>
 	/// <param name="in">Input DTC_DataPacket</param>
 	DTC_DataPacket(const DTC_DataPacket& in);
@@ -181,7 +195,8 @@ namespace DTCLib
 	/// <returns>JSON-formatted string representation of the DTC_DataPacket</returns>
 	std::string toJSON() const;
 	/// <summary>
-	/// Create a "packet format" representation of the DTC_DataPacket. See "DTC Hardware User's Guide" for "packet format" representation.
+	/// Create a "packet format" representation of the DTC_DataPacket. See "DTC Hardware User's Guide" for "packet format"
+	/// representation.
 	/// </summary>
 	/// <returns>"packet format" string representation of the DTC_DataPacket</returns>
 	std::string toPacketFormat() const;
@@ -196,30 +211,24 @@ namespace DTCLib
 	/// Get the current size, in bytes, of the DTC_DataPacket (default: 16)
 	/// </summary>
 	/// <returns></returns>
-	uint16_t GetSize() const
-	{
-	  return dataSize_;
-	}
+	uint16_t GetSize() const { return dataSize_; }
 
 	/// <summary>
 	/// Determine whether the DataPacket is in owner mode or overlay mode
 	/// </summary>
 	/// <returns>True if the DataPacket is in overlay mode</returns>
-	bool IsMemoryPacket() const
-	{
-	  return memPacket_;
-	}
+	bool IsMemoryPacket() const { return memPacket_; }
 
 	/// <summary>
-	/// Add a DTC_DataPacket's data to this DataPacket. DataPacket must be large enough to accomodate data and in "owner" mode.
+	/// Add a DTC_DataPacket's data to this DataPacket. DataPacket must be large enough to accomodate data and in "owner"
+	/// mode.
 	/// </summary>
 	/// <param name="other">Packet to add</param>
 	/// <param name="offset">Where to copy packet in this DataPacket</param>
 	/// <returns>True if successful</returns>
 	bool CramIn(DTC_DataPacket& other, int offset)
 	{
-		if (other.dataSize_ + offset <= dataSize_)
-		{
+		if (other.dataSize_ + offset <= dataSize_) {
 			memcpy(const_cast<uint8_t*>(dataPtr_) + offset, other.dataPtr_, other.dataSize_);
 			return true;
 		}
@@ -230,33 +239,25 @@ namespace DTCLib
 	/// Gets the pointer to the data
 	/// </summary>
 	/// <returns>Pointer to DTC_DataPacket data. Use GetSize() to determine the valid range of this pointer</returns>
-	const uint8_t* GetData() const
-	{
-	  return dataPtr_;
-	}
+	const uint8_t* GetData() const { return dataPtr_; }
 
 	/// <summary>
 	/// Comparison operator. Returns this.Equals(other)
 	/// </summary>
 	/// <param name="other">DataPacket to compare</param>
 	/// <returns>this.Equals(other)</returns>
-	bool operator==(const DTC_DataPacket& other) const
-	{
-	  return Equals(other);
-	}
+	bool operator==(const DTC_DataPacket& other) const { return Equals(other); }
 
 	/// <summary>
 	/// Comparison operator. Returns !this.Equals(other)
 	/// </summary>
 	/// <param name="other">DataPacket to compare</param>
 	/// <returns>!this.Equals(other)</returns>
-	bool operator!=(const DTC_DataPacket& other) const
-	{
-	  return !Equals(other);
-	}
+	bool operator!=(const DTC_DataPacket& other) const { return !Equals(other); }
 
 	/// <summary>
-	/// Compare the contents of two DataPackets. Ignores the first two bytes as they may differ (reserved words in most DMA packets).
+	/// Compare the contents of two DataPackets. Ignores the first two bytes as they may differ (reserved words in most
+	/// DMA packets).
 	/// </summary>
 	/// <param name="other">Data packet to compare</param>
 	/// <returns>Whether the two DataPackets contents are equal</returns>
@@ -270,43 +271,42 @@ namespace DTCLib
 	/// <returns>Stream reference for continued streaming</returns>
 	friend std::ostream& operator<<(std::ostream& s, DTC_DataPacket& p)
 	{
-	  return s.write(reinterpret_cast<const char*>(p.dataPtr_), p.dataSize_);
+		return s.write(reinterpret_cast<const char*>(p.dataPtr_), p.dataSize_);
 	}
 
-  private:
+private:
 	const uint8_t* dataPtr_;
 	uint16_t dataSize_;
 	bool memPacket_;
 	std::vector<uint8_t> vals_;
-  };
+};
 
-  /// <summary>
-  /// Header information common to all DTC Packets (except Data Packets)
-  /// </summary>
-  class DTC_DMAPacket
-  {
-  protected:
-	uint16_t byteCount_; ///< Byte count of current block
-	bool valid_; ///< Whether the DTC believes the packet to be valid
-	DTC_Ring_ID ringID_; ///< Ring identifier of packet
-	DTC_PacketType packetType_; ///< Packet type
-	DTC_ROC_ID rocID_; ///< ROC identifier of the packet
+/// <summary>
+/// Header information common to all DTC Packets (except Data Packets)
+/// </summary>
+class DTC_DMAPacket
+{
+protected:
+	uint16_t byteCount_;         ///< Byte count of current block
+	bool valid_;                 ///< Whether the DTC believes the packet to be valid
+	DTC_Link_ID linkID_;         ///< Link identifier of packet
+	DTC_PacketType packetType_;  ///< Packet type
 
-  public:
-	  /// <summary>
-	  /// DTC_DMAPacket default constructor. Fills in header fields with default (invalid) values.
-	  /// </summary>
-	DTC_DMAPacket() : byteCount_(0), valid_(false), ringID_(DTC_Ring_Unused), packetType_(DTC_PacketType_Invalid), rocID_(DTC_ROC_Unused) { }
+public:
+	/// <summary>
+	/// DTC_DMAPacket default constructor. Fills in header fields with default (invalid) values.
+	/// </summary>
+	DTC_DMAPacket()
+		: byteCount_(0), valid_(false), linkID_(DTC_Link_Unused), packetType_(DTC_PacketType_Invalid) {}
 
 	/// <summary>
 	/// Create a DTC_DMAPacket with the given parameters
 	/// </summary>
 	/// <param name="type">Packet Type</param>
-	/// <param name="ring">Ring ID</param>
-	/// <param name="roc">ROC ID</param>
-	/// <param name="byteCount">Block byte count. Default is the minimum value, 64 bytes</param>
+	/// <param name="link">Link ID</param>
+	/// <param name="byteCount">Block byte count. Default is one packet, 16 bytes</param>
 	/// <param name="valid">Valid flag for packet, default true</param>
-	DTC_DMAPacket(DTC_PacketType type, DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t byteCount = 64, bool valid = true);
+	DTC_DMAPacket(DTC_PacketType type, DTC_Link_ID link, uint16_t byteCount = 16, bool valid = true);
 
 	/// <summary>
 	/// Construct a DTC_DMAPacket using the data in the given DataPacket
@@ -349,10 +349,7 @@ namespace DTCLib
 	/// Packet Type accessor
 	/// </summary>
 	/// <returns>Packet Type of DMA Packet</returns>
-	DTC_PacketType GetPacketType() const
-	{
-	  return packetType_;
-	}
+	DTC_PacketType GetPacketType() const { return packetType_; }
 
 	/// <summary>
 	/// Gets the DMA Header in JSON
@@ -369,19 +366,13 @@ namespace DTCLib
 	/// Gets the block byte count
 	/// </summary>
 	/// <returns>Block byte count of DMA Header</returns>
-	uint16_t GetByteCount() const
-	{
-	  return byteCount_;
-	}
+	uint16_t GetByteCount() const { return byteCount_; }
 
 	/// <summary>
-	/// Gets the Ring ID of the packet
+	/// Gets the Link ID of the packet
 	/// </summary>
-	/// <returns>The Ring ID of the packet</returns>
-	DTC_Ring_ID GetRingID() const
-	{
-	  return ringID_;
-	}
+	/// <returns>The Link ID of the packet</returns>
+	DTC_Link_ID GetRingID() const { return linkID_; }
 
 	/// <summary>
 	/// Converts the DMA Packet to "packet format" representation (See DTC_DataPacket::toPacketFormat())
@@ -402,36 +393,36 @@ namespace DTCLib
 	/// <returns>Stream reference for continued streaming</returns>
 	friend std::ostream& operator<<(std::ostream& stream, DTC_DMAPacket& packet)
 	{
-	  stream << packet.toJSON();
-	  return stream;
+		stream << packet.toJSON();
+		return stream;
 	}
-  };
+};
 
-  /// <summary>
-  /// Representation of a DCS Request Packet
-  /// </summary>
-  class DTC_DCSRequestPacket : public DTC_DMAPacket
-  {
-  public:
-	  /// <summary>
-	  /// Default Constructor, zeroes out header fields
-	  /// </summary>
+/// <summary>
+/// Representation of a DCS Request Packet
+/// </summary>
+class DTC_DCSRequestPacket : public DTC_DMAPacket
+{
+public:
+	/// <summary>
+	/// Default Constructor, zeroes out header fields
+	/// </summary>
 	DTC_DCSRequestPacket();
 	/// <summary>
-	/// DCSRequestPacket constructor, using given ring and roc
+	/// DCSRequestPacket constructor, using given link and roc
 	/// </summary>
-	/// <param name="ring">Ring ID for packet</param>
-	/// <param name="roc">ROC ID for packet</param>
-	DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc);
+	/// <param name="link">Link ID for packet</param>
+	DTC_DCSRequestPacket(DTC_Link_ID link);
 	/// <summary>
 	/// Create a DTC_DCSRequestPacket instance with the given fields filled in
 	/// </summary>
-	/// <param name="ring">Ring ID for packet</param>
-	/// <param name="roc">ROC ID for packet</param>
+	/// <param name="link">Link ID for packet</param>
 	/// <param name="type">OpCode of packet</param>
-	/// <param name="address">Target address</param>
-	/// <param name="data">Data (for write)</param>
-	DTC_DCSRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_DCSOperationType type, uint8_t address, uint16_t data);
+	/// <param name="requestAck">Whether to request acknowledement of this operation</param>
+	/// <param name="address">Address of ROC register</param>
+	/// <param name="data">Data/wordCount for operation</param>
+	DTC_DCSRequestPacket(DTC_Link_ID link, DTC_DCSOperationType type, bool requestAck, uint16_t address,
+						 uint16_t data = 0x0);
 	/// <summary>
 	/// Default Copy Constructor
 	/// </summary>
@@ -464,56 +455,63 @@ namespace DTCLib
 	virtual ~DTC_DCSRequestPacket() = default;
 
 	/// <summary>
-	/// Gets the data word from the DCS Request Packet
-	/// </summary>
-	/// <returns>Value of the data word from the DCS Request</returns>
-	uint16_t GetData() const
-	{
-	  return data_;
-	}
-
-	/// <summary>
-	/// Sets the data word in the DCS Request Packet
-	/// </summary>
-	/// <param name="data">Value of the data word to set</param>
-	void SetData(uint16_t data)
-	{
-	  data_ = data;
-	}
-
-	/// <summary>
-	/// Gets the target address of the DCS Request Packet, in the ROC address space
-	/// </summary>
-	/// <returns>Target address of the DCS Request Packet</returns>
-	uint8_t GetAddress() const
-	{
-	  return address_;
-	}
-	/// <summary>
-	/// Sets the target address of the DCS Request Packet in the ROC address space
-	/// </summary>
-	/// <param name="address">New target address</param>
-	void SetAddress(uint8_t address)
-	{
-	  address_ = address & 0x1F;
-	}
-
-	/// <summary>
 	/// Gets the opcode of the DCS Request Packet
 	/// </summary>
 	/// <returns>Current Opcode of the DCS Request Packet</returns>
-	DTC_DCSOperationType GetType() const
+	DTC_DCSOperationType GetType() const { return type_; }
+
+	/// <summary>
+	/// Read the double operation bit from the DCS Request packet
+	/// </summary>
+	/// <returns>Whether the Double operation bit is set</returns>
+	bool IsDoubleOp() const { return doubleOp_; }
+
+	/// <summary>
+	/// Read the request acknowledement bit from the DCS Request Packet
+	/// </summary>
+	/// <returns>Whether the request acknowledement bit is set</returns>
+	bool RequestsAck() const { return requestAck_; }
+
+	/// <summary>
+	/// Get the request from the DCS Request Packet
+	/// </summary>
+	/// <param name="secondOp">Whether to read the second request</param>
+	/// <returns>Pair of address, data from the given request</returns>
+	std::pair<uint16_t, uint16_t> GetRequest(bool secondOp = false)
 	{
-	  return type_;
+		if (!secondOp) return std::make_pair(address1_, data1_);
+		return std::make_pair(address2_, data2_);
 	}
+
+	/// <summary>
+	/// Add a second request to the DCS Request Packet
+	/// </summary>
+	/// <param name="address">Address of the second request</param>
+	/// <param name="data">Data for the second request</param>
+	void AddRequest(uint16_t address, uint16_t data = 0x0);
+	/// <summary>
+	/// Set the block write data
+	/// </summary>
+	/// <param name="data">Vector of 16-bit words to write to the ROC</param>
+	void SetBlockWriteData(std::vector<uint16_t> data)
+	{
+		blockWriteData_ = data;
+		UpdatePacketAndWordCounts();
+	}
+	/// <summary>
+	/// Update the packetCount and data_ (Block word count) words in the DCS request packet, based on the type of operation and blockWriteData
+	/// </summary>
+	void UpdatePacketAndWordCounts();
 
 	/// <summary>
 	/// Sets the opcode of the DCS Request Packet
 	/// </summary>
 	/// <param name="type">Opcode to set</param>
-	void SetType(DTC_DCSOperationType type)
+	/// <param name="reqAck">Whether to request acknowledement of this operation</param>
+	void SetType(DTC_DCSOperationType type, bool reqAck)
 	{
-	  type_ = type;
+		requestAck_ = reqAck;
+		type_ = type;
 	}
 
 	/// <summary>
@@ -531,32 +529,37 @@ namespace DTCLib
 	/// </summary>
 	/// <returns>"packet format" string representation of DCS Request packet</returns>
 	std::string toPacketFormat() override;
-  private:
-	DTC_DCSOperationType type_;
-	uint8_t address_ : 5;
-	uint16_t data_;
-  };
 
-  /// <summary>
-  /// The DTC Heartbeat Packet (sometimes referred to as a "Readout Request" packet)
-  /// </summary>
-  class DTC_HeartbeatPacket : public DTC_DMAPacket
-  {
-  public:
-	  /// <summary>
-	  /// Construct a DTC_HeartbeatPacket
-	  /// </summary>
-	  /// <param name="ring">Destination Ring</param>
-	  /// <param name="maxROC">Number of "hops" along the ring the packet will travel (Default: DTC_ROC_5)</param>
-	explicit DTC_HeartbeatPacket(DTC_Ring_ID ring, DTC_ROC_ID maxROC = DTC_ROC_5);
+private:
+	DTC_DCSOperationType type_;
+	bool doubleOp_;
+	bool requestAck_;
+	uint16_t packetCount_;
+	uint16_t address1_;
+	uint16_t data1_;     ///< Also, blockWriteData0_
+	uint16_t address2_;  ///< Also, blockWriteData1_
+	uint16_t data2_;     ///< Also, blockWriteData2_
+	std::vector<uint16_t> blockWriteData_;
+};
+
+/// <summary>
+/// The DTC Heartbeat Packet (sometimes referred to as a "Readout Request" packet)
+/// </summary>
+class DTC_HeartbeatPacket : public DTC_DMAPacket
+{
+public:
 	/// <summary>
 	/// Construct a DTC_HeartbeatPacket
 	/// </summary>
-	  /// <param name="ring">Destination Ring</param>
+	/// <param name="link">Destination Link</param>
+	explicit DTC_HeartbeatPacket(DTC_Link_ID link);
+	/// <summary>
+	/// Construct a DTC_HeartbeatPacket
+	/// </summary>
+	/// <param name="link">Destination Link</param>
 	/// <param name="timestamp">Timestamp of request</param>
-	  /// <param name="maxROC">Number of "hops" along the ring the packet will travel (Default: DTC_ROC_5)</param>
 	/// <param name="eventMode">Debug event mode bytes (Default: nullptr) If not null, must be 6 bytes long</param>
-	DTC_HeartbeatPacket(DTC_Ring_ID ring, DTC_Timestamp timestamp, DTC_ROC_ID maxROC = DTC_ROC_5, uint8_t* eventMode = nullptr);
+	DTC_HeartbeatPacket(DTC_Link_ID link, DTC_Timestamp timestamp, uint8_t* eventMode = nullptr);
 	/// <summary>
 	/// Default Copy Constructor
 	/// </summary>
@@ -576,25 +579,19 @@ namespace DTCLib
 	/// <summary>
 	/// Default Destructor
 	/// </summary>
-	virtual ~DTC_HeartbeatPacket() = default;
+	virtual ~DTC_HeartbeatPacket() noexcept = default;
 
 	/// <summary>
 	/// Get the DTC_Timestamp stored in the HeartbeatPacket
 	/// </summary>
 	/// <returns>Timestamp of Heartbeat</returns>
-	DTC_Timestamp GetTimestamp() const
-	{
-	  return timestamp_;
-	}
+	DTC_Timestamp GetTimestamp() const { return timestamp_; }
 
 	/// <summary>
 	/// Get the Mode bytes from the Heartbeat packet
 	/// </summary>
 	/// <returns>6-byte array containing mode bytes</returns>
-	virtual uint8_t* GetData()
-	{
-	  return eventMode_;
-	}
+	virtual uint8_t* GetData() { return eventMode_; }
 
 	/// <summary>
 	/// Convert a DTC_HeartbeatPacket to DTC_DataPacket in "owner" mode
@@ -611,36 +608,37 @@ namespace DTCLib
 	/// </summary>
 	/// <returns>"packet format" string representation of DTC_HeartbeatPacket</returns>
 	std::string toPacketFormat() override;
-  private:
+
+private:
 	DTC_Timestamp timestamp_;
 	uint8_t eventMode_[6];
-  };
+};
 
-  /// <summary>
-  /// The DTC Data Request Packet
-  /// </summary>
-  class DTC_DataRequestPacket : public DTC_DMAPacket
-  {
-  public:
-	  /// <summary>
-	  /// Construct a DTC_DataRequestPacket
-	  /// </summary>
-	  /// <param name="ring">Destination Ring</param>
-	  /// <param name="roc">Destination ROC</param>
-	  /// <param name="debug">Debug Mode flag (Default: true)</param>
-	  /// <param name="debugPacketCount">Debug Packet Count (Default: 0)</param>
-	  /// <param name="type">Debug Type (Default: DTC_DebugType_SpecialSequence</param>
-	DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, bool debug = true, uint16_t debugPacketCount = 0, DTC_DebugType type = DTC_DebugType_SpecialSequence);
+/// <summary>
+/// The DTC Data Request Packet
+/// </summary>
+class DTC_DataRequestPacket : public DTC_DMAPacket
+{
+public:
 	/// <summary>
 	/// Construct a DTC_DataRequestPacket
 	/// </summary>
-	/// <param name="ring">Destination Ring</param>
-	/// <param name="roc">Destination ROC</param>
+	/// <param name="link">Destination Link</param>
+	/// <param name="debug">Debug Mode flag (Default: true)</param>
+	/// <param name="debugPacketCount">Debug Packet Count (Default: 0)</param>
+	/// <param name="type">Debug Type (Default: DTC_DebugType_SpecialSequence</param>
+	DTC_DataRequestPacket(DTC_Link_ID link, bool debug = true, uint16_t debugPacketCount = 0,
+						  DTC_DebugType type = DTC_DebugType_SpecialSequence);
+	/// <summary>
+	/// Construct a DTC_DataRequestPacket
+	/// </summary>
+	/// <param name="link">Destination Link</param>
 	/// <param name="timestamp">Timestamp to request data for</param>
 	/// <param name="debug">Debug Mode flag (Default: true)</param>
 	/// <param name="debugPacketCount">Debug Packet Count (Default: 0)</param>
 	/// <param name="type">Debug Type (Default: DTC_DebugType_SpecialSequence</param>
-	DTC_DataRequestPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, DTC_Timestamp timestamp, bool debug = true, uint16_t debugPacketCount = 0, DTC_DebugType type = DTC_DebugType_SpecialSequence);
+	DTC_DataRequestPacket(DTC_Link_ID link, DTC_Timestamp timestamp, bool debug = true, uint16_t debugPacketCount = 0,
+						  DTC_DebugType type = DTC_DebugType_SpecialSequence);
 	/// <summary>
 	/// Default Copy Constructor
 	/// </summary>
@@ -661,28 +659,19 @@ namespace DTCLib
 	/// Get the value of the debug flag
 	/// </summary>
 	/// <returns>Debug Flag value</returns>
-	bool GetDebug() const
-	{
-	  return debug_;
-	}
+	bool GetDebug() const { return debug_; }
 
 	/// <summary>
 	/// Get the Debug type
 	/// </summary>
 	/// <returns>DTC_DebugType enumeration value</returns>
-	DTC_DebugType GetDebugType() const
-	{
-	  return type_;
-	}
+	DTC_DebugType GetDebugType() const { return type_; }
 
 	/// <summary>
 	/// Get the Debug Packet Count
 	/// </summary>
 	/// <returns>Number of packets requested by Data Request</returns>
-	uint16_t GetDebugPacketCount() const
-	{
-	  return debugPacketCount_;
-	}
+	uint16_t GetDebugPacketCount() const { return debugPacketCount_; }
 
 	/// <summary>
 	/// Set the Debug Packet Count
@@ -694,10 +683,7 @@ namespace DTCLib
 	/// Get the timestamp of the request
 	/// </summary>
 	/// <returns>DTC_Timestamp of reqeust</returns>
-	DTC_Timestamp GetTimestamp() const
-	{
-	  return timestamp_;
-	}
+	DTC_Timestamp GetTimestamp() const { return timestamp_; }
 
 	/// <summary>
 	/// Convert a DTC_DataRequestPacket to DTC_DataPacket in "owner" mode
@@ -714,34 +700,20 @@ namespace DTCLib
 	/// </summary>
 	/// <returns>"packet format" string representation of DTC_DataRequestPacket</returns>
 	std::string toPacketFormat() override;
-  private:
+
+private:
 	DTC_Timestamp timestamp_;
 	bool debug_;
 	uint16_t debugPacketCount_;
 	DTC_DebugType type_;
-  };
+};
 
-  /// <summary>
-  /// The DCS Reply Packet
-  /// </summary>
-  class DTC_DCSReplyPacket : public DTC_DMAPacket
-  {
-  public:
-	  /// <summary>
-	  /// Construct a DTC_DCSReplyPacket
-	  /// </summary>
-	  /// <param name="ring">Value of the Ring field</param>
-	explicit DTC_DCSReplyPacket(DTC_Ring_ID ring);
-	/// <summary>
-	/// Construct a DTC_DCSReplyPacket
-	/// </summary>
-	/// <param name="ring">Ring of packet</param>
-	/// <param name="counter">Counter value</param>
-	/// <param name="type">DCS Operation Type</param>
-	/// <param name="address">Address for operation</param>
-	/// <param name="data">Data from operation</param>
-	/// <param name="fifoEmpty">Whether the ROC is available for more DCS requests</param>
-	DTC_DCSReplyPacket(DTC_Ring_ID ring, uint8_t counter, DTC_DCSOperationType type, uint8_t address, uint16_t data, bool fifoEmpty);
+/// <summary>
+/// The DCS Reply Packet
+/// </summary>
+class DTC_DCSReplyPacket : public DTC_DMAPacket
+{
+public:
 	/// <summary>
 	/// Default Copy Constructor
 	/// </summary>
@@ -759,49 +731,57 @@ namespace DTCLib
 	explicit DTC_DCSReplyPacket(const DTC_DataPacket in);
 
 	/// <summary>
-	/// Get the number of DCS Requests received by the ROC
-	/// </summary>
-	/// <returns></returns>
-	uint8_t GetRequestCounter() const
-	{
-	  return requestCounter_;
-	}
-
-	/// <summary>
-	/// Get the data from the DCS Reply packet
-	/// </summary>
-	/// <returns>DCS Reply packet data</returns>
-	uint16_t GetData() const
-	{
-	  return data_;
-	}
-	
-	/// <summary>
-	/// Get the address from the DCS Reply packet
-	/// </summary>
-	/// <returns>Address in DCS Reply packet</returns>
-	uint8_t GetAddress() const
-	{
-	  return address_;
-	}
-
-	/// <summary>
 	/// Get the DCS Operation Type
 	/// </summary>
 	/// <returns>DTC_DCSOperationType enumeration value</returns>
-	DTC_DCSOperationType GetType() const
-	{
-	  return type_;
-	}
+	DTC_DCSOperationType GetType() const { return type_; }
+
+	/// <summary>
+	/// Read the double operation bit from the DCS reply packet
+	/// </summary>
+	/// <returns>Whether the double operation bit is set</returns>
+	bool IsDoubleOperation() const { return doubleOp_; }
+
+	/// <summary>
+	/// Get the "request acknowledgement" bit from the DCS Reply packet
+	/// </summary>
+	/// <returns></returns>
+	bool IsAckRequested() const { return requestAck_; }
 
 	/// <summary>
 	/// Check if the DCS Receive FIFO is empty
 	/// </summary>
 	/// <returns>Value of DCS Receive FIFO Empty flag</returns>
-	bool DCSReceiveFIFOEmpty() const
+	bool DCSReceiveFIFOEmpty() const { return dcsReceiveFIFOEmpty_; }
+
+	/// <summary>
+	/// Get the corrupt flag from the status word
+	/// </summary>
+	/// <returns>Whether the corrupt bit is set</returns>
+	bool ROCIsCorrupt() const { return corruptFlag_; }
+
+	/// <summary>
+	/// Get the value packet count field
+	/// </summary>
+	/// <returns>The number of packets in the block read</returns>
+	uint16_t GetBlockPacketCount() const { return packetCount_; }
+
+	/// <summary>
+	/// Get the reply from the DCSReplyPacket
+	/// </summary>
+	/// <param name="secondOp">Whether to read the second operation</param>
+	/// <returns>Pair of address, data from the reply packet</returns>
+	std::pair<uint16_t, uint16_t> GetReply(bool secondOp = false)
 	{
-	  return dcsReceiveFIFOEmpty_;
+		if (!secondOp) return std::make_pair(address1_, data1_);
+		return std::make_pair(address2_, data2_);
 	}
+
+	/// <summary>
+	/// Get the block read data, if any
+	/// </summary>
+	/// <returns>Vector of 16-bit words</returns>
+	std::vector<uint16_t> GetBlockReadData() const { return blockReadData_; }
 
 	/// <summary>
 	/// Convert a DTC_DCSReplyPacket to DTC_DataPacket in "owner" mode
@@ -818,32 +798,39 @@ namespace DTCLib
 	/// </summary>
 	/// <returns>"packet format" string representation of DTC_DCSReplyPacket</returns>
 	std::string toPacketFormat() override;
-  private:
-	uint8_t requestCounter_;
-	DTC_DCSOperationType type_;
-	bool dcsReceiveFIFOEmpty_;
-	uint8_t address_ : 5;
-	uint16_t data_;
-  };
 
-  /// <summary>
-  /// The DTC Data Header Packet (A Data Header and its associated Data Packets forms a Data Block)
-  /// </summary>
-  class DTC_DataHeaderPacket : public DTC_DMAPacket
-  {
-  public:
-	  /// <summary>
-	  /// Construct a DTC_DataHeaderPacket
-	  /// </summary>
-	  /// <param name="ring">Ring from which packet came</param>
-	  /// <param name="roc">ROC from which packet came</param>
-	  /// <param name="packetCount">Number of DTC_DataPackets in Data Block</param>
-	  /// <param name="status">Status of Data Block</param>
-	  /// <param name="dtcid">DTC ID from which packet came</param>
-	  /// <param name="packetVersion">Version of data format</param>
-	  /// <param name="timestamp">Timestamp of Data Packet (Default: DTC_Timetstamp())</param>
-	  /// <param name="evbMode">EVB Mode byte (Default: 0)</param>
-	DTC_DataHeaderPacket(DTC_Ring_ID ring, DTC_ROC_ID roc, uint16_t packetCount, DTC_DataStatus status, uint8_t dtcid, uint8_t packetVersion, DTC_Timestamp timestamp = DTC_Timestamp(), uint8_t evbMode = 0);
+private:
+	DTC_DCSOperationType type_;
+	bool doubleOp_;
+	bool requestAck_;
+	bool dcsReceiveFIFOEmpty_;
+	bool corruptFlag_;
+	uint16_t packetCount_;
+	uint16_t address1_;
+	uint16_t data1_;
+	uint16_t address2_;
+	uint16_t data2_;
+	std::vector<uint16_t> blockReadData_;
+};
+
+/// <summary>
+/// The DTC Data Header Packet (A Data Header and its associated Data Packets forms a Data Block)
+/// </summary>
+class DTC_DataHeaderPacket : public DTC_DMAPacket
+{
+public:
+	/// <summary>
+	/// Construct a DTC_DataHeaderPacket
+	/// </summary>
+	/// <param name="link">Link from which packet came</param>
+	/// <param name="packetCount">Number of DTC_DataPackets in Data Block</param>
+	/// <param name="status">Status of Data Block</param>
+	/// <param name="dtcid">DTC ID from which packet came</param>
+	/// <param name="packetVersion">Version of data format</param>
+	/// <param name="timestamp">Timestamp of Data Packet (Default: DTC_Timetstamp())</param>
+	/// <param name="evbMode">EVB Mode byte (Default: 0)</param>
+	DTC_DataHeaderPacket(DTC_Link_ID link, uint16_t packetCount, DTC_DataStatus status, uint8_t dtcid,
+						 uint8_t packetVersion, DTC_Timestamp timestamp = DTC_Timestamp(), uint8_t evbMode = 0);
 	/// <summary>
 	/// Default Copy Constructor
 	/// </summary>
@@ -870,64 +857,43 @@ namespace DTCLib
 	/// Get the EVB Mode word from the Data Header Packet
 	/// </summary>
 	/// <returns>EVB Mode of Data Block</returns>
-	uint8_t GetEVBMode() const
-	{
-	  return evbMode_;
-	}
+	uint8_t GetEVBMode() const { return evbMode_; }
 
 	/// <summary>
 	/// Get the Subsystem ID of the Data Block
 	/// </summary>
 	/// <returns>DTC_Subsystem enumeration value</returns>
-	DTC_Subsystem GetSubsystem() const
-	{
-		return dtcId_.GetSubsystem();
-	}
+	DTC_Subsystem GetSubsystem() const { return dtcId_.GetSubsystem(); }
 
 	/// <summary>
 	/// Get the DTC ID of the Data Block
 	/// </summary>
 	/// <returns>DTC ID of Data Block</returns>
-	uint8_t GetID() const
-	{
-		return dtcId_.GetID();
-	}
+	uint8_t GetID() const { return dtcId_.GetID(); }
 
 	/// <summary>
 	/// Get the number of Data Packets in the Data block
 	/// </summary>
 	/// <returns>The number of packets in the Data Block</returns>
-	uint16_t GetPacketCount() const
-	{
-	  return packetCount_;
-	}
+	uint16_t GetPacketCount() const { return packetCount_; }
 
 	/// <summary>
 	/// Get the Data Packet Version identifier from the Data Header
 	/// </summary>
 	/// <returns>Version number of Data Packets</returns>
-	uint8_t GetVersion() const
-	{
-		return dataPacketVersion_;
-	}
+	uint8_t GetVersion() const { return dataPacketVersion_; }
 
 	/// <summary>
 	/// Get the Timestamp of the Data Block
 	/// </summary>
 	/// <returns>timestamp of Data Block</returns>
-	DTC_Timestamp GetTimestamp() const
-	{
-	  return timestamp_;
-	}
+	DTC_Timestamp GetTimestamp() const { return timestamp_; }
 
 	/// <summary>
 	/// Get the Data Status of the Data Block
 	/// </summary>
 	/// <returns>DTC_DataStatus enumeration value</returns>
-	DTC_DataStatus GetStatus() const
-	{
-	  return status_;
-	}
+	DTC_DataStatus GetStatus() const { return status_; }
 
 	/// <summary>
 	/// Convert the DTC_DataHeaderPacket to JSON representation
@@ -945,20 +911,14 @@ namespace DTCLib
 	/// </summary>
 	/// <param name="other">DataHeaderPacket to compare</param>
 	/// <returns>True if Data Header packet contents are equal</returns>
-	bool operator==(const DTC_DataHeaderPacket& other) const
-	{
-	  return Equals(other);
-	}
+	bool operator==(const DTC_DataHeaderPacket& other) const { return Equals(other); }
 
 	/// <summary>
 	/// Determine if two Data Header packets are not equal (Returns !(dhp == dhp))
 	/// </summary>
 	/// <param name="other">DataHeaderPacket to compare</param>
 	/// <returns>True if Data Header packet contents are not equal</returns>
-	bool operator!=(const DTC_DataHeaderPacket& other) const
-	{
-	  return !Equals(other);
-	}
+	bool operator!=(const DTC_DataHeaderPacket& other) const { return !Equals(other); }
 
 	/// <summary>
 	/// Determine if two Data Header packets are equal (Evaluates DataPacket == DataPacket, see DTC_DataPacket::Equals)
@@ -966,14 +926,15 @@ namespace DTCLib
 	/// <param name="other">DataHeaderPacket to compare</param>
 	/// <returns>True if Data Header packet contents are equal</returns>
 	bool Equals(const DTC_DataHeaderPacket& other) const;
-  private:
+
+private:
 	uint16_t packetCount_;
 	DTC_Timestamp timestamp_;
 	DTC_DataStatus status_;
 	uint8_t dataPacketVersion_;
 	DTC_ID dtcId_;
 	uint8_t evbMode_;
-  };
-}
+};
+}  // namespace DTCLib
 
-#endif //DTC_PACKETS_H
+#endif  // DTC_PACKETS_H

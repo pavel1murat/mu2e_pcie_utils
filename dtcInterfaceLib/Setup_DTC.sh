@@ -134,7 +134,7 @@ echo '         DTC_Test -n 1000000 -f /tmp/mu2etest.bin # send 1000000 read-out/
 echo '         DTC_Test2 -f /tmp/mu2etest.bin # Same as DTC_Test -n 1 -q -c 50 -t -f /tmp/mu2etest.bin'
 echo '         DTC_Test3 -f /tmp/mu2eraw.bin # Same as DTC_Test -n 1 -c 200 -S -Q -T 2 -f /tmp/mu2eraw.bin'
 echo 'Use DTC_TestDDR and DTC_TestSRAM for RAM Error Checking modes'
-echo 'Use DTC_Links to see which of Ring0/1 are currently connected'
+echo 'Use DTC_Links to see which of Link0/1 are currently connected'
 echo 'and reset with DTC_Reset and ROC_Reset'
 echo 'Use DTC_LoadData to generate data, send it to the DTC and print the generated buffers to screen'
 echo 'Use DTC_ReadLoadedData to read data generated using DTC_LoadData back'

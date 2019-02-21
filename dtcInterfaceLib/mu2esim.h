@@ -6,21 +6,23 @@
 #ifndef MU2ESIM_HH
 #define MU2ESIM_HH 1
 
-#include "mu2e_driver/mu2e_mmap_ioctl.h" //
-#include <unordered_map>
-#include <mutex>
-#include <map>
-#include <thread>
-#include <memory>
-#include <queue>
 #include <fstream>
-#include "DTC_Types.h"
+#include <map>
+#include <memory>
+#include <mutex>
+#include <queue>
+#include <thread>
+#include <unordered_map>
+
 #include "DTC_Packets.h"
+#include "DTC_Types.h"
+#include "mu2e_driver/mu2e_mmap_ioctl.h"  //
 
 #define SIM_BUFFCOUNT 40U
 
 /// <summary>
-/// The mu2esim class emulates a DTC in software. It can be used for hardware-independent testing of software, especially higher-level trigger algorithms.
+/// The mu2esim class emulates a DTC in software. It can be used for hardware-independent testing of software,
+/// especially higher-level trigger algorithms.
 /// </summary>
 class mu2esim
 {
@@ -46,7 +48,8 @@ public:
 	/// <returns>Byte count of data read into buffer. Negative value indicates error.</returns>
 	int read_data(int chn, void** buffer, int tmo_ms);
 	/// <summary>
-	/// Write data from the given buffer to the requested channel. The simulator will process the packets and enqueue appropriate responses.
+	/// Write data from the given buffer to the requested channel. The simulator will process the packets and enqueue
+	/// appropriate responses.
 	/// </summary>
 	/// <param name="chn">Channel to write data to</param>
 	/// <param name="buffer">Address of buffer to write</param>
@@ -82,13 +85,14 @@ public:
 	/// <param name="data">Data to write</param>
 	/// <returns>0 when successful (always)</returns>
 	int write_register(uint16_t address, int tmo_ms, uint32_t data);
+
 private:
 	unsigned delta_(int chn, int dir);
 	static void clearBuffer_(int chn, bool increment = true);
 	void openEvent_(DTCLib::DTC_Timestamp ts);
 	void closeEvent_();
 	void CFOEmulator_();
-	void packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Ring_ID ring, DTCLib::DTC_ROC_ID roc, uint16_t packetCount);
+	void packetSimulator_(DTCLib::DTC_Timestamp ts, DTCLib::DTC_Link_ID link, uint16_t packetCount);
 	void dcsPacketSimulator_(DTCLib::DTC_DCSRequestPacket in);
 
 	std::unordered_map<uint16_t, uint32_t> registers_;
@@ -98,17 +102,16 @@ private:
 	mu2e_databuff_t* dmaData_[MU2E_MAX_CHANNELS][SIM_BUFFCOUNT];
 	std::fstream ddrFile_;
 	DTCLib::DTC_SimMode mode_;
-	uint16_t simIndex_[6][6];
+	uint16_t simIndex_[6];
 	std::thread cfoEmulatorThread_;
 	bool cancelCFO_;
 
 	typedef std::bitset<6> readoutRequestData;
 	std::map<uint64_t, readoutRequestData> readoutRequestReceived_;
-	
+
 	DTCLib::DTC_Timestamp currentTimestamp_;
 	uint64_t currentEventSize_;
 	std::streampos eventBegin_;
 };
 
 #endif
-

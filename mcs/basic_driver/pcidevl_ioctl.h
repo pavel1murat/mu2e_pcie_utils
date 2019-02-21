@@ -9,36 +9,36 @@
 #define DEVL_IOCTL_H
 
 #ifdef __KERNEL__
-# include <asm/ioctl.h>		// _IOWR
+#include <asm/ioctl.h>  // _IOWR
 #else
-# include <sys/ioctl.h>		// _IOWR
-# include <sys/types.h>
-# include <unistd.h>		// sysconf
+#include <sys/ioctl.h>  // _IOWR
+#include <sys/types.h>
+#include <unistd.h>  // sysconf
 #endif
 
-#define PCIDEVL_DEV_FILE       "pcidev%d"
+#define PCIDEVL_DEV_FILE "pcidev%d"
 /*
  For _IO,_IOR,_IOW,_IORW ref. Documentation/ioctl/ioctl-number.txt
  _IO   - implementation has neither copy_from nor copy_to user (or equivalents)
  _IOR  - implementation has copy_to_user   (or equiv., at end)
  _IOW  - implementation has copy_from_user (or equiv., at beginnning)
  _IOWR - implementaions has both copy_from_user (at beginnning) and
-		 copy_to_user (at end)
+                 copy_to_user (at end)
 NOTE: for _IOR, _IOW: the size is only for the data at the address used in the
-	  ioctl call; NOT for the size at an address contained within the data
-	  pointed to by the address used in the ioctl call.  So, if a small
-	  structure is pointed to (to be copied in) which has an address of a
-	  large buffer, the only thing that these macros should consider is the
-	  pointer used (directly) in the ioctl call.
+          ioctl call; NOT for the size at an address contained within the data
+          pointed to by the address used in the ioctl call.  So, if a small
+          structure is pointed to (to be copied in) which has an address of a
+          large buffer, the only thing that these macros should consider is the
+          pointer used (directly) in the ioctl call.
  */
 #define DEVL_IOC_MAGIC 'D'
 
-#define IOC_HELLO	_IO  ( DEVL_IOC_MAGIC,14 )
+#define IOC_HELLO _IO(DEVL_IOC_MAGIC, 14)
 
-#define IOC_IOREMAP	_IO  ( DEVL_IOC_MAGIC,17 )
-#define IOC_IOUNMAP	_IO  ( DEVL_IOC_MAGIC,18 )
+#define IOC_IOREMAP _IO(DEVL_IOC_MAGIC, 17)
+#define IOC_IOUNMAP _IO(DEVL_IOC_MAGIC, 18)
 
-#define IOC_UINT32	_IOWR( DEVL_IOC_MAGIC,18, uint32_t )
+#define IOC_UINT32 _IOWR(DEVL_IOC_MAGIC, 18, uint32_t)
 
 enum ioc_ioop_ops
 {
@@ -50,12 +50,12 @@ enum ioc_ioop_ops
 /// </summary>
 struct ioc_ioop
 {
-	uint32_t offset;  /**< register offset */
-	enum ioc_ioop_ops ops_mask;  /**< can do write then read to same offset */
-	uint32_t write_val; ///< Value to write to register
-	uint32_t read_val; ///< Value read from register
+	uint32_t offset;            /**< register offset */
+	enum ioc_ioop_ops ops_mask; /**< can do write then read to same offset */
+	uint32_t write_val;         ///< Value to write to register
+	uint32_t read_val;          ///< Value read from register
 };
 
-#define IOC_IOOP        _IOWR( DEVL_IOC_MAGIC,19, struct ioc_ioop )
+#define IOC_IOOP _IOWR(DEVL_IOC_MAGIC, 19, struct ioc_ioop)
 
-#endif // DEVL_IOCTL_H
+#endif  // DEVL_IOCTL_H

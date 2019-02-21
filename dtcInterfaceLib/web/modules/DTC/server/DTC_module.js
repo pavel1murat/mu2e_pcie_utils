@@ -1,7 +1,7 @@
 // DTCDriver.js
 // Author: Eric Flumerfelt, FNAL/RSI
 // Last Modified: March 11, 2015
-// 
+//
 // This module for serverbase.js performs register I/O on the mu2e DTC board
 
 var dtc = require("./DTC");
@@ -49,7 +49,7 @@ function SendStatistics() {
     //gmetric.send_gmetric("/etc/ganglia/gmond.conf", "PCIe Receive Rate", receive.toString(), "double", "B/s", "both", 15, 0, "DTC_PCIe", "mu2e DAQ", "PCIe Receive Rate", "PCIe Receive Rate");
 };
 
-function readMaxRocs(input, ring) {
+function readMaxRocs(input, link) {
     input.ROC0Enabled = false;
     input.ROC1Enabled = false;
     input.ROC2Enabled = false;
@@ -57,7 +57,7 @@ function readMaxRocs(input, ring) {
     input.ROC4Enabled = false;
     input.ROC5Enabled = false;
 
-    var rocs = DTC.ReadRingROCCount(ring);
+    var rocs = DTC.ReadRingROCCount(link);
     switch (rocs) {
     case 5:
         input.ROC5Enabled = true;
@@ -197,30 +197,30 @@ dtcem.RO_readTimingEnable = function() {
     return DTC.ReadTimingEnable();
 };
 dtcem.RW_setTriggerDMATransferLength = function(POST) {
-    var val = DTC.SetTriggerDMATransferLength(POST.ring);
-    logMessage("Trigger DMA Transfer Length to " + POST.ring, "set", POST.who);
+    var val = DTC.SetTriggerDMATransferLength(POST.link);
+    logMessage("Trigger DMA Transfer Length to " + POST.link, "set", POST.who);
     return val;
 };
 dtcem.RO_readTriggerDMATransferLength = function() {
     return DTC.ReadTriggerDMATransferLength();
 };
 dtcem.RW_setMinDMATransferLength = function(POST) {
-    var val = DTC.SetMinDMATransferLength(POST.ring);
-    logMessage("Minimum DMA Transfer Length to " + POST.ring, "set", POST.who);
+    var val = DTC.SetMinDMATransferLength(POST.link);
+    logMessage("Minimum DMA Transfer Length to " + POST.link, "set", POST.who);
     return val;
 };
 dtcem.RO_readMinDMATransferLength = function() {
     return DTC.ReadMinDMATransferLength();
 };
 dtcem.RW_setSERDESLoopback = function(POST) {
-    var val = DTC.SetSERDESLoopbackMode(parseInt(POST.ring), parseInt(POST.val));
-    logMessage("SERDES Loopback on ring " + POST.ring + " to " + val, "set", POST.who);
+    var val = DTC.SetSERDESLoopbackMode(parseInt(POST.link), parseInt(POST.val));
+    logMessage("SERDES Loopback on link " + POST.link + " to " + val, "set", POST.who);
     return val;
 };
 
 dtcem.RO_readSERDESLoopback = function(POST) {
     var output = { NEPCS: 0, NEPMA: 0, FEPMA: 0, FEPCS: 0 };
-    switch (DTC.ReadSERDESLoopback(parseInt(POST.ring))) {
+    switch (DTC.ReadSERDESLoopback(parseInt(POST.link))) {
     case 1:
         output.NEPCS = 1;
         break;
@@ -244,12 +244,12 @@ dtcem.RO_readSERDESOScillatorInitializationComplete = function() {
     return DTC.ReadSERDESOscillatorInitializationComplete();
 };
 dtcem.RW_toggleROCEmulator = function(POST) {
-    var val = DTC.ToggleROCEmulator(POST.ring);
-    logMessage("ROC Emulator on ring " + POST.ring + "(" + val + ")", "toggled", POST.who);
+    var val = DTC.ToggleROCEmulator(POST.link);
+    logMessage("ROC Emulator on link " + POST.link + "(" + val + ")", "toggled", POST.who);
     return val;
 };
 dtcem.RO_readROCEmulator = function(POST) {
-    return DTC.ReadROCEmulator(POST.ring);
+    return DTC.ReadROCEmulator(POST.link);
 };
 dtcem.RW_toggleRingEnabled = function(POST) {
     var id = POST.val;
@@ -265,30 +265,30 @@ dtcem.RW_toggleRingEnabled = function(POST) {
         current.TimingEnable = true;
         break;
     }
-    var val = DTC.ToggleRingEnabled(POST.ring, current);
-    logMessage("Ring Enable bit " + POST.val + " on ring " + POST.ring + " (" + val + ")", "toggled", POST.who);
+    var val = DTC.ToggleRingEnabled(POST.link, current);
+    logMessage("Ring Enable bit " + POST.val + " on link " + POST.link + " (" + val + ")", "toggled", POST.who);
     return val;
 };
 dtcem.RO_readRingEnabled = function(POST) {
     var output = { TransmitEnable: false, ReceiveEnable: false, TimingEnable: false };
-    var enable = DTC.ReadRingEnabled(parseInt(POST.ring));
+    var enable = DTC.ReadRingEnabled(parseInt(POST.link));
     output.TransmitEnable = enable.TransmitEnable;
     output.ReceiveEnable = enable.ReceiveEnable;
     output.TimingEnable = enable.TimingEnable;
     return output;
 };
 dtcem.RW_resetSERDES = function(POST) {
-    logMessage("the SERDES on ring " + POST.ring, "is resetting", POST.who);
-    return DTC.ResetSERDES(parseInt(POST.ring));
+    logMessage("the SERDES on link " + POST.link, "is resetting", POST.who);
+    return DTC.ResetSERDES(parseInt(POST.link));
 };
 dtcem.RO_readResetSERDES = function(POST) {
-    return DTC.ReadResetSERDES(parseInt(POST.ring));
+    return DTC.ReadResetSERDES(parseInt(POST.link));
 };
 dtcem.RO_readSERDESResetDone = function(POST) {
-    return DTC.ReadResetSERDESDone(parseInt(POST.ring));
+    return DTC.ReadResetSERDESDone(parseInt(POST.link));
 };
 dtcem.RO_readSERDESRXDisparity = function(POST) {
-    switch (DTC.ReadSERDESRXDisparityError(parseInt(POST.ring)).GetData(true)) {
+    switch (DTC.ReadSERDESRXDisparityError(parseInt(POST.link)).GetData(true)) {
     case 0:
         return { low: 0, high: 0 };
     case 1:
@@ -300,11 +300,11 @@ dtcem.RO_readSERDESRXDisparity = function(POST) {
     }
 };
 dtcem.RW_clearSERDESRXDisparity = function(POST) {
-    DTC.ClearSERDESRXDisparityError(parseInt(POST.ring));
+    DTC.ClearSERDESRXDisparityError(parseInt(POST.link));
     return RO_readSERDESRXDisparity(POST);
 };
 dtcem.RO_readSERDESRXCharacterError = function(POST) {
-    switch (DTC.ReadSERDESRXCharacterNotInTableError(parseInt(POST.ring)).GetData(true)) {
+    switch (DTC.ReadSERDESRXCharacterNotInTableError(parseInt(POST.link)).GetData(true)) {
     case 0:
         return { low: 0, high: 0 };
     case 1:
@@ -316,27 +316,27 @@ dtcem.RO_readSERDESRXCharacterError = function(POST) {
     }
 };
 dtcem.RW_clearSERDESRXCharacterError = function(POST) {
-    DTC.ClearSERDESRXCharacterNotInTableError(parseInt(POST.ring));
+    DTC.ClearSERDESRXCharacterNotInTableError(parseInt(POST.link));
     return RO_readSREDESRXCharacterError(POST);
 };
 dtcem.RO_readSERDESUnlockError = function(POST) {
-    return DTC.ReadSERDESUnlockError(parseInt(POST.ring));
+    return DTC.ReadSERDESUnlockError(parseInt(POST.link));
 };
 dtcem.RW_clearSERDESUnlockError = function(POST) {
-    return DTC.ClearSERDESUnlockError(parseInt(POST.ring));
+    return DTC.ClearSERDESUnlockError(parseInt(POST.link));
 };
 dtcem.RO_readSERDESPLLLocked = function(POST) {
-    return DTC.ReadSERDESPLLLocked(parseInt(POST.ring));
+    return DTC.ReadSERDESPLLLocked(parseInt(POST.link));
 };
 dtcem.RO_readSERDESOverflowOrUnderflow = function(POST) {
-    return DTC.ReadSERDESOverflowOrUnderflow(parseInt(POST.ring));
+    return DTC.ReadSERDESOverflowOrUnderflow(parseInt(POST.link));
 };
 dtcem.RO_readSERDESBufferFIFOHalfFull = function(POST) {
-    return DTC.ReadSERDESBufferFIFOHalfFull(parseInt(POST.ring));
+    return DTC.ReadSERDESBufferFIFOHalfFull(parseInt(POST.link));
 };
 dtcem.RO_readSERDESRXBufferStatus = function(POST) {
     var output = { Nominal: 0, Empty: 0, Full: 0, Underflow: 0, Overflow: 0 };
-    switch (DTC.ReadSERDESRXBufferStatus(parseInt(POST.ring))) {
+    switch (DTC.ReadSERDESRXBufferStatus(parseInt(POST.link))) {
     case 0:
         output.Nominal = 1;
         break;
@@ -366,7 +366,7 @@ dtcem.RO_readSERDESRXStatus = function(POST) {
         EUnderflow: 0,
         DisparityError: 0
     };
-    switch (DTC.ReadSERDESRXStatus(parseInt(POST.ring))) {
+    switch (DTC.ReadSERDESRXStatus(parseInt(POST.link))) {
     case 0:
         output.DataOK = 1;
         break;
@@ -396,49 +396,49 @@ dtcem.RO_readSERDESRXStatus = function(POST) {
     return output;
 };
 dtcem.RO_readSERDESEyescanError = function(POST) {
-    return DTC.ReadSERDESEyescanError(parseInt(POST.ring));
+    return DTC.ReadSERDESEyescanError(parseInt(POST.link));
 };
 dtcem.RW_clearSERDESEyescanError = function(POST) {
-    return DTC.ClearSERDESEyescanError(parseInt(POST.ring));
+    return DTC.ClearSERDESEyescanError(parseInt(POST.link));
 };
 dtcem.RO_readSERDESRXCDRLock = function(POST) {
-    return DTC.ReadSERDESRXCDRLock(parseInt(POST.ring));
+    return DTC.ReadSERDESRXCDRLock(parseInt(POST.link));
 };
 dtcem.RW_writeDMATimeoutPreset = function(POST) {
-    var val = DTC.WriteDMATimeoutPreset(POST.ring);
-    logMessage("DMA Timeout Preset to " + POST.ring, "set", POST.who);
+    var val = DTC.WriteDMATimeoutPreset(POST.link);
+    logMessage("DMA Timeout Preset to " + POST.link, "set", POST.who);
     return val;
 };
 dtcem.RO_readDMATimeoutPreset = function() {
     return DTC.ReadDMATimeoutPreset();
 };
 dtcem.RW_writeDataPendingTimer = function(POST) {
-    var val = DTC.WriteDataPendingTimer(POST.ring);
-    logMessage("DMA Data Pending Timeout to " + POST.ring, "set", POST.who);
+    var val = DTC.WriteDataPendingTimer(POST.link);
+    logMessage("DMA Data Pending Timeout to " + POST.link, "set", POST.who);
     return val;
 };
 dtcem.RO_readDataPendingTimer = function() {
     return DTC.ReadDataPendingTimer();
 };
 dtcem.RW_setPacketSize = function(POST) {
-    var val = DTC.SetPacketSize(POST.ring);
-    logMessage("DMA Packet Size to " + POST.ring, "set", POST.who);
+    var val = DTC.SetPacketSize(POST.link);
+    logMessage("DMA Packet Size to " + POST.link, "set", POST.who);
     return val;
 };
 dtcem.RO_readPacketSize = function() {
     return DTC.ReadPacketSize();
 };
 dtcem.RO_readFIFOFlags = function(POST) {
-    return DTC.ReadFIFOFullErrorFlags(parseInt(POST.ring));
+    return DTC.ReadFIFOFullErrorFlags(parseInt(POST.link));
 };
 dtcem.RW_SetFIFOFlags = function(POST) {
     var activeFlag = POST.id;
     var flags = new dtc.DTC_FIFOFullErrorFlags();
     flags[activeFlag] = true;
-    return DTC.ToggleFIFOFullErrorFlags(parseInt(POST.ring), flags);
+    return DTC.ToggleFIFOFullErrorFlags(parseInt(POST.link), flags);
 };
 dtcem.RW_setTimestampPreset = function(POST) {
-    var ts = DTC.WriteTimestampPreset(new dtc.DTC_Timestamp(parseInt(parseInt(POST.ring), 16)));
+    var ts = DTC.WriteTimestampPreset(new dtc.DTC_Timestamp(parseInt(parseInt(POST.link), 16)));
     logMessage("the timestamp preset (" + ts.GetTimestamp(true) + ")", "set", POST.who);
     return ts.GetTimestamp(true);
 };
@@ -513,7 +513,7 @@ dtcem.RO_RegIO = function(POST) {
     return read(POST.address).toString(16);
 };
 dtcem.RW_WriteLog = function(POST) {
-    logMessage(parseInt(POST.ring), "says", POST.who);
+    logMessage(parseInt(POST.link), "says", POST.who);
     res.end(readLog());
     console.log("Done sending log message reply");
 };
@@ -574,7 +574,7 @@ dtcem.RW_DMAIO = function(POST) {
             for (var j = 0; j < 12; j++) {
                 dtc.u8array_setitem(data, j, packets[i].data[j]);
             }
-            packet = new dtc.DTC_DCSRequestPacket(packets[i].ringID, packets[i].hopCount, data);
+            packet = new dtc.DTC_DCSRequestPacket(packets[i].linkID, packets[i].hopCount, data);
             DTC.WriteDMADCSPacket(packet);
             readDcs = true;
             console.log("Done");
@@ -584,7 +584,7 @@ dtcem.RW_DMAIO = function(POST) {
             for (var j = 0; j < 6; j++) {
                 dtc.u8array_setitem(timestamp, j, packets[i].timestamp[j]);
             }
-            packet = new dtc.DTC_ReadoutRequestPacket(packets[i].ringID, new dtc.DTC_Timestamp(timestamp), packets[i].hopCount);
+            packet = new dtc.DTC_ReadoutRequestPacket(packets[i].linkID, new dtc.DTC_Timestamp(timestamp), packets[i].hopCount);
             DTC.WriteDMADAQPacket(packet);
             readDaq = true;
             console.log("Done");
@@ -594,7 +594,7 @@ dtcem.RW_DMAIO = function(POST) {
             for (var j = 0; j < 6; j++) {
                 dtc.u8array_setitem(timestamp, j, packets[i].timestamp[j]);
             }
-            packet = new dtc.DTC_DataRequestPacket(packets[i].ringID, packets[i].hopCount, new dtc.DTC_Timestamp(timestamp));
+            packet = new dtc.DTC_DataRequestPacket(packets[i].linkID, packets[i].hopCount, new dtc.DTC_Timestamp(timestamp));
             DTC.WriteDMADAQPacket(packet);
             readDaq = true;
             console.log("Done");
@@ -617,18 +617,18 @@ dtcem.RW_DMAIO = function(POST) {
 
 };
 dtcem.RW_setMaxROC = function(POST) {
-    DTC.SetMaxROCNumber(parseInt(POST.ring), parseInt(POST.val));
-    logMessage("Max ROC on ring " + POST.ring + " to " + POST.val, "set", POST.who);
+    DTC.SetMaxROCNumber(parseInt(POST.link), parseInt(POST.val));
+    logMessage("Max ROC on link " + POST.link + " to " + POST.val, "set", POST.who);
     return 1;
 };
 
 /* Script handler removed as of v1.0, sorry...
 dtcem.RW_RunScript = function (POST) {
     console.log("In Script handler");
-    
+
     var success = true;
     var status = "Success!";
-    var text = parseInt(POST.ring);
+    var text = parseInt(POST.link);
     var lines = text.split("\n");
     for (var i = 0; i < lines.length; i++) {
         var thisLine = lines[i];
@@ -639,7 +639,7 @@ dtcem.RW_RunScript = function (POST) {
         var value = write(address, val);
         if (value !== val) { success = false; }
     }
-    
+
     if (success) {
         logMessage("the script was run successfully.", "noticed that", POST.who);
     }
@@ -648,7 +648,7 @@ dtcem.RW_RunScript = function (POST) {
         status = "Script did not run successfully!!!";
         console.log("DTC Error Status: " + dtcem.Err);
     }
-    
+
     return status;
 }
 */
@@ -659,10 +659,10 @@ dtcem.RW_RegIO = function (POST) {
     if (POST.option === "read") {
         return dtcem.RO_RegIO(POST);
     }
-    
+
     logMessage(POST.value.toString(16) + " to " + POST.address.toString(16), "wrote", POST.who);
     value = write(POST.address, POST.value);
-    
+
     console.log("Replying with value " + value.toString(16));
     return value.toString(16);
 }

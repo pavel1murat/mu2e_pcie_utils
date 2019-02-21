@@ -5,7 +5,7 @@
 // $RCSfile: .emacs.gnu,v $
 // rev="$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
 
-#include "mu2e_driver/mu2e_mmap_ioctl.h" //
+#include "mu2e_driver/mu2e_mmap_ioctl.h"  //
 
 #include <atomic>
 #include "mu2esim.h"
@@ -26,55 +26,38 @@ public:
 
 	/// <summary>
 	/// Get the amount of time spent by the hardware executing requests, in seconds.
-	/// Time counter is measured in nanoseconds, but this precision should not be relied upon, it's measured by the CPU not the hardware.
+	/// Time counter is measured in nanoseconds, but this precision should not be relied upon, it's measured by the CPU
+	/// not the hardware.
 	/// </summary>
 	/// <returns>Current amount of time spent in hardware calls, in seconds</returns>
-	double GetDeviceTime() const
-	{
-		return deviceTime_ / 1000000000.0;
-	}
+	double GetDeviceTime() const { return deviceTime_ / 1000000000.0; }
 
 	/// <summary>
 	/// Reset the device time counter
 	/// </summary>
-	void ResetDeviceTime()
-	{
-		deviceTime_ = 0;
-	}
+	void ResetDeviceTime() { deviceTime_ = 0; }
 
 	/// <summary>
 	/// Get the current value of the write size counter
 	/// </summary>
 	/// <returns>Value of the write size counter</returns>
-	size_t GetWriteSize() const
-	{
-		return writeSize_;
-	}
+	size_t GetWriteSize() const { return writeSize_; }
 
 	/// <summary>
 	/// Reset the write size counter
 	/// </summary>
-	void ResetWriteSize()
-	{
-		writeSize_ = 0;
-	}
+	void ResetWriteSize() { writeSize_ = 0; }
 
 	/// <summary>
 	/// Gets the current value of the read size counter
 	/// </summary>
 	/// <returns>Value of the read size counter</returns>
-	size_t GetReadSize() const
-	{
-		return readSize_;
-	}
+	size_t GetReadSize() const { return readSize_; }
 
 	/// <summary>
 	/// Reset the read size counter
 	/// </summary>
-	void ResetReadSize()
-	{
-		readSize_ = 0;
-	}
+	void ResetReadSize() { readSize_ = 0; }
 
 	/// <summary>
 	/// Initialize the simulator if simMode requires it, otherwise set up DMA engines
@@ -96,7 +79,7 @@ public:
 	/// <summary>
 	/// Release a number of buffers held by the software on the given channel
 	/// </summary>
-    /// <param name="chn">Channel to release</param>
+	/// <param name="chn">Channel to release</param>
 	/// <param name="num">Number of buffers to release</param>
 	/// <returns>0 when successful (always)</returns>
 	int read_release(int chn, unsigned num);
@@ -143,20 +126,17 @@ public:
 	/// Gets the file descriptor for the mu2e block device (/dev/mu2eX)
 	/// </summary>
 	/// <returns>File descriptor for the mu2e block device</returns>
-	int get_devfd_() const
-	{
-		return devfd_;
-	}
+	int get_devfd_() const { return devfd_; }
 
-	//int  read_pcie_state(m_ioc_pcistate_t *output);
-	//int  read_dma_state(int chn, int dir, m_ioc_engstate_t *output);
-	//int  read_dma_stats(m_ioc_engstats_t *output);
-	//int  read_trn_stats(TRNStatsArray *output);
-	//int  read_test_command(m_ioc_cmd_t *output);
-	//int  write_test_command(m_ioc_cmd_t input, bool start);
+	// int  read_pcie_state(m_ioc_pcistate_t *output);
+	// int  read_dma_state(int chn, int dir, m_ioc_engstate_t *output);
+	// int  read_dma_stats(m_ioc_engstats_t *output);
+	// int  read_trn_stats(TRNStatsArray *output);
+	// int  read_test_command(m_ioc_cmd_t *output);
+	// int  write_test_command(m_ioc_cmd_t input, bool start);
 
 private:
-	//unsigned delta_(int chn, int dir);
+	// unsigned delta_(int chn, int dir);
 
 	int devfd_;
 	volatile void* mu2e_mmap_ptrs_[MU2E_MAX_NUM_DTCS][MU2E_MAX_CHANNELS][2][2];
@@ -168,4 +148,3 @@ private:
 	std::atomic<size_t> writeSize_;
 	std::atomic<size_t> readSize_;
 };
-
