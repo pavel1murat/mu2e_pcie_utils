@@ -18,7 +18,7 @@ fcldir      -
 
 #
 product		 version	optional
-TRACE            v3_13_07
+TRACE            v3_13_11
 gcc              v6_4_0         e15
 gcc              v7_3_0         e17
 swig             v3_0_12c        -       optional
@@ -32,6 +32,7 @@ end_product_list
 qualifier   TRACE     gcc	swig		nodejs	notes
 e17:prof    -nq-      -nq-      e17:prof 	-nq-	-std=c++17
 e17:debug   -nq-      -nq-      e17:debug	-nq- 	-std=c++17
+e15:s67:prof    -nq-      -nq-	e15:prof  	-nq-    -std=c++17
 e15:s64:prof    -nq-      -nq-	e15:prof  	-nq-    -std=c++14
 e15:prof    -nq-      -nq-	e15:prof  	-nq-    -std=c++14
 e15:debug   -nq-      -nq-	e15:debug 	-nq-    -std=c++14
