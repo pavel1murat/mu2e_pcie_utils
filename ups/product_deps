@@ -1,6 +1,6 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent pcie_linux_kernel_module	v2_01_00
+parent pcie_linux_kernel_module	v2_01_01
 defaultqual	e15
 
 # These optional lines define the installed directories where
@@ -18,7 +18,7 @@ fcldir      -
 
 #
 product		 version	optional
-TRACE            v3_13_11
+TRACE            v3_13_12
 gcc              v6_4_0         e15
 gcc              v7_3_0         e17
 swig             v3_0_12c        -       optional
@@ -32,8 +32,6 @@ end_product_list
 qualifier   TRACE     gcc	swig		nodejs	notes
 e17:prof    -nq-      -nq-      e17:prof 	-nq-	-std=c++17
 e17:debug   -nq-      -nq-      e17:debug	-nq- 	-std=c++17
-e15:s67:prof    -nq-      -nq-	e15:prof  	-nq-    -std=c++17
-e15:s64:prof    -nq-      -nq-	e15:prof  	-nq-    -std=c++14
 e15:prof    -nq-      -nq-	e15:prof  	-nq-    -std=c++14
 e15:debug   -nq-      -nq-	e15:debug 	-nq-    -std=c++14
 end_qualifier_list
