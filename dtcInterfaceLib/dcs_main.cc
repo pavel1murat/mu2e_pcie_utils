@@ -14,8 +14,12 @@
 #include <iostream>
 #include <string>
 
-#include "DTC.h"
+#define TRACE_NAME "rocUtil"
 #include "trace.h"
+
+#include "DTC.h"
+
+#define DCS_TLVL(b) b ? 10 : TLVL_INFO
 
 using namespace DTCLib;
 
@@ -117,7 +121,7 @@ int main(int argc, char* argv[])
 					reallyQuiet = true;
 					break;
 				default:
-					std::cout << "Unknown option: " << argv[optind] << std::endl;
+					TLOG(TLVL_ERROR) << "Unknown option: " << argv[optind] << std::endl;
 					printHelpMsg();
 					break;
 				case 'h':
@@ -131,8 +135,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	std::cout.setf(std::ios_base::boolalpha);
-	std::cout << "Options are: "
+	TLOG(TLVL_DEBUG) << "Options are: " << std::boolalpha
 			  << "Operation: " << std::string(op) << ", Num: " << number << ", Link: " << link << ", Delay: " << delay
 			  << ", Address: " << address << ", Data: " << data << ", Block: " << block << ", Quiet Mode: " << quiet
 			  << ", Really Quiet Mode: " << reallyQuiet << std::endl;
@@ -145,14 +148,14 @@ int main(int argc, char* argv[])
 	{
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
-			std::cout << "Operation \"read_register\" " << ii << std::endl;
+			TLOG(TLVL_DEBUG) << "Operation \"read_register\" " << ii << std::endl;
 			auto rocdata = thisDTC->ReadROCRegister(dtc_link, address);
-			if (!reallyQuiet) std::cout << rocdata << '\n';
+			TLOG(DCS_TLVL(reallyQuiet)) << rocdata << '\n';
 		}
 	}
 	else if (op == "reset_roc")
 	{
-		std::cout << "Operation \"reset_roc\"" << std::endl;
+		TLOG(TLVL_DEBUG) << "Operation \"reset_roc\"" << std::endl;
 		thisDTC->WriteExtROCRegister(dtc_link, 12, 1, 0x11);
 		thisDTC->WriteExtROCRegister(dtc_link, 11, 1, 0x11);
 		thisDTC->WriteExtROCRegister(dtc_link, 10, 1, 0x11);
@@ -163,7 +166,7 @@ int main(int argc, char* argv[])
 	{
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
-			std::cout << "Operation \"write_register\" " << ii << std::endl;
+			TLOG(TLVL_DEBUG) << "Operation \"write_register\" " << ii << std::endl;
 			thisDTC->WriteROCRegister(dtc_link, address, data);
 		}
 	}
@@ -171,43 +174,43 @@ int main(int argc, char* argv[])
 	{
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
-			std::cout << "Operation \"read_register\" " << ii << std::endl;
+			TLOG(TLVL_DEBUG) << "Operation \"read_register\" " << ii << std::endl;
 			auto rocdata = thisDTC->ReadExtROCRegister(dtc_link, block, address);
-			if (!reallyQuiet) std::cout << rocdata << '\n';
+			TLOG(DCS_TLVL(reallyQuiet)) << rocdata << '\n';
 		}
 	}
 	else if (op == "write_extregister")
 	{
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
-			std::cout << "Operation \"write_extregister\" " << ii << std::endl;
+			TLOG(TLVL_DEBUG) << "Operation \"write_extregister\" " << ii << std::endl;
 			thisDTC->WriteExtROCRegister(dtc_link, block, address, data);
 		}
 	}
 	else if (op == "test_read")
 	{
-		std::cout << "Operation \"test_read\"" << std::endl;
+		TLOG(TLVL_DEBUG) << "Operation \"test_read\"" << std::endl;
 
 		// thisDTC->SendDCSRequestPacket(dtc_link,  DTC_DCSOperationType_Read, address, quiet);
 
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
-			if (!reallyQuiet) std::cout << "Buffer Read " << ii << std::endl;
+			TLOG(DCS_TLVL(reallyQuiet)) << "Buffer Read " << ii << std::endl;
 			mu2e_databuff_t* buffer;
 			auto tmo_ms = 1500;
 			auto sts = device->read_data(DTC_DMA_Engine_DCS, reinterpret_cast<void**>(&buffer), tmo_ms);
 
-			TRACE(1, "util - read for DCS - ii=%u sts=%d %p", ii, sts, static_cast<void*>(buffer));
+			TLOG(TLVL_DEBUG) << "util - read for DCS - ii=" << ii << ", sts=" << sts << ", buffer=" << (void*)buffer;
 			if (sts > 0)
 			{
 				auto bufSize = *reinterpret_cast<uint64_t*>(&buffer[0]);
-				TRACE(1, "util - bufSize is %llu", static_cast<unsigned long long>(bufSize));
+				TLOG(TLVL_DEBUG) << "util - bufSize is " << bufSize;
 
 				if (!reallyQuiet)
 				{
 					for (unsigned line = 0; line < static_cast<unsigned>(ceil((bufSize - 8) / 16)); ++line)
 					{
-						std::cout << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
+						TLOG(TLVL_INFO) << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
 						// for (unsigned byte = 0; byte < 16; ++byte)
 						for (unsigned byte = 0; byte < 8; ++byte)
 						{
@@ -215,15 +218,13 @@ int main(int argc, char* argv[])
 							{
 								auto thisWord = reinterpret_cast<uint16_t*>(buffer)[4 + line * 8 + byte];
 								// uint8_t thisWord = (((uint8_t*)buffer)[8 + (line * 16) + byte]);
-								std::cout << std::setw(4) << static_cast<int>(thisWord) << " ";
+								TLOG(TLVL_INFO) << std::setw(4) << static_cast<int>(thisWord) << " ";
 							}
 						}
-						std::cout << std::endl;
+						TLOG(TLVL_INFO) << std::endl;
 					}
 				}
 			}
-			if (!reallyQuiet) std::cout << std::endl
-										<< std::endl;
 			device->read_release(DTC_DMA_Engine_DCS, 1);
 			if (delay > 0) usleep(delay);
 		}
@@ -232,30 +233,31 @@ int main(int argc, char* argv[])
 	{
 		if (!thisDTC->ReadSERDESOscillatorClock())
 		{
-			std::cout << "Setting SERDES Oscillator Clock to 2.5 Gbps" << std::endl;
+			TLOG(TLVL_INFO) << "Setting SERDES Oscillator Clock to 2.5 Gbps" << std::endl;
 			thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_25Gbps);
 		}
 		else
 		{
-			std::cout << "Setting SERDES Oscillator Clock to 3.125 Gbps" << std::endl;
+			TLOG(TLVL_INFO) << "Setting SERDES Oscillator Clock to 3.125 Gbps" << std::endl;
 			thisDTC->SetSERDESOscillatorClock(DTC_SerdesClockSpeed_3125Gbps);
 		}
 	}
 	else if (op == "read_release")
 	{
+		TLOG(TLVL_DEBUG) << "Operation \"read_release\"";
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
 			void* buffer;
 			auto tmo_ms = 0;
 			auto stsRD = device->read_data(DTC_DMA_Engine_DCS, &buffer, tmo_ms);
 			auto stsRL = device->read_release(DTC_DMA_Engine_DCS, 1);
-			TRACE(12, "dcs - release/read for DCS ii=%u stsRD=%d stsRL=%d %p", ii, stsRD, stsRL, buffer);
+			TLOG(11) << "dcs - release/read for DCS ii=" << ii << ", stsRD=" << stsRD << ", stsRL=" << stsRL << ", buffer=" << buffer;
 			if (delay > 0) usleep(delay);
 		}
 	}
 	else
 	{
-		std::cout << "Unrecognized operation: " << op << std::endl;
+		TLOG(TLVL_ERROR) << "Unrecognized operation: " << op << std::endl;
 		printHelpMsg();
 	}
 
