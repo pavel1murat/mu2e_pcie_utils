@@ -172,14 +172,14 @@ std::string DTCLib::DTC_DMAPacket::toJSON()
 std::string DTCLib::DTC_DMAPacket::toPacketFormat() { return headerPacketFormat(); }
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket()
-	: DTC_DMAPacket(DTC_PacketType_DCSRequest, DTC_Link_Unused), type_(DTC_DCSOperationType_Unknown), packetCount_(0), address1_(0), data1_(0) {}
+	: DTC_DMAPacket(DTC_PacketType_DCSRequest, DTC_Link_Unused), type_(DTC_DCSOperationType_Unknown), packetCount_(0), address1_(0), data1_(0),address2_(0), data2_(0) {}
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Link_ID link)
-	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link), type_(DTC_DCSOperationType_Unknown), packetCount_(0), address1_(0), data1_(0) {}
+	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link), type_(DTC_DCSOperationType_Unknown), packetCount_(0), address1_(0), data1_(0), address2_(0), data2_(0) {}
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Link_ID link, DTC_DCSOperationType type, bool requestAck,
 												   uint16_t address, uint16_t data)
-	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link), type_(type), requestAck_(requestAck),packetCount_(0), address1_(address), data1_(data) {}
+	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link), type_(type), requestAck_(requestAck),packetCount_(0), address1_(address), data1_(data), address2_(0), data2_(0) {}
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in)
 	: DTC_DMAPacket(in)
@@ -334,6 +334,8 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSRequestPacket::ConvertToDataPacket() const
 		output.SetWord(11, static_cast<uint8_t>(((address2_ & 0xFF00) >> 8)));
 		output.SetWord(12, static_cast<uint8_t>(data2_ & 0xFF));
 		output.SetWord(13, static_cast<uint8_t>(((data2_ & 0xFF00) >> 8)));
+		output.SetWord(14,0);
+		output.SetWord(15,0);
 	}
 	else
 	{
@@ -343,6 +345,9 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSRequestPacket::ConvertToDataPacket() const
 			output.SetWord(wordCounter, word & 0xFF);
 			output.SetWord(wordCounter + 1, (word & 0xFF00) >> 8);
 			wordCounter += 2;
+		}
+		for(;wordCounter < output.size();wordCounter++) {
+			output.SetWord(wordCounter, 0);
 		}
 	}
 	return output;
