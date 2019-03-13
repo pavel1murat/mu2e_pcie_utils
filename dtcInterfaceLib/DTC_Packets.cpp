@@ -172,14 +172,14 @@ std::string DTCLib::DTC_DMAPacket::toJSON()
 std::string DTCLib::DTC_DMAPacket::toPacketFormat() { return headerPacketFormat(); }
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket()
-	: DTC_DMAPacket(DTC_PacketType_DCSRequest, DTC_Link_Unused), type_(DTC_DCSOperationType_Unknown), address1_(0), data1_(0) {}
+	: DTC_DMAPacket(DTC_PacketType_DCSRequest, DTC_Link_Unused), type_(DTC_DCSOperationType_Unknown), packetCount_(0), address1_(0), data1_(0) {}
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Link_ID link)
-	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link), type_(DTC_DCSOperationType_Unknown), address1_(0), data1_(0) {}
+	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link), type_(DTC_DCSOperationType_Unknown), packetCount_(0), address1_(0), data1_(0) {}
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Link_ID link, DTC_DCSOperationType type, bool requestAck,
 												   uint16_t address, uint16_t data)
-	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link), type_(type), requestAck_(requestAck), address1_(address), data1_(data) {}
+	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link), type_(type), requestAck_(requestAck),packetCount_(0), address1_(address), data1_(data) {}
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in)
 	: DTC_DMAPacket(in)

@@ -136,9 +136,9 @@ int main(int argc, char* argv[])
 	}
 
 	TLOG(TLVL_DEBUG) << "Options are: " << std::boolalpha
-			  << "Operation: " << std::string(op) << ", Num: " << number << ", Link: " << link << ", Delay: " << delay
-			  << ", Address: " << address << ", Data: " << data << ", Block: " << block << ", Quiet Mode: " << quiet
-			  << ", Really Quiet Mode: " << reallyQuiet << std::endl;
+					 << "Operation: " << std::string(op) << ", Num: " << number << ", Link: " << link << ", Delay: " << delay
+					 << ", Address: " << address << ", Data: " << data << ", Block: " << block << ", Quiet Mode: " << quiet
+					 << ", Really Quiet Mode: " << reallyQuiet << std::endl;
 
 	auto dtc_link = static_cast<DTC_Link_ID>(link);
 	auto thisDTC = new DTC(DTC_SimMode_NoCFO, -1, (0x1 << (link * 4)));  // rocMask is in hex, not binary

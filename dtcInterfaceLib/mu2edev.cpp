@@ -48,7 +48,8 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode, int dtc)
 		if (devfd_ == -1 || devfd_ == 0) {
 			perror(("open " + std::string(devfile)).c_str());
 			TRACE(1, "mu2e Device file not found and DTCLIB_SIM_ENABLE not set! Exiting.");
-			exit(1);
+			throw std::runtime_error("mu2e Device file not found and DTCLIB_SIM_ENABLE not set! Exiting.");
+			//exit(1);
 		}
 		for (unsigned chn = 0; chn < MU2E_MAX_CHANNELS; ++chn)
 			for (unsigned dir = 0; dir < 2; ++dir) {
@@ -60,7 +61,9 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode, int dtc)
 				sts = ioctl(devfd_, M_IOC_GET_INFO, &get_info);
 				if (sts != 0) {
 					perror("M_IOC_GET_INFO");
-					exit(1);
+
+					throw std::runtime_error("Failed mu2edev::init before ioctl( devfd_, M_IOC_GET_INFO, &get_info)");
+					//exit(1);
 				}
 				mu2e_channel_info_[activeDTC_][chn][dir] = get_info;
 				TRACE(4, "mu2edev::init %d %u:%u - num=%u size=%u hwIdx=%u, swIdx=%u delta=%u", activeDTC_, chn, dir,
@@ -76,7 +79,8 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode, int dtc)
 																	  length, prot, MAP_SHARED, devfd_, offset);
 					if (mu2e_mmap_ptrs_[activeDTC_][chn][dir][map] == MAP_FAILED) {
 						perror("mmap");
-						exit(1);
+						throw std::runtime_error("mmap");
+						//exit(1);
 					}
 					TRACE(4, "mu2edev::init chnDirMap2offset=%lu mu2e_mmap_ptrs_[%d][%d][%d][%d]=%p p=%c l=%lu", offset, dtc, chn,
 						  dir, map, mu2e_mmap_ptrs_[activeDTC_][chn][dir][map], prot == PROT_READ ? 'R' : 'W', length);
