@@ -346,7 +346,7 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSRequestPacket::ConvertToDataPacket() const
 			output.SetWord(wordCounter + 1, (word & 0xFF00) >> 8);
 			wordCounter += 2;
 		}
-		for(;wordCounter < output.size();wordCounter++) {
+		for(;wordCounter < (1 + packetCount_) * 16;wordCounter++) {
 			output.SetWord(wordCounter, 0);
 		}
 	}
