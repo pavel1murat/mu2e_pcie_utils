@@ -150,7 +150,7 @@ int main(int argc, char* argv[])
 		{
 			TLOG(TLVL_DEBUG) << "Operation \"read_register\" " << ii << std::endl;
 			auto rocdata = thisDTC->ReadROCRegister(dtc_link, address);
-			TLOG(DCS_TLVL(reallyQuiet)) << rocdata << '\n';
+			TLOG(DCS_TLVL(reallyQuiet)) << "ROC " << dtc_link << " returned " << rocdata << " for address " << address;
 		}
 	}
 	else if (op == "reset_roc")
@@ -176,7 +176,7 @@ int main(int argc, char* argv[])
 		{
 			TLOG(TLVL_DEBUG) << "Operation \"read_register\" " << ii << std::endl;
 			auto rocdata = thisDTC->ReadExtROCRegister(dtc_link, block, address);
-			TLOG(DCS_TLVL(reallyQuiet)) << rocdata << '\n';
+			TLOG(DCS_TLVL(reallyQuiet)) << "ROC " << dtc_link << " returned " << rocdata << " for address " << address << ", block " << block;
 		}
 	}
 	else if (op == "write_extregister")
