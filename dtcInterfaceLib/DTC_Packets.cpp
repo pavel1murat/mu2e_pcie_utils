@@ -82,9 +82,10 @@ std::string DTCLib::DTC_DataPacket::toPacketFormat() const
 	std::stringstream ss;
 	ss << std::setfill('0') << std::hex;
 	for (uint16_t ii = 0; ii < dataSize_ - 1; ii += 2) {
-		ss << "0x" << std::setw(6) << static_cast<int>(dataPtr_[ii + 1]) << "\t";
-		ss << "0x" << std::setw(6) << static_cast<int>(dataPtr_[ii]) << "\n";
+		ss << "0x" << std::setw(2) << static_cast<int>(dataPtr_[ii + 1]) << "\t";
+		ss << "0x" << std::setw(2) << static_cast<int>(dataPtr_[ii]) << "\n";
 	}
+	ss << std::dec;
 	return ss.str();
 }
 
@@ -123,7 +124,7 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DMAPacket::ConvertToDataPacket() const
 	}
 
 
-	std::cout << "ConvertToDataPacket: " << output.toPacketFormat() << std::endl;
+	std::cout << "ConvertToDataPacket: \n" << output.toPacketFormat() << std::endl;
 
 	return output;
 }

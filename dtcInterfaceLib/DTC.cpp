@@ -657,7 +657,7 @@ void DTCLib::DTC::SendDCSRequestPacket(const DTC_Link_ID& link, const DTC_DCSOpe
 
 	TLOG(TLVL_SendDCSRequestPacket) << "SendDCSRequestPacket before WriteDMADCSPacket - DTC_DCSRequestPacket";
 
-	if (!quiet) std::cout << "Sending DCS Packet: " << req.toJSON() << std::endl;
+	if (!quiet) std::cout << "Sending DCS Packet: \n" << req.toJSON() << std::endl;
 
 	if (!ReadDCSReception()) EnableDCSReception();
 
@@ -944,6 +944,18 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DataPacket& packet)
 	memcpy(&buf[0], &size, sizeof(uint64_t));
 	memcpy(&buf[8], packet.GetData(), packet.GetSize() * sizeof(uint8_t));
 
+	{
+		std::stringstream ss;
+		ss << std::setfill('0') << std::hex;
+		for (uint16_t ii = 0; ii < packet.GetSize()+8 - 1; ii += 2) {
+			ss << "0x" << std::setw(2) << static_cast<int>(buf[ii + 1]) << "\t";
+			ss << "0x" << std::setw(2) << static_cast<int>(buf[ii]) << "\n";
+		}
+		ss << std::dec;
+
+		std::cout << "Buffer being sent: \n" << ss.str() << std::endl;
+	}
+
 	auto retry = 3;
 	int errorCode;
 	do
@@ -959,4 +971,7 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DataPacket& packet)
 	}
 }
 
-void DTCLib::DTC::WriteDMAPacket(const DTC_DMAPacket& packet) { WriteDataPacket(packet.ConvertToDataPacket()); }
+void DTCLib::DTC::WriteDMAPacket(const DTC_DMAPacket& packet)
+{
+	WriteDataPacket(packet.ConvertToDataPacket());
+}
