@@ -415,7 +415,10 @@ uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint16_t ad
 {
 	dcsDMAInfo_.currentReadPtr = nullptr;
 	ReleaseBuffers(DTC_DMA_Engine_DCS);
-	SendDCSRequestPacket(link, DTC_DCSOperationType_Read, address);
+	SendDCSRequestPacket(link, DTC_DCSOperationType_Read, address,
+			 0x0 /*data*/, 0x0 /*address2*/, 0x0 /*data2*/,
+										false  /*quiet*/);
+
 	usleep(2500);
 	uint16_t data = 0xFFFF;
 	while (retries > 0) {
