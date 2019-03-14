@@ -947,7 +947,7 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DataPacket& packet)
 	{
 		std::stringstream ss;
 		ss << std::setfill('0') << std::hex;
-		for (uint16_t ii = 0; ii < packet.GetSize()+8 - 1; ii += 2) {
+		for (uint16_t ii = 0; ii < size - 1; ii += 2) {
 			ss << "0x" << std::setw(2) << static_cast<int>(buf[ii + 1]) << "\t";
 			ss << "0x" << std::setw(2) << static_cast<int>(buf[ii]) << "\n";
 		}
