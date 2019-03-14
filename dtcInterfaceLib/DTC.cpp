@@ -656,11 +656,10 @@ void DTCLib::DTC::SendDCSRequestPacket(const DTC_Link_ID& link, const DTC_DCSOpe
 	}
 
 	TLOG(TLVL_SendDCSRequestPacket) << "SendDCSRequestPacket before WriteDMADCSPacket - DTC_DCSRequestPacket";
-	if (!quiet) std::cout << req.toJSON() << std::endl;
+
+	if (!quiet) std::cout << "Sending DCS Packet: " << req.toJSON() << std::endl;
 
 	if (!ReadDCSReception()) EnableDCSReception();
-
-	if(!quiet) std::cout << "Writing DMA Packet: 0x" << std::hex << req << std::dec << std::endl;
 
 	WriteDMAPacket(req);
 	TLOG(TLVL_SendDCSRequestPacket) << "SendDCSRequestPacket after  WriteDMADCSPacket - DTC_DCSRequestPacket";
