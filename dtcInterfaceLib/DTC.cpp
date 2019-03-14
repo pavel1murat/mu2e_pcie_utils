@@ -651,7 +651,7 @@ void DTCLib::DTC::SendDCSRequestPacket(const DTC_Link_ID& link, const DTC_DCSOpe
 	DTC_DCSRequestPacket req(link, type, false /*requestAck*/, address, data);
 
 	if (type == DTC_DCSOperationType_DoubleRead ||
-			type === DTC_DCSOperationType_DoubleWrite) {
+			type == DTC_DCSOperationType_DoubleWrite) {
 		req.AddRequest(address2, data2);
 	}
 
@@ -659,6 +659,8 @@ void DTCLib::DTC::SendDCSRequestPacket(const DTC_Link_ID& link, const DTC_DCSOpe
 	if (!quiet) std::cout << req.toJSON() << std::endl;
 
 	if (!ReadDCSReception()) EnableDCSReception();
+
+	if(!quiet) std::cout << "Writing DMA Packet: 0x" << std::hex << req << std::dec << std::endl;
 
 	WriteDMAPacket(req);
 	TLOG(TLVL_SendDCSRequestPacket) << "SendDCSRequestPacket after  WriteDMADCSPacket - DTC_DCSRequestPacket";
