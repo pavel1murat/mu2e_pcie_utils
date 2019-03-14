@@ -459,7 +459,9 @@ uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint16_t ad
 
 void DTCLib::DTC::WriteROCRegister(const DTC_Link_ID& link, const uint16_t address, const uint16_t data)
 {
-	SendDCSRequestPacket(link, DTC_DCSOperationType_Write, address, data);
+	SendDCSRequestPacket(link, DTC_DCSOperationType_Write, address, data,
+			0x0 /*address2*/, 0x0 /*data2*/,
+			false  /*quiet*/);
 }
 
 std::pair<uint16_t, uint16_t> DTCLib::DTC::ReadROCRegisters(const DTC_Link_ID& link, const uint16_t address1,
