@@ -121,6 +121,8 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DMAPacket::ConvertToDataPacket() const
 	for (uint16_t i = 4; i < byteCount_; ++i) {
 		output.SetWord(i, 0);
 	}
+	std::cout << "ConverToDataPacket: 0x" << std::hex << output << std::dec << std::endl;
+
 	return output;
 }
 

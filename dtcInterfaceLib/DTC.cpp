@@ -596,7 +596,8 @@ void DTCLib::DTC::WriteROCBlock(const DTC_Link_ID& link, const uint16_t address,
 	TLOG(TLVL_SendDCSRequestPacket) << "WriteROCBlock after  WriteDMADCSPacket - DTC_DCSRequestPacket";
 }
 
-uint16_t DTCLib::DTC::ReadExtROCRegister(const DTC_Link_ID& link, const uint16_t block, const uint16_t address)
+uint16_t DTCLib::DTC::ReadExtROCRegister(const DTC_Link_ID& link, const uint16_t block,
+		const uint16_t address)
 {
 	uint16_t addressT = address & 0x7FFF;
 	WriteROCRegister(link, 12, block);
@@ -605,7 +606,8 @@ uint16_t DTCLib::DTC::ReadExtROCRegister(const DTC_Link_ID& link, const uint16_t
 	return ReadROCRegister(link, 22);
 }
 
-void DTCLib::DTC::WriteExtROCRegister(const DTC_Link_ID& link, const uint16_t block, const uint16_t address,
+void DTCLib::DTC::WriteExtROCRegister(const DTC_Link_ID& link, const uint16_t block,
+		const uint16_t address,
 									  const uint16_t data)
 {
 	uint16_t dataT = data & 0x7FFF;
@@ -646,9 +648,10 @@ void DTCLib::DTC::SendReadoutRequestPacket(const DTC_Link_ID& link, const DTC_Ti
 void DTCLib::DTC::SendDCSRequestPacket(const DTC_Link_ID& link, const DTC_DCSOperationType type, const uint16_t address,
 									   const uint16_t data, const uint16_t address2, const uint16_t data2, bool quiet)
 {
-	DTC_DCSRequestPacket req(link, type, false, address, data);
+	DTC_DCSRequestPacket req(link, type, false /*requestAck*/, address, data);
 
-	if (address2 != 0) {
+	if (type == DTC_DCSOperationType_DoubleRead ||
+			type === DTC_DCSOperationType_DoubleWrite) {
 		req.AddRequest(address2, data2);
 	}
 

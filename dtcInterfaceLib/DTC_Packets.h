@@ -43,6 +43,8 @@ enum DTC_DCSOperationType : uint8_t
 	DTC_DCSOperationType_Write = 1,
 	DTC_DCSOperationType_BlockRead = 2,
 	DTC_DCSOperationType_BlockWrite = 3,
+	DTC_DCSOperationType_DoubleRead = 4,
+	DTC_DCSOperationType_DoubleWrite = 5,
 	DTC_DCSOperationType_Unknown = 0xF
 };
 
