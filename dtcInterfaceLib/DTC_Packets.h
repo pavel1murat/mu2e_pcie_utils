@@ -240,7 +240,8 @@ public:
 	/// <returns>True if successful</returns>
 	bool CramIn(DTC_DataPacket& other, int offset)
 	{
-		if (other.dataSize_ + offset <= dataSize_) {
+		if (other.dataSize_ + offset <= dataSize_)
+		{
 			memcpy(const_cast<uint8_t*>(dataPtr_) + offset, other.dataPtr_, other.dataSize_);
 			return true;
 		}
@@ -433,8 +434,10 @@ public:
 	/// <param name="requestAck">Whether to request acknowledement of this operation</param>
 	/// <param name="address">Address of ROC register</param>
 	/// <param name="data">Data/wordCount for operation</param>
+	/// <param name="address2">Address of ROC register</param>
+	/// <param name="data2">Data/wordCount for operation</param>
 	DTC_DCSRequestPacket(DTC_Link_ID link, DTC_DCSOperationType type, bool requestAck, uint16_t address,
-						 uint16_t data = 0x0);
+						 uint16_t data = 0x0, uint16_t address2 = 0x0, uint16_t data2 = 0x0);
 	/// <summary>
 	/// Default Copy Constructor
 	/// </summary>
@@ -476,7 +479,7 @@ public:
 	/// Read the double operation bit from the DCS Request packet
 	/// </summary>
 	/// <returns>Whether the Double operation bit is set</returns>
-	bool IsDoubleOp() const { return doubleOp_; }
+	bool IsDoubleOp() const { return (type_ & 0x4) != 0; }
 
 	/// <summary>
 	/// Read the request acknowledement bit from the DCS Request Packet
@@ -544,7 +547,6 @@ public:
 
 private:
 	DTC_DCSOperationType type_;
-	bool doubleOp_;
 	bool requestAck_;
 	uint16_t packetCount_;
 	uint16_t address1_;

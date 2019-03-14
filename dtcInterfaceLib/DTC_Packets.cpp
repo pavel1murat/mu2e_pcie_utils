@@ -185,10 +185,10 @@ DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Link_ID link)
 	  packetCount_(0), address1_(0), data1_(0), address2_(0), data2_(0) {}
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Link_ID link, DTC_DCSOperationType type, bool requestAck,
-												   uint16_t address, uint16_t data)
+												   uint16_t address, uint16_t data, uint16_t address2, uint16_t data2)
 	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link), type_(type),
 	  requestAck_(requestAck),packetCount_(0), address1_(address), data1_(data),
-	  address2_(0), data2_(0) {}
+	  address2_(address2), data2_(data2) {}
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in)
 	: DTC_DMAPacket(in)
@@ -198,8 +198,7 @@ DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in)
 		TLOG(TLVL_ERROR) << ex.what();
 		throw ex;
 	}
-	type_ = static_cast<DTC_DCSOperationType>(in.GetData()[4] & 0x3);
-	doubleOp_ = (in.GetData()[4] & 0x4) == 0x4;
+	type_ = static_cast<DTC_DCSOperationType>(in.GetData()[4] & 0x7);
 	requestAck_ = (in.GetData()[4] & 0x8) == 0x8;
 
 	packetCount_ = (in.GetData()[4] >> 6) + (in.GetData()[5] << 2);
@@ -228,7 +227,6 @@ std::string DTCLib::DTC_DCSRequestPacket::toJSON()
 	ss << "\"DCSRequestPacket\": {";
 	ss << headerJSON() << ", ";
 	ss << "\"Operation Type\":" << DTC_DCSOperationTypeConverter(type_) << ", ";
-	ss << "\"Double Operation\":" << (doubleOp_ ? "\"true\"" : "\"false\"") << ", ";
 	ss << "\"Request Acknowledgement\":" << (requestAck_ ? "\"true\"" : "\"false\"") << ", ";
 	ss << "\"Address1\": " << static_cast<int>(address1_) << ", ";
 	if (type_ != DTC_DCSOperationType_BlockWrite) {
@@ -258,7 +256,7 @@ std::string DTCLib::DTC_DCSRequestPacket::toPacketFormat()
 
 	auto firstWord = (packetCount_ & 0x3FC) >> 2;
 	auto secondWord =
-		((packetCount_ & 0x3) << 6) + (requestAck_ ? 0x8 : 0) + (doubleOp_ ? 0x4 : 0) + static_cast<int>(type_);
+		((packetCount_ & 0x3) << 6) + (requestAck_ ? 0x8 : 0) + (static_cast<int>(type_) & 0x7);
 	ss << std::setw(8) << firstWord << "\t" << secondWord << std::endl;
 
 	ss << std::setw(8) << ((address1_ & 0xFF00) >> 8) << "\t" << (address1_ & 0xFF) << std::endl;
@@ -297,7 +295,7 @@ std::string DTCLib::DTC_DCSRequestPacket::toPacketFormat()
 
 void DTCLib::DTC_DCSRequestPacket::AddRequest(uint16_t address, uint16_t data)
 {
-	if (doubleOp_) {
+	if (IsDoubleOp()) {
 		auto ex = DTC_IOErrorException(255);
 		TLOG(TLVL_ERROR) << "DCS Request already has two requests, cannot add another! " << ex.what();
 		throw ex;
@@ -307,7 +305,7 @@ void DTCLib::DTC_DCSRequestPacket::AddRequest(uint16_t address, uint16_t data)
 		TLOG(TLVL_ERROR) << "Cannot add second request to Block Read or Block Write operations! " << ex.what();
 		throw ex;
 	}
-	doubleOp_ = true;
+	type_ = static_cast<DTC_DCSOperationType>(type_ | 0x4);
 	address2_ = address;
 	data2_ = data;
 }
@@ -330,9 +328,15 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSRequestPacket::ConvertToDataPacket() const
 {
 	auto output = DTC_DMAPacket::ConvertToDataPacket();
 
+	auto type = type_;
+	if (address2_ == 0 && data2_ == 0 && (type_ == DTC_DCSOperationType_DoubleRead || type_ == DTC_DCSOperationType_DoubleWrite))
+	{
+		type = static_cast<DTC_DCSOperationType>(type_ & 0x3);
+	}
+
 	auto firstWord = (packetCount_ & 0x3FC) >> 2;
 	auto secondWord =
-		((packetCount_ & 0x3) << 6) + (requestAck_ ? 0x8 : 0) + (doubleOp_ ? 0x4 : 0) + static_cast<int>(type_);
+		((packetCount_ & 0x3) << 6) + (requestAck_ ? 0x8 : 0) + (static_cast<int>(type) & 0x7);
 	output.SetWord(4, static_cast<uint8_t>(secondWord));
 	output.SetWord(5, static_cast<uint8_t>(firstWord));
 
@@ -341,7 +345,7 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSRequestPacket::ConvertToDataPacket() const
 	output.SetWord(8, static_cast<uint8_t>(data1_ & 0xFF));
 	output.SetWord(9, static_cast<uint8_t>(((data1_ & 0xFF00) >> 8)));
 
-	if (type_ != DTC_DCSOperationType_BlockWrite) {
+	if (type != DTC_DCSOperationType_BlockWrite) {
 		output.SetWord(10, static_cast<uint8_t>(address2_ & 0xFF));
 		output.SetWord(11, static_cast<uint8_t>(((address2_ & 0xFF00) >> 8)));
 		output.SetWord(12, static_cast<uint8_t>(data2_ & 0xFF));
