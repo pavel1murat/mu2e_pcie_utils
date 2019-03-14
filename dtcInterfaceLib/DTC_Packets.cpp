@@ -82,8 +82,8 @@ std::string DTCLib::DTC_DataPacket::toPacketFormat() const
 	std::stringstream ss;
 	ss << std::setfill('0') << std::hex;
 	for (uint16_t ii = 0; ii < dataSize_ - 1; ii += 2) {
-		ss << "0x" << std::setw(2) << static_cast<int>(dataPtr_[ii + 1]) << "\t";
-		ss << "0x" << std::setw(2) << static_cast<int>(dataPtr_[ii]) << "\n";
+		ss << "0x" << std::setw(2) << static_cast<int>(dataPtr_[ii + 1]) << " ";
+		ss << "" << std::setw(2) << static_cast<int>(dataPtr_[ii]) << "\n";
 	}
 	ss << std::dec;
 	return ss.str();
@@ -177,14 +177,18 @@ std::string DTCLib::DTC_DMAPacket::toJSON()
 std::string DTCLib::DTC_DMAPacket::toPacketFormat() { return headerPacketFormat(); }
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket()
-	: DTC_DMAPacket(DTC_PacketType_DCSRequest, DTC_Link_Unused), type_(DTC_DCSOperationType_Unknown), packetCount_(0), address1_(0), data1_(0),address2_(0), data2_(0) {}
+	: DTC_DMAPacket(DTC_PacketType_DCSRequest, DTC_Link_Unused),
+	  type_(DTC_DCSOperationType_Unknown), packetCount_(0), address1_(0), data1_(0),address2_(0), data2_(0) {}
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Link_ID link)
-	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link), type_(DTC_DCSOperationType_Unknown), packetCount_(0), address1_(0), data1_(0), address2_(0), data2_(0) {}
+	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link), type_(DTC_DCSOperationType_Unknown),
+	  packetCount_(0), address1_(0), data1_(0), address2_(0), data2_(0) {}
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Link_ID link, DTC_DCSOperationType type, bool requestAck,
 												   uint16_t address, uint16_t data)
-	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link), type_(type), requestAck_(requestAck),packetCount_(0), address1_(address), data1_(data), address2_(0), data2_(0) {}
+	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link), type_(type),
+	  requestAck_(requestAck),packetCount_(0), address1_(address), data1_(data),
+	  address2_(0), data2_(0) {}
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in)
 	: DTC_DMAPacket(in)
@@ -214,6 +218,8 @@ DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in)
 		address2_ = in.GetData()[10] + (in.GetData()[11] << 8);
 		data2_ = in.GetData()[12] + (in.GetData()[13] << 8);
 	}
+
+	std::cout << "Constructor copy: " << toJSON() << std::endl;
 }
 
 std::string DTCLib::DTC_DCSRequestPacket::toJSON()
@@ -241,6 +247,7 @@ std::string DTCLib::DTC_DCSRequestPacket::toJSON()
 		}
 	}
 	ss << "}";
+
 	return ss.str();
 }
 

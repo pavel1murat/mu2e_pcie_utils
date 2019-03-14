@@ -78,6 +78,10 @@ struct DTC_DCSOperationTypeConverter
 				return "BlockRead";
 			case DTC_DCSOperationType_BlockWrite:
 				return "BlockWrite";
+			case DTC_DCSOperationType_DoubleRead:
+				return "DoubleRead";
+			case DTC_DCSOperationType_DoubleWrite:
+				return "DoubleWrite";
 			case DTC_DCSOperationType_Unknown:
 			default:
 				return "Unknown";
@@ -105,6 +109,12 @@ struct DTC_DCSOperationTypeConverter
 				break;
 			case DTC_DCSOperationType_BlockWrite:
 				stream << "\"BlockWrite\"";
+				break;
+			case DTC_DCSOperationType_DoubleRead:
+				stream << "\"DoubleRead\"";
+				break;
+			case DTC_DCSOperationType_DoubleWrite:
+				stream << "\"DoubleWrite\"";
 				break;
 			case DTC_DCSOperationType_Unknown:
 			default:

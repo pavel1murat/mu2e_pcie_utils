@@ -650,8 +650,12 @@ void DTCLib::DTC::SendDCSRequestPacket(const DTC_Link_ID& link, const DTC_DCSOpe
 {
 	DTC_DCSRequestPacket req(link, type, false /*requestAck*/, address, data);
 
+	if (!quiet) std::cout << "Init DCS Packet: \n" << req.toJSON() << std::endl;
+
 	if (type == DTC_DCSOperationType_DoubleRead ||
-			type == DTC_DCSOperationType_DoubleWrite) {
+			type == DTC_DCSOperationType_DoubleWrite)
+	{
+		std::cout << "Double operation enabled!" << std::endl;
 		req.AddRequest(address2, data2);
 	}
 
@@ -948,8 +952,8 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DataPacket& packet)
 		std::stringstream ss;
 		ss << std::setfill('0') << std::hex;
 		for (uint16_t ii = 0; ii < size - 1; ii += 2) {
-			ss << "0x" << std::setw(2) << static_cast<int>(buf[ii + 1]) << "\t";
-			ss << "0x" << std::setw(2) << static_cast<int>(buf[ii]) << "\n";
+			ss << "0x" << std::setw(2) << static_cast<int>(buf[ii + 1]) << " ";
+			ss << "" << std::setw(2) << static_cast<int>(buf[ii]) << "\n";
 		}
 		ss << std::dec;
 
