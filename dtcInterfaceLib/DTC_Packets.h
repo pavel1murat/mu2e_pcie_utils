@@ -35,7 +35,7 @@ enum DTC_DataStatus
 };
 
 /// <summary>
-/// Possible values for the Op word of the DCS Reqeust packet.
+/// Possible values for the Op word of the DCS Request packet.
 /// </summary>
 enum DTC_DCSOperationType : uint8_t
 {
@@ -49,7 +49,7 @@ enum DTC_DCSOperationType : uint8_t
 };
 
 /// <summary>
-/// Convert a DTC_DCSOperationType eunumeration value to its string or JSON representation
+/// Convert a DTC_DCSOperationType enumeration value to its string or JSON representation
 /// </summary>
 struct DTC_DCSOperationTypeConverter
 {
@@ -202,7 +202,7 @@ public:
 	/// <returns>Value of the word</returns>
 	uint8_t GetWord(uint16_t index) const;
 	/// <summary>
-	/// Creates a JSON represenation of the DTC_DataPacket
+	/// Creates a JSON representation of the DTC_DataPacket
 	/// </summary>
 	/// <returns>JSON-formatted string representation of the DTC_DataPacket</returns>
 	std::string toJSON() const;
@@ -482,9 +482,9 @@ public:
 	bool IsDoubleOp() const { return (type_ & 0x4) != 0; }
 
 	/// <summary>
-	/// Read the request acknowledement bit from the DCS Request Packet
+	/// Read the request acknowledgment bit from the DCS Request Packet
 	/// </summary>
-	/// <returns>Whether the request acknowledement bit is set</returns>
+	/// <returns>Whether the request acknowledgment bit is set</returns>
 	bool RequestsAck() const { return requestAck_; }
 
 	/// <summary>
@@ -522,7 +522,7 @@ public:
 	/// Sets the opcode of the DCS Request Packet
 	/// </summary>
 	/// <param name="type">Opcode to set</param>
-	/// <param name="reqAck">Whether to request acknowledement of this operation</param>
+	/// <param name="reqAck">Whether to request acknowledgment of this operation</param>
 	void SetType(DTC_DCSOperationType type, bool reqAck)
 	{
 		requestAck_ = reqAck;
@@ -757,7 +757,7 @@ public:
 	bool IsDoubleOperation() const { return doubleOp_; }
 
 	/// <summary>
-	/// Get the "request acknowledgement" bit from the DCS Reply packet
+	/// Get the "request acknowledgment" bit from the DCS Reply packet
 	/// </summary>
 	/// <returns></returns>
 	bool IsAckRequested() const { return requestAck_; }
