@@ -156,18 +156,18 @@ int main(int argc, char* argv[])
 	else if (op == "reset_roc")
 	{
 		TLOG(TLVL_DEBUG) << "Operation \"reset_roc\"" << std::endl;
-		thisDTC->WriteExtROCRegister(dtc_link, 12, 1, 0x11);
-		thisDTC->WriteExtROCRegister(dtc_link, 11, 1, 0x11);
-		thisDTC->WriteExtROCRegister(dtc_link, 10, 1, 0x11);
-		thisDTC->WriteExtROCRegister(dtc_link, 9, 1, 0x11);
-		thisDTC->WriteExtROCRegister(dtc_link, 8, 1, 0x11);
+		thisDTC->WriteExtROCRegister(dtc_link, 12, 1, 0x11, false);
+		thisDTC->WriteExtROCRegister(dtc_link, 11, 1, 0x11, false);
+		thisDTC->WriteExtROCRegister(dtc_link, 10, 1, 0x11, false);
+		thisDTC->WriteExtROCRegister(dtc_link, 9, 1, 0x11, false);
+		thisDTC->WriteExtROCRegister(dtc_link, 8, 1, 0x11, false);
 	}
 	else if (op == "write_register")
 	{
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
 			TLOG(TLVL_DEBUG) << "Operation \"write_register\" " << ii << std::endl;
-			thisDTC->WriteROCRegister(dtc_link, address, data);
+			thisDTC->WriteROCRegister(dtc_link, address, data, false);
 		}
 	}
 	else if (op == "read_extregister")
@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
 			TLOG(TLVL_DEBUG) << "Operation \"write_extregister\" " << ii << std::endl;
-			thisDTC->WriteExtROCRegister(dtc_link, block, address, data);
+			thisDTC->WriteExtROCRegister(dtc_link, block, address, data, false);
 		}
 	}
 	else if (op == "test_read")

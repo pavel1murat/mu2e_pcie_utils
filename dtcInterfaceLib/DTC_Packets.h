@@ -432,11 +432,12 @@ public:
 	/// <param name="link">Link ID for packet</param>
 	/// <param name="type">OpCode of packet</param>
 	/// <param name="requestAck">Whether to request acknowledement of this operation</param>
+	/// <param name="incrementAddress">Whether to increment the address pointer for block reads/writes</param>
 	/// <param name="address">Address of ROC register</param>
 	/// <param name="data">Data/wordCount for operation</param>
 	/// <param name="address2">Address of ROC register</param>
 	/// <param name="data2">Data/wordCount for operation</param>
-	DTC_DCSRequestPacket(DTC_Link_ID link, DTC_DCSOperationType type, bool requestAck, uint16_t address,
+	DTC_DCSRequestPacket(DTC_Link_ID link, DTC_DCSOperationType type, bool requestAck, bool incrementAddress, uint16_t address,
 						 uint16_t data = 0x0, uint16_t address2 = 0x0, uint16_t data2 = 0x0);
 	/// <summary>
 	/// Default Copy Constructor
@@ -488,6 +489,12 @@ public:
 	bool RequestsAck() const { return requestAck_; }
 
 	/// <summary>
+	/// Read the increment address bit from the DCS Request Packet
+	/// </summary>
+	/// <returns>Whether the increment address bit is set</returns>
+	bool IncrementsAddress() const { return incrementAddress_; }
+
+	/// <summary>
 	/// Get the request from the DCS Request Packet
 	/// </summary>
 	/// <param name="secondOp">Whether to read the second request</param>
@@ -523,9 +530,11 @@ public:
 	/// </summary>
 	/// <param name="type">Opcode to set</param>
 	/// <param name="reqAck">Whether to request acknowledgment of this operation</param>
-	void SetType(DTC_DCSOperationType type, bool reqAck)
+	/// <param name="incAddress">Whether to increment the address pointer for block reads/writes</param>
+	void SetType(DTC_DCSOperationType type, bool reqAck, bool incAddress)
 	{
 		requestAck_ = reqAck;
+		incrementAddress_ = incAddress;
 		type_ = type;
 	}
 
@@ -548,6 +557,7 @@ public:
 private:
 	DTC_DCSOperationType type_;
 	bool requestAck_;
+	bool incrementAddress_;
 	uint16_t packetCount_;
 	uint16_t address1_;
 	uint16_t data1_;     ///< Also, blockWriteData0_

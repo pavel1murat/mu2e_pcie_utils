@@ -184,10 +184,10 @@ DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Link_ID link)
 	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link), type_(DTC_DCSOperationType_Unknown),
 	  packetCount_(0), address1_(0), data1_(0), address2_(0), data2_(0) {}
 
-DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Link_ID link, DTC_DCSOperationType type, bool requestAck,
+DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Link_ID link, DTC_DCSOperationType type, bool requestAck, bool incrementAddress,
 												   uint16_t address, uint16_t data, uint16_t address2, uint16_t data2)
 	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link), type_(type),
-	  requestAck_(requestAck),packetCount_(0), address1_(address), data1_(data),
+	  requestAck_(requestAck), incrementAddress_(incrementAddress), packetCount_(0), address1_(address), data1_(data),
 	  address2_(address2), data2_(data2) {}
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in)
@@ -200,6 +200,7 @@ DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in)
 	}
 	type_ = static_cast<DTC_DCSOperationType>(in.GetData()[4] & 0x7);
 	requestAck_ = (in.GetData()[4] & 0x8) == 0x8;
+	incrementAddress_ = (in.GetData()[4] & 0x10) == 0x10;
 
 	packetCount_ = (in.GetData()[4] >> 6) + (in.GetData()[5] << 2);
 	address1_ = in.GetData()[6] + (in.GetData()[7] << 8);
@@ -314,8 +315,13 @@ void DTCLib::DTC_DCSRequestPacket::UpdatePacketAndWordCounts()
 {
 	assert(blockWriteData_.size() < 0x10000);
 
-	if (type_ == DTC_DCSOperationType_BlockWrite) {
+	if (type_ == DTC_DCSOperationType_BlockWrite)
+	{
 		data1_ = blockWriteData_.size();
+	}
+
+	if (type_ == DTC_DCSOperationType_BlockRead || type_ == DTC_DCSOperationType_BlockWrite)
+	{
 		packetCount_ = (data1_ - 3) / 8 + ((data1_ - 3) % 8 ? 1 : 0);
 	}
 	else
