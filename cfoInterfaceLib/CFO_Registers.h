@@ -148,11 +148,10 @@ public:
 	/// </summary>
 	/// <param name="mode">Default: CFO_SimMode_Disabled; The simulation mode of the CFO</param>
 	/// <param name="CFO">CFO/DTC card instance to use</param>
-	/// <param name="dtcMask">The initially-enabled DTCs. Each digit corresponds to a Link, so all DTCs =
-	/// 0xFFFFFFFF</param> <param name="skipInit">Default: false; Whether to skip initializing the CFO using the SimMode.
+	/// <param name="skipInit">Default: false; Whether to skip initializing the CFO using the SimMode.
 	/// Used to read state.</param> <param name="expectedDesignVersion">Expected CFO Firmware Design Version. If set, will
 	/// throw an exception if the CFO firmware does not match (Default: "")</param>
-	explicit CFO_Registers(DTC_SimMode mode, int CFO, unsigned dtcMask = 0, std::string expectedDesignVersion = "",
+	explicit CFO_Registers(DTC_SimMode mode, int CFO,  std::string expectedDesignVersion = "",
 						   bool skipInit = false);
 	/// <summary>
 	/// CFO_Registers destructor

@@ -21,7 +21,7 @@
 #define THREADED_CFO_EMULATOR 1
 
 mu2esim::mu2esim()
-	: registers_(), swIdx_(), detSimLoopCount_(0), dmaData_(), ddrFile_("mu2esim.bin", std::ios::binary | std::ios::in | std::ios::out), mode_(DTCLib::DTC_SimMode_Disabled), simIndex_(), cancelCFO_(true), readoutRequestReceived_(), currentTimestamp_(0xFFFFFFFFFFFF), currentEventSize_(0), eventBegin_(ddrFile_.tellp())
+	: registers_(), swIdx_()/*, detSimLoopCount_(0)*/, dmaData_(), ddrFile_("mu2esim.bin", std::ios::binary | std::ios::in | std::ios::out), mode_(DTCLib::DTC_SimMode_Disabled), simIndex_(), cancelCFO_(true), readoutRequestReceived_(), currentTimestamp_(0xFFFFFFFFFFFF), currentEventSize_(0), eventBegin_(ddrFile_.tellp())
 {
 	TLOG(10) << "mu2esim::mu2esim BEGIN";
 	swIdx_[0] = 0;
@@ -65,21 +65,29 @@ int mu2esim::init(DTCLib::DTC_SimMode mode)
 	TLOG(11) << "Initializing registers";
 	// Set initial register values...
 	registers_[DTCLib::DTC_Register_DesignVersion] = 0x00006363;              // v99.99
-	registers_[DTCLib::DTC_Register_DesignDate] = 0x53494D44;                 // SIMD in ASCII
+	registers_[DTCLib::DTC_Register_DesignDate] = 0x53494D44; // SIMD in ASCII      
+	registers_[DTCLib::DTC_Register_DesignStatus] = 0,
+	registers_[DTCLib::DTC_Register_VivadoVersion] = 0,
+	registers_[DTCLib::DTC_Register_FPGA_Temperature] = 0,
+	registers_[DTCLib::DTC_Register_FPGA_VCCINT] = 0,
+	registers_[DTCLib::DTC_Register_FPGA_VCCAUX] = 0,
+	registers_[DTCLib::DTC_Register_FPGA_VCCBRAM] = 0,
+	registers_[DTCLib::DTC_Register_FPGA_MonitorAlarm] = 0,
 	registers_[DTCLib::DTC_Register_DTCControl] = 0x00000003;                 // System Clock, Timing Enable
 	registers_[DTCLib::DTC_Register_DMATransferLength] = 0x80000010;          // Default value from HWUG
 	registers_[DTCLib::DTC_Register_SERDESLoopbackEnable] = 0x00000000;       // SERDES Loopback Disabled
 	registers_[DTCLib::DTC_Register_ClockOscillatorStatus] = 0x20002;         // Initialization Complete, no IIC Error
 	registers_[DTCLib::DTC_Register_ROCEmulationEnable] = 0x3F;               // ROC Emulators enabled (of course!)
 	registers_[DTCLib::DTC_Register_LinkEnable] = 0x3F3F;                     // All links Tx/Rx enabled, CFO and timing disabled
-	registers_[DTCLib::DTC_Register_SERDESReset] = 0x0;                       // No SERDES Reset
-	registers_[DTCLib::DTC_Register_SERDESRXDisparityError] = 0x0;            // No SERDES Disparity Error
-	registers_[DTCLib::DTC_Register_SERDESRXCharacterNotInTableError] = 0x0;  // No SERDES CNIT Error
-	registers_[DTCLib::DTC_Register_SERDESUnlockError] = 0x0;                 // No SERDES Unlock Error
-	registers_[DTCLib::DTC_Register_SERDESPLLLocked] = 0x7F;                  // SERDES PLL Locked
-	registers_[DTCLib::DTC_Register_SERDESRXStatus] = 0x0;                    // SERDES RX Status Nominal
-	registers_[DTCLib::DTC_Register_SERDESResetDone] = 0x7F;                  // SERDES Resets Done
-	registers_[DTCLib::DTC_Register_SFPSERDESStatus] = 0x7F00007F;            // RX CDR Locked
+	registers_[DTCLib::DTC_Register_SERDES_Reset] = 0x0;                       // No SERDES Reset
+	registers_[DTCLib::DTC_Register_SERDES_RXDisparityError] = 0x0;            // No SERDES Disparity Error
+	registers_[DTCLib::DTC_Register_SERDES_RXCharacterNotInTableError] = 0x0;  // No SERDES CNIT Error
+	registers_[DTCLib::DTC_Register_SERDES_UnlockError] = 0x0;                 // No SERDES Unlock Error
+	registers_[DTCLib::DTC_Register_SERDES_PLLLocked] = 0x7F;                  // SERDES PLL Locked
+	registers_[DTCLib::DTC_Register_SERDES_PLLPowerDown] = 0;
+	registers_[DTCLib::DTC_Register_SERDES_RXStatus] = 0x0;                    // SERDES RX Status Nominal
+	registers_[DTCLib::DTC_Register_SERDES_ResetDone] = 0xFFFFFFFF;                  // SERDES Resets Done
+	registers_[DTCLib::DTC_Register_SERDES_RXCDRLockStatus] = 0x7F00007F;      // RX CDR Locked
 	registers_[DTCLib::DTC_Register_DMATimeoutPreset] = 0x800;                // DMA Timeout Preset
 	registers_[DTCLib::DTC_Register_ROCReplyTimeout] = 0x200000;              // ROC Timeout Preset
 	registers_[DTCLib::DTC_Register_ROCReplyTimeoutError] = 0x0;              // ROC Timeout Error

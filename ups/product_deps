@@ -21,6 +21,8 @@ product		 version	optional
 TRACE            v3_13_12
 gcc              v6_4_0         e15
 gcc              v7_3_0         e17
+gcc              v6_4_0         c2
+clang            v5_0_1         c2
 swig             v3_0_12c        -       optional
 nodejs           v4_5_0         -       optional
 cetbuildtools    v7_02_01        -       only_for_build
@@ -29,11 +31,13 @@ end_product_list
 # e6  - with gcc 4.9.1 and -std=c++1y
 # -nq- here means there is no qualifier
 # a "-" here means the dependent product is not required by the parent and will not be setup
-qualifier   TRACE     gcc	swig		nodejs	notes
-e17:prof    -nq-      -nq-      e17:prof 	-nq-	-std=c++17
-e17:debug   -nq-      -nq-      e17:debug	-nq- 	-std=c++17
-e15:prof    -nq-      -nq-	e15:prof  	-nq-    -std=c++14
-e15:debug   -nq-      -nq-	e15:debug 	-nq-    -std=c++14
+qualifier   TRACE     gcc	clang	swig		nodejs	notes
+c2:prof		-nq-      -nq-  -nq-	c2:prof 	-nq-	-std=c++17
+c2:debug	-nq-      -nq-  -nq-	c2:debug	-nq- 	-std=c++17
+e17:prof    -nq-      -nq-  -		e17:prof 	-nq-	-std=c++17
+e17:debug   -nq-      -nq-  -		e17:debug	-nq- 	-std=c++17
+e15:prof    -nq-      -nq-	-		e15:prof  	-nq-    -std=c++14
+e15:debug   -nq-      -nq-	-		e15:debug 	-nq-    -std=c++14
 end_qualifier_list
 
 

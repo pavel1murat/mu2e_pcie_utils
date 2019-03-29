@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	auto thisCFO = new CFOLib::CFO_Registers(DTCLib::DTC_SimMode_Disabled, CFO, 0x1, "", true);
+	auto thisCFO = new CFOLib::CFO_Registers(DTCLib::DTC_SimMode_Disabled, CFO, "", true);
 
 	auto cols = 80;
 	auto lines = 24;

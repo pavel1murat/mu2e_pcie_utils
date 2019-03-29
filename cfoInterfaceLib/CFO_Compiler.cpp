@@ -142,7 +142,7 @@ bool CFOLib::CFO_Compiler::isComment()  // Checks if line has a comment.
 	if (inFile_.peek() == '/') {
 		inFile_.get();
 		if (inFile_.get() != '/') {
-			std::string errorMessage = "Error: Missing slash for comment. (Line " + lineNumber_ + std::string(")");
+			std::string errorMessage = "Error: Missing slash for comment. (Line " + std::to_string(lineNumber_) + std::string(")");
 			throw std::runtime_error(errorMessage);
 		}
 		return true;

@@ -17,7 +17,8 @@ DTCLib::DTC_DataPacket::DTC_DataPacket(const DTC_DataPacket& in)
 {
 	dataSize_ = in.GetSize();
 	memPacket_ = in.IsMemoryPacket();
-	if (!memPacket_) {
+	if (!memPacket_)
+	{
 		vals_ = std::vector<uint8_t>(dataSize_);
 		dataPtr_ = &vals_[0];
 		memcpy(const_cast<uint8_t*>(dataPtr_), in.GetData(), in.GetSize() * sizeof(uint8_t));
@@ -30,14 +31,16 @@ DTCLib::DTC_DataPacket::DTC_DataPacket(const DTC_DataPacket& in)
 
 DTCLib::DTC_DataPacket::~DTC_DataPacket()
 {
-	if (!memPacket_ && dataPtr_ != nullptr) {
+	if (!memPacket_ && dataPtr_ != nullptr)
+	{
 		dataPtr_ = nullptr;
 	}
 }
 
 void DTCLib::DTC_DataPacket::SetWord(uint16_t index, uint8_t data)
 {
-	if (!memPacket_ && index < dataSize_) {
+	if (!memPacket_ && index < dataSize_)
+	{
 		const_cast<uint8_t*>(dataPtr_)[index] = data;
 	}
 }
@@ -50,7 +53,8 @@ uint8_t DTCLib::DTC_DataPacket::GetWord(uint16_t index) const
 
 bool DTCLib::DTC_DataPacket::Resize(const uint16_t dmaSize)
 {
-	if (!memPacket_ && dmaSize > dataSize_) {
+	if (!memPacket_ && dmaSize > dataSize_)
+	{
 		vals_.resize(dmaSize);
 		dataPtr_ = &vals_[0];
 		dataSize_ = dmaSize;
@@ -68,7 +72,8 @@ std::string DTCLib::DTC_DataPacket::toJSON() const
 	ss << "\"data\": [";
 	ss << std::hex << std::setfill('0');
 	uint16_t jj = 0;
-	for (uint16_t ii = 0; ii < dataSize_ - 2; ii += 2) {
+	for (uint16_t ii = 0; ii < dataSize_ - 2; ii += 2)
+	{
 		ss << "0x" << std::setw(4) << static_cast<int>(reinterpret_cast<uint16_t const*>(dataPtr_)[jj]) << ",";
 		++jj;
 	}
@@ -81,7 +86,8 @@ std::string DTCLib::DTC_DataPacket::toPacketFormat() const
 {
 	std::stringstream ss;
 	ss << std::setfill('0') << std::hex;
-	for (uint16_t ii = 0; ii < dataSize_ - 1; ii += 2) {
+	for (uint16_t ii = 0; ii < dataSize_ - 1; ii += 2)
+	{
 		ss << "0x" << std::setw(2) << static_cast<int>(dataPtr_[ii + 1]) << " ";
 		ss << "" << std::setw(2) << static_cast<int>(dataPtr_[ii]) << "\n";
 	}
@@ -92,9 +98,11 @@ std::string DTCLib::DTC_DataPacket::toPacketFormat() const
 bool DTCLib::DTC_DataPacket::Equals(const DTC_DataPacket& other) const
 {
 	auto equal = true;
-	for (uint16_t ii = 2; ii < 16; ++ii) {
+	for (uint16_t ii = 2; ii < 16; ++ii)
+	{
 		// TRACE(21, "DTC_DataPacket::Equals: Compalink %u to %u", GetWord(ii), other.GetWord(ii));
-		if (other.GetWord(ii) != GetWord(ii)) {
+		if (other.GetWord(ii) != GetWord(ii))
+		{
 			equal = false;
 			break;
 		}
@@ -119,12 +127,13 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DMAPacket::ConvertToDataPacket() const
 	uint8_t word1B = static_cast<uint8_t>(linkID_) + (valid_ ? 0x80 : 0x0);
 	output.SetWord(2, word1A);
 	output.SetWord(3, word1B);
-	for (uint16_t i = 4; i < byteCount_; ++i) {
+	for (uint16_t i = 4; i < byteCount_; ++i)
+	{
 		output.SetWord(i, 0);
 	}
 
-
-	std::cout << "ConvertToDataPacket: \n" << output.toPacketFormat() << std::endl;
+	std::cout << "ConvertToDataPacket: \n"
+			  << output.toPacketFormat() << std::endl;
 
 	return output;
 }
@@ -177,23 +186,20 @@ std::string DTCLib::DTC_DMAPacket::toJSON()
 std::string DTCLib::DTC_DMAPacket::toPacketFormat() { return headerPacketFormat(); }
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket()
-	: DTC_DMAPacket(DTC_PacketType_DCSRequest, DTC_Link_Unused),
-	  type_(DTC_DCSOperationType_Unknown), packetCount_(0), address1_(0), data1_(0),address2_(0), data2_(0) {}
+	: DTC_DMAPacket(DTC_PacketType_DCSRequest, DTC_Link_Unused), type_(DTC_DCSOperationType_Unknown), packetCount_(0), address1_(0), data1_(0), address2_(0), data2_(0) {}
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Link_ID link)
-	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link), type_(DTC_DCSOperationType_Unknown),
-	  packetCount_(0), address1_(0), data1_(0), address2_(0), data2_(0) {}
+	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link), type_(DTC_DCSOperationType_Unknown), packetCount_(0), address1_(0), data1_(0), address2_(0), data2_(0) {}
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_Link_ID link, DTC_DCSOperationType type, bool requestAck, bool incrementAddress,
 												   uint16_t address, uint16_t data, uint16_t address2, uint16_t data2)
-	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link), type_(type),
-	  requestAck_(requestAck), incrementAddress_(incrementAddress), packetCount_(0), address1_(address), data1_(data),
-	  address2_(address2), data2_(data2) {}
+	: DTC_DMAPacket(DTC_PacketType_DCSRequest, link), type_(type), requestAck_(requestAck), incrementAddress_(incrementAddress), packetCount_(0), address1_(address), data1_(data), address2_(address2), data2_(data2) { UpdatePacketAndWordCounts(); }
 
 DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in)
 	: DTC_DMAPacket(in)
 {
-	if (packetType_ != DTC_PacketType_DCSRequest) {
+	if (packetType_ != DTC_PacketType_DCSRequest)
+	{
 		auto ex = DTC_WrongPacketTypeException(DTC_PacketType_DCSRequest, packetType_);
 		TLOG(TLVL_ERROR) << ex.what();
 		throw ex;
@@ -206,7 +212,8 @@ DTCLib::DTC_DCSRequestPacket::DTC_DCSRequestPacket(DTC_DataPacket in)
 	address1_ = in.GetData()[6] + (in.GetData()[7] << 8);
 	data1_ = in.GetData()[8] + (in.GetData()[9] << 8);
 
-	if (type_ == DTC_DCSOperationType_BlockWrite) {
+	if (type_ == DTC_DCSOperationType_BlockWrite)
+	{
 		address2_ = 0;
 		data2_ = 0;
 		blockWriteData_.push_back(in.GetData()[10] + (in.GetData()[11] << 8));
@@ -230,7 +237,8 @@ std::string DTCLib::DTC_DCSRequestPacket::toJSON()
 	ss << "\"Operation Type\":" << DTC_DCSOperationTypeConverter(type_) << ", ";
 	ss << "\"Request Acknowledgement\":" << (requestAck_ ? "\"true\"" : "\"false\"") << ", ";
 	ss << "\"Address1\": " << static_cast<int>(address1_) << ", ";
-	if (type_ != DTC_DCSOperationType_BlockWrite) {
+	if (type_ != DTC_DCSOperationType_BlockWrite)
+	{
 		ss << "\"Data1\": " << static_cast<int>(data1_) << ", ";
 		ss << "\"Address2\": " << static_cast<int>(address2_) << ", ";
 		ss << "\"Data2\": " << static_cast<int>(data2_);
@@ -239,7 +247,8 @@ std::string DTCLib::DTC_DCSRequestPacket::toJSON()
 	{
 		auto counter = 0;
 		ss << ", \"Block Word Count\": " << static_cast<int>(data1_);
-		for (auto& word : blockWriteData_) {
+		for (auto& word : blockWriteData_)
+		{
 			ss << ", "
 			   << "\"Block Write word " << counter << "\":" << static_cast<int>(word);
 			counter++;
@@ -262,28 +271,32 @@ std::string DTCLib::DTC_DCSRequestPacket::toPacketFormat()
 
 	ss << std::setw(8) << ((address1_ & 0xFF00) >> 8) << "\t" << (address1_ & 0xFF) << std::endl;
 	ss << std::setw(8) << ((data1_ & 0xFF00) >> 8) << "\t" << (data1_ & 0xFF) << std::endl;
-	if (type_ != DTC_DCSOperationType_BlockWrite) {
+	if (type_ != DTC_DCSOperationType_BlockWrite)
+	{
 		ss << std::setw(8) << ((address2_ & 0xFF00) >> 8) << "\t" << (address2_ & 0xFF) << std::endl;
 		ss << std::setw(8) << ((data2_ & 0xFF00) >> 8) << "\t" << (data2_ & 0xFF) << std::endl;
 		ss << "        \t        " << std::endl;
 	}
 	else
 	{
-		if (blockWriteData_.size() > 0) {
+		if (blockWriteData_.size() > 0)
+		{
 			ss << std::setw(8) << ((blockWriteData_[0] & 0xFF00) >> 8) << "\t" << (blockWriteData_[0] & 0xFF) << std::endl;
 		}
 		else
 		{
 			ss << "        \t        " << std::endl;
 		}
-		if (blockWriteData_.size() > 1) {
+		if (blockWriteData_.size() > 1)
+		{
 			ss << std::setw(8) << ((blockWriteData_[1] & 0xFF00) >> 8) << "\t" << (blockWriteData_[1] & 0xFF) << std::endl;
 		}
 		else
 		{
 			ss << "        \t        " << std::endl;
 		}
-		if (blockWriteData_.size() > 2) {
+		if (blockWriteData_.size() > 2)
+		{
 			ss << std::setw(8) << ((blockWriteData_[2] & 0xFF00) >> 8) << "\t" << (blockWriteData_[2] & 0xFF) << std::endl;
 		}
 		else
@@ -296,12 +309,14 @@ std::string DTCLib::DTC_DCSRequestPacket::toPacketFormat()
 
 void DTCLib::DTC_DCSRequestPacket::AddRequest(uint16_t address, uint16_t data)
 {
-	if (IsDoubleOp()) {
+	if (IsDoubleOp())
+	{
 		auto ex = DTC_IOErrorException(255);
 		TLOG(TLVL_ERROR) << "DCS Request already has two requests, cannot add another! " << ex.what();
 		throw ex;
 	}
-	if (type_ == DTC_DCSOperationType_BlockRead || type_ == DTC_DCSOperationType_BlockWrite) {
+	if (type_ == DTC_DCSOperationType_BlockRead || type_ == DTC_DCSOperationType_BlockWrite)
+	{
 		auto ex = DTC_IOErrorException(254);
 		TLOG(TLVL_ERROR) << "Cannot add second request to Block Read or Block Write operations! " << ex.what();
 		throw ex;
@@ -320,9 +335,13 @@ void DTCLib::DTC_DCSRequestPacket::UpdatePacketAndWordCounts()
 		data1_ = blockWriteData_.size();
 	}
 
-	if (type_ == DTC_DCSOperationType_BlockRead || type_ == DTC_DCSOperationType_BlockWrite)
+	if (type_ == DTC_DCSOperationType_BlockWrite)
 	{
-		packetCount_ = (data1_ - 3) / 8 + ((data1_ - 3) % 8 ? 1 : 0);
+		packetCount_ = 1 + (data1_ - 3) / 8 + ((data1_ - 3) % 8 ? 1 : 0);
+	}
+	else if (type_ == DTC_DCSOperationType_BlockRead)
+	{
+		packetCount_ = 1;
 	}
 	else
 	{
@@ -351,24 +370,27 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSRequestPacket::ConvertToDataPacket() const
 	output.SetWord(8, static_cast<uint8_t>(data1_ & 0xFF));
 	output.SetWord(9, static_cast<uint8_t>(((data1_ & 0xFF00) >> 8)));
 
-	if (type != DTC_DCSOperationType_BlockWrite) {
+	if (type != DTC_DCSOperationType_BlockWrite)
+	{
 		output.SetWord(10, static_cast<uint8_t>(address2_ & 0xFF));
 		output.SetWord(11, static_cast<uint8_t>(((address2_ & 0xFF00) >> 8)));
 		output.SetWord(12, static_cast<uint8_t>(data2_ & 0xFF));
 		output.SetWord(13, static_cast<uint8_t>(((data2_ & 0xFF00) >> 8)));
-		output.SetWord(14,0);
-		output.SetWord(15,0);
+		output.SetWord(14, 0);
+		output.SetWord(15, 0);
 	}
 	else
 	{
 		output.Resize((1 + packetCount_) * 16);
 		size_t wordCounter = 10;
-		for (auto& word : blockWriteData_) {
+		for (auto& word : blockWriteData_)
+		{
 			output.SetWord(wordCounter, word & 0xFF);
 			output.SetWord(wordCounter + 1, (word & 0xFF00) >> 8);
 			wordCounter += 2;
 		}
-		for(;wordCounter < static_cast<size_t>((1 + packetCount_) * 16);wordCounter++) {
+		for (; wordCounter < static_cast<size_t>((1 + packetCount_) * 16); wordCounter++)
+		{
 			output.SetWord(wordCounter, 0);
 		}
 	}
@@ -389,8 +411,10 @@ DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(DTC_Link_ID link)
 DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(DTC_Link_ID link, DTC_Timestamp timestamp, uint8_t* eventMode)
 	: DTC_DMAPacket(DTC_PacketType_Heartbeat, link), timestamp_(timestamp), eventMode_()
 {
-	if (eventMode != nullptr) {
-		for (auto i = 0; i < 6; ++i) {
+	if (eventMode != nullptr)
+	{
+		for (auto i = 0; i < 6; ++i)
+		{
 			eventMode_[i] = eventMode[i];
 		}
 	}
@@ -399,7 +423,8 @@ DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(DTC_Link_ID link, DTC_Timestamp
 DTCLib::DTC_HeartbeatPacket::DTC_HeartbeatPacket(const DTC_DataPacket in)
 	: DTC_DMAPacket(in)
 {
-	if (packetType_ != DTC_PacketType_Heartbeat) {
+	if (packetType_ != DTC_PacketType_Heartbeat)
+	{
 		auto ex = DTC_WrongPacketTypeException(DTC_PacketType_Heartbeat, packetType_);
 		TLOG(TLVL_ERROR) << ex.what();
 		throw ex;
@@ -448,7 +473,8 @@ DTCLib::DTC_DataPacket DTCLib::DTC_HeartbeatPacket::ConvertToDataPacket() const
 {
 	auto output = DTC_DMAPacket::ConvertToDataPacket();
 	timestamp_.GetTimestamp(output.GetData(), 4);
-	for (auto i = 0; i < 6; ++i) {
+	for (auto i = 0; i < 6; ++i)
+	{
 		output.SetWord(static_cast<uint16_t>(10 + i), eventMode_[i]);
 	}
 	return output;
@@ -465,7 +491,8 @@ DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_Link_ID link, DTC_Times
 DTCLib::DTC_DataRequestPacket::DTC_DataRequestPacket(DTC_DataPacket in)
 	: DTC_DMAPacket(in)
 {
-	if (packetType_ != DTC_PacketType_DataRequest) {
+	if (packetType_ != DTC_PacketType_DataRequest)
+	{
 		auto ex = DTC_WrongPacketTypeException(DTC_PacketType_DataRequest, packetType_);
 		TLOG(TLVL_ERROR) << ex.what();
 		throw ex;
@@ -514,7 +541,8 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DataRequestPacket::ConvertToDataPacket() cons
 
 void DTCLib::DTC_DataRequestPacket::SetDebugPacketCount(uint16_t count)
 {
-	if (count > 0) {
+	if (count > 0)
+	{
 		debug_ = true;
 	}
 	else
@@ -528,7 +556,8 @@ DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_DataPacket in)
 	: DTC_DMAPacket(in)
 {
 	TRACE(20, "DTC_DCSReplyPacket::DTC_DCSReplyPacket Before packetType test");
-	if (packetType_ != DTC_PacketType_DCSReply) {
+	if (packetType_ != DTC_PacketType_DCSReply)
+	{
 		auto ex = DTC_WrongPacketTypeException(DTC_PacketType_DCSReply, packetType_);
 		TLOG(TLVL_ERROR) << ex.what();
 		throw ex;
@@ -544,22 +573,28 @@ DTCLib::DTC_DCSReplyPacket::DTC_DCSReplyPacket(DTC_DataPacket in)
 	address1_ = in.GetData()[6] + (in.GetData()[7] << 8);
 	data1_ = in.GetData()[8] + (in.GetData()[9] << 8);
 
-	if (type_ == DTC_DCSOperationType_BlockRead) {
+	if (type_ == DTC_DCSOperationType_BlockRead)
+	{
 		address2_ = 0;
 		data2_ = 0;
-		if (data1_ > 0) {
+		if (data1_ > 0)
+		{
 			blockReadData_.push_back(in.GetData()[10] + (in.GetData()[11] << 8));
 		}
-		if (data1_ > 1) {
+		if (data1_ > 1)
+		{
 			blockReadData_.push_back(in.GetData()[12] + (in.GetData()[13] << 8));
 		}
-		if (data1_ > 2) {
+		if (data1_ > 2)
+		{
 			blockReadData_.push_back(in.GetData()[14] + (in.GetData()[15] << 8));
 		}
 
-		if (in.GetSize() > 16) {
+		if (in.GetSize() > 16)
+		{
 			size_t wordCounter = 16;
-			while (wordCounter < in.GetSize()) {
+			while (wordCounter < in.GetSize())
+			{
 				blockReadData_.push_back(in.GetData()[wordCounter] + (in.GetData()[wordCounter + 1] << 8));
 				wordCounter += 2;
 			}
@@ -583,7 +618,8 @@ std::string DTCLib::DTC_DCSReplyPacket::toJSON()
 	ss << "\"DCS Request FIFO Empty\": " << (dcsReceiveFIFOEmpty_ ? "\"true\"" : "\"false\"") << ", ";
 	ss << "\"Corrupt Flag\": " << (corruptFlag_ ? "\"true\"" : "\"false\"") << ", ";
 	ss << "\"Address1\": " << static_cast<int>(address1_) << ", ";
-	if (type_ != DTC_DCSOperationType_BlockRead) {
+	if (type_ != DTC_DCSOperationType_BlockRead)
+	{
 		ss << "\"Data1\": " << static_cast<int>(data1_) << ", ";
 		ss << "\"Address2\": " << static_cast<int>(address2_) << ", ";
 		ss << "\"Data2\": " << static_cast<int>(data2_);
@@ -592,7 +628,8 @@ std::string DTCLib::DTC_DCSReplyPacket::toJSON()
 	{
 		ss << "\"Block Word Count\": " << static_cast<int>(data1_);
 		auto counter = 0;
-		for (auto& word : blockReadData_) {
+		for (auto& word : blockReadData_)
+		{
 			ss << ", "
 			   << "\"Block Read word " << counter << "\":" << static_cast<int>(word);
 			counter++;
@@ -614,28 +651,32 @@ std::string DTCLib::DTC_DCSReplyPacket::toPacketFormat()
 
 	ss << std::setw(8) << ((address1_ & 0xFF00) >> 8) << "\t" << (address1_ & 0xFF) << std::endl;
 	ss << std::setw(8) << ((data1_ & 0xFF00) >> 8) << "\t" << (data1_ & 0xFF) << std::endl;
-	if (type_ != DTC_DCSOperationType_BlockRead) {
+	if (type_ != DTC_DCSOperationType_BlockRead)
+	{
 		ss << std::setw(8) << ((address2_ & 0xFF00) >> 8) << "\t" << (address2_ & 0xFF) << std::endl;
 		ss << std::setw(8) << ((data2_ & 0xFF00) >> 8) << "\t" << (data2_ & 0xFF) << std::endl;
 		ss << "        \t        " << std::endl;
 	}
 	else
 	{
-		if (blockReadData_.size() > 0) {
+		if (blockReadData_.size() > 0)
+		{
 			ss << std::setw(8) << ((blockReadData_[0] & 0xFF00) >> 8) << "\t" << (blockReadData_[0] & 0xFF) << std::endl;
 		}
 		else
 		{
 			ss << "        \t        " << std::endl;
 		}
-		if (blockReadData_.size() > 1) {
+		if (blockReadData_.size() > 1)
+		{
 			ss << std::setw(8) << ((blockReadData_[1] & 0xFF00) >> 8) << "\t" << (blockReadData_[1] & 0xFF) << std::endl;
 		}
 		else
 		{
 			ss << "        \t        " << std::endl;
 		}
-		if (blockReadData_.size() > 2) {
+		if (blockReadData_.size() > 2)
+		{
 			ss << std::setw(8) << ((blockReadData_[2] & 0xFF00) >> 8) << "\t" << (blockReadData_[2] & 0xFF) << std::endl;
 		}
 		else
@@ -661,7 +702,8 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSReplyPacket::ConvertToDataPacket() const
 	output.SetWord(8, static_cast<uint8_t>(data1_ & 0xFF));
 	output.SetWord(9, static_cast<uint8_t>(((data1_ & 0xFF00) >> 8)));
 
-	if (type_ != DTC_DCSOperationType_BlockRead) {
+	if (type_ != DTC_DCSOperationType_BlockRead)
+	{
 		output.SetWord(10, static_cast<uint8_t>(address2_ & 0xFF));
 		output.SetWord(11, static_cast<uint8_t>(((address2_ & 0xFF00) >> 8)));
 		output.SetWord(12, static_cast<uint8_t>(data2_ & 0xFF));
@@ -671,7 +713,8 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSReplyPacket::ConvertToDataPacket() const
 	{
 		output.Resize((1 + packetCount_) * 16);
 		size_t wordCounter = 10;
-		for (auto& word : blockReadData_) {
+		for (auto& word : blockReadData_)
+		{
 			output.SetWord(wordCounter, word & 0xFF);
 			output.SetWord(wordCounter + 1, (word & 0xFF00) >> 8);
 			wordCounter += 2;
@@ -688,7 +731,8 @@ DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Link_ID link, uint16_t pa
 DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket in)
 	: DTC_DMAPacket(in)
 {
-	if (packetType_ != DTC_PacketType_DataHeader) {
+	if (packetType_ != DTC_PacketType_DataHeader)
+	{
 		auto ex = DTC_WrongPacketTypeException(DTC_PacketType_DataHeader, packetType_);
 		TLOG(TLVL_ERROR) << ex.what();
 		throw ex;

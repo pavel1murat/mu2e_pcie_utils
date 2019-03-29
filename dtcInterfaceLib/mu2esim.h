@@ -98,7 +98,7 @@ private:
 	std::unordered_map<uint16_t, uint32_t> registers_;
 	unsigned swIdx_[MU2E_MAX_CHANNELS];
 	unsigned hwIdx_[MU2E_MAX_CHANNELS];
-	uint32_t detSimLoopCount_;
+	//uint32_t detSimLoopCount_;
 	mu2e_databuff_t* dmaData_[MU2E_MAX_CHANNELS][SIM_BUFFCOUNT];
 	std::fstream ddrFile_;
 	DTCLib::DTC_SimMode mode_;

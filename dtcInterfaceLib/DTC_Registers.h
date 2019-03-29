@@ -16,20 +16,26 @@ enum DTC_Register : uint16_t
 	DTC_Register_DesignDate = 0x9004,
 	DTC_Register_DesignStatus = 0x9008,
 	DTC_Register_VivadoVersion = 0x900C,
+	DTC_Register_FPGA_Temperature = 0x9010,
+	DTC_Register_FPGA_VCCINT = 0x9014,
+	DTC_Register_FPGA_VCCAUX = 0x9018,
+	DTC_Register_FPGA_VCCBRAM = 0x901C,
+	DTC_Register_FPGA_MonitorAlarm = 0x9020,
 	DTC_Register_DTCControl = 0x9100,
 	DTC_Register_DMATransferLength = 0x9104,
 	DTC_Register_SERDESLoopbackEnable = 0x9108,
 	DTC_Register_ClockOscillatorStatus = 0x910C,
 	DTC_Register_ROCEmulationEnable = 0x9110,
 	DTC_Register_LinkEnable = 0x9114,
-	DTC_Register_SERDESReset = 0x9118,
-	DTC_Register_SERDESRXDisparityError = 0x911C,
-	DTC_Register_SERDESRXCharacterNotInTableError = 0x9120,
-	DTC_Register_SERDESUnlockError = 0x9124,
-	DTC_Register_SERDESPLLLocked = 0x9128,
-	DTC_Register_SERDESRXStatus = 0x9134,
-	DTC_Register_SERDESResetDone = 0x9138,
-	DTC_Register_SFPSERDESStatus = 0x9140,
+	DTC_Register_SERDES_Reset = 0x9118,
+	DTC_Register_SERDES_RXDisparityError = 0x911C,
+	DTC_Register_SERDES_RXCharacterNotInTableError = 0x9120,
+	DTC_Register_SERDES_UnlockError = 0x9124,
+	DTC_Register_SERDES_PLLLocked = 0x9128,
+	DTC_Register_SERDES_PLLPowerDown = 0x912C,
+	DTC_Register_SERDES_RXStatus = 0x9134,
+	DTC_Register_SERDES_ResetDone = 0x9138,
+	DTC_Register_SERDES_RXCDRLockStatus = 0x9140,
 	DTC_Register_DMATimeoutPreset = 0x9144,
 	DTC_Register_ROCReplyTimeout = 0x9148,
 	DTC_Register_ROCReplyTimeoutError = 0x914C,
@@ -157,6 +163,7 @@ enum DTC_Register : uint16_t
 	DTC_Register_CFOLinkErrorFlags = 0x9398,
 	DTC_Register_LinkMuxErrorFlags = 0x939C,
 	DTC_Register_FireFlyControlStatus = 0x93A0,
+	DTC_Register_SFPControlStatus = 0x93A4,
 	DTC_Register_FPGAProgramData = 0x9400,
 	DTC_Register_FPGAPROMProgramStatus = 0x9404,
 	DTC_Register_FPGACoreAccess = 0x9408,
@@ -316,6 +323,115 @@ public:
 	/// <returns>DTC_RegisterFormatter object containing register information</returns>
 	DTC_RegisterFormatter FormatVivadoVersion();
 
+	// FPGA Temperature Register
+	/// <summary>
+	/// Read the FPGA On-die Temperature sensor
+	/// </summary>
+	/// <returns>Temperature of the FGPA (deg. C)</returns>
+	double ReadFPGATemperature();
+	/// <summary>
+	/// Formats the register's current value for register dumps
+	/// </summary>
+	/// <returns>DTC_RegisterFormatter object containing register information</returns>
+	DTC_RegisterFormatter FormatFPGATemperature();
+
+	// FPGA VCCINT Voltage Register
+	/// <summary>
+	/// Read the FPGA VCC INT Voltage (Nominal is 1.0 V)
+	/// </summary>
+	/// <returns>FPGA VCC INT Voltage (V)</returns>
+	double ReadFPGAVCCINTVoltage();
+	/// <summary>
+	/// Formats the register's current value for register dumps
+	/// </summary>
+	/// <returns>DTC_RegisterFormatter object containing register information</returns>
+	DTC_RegisterFormatter FormatFPGAVCCINT();
+
+	// FPGA VCCAUX Voltage Register
+	/// <summary>
+	/// Read the FPGA VCC AUX Voltage (Nominal is 1.8 V)
+	/// </summary>
+	/// <returns>FPGA VCC AUX Voltage (V)</returns>
+	double ReadFPGAVCCAUXVoltage();
+	/// <summary>
+	/// Formats the register's current value for register dumps
+	/// </summary>
+	/// <returns>DTC_RegisterFormatter object containing register information</returns>
+	DTC_RegisterFormatter FormatFPGAVCCAUX();
+
+	// FPGA VCCBRAM Voltage Register
+	/// <summary>
+	/// Read the FPGA VCC BRAM Voltage (Nominal 1.0 V)
+	/// </summary>
+	/// <returns>FPGA VCC BRAM Voltage (V)</returns>
+	double ReadFPGAVCCBRAMVoltage();
+	/// <summary>
+	/// Formats the register's current value for register dumps
+	/// </summary>
+	/// <returns>DTC_RegisterFormatter object containing register information</returns>
+	DTC_RegisterFormatter FormatFPGAVCCBRAM();
+
+	// FPGA Monitor Alarm Register
+	/// <summary>
+	/// Read the value of the FPGA Die Temperature Alarm bit
+	/// </summary>
+	/// <returns>Value of the bit</returns>
+	bool ReadFPGADieTemperatureAlarm();
+	/// <summary>
+	/// Reset the FPGA Die Temperature Alarm bit
+	/// </summary>
+	void ResetFPGADieTemperatureAlarm();
+	/// <summary>
+	/// Read the FPGA Alarms bit (OR of VCC and User Temperature alarm bits)
+	/// </summary>
+	/// <returns>Value of the bit</returns>
+	bool ReadFPGAAlarms();
+	/// <summary>
+	/// Reset the FPGA Alarms bit
+	/// </summary>
+	void ResetFPGAAlarms();
+	/// <summary>
+	/// Read the VCC BRAM Alarm bit
+	/// </summary>
+	/// <returns>Value of the bit</returns>
+	bool ReadVCCBRAMAlarm();
+	/// <summary>
+	/// Reset the VCC BRAM Alarm bit
+	/// </summary>
+	void ResetVCCBRAMAlarm();
+	/// <summary>
+	/// Read the VCC AUX Alarm bit
+	/// </summary>
+	/// <returns>Value of the bit</returns>
+	bool ReadVCCAUXAlarm();
+	/// <summary>
+	/// Reset the VCC AUX Alarm bit
+	/// </summary>
+	void ResetVCCAUXAlarm();
+	/// <summary>
+	/// Read the VCC INT Alarm bit
+	/// </summary>
+	/// <returns>Value of the bit</returns>
+	bool ReadVCCINTAlarm();
+	/// <summary>
+	/// Reset the VCC INT Alarm bit
+	/// </summary>
+	void ResetVCCINTAlarm();
+	/// <summary>
+	/// Read the FPGA User Temperature Alarm bit
+	/// </summary>
+	/// <returns>Value of the bit</returns>
+	bool ReadFPGAUserTemperatureAlarm();
+	/// <summary>
+	/// Reset the FPGA User Temperature Alarm bit
+	/// </summary>
+	void ResetFPGAUserTemperatureAlarm();
+	/// <summary>
+	/// Formats the register's current value for register dumps
+	/// </summary>
+	/// <returns>DTC_RegisterFormatter object containing register information</returns>
+	DTC_RegisterFormatter FormatFPGAAlarms();
+
 	// DTC Control Register
 	/// <summary>
 	/// Perform a DTC Reset
@@ -340,6 +456,19 @@ public:
 	/// </summary>
 	/// <returns>True if the emulator is enabled, false otherwise</returns>
 	bool ReadCFOEmulation();
+	/// <summary>
+	/// Enable CFO Loopback. CFO packets will be returned to the CFO, for delay calculation.
+	/// </summary>
+	void EnableCFOLoopback();
+	/// <summary>
+	/// Disable CFO Loopback. CFO packets will be transmitted instead to the next DTC (Normal operation)
+	/// </summary>
+	void DisableCFOLoopback();
+	/// <summary>
+	/// Read the value of the CFO Link Loopback bit
+	/// </summary>
+	/// <returns>Value of the bit</returns>
+	bool ReadCFOLoopback();
 	/// <summary>
 	/// Resets the DDR Write pointer to 0
 	/// </summary>
@@ -426,7 +555,15 @@ public:
 	/// </summary>
 	/// <returns>Whether the LED6 bit is set</returns>
 	bool ReadLED6State();
-
+	/// <summary>
+	/// Set the SERDES Global Reset bit to true, and wait for the reset to complete
+	/// </summary>
+	void ResetSERDES();
+	/// <summary>
+	/// Read the SERDES Global Reset bit
+	/// </summary>
+	/// <returns>Whether a SERDES global reset is in progress</returns>
+	bool ReadResetSERDES();
 	/// <summary>
 	/// Enalbe receiving DCS packets.
 	/// </summary>
@@ -684,6 +821,29 @@ public:
 	/// <returns>DTC_RegisterFormatter object containing register information</returns>
 	DTC_RegisterFormatter FormatSERDESPLLLocked();
 
+	// SERDES PLL Power Down
+	/// <summary>
+	/// Disable the SERDES PLL Power Down bit for the given link, enabling that link
+	/// </summary>
+	/// <param name="link">Link to set</param>
+	void EnableSERDESPLL(const DTC_Link_ID& link);
+	/// <summary>
+	/// Enable the SERDES PLL Power Down bit for the given link, disabling that link
+	/// </summary>
+	/// <param name="link">Link to set</param>
+	void DisableSERDESPLL(const DTC_Link_ID& link);
+	/// <summary>
+	/// Read the SERDES PLL Power Down bit for the given link
+	/// </summary>
+	/// <param name="link">link to read</param>
+	/// <returns>Value of the bit</returns>
+	bool ReadSERDESPLLPowerDown(const DTC_Link_ID& link);
+	/// <summary>
+	/// Formats the register's current value for register dumps
+	/// </summary>
+	/// <returns>DTC_RegisterFormatter object containing register information</returns>
+	DTC_RegisterFormatter FormatSERDESPLLPowerDown();
+
 	// SERDES RX Status Register
 	/// <summary>
 	/// Read the SERDES RX Status for the given SERDES Link
@@ -699,18 +859,36 @@ public:
 
 	// SERDES Reset Done Register
 	/// <summary>
-	/// Read if the SERDES reset is complete on the given SERDES link
+	/// Read the SERDES Reset RX FSM Done bit
 	/// </summary>
-	/// <param name="link">Link to read</param>
-	/// <returns>True if the SERDES Reset is done, false otherwise</returns>
-	bool ReadResetSERDESDone(const DTC_Link_ID& link);
+	/// <param name="link">link to read</param>
+	/// <returns>Value of the bit</returns>
+	bool ReadResetRXFSMSERDESDone(const DTC_Link_ID& link);
+	/// <summary>
+	/// Read the SERDES Reset RX Done bit
+	/// </summary>
+	/// <param name="link">link to read</param>
+	/// <returns>Value of the bit</returns>
+	bool ReadResetRXSERDESDone(const DTC_Link_ID& link);
+	/// <summary>
+	/// Read the SERDES Reset TX FSM Done bit
+	/// </summary>
+	/// <param name="link">link to read</param>
+	/// <returns>Value of the bit</returns>
+	bool ReadResetTXFSMSERDESDone(const DTC_Link_ID& link);
+	/// <summary>
+	/// Read the SERDES Reset TX Done bit
+	/// </summary>
+	/// <param name="link">link to read</param>
+	/// <returns>Value of the bit</returns>
+	bool ReadResetTXSERDESDone(const DTC_Link_ID& link);
 	/// <summary>
 	/// Formats the register's current value for register dumps
 	/// </summary>
 	/// <returns>DTC_RegisterFormatter object containing register information</returns>
 	DTC_RegisterFormatter FormatSERDESResetDone();
 
-	// SFP / SERDES Status Register
+	// SERDES CDR Lock Register
 	/// <summary>
 	/// Read the SERDES CDR Lock bit for the given SERDES Link
 	/// </summary>
@@ -721,7 +899,7 @@ public:
 	/// Formats the register's current value for register dumps
 	/// </summary>
 	/// <returns>DTC_RegisterFormatter object containing register information</returns>
-	DTC_RegisterFormatter FormatSFPSERDESStatus();
+	DTC_RegisterFormatter FormatRXCDRLockStatus();
 
 	// DMA Timeout Preset Regsiter
 	/// <summary>
@@ -2440,6 +2618,54 @@ public:
 	/// <returns>DTC_RegisterFormatter object containing register information</returns>
 	DTC_RegisterFormatter FormatFireflyCSR();
 
+	// SFP Control Status Register
+	/// <summary>
+	/// Read the SFP Present bit
+	/// </summary>
+	/// <returns>Value of the bit</returns>
+	bool ReadSFPPresent();
+	/// <summary>
+	/// Read the SFP LOS bit
+	/// </summary>
+	/// <returns>Value of the bit</returns>
+	bool ReadSFPLOS();
+	/// <summary>
+	/// Read the SFP TX Fault bit
+	/// </summary>
+	/// <returns>Value of the bit</returns>
+	bool ReadSFPTXFault();
+	/// <summary>
+	/// Set the SFP Rate Select bit high
+	/// </summary>
+	void EnableSFPRateSelect();
+	/// <summary>
+	/// Set the SFP Rate Select bit low
+	/// </summary>
+	void DisableSFPRateSelect();
+	/// <summary>
+	/// Read the value of the SFP Rate Select bit
+	/// </summary>
+	/// <returns>The value of the SFP Rate Select bit</returns>
+	bool ReadSFPRateSelect();
+	/// <summary>
+	/// Disable SFP TX
+	/// </summary>
+	void DisableSFPTX();
+	/// <summary>
+	/// Enable SFP TX
+	/// </summary>
+	void EnableSFPTX();
+	/// <summary>
+	/// Read the SFP TX Disable bit
+	/// </summary>
+	/// <returns>Value of the SFP TX Disable bit</returns>
+	bool ReadSFPTXDisable();
+	/// <summary>
+	/// Formats the register's current value for register dumps
+	/// </summary>
+	/// <returns>DTC_RegisterFormatter object containing register information</returns>
+	DTC_RegisterFormatter FormatSFPControlStatus();
+
 	// FPGA PROM Program Data Register
 
 	// FPGA PROM Program Status Register
@@ -2561,11 +2787,16 @@ protected:
 	/// <summary>
 	/// Functions needed to print regular register map
 	/// </summary>
-	const std::vector<std::function<DTC_RegisterFormatter()>> formattedDumpFunctions_{
+	const std::vector<std::function<DTC_RegisterFormatter()>> formattedDumpFunctions_
+	{
 		[this]() { return this->FormatDesignVersion(); },
 		[this]() { return this->FormatDesignDate(); },
 		[this]() { return this->FormatDesignStatus(); },
 		[this]() { return this->FormatVivadoVersion(); },
+		[this]() { return this->FormatFPGATemperature(); },
+		[this]() { return this->FormatFPGAVCCAUX(); },
+		[this]() { return this->FormatFPGAVCCBRAM(); },
+		[this]() { return this->FormatFPGAAlarms(); },
 		[this]() { return this->FormatDTCControl(); },
 		[this]() { return this->FormatDMATransferLength(); },
 		[this]() { return this->FormatSERDESLoopbackEnable(); },
@@ -2576,10 +2807,11 @@ protected:
 		[this]() { return this->FormatSERDESRXDisparityError(); },
 		[this]() { return this->FormatSERDESRXCharacterNotInTableError(); },
 		[this]() { return this->FormatSERDESUnlockError(); },
-		[this]() { return this->FormatSERDESPLLLocked(); },
+		[this]() { return this->FormatSERDESPLLLocked(); }, 
+		[this]() { return this->FormatSERDESPLLPowerDown();}, 
 		[this]() { return this->FormatSERDESRXStatus(); },
 		[this]() { return this->FormatSERDESResetDone(); },
-		[this]() { return this->FormatSFPSERDESStatus(); },
+		[this]() { return this->FormatRXCDRLockStatus(); },
 		[this]() { return this->FormatDMATimeoutPreset(); },
 		[this]() { return this->FormatROCReplyTimeout(); },
 		[this]() { return this->FormatROCReplyTimeoutError(); },
@@ -2670,46 +2902,47 @@ protected:
 		[this]() { return this->FormatCFOLinkError(); },
 		[this]() { return this->FormatLinkMuxError(); },
 		[this]() { return this->FormatFireflyCSR(); },
+		[this]() { return this->FormatSFPControlStatus(); },
 		[this]() { return this->FormatFPGAPROMProgramStatus(); },
-		[this]() { return this->FormatFPGACoreAccess(); }};
+		[this]() { return this->FormatFPGACoreAccess(); } };
 
-	/// <summary>
-	/// Dump Byte/Packet Counter Registers
-	/// </summary>
-	const std::vector<std::function<DTC_RegisterFormatter()>> formattedCounterFunctions_{
-		[this]() { return this->FormatReceiveByteCountRing0(); },
-		[this]() { return this->FormatReceiveByteCountRing1(); },
-		[this]() { return this->FormatReceiveByteCountRing2(); },
-		[this]() { return this->FormatReceiveByteCountRing3(); },
-		[this]() { return this->FormatReceiveByteCountRing4(); },
-		[this]() { return this->FormatReceiveByteCountRing5(); },
-		[this]() { return this->FormatReceiveByteCountCFO(); },
-		[this]() { return this->FormatReceiveByteCountEVB(); },
-		[this]() { return this->FormatReceivePacketCountRing0(); },
-		[this]() { return this->FormatReceivePacketCountRing1(); },
-		[this]() { return this->FormatReceivePacketCountRing2(); },
-		[this]() { return this->FormatReceivePacketCountRing3(); },
-		[this]() { return this->FormatReceivePacketCountRing4(); },
-		[this]() { return this->FormatReceivePacketCountRing5(); },
-		[this]() { return this->FormatReceivePacketCountCFO(); },
-		[this]() { return this->FormatReceivePacketCountEVB(); },
-		[this]() { return this->FormatTramsitByteCountRing0(); },
-		[this]() { return this->FormatTramsitByteCountRing1(); },
-		[this]() { return this->FormatTramsitByteCountRing2(); },
-		[this]() { return this->FormatTramsitByteCountRing3(); },
-		[this]() { return this->FormatTramsitByteCountRing4(); },
-		[this]() { return this->FormatTramsitByteCountRing5(); },
-		[this]() { return this->FormatTramsitByteCountCFO(); },
-		[this]() { return this->FormatTramsitByteCountEVB(); },
-		[this]() { return this->FormatTransmitPacketCountRing0(); },
-		[this]() { return this->FormatTransmitPacketCountRing1(); },
-		[this]() { return this->FormatTransmitPacketCountRing2(); },
-		[this]() { return this->FormatTransmitPacketCountRing3(); },
-		[this]() { return this->FormatTransmitPacketCountRing4(); },
-		[this]() { return this->FormatTransmitPacketCountRing5(); },
-		[this]() { return this->FormatTransmitPacketCountCFO(); },
-		[this]() { return this->FormatTransmitPacketCountEVB(); }};
-};
-}  // namespace DTCLib
+			/// <summary>
+			/// Dump Byte/Packet Counter Registers
+			/// </summary>
+			const std::vector<std::function<DTC_RegisterFormatter()>> formattedCounterFunctions_{
+				[this]() { return this->FormatReceiveByteCountRing0(); },
+				[this]() { return this->FormatReceiveByteCountRing1(); },
+				[this]() { return this->FormatReceiveByteCountRing2(); },
+				[this]() { return this->FormatReceiveByteCountRing3(); },
+				[this]() { return this->FormatReceiveByteCountRing4(); },
+				[this]() { return this->FormatReceiveByteCountRing5(); },
+				[this]() { return this->FormatReceiveByteCountCFO(); },
+				[this]() { return this->FormatReceiveByteCountEVB(); },
+				[this]() { return this->FormatReceivePacketCountRing0(); },
+				[this]() { return this->FormatReceivePacketCountRing1(); },
+				[this]() { return this->FormatReceivePacketCountRing2(); },
+				[this]() { return this->FormatReceivePacketCountRing3(); },
+				[this]() { return this->FormatReceivePacketCountRing4(); },
+				[this]() { return this->FormatReceivePacketCountRing5(); },
+				[this]() { return this->FormatReceivePacketCountCFO(); },
+				[this]() { return this->FormatReceivePacketCountEVB(); },
+				[this]() { return this->FormatTramsitByteCountRing0(); },
+				[this]() { return this->FormatTramsitByteCountRing1(); },
+				[this]() { return this->FormatTramsitByteCountRing2(); },
+				[this]() { return this->FormatTramsitByteCountRing3(); },
+				[this]() { return this->FormatTramsitByteCountRing4(); },
+				[this]() { return this->FormatTramsitByteCountRing5(); },
+				[this]() { return this->FormatTramsitByteCountCFO(); },
+				[this]() { return this->FormatTramsitByteCountEVB(); },
+				[this]() { return this->FormatTransmitPacketCountRing0(); },
+				[this]() { return this->FormatTransmitPacketCountRing1(); },
+				[this]() { return this->FormatTransmitPacketCountRing2(); },
+				[this]() { return this->FormatTransmitPacketCountRing3(); },
+				[this]() { return this->FormatTransmitPacketCountRing4(); },
+				[this]() { return this->FormatTransmitPacketCountRing5(); },
+				[this]() { return this->FormatTransmitPacketCountCFO(); },
+				[this]() { return this->FormatTransmitPacketCountEVB(); }};
+		};
+	}  // namespace DTCLib
 
 #endif  // DTC_REGISTERS_H
