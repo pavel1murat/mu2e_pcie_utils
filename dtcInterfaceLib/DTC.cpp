@@ -668,9 +668,11 @@ std::vector<uint16_t> DTCLib::DTC::ReadROCBlock(const DTC_Link_ID& link, const u
 
 		auto wordCount = replytmp.second;
 		auto processedWords = 3;
+		dcsDMAInfo_.currentReadPtr = reinterpret_cast<uint8_t*>(dcsDMAInfo_.currentReadPtr) + 16;
+
 		while (packetCount > 0)
 		{
-			auto dataPacket = ReadNextPacket(DTC_DMA_Engine_DCS);
+			auto dataPacket = new DTC_DataPacket(dcsDMAInfo_.currentReadPtr);
 			if (dataPacket == nullptr) break;
 			auto byteInPacket = 0;
 
@@ -832,6 +834,14 @@ std::unique_ptr<DTCLib::DTC_DCSReplyPacket> DTCLib::DTC::ReadNextDCSPacket()
 	auto test = ReadNextPacket(DTC_DMA_Engine_DCS);
 	if (test == nullptr) return nullptr;  // Couldn't read new block
 	auto output = std::make_unique<DTC_DCSReplyPacket>(*test.get());
+	TLOG(TLVL_ReadNextDAQPacket) << output->toJSON();
+	if (static_cast<uint16_t>((1 + output->GetBlockPacketCount()) * 16) != output->GetByteCount())
+	{
+		TLOG(TLVL_ERROR) << "Data Error Detected: PacketCount: " << output->GetBlockPacketCount()
+						 << ", ExpectedByteCount: " << (1u + output->GetBlockPacketCount()) * 16u
+						 << ", BlockByteCount: " << output->GetByteCount();
+		throw DTC_DataCorruptionException();
+	}
 
 	return output;
 }
