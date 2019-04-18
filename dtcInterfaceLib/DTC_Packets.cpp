@@ -266,7 +266,7 @@ std::string DTCLib::DTC_DCSRequestPacket::toPacketFormat()
 
 	auto firstWord = (packetCount_ & 0x3FC) >> 2;
 	auto secondWord =
-		((packetCount_ & 0x3) << 6) + (requestAck_ ? 0x8 : 0) + (static_cast<int>(type_) & 0x7);
+		((packetCount_ & 0x3) << 6) + (incrementAddress_ ? 0x10 : 0) + (requestAck_ ? 0x8 : 0) + (static_cast<int>(type_) & 0x7);
 	ss << std::setw(8) << firstWord << "\t" << secondWord << std::endl;
 
 	ss << std::setw(8) << ((address1_ & 0xFF00) >> 8) << "\t" << (address1_ & 0xFF) << std::endl;
@@ -356,12 +356,12 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSRequestPacket::ConvertToDataPacket() const
 	auto type = type_;
 	if (address2_ == 0 && data2_ == 0 && (type_ == DTC_DCSOperationType_DoubleRead || type_ == DTC_DCSOperationType_DoubleWrite))
 	{
-		type = static_cast<DTC_DCSOperationType>(type_ & 0x3);
+		type = static_cast<DTC_DCSOperationType>(type_ & 0x1);
 	}
 
 	auto firstWord = (packetCount_ & 0x3FC) >> 2;
 	auto secondWord =
-		((packetCount_ & 0x3) << 6) + (requestAck_ ? 0x8 : 0) + (static_cast<int>(type) & 0x7);
+		((packetCount_ & 0x3) << 6) + (incrementAddress_ ? 0x10 : 0) + (requestAck_ ? 0x8 : 0) + (static_cast<int>(type) & 0x7);
 	output.SetWord(4, static_cast<uint8_t>(secondWord));
 	output.SetWord(5, static_cast<uint8_t>(firstWord));
 
