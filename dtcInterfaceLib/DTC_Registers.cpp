@@ -83,7 +83,7 @@ DTCLib::DTC_Registers::~DTC_Registers()
 {
 	DisableDetectorEmulator();
 	// DisableDetectorEmulatorMode();
-	DisableCFOEmulation();
+	// DisableCFOEmulation();
 	// ResetDTC();
 	device_.close();
 }
