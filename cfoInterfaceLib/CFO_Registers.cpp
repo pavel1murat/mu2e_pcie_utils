@@ -9,7 +9,7 @@
 
 #include "trace.h"
 
-CFOLib::CFO_Registers::CFO_Registers(DTC_SimMode mode, int CFO, unsigned dtcMask, std::string expectedDesignVersion,
+CFOLib::CFO_Registers::CFO_Registers(DTC_SimMode mode, int CFO,std::string expectedDesignVersion,
 									 bool skipInit)
 	: device_(), simMode_(mode), dmaSize_(16)
 {

@@ -165,7 +165,6 @@ private:
 	int64_t lineNumber_;
 	int64_t FPGAClock_;
 	int macroArgCount_;
-	int macroInsCount_;
 	CFO_MACRO macroOpcode_;
 	bool macroFlag_;
 

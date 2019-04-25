@@ -35,7 +35,7 @@ enum DTC_DataStatus
 };
 
 /// <summary>
-/// Possible values for the Op word of the DCS Reqeust packet.
+/// Possible values for the Op word of the DCS Request packet.
 /// </summary>
 enum DTC_DCSOperationType : uint8_t
 {
@@ -43,11 +43,13 @@ enum DTC_DCSOperationType : uint8_t
 	DTC_DCSOperationType_Write = 1,
 	DTC_DCSOperationType_BlockRead = 2,
 	DTC_DCSOperationType_BlockWrite = 3,
+	DTC_DCSOperationType_DoubleRead = 4,
+	DTC_DCSOperationType_DoubleWrite = 5,
 	DTC_DCSOperationType_Unknown = 0xF
 };
 
 /// <summary>
-/// Convert a DTC_DCSOperationType eunumeration value to its string or JSON representation
+/// Convert a DTC_DCSOperationType enumeration value to its string or JSON representation
 /// </summary>
 struct DTC_DCSOperationTypeConverter
 {
@@ -76,6 +78,10 @@ struct DTC_DCSOperationTypeConverter
 				return "BlockRead";
 			case DTC_DCSOperationType_BlockWrite:
 				return "BlockWrite";
+			case DTC_DCSOperationType_DoubleRead:
+				return "DoubleRead";
+			case DTC_DCSOperationType_DoubleWrite:
+				return "DoubleWrite";
 			case DTC_DCSOperationType_Unknown:
 			default:
 				return "Unknown";
@@ -103,6 +109,12 @@ struct DTC_DCSOperationTypeConverter
 				break;
 			case DTC_DCSOperationType_BlockWrite:
 				stream << "\"BlockWrite\"";
+				break;
+			case DTC_DCSOperationType_DoubleRead:
+				stream << "\"DoubleRead\"";
+				break;
+			case DTC_DCSOperationType_DoubleWrite:
+				stream << "\"DoubleWrite\"";
 				break;
 			case DTC_DCSOperationType_Unknown:
 			default:
@@ -190,7 +202,7 @@ public:
 	/// <returns>Value of the word</returns>
 	uint8_t GetWord(uint16_t index) const;
 	/// <summary>
-	/// Creates a JSON represenation of the DTC_DataPacket
+	/// Creates a JSON representation of the DTC_DataPacket
 	/// </summary>
 	/// <returns>JSON-formatted string representation of the DTC_DataPacket</returns>
 	std::string toJSON() const;
@@ -228,7 +240,8 @@ public:
 	/// <returns>True if successful</returns>
 	bool CramIn(DTC_DataPacket& other, int offset)
 	{
-		if (other.dataSize_ + offset <= dataSize_) {
+		if (other.dataSize_ + offset <= dataSize_)
+		{
 			memcpy(const_cast<uint8_t*>(dataPtr_) + offset, other.dataPtr_, other.dataSize_);
 			return true;
 		}
@@ -419,10 +432,13 @@ public:
 	/// <param name="link">Link ID for packet</param>
 	/// <param name="type">OpCode of packet</param>
 	/// <param name="requestAck">Whether to request acknowledement of this operation</param>
+	/// <param name="incrementAddress">Whether to increment the address pointer for block reads/writes</param>
 	/// <param name="address">Address of ROC register</param>
 	/// <param name="data">Data/wordCount for operation</param>
-	DTC_DCSRequestPacket(DTC_Link_ID link, DTC_DCSOperationType type, bool requestAck, uint16_t address,
-						 uint16_t data = 0x0);
+	/// <param name="address2">Address of ROC register</param>
+	/// <param name="data2">Data/wordCount for operation</param>
+	DTC_DCSRequestPacket(DTC_Link_ID link, DTC_DCSOperationType type, bool requestAck, bool incrementAddress, uint16_t address,
+						 uint16_t data = 0x0, uint16_t address2 = 0x0, uint16_t data2 = 0x0);
 	/// <summary>
 	/// Default Copy Constructor
 	/// </summary>
@@ -464,13 +480,19 @@ public:
 	/// Read the double operation bit from the DCS Request packet
 	/// </summary>
 	/// <returns>Whether the Double operation bit is set</returns>
-	bool IsDoubleOp() const { return doubleOp_; }
+	bool IsDoubleOp() const { return (type_ & 0x4) != 0; }
 
 	/// <summary>
-	/// Read the request acknowledement bit from the DCS Request Packet
+	/// Read the request acknowledgment bit from the DCS Request Packet
 	/// </summary>
-	/// <returns>Whether the request acknowledement bit is set</returns>
+	/// <returns>Whether the request acknowledgment bit is set</returns>
 	bool RequestsAck() const { return requestAck_; }
+
+	/// <summary>
+	/// Read the increment address bit from the DCS Request Packet
+	/// </summary>
+	/// <returns>Whether the increment address bit is set</returns>
+	bool IncrementsAddress() const { return incrementAddress_; }
 
 	/// <summary>
 	/// Get the request from the DCS Request Packet
@@ -507,10 +529,12 @@ public:
 	/// Sets the opcode of the DCS Request Packet
 	/// </summary>
 	/// <param name="type">Opcode to set</param>
-	/// <param name="reqAck">Whether to request acknowledement of this operation</param>
-	void SetType(DTC_DCSOperationType type, bool reqAck)
+	/// <param name="reqAck">Whether to request acknowledgment of this operation</param>
+	/// <param name="incAddress">Whether to increment the address pointer for block reads/writes</param>
+	void SetType(DTC_DCSOperationType type, bool reqAck, bool incAddress)
 	{
 		requestAck_ = reqAck;
+		incrementAddress_ = incAddress;
 		type_ = type;
 	}
 
@@ -532,8 +556,8 @@ public:
 
 private:
 	DTC_DCSOperationType type_;
-	bool doubleOp_;
 	bool requestAck_;
+	bool incrementAddress_;
 	uint16_t packetCount_;
 	uint16_t address1_;
 	uint16_t data1_;     ///< Also, blockWriteData0_
@@ -743,7 +767,7 @@ public:
 	bool IsDoubleOperation() const { return doubleOp_; }
 
 	/// <summary>
-	/// Get the "request acknowledgement" bit from the DCS Reply packet
+	/// Get the "request acknowledgment" bit from the DCS Reply packet
 	/// </summary>
 	/// <returns></returns>
 	bool IsAckRequested() const { return requestAck_; }
