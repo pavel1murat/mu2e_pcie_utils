@@ -668,12 +668,14 @@ std::vector<uint16_t> DTCLib::DTC::ReadROCBlock(const DTC_Link_ID& link, const u
 
 		auto wordCount = replytmp.second;
 		auto processedWords = 3;
-		dcsDMAInfo_.currentReadPtr = reinterpret_cast<uint8_t*>(dcsDMAInfo_.currentReadPtr) + 16;
+		dcsDMAInfo_.lastReadPtr = reinterpret_cast<uint8_t*>(dcsDMAInfo_.lastReadPtr) + 16;
 
 		while (packetCount > 0)
 		{
-			auto dataPacket = new DTC_DataPacket(dcsDMAInfo_.currentReadPtr);
+			auto dataPacket = new DTC_DataPacket(dcsDMAInfo_.lastReadPtr);
 			if (dataPacket == nullptr) break;
+
+			TLOG(TLVL_TRACE) << "ReadROCBlock: next data packet: " << dataPacket->toJSON();
 			auto byteInPacket = 0;
 
 			while (wordCount - processedWords > 0 && byteInPacket < 16)
