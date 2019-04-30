@@ -627,8 +627,10 @@ void DTCLib::DTC::WriteROCRegisters(const DTC_Link_ID& link, const uint16_t addr
 	}
 }
 
-std::vector<uint16_t> DTCLib::DTC::ReadROCBlock(const DTC_Link_ID& link, const uint16_t address,
-												const uint16_t wordCount, bool incrementAddress)
+void DTCLib::DTC::ReadROCBlock(
+	std::vector<uint16_t>& data,
+	const DTC_Link_ID& link, const uint16_t address,
+	const uint16_t wordCount, bool incrementAddress)
 {
 	DTC_DCSRequestPacket req(link, DTC_DCSOperationType_BlockRead, false, incrementAddress, address, wordCount);
 
@@ -643,7 +645,6 @@ std::vector<uint16_t> DTCLib::DTC::ReadROCBlock(const DTC_Link_ID& link, const u
 	TLOG(TLVL_SendDCSRequestPacket) << "ReadROCBlock after  WriteDMADCSPacket - DTC_DCSRequestPacket";
 
 	usleep(2500);
-	std::vector<uint16_t> data;
 
 	auto reply = ReadNextDCSPacket();
 	while (reply != nullptr)
@@ -692,7 +693,7 @@ std::vector<uint16_t> DTCLib::DTC::ReadROCBlock(const DTC_Link_ID& link, const u
 
 	TLOG(TLVL_TRACE) << "ReadROCBlock returning " << static_cast<int>(data.size()) << " words for link " << static_cast<int>(link)
 					 << ", address " << static_cast<int>(address);
-	return data;
+	
 }
 
 void DTCLib::DTC::WriteROCBlock(const DTC_Link_ID& link, const uint16_t address,

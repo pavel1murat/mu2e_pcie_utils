@@ -110,12 +110,13 @@ public:
 	/// <summary>
 	/// Perform a ROC block read
 	/// </summary>
+	/// <param name="data">vector of data by reference to read</param>
 	/// <param name="link">Link of the ROC to read</param>
 	/// <param name="address">Address of the block</param>
 	/// <param name="wordCount">Number of words to read</param>
 	/// <returns>Vector of words returned by block read</returns>
 	/// <param name="incrementAddress">Whether to increment the address pointer for block reads/writes</param>
-	std::vector<uint16_t> ReadROCBlock(const DTC_Link_ID& link, const uint16_t address, const uint16_t wordCount, bool incrementAddress);
+	void ReadROCBlock(std::vector<uint16_t>& data, const DTC_Link_ID& link, const uint16_t address, const uint16_t wordCount, bool incrementAddress);
 	/// <summary>
 	/// Perform a ROC block write
 	/// </summary>
