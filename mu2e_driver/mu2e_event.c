@@ -10,6 +10,7 @@
 #include <linux/mm.h>
 #include <linux/pci.h>   /* struct pci_dev *pci_get_device */
 #include <linux/timer.h> /* del_timer_sync  */
+#include <linux/version.h>		/* LINUX_VERSION_COD, KERNEL_VERSION */
 
 #include "trace.h" /* TRACE */
 
@@ -66,13 +67,23 @@ irqreturn_t DmaInterrupt(int irq, void *dev_id)
 /* Poll for completed "read dma (C2S)" buffers.
    Called from timer or interrupt (indirectly via mu2e_force_poll).
  */
-static void poll_packets(unsigned long dc)
+static void poll_packets(
+#                        if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
+                         unsigned long dc
+#                        else
+                         struct timer_list *t
+#                        endif
+                         )
 {
 	unsigned long base;
 	int error, did_work;
 	int chn, dir;
 	unsigned nxtCachedCmpltIdx;
+#	if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
 	int dtc = (int)dc;
+#	else
+	int dtc = 0;  // FIXME: from_timer(, t, );
+#	endif
 	mu2e_buffdesc_C2S_t *buffdesc_C2S_p;
 
 	error = 0;
@@ -169,9 +180,14 @@ static void poll_packets(unsigned long dc)
 
 int mu2e_event_up(int dtc)
 {
+#	if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
 	init_timer(&packets_timer[dtc]);
 	packets_timer[dtc].function = poll_packets;
 	packets_timer[dtc].data = dtc;
+#	else
+	timer_setup(&packets_timer[dtc],poll_packets, 0);
+	// FIXME: how to pass "dtc" to poll
+#	endif
 	packets_timer_guard[dtc] = 1;
 	return mu2e_sched_poll(dtc);
 }
@@ -197,7 +213,11 @@ int mu2e_force_poll(int dtc)
 	TRACE(21, "mu2e_force_poll dtc=%d packets_timer_guard[dtc]=%d", dtc, packets_timer_guard[dtc]);
 	if (packets_timer_guard[dtc]) {
 		packets_timer_guard[dtc] = 0;
+#		if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
 		poll_packets(dtc);
+#		else
+		// FIXME
+#		endif
 	}
 	return 0;
 }
