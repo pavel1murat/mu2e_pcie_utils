@@ -21,7 +21,11 @@
 
 #define PACKET_POLL_HZ 1000
 
-struct timer_list packets_timer[MU2E_MAX_NUM_DTCS];
+struct timer_data {
+  struct timer_list timer;
+  int dtc;
+};
+struct timer_data packets_timer[MU2E_MAX_NUM_DTCS];
 int packets_timer_guard[MU2E_MAX_NUM_DTCS] = {1};
 
 extern int checkDmaEngine(int dtc, unsigned chn, unsigned dir);
@@ -82,7 +86,8 @@ static void poll_packets(
 #	if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
 	int dtc = (int)dc;
 #	else
-	int dtc = 0;  // FIXME: from_timer(, t, );
+	struct timer_data* tt = from_timer(tt, t, timer);
+	int dtc = tt->dtc;  // FIXME: from_timer(, t, );
 #	endif
 	mu2e_buffdesc_C2S_t *buffdesc_C2S_p;
 
@@ -151,8 +156,8 @@ static void poll_packets(
 	if (did_work) {
 	// Reschedule immediately
 #if 1
-		packets_timer[dtc].expires = jiffies + 1;
-		add_timer(&packets_timer[dtc]);
+		packets_timer[dtc].timer.expires = jiffies + 1;
+		add_timer(&packets_timer[dtc].timer);
 #else
 		poll_packets(__opaque);
 #endif
@@ -171,7 +176,7 @@ static void poll_packets(
 	packets_timer_guard[dtc] = 1;
 	offset = HZ / PACKET_POLL_HZ + (error ? 5 * HZ : 0);
 	packets_timer[dtc].expires = jiffies + offset;
-	add_timer(&packets_timer[dtc]);
+	add_timer(&packets_timer[dtc].timer);
 	TRACE(21, "poll_packets: After reschedule, offset=%i", offset);
 #endif
 }
@@ -185,8 +190,7 @@ int mu2e_event_up(int dtc)
 	packets_timer[dtc].function = poll_packets;
 	packets_timer[dtc].data = dtc;
 #	else
-	timer_setup(&packets_timer[dtc],poll_packets, 0);
-	// FIXME: how to pass "dtc" to poll
+	timer_setup(&packets_timer[dtc].timer,poll_packets, 0);
 #	endif
 	packets_timer_guard[dtc] = 1;
 	return mu2e_sched_poll(dtc);
@@ -197,13 +201,13 @@ int mu2e_sched_poll(int dtc)
 	TRACE(21, "mu2e_sched_poll dtc=%d packets_timer_guard[dtc]=%d", dtc, packets_timer_guard[dtc]);
 	if (packets_timer_guard[dtc]) {
 		packets_timer_guard[dtc] = 0;
-		packets_timer[dtc].expires = jiffies
+		packets_timer[dtc].timer.expires = jiffies
 #if MU2E_RECV_INTER_ENABLED == 0
 									 + (HZ / PACKET_POLL_HZ)
 #endif
 			;
 		// timer->data=(unsigned long) pdev;
-		add_timer(&packets_timer[dtc]);
+		add_timer(&packets_timer[dtc].timer);
 	}
 	return (0);
 }
@@ -216,10 +220,10 @@ int mu2e_force_poll(int dtc)
 #		if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
 		poll_packets(dtc);
 #		else
-		// FIXME
+		poll_packets(&packets_timer[dtc].timer);
 #		endif
 	}
 	return 0;
 }
 
-void mu2e_event_down(int dtc) { del_timer_sync(&packets_timer[dtc]); }
+void mu2e_event_down(int dtc) { del_timer_sync(&packets_timer[dtc].timer); }
