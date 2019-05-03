@@ -185,13 +185,13 @@ static void poll_packets(
 
 int mu2e_event_up(int dtc)
 {
-#	if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
-	init_timer(&packets_timer[dtc]);
-	packets_timer[dtc].function = poll_packets;
-	packets_timer[dtc].data = dtc;
-#	else
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
+	init_timer(&(packets_timer[dtc].timer));
+	packets_timer[dtc].timer.function = poll_packets;
+	packets_timer[dtc].timer.data = dtc;
+#else
 	timer_setup(&packets_timer[dtc].timer,poll_packets, 0);
-#	endif
+#endif
 	packets_timer_guard[dtc] = 1;
 	return mu2e_sched_poll(dtc);
 }
