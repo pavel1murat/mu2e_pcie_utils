@@ -1130,8 +1130,8 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DataPacket& packet)
 		}
 		ss << std::dec;
 
-		std::cout << "Buffer being sent: \n"
-				  << ss.str() << std::endl;
+		//std::cout << "Buffer being sent: \n"
+		//		  << ss.str() << std::endl;
 	}
 
 	auto retry = 3;
