@@ -1487,21 +1487,25 @@ void DTCLib::DTC_Registers::SetSERDESOscillatorClock(DTC_SerdesClockSpeed speed)
 			targetFreq = 0.0;
 			break;
 	}
-	SetNewOscillatorFrequency(DTC_OscillatorType_SERDES, targetFreq);
-	for (auto& link : DTC_Links)
+	if (SetNewOscillatorFrequency(DTC_OscillatorType_SERDES, targetFreq))
 	{
-		ResetSERDES(link, 1000);
+		for (auto& link : DTC_Links)
+		{
+			ResetSERDES(link, 1000);
+		}
+		ResetSERDES(DTC_Link_CFO, 1000);
+		// ResetSERDES(DTC_Link_EVB, 1000);
 	}
-	ResetSERDES(DTC_Link_CFO, 1000);
-	// ResetSERDES(DTC_Link_EVB, 1000);
 }
 
 void DTCLib::DTC_Registers::SetTimingOscillatorClock(uint32_t freq)
 {
 	double targetFreq = freq;
-	SetNewOscillatorFrequency(DTC_OscillatorType_Timing, targetFreq);
-	ResetSERDES(DTC_Link_CFO, 1000);
-	// ResetSERDES(DTC_Link_EVB, 1000);
+	if (SetNewOscillatorFrequency(DTC_OscillatorType_Timing, targetFreq))
+	{
+		ResetSERDES(DTC_Link_CFO, 1000);
+		// ResetSERDES(DTC_Link_EVB, 1000);
+	}
 }
 
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatTimingSERDESOscillatorFrequency()
@@ -4649,7 +4653,7 @@ uint32_t DTCLib::DTC_Registers::ReadEventModeWord(uint8_t which)
 }
 
 // Oscillator Programming (DDR and SERDES)
-void DTCLib::DTC_Registers::SetNewOscillatorFrequency(DTC_OscillatorType oscillator, double targetFrequency)
+bool DTCLib::DTC_Registers::SetNewOscillatorFrequency(DTC_OscillatorType oscillator, double targetFrequency)
 {
 	auto currentFrequency = ReadCurrentFrequency(oscillator);
 	auto currentProgram = ReadCurrentProgram(oscillator);
@@ -4660,17 +4664,18 @@ void DTCLib::DTC_Registers::SetNewOscillatorFrequency(DTC_OscillatorType oscilla
 	if (fabs(currentFrequency - targetFrequency) < targetFrequency * 30 / 1000000)
 	{
 		TLOG(TLVL_INFO) << "New frequency and old frequency are within 30 ppm of each other, not reprogramming!";
-		return;
+		return false;
 	}
 
 	auto newParameters = CalculateFrequencyForProgramming_(targetFrequency, currentFrequency, currentProgram);
 	if (newParameters == 0)
 	{
 		TLOG(TLVL_WARNING) << "New program calculated as 0! Check parameters!";
-		return;
+		return false;
 	}
 	WriteCurrentProgram(newParameters, oscillator);
 	WriteCurrentFrequency(targetFrequency, oscillator);
+	return true;
 }
 
 double DTCLib::DTC_Registers::ReadCurrentFrequency(DTC_OscillatorType oscillator)

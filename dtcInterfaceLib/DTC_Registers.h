@@ -2731,7 +2731,8 @@ public:
 	/// </summary>
 	/// <param name="oscillator">Oscillator to program, either DDR or SERDES</param>
 	/// <param name="targetFrequency">New frequency to program, in Hz</param>
-	void SetNewOscillatorFrequency(DTC_OscillatorType oscillator, double targetFrequency);
+	/// <returns>Whether the oscillator was changed (Will not reset if already set to desired frequency)</returns>
+	bool SetNewOscillatorFrequency(DTC_OscillatorType oscillator, double targetFrequency);
 	/// <summary>
 	/// Get the DTC's idea of the current frequency of the specified oscillator
 	/// </summary>
