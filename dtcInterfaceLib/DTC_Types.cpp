@@ -69,7 +69,9 @@ DTCLib::DTC_Timestamp::DTC_Timestamp(const std::bitset<48> timestamp)
 
 void DTCLib::DTC_Timestamp::SetTimestamp(const uint32_t timestampLow, const uint16_t timestampHigh)
 {
-	timestamp_ = timestampLow + (static_cast<const uint64_t>(timestampHigh) << 32);
+	uint64_t timestamp_temp = timestampHigh;
+	timestamp_temp = timestamp_temp << 32;
+	timestamp_ = timestampLow + timestamp_temp;
 }
 
 void DTCLib::DTC_Timestamp::GetTimestamp(const uint8_t* timeArr, int offset) const

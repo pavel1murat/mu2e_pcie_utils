@@ -49,8 +49,13 @@ macro (create_nodejs_addon)
         execute_process(COMMAND printf %d%02d%02d ${V8_STRING_MAJOR} ${V8_STRING_MINOR} ${V8_STRING_PATCH} OUTPUT_VARIABLE V8_DEFINE_STRING)
         message("V8_DEFINE_STRING is ${V8_DEFINE_STRING}")
 
-        set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-parameter")
-
+		message("CMAKE_CXX_COMPILER is ${CMAKE_CXX_COMPILER}")
+		if(CMAKE_CXX_COMPILER MATCHES "clang\\+\\+$")
+		        set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-bad-function-cast -Wno-unused-parameter")
+		else()
+			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-cast-function-type -Wno-unused-parameter")
+		endif()
+		
         file(GLOB NODEJS_ADDON_SOURCES  *.i)
         file(GLOB LIB_SOURCES  *.cpp)
 		file(GLOB SWIG_DEPENDS *.h *.i)

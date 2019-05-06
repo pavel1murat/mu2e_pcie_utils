@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
 					data = thisDTC->GetData(zero);
 					// TRACE(4, "Done calling theInterface->GetData(zero)");
 				}
-				catch (std::exception ex)
+				catch (std::exception const& ex)
 				{
 					std::cerr << ex.what() << std::endl;
 				}
