@@ -293,7 +293,7 @@ void DTCLib::DTCLibTest::doClassTest()
 			if (printMessages_) std::cout << "DTC_DataPacket Class failed checks!" << std::endl;
 		}
 	}
-	catch (std::exception ex)
+	catch (std::exception const& ex)
 	{
 		if (printMessages_) {
 			std::cout << "Test failed with exception: " << ex.what() << std::endl;
@@ -357,7 +357,7 @@ void DTCLib::DTCLibTest::doRegTest()
 			++regFailed_;
 		}
 	}
-	catch (std::exception ex)
+	catch (std::exception const& ex)
 	{
 		if (printMessages_) {
 			std::cout << "Test failed with exception: " << ex.what() << std::endl;
@@ -400,7 +400,7 @@ void DTCLib::DTCLibTest::doDCSTest()
 		}
 		++dcsPassed_;
 	}
-	catch (std::exception ex)
+	catch (std::exception const& ex)
 	{
 		if (printMessages_) {
 			std::cout << "Test failed with exception: " << ex.what() << std::endl;
@@ -473,7 +473,7 @@ void DTCLib::DTCLibTest::doDAQTest()
 		}
 		++daqPassed_;
 	}
-	catch (std::exception ex)
+	catch (std::exception const& ex)
 	{
 		if (printMessages_) {
 			std::cout << "Test failed with exception: " << ex.what() << std::endl;
