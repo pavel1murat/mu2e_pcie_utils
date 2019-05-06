@@ -1546,7 +1546,8 @@ public:
 	/// Set the given oscillator to the given frequency, calculating a new program in the process.
 	/// </summary>
 	/// <param name="targetFrequency">New frequency to program, in Hz</param>
-	void SetNewOscillatorFrequency(double targetFrequency);
+	/// <returns>Whether the oscillator frequency was changed</returns>
+	bool SetNewOscillatorFrequency(double targetFrequency);
 
 private:
 	void WriteRegister_(uint32_t data, const CFO_Register& address);

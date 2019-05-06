@@ -446,7 +446,8 @@ public:
 	/// Enable the DTC CFO Emulator
 	/// Parameters for the CFO Emulator, such as count and starting timestamp, must be set before enabling.
 	/// </summary>
-	void EnableCFOEmulation();
+	/// <param name=interval>Microseconds to sleep while checking links for ready state</param>
+	void EnableCFOEmulation(size_t interval = 1000);
 	/// <summary>
 	/// Disable the DTC CFO Emulator
 	/// </summary>
@@ -2777,6 +2778,8 @@ private:
 	void SetSERDESOscillatorParameters_(uint64_t program);
 	void SetTimingOscillatorParameters_(uint64_t program);
 	void SetDDROscillatorParameters_(uint64_t program);
+
+	void WaitForLinkReady_(DTC_Link_ID const& link, size_t interval);
 
 protected:
 	mu2edev device_;              ///< Device handle

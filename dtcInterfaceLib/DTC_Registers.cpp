@@ -462,11 +462,21 @@ bool DTCLib::DTC_Registers::ReadResetDTC()
 	return dataSet[31];
 }
 
-void DTCLib::DTC_Registers::EnableCFOEmulation()
+void DTCLib::DTC_Registers::EnableCFOEmulation(size_t interval)
 {
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
+	bool changed = data[30] == 0;
 	data[30] = 1;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
+	if (changed)
+	{
+		for (auto& link : DTC_Links)
+		{
+			if (!ReadLinkEnabled(link).TransmitEnable) continue;
+
+			WaitForLinkReady_(link, interval);
+		}
+	}
 }
 
 void DTCLib::DTC_Registers::DisableCFOEmulation()
@@ -4971,4 +4981,15 @@ void DTCLib::DTC_Registers::SetDDROscillatorParameters_(uint64_t program)
 
 	WriteDDRIICInterface(DTC_IICDDRBusAddress_DDROscillator, 0x89, 0);
 	WriteDDRIICInterface(DTC_IICDDRBusAddress_DDROscillator, 0x87, 0x40);
+}
+
+void DTCLib::DTC_Registers::WaitForLinkReady_(DTC_Link_ID const& link, size_t interval)
+{
+	bool ready = ReadSERDESPLLLocked(link) && ReadResetRXSERDESDone(link) && ReadResetTXSERDESDone(link);
+
+	while (!ready)
+	{
+		usleep(interval);
+		ready = ReadSERDESPLLLocked(link) && ReadResetRXSERDESDone(link) && ReadResetTXSERDESDone(link);
+	}
 }
