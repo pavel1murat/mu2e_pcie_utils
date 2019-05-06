@@ -10,6 +10,7 @@
 #include <linux/mm.h>
 #include <linux/pci.h>   /* struct pci_dev *pci_get_device */
 #include <linux/timer.h> /* del_timer_sync  */
+#include <linux/version.h>		/* LINUX_VERSION_COD, KERNEL_VERSION */
 
 #include "trace.h" /* TRACE */
 
@@ -20,7 +21,11 @@
 
 #define PACKET_POLL_HZ 1000
 
-struct timer_list packets_timer[MU2E_MAX_NUM_DTCS];
+struct timer_data {
+  struct timer_list timer;
+  int dtc;
+};
+struct timer_data packets_timer[MU2E_MAX_NUM_DTCS];
 int packets_timer_guard[MU2E_MAX_NUM_DTCS] = {1};
 
 extern int checkDmaEngine(int dtc, unsigned chn, unsigned dir);
@@ -66,13 +71,24 @@ irqreturn_t DmaInterrupt(int irq, void *dev_id)
 /* Poll for completed "read dma (C2S)" buffers.
    Called from timer or interrupt (indirectly via mu2e_force_poll).
  */
-static void poll_packets(unsigned long dc)
+static void poll_packets(
+#                        if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
+                         unsigned long dc
+#                        else
+                         struct timer_list *t
+#                        endif
+                         )
 {
 	unsigned long base;
 	int error, did_work;
 	int chn, dir;
 	unsigned nxtCachedCmpltIdx;
+#	if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
 	int dtc = (int)dc;
+#	else
+	struct timer_data* tt = from_timer(tt, t, timer);
+	int dtc = tt->dtc;  // FIXME: from_timer(, t, );
+#	endif
 	mu2e_buffdesc_C2S_t *buffdesc_C2S_p;
 
 	error = 0;
@@ -140,8 +156,8 @@ static void poll_packets(unsigned long dc)
 	if (did_work) {
 	// Reschedule immediately
 #if 1
-		packets_timer[dtc].expires = jiffies + 1;
-		add_timer(&packets_timer[dtc]);
+		packets_timer[dtc].timer.expires = jiffies + 1;
+		add_timer(&packets_timer[dtc].timer);
 #else
 		poll_packets(__opaque);
 #endif
@@ -160,7 +176,7 @@ static void poll_packets(unsigned long dc)
 	packets_timer_guard[dtc] = 1;
 	offset = HZ / PACKET_POLL_HZ + (error ? 5 * HZ : 0);
 	packets_timer[dtc].expires = jiffies + offset;
-	add_timer(&packets_timer[dtc]);
+	add_timer(&packets_timer[dtc].timer);
 	TRACE(21, "poll_packets: After reschedule, offset=%i", offset);
 #endif
 }
@@ -169,9 +185,13 @@ static void poll_packets(unsigned long dc)
 
 int mu2e_event_up(int dtc)
 {
-	init_timer(&packets_timer[dtc]);
-	packets_timer[dtc].function = poll_packets;
-	packets_timer[dtc].data = dtc;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
+	init_timer(&(packets_timer[dtc].timer));
+	packets_timer[dtc].timer.function = poll_packets;
+	packets_timer[dtc].timer.data = dtc;
+#else
+	timer_setup(&packets_timer[dtc].timer,poll_packets, 0);
+#endif
 	packets_timer_guard[dtc] = 1;
 	return mu2e_sched_poll(dtc);
 }
@@ -181,13 +201,13 @@ int mu2e_sched_poll(int dtc)
 	TRACE(21, "mu2e_sched_poll dtc=%d packets_timer_guard[dtc]=%d", dtc, packets_timer_guard[dtc]);
 	if (packets_timer_guard[dtc]) {
 		packets_timer_guard[dtc] = 0;
-		packets_timer[dtc].expires = jiffies
+		packets_timer[dtc].timer.expires = jiffies
 #if MU2E_RECV_INTER_ENABLED == 0
 									 + (HZ / PACKET_POLL_HZ)
 #endif
 			;
 		// timer->data=(unsigned long) pdev;
-		add_timer(&packets_timer[dtc]);
+		add_timer(&packets_timer[dtc].timer);
 	}
 	return (0);
 }
@@ -197,9 +217,13 @@ int mu2e_force_poll(int dtc)
 	TRACE(21, "mu2e_force_poll dtc=%d packets_timer_guard[dtc]=%d", dtc, packets_timer_guard[dtc]);
 	if (packets_timer_guard[dtc]) {
 		packets_timer_guard[dtc] = 0;
+#		if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
 		poll_packets(dtc);
+#		else
+		poll_packets(&packets_timer[dtc].timer);
+#		endif
 	}
 	return 0;
 }
 
-void mu2e_event_down(int dtc) { del_timer_sync(&packets_timer[dtc]); }
+void mu2e_event_down(int dtc) { del_timer_sync(&packets_timer[dtc].timer); }

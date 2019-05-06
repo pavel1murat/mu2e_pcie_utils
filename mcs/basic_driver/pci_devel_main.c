@@ -5,7 +5,7 @@
         $RCSfile: .emacs.gnu,v $
         rev="$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
         */
-#include <asm/uaccess.h>   /* access_ok, copy_to_user */
+#include <linux/uaccess.h>   /* access_ok, copy_to_user */
 #include <linux/cdev.h>    /* cdev_add */
 #include <linux/delay.h>   /* msleep */
 #include <linux/device.h>  /* class_create */
@@ -65,14 +65,14 @@ static struct file_operations devl_file_ops = {
 	.poll = NULL,                        /* poll         */
 	.IOCTL_FILE_OPS_MEMBER = devl_ioctl, /* ioctl  */
 	.mmap = NULL,                        /* mmap         */
-	NULL,                                /* open         */
-	NULL,                                /* flush        */
-	NULL,                                /* release (close?)*/
-	NULL,                                /* fsync        */
-	NULL,                                /* fasync       */
-	NULL,                                /* check_media_change */
-	NULL,                                /* revalidate   */
-	NULL                                 /* lock         */
+	0                                    /* open         */
+	                                     /* flush        */
+	                                     /* release (close?)*/
+	                                     /* fsync        */
+	                                     /* fasync       */
+	                                     /* check_media_change */
+	                                     /* revalidate   */
+	                                     /* lock         */
 };
 
 dev_t devl_dev_number;

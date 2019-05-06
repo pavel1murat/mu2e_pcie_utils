@@ -132,8 +132,8 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DMAPacket::ConvertToDataPacket() const
 		output.SetWord(i, 0);
 	}
 
-	std::cout << "ConvertToDataPacket: \n"
-			  << output.toPacketFormat() << std::endl;
+	//std::cout << "ConvertToDataPacket: \n"
+	//		  << output.toPacketFormat() << std::endl;
 
 	return output;
 }

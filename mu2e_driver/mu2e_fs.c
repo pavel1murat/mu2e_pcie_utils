@@ -26,14 +26,14 @@ static struct file_operations mu2e_file_ops = {
 	.poll = NULL,                        /* poll         */
 	.IOCTL_FILE_OPS_MEMBER = mu2e_ioctl, /* ioctl  */
 	.mmap = mu2e_mmap,                   /* mmap         */
-	NULL,                                /* open         */
-	NULL,                                /* flush        */
-	NULL,                                /* release (close?)*/
-	NULL,                                /* fsync        */
-	NULL,                                /* fasync       */
-	NULL,                                /* check_media_change */
-	NULL,                                /* revalidate   */
-	NULL                                 /* lock         */
+	0                                    /* open         */
+	                                     /* flush        */
+	                                     /* release (close?)*/
+	                                     /* fsync        */
+	                                     /* fasync       */
+	                                     /* check_media_change */
+	                                     /* revalidate   */
+	                                     /* lock         */
 };
 
 struct cdev mu2e_cdev;

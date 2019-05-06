@@ -627,8 +627,10 @@ void DTCLib::DTC::WriteROCRegisters(const DTC_Link_ID& link, const uint16_t addr
 	}
 }
 
-std::vector<uint16_t> DTCLib::DTC::ReadROCBlock(const DTC_Link_ID& link, const uint16_t address,
-												const uint16_t wordCount, bool incrementAddress)
+void DTCLib::DTC::ReadROCBlock(
+	std::vector<uint16_t>& data,
+	const DTC_Link_ID& link, const uint16_t address,
+	const uint16_t wordCount, bool incrementAddress)
 {
 	DTC_DCSRequestPacket req(link, DTC_DCSOperationType_BlockRead, false, incrementAddress, address, wordCount);
 
@@ -643,7 +645,6 @@ std::vector<uint16_t> DTCLib::DTC::ReadROCBlock(const DTC_Link_ID& link, const u
 	TLOG(TLVL_SendDCSRequestPacket) << "ReadROCBlock after  WriteDMADCSPacket - DTC_DCSRequestPacket";
 
 	usleep(2500);
-	std::vector<uint16_t> data;
 
 	auto reply = ReadNextDCSPacket();
 	while (reply != nullptr)
@@ -668,12 +669,14 @@ std::vector<uint16_t> DTCLib::DTC::ReadROCBlock(const DTC_Link_ID& link, const u
 
 		auto wordCount = replytmp.second;
 		auto processedWords = 3;
-		dcsDMAInfo_.currentReadPtr = reinterpret_cast<uint8_t*>(dcsDMAInfo_.currentReadPtr) + 16;
+		dcsDMAInfo_.lastReadPtr = reinterpret_cast<uint8_t*>(dcsDMAInfo_.lastReadPtr) + 16;
 
 		while (packetCount > 0)
 		{
-			auto dataPacket = new DTC_DataPacket(dcsDMAInfo_.currentReadPtr);
+			auto dataPacket = new DTC_DataPacket(dcsDMAInfo_.lastReadPtr);
 			if (dataPacket == nullptr) break;
+
+			TLOG(TLVL_TRACE) << "ReadROCBlock: next data packet: " << dataPacket->toJSON();
 			auto byteInPacket = 0;
 
 			while (wordCount - processedWords > 0 && byteInPacket < 16)
@@ -690,7 +693,7 @@ std::vector<uint16_t> DTCLib::DTC::ReadROCBlock(const DTC_Link_ID& link, const u
 
 	TLOG(TLVL_TRACE) << "ReadROCBlock returning " << static_cast<int>(data.size()) << " words for link " << static_cast<int>(link)
 					 << ", address " << static_cast<int>(address);
-	return data;
+	
 }
 
 void DTCLib::DTC::WriteROCBlock(const DTC_Link_ID& link, const uint16_t address,
@@ -1127,8 +1130,8 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DataPacket& packet)
 		}
 		ss << std::dec;
 
-		std::cout << "Buffer being sent: \n"
-				  << ss.str() << std::endl;
+		//std::cout << "Buffer being sent: \n"
+		//		  << ss.str() << std::endl;
 	}
 
 	auto retry = 3;

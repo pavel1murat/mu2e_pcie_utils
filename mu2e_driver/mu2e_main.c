@@ -5,7 +5,7 @@
         $RCSfile: .emacs.gnu,v $
         rev="$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
         */
-#include <asm/uaccess.h>   /* access_ok, copy_to_user */
+#include <linux/uaccess.h>   /* access_ok, copy_to_user */
 #include <linux/delay.h>   /* msleep */
 #include <linux/fs.h>      /* struct inode */
 #include <linux/init.h>    // module_init,_exit
