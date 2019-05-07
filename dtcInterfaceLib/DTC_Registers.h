@@ -446,8 +446,7 @@ public:
 	/// Enable the DTC CFO Emulator
 	/// Parameters for the CFO Emulator, such as count and starting timestamp, must be set before enabling.
 	/// </summary>
-	/// <param name=interval>Microseconds to sleep while checking links for ready state</param>
-	void EnableCFOEmulation(size_t interval = 1000);
+	void EnableCFOEmulation();
 	/// <summary>
 	/// Disable the DTC CFO Emulator
 	/// </summary>
@@ -556,6 +555,21 @@ public:
 	/// </summary>
 	/// <returns>Whether the LED6 bit is set</returns>
 	bool ReadLED6State();
+	/// <summary>
+	/// Enable CFO Emulation mode. If CFO Emulation mode was not enabled, wait for links to become ready
+	/// </summary>
+	/// <param name="interval">Sleep interval while waiting for links</param>
+	void SetCFOEmulationMode(size_t interval = 1000);
+	/// <summary>
+	/// Disable CFO Emulation mode. If CFO Emulation mode was senabled, wait for links to become ready
+	/// </summary>
+	/// <param name="interval">Sleep interval while waiting for links</param>
+	void ClearCFOEmulationMode(size_t interval = 1000);
+	/// <summary>
+	/// Read the state of the CFO Emulation Mode bit
+	/// </summary>
+	/// <returns>Whether CFO Emulation Mode is enabled</returns>
+	bool ReadCFOEmulationMode();
 	/// <summary>
 	/// Set the SERDES Global Reset bit to true, and wait for the reset to complete
 	/// </summary>

@@ -1,9 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-// The DTCSoftwareCFO class is responsible for sending ReadoutRequest and
-// DataRequest packets to the DTC in the absence of a functioning CFO.
-// Requests are sent asynchronously, and the overall behaviour is meant to
-// emulate a system with a CFO as closely as possible.
-//
 // Author: Eric Flumerfelt, FNAL RSI
 // Date: 8/13/2015
 ///////////////////////////////////////////////////////////////////////////////
@@ -20,7 +15,6 @@
 
 namespace DTCLib {
 /// <summary>
-/// DEPRECATED
 /// The DTCSoftwareCFO class is responsible for sending ReadoutRequest and
 /// DataRequest packets to the DTC in the absence of a functioning CFO.
 /// Requests are sent asynchronously, and the overall behaviour is meant to
@@ -49,20 +43,21 @@ public:
 	~DTCSoftwareCFO();
 
 	/// <summary>
-	/// Send a readout request and data request for a given timestamp
+	/// Send a Heartbeat Packet and data request for a given timestamp
 	/// </summary>
 	/// <param name="ts">Timestamp for requests</param>
 	void SendRequestForTimestamp(DTC_Timestamp ts = DTC_Timestamp(static_cast<uint64_t>(0)));
 	/// <summary>
-	/// Send requests for a range of timestamps.
+	/// Send Heartbeat Packets and Data Requests for a range of timestamps.
 	/// </summary>
 	/// <param name="count">Number of requests</param>
 	/// <param name="start">Starting timestamp (Default: 0)</param>
 	/// <param name="increment">Whether to increment the timestamp for each request (Default: true)</param>
 	/// <param name="delayBetweenDataRequests">Number of microseconds to wait between requests</param>
-	/// <param name="requestsAhead">Number of readout requests to send ahead of data requests</param>
+	/// <param name="requestsAhead">Number of Heartbeat Packets to send ahead of data requests</param>
+	/// <param name="readoutRequestsAfter">How many Heartbeat Packets to send after all Data Requests have been sent to flush the system</param>
 	void SendRequestsForRange(int count, DTC_Timestamp start = DTC_Timestamp(static_cast<uint64_t>(0)),
-							  bool increment = true, uint32_t delayBetweenDataRequests = 0, int requestsAhead = 1);
+							  bool increment = true, uint32_t delayBetweenDataRequests = 0, int requestsAhead = 1, uint32_t readoutRequestsAfter = 4);
 
 	/// <summary>
 	/// Send requests for a list of timestamps.
@@ -98,9 +93,9 @@ public:
 
 private:
 	void SendRequestsForRangeImplAsync(DTC_Timestamp start, int count, bool increment = true,
-									   uint32_t delayBetweenDataRequests = 0);
+									   uint32_t delayBetweenDataRequests = 0, uint32_t readoutRequestsAfter = 4);
 	void SendRequestsForRangeImplSync(DTC_Timestamp start, int count, bool increment = true,
-									  uint32_t delayBetweenDataRequests = 0, int requestsAhead = 1);
+									  uint32_t delayBetweenDataRequests = 0, int requestsAhead = 1, uint32_t readoutRequestsAfter = 4);
 
 	void SendRequestsForListImplAsync(std::set<DTC_Timestamp> timestamps, uint32_t delayBetweenDataRequests = 0);
 

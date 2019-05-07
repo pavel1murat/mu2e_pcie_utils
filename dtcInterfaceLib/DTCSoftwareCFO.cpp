@@ -91,7 +91,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 }
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start, bool increment,
-												  uint32_t delayBetweenDataRequests, int requestsAhead)
+												  uint32_t delayBetweenDataRequests, int requestsAhead, uint32_t readoutRequestsAfter)
 {
 	if (theDTC_->IsDetectorEmulatorInUse()) {
 		TLOG(13) << "Enabling Detector Emulator for " << count << " DMAs";
@@ -109,13 +109,13 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start
 		if (asyncRR_) {
 			if (theThread_ && theThread_->joinable()) theThread_->join();
 			theThread_.reset(new std::thread(&DTCSoftwareCFO::SendRequestsForRangeImplAsync, this, start, count, increment,
-											 delayBetweenDataRequests));
+											 delayBetweenDataRequests, readoutRequestsAfter));
 		}
 		else
 		{
 			if (theThread_ && theThread_->joinable()) theThread_->join();
 			theThread_.reset(new std::thread(&DTCSoftwareCFO::SendRequestsForRangeImplSync, this, start, count, increment,
-											 delayBetweenDataRequests, requestsAhead));
+											 delayBetweenDataRequests, requestsAhead, readoutRequestsAfter));
 		}
 		WaitForRequestsToBeSent();
 	}
@@ -132,6 +132,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start
 		theDTC_->SetCFOEmulationNumRequests(count);
 		theDTC_->SetCFOEmulationDebugType(debugType_);
 		theDTC_->SetCFOEmulationModeByte(5, 1);
+		theDTC_->SetCFOEmulationNumNullHeartbeats(readoutRequestsAfter);
 		if (!forceNoDebug_)
 			theDTC_->EnableDebugPacketMode();
 		else
@@ -200,7 +201,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForListImplAsync(std::set<DTC_Timestamp
 }
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync(DTC_Timestamp start, int count, bool increment,
-														  uint32_t delayBetweenDataRequests, int requestsAhead)
+														  uint32_t delayBetweenDataRequests, int requestsAhead, uint32_t readoutRequestsAfter)
 {
 	TLOG(14) << "SendRequestsForRangeImplSync Start";
 	for (auto ii = 0; ii < count; ++ii) {
@@ -214,10 +215,27 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplSync(DTC_Timestamp start, i
 		usleep(delayBetweenDataRequests);
 		if (abort_) return;
 	}
+
+	for (uint32_t ii = 0; ii < readoutRequestsAfter; ++ii)
+	{
+		auto ts = start + (increment ? count + ii : 0);
+		for (auto link : DTC_Links)
+		{
+			if (!linkMode_[link].TimingEnable)
+			{
+				if (linkMode_[link].TransmitEnable)
+				{
+					TLOG(15) << "SendRequestsForRangeImpl before SendReadoutRequestPacket";
+					theDTC_->SendReadoutRequestPacket(link, ts, quiet_);
+				}
+			}
+			if (abort_) return;
+		}
+	}
 }
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync(DTC_Timestamp start, int count, bool increment,
-														   uint32_t delayBetweenDataRequests)
+														   uint32_t delayBetweenDataRequests, uint32_t readoutRequestsAfter)
 {
 	TLOG(15) << "SendRequestsForRangeImplAsync Start";
 
@@ -264,5 +282,22 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRangeImplAsync(DTC_Timestamp start, 
 			if (abort_) return;
 		}
 		usleep(delayBetweenDataRequests);
+	}
+
+	for (uint32_t ii = 0; ii < readoutRequestsAfter; ++ii)
+	{
+		auto ts = start + (increment ? count + ii : 0);
+		for (auto link : DTC_Links)
+		{
+			if (!linkMode_[link].TimingEnable)
+			{
+				if (linkMode_[link].TransmitEnable)
+				{
+					TLOG(15) << "SendRequestsForRangeImpl before SendReadoutRequestPacket";
+					theDTC_->SendReadoutRequestPacket(link, ts, quiet_);
+				}
+			}
+			if (abort_) return;
+		}
 	}
 }

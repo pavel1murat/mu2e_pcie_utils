@@ -462,21 +462,11 @@ bool DTCLib::DTC_Registers::ReadResetDTC()
 	return dataSet[31];
 }
 
-void DTCLib::DTC_Registers::EnableCFOEmulation(size_t interval)
+void DTCLib::DTC_Registers::EnableCFOEmulation()
 {
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
-	bool changed = data[30] == 0;
 	data[30] = 1;
 	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
-	if (changed)
-	{
-		for (auto& link : DTC_Links)
-		{
-			if (!ReadLinkEnabled(link).TransmitEnable) continue;
-
-			WaitForLinkReady_(link, interval);
-		}
-	}
 }
 
 void DTCLib::DTC_Registers::DisableCFOEmulation()
@@ -642,6 +632,47 @@ bool DTCLib::DTC_Registers::ReadLED6State()
 {
 	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
 	return data[16];
+}
+
+void DTCLib::DTC_Registers::SetCFOEmulationMode(size_t interval)
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
+	bool changed = data[30] == 0;
+	data[30] = 1;
+	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
+	if (changed)
+	{
+		for (auto& link : DTC_Links)
+		{
+			if (!ReadLinkEnabled(link).TransmitEnable) continue;
+
+			WaitForLinkReady_(link, interval);
+		}
+	}
+}
+
+void DTCLib::DTC_Registers::ClearCFOEmulationMode(size_t interval)
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
+	bool changed = data[30] == 1;
+	data[30] = 0;
+	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
+	if (changed)
+	{
+		for (auto& link : DTC_Links)
+		{
+			if (!ReadLinkEnabled(link).TransmitEnable) continue;
+
+			WaitForLinkReady_(link, interval);
+		}
+	}
+	WriteRegister_(data.to_ulong(), DTC_Register_DTCControl);
+}
+
+bool DTCLib::DTC_Registers::ReadCFOEmulationMode()
+{
+	std::bitset<32> data = ReadRegister_(DTC_Register_DTCControl);
+	return data[15];
 }
 
 void DTCLib::DTC_Registers::ResetSERDES()
@@ -4985,11 +5016,11 @@ void DTCLib::DTC_Registers::SetDDROscillatorParameters_(uint64_t program)
 
 void DTCLib::DTC_Registers::WaitForLinkReady_(DTC_Link_ID const& link, size_t interval)
 {
-	bool ready = ReadSERDESPLLLocked(link) && ReadResetRXSERDESDone(link) && ReadResetTXSERDESDone(link);
+	bool ready = ReadSERDESPLLLocked(link) && ReadResetRXSERDESDone(link) && ReadResetTXSERDESDone(link) && ReadSERDESRXCDRLock(link);
 
 	while (!ready)
 	{
 		usleep(interval);
-		ready = ReadSERDESPLLLocked(link) && ReadResetRXSERDESDone(link) && ReadResetTXSERDESDone(link);
+		ready = ReadSERDESPLLLocked(link) && ReadResetRXSERDESDone(link) && ReadResetTXSERDESDone(link) && ReadSERDESRXCDRLock(link);
 	}
 }
