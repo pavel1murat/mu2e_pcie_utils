@@ -43,7 +43,17 @@ CFOLib::CFO_Registers::CFO_Registers(DTC_SimMode mode, int CFO, std::string expe
 			CFO = atoi(CFOE);
 		}
 		else
-			CFO = 0;
+		{
+			CFOE = getenv("DTCLIB_DTC");  // Check both environment variables for CFO
+			if (CFOE != nullptr)
+			{
+				CFO = atoi(CFOE);
+			}
+			else
+			{
+				CFO = 0;
+			}
+		}
 	}
 
 	SetSimMode(expectedDesignVersion, simMode_, CFO, skipInit);
