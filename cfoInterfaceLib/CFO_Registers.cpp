@@ -9,12 +9,13 @@
 
 #include "trace.h"
 
-CFOLib::CFO_Registers::CFO_Registers(DTC_SimMode mode, int CFO,std::string expectedDesignVersion,
+CFOLib::CFO_Registers::CFO_Registers(DTC_SimMode mode, int CFO, std::string expectedDesignVersion,
 									 bool skipInit)
 	: device_(), simMode_(mode), dmaSize_(16)
 {
 	auto sim = getenv("CFOLIB_SIM_ENABLE");
-	if (sim != nullptr) {
+	if (sim != nullptr)
+	{
 		switch (sim[0])
 		{
 			case '1':
@@ -34,9 +35,11 @@ CFOLib::CFO_Registers::CFO_Registers(DTC_SimMode mode, int CFO,std::string expec
 		}
 	}
 
-	if (CFO == -1) {
+	if (CFO == -1)
+	{
 		auto CFOE = getenv("CFOLIB_CFO");
-		if (CFOE != nullptr) {
+		if (CFOE != nullptr)
+		{
 			CFO = atoi(CFOE);
 		}
 		else
@@ -53,15 +56,18 @@ DTCLib::DTC_SimMode CFOLib::CFO_Registers::SetSimMode(std::string expectedDesign
 {
 	simMode_ = mode;
 	device_.init(simMode_, CFO);
-	if (expectedDesignVersion != "" && expectedDesignVersion != ReadDesignVersion()) {
+	if (expectedDesignVersion != "" && expectedDesignVersion != ReadDesignVersion())
+	{
 		throw new DTC_WrongVersionException(expectedDesignVersion, ReadDesignVersion());
 	}
 
 	if (skipInit) return simMode_;
 
-	for (auto link : CFO_Links) {
+	for (auto link : CFO_Links)
+	{
 		bool LinkEnabled = ((maxDTCs_ >> (link * 4)) & 0xF) != 0;
-		if (!LinkEnabled) {
+		if (!LinkEnabled)
+		{
 			DisableLink(link);
 		}
 		else
@@ -72,11 +78,14 @@ DTCLib::DTC_SimMode CFOLib::CFO_Registers::SetSimMode(std::string expectedDesign
 		if (!LinkEnabled) SetSERDESLoopbackMode(link, DTC_SERDESLoopbackMode_Disabled);
 	}
 
-	if (simMode_ != DTC_SimMode_Disabled) {
+	if (simMode_ != DTC_SimMode_Disabled)
+	{
 		// Set up hardware simulation mode: Link 0 Tx/Rx Enabled, Loopback Enabled, ROC Emulator Enabled. All other Links
 		// disabled.
-		for (auto link : CFO_Links) {
-			if (simMode_ == DTC_SimMode_Loopback) {
+		for (auto link : CFO_Links)
+		{
+			if (simMode_ == DTC_SimMode_Loopback)
+			{
 				SetSERDESLoopbackMode(link, DTC_SERDESLoopbackMode_NearPCS);
 				//			SetMaxROCNumber(CFO_Link_0, CFO_ROC_0);
 			}
@@ -96,14 +105,16 @@ std::string CFOLib::CFO_Registers::FormattedRegDump(int width)
 {
 	std::string divider(width, '=');
 	formatterWidth_ = width - 27 - 65;
-	if (formatterWidth_ < 28) {
+	if (formatterWidth_ < 28)
+	{
 		formatterWidth_ = 28;
 	}
 	std::string spaces(formatterWidth_ - 4, ' ');
 	std::ostringstream o;
 	o << "Memory Map: " << std::endl;
 	o << "    Address | Value      | Name " << spaces << "| Translation" << std::endl;
-	for (auto i : formattedDumpFunctions_) {
+	for (auto i : formattedDumpFunctions_)
+	{
 		o << divider << std::endl;
 		o << i();
 	}
@@ -114,14 +125,16 @@ std::string CFOLib::CFO_Registers::LinkCountersRegDump(int width)
 {
 	std::string divider(width, '=');
 	formatterWidth_ = width - 27 - 65;
-	if (formatterWidth_ < 28) {
+	if (formatterWidth_ < 28)
+	{
 		formatterWidth_ = 28;
 	}
 	std::string spaces(formatterWidth_ - 4, ' ');
 	std::ostringstream o;
 	o << "SERDES Byte/Packet Counters: " << std::endl;
 	o << "    Address | Value      | Name " << spaces << "| Translation" << std::endl;
-	for (auto i : formattedCounterFunctions_) {
+	for (auto i : formattedCounterFunctions_)
+	{
 		o << divider << std::endl;
 		o << i();
 	}
@@ -405,7 +418,8 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESLoopbackEnable(
 {
 	auto form = CreateFormatter(CFO_Register_SERDESLoopbackEnable);
 	form.description = "SERDES Loopback Enable";
-	for (auto r : CFO_Links) {
+	for (auto r : CFO_Links)
+	{
 		form.vals.push_back(std::string("Link ") + std::to_string(r) + ": " +
 							DTC_SERDESLoopbackModeConverter(ReadSERDESLoopback(r)).toString());
 	}
@@ -431,7 +445,8 @@ bool CFOLib::CFO_Registers::WaitForSERDESOscillatorInitializationComplete(double
 	while (
 		!ReadSERDESOscillatorInitializationComplete() &&
 		std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::steady_clock::now() - start_time).count() <
-			max_wait) {
+			max_wait)
+	{
 		usleep(1000);
 	}
 	return ReadSERDESOscillatorInitializationComplete();
@@ -484,7 +499,8 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatLinkEnable()
 	auto form = CreateFormatter(CFO_Register_LinkEnable);
 	form.description = "Link Enable";
 	form.vals.push_back("       ([TX, RX, Timing])");
-	for (auto r : CFO_Links) {
+	for (auto r : CFO_Links)
+	{
 		auto re = ReadLinkEnabled(r);
 		form.vals.push_back(std::string("Link ") + std::to_string(r) + ": [" + (re.TransmitEnable ? "x" : " ") + "," +
 							(re.ReceiveEnable ? "x" : " ") + "]");
@@ -496,7 +512,8 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatLinkEnable()
 void CFOLib::CFO_Registers::ResetSERDES(const CFO_Link_ID& link, int interval)
 {
 	auto resetDone = false;
-	while (!resetDone) {
+	while (!resetDone)
+	{
 		TRACE(0, "EnteLink SERDES Reset Loop for Link %u", link);
 		std::bitset<32> data = ReadRegister_(CFO_Register_SERDESReset);
 		data[link] = 1;
@@ -525,7 +542,8 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESReset()
 {
 	auto form = CreateFormatter(CFO_Register_SERDESReset);
 	form.description = "SERDES Reset";
-	for (auto r : CFO_Links) {
+	for (auto r : CFO_Links)
+	{
 		form.vals.push_back(std::string("Link ") + std::to_string(r) + ": [" + (ReadResetSERDES(r) ? "x" : " ") + "]");
 	}
 	return form;
@@ -542,7 +560,8 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESRXDisparityErro
 	auto form = CreateFormatter(CFO_Register_SERDESRXDisparityError);
 	form.description = "SERDES RX Disparity Error";
 	form.vals.push_back("       ([H,L])");
-	for (auto r : CFO_Links) {
+	for (auto r : CFO_Links)
+	{
 		auto re = ReadSERDESRXDisparityError(r);
 		form.vals.push_back(std::string("Link ") + std::to_string(r) + ": [" + std::to_string(re.GetData()[1]) + "," +
 							std::to_string(re.GetData()[0]) + "]");
@@ -563,7 +582,8 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESRXCharacterNotI
 	auto form = CreateFormatter(CFO_Register_SERDESRXCharacterNotInTableError);
 	form.description = "SERDES RX CNIT Error";
 	form.vals.push_back("       ([H,L])");
-	for (auto r : CFO_Links) {
+	for (auto r : CFO_Links)
+	{
 		auto re = ReadSERDESRXCharacterNotInTableError(r);
 		form.vals.push_back(std::string("Link ") + std::to_string(r) + ": [" + std::to_string(re.GetData()[1]) + "," +
 							std::to_string(re.GetData()[0]) + "]");
@@ -582,7 +602,8 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESUnlockError()
 {
 	auto form = CreateFormatter(CFO_Register_SERDESUnlockError);
 	form.description = "SERDES Unlock Error";
-	for (auto r : CFO_Links) {
+	for (auto r : CFO_Links)
+	{
 		form.vals.push_back(std::string("Link ") + std::to_string(r) + ": [" + (ReadSERDESUnlockError(r) ? "x" : " ") +
 							"]");
 	}
@@ -600,7 +621,8 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESPLLLocked()
 {
 	auto form = CreateFormatter(CFO_Register_SERDESPLLLocked);
 	form.description = "SERDES PLL Locked";
-	for (auto r : CFO_Links) {
+	for (auto r : CFO_Links)
+	{
 		form.vals.push_back(std::string("Link ") + std::to_string(r) + ": [" + (ReadSERDESPLLLocked(r) ? "x" : " ") + "]");
 	}
 	return form;
@@ -618,7 +640,8 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESRXStatus()
 {
 	auto form = CreateFormatter(CFO_Register_SERDESRXStatus);
 	form.description = "SERDES RX Status";
-	for (auto r : CFO_Links) {
+	for (auto r : CFO_Links)
+	{
 		auto re = ReadSERDESRXStatus(r);
 		form.vals.push_back(std::string("Link ") + std::to_string(r) + ": " + DTC_RXStatusConverter(re).toString());
 	}
@@ -637,7 +660,8 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESResetDone()
 {
 	auto form = CreateFormatter(CFO_Register_SERDESResetDone);
 	form.description = "SERDES Reset Done";
-	for (auto r : CFO_Links) {
+	for (auto r : CFO_Links)
+	{
 		form.vals.push_back(std::string("Link ") + std::to_string(r) + ": [" + (ReadResetSERDESDone(r) ? "x" : " ") + "]");
 	}
 	return form;
@@ -655,7 +679,8 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESRXCDRLock()
 {
 	auto form = CreateFormatter(CFO_Register_SFPSERDESStatus);
 	form.description = "SERDES CDR Lock";
-	for (auto r : CFO_Links) {
+	for (auto r : CFO_Links)
+	{
 		form.vals.push_back(std::string("Link ") + std::to_string(r) + ": [" + (ReadSERDESRXCDRLock(r) ? "x" : " ") + "]");
 	}
 	return form;
@@ -700,7 +725,8 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatBeamOnMode()
 {
 	auto form = CreateFormatter(CFO_Register_EnableBeamOnMode);
 	form.description = "Enable Beam On Mode Register";
-	for (auto r : CFO_Links) {
+	for (auto r : CFO_Links)
+	{
 		form.vals.push_back(std::string("Link ") + std::to_string(r) + ": [" + (ReadBeamOnMode(r) ? "x" : " ") + "]");
 	}
 	return form;
@@ -730,7 +756,8 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatBeamOffMode()
 {
 	auto form = CreateFormatter(CFO_Register_EnableBeamOffMode);
 	form.description = "Enable Beam Off Mode Register";
-	for (auto r : CFO_Links) {
+	for (auto r : CFO_Links)
+	{
 		form.vals.push_back(std::string("Link ") + std::to_string(r) + ": [" + (ReadBeamOffMode(r) ? "x" : " ") + "]");
 	}
 	return form;
@@ -845,9 +872,12 @@ void CFOLib::CFO_Registers::SetSERDESOscillatorClock(DTC_SerdesClockSpeed speed)
 			targetFreq = 0.0;
 			break;
 	}
-	SetNewOscillatorFrequency(targetFreq);
-	for (auto& Link : CFO_Links) {
-		ResetSERDES(Link, 1000);
+	if (SetNewOscillatorFrequency(targetFreq))
+	{
+		for (auto& Link : CFO_Links)
+		{
+			ResetSERDES(Link, 1000);
+		}
 	}
 }
 
@@ -950,7 +980,8 @@ void CFOLib::CFO_Registers::SetMaxDTCNumber(const CFO_Link_ID& Link, const uint8
 
 uint8_t CFOLib::CFO_Registers::ReadLinkDTCCount(const CFO_Link_ID& Link, bool local)
 {
-	if (!local) {
+	if (!local)
+	{
 		auto data = ReadRegister_(CFO_Register_NUMDTCs);
 		maxDTCs_ = data;
 	}
@@ -961,7 +992,8 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatNUMDTCs()
 {
 	auto form = CreateFormatter(CFO_Register_NUMDTCs);
 	form.description = "Number of DTCs Register";
-	for (auto r : CFO_Links) {
+	for (auto r : CFO_Links)
+	{
 		form.vals.push_back(std::string("Link ") + std::to_string(r) + ": [" + (ReadLinkDTCCount(r, false) ? "x" : " ") +
 							"]");
 	}
@@ -994,7 +1026,8 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatFIFOFullErrorFlag0()
 	auto form = CreateFormatter(CFO_Register_FIFOFullErrorFlag0);
 	form.description = "FIFO Full Error Flags 0";
 	form.vals.push_back("       ([CFO Link Output])");
-	for (auto r : CFO_Links) {
+	for (auto r : CFO_Links)
+	{
 		auto re = ReadFIFOFullErrorFlags(r);
 		form.vals.push_back(std::string("Link ") + std::to_string(r) + ": [" + (re.CFOLinkInput ? "x" : " ") + "]");
 	}
@@ -1059,7 +1092,8 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatReceivePacketError()
 	auto form = CreateFormatter(CFO_Register_ReceivePacketError);
 	form.description = "Receive Packet Error";
 	form.vals.push_back("       ([CRC, PacketError, RX Overrun, RX Underrun])");
-	for (auto r : CFO_Links) {
+	for (auto r : CFO_Links)
+	{
 		form.vals.push_back(std::string("Link ") + std::to_string(r) + ": [" + (ReadPacketCRCError(r) ? "x" : " ") + "," +
 							(ReadPacketError(r) ? "x" : " ") + "," + (ReadRXElasticBufferOverrun(r) ? "x" : " ") + "," +
 							(ReadRXElasticBufferUnderrun(r) ? "x" : " ") + "]");
@@ -1120,7 +1154,8 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatEventWindowTimeoutErr
 {
 	auto form = CreateFormatter(CFO_Register_EventWindowTimeoutError);
 	form.description = "Event Window Timeout Error";
-	for (auto r : CFO_Links) {
+	for (auto r : CFO_Links)
+	{
 		form.vals.push_back(std::string("Link ") + std::to_string(r) + ": [" +
 							(ReadEventWindowTimeoutError(r) ? "x" : " ") + "]");
 	}
@@ -2737,7 +2772,8 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatCableDelayControl()
 	form.vals.push_back(std::string("Delay External Loopback Enable: [") +
 						(ReadDelayExternalLoopbackEnable() ? "x" : " ") + std::string("]"));
 	form.vals.push_back(std::string("Delay Measure Flags:           ([Error, Enabled, Now])"));
-	for (auto r : CFO_Links) {
+	for (auto r : CFO_Links)
+	{
 		form.vals.push_back(std::string("Link ") + std::to_string(r) + ":                         [" +
 							(ReadDelayMeasureError(r) ? "x" : " ") + "," + (ReadDelayMeasureMode(r) ? "x" : " ") + "," +
 							(ReadDelayMeasureNow(r) ? "x" : " ") + "]");
@@ -2772,31 +2808,38 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatFPGAPROMProgramStatus
 void CFOLib::CFO_Registers::ReloadFPGAFirmware()
 {
 	WriteRegister_(0xFFFFFFFF, CFO_Register_FPGACoreAccess);
-	while (ReadFPGACoreAccessFIFOFull()) {
+	while (ReadFPGACoreAccessFIFOFull())
+	{
 		usleep(10);
 	}
 	WriteRegister_(0xAA995566, CFO_Register_FPGACoreAccess);
-	while (ReadFPGACoreAccessFIFOFull()) {
+	while (ReadFPGACoreAccessFIFOFull())
+	{
 		usleep(10);
 	}
 	WriteRegister_(0x20000000, CFO_Register_FPGACoreAccess);
-	while (ReadFPGACoreAccessFIFOFull()) {
+	while (ReadFPGACoreAccessFIFOFull())
+	{
 		usleep(10);
 	}
 	WriteRegister_(0x30020001, CFO_Register_FPGACoreAccess);
-	while (ReadFPGACoreAccessFIFOFull()) {
+	while (ReadFPGACoreAccessFIFOFull())
+	{
 		usleep(10);
 	}
 	WriteRegister_(0x00000000, CFO_Register_FPGACoreAccess);
-	while (ReadFPGACoreAccessFIFOFull()) {
+	while (ReadFPGACoreAccessFIFOFull())
+	{
 		usleep(10);
 	}
 	WriteRegister_(0x30008001, CFO_Register_FPGACoreAccess);
-	while (ReadFPGACoreAccessFIFOFull()) {
+	while (ReadFPGACoreAccessFIFOFull())
+	{
 		usleep(10);
 	}
 	WriteRegister_(0x0000000F, CFO_Register_FPGACoreAccess);
-	while (ReadFPGACoreAccessFIFOFull()) {
+	while (ReadFPGACoreAccessFIFOFull())
+	{
 		usleep(10);
 	}
 	WriteRegister_(0x20000000, CFO_Register_FPGACoreAccess);
@@ -2826,18 +2869,19 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatFPGACoreAccess()
 }
 
 // Oscillator Programming (DDR and SERDES)
-void CFOLib::CFO_Registers::SetNewOscillatorFrequency(double targetFrequency)
+bool CFOLib::CFO_Registers::SetNewOscillatorFrequency(double targetFrequency)
 {
 	auto currentFrequency = ReadSERDESOscillatorFrequency();
 	auto currentProgram = ReadSERDESOscillatorParameters();
 
 	// Check if targetFrequency is essentially the same as the current frequency...
-	if (fabs(currentFrequency - targetFrequency) < targetFrequency * 30 / 1000000) return;
+	if (fabs(currentFrequency - targetFrequency) < targetFrequency * 30 / 1000000) return false;
 
 	auto newParameters = CalculateFrequencyForProgramming_(targetFrequency, currentFrequency, currentProgram);
-	if (newParameters == 0) return;
+	if (newParameters == 0) return false;
 	SetSERDESOscillatorParameters(newParameters);
 	SetSERDESOscillatorFrequency(targetFrequency);
+	return true;
 }
 
 // Private Functions
@@ -2850,7 +2894,8 @@ void CFOLib::CFO_Registers::WriteRegister_(uint32_t data, const CFO_Register& ad
 		errorCode = device_.write_register(address, 100, data);
 		--retry;
 	} while (retry > 0 && errorCode != 0);
-	if (errorCode != 0) {
+	if (errorCode != 0)
+	{
 		throw DTC_IOErrorException(errorCode);
 	}
 }
@@ -2865,7 +2910,8 @@ uint32_t CFOLib::CFO_Registers::ReadRegister_(const CFO_Register& address)
 		errorCode = device_.read_register(address, 100, &data);
 		--retry;
 	} while (retry > 0 && errorCode != 0);
-	if (errorCode != 0) {
+	if (errorCode != 0)
+	{
 		throw DTC_IOErrorException(errorCode);
 	}
 
@@ -2939,13 +2985,15 @@ uint64_t CFOLib::CFO_Registers::CalculateFrequencyForProgramming_(double targetF
 
 	std::vector<int> hsdiv_values = {11, 9, 7, 6, 5, 4};
 	std::vector<std::pair<int, double>> parameter_values;
-	for (auto hsdiv : hsdiv_values) {
+	for (auto hsdiv : hsdiv_values)
+	{
 		auto minN = minFreq / (targetFrequency * hsdiv);
 		if (minN > 128) break;
 
 		auto thisN = 2;
 		if (minN < 1) thisN = 1;
-		while (thisN < minN) {
+		while (thisN < minN)
+		{
 			thisN += 2;
 		}
 		auto fdco_new = hsdiv * thisN * targetFrequency;
@@ -2959,7 +3007,8 @@ uint64_t CFOLib::CFO_Registers::CalculateFrequencyForProgramming_(double targetF
 	auto newOutputDivider = 0;
 	auto newRFREQ = 0.0;
 
-	for (auto values : parameter_values) {
+	for (auto values : parameter_values)
+	{
 		++counter;
 		if (values.second > maxFreq) continue;
 
@@ -2971,15 +3020,18 @@ uint64_t CFOLib::CFO_Registers::CalculateFrequencyForProgramming_(double targetF
 	TRACE(4, "CalculateFrequencyForProgramming: New Program: HSDIV=%d, N1=%d, RFREQ=%lf", newHighSpeedDivider,
 		  newOutputDivider, newRFREQ);
 
-	if (EncodeHighSpeedDivider_(newHighSpeedDivider) == -1) {
+	if (EncodeHighSpeedDivider_(newHighSpeedDivider) == -1)
+	{
 		TRACE(0, "ERROR: CalculateFrequencyForProgramming: Invalid HSDIV %d!", newHighSpeedDivider);
 		return 0;
 	}
-	if (newOutputDivider > 128 || newOutputDivider < 0) {
+	if (newOutputDivider > 128 || newOutputDivider < 0)
+	{
 		TRACE(0, "ERROR: CalculateFrequencyForProgramming: Invalid N1 %d!", newOutputDivider);
 		return 0;
 	}
-	if (newRFREQ <= 0) {
+	if (newRFREQ <= 0)
+	{
 		TRACE(0, "ERROR: CalculateFrequencyForProgramming: Invalid RFREQ %lf!", newRFREQ);
 		return 0;
 	}
