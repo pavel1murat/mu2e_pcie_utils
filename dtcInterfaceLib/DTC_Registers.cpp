@@ -139,6 +139,11 @@ DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(std::string expectedDesign
 		}
 		SetInternalSystemClock();
 		DisableTiming();
+		SetCFOEmulationMode();
+	}
+	else
+	{
+		ClearCFOEmulationMode();
 	}
 	ReadMinDMATransferLength();
 

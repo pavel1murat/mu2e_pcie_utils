@@ -68,6 +68,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 	else
 	{
 		TLOG(12) << "SendRequestForTimestamp setting up DTC CFO Emulator";
+		theDTC_->SetCFOEmulationMode();
 		theDTC_->DisableCFOEmulation();
 		theDTC_->SetCFOEmulationTimestamp(ts);
 		for (auto link : DTC_Links) {
@@ -122,6 +123,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start
 	else
 	{
 		TLOG(13) << "SendRequestsForRange setting up DTC CFO Emulator";
+		theDTC_->SetCFOEmulationMode();
 		theDTC_->DisableCFOEmulation();
 		theDTC_->SetCFOEmulationTimestamp(start);
 		for (auto link : DTC_Links) {
@@ -178,6 +180,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForListImplAsync(std::set<DTC_Timestamp
 			nextTimestamp = *ii;
 		}
 
+		theDTC_->SetCFOEmulationMode();
 		theDTC_->DisableCFOEmulation();
 		theDTC_->SetCFOEmulationTimestamp(thisTimestamp);
 		for (auto link : DTC_Links) {
