@@ -982,7 +982,7 @@ int main(int argc, char* argv[])
 	else if (op == "program_clock")
 	{
 		TLOG(TLVL_DEBUG) << "Operation \"program_clock\"";
-		auto thisDTC = new DTC(DTC_SimMode_NoCFO, dtc, rocMask, expectedDesignVersion);
+		auto thisDTC = new DTC(DTC_SimMode_NoCFO, dtc, rocMask, expectedDesignVersion, true);
 		auto oscillator = clockToProgram == 0 ? DTC_OscillatorType_SERDES
 											  : (clockToProgram == 1 ? DTC_OscillatorType_DDR : DTC_OscillatorType_Timing);
 		thisDTC->SetNewOscillatorFrequency(oscillator, targetFrequency);

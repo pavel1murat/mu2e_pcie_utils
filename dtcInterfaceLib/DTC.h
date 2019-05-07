@@ -25,8 +25,9 @@ public:
 	/// <param name="rocMask">Which ROCs should be active. Each hex digit corresponds to a Link, and the number indicates
 	/// how many ROCs are active on that link. (Default: 0x1)</param> <param name="expectedDesignVersion">Expected DTC
 	/// Firmware Design Version. If set, will throw an exception if the DTC firmware does not match (Default: "")</param>
+	/// <param name="skipInit">Whether to skip full initialization of the DTC</param>
 	explicit DTC(DTC_SimMode mode = DTC_SimMode_Disabled, int dtc = -1, unsigned rocMask = 0x1,
-				 std::string expectedDesignVersion = "");
+				 std::string expectedDesignVersion = "", bool skipInit = false);
 	virtual ~DTC();
 
 	//
