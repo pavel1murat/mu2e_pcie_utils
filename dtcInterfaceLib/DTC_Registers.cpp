@@ -4814,6 +4814,8 @@ uint32_t DTCLib::DTC_Registers::ReadRegister_(const DTC_Register& address)
 		throw DTC_IOErrorException(errorCode);
 	}
 
+
+	TLOG(21) << "DTC " << device_.getDTCID() << " ReadRegister_ returning " << std::hex << std::showbase << data << " for address " << static_cast<uint32_t>(address);
 	return data;
 }
 
@@ -5021,11 +5023,16 @@ void DTCLib::DTC_Registers::SetDDROscillatorParameters_(uint64_t program)
 
 void DTCLib::DTC_Registers::WaitForLinkReady_(DTC_Link_ID const& link, size_t interval)
 {
+	auto start = std::chrono::steady_clock::now();
 	bool ready = ReadSERDESPLLLocked(link) && ReadResetRXSERDESDone(link) && ReadResetTXSERDESDone(link) && ReadSERDESRXCDRLock(link);
 
 	while (!ready)
 	{
 		usleep(interval);
 		ready = ReadSERDESPLLLocked(link) && ReadResetRXSERDESDone(link) && ReadResetTXSERDESDone(link) && ReadSERDESRXCDRLock(link);
+		if(std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(std::chrono::steady_clock::now() - start).count() > 5.0) {
+	TLOG(3) << "WaitForLinkReady_: DTC "<< device_.getDTCID() << " Link " << link << ": PLL Locked: " << std::boolalpha << ReadSERDESPLLLocked(link) << ", RX Reset Done: " << ReadResetRXSERDESDone(link) << ", TX Reset Done: " << ReadResetTXSERDESDone(link) << ", CDR Lock: " << ReadSERDESRXCDRLock(link);
+	start = std::chrono::steady_clock::now();
+}
 	}
 }
