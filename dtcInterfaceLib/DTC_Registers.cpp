@@ -4814,7 +4814,6 @@ uint32_t DTCLib::DTC_Registers::ReadRegister_(const DTC_Register& address)
 		throw DTC_IOErrorException(errorCode);
 	}
 
-
 	TLOG(21) << "DTC " << device_.getDTCID() << " ReadRegister_ returning " << std::hex << std::showbase << data << " for address " << static_cast<uint32_t>(address);
 	return data;
 }
@@ -5021,18 +5020,26 @@ void DTCLib::DTC_Registers::SetDDROscillatorParameters_(uint64_t program)
 	WriteDDRIICInterface(DTC_IICDDRBusAddress_DDROscillator, 0x87, 0x40);
 }
 
-void DTCLib::DTC_Registers::WaitForLinkReady_(DTC_Link_ID const& link, size_t interval)
+bool DTCLib::DTC_Registers::WaitForLinkReady_(DTC_Link_ID const& link, size_t interval, double timeout)
 {
 	auto start = std::chrono::steady_clock::now();
+	auto last_print = start;
 	bool ready = ReadSERDESPLLLocked(link) && ReadResetRXSERDESDone(link) && ReadResetTXSERDESDone(link) && ReadSERDESRXCDRLock(link);
 
 	while (!ready)
 	{
 		usleep(interval);
 		ready = ReadSERDESPLLLocked(link) && ReadResetRXSERDESDone(link) && ReadResetTXSERDESDone(link) && ReadSERDESRXCDRLock(link);
-		if(std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(std::chrono::steady_clock::now() - start).count() > 5.0) {
-	TLOG(3) << "WaitForLinkReady_: DTC "<< device_.getDTCID() << " Link " << link << ": PLL Locked: " << std::boolalpha << ReadSERDESPLLLocked(link) << ", RX Reset Done: " << ReadResetRXSERDESDone(link) << ", TX Reset Done: " << ReadResetTXSERDESDone(link) << ", CDR Lock: " << ReadSERDESRXCDRLock(link);
-	start = std::chrono::steady_clock::now();
-}
+		if (std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(std::chrono::steady_clock::now() - last_print).count() > 5.0)
+		{
+			TLOG(TLVL_DEBUG) << "WaitForLinkReady_: DTC " << device_.getDTCID() << " Link " << link << ": PLL Locked: " << std::boolalpha << ReadSERDESPLLLocked(link) << ", RX Reset Done: " << ReadResetRXSERDESDone(link) << ", TX Reset Done: " << ReadResetTXSERDESDone(link) << ", CDR Lock: " << ReadSERDESRXCDRLock(link);
+			last_print = std::chrono::steady_clock::now();
+		}
+		if (std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(std::chrono::steady_clock::now() - start).count() > timeout)
+		{
+			TLOG(TLVL_ERROR) << "WaitForLinkReady_ ABORTING: DTC " << device_.getDTCID() << " Link " << link << ": PLL Locked: " << std::boolalpha << ReadSERDESPLLLocked(link) << ", RX Reset Done: " << ReadResetRXSERDESDone(link) << ", TX Reset Done: " << ReadResetTXSERDESDone(link) << ", CDR Lock: " << ReadSERDESRXCDRLock(link);
+			return false;
+		}
 	}
+	return true;
 }

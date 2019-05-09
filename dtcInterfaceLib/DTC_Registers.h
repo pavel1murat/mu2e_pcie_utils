@@ -2793,7 +2793,7 @@ private:
 	void SetTimingOscillatorParameters_(uint64_t program);
 	void SetDDROscillatorParameters_(uint64_t program);
 
-	void WaitForLinkReady_(DTC_Link_ID const& link, size_t interval);
+	bool WaitForLinkReady_(DTC_Link_ID const& link, size_t interval, double timeout = 30.0);
 
 protected:
 	mu2edev device_;              ///< Device handle
