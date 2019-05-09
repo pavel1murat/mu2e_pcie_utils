@@ -800,59 +800,70 @@ void CFOLib::CFO_Registers::SetSERDESOscillatorFrequency(uint32_t freq)
 {
 	WriteRegister_(freq, CFO_Register_SERDESOscillatorFrequency);
 }
-bool CFOLib::CFO_Registers::ReadSERDESOscillaotrIICFSMEnable()
+bool CFOLib::CFO_Registers::ReadSERDESOscillatorIICInterfaceReset()
 {
-	std::bitset<32> data = ReadRegister_(CFO_Register_SERDESOscillatorControl);
-	return data[31];
+	auto dataSet = std::bitset<32>(ReadRegister_(CFO_Register_SERDESOscillatorIICBusControl));
+	return dataSet[31];
 }
-void CFOLib::CFO_Registers::EnableSERDESOscillatorIICFSM()
+
+void CFOLib::CFO_Registers::ResetSERDESOscillatorIICInterface()
 {
-	std::bitset<32> data = ReadRegister_(CFO_Register_SERDESOscillatorControl);
-	data[31] = true;
-	WriteRegister_(data.to_ulong(), CFO_Register_SERDESOscillatorControl);
+	auto bs = std::bitset<32>();
+	bs[31] = 1;
+	WriteRegister_(bs.to_ulong(), CFO_Register_SERDESOscillatorIICBusControl);
+	while (ReadSERDESOscillatorIICInterfaceReset())
+	{
+		usleep(1000);
+	}
 }
-void CFOLib::CFO_Registers::DisableSERDESOscillatorIICFSM()
+
+void CFOLib::CFO_Registers::WriteSERDESIICInterface(DTC_IICSERDESBusAddress device, uint8_t address, uint8_t data)
 {
-	std::bitset<32> data = ReadRegister_(CFO_Register_SERDESOscillatorControl);
-	data[31] = false;
-	WriteRegister_(data.to_ulong(), CFO_Register_SERDESOscillatorControl);
+	uint32_t reg_data = (static_cast<uint8_t>(device) << 24) + (address << 16) + (data << 8);
+	WriteRegister_(reg_data, CFO_Register_SERDESOscillatorIICBusLow);
+	WriteRegister_(0x1, CFO_Register_SERDESOscillatorIICBusHigh);
+	while (ReadRegister_(CFO_Register_SERDESOscillatorIICBusHigh) == 0x1)
+	{
+		usleep(1000);
+	}
 }
-bool CFOLib::CFO_Registers::ReadSERDESOscillatorReadWriteMode()
+
+uint8_t CFOLib::CFO_Registers::ReadSERDESIICInterface(DTC_IICSERDESBusAddress device, uint8_t address)
 {
-	std::bitset<32> data = ReadRegister_(CFO_Register_SERDESOscillatorControl);
-	return data[0];
+	uint32_t reg_data = (static_cast<uint8_t>(device) << 24) + (address << 16);
+	WriteRegister_(reg_data, CFO_Register_SERDESOscillatorIICBusLow);
+	WriteRegister_(0x2, CFO_Register_SERDESOscillatorIICBusHigh);
+	while (ReadRegister_(CFO_Register_SERDESOscillatorIICBusHigh) == 0x2)
+	{
+		usleep(1000);
+	}
+	auto data = ReadRegister_(CFO_Register_SERDESOscillatorIICBusLow);
+	return static_cast<uint8_t>(data);
 }
-void CFOLib::CFO_Registers::SetSERDESOscillatorWriteMode()
-{
-	std::bitset<32> data = ReadRegister_(CFO_Register_SERDESOscillatorControl);
-	data[0] = true;
-	WriteRegister_(data.to_ulong(), CFO_Register_SERDESOscillatorControl);
-}
-void CFOLib::CFO_Registers::SetSERDESOscillatorReadMode()
-{
-	std::bitset<32> data = ReadRegister_(CFO_Register_SERDESOscillatorControl);
-	data[0] = false;
-	WriteRegister_(data.to_ulong(), CFO_Register_SERDESOscillatorControl);
-}
+
 uint64_t CFOLib::CFO_Registers::ReadSERDESOscillatorParameters()
 {
-	SetSERDESOscillatorReadMode();
-	EnableSERDESOscillatorIICFSM();
-	usleep(10000);
-	DisableSERDESOscillatorIICFSM();
-	WaitForSERDESOscillatorInitializationComplete();
-	return (static_cast<uint64_t>(ReadRegister_(CFO_Register_SERDESOscillatorParameterHigh)) << 32) +
-		   ReadRegister_(CFO_Register_SERDESOscillatorParameterLow);
+	uint64_t data = (static_cast<uint64_t>(ReadSERDESIICInterface(DTC_IICSERDESBusAddress_EVB, 7)) << 40) +
+					(static_cast<uint64_t>(ReadSERDESIICInterface(DTC_IICSERDESBusAddress_EVB, 8)) << 32) +
+					(static_cast<uint64_t>(ReadSERDESIICInterface(DTC_IICSERDESBusAddress_EVB, 9)) << 24) +
+					(static_cast<uint64_t>(ReadSERDESIICInterface(DTC_IICSERDESBusAddress_EVB, 10)) << 16) +
+					(static_cast<uint64_t>(ReadSERDESIICInterface(DTC_IICSERDESBusAddress_EVB, 11)) << 8) +
+					static_cast<uint64_t>(ReadSERDESIICInterface(DTC_IICSERDESBusAddress_EVB, 12));
+	return data;
 }
-void CFOLib::CFO_Registers::SetSERDESOscillatorParameters(uint64_t parameters)
+void CFOLib::CFO_Registers::SetSERDESOscillatorParameters(uint64_t program)
 {
-	SetSERDESOscillatorWriteMode();
-	WriteRegister_(parameters >> 32, CFO_Register_SERDESOscillatorParameterHigh);
-	WriteRegister_(static_cast<uint32_t>(parameters), CFO_Register_SERDESOscillatorParameterLow);
-	EnableSERDESOscillatorIICFSM();
-	usleep(10000);
-	DisableSERDESOscillatorIICFSM();
-	WaitForSERDESOscillatorInitializationComplete();
+	WriteSERDESIICInterface(DTC_IICSERDESBusAddress_EVB, 0x89, 0x10);
+
+	WriteSERDESIICInterface(DTC_IICSERDESBusAddress_EVB, 7, static_cast<uint8_t>(program >> 40));
+	WriteSERDESIICInterface(DTC_IICSERDESBusAddress_EVB, 8, static_cast<uint8_t>(program >> 32));
+	WriteSERDESIICInterface(DTC_IICSERDESBusAddress_EVB, 9, static_cast<uint8_t>(program >> 24));
+	WriteSERDESIICInterface(DTC_IICSERDESBusAddress_EVB, 10, static_cast<uint8_t>(program >> 16));
+	WriteSERDESIICInterface(DTC_IICSERDESBusAddress_EVB, 11, static_cast<uint8_t>(program >> 8));
+	WriteSERDESIICInterface(DTC_IICSERDESBusAddress_EVB, 12, static_cast<uint8_t>(program));
+
+	WriteSERDESIICInterface(DTC_IICSERDESBusAddress_EVB, 0x89, 0);
+	WriteSERDESIICInterface(DTC_IICSERDESBusAddress_EVB, 0x87, 0x40);
 }
 
 DTCLib::DTC_SerdesClockSpeed CFOLib::CFO_Registers::ReadSERDESOscillatorClock()
@@ -902,40 +913,35 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESOscillatorFrequ
 }
 DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESOscillatorControl()
 {
-	auto form = CreateFormatter(CFO_Register_SERDESOscillatorControl);
-	form.description = "SERDES Oscillator Control";
-	form.vals.push_back(std::string("IIC FSM Active:  [") + (ReadSERDESOscillaotrIICFSMEnable() ? "x" : " ") + "]");
-	form.vals.push_back(std::string("Read/Write Mode: [") + (ReadSERDESOscillatorReadWriteMode() ? "W" : "R") + "]");
+	auto form = CreateFormatter(CFO_Register_SERDESOscillatorIICBusControl);
+	form.description = "SERDES Oscillator IIC Bus Control";
+	form.vals.push_back(std::string("Reset:  [") + (ReadSERDESOscillatorIICInterfaceReset() ? "x" : " ") + "]");
 	return form;
 }
 DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESOscillatorParameterLow()
 {
-	ReadSERDESOscillatorParameters();
-	auto form = CreateFormatter(CFO_Register_SERDESOscillatorParameterLow);
-	form.description = "SERDES Oscillator RFREQ 31:0";
-	std::stringstream o;
-	o << "0x" << std::hex << ReadRegister_(CFO_Register_SERDESOscillatorParameterLow);
-	form.vals.push_back(o.str());
+	auto form = CreateFormatter(CFO_Register_SERDESOscillatorIICBusLow);
+	form.description = "SERDES Oscillator IIC Bus Low";
+	auto data = ReadRegister_(CFO_Register_SERDESOscillatorIICBusLow);
+	std::ostringstream s1, s2, s3, s4;
+	s1 << "Device:     " << std::showbase << std::hex << ((data & 0xFF000000) >> 24);
+	form.vals.push_back(s1.str());
+	s2 << "Address:    " << std::showbase << std::hex << ((data & 0xFF0000) >> 16);
+	form.vals.push_back(s2.str());
+	s3 << "Write Data: " << std::showbase << std::hex << ((data & 0xFF00) >> 8);
+	form.vals.push_back(s3.str());
+	s4 << "Read Data:  " << std::showbase << std::hex << (data & 0xFF);
+	form.vals.push_back(s4.str());
 	return form;
 }
 DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatSERDESOscillatorParameterHigh()
 {
-	ReadSERDESOscillatorParameters();
-	auto form = CreateFormatter(CFO_Register_SERDESOscillatorParameterHigh);
-	form.description = "SERDES Oscillator Parameters";
-	std::stringstream o1, o2, o3, o4;
-	auto hsdiv = (ReadRegister_(CFO_Register_SERDESOscillatorParameterHigh) >> 16) & 0x7;
-	o1 << "HSDIV:       " << std::dec << hsdiv << " (" << DecodeHighSpeedDivider_(hsdiv) << ")";
-	form.vals.push_back(o1.str());
-	auto n1 = (ReadRegister_(CFO_Register_SERDESOscillatorParameterHigh) >> 8) & 0x7F;
-	o2 << "N1:          " << std::dec << n1 << " (" << DecodeOutputDivider_(n1) << ")";
-	form.vals.push_back(o2.str());
-	o3 << "RFREQ 37:32: " << std::hex << (ReadRegister_(CFO_Register_SERDESOscillatorParameterHigh) & 0xFF);
-	form.vals.push_back(o3.str());
-	o4 << "RFREQ: " << std::dec
-	   << DecodeRFREQ_((static_cast<uint64_t>(ReadRegister_(CFO_Register_SERDESOscillatorParameterHigh) & 0x3F) << 32) +
-					   ReadRegister_(CFO_Register_SERDESOscillatorParameterLow));
-	form.vals.push_back(o4.str());
+	auto form = CreateFormatter(CFO_Register_SERDESOscillatorIICBusHigh);
+	form.description = "SERDES Oscillator IIC Bus High";
+	form.vals.push_back(std::string("Write:  [") +
+						(ReadRegister_(CFO_Register_SERDESOscillatorIICBusHigh) & 0x1 ? "x" : " ") + "]");
+	form.vals.push_back(std::string("Read:   [") +
+						(ReadRegister_(CFO_Register_SERDESOscillatorIICBusHigh) & 0x2 ? "x" : " ") + "]");
 	return form;
 }
 

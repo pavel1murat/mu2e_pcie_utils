@@ -1576,7 +1576,7 @@ DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatMainBoardSERDESOscill
 DTCLib::DTC_RegisterFormatter DTCLib::DTC_Registers::FormatSERDESOscillatorControl()
 {
 	auto form = CreateFormatter(DTC_Register_SERDESOscillatorIICBusControl);
-	form.description = "DDR Oscillator IIC Bus Control";
+	form.description = "SERDES Oscillator IIC Bus Control";
 	form.vals.push_back(std::string("Reset:  [") + (ReadSERDESOscillatorIICInterfaceReset() ? "x" : " ") + "]");
 	return form;
 }
