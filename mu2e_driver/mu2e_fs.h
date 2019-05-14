@@ -28,4 +28,7 @@ int mu2e_fs_up(void);
 
 void mu2e_fs_down(void);
 
+int mu2e_open(struct inode *inode, struct file *filp);
+int mu2e_release(struct inode *inode, struct file *filp);
+
 #endif  // MU2E_FS_H
