@@ -278,16 +278,18 @@ void WriteGeneratedData(DTC* thisDTC)
 			auto maxLine = static_cast<unsigned>(ceil((dmaWriteByteCount) / 16.0));
 			for (unsigned line = 0; line < maxLine; ++line)
 			{
-				TLOG(TLVL_INFO) << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
+				std::stringstream ostr;
+				ostr << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
 				// for (unsigned byte = 0; byte < 16; ++byte)
 				for (unsigned byte = 0; byte < 8; ++byte)
 				{
 					if (line * 16 + 2 * byte < dmaWriteByteCount)
 					{
 						auto thisWord = reinterpret_cast<uint16_t*>(buf)[line * 8 + byte];
-						TLOG(TLVL_INFO) << std::setw(4) << static_cast<int>(thisWord) << " ";
+						ostr << std::setw(4) << static_cast<int>(thisWord) << " ";
 					}
 				}
+				TLOG(TLVL_INFO) << ostr.str();
 				if (maxLine > quietCount * 2 && quiet && line == (quietCount - 1))
 				{
 					line = static_cast<unsigned>(ceil((dmaWriteByteCount) / 16.0)) - (1 + quietCount);
@@ -740,15 +742,17 @@ int main(int argc, char* argv[])
 					auto maxLine = static_cast<unsigned>(ceil((sts - 8) / 16.0));
 					for (unsigned line = 0; line < maxLine; ++line)
 					{
-						TLOG(TLVL_INFO) << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
+						std::stringstream ostr;
+						ostr << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
 						for (unsigned byte = 0; byte < 8; ++byte)
 						{
 							if (line * 16 + 2 * byte < sts - 8u)
 							{
 								auto thisWord = reinterpret_cast<uint16_t*>(buffer)[4 + line * 8 + byte];
-								TLOG(TLVL_INFO) << std::setw(4) << static_cast<int>(thisWord) << " ";
+								ostr << std::setw(4) << static_cast<int>(thisWord) << " ";
 							}
 						}
+						TLOG(TLVL_INFO) << ostr.str();
 						if (maxLine > quietCount * 2 && quiet && line == (quietCount - 1))
 						{
 							line = static_cast<unsigned>(ceil((sts - 8) / 16.0)) - (1 + quietCount);
