@@ -62,9 +62,9 @@ enum CFO_Register : uint16_t
 	CFO_Register_EnableBeamOffMode = 0x914C,
 	CFO_Register_ClockMarkerIntervalCount = 0x9154,
 	CFO_Register_SERDESOscillatorFrequency = 0x9160,
-	CFO_Register_SERDESOscillatorControl = 0x9164,
-	CFO_Register_SERDESOscillatorParameterLow = 0x9168,
-	CFO_Register_SERDESOscillatorParameterHigh = 0x916C,
+	CFO_Register_SERDESOscillatorIICBusControl = 0x9164,
+	CFO_Register_SERDESOscillatorIICBusLow = 0x9168,
+	CFO_Register_SERDESOscillatorIICBusHigh = 0x916C,
 	CFO_Register_TimestampPreset0 = 0x9180,
 	CFO_Register_TimestampPreset1 = 0x9184,
 	CFO_Register_NUMDTCs = 0x918C,
@@ -649,31 +649,28 @@ public:
 	/// <param name="freq">New frequency, in Hz</param>
 	void SetSERDESOscillatorFrequency(uint32_t freq);
 	/// <summary>
-	/// Read the SERDES Oscillator IIC FSM bit
+	/// Read the Reset bit of the SERDES IIC Bus
 	/// </summary>
-	/// <returns>True if the Oscillator IIC FSM bit is set</returns>
-	bool ReadSERDESOscillaotrIICFSMEnable();
+	/// <returns>Reset bit value</returns>
+	bool ReadSERDESOscillatorIICInterfaceReset();
 	/// <summary>
-	/// Enable the SERDES Oscillator IIC FSM
+	/// Reset the SERDES IIC Bus
 	/// </summary>
-	void EnableSERDESOscillatorIICFSM();
+	void ResetSERDESOscillatorIICInterface();
 	/// <summary>
-	/// Disable the SERDES Oscillator IIC FSM
+	/// Write a value to the SERDES IIC Bus
 	/// </summary>
-	void DisableSERDESOscillatorIICFSM();
+	/// <param name="device">Device address</param>
+	/// <param name="address">Register address</param>
+	/// <param name="data">Data to write</param>
+	void WriteSERDESIICInterface(DTC_IICSERDESBusAddress device, uint8_t address, uint8_t data);
 	/// <summary>
-	/// Returns the current mode of the SERDES Oscillator Parameter register
+	/// Read a value from the SERDES IIC Bus
 	/// </summary>
-	/// <returns>True if the Oscillator is in Write mode, false for Read mode</returns>
-	bool ReadSERDESOscillatorReadWriteMode();
-	/// <summary>
-	/// Set the SERDES Oscillator to Write mode
-	/// </summary>
-	void SetSERDESOscillatorWriteMode();
-	/// <summary>
-	/// Set the SERDES Oscillator to Read mode
-	/// </summary>
-	void SetSERDESOscillatorReadMode();
+	/// <param name="device">Device address</param>
+	/// <param name="address">Register address</param>
+	/// <returns>Value of register</returns>
+	uint8_t ReadSERDESIICInterface(DTC_IICSERDESBusAddress device, uint8_t address);
 	/// <summary>
 	/// Read the current Oscillator program for the SERDES Oscillator
 	/// </summary>
@@ -682,8 +679,8 @@ public:
 	/// <summary>
 	/// Set the SERDES Oscillator program
 	/// </summary>
-	/// <param name="parameters">New program for the SERDES Oscillator</param>
-	void SetSERDESOscillatorParameters(uint64_t parameters);
+	/// <param name="program">New program for the SERDES Oscillator</param>
+	void SetSERDESOscillatorParameters(uint64_t program);
 	/// <summary>
 	/// Read the current SERDES Oscillator clock speed
 	/// </summary>
@@ -1546,7 +1543,8 @@ public:
 	/// Set the given oscillator to the given frequency, calculating a new program in the process.
 	/// </summary>
 	/// <param name="targetFrequency">New frequency to program, in Hz</param>
-	void SetNewOscillatorFrequency(double targetFrequency);
+	/// <returns>Whether the oscillator frequency was changed</returns>
+	bool SetNewOscillatorFrequency(double targetFrequency);
 
 private:
 	void WriteRegister_(uint32_t data, const CFO_Register& address);
