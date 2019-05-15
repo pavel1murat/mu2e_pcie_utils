@@ -669,10 +669,10 @@ void DTCLib::DTC::ReadROCBlock(
 
 		auto wordCount = replytmp.second;
 		auto processedWords = 3;
-		dcsDMAInfo_.lastReadPtr = reinterpret_cast<uint8_t*>(dcsDMAInfo_.lastReadPtr) + 16;
 
 		while (packetCount > 0)
 		{
+			dcsDMAInfo_.lastReadPtr = reinterpret_cast<uint8_t*>(dcsDMAInfo_.lastReadPtr) + 16;
 			auto dataPacket = new DTC_DataPacket(dcsDMAInfo_.lastReadPtr);
 			if (dataPacket == nullptr) break;
 
