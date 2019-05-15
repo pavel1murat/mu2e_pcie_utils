@@ -48,8 +48,6 @@ find_ups_product( TRACE v3_03_00 )
 # macros for art_dictionary and simple_plugin
 include(CetTest)
 
-include(NodeJSAddon)
-
 # source
 add_subdirectory(mu2e_driver)
 add_subdirectory(mcs)
