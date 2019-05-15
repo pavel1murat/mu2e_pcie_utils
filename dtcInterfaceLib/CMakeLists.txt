@@ -24,8 +24,6 @@ cet_make_exec(DTCRegDump SOURCE dtcRegDump.cc LIBRARIES DTCInterface)
 cet_make_exec(my_cntl SOURCE my_cntl.cc LIBRARIES DTCInterface)
 cet_make_exec(rick_clock_test SOURCE rick_clock_test.cc LIBRARIES DTCInterface)
 
-create_nodejs_addon(ADDON_NAME "DTC" LIBRARIES DTCInterface INCLUDES ${CMAKE_CURRENT_SOURCE_DIR} )
-
 # Install_headers MUST BE FIRST...for some reason
 install_headers()
 install_source()
