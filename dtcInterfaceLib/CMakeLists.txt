@@ -28,9 +28,6 @@ cet_make_exec(rick_clock_test SOURCE rick_clock_test.cc LIBRARIES DTCInterface)
 install_headers()
 install_source()
 
-FILE(COPY web DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin/web DESTINATION ${${product}_bin_dir})
-
 cet_script(updateMu2e.sh Setup_DTC.sh)
 
 add_subdirectory(test)
