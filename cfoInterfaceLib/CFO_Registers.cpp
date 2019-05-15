@@ -8,6 +8,7 @@
 #include <sstream>  // Convert uint to hex stLink
 
 #include "trace.h"
+#define CFO_TLOG(lvl) TLOG(lvl) << "CFO " << device_.getDTCID() << ": "
 
 CFOLib::CFO_Registers::CFO_Registers(DTC_SimMode mode, int CFO, std::string expectedDesignVersion,
 									 bool skipInit)
@@ -259,7 +260,7 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatVivadoVersion()
 // CFO Control Register
 void CFOLib::CFO_Registers::ResetCFO()
 {
-	TRACE(15, "ResetCFO start");
+	CFO_TLOG(15) <<  "ResetCFO start";
 	std::bitset<32> data = ReadRegister_(CFO_Register_CFOControl);
 	data[31] = 1;  // CFO Reset bit
 	WriteRegister_(data.to_ulong(), CFO_Register_CFOControl);
@@ -273,7 +274,7 @@ bool CFOLib::CFO_Registers::ReadResetCFO()
 
 void CFOLib::CFO_Registers::EnableAutogenDRP()
 {
-	TRACE(15, "EnableAutogenDRP start");
+	CFO_TLOG(15) <<  "EnableAutogenDRP start";
 	std::bitset<32> data = ReadRegister_(CFO_Register_CFOControl);
 	data[23] = 1;
 	WriteRegister_(data.to_ulong(), CFO_Register_CFOControl);
@@ -524,7 +525,7 @@ void CFOLib::CFO_Registers::ResetSERDES(const CFO_Link_ID& link, int interval)
 	auto resetDone = false;
 	while (!resetDone)
 	{
-		TRACE(0, "EnteLink SERDES Reset Loop for Link %u", link);
+		CFO_TLOG(4) <<  "Entering SERDES Reset Loop for Link " << link;
 		std::bitset<32> data = ReadRegister_(CFO_Register_SERDESReset);
 		data[link] = 1;
 		WriteRegister_(data.to_ulong(), CFO_Register_SERDESReset);
@@ -538,7 +539,7 @@ void CFOLib::CFO_Registers::ResetSERDES(const CFO_Link_ID& link, int interval)
 		usleep(interval);
 
 		resetDone = ReadResetSERDESDone(link);
-		TRACE(0, "End of SERDES Reset loop, done=%s", (resetDone ? "true" : "false"));
+		CFO_TLOG(4) <<  "End of SERDES Reset loop, done=" << std::boolalpha << resetDone;
 	}
 }
 
@@ -2889,12 +2890,22 @@ bool CFOLib::CFO_Registers::SetNewOscillatorFrequency(double targetFrequency)
 {
 	auto currentFrequency = ReadSERDESOscillatorFrequency();
 	auto currentProgram = ReadSERDESOscillatorParameters();
+	CFO_TLOG(TLVL_DEBUG) << "Target Frequency: " << targetFrequency << ", Current Frequency: " << currentFrequency
+						 << ", Current Program: " << currentProgram;
 
 	// Check if targetFrequency is essentially the same as the current frequency...
-	if (fabs(currentFrequency - targetFrequency) < targetFrequency * 30 / 1000000) return false;
+	if (fabs(currentFrequency - targetFrequency) < targetFrequency * 30 / 1000000)
+	{
+		CFO_TLOG(TLVL_INFO) << "New frequency and old frequency are within 30 ppm of each other, not reprogramming!";
+		return false;
+	}
 
 	auto newParameters = CalculateFrequencyForProgramming_(targetFrequency, currentFrequency, currentProgram);
-	if (newParameters == 0) return false;
+	if (newParameters == 0)
+	{
+		CFO_TLOG(TLVL_WARNING) << "New program calculated as 0! Check parameters!";
+		return false;
+	}
 	SetSERDESOscillatorParameters(newParameters);
 	SetSERDESOscillatorFrequency(targetFrequency);
 	return true;
@@ -2986,18 +2997,17 @@ int CFOLib::CFO_Registers::EncodeOutputDivider_(int input)
 uint64_t CFOLib::CFO_Registers::CalculateFrequencyForProgramming_(double targetFrequency, double currentFrequency,
 																  uint64_t currentProgram)
 {
-	TRACE(4, "CalculateFrequencyForProgramming: targetFrequency=%lf, currentFrequency=%lf, currentProgram=0x%llx",
-		  targetFrequency, currentFrequency, static_cast<unsigned long long>(currentProgram));
-	auto currentHighSpeedDivider = DecodeHighSpeedDivider_((currentProgram >> 48) & 0x7);
-	auto currentOutputDivider = DecodeOutputDivider_((currentProgram >> 40) & 0x7F);
+	CFO_TLOG(4) << "CalculateFrequencyForProgramming: targetFrequency=" << targetFrequency << ", currentFrequency=" << currentFrequency
+				<< ", currentProgram=" << std::showbase << std::hex << static_cast<unsigned long long>(currentProgram);
+	auto currentHighSpeedDivider = DecodeHighSpeedDivider_((currentProgram >> 45) & 0x7);
+	auto currentOutputDivider = DecodeOutputDivider_((currentProgram >> 38) & 0x7F);
 	auto currentRFREQ = DecodeRFREQ_(currentProgram & 0x3FFFFFFFFF);
-	TRACE(4, "CalculateFrequencyForProgramming: Current HSDIV=%d, N1=%d, RFREQ=%lf", currentHighSpeedDivider,
-		  currentOutputDivider, currentRFREQ);
+	CFO_TLOG(4) << "CalculateFrequencyForProgramming: Current HSDIV=" << currentHighSpeedDivider << ", N1=" << currentOutputDivider << ", RFREQ=" << currentRFREQ;
 	const auto minFreq = 4850000000;  // Hz
 	const auto maxFreq = 5670000000;  // Hz
 
 	auto fXTAL = currentFrequency * currentHighSpeedDivider * currentOutputDivider / currentRFREQ;
-	TRACE(4, "CalculateFrequencyForProgramming: fXTAL=%lf", fXTAL);
+	CFO_TLOG(4) << "CalculateFrequencyForProgramming: fXTAL=" << fXTAL;
 
 	std::vector<int> hsdiv_values = {11, 9, 7, 6, 5, 4};
 	std::vector<std::pair<int, double>> parameter_values;
@@ -3013,8 +3023,7 @@ uint64_t CFOLib::CFO_Registers::CalculateFrequencyForProgramming_(double targetF
 			thisN += 2;
 		}
 		auto fdco_new = hsdiv * thisN * targetFrequency;
-		TRACE(4, "CalculateFrequencyForProgramming: Adding solution: HSDIV=%d, N1=%d, fdco_new=%lf", hsdiv, thisN,
-			  fdco_new);
+		CFO_TLOG(4) << "CalculateFrequencyForProgramming: Adding solution: HSDIV=" << hsdiv << ", N1=" << thisN << ", fdco_new=" << fdco_new;
 		parameter_values.push_back(std::make_pair(thisN, fdco_new));
 	}
 
@@ -3033,27 +3042,26 @@ uint64_t CFOLib::CFO_Registers::CalculateFrequencyForProgramming_(double targetF
 		newRFREQ = values.second / fXTAL;
 		break;
 	}
-	TRACE(4, "CalculateFrequencyForProgramming: New Program: HSDIV=%d, N1=%d, RFREQ=%lf", newHighSpeedDivider,
-		  newOutputDivider, newRFREQ);
+	CFO_TLOG(4) << "CalculateFrequencyForProgramming: New Program: HSDIV=" << newHighSpeedDivider << ", N1=" << newOutputDivider << ", RFREQ=" << newRFREQ;
 
 	if (EncodeHighSpeedDivider_(newHighSpeedDivider) == -1)
 	{
-		TRACE(0, "ERROR: CalculateFrequencyForProgramming: Invalid HSDIV %d!", newHighSpeedDivider);
+		CFO_TLOG(0) << "ERROR: CalculateFrequencyForProgramming: Invalid HSDIV " << newHighSpeedDivider << "!";
 		return 0;
 	}
 	if (newOutputDivider > 128 || newOutputDivider < 0)
 	{
-		TRACE(0, "ERROR: CalculateFrequencyForProgramming: Invalid N1 %d!", newOutputDivider);
+		CFO_TLOG(0) << "ERROR: CalculateFrequencyForProgramming: Invalid N1 " << newOutputDivider << "!";
 		return 0;
 	}
 	if (newRFREQ <= 0)
 	{
-		TRACE(0, "ERROR: CalculateFrequencyForProgramming: Invalid RFREQ %lf!", newRFREQ);
+		CFO_TLOG(0) << "ERROR: CalculateFrequencyForProgramming: Invalid RFREQ " << newRFREQ << "!";
 		return 0;
 	}
 
-	auto output = (static_cast<uint64_t>(EncodeHighSpeedDivider_(newHighSpeedDivider)) << 48) +
-				  (static_cast<uint64_t>(EncodeOutputDivider_(newOutputDivider)) << 40) + EncodeRFREQ_(newRFREQ);
-	TRACE(4, "CalculateFrequencyForProgramming: New Program: 0x%llx", static_cast<unsigned long long>(output));
+	auto output = (static_cast<uint64_t>(EncodeHighSpeedDivider_(newHighSpeedDivider)) << 45) +
+				  (static_cast<uint64_t>(EncodeOutputDivider_(newOutputDivider)) << 38) + EncodeRFREQ_(newRFREQ);
+	CFO_TLOG(4) << "CalculateFrequencyForProgramming: New Program: " << std::showbase << std::hex << static_cast<unsigned long long>(output);
 	return output;
 }

@@ -151,7 +151,7 @@ public:
 	/// <param name="skipInit">Default: false; Whether to skip initializing the CFO using the SimMode.
 	/// Used to read state.</param> <param name="expectedDesignVersion">Expected CFO Firmware Design Version. If set, will
 	/// throw an exception if the CFO firmware does not match (Default: "")</param>
-	explicit CFO_Registers(DTC_SimMode mode, int CFO,  std::string expectedDesignVersion = "",
+	explicit CFO_Registers(DTC_SimMode mode, int CFO, std::string expectedDesignVersion = "",
 						   bool skipInit = false);
 	/// <summary>
 	/// CFO_Registers destructor
@@ -1550,14 +1550,14 @@ private:
 	void WriteRegister_(uint32_t data, const CFO_Register& address);
 	uint32_t ReadRegister_(const CFO_Register& address);
 
-	static int DecodeHighSpeedDivider_(int input);
-	static int DecodeOutputDivider_(int input) { return input + 1; }
-	static double DecodeRFREQ_(uint64_t input) { return input / 268435456.0; }
-	static int EncodeHighSpeedDivider_(int input);
-	static int EncodeOutputDivider_(int input);
-	static uint64_t EncodeRFREQ_(double input) { return static_cast<uint64_t>(input * 268435456) & 0x3FFFFFFFFF; }
-	static uint64_t CalculateFrequencyForProgramming_(double targetFrequency, double currentFrequency,
-													  uint64_t currentProgram);
+	int DecodeHighSpeedDivider_(int input);
+	int DecodeOutputDivider_(int input) { return input + 1; }
+	double DecodeRFREQ_(uint64_t input) { return input / 268435456.0; }
+	int EncodeHighSpeedDivider_(int input);
+	int EncodeOutputDivider_(int input);
+	uint64_t EncodeRFREQ_(double input) { return static_cast<uint64_t>(input * 268435456) & 0x3FFFFFFFFF; }
+	uint64_t CalculateFrequencyForProgramming_(double targetFrequency, double currentFrequency,
+											   uint64_t currentProgram);
 
 protected:
 	mu2edev device_;              ///< Device handle
