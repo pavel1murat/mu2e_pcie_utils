@@ -1,6 +1,6 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent pcie_linux_kernel_module	v2_01_06
+parent pcie_linux_kernel_module	v2_02_00
 defaultqual	e15
 
 # These optional lines define the installed directories where
@@ -26,25 +26,23 @@ gcc              v6_4_0         c2
 gcc              v8_2_0         c7
 clang            v5_0_1         c2
 clang            v7_0_0         c7
-swig             v3_0_12d        -       optional
-nodejs           v4_5_0         -       optional
 cetbuildtools    v7_12_01        -       only_for_build
 end_product_list
 
 # e6  - with gcc 4.9.1 and -std=c++1y
 # -nq- here means there is no qualifier
 # a "-" here means the dependent product is not required by the parent and will not be setup
-qualifier   TRACE     gcc	clang	swig		nodejs	notes
-c7:prof		-nq-      -nq-  -nq-	c7:prof 	-nq-	-std=c++17
-c7:debug	-nq-      -nq-  -nq-	c7:debug	-nq- 	-std=c++17
-c2:prof		-nq-      -nq-  -nq-	c2:prof 	-nq-	-std=c++17
-c2:debug	-nq-      -nq-  -nq-	c2:debug	-nq- 	-std=c++17
-e19:prof    -nq-      -nq-  -		e19:prof 	-nq-	-std=c++17
-e19:debug   -nq-      -nq-  -		e19:debug	-nq- 	-std=c++17
-e17:prof    -nq-      -nq-  -		e17:prof 	-nq-	-std=c++17
-e17:debug   -nq-      -nq-  -		e17:debug	-nq- 	-std=c++17
-e15:prof    -nq-      -nq-	-		e15:prof  	-nq-    -std=c++14
-e15:debug   -nq-      -nq-	-		e15:debug 	-nq-    -std=c++14
+qualifier   TRACE     gcc	clang	notes
+c7:prof	    -nq-      -nq-  	-nq-	-std=c++17
+c7:debug    -nq-      -nq-  	-nq-	-std=c++17
+c2:prof	    -nq-      -nq-  	-nq-	-std=c++17
+c2:debug    -nq-      -nq-  	-nq- 	-std=c++17
+e19:prof    -nq-      -nq-  	-	-std=c++17
+e19:debug   -nq-      -nq-  	- 	-std=c++17
+e17:prof    -nq-      -nq-  	-	-std=c++17
+e17:debug   -nq-      -nq-  	-	-std=c++17
+e15:prof    -nq-      -nq-	-	-std=c++14
+e15:debug   -nq-      -nq-	-	-std=c++14
 end_qualifier_list
 
 
