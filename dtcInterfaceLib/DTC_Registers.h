@@ -2778,14 +2778,14 @@ private:
 	void WriteRegister_(uint32_t data, const DTC_Register& address);
 	uint32_t ReadRegister_(const DTC_Register& address);
 
-	static int DecodeHighSpeedDivider_(int input);
-	static int DecodeOutputDivider_(int input) { return input + 1; }
-	static double DecodeRFREQ_(uint64_t input) { return input / 268435456.0; }
-	static int EncodeHighSpeedDivider_(int input);
-	static int EncodeOutputDivider_(int input);
-	static uint64_t EncodeRFREQ_(double input) { return static_cast<uint64_t>(input * 268435456) & 0x3FFFFFFFFF; }
-	static uint64_t CalculateFrequencyForProgramming_(double targetFrequency, double currentFrequency,
-													  uint64_t currentProgram);
+	int DecodeHighSpeedDivider_(int input);
+	int DecodeOutputDivider_(int input) { return input + 1; }
+	double DecodeRFREQ_(uint64_t input) { return input / 268435456.0; }
+	int EncodeHighSpeedDivider_(int input);
+	int EncodeOutputDivider_(int input);
+	uint64_t EncodeRFREQ_(double input) { return static_cast<uint64_t>(input * 268435456) & 0x3FFFFFFFFF; }
+	uint64_t CalculateFrequencyForProgramming_(double targetFrequency, double currentFrequency,
+											   uint64_t currentProgram);
 	uint64_t ReadSERDESOscillatorParameters_();
 	uint64_t ReadTimingOscillatorParameters_();
 	uint64_t ReadDDROscillatorParameters_();
@@ -2805,8 +2805,7 @@ protected:
 	/// <summary>
 	/// Functions needed to print regular register map
 	/// </summary>
-	const std::vector<std::function<DTC_RegisterFormatter()>> formattedDumpFunctions_
-	{
+	const std::vector<std::function<DTC_RegisterFormatter()>> formattedDumpFunctions_{
 		[this]() { return this->FormatDesignVersion(); },
 		[this]() { return this->FormatDesignDate(); },
 		[this]() { return this->FormatDesignStatus(); },
@@ -2825,8 +2824,8 @@ protected:
 		[this]() { return this->FormatSERDESRXDisparityError(); },
 		[this]() { return this->FormatSERDESRXCharacterNotInTableError(); },
 		[this]() { return this->FormatSERDESUnlockError(); },
-		[this]() { return this->FormatSERDESPLLLocked(); }, 
-		[this]() { return this->FormatSERDESPLLPowerDown();}, 
+		[this]() { return this->FormatSERDESPLLLocked(); },
+		[this]() { return this->FormatSERDESPLLPowerDown(); },
 		[this]() { return this->FormatSERDESRXStatus(); },
 		[this]() { return this->FormatSERDESResetDone(); },
 		[this]() { return this->FormatRXCDRLockStatus(); },
@@ -2922,45 +2921,45 @@ protected:
 		[this]() { return this->FormatFireflyCSR(); },
 		[this]() { return this->FormatSFPControlStatus(); },
 		[this]() { return this->FormatFPGAPROMProgramStatus(); },
-		[this]() { return this->FormatFPGACoreAccess(); } };
+		[this]() { return this->FormatFPGACoreAccess(); }};
 
-			/// <summary>
-			/// Dump Byte/Packet Counter Registers
-			/// </summary>
-			const std::vector<std::function<DTC_RegisterFormatter()>> formattedCounterFunctions_{
-				[this]() { return this->FormatReceiveByteCountRing0(); },
-				[this]() { return this->FormatReceiveByteCountRing1(); },
-				[this]() { return this->FormatReceiveByteCountRing2(); },
-				[this]() { return this->FormatReceiveByteCountRing3(); },
-				[this]() { return this->FormatReceiveByteCountRing4(); },
-				[this]() { return this->FormatReceiveByteCountRing5(); },
-				[this]() { return this->FormatReceiveByteCountCFO(); },
-				[this]() { return this->FormatReceiveByteCountEVB(); },
-				[this]() { return this->FormatReceivePacketCountRing0(); },
-				[this]() { return this->FormatReceivePacketCountRing1(); },
-				[this]() { return this->FormatReceivePacketCountRing2(); },
-				[this]() { return this->FormatReceivePacketCountRing3(); },
-				[this]() { return this->FormatReceivePacketCountRing4(); },
-				[this]() { return this->FormatReceivePacketCountRing5(); },
-				[this]() { return this->FormatReceivePacketCountCFO(); },
-				[this]() { return this->FormatReceivePacketCountEVB(); },
-				[this]() { return this->FormatTramsitByteCountRing0(); },
-				[this]() { return this->FormatTramsitByteCountRing1(); },
-				[this]() { return this->FormatTramsitByteCountRing2(); },
-				[this]() { return this->FormatTramsitByteCountRing3(); },
-				[this]() { return this->FormatTramsitByteCountRing4(); },
-				[this]() { return this->FormatTramsitByteCountRing5(); },
-				[this]() { return this->FormatTramsitByteCountCFO(); },
-				[this]() { return this->FormatTramsitByteCountEVB(); },
-				[this]() { return this->FormatTransmitPacketCountRing0(); },
-				[this]() { return this->FormatTransmitPacketCountRing1(); },
-				[this]() { return this->FormatTransmitPacketCountRing2(); },
-				[this]() { return this->FormatTransmitPacketCountRing3(); },
-				[this]() { return this->FormatTransmitPacketCountRing4(); },
-				[this]() { return this->FormatTransmitPacketCountRing5(); },
-				[this]() { return this->FormatTransmitPacketCountCFO(); },
-				[this]() { return this->FormatTransmitPacketCountEVB(); }};
-		};
-	}  // namespace DTCLib
+	/// <summary>
+	/// Dump Byte/Packet Counter Registers
+	/// </summary>
+	const std::vector<std::function<DTC_RegisterFormatter()>> formattedCounterFunctions_{
+		[this]() { return this->FormatReceiveByteCountRing0(); },
+		[this]() { return this->FormatReceiveByteCountRing1(); },
+		[this]() { return this->FormatReceiveByteCountRing2(); },
+		[this]() { return this->FormatReceiveByteCountRing3(); },
+		[this]() { return this->FormatReceiveByteCountRing4(); },
+		[this]() { return this->FormatReceiveByteCountRing5(); },
+		[this]() { return this->FormatReceiveByteCountCFO(); },
+		[this]() { return this->FormatReceiveByteCountEVB(); },
+		[this]() { return this->FormatReceivePacketCountRing0(); },
+		[this]() { return this->FormatReceivePacketCountRing1(); },
+		[this]() { return this->FormatReceivePacketCountRing2(); },
+		[this]() { return this->FormatReceivePacketCountRing3(); },
+		[this]() { return this->FormatReceivePacketCountRing4(); },
+		[this]() { return this->FormatReceivePacketCountRing5(); },
+		[this]() { return this->FormatReceivePacketCountCFO(); },
+		[this]() { return this->FormatReceivePacketCountEVB(); },
+		[this]() { return this->FormatTramsitByteCountRing0(); },
+		[this]() { return this->FormatTramsitByteCountRing1(); },
+		[this]() { return this->FormatTramsitByteCountRing2(); },
+		[this]() { return this->FormatTramsitByteCountRing3(); },
+		[this]() { return this->FormatTramsitByteCountRing4(); },
+		[this]() { return this->FormatTramsitByteCountRing5(); },
+		[this]() { return this->FormatTramsitByteCountCFO(); },
+		[this]() { return this->FormatTramsitByteCountEVB(); },
+		[this]() { return this->FormatTransmitPacketCountRing0(); },
+		[this]() { return this->FormatTransmitPacketCountRing1(); },
+		[this]() { return this->FormatTransmitPacketCountRing2(); },
+		[this]() { return this->FormatTransmitPacketCountRing3(); },
+		[this]() { return this->FormatTransmitPacketCountRing4(); },
+		[this]() { return this->FormatTransmitPacketCountRing5(); },
+		[this]() { return this->FormatTransmitPacketCountCFO(); },
+		[this]() { return this->FormatTransmitPacketCountEVB(); }};
+};
+}  // namespace DTCLib
 
 #endif  // DTC_REGISTERS_H

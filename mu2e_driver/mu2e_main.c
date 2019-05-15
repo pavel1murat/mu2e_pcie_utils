@@ -79,9 +79,9 @@ int checkDmaEngine(int dtc, unsigned chn, unsigned dir)
 
 	if (dir == C2S &&
 		(status & (DMA_ENG_INT_ALERR | DMA_ENG_INT_FETERR | DMA_ENG_INT_ABORTERR | DMA_ENG_INT_CHAINEND)) != 0) {
-		TRACE(20, "checkDmaEngine: One of the error bits set: chn=%d dir=%d sts=0x%llx", chn, dir,
+		TRACE(20, "checkDmaEngine: One of the error bits set: dtc=%d chn=%d dir=%d sts=0x%llx", dtc, chn, dir,
 			  (unsigned long long)status);
-		printk("DTC DMA Interrupt Error Bits Set: chn=%d dir=%d, sts=0x%llx", chn, dir, (unsigned long long)status);
+		printk("DTC DMA Interrupt Error Bits Set: dtc=%d chn=%d dir=%d, sts=0x%llx", dtc, chn, dir, (unsigned long long)status);
 		/* Perform soft reset of DMA engine */
 		Dma_mWriteChnReg(dtc, chn, dir, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_USER_RESET);
 		status = Dma_mReadChnReg(dtc, chn, dir, REG_DMA_ENG_CTRL_STATUS);
@@ -99,7 +99,7 @@ int checkDmaEngine(int dtc, unsigned chn, unsigned dir)
 	}
 
 	if ((status & DMA_ENG_ENABLE) == 0) {
-		TRACE(20, "checkDmaEngine: DMA ENGINE DISABLED! Re-enabling... chn=%d dir=%d", chn, dir);
+		TRACE(20, "checkDmaEngine: DMA ENGINE DISABLED! Re-enabling... dtc=%d chn=%d dir=%d", dtc, chn, dir);
 		if (dir == C2S) {
 			Dma_mWriteChnReg(dtc, chn, dir, REG_DMA_ENG_CTRL_STATUS, DMA_ENG_ENABLE | DMA_ENG_INT_ENABLE);
 		}
@@ -138,7 +138,7 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp, uns
 	unsigned tmo_jiffies;
 	int dtc = iminor(filp->f_path.dentry->d_inode);
 
-	TRACE(11, "mu2e_ioctl: start - cmd=0x%x", cmd);
+	TRACE(11, "mu2e_ioctl: start - dtc=%d cmd=0x%x",dtc, cmd);
 	if (_IOC_TYPE(cmd) != MU2E_IOC_MAGIC) return -ENOTTY;
 
 	/* Check read/write and corresponding argument */
@@ -310,13 +310,14 @@ IOCTL_RET_TYPE mu2e_ioctl(IOCTL_ARGS(struct inode *inode, struct file *filp, uns
 				return (-EFAULT);
 			}
 			if (reg_access.access_type) {
-				TRACE(19, "mu2e_ioctl: cmd=REG_ACCESS - write offset=0x%x, val=0x%x", reg_access.reg_offset, reg_access.val);
+				TRACE(19, "mu2e_ioctl: cmd=REG_ACCESS - write dtc=%d offset=0x%x, val=0x%x",dtc, reg_access.reg_offset, reg_access.val);
 				Dma_mWriteReg(base, reg_access.reg_offset, reg_access.val);
 			}
 			else
 			{
-				TRACE(19, "mu2e_ioctl: cmd=REG_ACCESS - read offset=0x%x", reg_access.reg_offset);
+				TRACE(18, "mu2e_ioctl: cmd=REG_ACCESS - read offset=0x%x", reg_access.reg_offset);
 				reg_access.val = Dma_mReadReg(base, reg_access.reg_offset);
+				TRACE(19, "mu2e_ioctl: cmd=REG_ACCESS - read dtc=%d offset=0x%x, val=0x%x",dtc, reg_access.reg_offset, reg_access.val);
 				if (copy_to_user((void *)arg, &reg_access, sizeof(reg_access))) {
 					printk("copy_to_user failed\n");
 					return (-EFAULT);
