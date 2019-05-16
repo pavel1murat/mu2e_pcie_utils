@@ -278,8 +278,8 @@ typedef struct
 typedef unsigned char mu2e_databuff_t[0x10000];
 
 typedef enum {
-	DTC_DMA_Engine_DCS = 0,
-	DTC_DMA_Engine_DAQ = 1,
+	DTC_DMA_Engine_DAQ = 0,
+	DTC_DMA_Engine_DCS = 1,
 	DTC_DMA_Engine_Invalid,
 } DTC_DMA_Engine;
 
