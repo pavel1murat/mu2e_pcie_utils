@@ -28,7 +28,7 @@ bool incrementTimestamp = true;
 bool syncRequests = false;
 bool checkSERDES = false;
 bool quiet = false;
-unsigned quietCount = 1;
+unsigned quietCount = 0;
 bool reallyQuiet = false;
 bool rawOutput = false;
 bool skipVerify = false;
@@ -278,7 +278,7 @@ void WriteGeneratedData(DTC* thisDTC)
 			DTCLib::Utilities::PrintBuffer(buf, dmaWriteByteCount, quietCount);
 		}
 
-		thisDTC->GetDevice()->write_data(0, buf, static_cast<size_t>(dmaWriteByteCount));
+		thisDTC->GetDevice()->write_data(DTC_DMA_Engine_DAQ, buf, static_cast<size_t>(dmaWriteByteCount));
 		delete[] buf;
 	}
 
@@ -389,7 +389,6 @@ int main(int argc, char* argv[])
 				case 'q':
 					quiet = true;
 					quietCount = getOptionValue(&optind, &argv);
-					if (quietCount == 0) quietCount = 1;
 					break;
 				case 'p':
 					useSimFile = true;

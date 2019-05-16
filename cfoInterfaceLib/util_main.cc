@@ -269,7 +269,7 @@ int main(int argc, char* argv[])
 
 		mu2edev dev;
 		dev.init(DTC_SimMode_NoCFO, dtc);
-		dev.write_data(0, inputData, sizeof(inputData));
+		dev.write_data(DTC_DMA_Engine_DAQ, inputData, sizeof(inputData));
 	}
 	else if (op == "program_clock")
 	{
