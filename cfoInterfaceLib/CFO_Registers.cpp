@@ -2891,7 +2891,7 @@ bool CFOLib::CFO_Registers::SetNewOscillatorFrequency(double targetFrequency)
 	auto currentFrequency = ReadSERDESOscillatorFrequency();
 	auto currentProgram = ReadSERDESOscillatorParameters();
 	CFO_TLOG(TLVL_DEBUG) << "Target Frequency: " << targetFrequency << ", Current Frequency: " << currentFrequency
-						 << ", Current Program: " << currentProgram;
+						 << ", Current Program: " << std::showbase << std::hex << currentProgram;
 
 	// Check if targetFrequency is essentially the same as the current frequency...
 	if (fabs(currentFrequency - targetFrequency) < targetFrequency * 30 / 1000000)

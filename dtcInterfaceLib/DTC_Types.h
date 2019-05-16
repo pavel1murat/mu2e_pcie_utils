@@ -5,6 +5,7 @@
 #include <cstdint>  // uint8_t, uint16_t
 #include <iomanip>
 #include <vector>  // std::vector
+#include "trace.h"
 
 namespace DTCLib {
 enum DTC_Subsystem : uint8_t
@@ -1149,6 +1150,15 @@ struct Utilities
 	/// <param name="seconds">Number of seconds to convert</param>
 	/// <returns>Pair of Value in "best unit" and string representation of unit (i.e. "ns", "us", "hours", etc)</returns>
 	static std::pair<double, std::string> FormatTime(double seconds);
+
+	/// <summary>
+	/// Print out the buffer in hexdump -c format
+	/// </summary>
+	/// <param name="ptr">Pointer to the buffer</param>
+	/// <param name="sz">Size of the buffer</param>
+	/// <param name="quietCount">Number of lines to print at the begin/end. Default is 0, which prints entire buffer</param>
+	/// <param name="tlvl">TLVL to use for printing (Default TLVL_INFO)</param>
+	static void PrintBuffer(void* ptr, size_t sz, size_t quietCount = 0, int tlvl = TLVL_INFO);
 };
 }  // namespace DTCLib
 

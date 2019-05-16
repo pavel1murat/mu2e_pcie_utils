@@ -128,7 +128,10 @@ public:
 	/// <returns>File descriptor for the mu2e block device</returns>
 	int get_devfd_() const { return devfd_; }
 
-
+	/// <summary>
+	/// Get the current DTC ID for this instance
+	/// </summary>
+	/// <returns>The current DTC ID for this instance</returns>
 	int getDTCID() { return activeDTC_; }
 	// int  read_pcie_state(m_ioc_pcistate_t *output);
 	// int  read_dma_state(int chn, int dir, m_ioc_engstate_t *output);

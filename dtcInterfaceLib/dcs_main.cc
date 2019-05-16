@@ -61,7 +61,7 @@ void printHelpMsg()
 {
 	std::cout << "Usage: rocUtil [options] "
 				 "[read_register,reset_roc,write_register,read_extregister,write_extregister,test_read,read_release,"
-				 "toggle_serdes]"
+				 "toggle_serdes,block_read,block_write,raw_block_read]"
 			  << std::endl;
 	std::cout << "Options are:" << std::endl
 			  << "    -h: This message." << std::endl
@@ -73,7 +73,9 @@ void printHelpMsg()
 			  << "    -b: Block address (for write_rocext)" << std::endl
 			  << "    -q: Quiet mode (Don't print requests)" << std::endl
 			  << "    -Q: Really Quiet mode (Try not to print anything)" << std::endl
-			  << "    -v: Expected DTC Design version string (Default: \"\")" << std::endl;
+			  << "    -v: Expected DTC Design version string (Default: \"\")" << std::endl
+			  << "    -c: Word count for Block Reads (Default: 0)" << std::endl
+			  << "    -i: Do not set the incrementAddress bit for block operations" << std::endl;
 	exit(0);
 }
 
@@ -87,6 +89,8 @@ int main(int argc, char* argv[])
 	unsigned address = 0;
 	unsigned data = 0;
 	unsigned block = 0;
+	size_t count = 0;
+	bool incrementAddress = true;
 	std::string op = "";
 
 	for (auto optind = 1; optind < argc; ++optind)
@@ -112,6 +116,12 @@ int main(int argc, char* argv[])
 					break;
 				case 'b':
 					block = getOptionValue(&optind, &argv);
+					break;
+				case 'c':
+					count = getOptionValue(&optind, &argv);
+					break;
+				case 'i':
+					incrementAddress = !incrementAddress;
 					break;
 				case 'q':
 					quiet = true;
@@ -254,6 +264,60 @@ int main(int argc, char* argv[])
 			TLOG(11) << "dcs - release/read for DCS ii=" << ii << ", stsRD=" << stsRD << ", stsRL=" << stsRL << ", buffer=" << buffer;
 			if (delay > 0) usleep(delay);
 		}
+	}
+	else if (op == "block_read")
+	{
+		std::vector<uint16_t> data(count);
+		thisDTC->ReadROCBlock(data, dtc_link, address, count, incrementAddress);
+		DTCLib::Utilities::PrintBuffer(&data[0], data.size() * sizeof(uint16_t));
+	}
+	else if (op == "block_write")
+	{
+		std::vector<uint16_t> blockData;
+		for (size_t ii = 0; ii < count; ++ii)
+		{
+			blockData.push_back(static_cast<uint16_t>(ii));
+		}
+		thisDTC->WriteROCBlock(dtc_link, address, blockData, false, incrementAddress);
+	}
+	else if (op == "raw_block_read")
+	{
+		DTC_DCSRequestPacket req(dtc_link, DTC_DCSOperationType_BlockRead, false, incrementAddress, address, count);
+
+		TLOG(TLVL_TRACE) << "rocUtil raw_block_read: before WriteDMADCSPacket - DTC_DCSRequestPacket";
+
+		thisDTC->ReleaseAllBuffers(DTC_DMA_Engine_DCS);
+
+		if (!thisDTC->ReadDCSReception()) thisDTC->EnableDCSReception();
+
+		thisDTC->WriteDMAPacket(req);
+		TLOG(TLVL_TRACE) << "rocUtil raw_block_read: after  WriteDMADCSPacket - DTC_DCSRequestPacket";
+
+		usleep(2500);
+
+		mu2e_databuff_t* buffer;
+		auto tmo_ms = 1500;
+		TLOG(TLVL_TRACE) << "rocUtil - before read for DCS";
+		auto sts = device->read_data(DTC_DMA_Engine_DCS, reinterpret_cast<void**>(&buffer), tmo_ms);
+		TLOG(TLVL_TRACE) << "rocUtil - after read for DCS - " << " sts=" << sts << ", buffer=" << (void*)buffer;
+
+		if (sts > 0)
+		{
+			void* readPtr = &buffer[0];
+			auto bufSize = static_cast<uint16_t>(*static_cast<uint64_t*>(readPtr));
+			readPtr = static_cast<uint8_t*>(readPtr) + 8;
+			TLOG(reallyQuiet ? 9 : TLVL_INFO) << "Buffer reports DMA size of " << std::dec << bufSize << " bytes. Device driver reports read of "
+											  << sts << " bytes," << std::endl;
+
+			TLOG(TLVL_TRACE) << "util - bufSize is " << bufSize;
+
+			if (!reallyQuiet)
+			{
+				DTCLib::Utilities::PrintBuffer(buffer, sts);
+			}
+		}
+		device->read_release(DTC_DMA_Engine_DCS, 1);
+		if (delay > 0) usleep(delay);
 	}
 	else
 	{

@@ -4706,7 +4706,7 @@ bool DTCLib::DTC_Registers::SetNewOscillatorFrequency(DTC_OscillatorType oscilla
 	auto currentFrequency = ReadCurrentFrequency(oscillator);
 	auto currentProgram = ReadCurrentProgram(oscillator);
 	DTC_TLOG(TLVL_DEBUG) << "Target Frequency: " << targetFrequency << ", Current Frequency: " << currentFrequency
-						 << ", Current Program: " << currentProgram;
+						 << ", Current Program: " << std::showbase << std::hex << currentProgram;
 
 	// Check if targetFrequency is essentially the same as the current frequency...
 	if (fabs(currentFrequency - targetFrequency) < targetFrequency * 30 / 1000000)

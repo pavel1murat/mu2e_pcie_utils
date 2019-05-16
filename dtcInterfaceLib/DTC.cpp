@@ -693,7 +693,6 @@ void DTCLib::DTC::ReadROCBlock(
 
 	TLOG(TLVL_TRACE) << "ReadROCBlock returning " << static_cast<int>(data.size()) << " words for link " << static_cast<int>(link)
 					 << ", address " << static_cast<int>(address);
-	
 }
 
 void DTCLib::DTC::WriteROCBlock(const DTC_Link_ID& link, const uint16_t address,
@@ -1120,19 +1119,7 @@ void DTCLib::DTC::WriteDataPacket(const DTC_DataPacket& packet)
 	memcpy(&buf[0], &size, sizeof(uint64_t));
 	memcpy(&buf[8], packet.GetData(), packet.GetSize() * sizeof(uint8_t));
 
-	{
-		std::stringstream ss;
-		ss << std::setfill('0') << std::hex;
-		for (uint16_t ii = 0; ii < size - 1; ii += 2)
-		{
-			ss << "0x" << std::setw(2) << static_cast<int>(buf[ii + 1]) << " ";
-			ss << "" << std::setw(2) << static_cast<int>(buf[ii]) << "\n";
-		}
-		ss << std::dec;
-
-		//std::cout << "Buffer being sent: \n"
-		//		  << ss.str() << std::endl;
-	}
+		Utilities::PrintBuffer(buf, size, 0, 27);
 
 	auto retry = 3;
 	int errorCode;

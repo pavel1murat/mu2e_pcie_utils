@@ -2,6 +2,9 @@
 
 #include <iomanip>
 #include <sstream>
+#include <cmath>
+
+#include "trace.h"
 
 DTCLib::DTC_RXStatusConverter::DTC_RXStatusConverter(DTC_RXStatus status)
 	: status_(status) {}
@@ -251,4 +254,27 @@ std::pair<double, std::string> DTCLib::Utilities::FormatTime(double seconds)
 	}
 
 	return std::make_pair(val, unit);
+}
+
+void DTCLib::Utilities::PrintBuffer(void* ptr, size_t sz, size_t quietCount, int tlvl)
+{
+	auto maxLine = static_cast<unsigned>(ceil((sz - 8) / 16.0));
+	for (unsigned line = 0; line < maxLine; ++line)
+	{
+		std::stringstream ostr;
+		ostr << "0x" << std::hex << std::setw(5) << std::setfill('0') << line << "0: ";
+		for (unsigned byte = 0; byte < 8; ++byte)
+		{
+			if (line * 16 + 2 * byte < sz - 8u)
+			{
+				auto thisWord = reinterpret_cast<uint16_t*>(ptr)[4 + line * 8 + byte];
+				ostr << std::setw(4) << static_cast<int>(thisWord) << " ";
+			}
+		}
+		TLOG(tlvl) << ostr.str();
+		if (quietCount > 0 && maxLine > quietCount * 2 && line == (quietCount - 1))
+		{
+			line = static_cast<unsigned>(ceil((sz - 8) / 16.0)) - (1 + quietCount);
+		}
+	}
 }

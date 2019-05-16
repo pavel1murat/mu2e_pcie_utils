@@ -21,9 +21,12 @@
 
 #define PACKET_POLL_HZ 1000
 
+/// <summary>
+/// Data for retrieving DTC ID from timer list
+/// </summary>
 struct timer_data {
-  struct timer_list timer;
-  int dtc;
+  struct timer_list timer; ///< Timer instance
+  int dtc; ///< DTC Number
 };
 struct timer_data packets_timer[MU2E_MAX_NUM_DTCS];
 int packets_timer_guard[MU2E_MAX_NUM_DTCS] = {1};
