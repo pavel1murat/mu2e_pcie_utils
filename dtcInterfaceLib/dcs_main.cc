@@ -313,7 +313,7 @@ int main(int argc, char* argv[])
 
 			if (!reallyQuiet)
 			{
-				DTCLib::Utilities::PrintBuffer(buffer, sts);
+				DTCLib::Utilities::PrintBuffer(buffer, sts >= bufSize ? sts : bufSize);
 			}
 		}
 		device->read_release(DTC_DMA_Engine_DCS, 1);
