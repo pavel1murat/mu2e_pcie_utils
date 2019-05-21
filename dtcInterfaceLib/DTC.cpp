@@ -837,6 +837,8 @@ std::unique_ptr<DTCLib::DTC_DCSReplyPacket> DTCLib::DTC::ReadNextDCSPacket()
 	if (test == nullptr) return nullptr;  // Couldn't read new block
 	auto output = std::make_unique<DTC_DCSReplyPacket>(*test.get());
 	TLOG(TLVL_ReadNextDAQPacket) << output->toJSON();
+	// ELF 5/21/2019: Since we had to add a word to the DCS reply to work around a mysterious issue in the DMA engine, these byte counts will not match
+	/*
 	if (static_cast<uint16_t>((1 + output->GetBlockPacketCount()) * 16) != output->GetByteCount())
 	{
 		TLOG(TLVL_ERROR) << "Data Error Detected: PacketCount: " << output->GetBlockPacketCount()
@@ -844,6 +846,7 @@ std::unique_ptr<DTCLib::DTC_DCSReplyPacket> DTCLib::DTC::ReadNextDCSPacket()
 						 << ", BlockByteCount: " << output->GetByteCount();
 		throw DTC_DataCorruptionException();
 	}
+	*/
 
 	return output;
 }
