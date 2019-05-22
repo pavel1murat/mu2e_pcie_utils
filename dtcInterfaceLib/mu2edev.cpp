@@ -94,7 +94,7 @@ int mu2edev::init(DTCLib::DTC_SimMode simMode, int dtc)
 				}
 				if (dir == DTC_DMA_Direction_C2S)
 				{
-					release_all(chn);
+					release_all(static_cast<DTC_DMA_Engine>(chn));
 				}
 
 				// Reset the DTC
