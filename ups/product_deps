@@ -18,7 +18,7 @@ fcldir      -
 
 #
 product		 version	optional
-TRACE            v3_13_12
+TRACE            v3_13_13
 gcc              v6_4_0         e15
 gcc              v7_3_0         e17
 gcc              v8_2_0         e19
