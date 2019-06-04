@@ -21,6 +21,7 @@ DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(DTC* dtc, bool useCFOEmulator, uint16_t d
 
 DTCLib::DTCSoftwareCFO::~DTCSoftwareCFO()
 {
+	theDTC_->DisableAutogenDRP();
 	abort_ = true;
 	if (theThread_ && theThread_->joinable()) theThread_->join();
 }
