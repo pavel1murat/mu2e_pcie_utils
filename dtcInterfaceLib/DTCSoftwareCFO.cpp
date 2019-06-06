@@ -5,6 +5,14 @@
 #include <iostream>
 #include "DTCSoftwareCFO.h"
 
+#define __SHORTFILE__ \
+	(strstr(&__FILE__[0], "/srcs/") ? strstr(&__FILE__[0], "/srcs/") + 6 : __FILE__)
+#define __COUT__ std::cout << __SHORTFILE__ << " [" << std::dec << __LINE__ << "]\t"
+#define __E__ std::endl
+#define Q(X) #X
+#define QUOTE(X) Q(X)
+#define __COUTV__(X) __COUT__ << QUOTE(X) << " = " << X << __E__
+
 DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(DTC* dtc, bool useCFOEmulator, uint16_t debugPacketCount,
 									   DTC_DebugType debugType, bool stickyDebugType, bool quiet, bool asyncRR,
 									   bool forceNoDebug)
@@ -93,19 +101,32 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 }
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start, bool increment,
-												  uint32_t delayBetweenDataRequests, int requestsAhead, uint32_t readoutRequestsAfter)
+												  uint32_t delayBetweenDataRequests, int requestsAhead, 
+												  uint32_t readoutRequestsAfter)
 {
+	
+
 	if (theDTC_->IsDetectorEmulatorInUse()) {
 		TLOG(13) << "Enabling Detector Emulator for " << count << " DMAs";
+		__COUT__ << "Enabling Detector Emulator for " << count << " DMAs";
+		
 		// theDTC_->ResetDTC();
 		theDTC_->DisableDetectorEmulator();
 		theDTC_->SetDetectorEmulationDMACount(count + 1);
 		theDTC_->EnableDetectorEmulator();
 		return;
 	}
+	
+	
 	if (delayBetweenDataRequests < 1000) {
 		delayBetweenDataRequests = 1000;
 	}
+	
+	__COUTV__(count);
+	__COUTV__(delayBetweenDataRequests);
+	__COUTV__(requestsAhead);
+	__COUTV__(readoutRequestsAfter);
+	
 	if (!useCFOEmulator_) {
 		requestsSent_ = false;
 		if (asyncRR_) {
@@ -124,6 +145,8 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start
 	else
 	{
 		TLOG(13) << "SendRequestsForRange setting up DTC CFO Emulator";
+		__COUT__ << "SendRequestsForRange setting up DTC CFO Emulator";
+		
 		theDTC_->SetCFOEmulationMode();
 		theDTC_->DisableCFOEmulation();
 		theDTC_->SetCFOEmulationTimestamp(start);

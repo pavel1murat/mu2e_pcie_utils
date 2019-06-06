@@ -59,6 +59,14 @@ unsigned rocMask = 0x1;
 unsigned targetFrequency = 166666667;
 int clockToProgram = 0;
 
+#define __SHORTFILE__ \
+	(strstr(&__FILE__[0], "/srcs/") ? strstr(&__FILE__[0], "/srcs/") + 6 : __FILE__)
+#define __COUT__ std::cout << __SHORTFILE__ << " [" << std::dec << __LINE__ << "]\t"
+#define __E__ std::endl
+#define Q(X) #X
+#define QUOTE(X) Q(X)
+#define __COUTV__(X) __COUT__ << QUOTE(X) << " = " << X << __E__
+
 int dtc = -1;
 
 unsigned getOptionValue(int* index, char** argv[])
@@ -688,6 +696,9 @@ int main(int argc, char* argv[])
 					std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(endRequest - startRequest).count();
 			}
 			TLOG(reallyQuiet ? 9 : TLVL_INFO) << "Buffer Read " << std::dec << ii << std::endl;
+			
+			__COUT__ << "Buffer read " << ii << __E__;
+			
 			mu2e_databuff_t* buffer;
 			auto tmo_ms = 1500;
 			TLOG(TLVL_TRACE) << "util - before read for DAQ - ii=" << ii;
