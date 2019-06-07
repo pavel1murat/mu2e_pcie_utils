@@ -1,17 +1,15 @@
 
-#define TRACE_NAME "DTCSoftwareCFO"
-#include "trace.h"
+//#define TRACE_NAME "DTCSoftwareCFO"
+//#define TRACE_NAME (strstr(&__FILE__[0], "/srcs/") ? strstr(&__FILE__[0], "/srcs/") + 6 : __FILE__)  /* TOO LONG */
+#define TRACE_NAME &std::string(__FILE__).substr(std::string(__FILE__).rfind('/',std::string(__FILE__).rfind('/')-1)+1)[0]
+#include "traceln.h"
 
 #include <iostream>
 #include "DTCSoftwareCFO.h"
 
-#define __SHORTFILE__ \
-	(strstr(&__FILE__[0], "/srcs/") ? strstr(&__FILE__[0], "/srcs/") + 6 : __FILE__)
-#define __COUT__ std::cout << __SHORTFILE__ << " [" << std::dec << __LINE__ << "]\t"
-#define __E__ std::endl
 #define Q(X) #X
 #define QUOTE(X) Q(X)
-#define __COUTV__(X) __COUT__ << QUOTE(X) << " = " << X << __E__
+#define VAL(X) QUOTE(X) << " = " << X
 
 DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(DTC* dtc, bool useCFOEmulator, uint16_t debugPacketCount,
 									   DTC_DebugType debugType, bool stickyDebugType, bool quiet, bool asyncRR,
@@ -108,7 +106,6 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start
 
 	if (theDTC_->IsDetectorEmulatorInUse()) {
 		TLOG(13) << "Enabling Detector Emulator for " << count << " DMAs";
-		__COUT__ << "Enabling Detector Emulator for " << count << " DMAs";
 		
 		// theDTC_->ResetDTC();
 		theDTC_->DisableDetectorEmulator();
@@ -122,10 +119,10 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start
 		delayBetweenDataRequests = 1000;
 	}
 	
-	__COUTV__(count);
-	__COUTV__(delayBetweenDataRequests);
-	__COUTV__(requestsAhead);
-	__COUTV__(readoutRequestsAfter);
+	TLOG(2) << VAL(count);
+	TLOG(2) << VAL(delayBetweenDataRequests);
+	TLOG(2) << VAL(requestsAhead);
+	TLOG(2) << VAL(readoutRequestsAfter);
 	
 	if (!useCFOEmulator_) {
 		requestsSent_ = false;
@@ -145,7 +142,6 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start
 	else
 	{
 		TLOG(13) << "SendRequestsForRange setting up DTC CFO Emulator";
-		__COUT__ << "SendRequestsForRange setting up DTC CFO Emulator";
 		
 		theDTC_->SetCFOEmulationMode();
 		theDTC_->DisableCFOEmulation();
