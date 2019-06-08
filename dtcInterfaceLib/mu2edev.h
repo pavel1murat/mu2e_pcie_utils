@@ -75,20 +75,20 @@ public:
 	/// <param name="buffer">Pointer to output buffer</param>
 	/// <param name="tmo_ms">Timeout for read</param>
 	/// <returns>Byte count of data read into buffer. Negative value indicates error.</returns>
-	int read_data(int chn, void** buffer, int tmo_ms);
+	int read_data(DTC_DMA_Engine const& chn, void** buffer, int tmo_ms);
 	/// <summary>
 	/// Release a number of buffers held by the software on the given channel
 	/// </summary>
 	/// <param name="chn">Channel to release</param>
 	/// <param name="num">Number of buffers to release</param>
 	/// <returns>0 when successful (always)</returns>
-	int read_release(int chn, unsigned num);
+	int read_release(DTC_DMA_Engine const& chn, unsigned num);
 	/// <summary>
 	/// Release all buffers held by software on the given channel
 	/// </summary>
 	/// <param name="chn">Channel to release (DAQ or DCS)</param>
 	/// <returns>0 on success</returns>
-	int release_all(int chn);
+	int release_all(DTC_DMA_Engine const& chn);
 	/// <summary>
 	/// Read a DTC register
 	/// </summary>
@@ -116,7 +116,7 @@ public:
 	/// <param name="buffer">Buffer containing data to write</param>
 	/// <param name="bytes">Size of the buffer, in bytes</param>
 	/// <returns>0 on success</returns>
-	int write_data(int chn, void* buffer, size_t bytes);
+	int write_data(DTC_DMA_Engine const& chn, void* buffer, size_t bytes);
 	/// <summary>
 	/// Close the connection to the DTC
 	/// </summary>

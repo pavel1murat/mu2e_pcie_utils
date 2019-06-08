@@ -1,9 +1,15 @@
 
-#define TRACE_NAME "DTCSoftwareCFO"
-#include "trace.h"
+//#define TRACE_NAME "DTCSoftwareCFO"
+//#define TRACE_NAME (strstr(&__FILE__[0], "/srcs/") ? strstr(&__FILE__[0], "/srcs/") + 6 : __FILE__)  /* TOO LONG */
+#define TRACE_NAME &std::string(__FILE__).substr(std::string(__FILE__).rfind('/',std::string(__FILE__).rfind('/')-1)+1)[0]
+#include "traceln.h"
 
 #include <iostream>
 #include "DTCSoftwareCFO.h"
+
+#define Q(X) #X
+#define QUOTE(X) Q(X)
+#define VAL(X) QUOTE(X) << " = " << X
 
 DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(DTC* dtc, bool useCFOEmulator, uint16_t debugPacketCount,
 									   DTC_DebugType debugType, bool stickyDebugType, bool quiet, bool asyncRR,
@@ -21,6 +27,7 @@ DTCLib::DTCSoftwareCFO::DTCSoftwareCFO(DTC* dtc, bool useCFOEmulator, uint16_t d
 
 DTCLib::DTCSoftwareCFO::~DTCSoftwareCFO()
 {
+	theDTC_->DisableAutogenDRP();
 	abort_ = true;
 	if (theThread_ && theThread_->joinable()) theThread_->join();
 }
@@ -92,19 +99,31 @@ void DTCLib::DTCSoftwareCFO::SendRequestForTimestamp(DTC_Timestamp ts)
 }
 
 void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start, bool increment,
-												  uint32_t delayBetweenDataRequests, int requestsAhead, uint32_t readoutRequestsAfter)
+												  uint32_t delayBetweenDataRequests, int requestsAhead, 
+												  uint32_t readoutRequestsAfter)
 {
+	
+
 	if (theDTC_->IsDetectorEmulatorInUse()) {
 		TLOG(13) << "Enabling Detector Emulator for " << count << " DMAs";
+		
 		// theDTC_->ResetDTC();
 		theDTC_->DisableDetectorEmulator();
 		theDTC_->SetDetectorEmulationDMACount(count + 1);
 		theDTC_->EnableDetectorEmulator();
 		return;
 	}
+	
+	
 	if (delayBetweenDataRequests < 1000) {
 		delayBetweenDataRequests = 1000;
 	}
+	
+	TLOG(2) << VAL(count);
+	TLOG(2) << VAL(delayBetweenDataRequests);
+	TLOG(2) << VAL(requestsAhead);
+	TLOG(2) << VAL(readoutRequestsAfter);
+	
 	if (!useCFOEmulator_) {
 		requestsSent_ = false;
 		if (asyncRR_) {
@@ -123,6 +142,7 @@ void DTCLib::DTCSoftwareCFO::SendRequestsForRange(int count, DTC_Timestamp start
 	else
 	{
 		TLOG(13) << "SendRequestsForRange setting up DTC CFO Emulator";
+		
 		theDTC_->SetCFOEmulationMode();
 		theDTC_->DisableCFOEmulation();
 		theDTC_->SetCFOEmulationTimestamp(start);
