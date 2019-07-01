@@ -1,7 +1,7 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent pcie_linux_kernel_module	v2_02_02
-defaultqual	e15
+parent pcie_linux_kernel_module	v2_02_03
+defaultqual	e17
 
 # These optional lines define the installed directories where
 # headers, libraries, and executables will be found
@@ -18,7 +18,7 @@ fcldir      -
 
 #
 product		 version	optional
-TRACE            v3_13_13
+TRACE            v3_13_14
 gcc              v6_4_0         e15
 gcc              v7_3_0         e17
 gcc              v8_2_0         e19
@@ -26,7 +26,7 @@ gcc              v6_4_0         c2
 gcc              v8_2_0         c7
 clang            v5_0_1         c2
 clang            v7_0_0         c7
-cetbuildtools    v7_12_01        -       only_for_build
+cetbuildtools    v7_13_02        -       only_for_build
 end_product_list
 
 # e6  - with gcc 4.9.1 and -std=c++1y
