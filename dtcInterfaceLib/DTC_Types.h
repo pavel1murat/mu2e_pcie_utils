@@ -8,6 +8,10 @@
 #include "trace.h"
 
 namespace DTCLib {
+	
+typedef uint16_t roc_address_t;
+typedef uint16_t roc_data_t;
+
 enum DTC_Subsystem : uint8_t
 {
 	DTC_Subsystem_Tracker = 0,
