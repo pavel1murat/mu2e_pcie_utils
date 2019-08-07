@@ -1,3 +1,6 @@
+#ifndef MU2EDEV_H
+#define MU2EDEV_H
+
 // This file (mu2edev.hh) was created by Ron Rechenmacher <ron@fnal.gov> on
 // Feb 13, 2014. "TERMS AND CONDITIONS" governing this file are in the README
 // or COPYING file. If you do not have such a file, one can be obtained by
@@ -153,3 +156,5 @@ private:
 	std::atomic<size_t> writeSize_;
 	std::atomic<size_t> readSize_;
 };
+
+#endif
