@@ -203,7 +203,7 @@ public:
 	/// DCS packets are read one-at-a-time, this function reads the next one from the DTC
 	/// </summary>
 	/// <returns>Pointer to read DCSReplyPacket. Will be nullptr if no data available.</returns>
-	std::unique_ptr<DTC_DCSReplyPacket> ReadNextDCSPacket();
+	std::unique_ptr<DTC_DCSReplyPacket> ReadNextDCSPacket(int tmo_ms = 0);
 
 	/// <summary>
 	/// Releases all buffers to the hardware, from both the DAQ and DCS channels
@@ -229,7 +229,7 @@ public:
 
 private:
 	std::unique_ptr<DTC_DataPacket> ReadNextPacket(const DTC_DMA_Engine& channel, int tmo_ms = 0);
-	int ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms = 0);
+	int ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms = 0, const int retries = 1);
 	/// <summary>
 	/// This function releases all buffers except for the one containing currentReadPtr. Should only be called when done
 	/// with data in other buffers!
