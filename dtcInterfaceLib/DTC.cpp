@@ -1,6 +1,7 @@
-#define TRACE_NAME "DTC"
-#include "trace.h"
 
+#include "DTC.h"
+#include "trace.h"
+#define TRACE_NAME "DTC.cpp"
 #define TLVL_GetData 10
 #define TLVL_GetJSONData 11
 #define TLVL_ReadBuffer 12
@@ -18,8 +19,6 @@
 #define TLVL_WriteDataPacket 24
 #define TLVL_ReleaseBuffers 25
 #define TLVL_GetCurrentBuffer 26
-
-#include "DTC.h"
 
 #include <unistd.h>
 #include <fstream>
@@ -450,47 +449,56 @@ uint16_t DTCLib::DTC::ReadROCRegister(const DTC_Link_ID& link, const uint16_t ad
 						 0x0 /*data*/, 0x0 /*address2*/, 0x0 /*data2*/,
 						 false /*quiet*/);
 
-	usleep(2500);
 	uint16_t data = 0xFFFF;
-	while (retries > 0)
+	const int originalRetries = retries;
+	do
 	{
 		TLOG(TLVL_TRACE) << "ReadROCRegister: Loop start, retries=" << retries;
-		auto reply = ReadNextDCSPacket();
-		auto count = 0;
-		while (reply != nullptr)
+		auto reply = ReadNextDCSPacket(3);
+		
+		if (reply != nullptr) //have data!
 		{
-			count++;
-			auto replytmp = reply->GetReply(false);
-			auto linktmp = reply->GetRingID();
-			TLOG(TLVL_TRACE) << "Got packet, "
-							 << "link=" << static_cast<int>(linktmp) << " (expected " << static_cast<int>(link) << "), "
-							 << "address=" << static_cast<int>(replytmp.first) << " (expected " << static_cast<int>(address)
-							 << "), "
-							 << "data=" << static_cast<int>(replytmp.second);
-
-			reply.reset(nullptr);
-			if (replytmp.first != address || linktmp != link)
+			
+			do
 			{
-				TLOG(TLVL_TRACE) << "Address or link did not match, reading next packet!";
-				reply = ReadNextDCSPacket();  // Read the next packet
-				continue;
-			}
-
-			data = replytmp.second;
-			retries = 0;
-			reply = ReadNextDCSPacket();  // Read the next packet
-		}
-		if (count == 0)
-		{
-			SendDCSRequestPacket(link, DTC_DCSOperationType_Read, address);
-			usleep(2500);
-		}
-		retries--;
-	}
-	TLOG(TLVL_TRACE) << "ReadROCRegister returning " << static_cast<int>(data) << " for link " << static_cast<int>(link)
+				auto replytmp = reply->GetReply(false);
+				auto linktmp = reply->GetRingID();
+				TLOG(TLVL_TRACE) << "Got packet, "
+								 << "link=" << static_cast<int>(linktmp) << " (expected " << static_cast<int>(link) << "), "
+								 << "address=" << static_cast<int>(replytmp.first) << " (expected " << static_cast<int>(address)
+								 << "), "
+								 << "data=" << static_cast<int>(replytmp.second);
+	
+				reply.reset(nullptr);
+				if (replytmp.first != address || linktmp != link)
+				{
+					TLOG(TLVL_TRACE) << "Address or link did not match, reading next packet!";
+					reply = ReadNextDCSPacket();  // Read the next packet
+					continue;
+				}
+	
+				data = replytmp.second;
+				reply = ReadNextDCSPacket();  // Read the next piece of packet			
+				
+			} while (reply != nullptr);
+			
+			//return final data
+			TLOG(TLVL_TRACE) << "ReadROCRegister returning " << static_cast<int>(data) << " for link " << static_cast<int>(link)
 					 << ", address " << static_cast<int>(address);
-	return data;
-}
+			return data;
+		}
+		
+	} while (retries-- > 0);
+	
+	{ //throw exception for no data after retries
+		std::stringstream ss;
+		ss << "ReadROCRegister returning after timeout: no data after " << originalRetries << 
+			" retries from address 0x" << std::hex << address << "!" << std::endl;
+		TLOG(TLVL_TRACE) << ss.str();
+		throw std::runtime_error(ss.str());
+	}
+	
+} //end ReadROCRegister()
 
 void DTCLib::DTC::WriteROCRegister(const DTC_Link_ID& link, const uint16_t address, const uint16_t data, bool requestAck)
 {
@@ -831,9 +839,9 @@ std::unique_ptr<DTCLib::DTC_DataHeaderPacket> DTCLib::DTC::ReadNextDAQPacket(int
 	return output;
 }
 
-std::unique_ptr<DTCLib::DTC_DCSReplyPacket> DTCLib::DTC::ReadNextDCSPacket()
+std::unique_ptr<DTCLib::DTC_DCSReplyPacket> DTCLib::DTC::ReadNextDCSPacket(int tmo_ms)
 {
-	auto test = ReadNextPacket(DTC_DMA_Engine_DCS);
+	auto test = ReadNextPacket(DTC_DMA_Engine_DCS, tmo_ms);
 	if (test == nullptr) return nullptr;  // Couldn't read new block
 	auto output = std::make_unique<DTC_DCSReplyPacket>(*test.get());
 	TLOG(TLVL_ReadNextDAQPacket) << output->toJSON();
@@ -886,7 +894,7 @@ std::unique_ptr<DTCLib::DTC_DataPacket> DTCLib::DTC::ReadNextPacket(const DTC_DM
 
 		void* oldBufferPtr = nullptr;
 		if (info->buffer.size() > 0) oldBufferPtr = &info->buffer.back()[0];
-		auto sts = ReadBuffer(engine, tmo_ms);  // does return code
+		auto sts = ReadBuffer(engine, tmo_ms, 0 /*retries*/);  // does return code
 		if (sts <= 0)
 		{
 			TLOG(TLVL_ReadNextDAQPacket) << "ReadNextPacket: ReadBuffer returned " << sts << ", returning nullptr";
@@ -1003,18 +1011,20 @@ void DTCLib::DTC::WriteDetectorEmulatorData(mu2e_databuff_t* buf, size_t sz)
 //
 // Private Functions.
 //
-int DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms)
+int DTCLib::DTC::ReadBuffer(const DTC_DMA_Engine& channel, int tmo_ms, const int originalRetries)
 {
 	mu2e_databuff_t* buffer;
-	auto retry = 2;
+	int retry = originalRetries;
 	int errorCode;
 	do
 	{
-		TLOG(TLVL_ReadBuffer) << "ReadBuffer before device_.read_data";
+		TLOG(TLVL_ReadBuffer) << "ReadBuffer before device_.read_data tmo=" << tmo_ms <<
+			" retry=" << retry;
 		errorCode = device_.read_data(channel, reinterpret_cast<void**>(&buffer), tmo_ms);
-		retry--;
 		// if (errorCode == 0) usleep(1000);
-	} while (retry > 0 && errorCode == 0);
+		
+	} while (retry-- > 0 && errorCode == 0); //error code of 0 is timeout
+	
 	if (errorCode == 0)
 	{
 		TLOG(TLVL_ReadBuffer) << "ReadBuffer: Device timeout occurred! ec=" << errorCode << ", rt=" << retry;
