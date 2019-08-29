@@ -6,7 +6,7 @@
 
 #include "DTCSoftwareCFO.h"
 
-#include "trace.h"
+#include "TRACE/tracemf.h"
 
 unsigned getOptionValue(int* index, char** argv[])
 {

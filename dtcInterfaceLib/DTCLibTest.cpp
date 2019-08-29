@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-#include "trace.h"
+#include "TRACE/tracemf.h"
 
 DTCLib::DTCLibTest::DTCLibTest()
 	: running_(false), classPassed_(0), classFailed_(0), regPassed_(0), regFailed_(0), daqPassed_(0), daqFailed_(0), dcsPassed_(0), dcsFailed_(0), classPassedTemp_(0), classFailedTemp_(0), regPassedTemp_(0), regFailedTemp_(0), daqPassedTemp_(0), daqFailedTemp_(0), dcsPassedTemp_(0), dcsFailedTemp_(0), nTests_(0), runClassTest_(false), runRegTest_(false), runDAQTest_(false), runDCSTest_(false), printMessages_(false)

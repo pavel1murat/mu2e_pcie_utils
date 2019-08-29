@@ -1,7 +1,8 @@
 
-#include "DTC.h"
-#include "trace.h"
+#include "TRACE/tracemf.h"
 #define TRACE_NAME "DTC.cpp"
+
+#include "DTC.h"
 #define TLVL_GetData 10
 #define TLVL_GetJSONData 11
 #define TLVL_ReadBuffer 12

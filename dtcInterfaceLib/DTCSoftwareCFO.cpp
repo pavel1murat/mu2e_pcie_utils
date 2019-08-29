@@ -1,9 +1,9 @@
 
+#include "TRACE/tracemf.h"
+
 //#define TRACE_NAME "DTCSoftwareCFO"
 //#define TRACE_NAME (strstr(&__FILE__[0], "/srcs/") ? strstr(&__FILE__[0], "/srcs/") + 6 : __FILE__)  /* TOO LONG */
 #define TRACE_NAME &std::string(__FILE__).substr(std::string(__FILE__).rfind('/',std::string(__FILE__).rfind('/')-1)+1)[0]
-//#include "traceln.h"
-#include "TRACE/traceln.h"
 #include <iostream>
 #include "DTCSoftwareCFO.h"
 

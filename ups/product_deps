@@ -18,31 +18,44 @@ fcldir      -
 
 #
 product		 version	optional
+messagefacility v2_05_00        s87
+messagefacility v2_04_03        s82
+messagefacility v2_02_04        s73
+messagefacility v2_02_01        s67
 TRACE            v3_14_02
-gcc              v6_4_0         e15
-gcc              v7_3_0         e17
-gcc              v8_2_0         e19
-gcc              v6_4_0         c2
-gcc              v8_2_0         c7
-clang            v5_0_1         c2
-clang            v7_0_0         c7
 cetbuildtools    v7_13_02        -       only_for_build
 end_product_list
 
 # e6  - with gcc 4.9.1 and -std=c++1y
 # -nq- here means there is no qualifier
 # a "-" here means the dependent product is not required by the parent and will not be setup
-qualifier   TRACE     gcc	clang	notes
-c7:prof	    -nq-      -nq-  	-nq-	-std=c++17
-c7:debug    -nq-      -nq-  	-nq-	-std=c++17
-c2:prof	    -nq-      -nq-  	-nq-	-std=c++17
-c2:debug    -nq-      -nq-  	-nq- 	-std=c++17
-e19:prof    -nq-      -nq-  	-	-std=c++17
-e19:debug   -nq-      -nq-  	- 	-std=c++17
-e17:prof    -nq-      -nq-  	-	-std=c++17
-e17:debug   -nq-      -nq-  	-	-std=c++17
-e15:prof    -nq-      -nq-	-	-std=c++14
-e15:debug   -nq-      -nq-	-	-std=c++14
+qualifier     messagefacility   TRACE   notes
+c7:s87:debug c7:debug           -nq-    -std=c++17
+c7:s87:prof  c7:prof            -nq-    -std=c++17
+c2:s87:debug c2:debug           -nq-    -std=c++17
+c2:s87:prof  c2:prof            -nq-    -std=c++17
+e19:s87:debug e19:debug         -nq-    -std=c++17
+e19:s87:prof  e19:prof          -nq-    -std=c++17
+e17:s87:debug e17:debug         -nq-    -std=c++17
+e17:s87:prof  e17:prof          -nq-    -std=c++17
+c7:s82:debug c7:debug           -nq-    -std=c++17
+c7:s82:prof  c7:prof            -nq-    -std=c++17
+c2:s82:debug c2:debug           -nq-    -std=c++17
+c2:s82:prof  c2:prof            -nq-    -std=c++17
+e19:s82:debug e19:debug         -nq-    -std=c++17
+e19:s82:prof  e19:prof          -nq-    -std=c++17
+e17:s82:debug e17:debug         -nq-    -std=c++17
+e17:s82:prof  e17:prof          -nq-    -std=c++17
+c2:s73:debug c2:debug           -nq-    -std=c++17
+c2:s73:prof  c2:prof            -nq-    -std=c++17
+e17:s73:debug e17:debug         -nq-    -std=c++17
+e17:s73:prof  e17:prof          -nq-    -std=c++17
+c2:s67:debug c2:debug           -nq-    -std=c++17
+c2:s67:prof  c2:prof            -nq-    -std=c++17
+e17:s67:debug e17:debug         -nq-    -std=c++17
+e17:s67:prof  e17:prof          -nq-    -std=c++17
+e15:s67:debug e15:debug         -nq-    -std=c++14
+e15:s67:prof  e15:prof          -nq-    -std=c++14
 end_qualifier_list
 
 

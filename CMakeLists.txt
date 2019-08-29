@@ -43,6 +43,7 @@ cet_report_compiler_flags()
 find_ups_product( gcc v4_9_0 )
 find_ups_product( cetbuildtools v3_03_00 )
 find_ups_product( cetpkgsupport v1_08_03 )
+find_ups_product( messagefacility v1_00_00 )
 find_ups_product( TRACE v3_03_00 )
 
 # macros for art_dictionary and simple_plugin

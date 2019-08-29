@@ -16,7 +16,7 @@
 #include <set>
 #include <string>
 
-#include "trace.h"
+#include "TRACE/tracemf.h"
 
 #include "cfoInterfaceLib/CFO_Compiler.hh"
 #include "cfoInterfaceLib/CFO_Registers.h"

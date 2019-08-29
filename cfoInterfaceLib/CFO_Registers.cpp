@@ -7,7 +7,7 @@
 #include <iomanip>  // std::setw, std::setfill
 #include <sstream>  // Convert uint to hex stLink
 
-#include "trace.h"
+#include "TRACE/tracemf.h"
 #define CFO_TLOG(lvl) TLOG(lvl) << "CFO " << device_.getDTCID() << ": "
 
 CFOLib::CFO_Registers::CFO_Registers(DTC_SimMode mode, int CFO, std::string expectedDesignVersion,

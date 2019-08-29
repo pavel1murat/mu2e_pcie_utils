@@ -12,7 +12,7 @@
 #include <signal.h>
 #include <chrono>
 
-#include "trace.h"
+#include "TRACE/tracemf.h"
 
 #include "mu2edev.h"
 

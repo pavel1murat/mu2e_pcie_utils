@@ -5,7 +5,7 @@
 #include <cstdint>  // uint8_t, uint16_t
 #include <iomanip>
 #include <vector>  // std::vector
-#include "trace.h"
+#include "TRACE/tracemf.h"
 
 namespace DTCLib {
 	

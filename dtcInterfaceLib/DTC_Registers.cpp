@@ -7,7 +7,7 @@
 #include <iomanip>  // std::setw, std::setfill
 #include <sstream>  // Convert uint to hex string
 
-#include "trace.h"
+#include "TRACE/tracemf.h"
 
 #define DTC_TLOG(lvl) TLOG(lvl) << "DTC " << device_.getDTCID() << ": "
 

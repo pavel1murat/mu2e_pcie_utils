@@ -11,6 +11,7 @@ cet_make_library(LIBRARY_NAME DTCInterface SOURCE
 	    mu2esim.cpp
         LIBRARIES
         pthread
+		${MF_MESSAGELOGGER}
 )
 
 cet_make_exec(mu2eUtil SOURCE util_main.cc LIBRARIES DTCInterface)

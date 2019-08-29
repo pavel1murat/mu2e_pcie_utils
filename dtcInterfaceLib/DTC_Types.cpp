@@ -4,7 +4,7 @@
 #include <sstream>
 #include <cmath>
 
-#include "trace.h"
+#include "TRACE/tracemf.h"
 
 DTCLib::DTC_RXStatusConverter::DTC_RXStatusConverter(DTC_RXStatus status)
 	: status_(status) {}
