@@ -18,7 +18,7 @@ cet_make_exec(mu2eUtil SOURCE util_main.cc LIBRARIES DTCInterface)
 
 cet_make_exec(rocUtil SOURCE dcs_main.cc LIBRARIES DTCInterface)
 
-cet_make_Exec(requestSender SOURCE requestSender.cc LIBRARIES DTCInterface)
+cet_make_Exec(mu2eRequestSender SOURCE requestSender.cc LIBRARIES DTCInterface)
 
 cet_make_exec(DTCRegDump SOURCE dtcRegDump.cc LIBRARIES DTCInterface)
 
