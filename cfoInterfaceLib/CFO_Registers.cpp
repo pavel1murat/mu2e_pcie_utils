@@ -15,6 +15,11 @@ CFOLib::CFO_Registers::CFO_Registers(DTC_SimMode mode, int CFO, std::string expe
 	: device_(), simMode_(mode), dmaSize_(16)
 {
 	auto sim = getenv("CFOLIB_SIM_ENABLE");
+	if (sim == nullptr)
+	{
+		// Give priority to CFOLIB_SIM_ENABLE, but go ahead and check DTCLIB_SIM_ENABLE, too
+		sim = getenv("DTCLIB_SIM_ENABLE");
+	}
 	if (sim != nullptr)
 	{
 		switch (sim[0])
@@ -260,7 +265,7 @@ DTCLib::DTC_RegisterFormatter CFOLib::CFO_Registers::FormatVivadoVersion()
 // CFO Control Register
 void CFOLib::CFO_Registers::ResetCFO()
 {
-	CFO_TLOG(15) <<  "ResetCFO start";
+	CFO_TLOG(15) << "ResetCFO start";
 	std::bitset<32> data = ReadRegister_(CFO_Register_CFOControl);
 	data[31] = 1;  // CFO Reset bit
 	WriteRegister_(data.to_ulong(), CFO_Register_CFOControl);
@@ -274,7 +279,7 @@ bool CFOLib::CFO_Registers::ReadResetCFO()
 
 void CFOLib::CFO_Registers::EnableAutogenDRP()
 {
-	CFO_TLOG(15) <<  "EnableAutogenDRP start";
+	CFO_TLOG(15) << "EnableAutogenDRP start";
 	std::bitset<32> data = ReadRegister_(CFO_Register_CFOControl);
 	data[23] = 1;
 	WriteRegister_(data.to_ulong(), CFO_Register_CFOControl);
@@ -525,7 +530,7 @@ void CFOLib::CFO_Registers::ResetSERDES(const CFO_Link_ID& link, int interval)
 	auto resetDone = false;
 	while (!resetDone)
 	{
-		CFO_TLOG(4) <<  "Entering SERDES Reset Loop for Link " << link;
+		CFO_TLOG(4) << "Entering SERDES Reset Loop for Link " << link;
 		std::bitset<32> data = ReadRegister_(CFO_Register_SERDESReset);
 		data[link] = 1;
 		WriteRegister_(data.to_ulong(), CFO_Register_SERDESReset);
@@ -539,7 +544,7 @@ void CFOLib::CFO_Registers::ResetSERDES(const CFO_Link_ID& link, int interval)
 		usleep(interval);
 
 		resetDone = ReadResetSERDESDone(link);
-		CFO_TLOG(4) <<  "End of SERDES Reset loop, done=" << std::boolalpha << resetDone;
+		CFO_TLOG(4) << "End of SERDES Reset loop, done=" << std::boolalpha << resetDone;
 	}
 }
 

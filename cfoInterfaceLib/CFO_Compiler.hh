@@ -2,74 +2,22 @@
 #define CFOINTERFACELIB_MU2ECOMPILER_HH
 
 #include <deque>
+#include <vector>
 #include <fstream>
 #include <memory>
 #include <sstream>
 #include <stack>
 #include <string>
+#include <algorithm>
+#include <cctype>
+#include <locale>
+
+#include "tracemf.h"
 
 /// <summary>
 /// The CFO Namespace
 /// </summary>
 namespace CFOLib {
-
-/// <summary>
-/// Represents a CFO source code file
-/// </summary>
-class CFO_Source_File
-{
-public:
-	/// <summary>
-	/// Construct a CFO_Source_File using file data
-	/// </summary>
-	/// <param name="input">CFO Source code</param>
-	explicit CFO_Source_File(std::string const& input)
-		: buffer_(input), index_(0) {}
-	/// <summary>
-	/// Default Constructor
-	/// </summary>
-	explicit CFO_Source_File()
-		: buffer_(""), index_(0) {}
-
-	/// <summary>
-	/// Read the next character from the buffer, without incrementing the index
-	/// </summary>
-	/// <returns>Next character in the buffer</returns>
-	char peek()
-	{
-		if (index_ < buffer_.size()) return buffer_[index_];
-		return '\n';
-	}
-
-	/// <summary>
-	/// Read the next character from the buffer, incrementing the index
-	/// </summary>
-	/// <returns>Next character in the buffer</returns>
-	char get()
-	{
-		if (index_ >= buffer_.size()) return '\n';
-		return buffer_[index_++];
-	}
-
-	/// <summary>
-	/// Determine if the buffer is empty
-	/// </summary>
-	/// <returns>Whether the buffer is empty</returns>
-	bool eof() { return index_ == buffer_.size(); }
-
-	/// <summary>
-	/// "Close" the stream, wiping the buffer
-	/// </summary>
-	void close()
-	{
-		index_ = 0;
-		buffer_ = "";
-	}
-
-private:
-	std::string buffer_;
-	size_t index_;
-};
 
 /// <summary>
 /// The CFO Compiler class
@@ -129,30 +77,28 @@ public:
 	/// <summary>
 	/// Process an input file and create a byte block for sending to the CFO
 	/// </summary>
-	/// <param name="file">File to read</param>
+	/// <param name="lines">Lines from input file</param>
 	/// <returns>Array of bytes</returns>
-	std::deque<char> processFile(CFO_Source_File const& file);
+	std::deque<char> processFile(std::vector<std::string> lines);
 
 private:
 	// For changing/adding new instructions check README file that comes with this source.
 	/***********************
    ** Function Prototypes
    **********************/
-	void readSpace();
-	void newLine();
-	void readLine();
+	void readLine(std::string line);
 	void transcribeIns();
 	void transcribeMacro();
 	void errorCheck(CFO_INSTR);
 	int64_t calcParameter(CFO_INSTR);
-	std::string readInstruction();
-	void readMacro();
+	std::string readInstruction(std::string& line);
+	void readMacro(std::string& line);
 	void feedInstruction(std::string, std::string, int64_t, std::string);
 	void macroSetup(std::string);
 	CFO_INSTR parse_instruction(std::string);
 	CFO_MACRO parse_macro(std::string);
 	void outParameter(int64_t);
-	bool isComment();
+	bool isComment(std::string line);
 	bool isMacro();
 	void macroErrorCheck(CFO_MACRO);
 
@@ -162,14 +108,41 @@ private:
 	std::string argumentBuffer_;
 	std::string identifierBuffer_;
 	int64_t parameterBuffer_;
-	int64_t lineNumber_;
 	int64_t FPGAClock_;
 	int macroArgCount_;
 	CFO_MACRO macroOpcode_;
 	bool macroFlag_;
 
-	CFO_Source_File inFile_;
+	size_t lineNumber_;
 	std::deque<char> output_;
+
+	//https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
+// trim from start (in place)
+	static inline void ltrim(std::string &s)
+	{
+		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
+					return !std::isspace(ch);
+				}));
+	}
+
+	// trim from end (in place)
+	static inline void rtrim(std::string &s)
+	{
+		s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
+					return !std::isspace(ch);
+				})
+					.base(),
+				s.end());
+	}
+
+	// trim from both ends (copying)
+	static inline std::string trim(std::string s)
+	{
+		ltrim(s);
+		rtrim(s);
+		return s;
+	}
+
 };
 
 }  // namespace CFOLib
