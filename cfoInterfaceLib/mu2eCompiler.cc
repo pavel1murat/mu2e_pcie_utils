@@ -169,16 +169,14 @@ int main(int argc, char* argv[])
 	setIOFiles(argc, argv);
 	CFOLib::CFO_Compiler c(FPGAClock);
 
-	std::stringstream ss;
+	std::vector<std::string> lines;
 	while (!inFile.eof()) {
 		std::string line;
 		getline(inFile, line);
-		ss << line << "\n";
+		lines.push_back(line);
 	}
 
-	std::cout << "Input string: " << ss.str() << std::endl;
-	auto source = CFOLib::CFO_Source_File(ss.str());
-	auto output = c.processFile(source);
+	auto output = c.processFile(lines);
 
 	for (auto ch : output) {
 		outFile << ch;

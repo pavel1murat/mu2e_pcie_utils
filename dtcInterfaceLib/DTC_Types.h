@@ -5,9 +5,13 @@
 #include <cstdint>  // uint8_t, uint16_t
 #include <iomanip>
 #include <vector>  // std::vector
-#include "trace.h"
+#include "TRACE/tracemf.h"
 
 namespace DTCLib {
+	
+typedef uint16_t roc_address_t;
+typedef uint16_t roc_data_t;
+
 enum DTC_Subsystem : uint8_t
 {
 	DTC_Subsystem_Tracker = 0,

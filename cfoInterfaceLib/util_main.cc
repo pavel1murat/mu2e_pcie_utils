@@ -16,7 +16,7 @@
 #include <set>
 #include <string>
 
-#include "trace.h"
+#include "TRACE/tracemf.h"
 
 #include "cfoInterfaceLib/CFO_Compiler.hh"
 #include "cfoInterfaceLib/CFO_Registers.h"
@@ -37,7 +37,8 @@ std::string op = "";
 unsigned getOptionValue(int* index, char** argv[])
 {
 	auto arg = (*argv)[*index];
-	if (arg[2] == '\0') {
+	if (arg[2] == '\0')
+	{
 		(*index)++;
 		unsigned ret = strtoul((*argv)[*index], nullptr, 0);
 		if (ret == 0 && (*argv)[*index][0] != '0')  // No option given
@@ -47,7 +48,8 @@ unsigned getOptionValue(int* index, char** argv[])
 		return ret;
 	}
 	auto offset = 2;
-	if (arg[2] == '=') {
+	if (arg[2] == '=')
+	{
 		offset = 3;
 	}
 
@@ -56,7 +58,8 @@ unsigned getOptionValue(int* index, char** argv[])
 unsigned long long getOptionValueLong(int* index, char** argv[])
 {
 	auto arg = (*argv)[*index];
-	if (arg[2] == '\0') {
+	if (arg[2] == '\0')
+	{
 		(*index)++;
 		unsigned long long ret = strtoull((*argv)[*index], nullptr, 0);
 		if (ret == 0 && (*argv)[*index][0] != '0')  // No option given
@@ -66,7 +69,8 @@ unsigned long long getOptionValueLong(int* index, char** argv[])
 		return ret;
 	}
 	auto offset = 2;
-	if (arg[2] == '=') {
+	if (arg[2] == '=')
+	{
 		offset = 3;
 	}
 
@@ -76,12 +80,14 @@ unsigned long long getOptionValueLong(int* index, char** argv[])
 std::string getOptionString(int* index, char** argv[])
 {
 	auto arg = (*argv)[*index];
-	if (arg[2] == '\0') {
+	if (arg[2] == '\0')
+	{
 		(*index)++;
 		return std::string((*argv)[*index]);
 	}
 	auto offset = 2;
-	if (arg[2] == '=') {
+	if (arg[2] == '=')
+	{
 		offset = 3;
 	}
 
@@ -93,7 +99,8 @@ unsigned getLongOptionValue(int* index, char** argv[])
 	auto arg = std::string((*argv)[*index]);
 	auto pos = arg.find('=');
 
-	if (pos == std::string::npos) {
+	if (pos == std::string::npos)
+	{
 		(*index)++;
 		unsigned ret = strtoul((*argv)[*index], nullptr, 0);
 		if (ret == 0 && (*argv)[*index][0] != '0')  // No option given
@@ -110,7 +117,8 @@ unsigned long long getLongOptionValueLong(int* index, char** argv[])
 	auto arg = std::string((*argv)[*index]);
 	auto pos = arg.find('=');
 
-	if (pos == std::string::npos) {
+	if (pos == std::string::npos)
+	{
 		(*index)++;
 		unsigned long long ret = strtoull((*argv)[*index], nullptr, 0);
 		if (ret == 0 && (*argv)[*index][0] != '0')  // No option given
@@ -128,7 +136,8 @@ std::string getLongOptionOption(int* index, char** argv[])
 	auto arg = std::string((*argv)[*index]);
 	auto pos = arg.find('=');
 
-	if (pos == std::string::npos) {
+	if (pos == std::string::npos)
+	{
 		return arg;
 	}
 	else
@@ -141,7 +150,8 @@ std::string getLongOptionString(int* index, char** argv[])
 {
 	auto arg = std::string((*argv)[*index]);
 
-	if (arg.find('=') == std::string::npos) {
+	if (arg.find('=') == std::string::npos)
+	{
 		return std::string((*argv)[++(*index)]);
 	}
 	else
@@ -170,8 +180,10 @@ void printHelpMsg()
 
 int main(int argc, char* argv[])
 {
-	for (auto optind = 1; optind < argc; ++optind) {
-		if (argv[optind][0] == '-') {
+	for (auto optind = 1; optind < argc; ++optind)
+	{
+		if (argv[optind][0] == '-')
+		{
 			switch (argv[optind][1])
 			{
 				case 'f':
@@ -193,7 +205,8 @@ int main(int argc, char* argv[])
 				case '-':  // Long option
 				{
 					auto option = getLongOptionOption(&optind, &argv);
-					if (option == "--cfo") {
+					if (option == "--cfo")
+					{
 						dtc = getLongOptionValue(&optind, &argv);
 					}
 					else if (option == "--help")
@@ -220,40 +233,48 @@ int main(int argc, char* argv[])
 	std::cout.setf(std::ios_base::boolalpha);
 	std::cout << "Options are: "
 			  << "Operation: " << std::string(op) << ", CFO: " << dtc;
-	if (rawOutput) {
+	if (rawOutput)
+	{
 		std::cout << ", Raw output file: " << rawOutputFile;
 	}
 	std::cout << std::endl;
-	if (rawOutput) outputStream.open(rawOutputFile, std::ios::out | std::ios::app | std::ios::binary);
+	if (rawOutput) outputStream.open(rawOutputFile, std::ios::out | std::ios::trunc | std::ios::binary);
 
-	if (op == "write_program") {
-		std::stringstream f;
-		std::ifstream ifstr(inputFile);
-		while (!ifstr.eof()) {
-			std::string line;
-			ifstr >> line;
-			f << line;
-		}
-		std::string input = f.str();
-		std::deque<char> inputBytes;
+	if (op == "write_program")
+	{
 		mu2e_databuff_t inputData;
 
-		if (compileInputFile) {
-			auto compiler = new CFO_Compiler(clockSpeed);
-			inputBytes = compiler->processFile(CFO_Source_File(input));
+		if (compileInputFile)
+		{
+			std::vector<std::string> lines;
+			std::ifstream ifstr(inputFile);
+			while (!ifstr.eof())
+			{
+				std::string line;
+				getline(ifstr, line);
+				lines.push_back(line);
+			}
+			ifstr.close();
 
-			if (rawOutput) {
-				for (auto ch : inputBytes) {
+			std::deque<char> inputBytes;
+			auto compiler = new CFO_Compiler(clockSpeed);
+			inputBytes = compiler->processFile(lines);
+
+			if (rawOutput)
+			{
+				for (auto ch : inputBytes)
+				{
 					outputStream << ch;
 				}
 			}
 			else
 			{
 				size_t offset = 8;
-				auto inputSize = input.size();
+				auto inputSize = inputBytes.size();
 				//*reinterpret_cast<uint64_t*>(inputData) = inputBytes.size();
 				memcpy(&inputData[0], &inputSize, sizeof(uint64_t));
-				for (auto ch : inputBytes) {
+				for (auto ch : inputBytes)
+				{
 					inputData[offset++] = ch;
 				}
 				return 0;
@@ -261,15 +282,22 @@ int main(int argc, char* argv[])
 		}
 		else
 		{
-			auto inputSize = input.size();
+			std::ifstream file(inputFile, std::ios::binary | std::ios::ate);
+			auto inputSize = file.tellg();
+			uint64_t dmaSize = static_cast<uint64_t>(inputSize) + 8;
+			file.seekg(0, std::ios::beg);
 			//*reinterpret_cast<uint64_t*>(inputData) = input.size();
-			memcpy(&inputData[0], &inputSize, sizeof(uint64_t));
-			memcpy(&inputData[8], &input[0], input.size());
+			memcpy(&inputData[0], &dmaSize, sizeof(uint64_t));
+			file.read(reinterpret_cast<char*>(&inputData[8]), inputSize);
+			file.close();
 		}
 
-		mu2edev dev;
-		dev.init(DTC_SimMode_NoCFO, dtc);
-		dev.write_data(DTC_DMA_Engine_DAQ, inputData, sizeof(inputData));
+		if (!rawOutput)
+		{
+			auto thisCFO = new CFO_Registers(DTC_SimMode_NoCFO, dtc);
+			thisCFO->GetDevice()->write_data(DTC_DMA_Engine_DAQ, inputData, sizeof(inputData));
+			delete thisCFO;
+		}
 	}
 	else if (op == "program_clock")
 	{
@@ -279,9 +307,11 @@ int main(int argc, char* argv[])
 	}
 	else if (op == "dma_info")
 	{
-		if (dtc == -1) {
+		if (dtc == -1)
+		{
 			auto dtcE = getenv("DTCLIB_DTC");
-			if (dtcE != nullptr) {
+			if (dtcE != nullptr)
+			{
 				dtc = atoi(dtcE);
 			}
 			else

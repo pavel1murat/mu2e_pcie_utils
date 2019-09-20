@@ -14,8 +14,8 @@
 #include <iostream>
 #include <string>
 
+#include "TRACE/tracemf.h"
 #define TRACE_NAME "rocUtil"
-#include "trace.h"
 
 #include "DTC.h"
 
@@ -306,7 +306,7 @@ int main(int argc, char* argv[])
 			void* readPtr = &buffer[0];
 			auto bufSize = static_cast<uint16_t>(*static_cast<uint64_t*>(readPtr));
 			readPtr = static_cast<uint8_t*>(readPtr) + 8;
-			TLOG(reallyQuiet ? 9 : TLVL_INFO) << "Buffer reports DMA size of " << std::dec << bufSize << " bytes. Device driver reports read of "
+			TLOG((reallyQuiet ? 9 : TLVL_INFO)) << "Buffer reports DMA size of " << std::dec << bufSize << " bytes. Device driver reports read of "
 											  << sts << " bytes," << std::endl;
 
 			TLOG(TLVL_TRACE) << "util - bufSize is " << bufSize;

@@ -22,6 +22,10 @@ static char* rev = (char*)"$Revision: 1.23 $$Date: 2012/01/23 15:32:40 $";
           %s write <offset> <val>\n\
           %s write_loopback_data [-p<packet_cnt>] [data]...\n\
 examples: %s start\n\
+options:\n\
+ -d<dtvdevnum>     \n\
+ -l<loops>\n\
+ -t     test/check   - currently for read\n\
 ",            \
 		basename(argv[0]), basename(argv[0]), basename(argv[0]), basename(argv[0]), basename(argv[0])
 
@@ -38,7 +42,9 @@ int main(int argc, char* argv[])
 
 	int opt_v = 0;
 	int opt;
-	int opt_packets = 8;
+	//int opt_packets = 8;
+	unsigned opt_loops=1;   // saying -l10 will cause the thing to happen 10 times (i.e "loop back around 9 times")
+	unsigned opt_test_check=0;
 	while (1) {
 		int option_index = 0;
 		static struct option long_options[] = {
@@ -46,7 +52,7 @@ int main(int argc, char* argv[])
 			{"mem-to-malloc", 1, 0, 'm'},
 			{0, 0, 0, 0},
 		};
-		opt = getopt_long(argc, argv, "?hm:Vv", long_options, &option_index);
+		opt = getopt_long(argc, argv, "?hm:Vvp:d:l:t", long_options, &option_index);
 		if (opt == -1) break;
 		switch (opt)
 		{
@@ -63,10 +69,16 @@ int main(int argc, char* argv[])
 				opt_v++;
 				break;
 			case 'p':
-				opt_packets = strtoul(optarg, NULL, 0);
+				//opt_packets = strtoul(optarg, NULL, 0);
 				break;
 			case 'd':
 				dtc = strtol(optarg, NULL, 0);
+				break;
+			case 'l':
+				opt_loops = strtol(optarg, NULL, 0);
+				break;
+			case 't':
+				opt_test_check=1;
 				break;
 			default:
 				printf("?? getopt returned character code 0%o ??\n", opt);
@@ -78,8 +90,8 @@ int main(int argc, char* argv[])
 		exit(0);
 	}
 	cmd = argv[optind++];
-	printf("cmd=%s\n", cmd);
-	printf("opt_packets=%i\n", opt_packets);
+	TRACE(2,"cmd=%s", cmd);
+	//	TRACE(2,"opt_packets=%i", opt_packets);
 
 	if (dtc == -1) {
 		char* dtcE = getenv("DTCLIB_DTC");
@@ -110,14 +122,34 @@ int main(int argc, char* argv[])
 			printf(USAGE);
 			return (1);
 		}
-		reg_access.reg_offset = strtoul(argv[2], NULL, 0);
+		reg_access.reg_offset = strtoul(argv[optind], NULL, 0);
 		reg_access.access_type = 0;
-		sts = ioctl(fd, M_IOC_REG_ACCESS, &reg_access);
-		if (sts) {
-			perror("ioctl M_IOC_REG_ACCESS read");
-			return (1);
+		int need_initial=1;
+		unsigned prv_val;
+		int val_changed=0;
+		for (unsigned ll=0; ll < opt_loops; ++ll) {
+			sts = ioctl(fd, M_IOC_REG_ACCESS, &reg_access);
+			if (sts) {
+				perror("ioctl M_IOC_REG_ACCESS read");
+				return (1);
+			}
+			if (opt_test_check) {
+				if (need_initial) {
+					need_initial=0;
+					prv_val = reg_access.val;
+					printf("initial val: 0x%08x\n", reg_access.val);
+				} else if (reg_access.val != prv_val) {
+						printf("val changed from 0x%08x - new val: 0x%08x\n",prv_val,reg_access.val);
+						prv_val = reg_access.val;
+						val_changed++;
+				}
+			} else
+				printf("0x%08x\n", reg_access.val);
 		}
-		printf("0x%08x\n", reg_access.val);
+		if (val_changed)
+			printf("value changed %d times\n", val_changed );
+		else if (opt_test_check)
+			printf("value did not change during %u loops\n", opt_loops );
 	}
 	else if (strcmp(cmd, "write") == 0)
 	{
@@ -125,9 +157,9 @@ int main(int argc, char* argv[])
 			printf(USAGE);
 			return (1);
 		}
-		reg_access.reg_offset = strtoul(argv[2], NULL, 0);
+		reg_access.reg_offset = strtoul(argv[optind++], NULL, 0);
 		reg_access.access_type = 1;
-		reg_access.val = strtoul(argv[3], NULL, 0);
+		reg_access.val = strtoul(argv[optind++], NULL, 0);
 		sts = ioctl(fd, M_IOC_REG_ACCESS, &reg_access);
 		if (sts) {
 			perror("ioctl M_IOC_REG_ACCESS write");
@@ -177,7 +209,7 @@ int main(int argc, char* argv[])
 	// 	  printf("sizeof(hdr)=%lu\n", sizeof(data.hdr) );
 	// 	  printf("sizeof(data)=%lu\n", sizeof(data.hdr) );
 	// 	  data.hdr.s.TransferByteCount = 64;
-	// 	  if (argc > 2) data.hdr.s.TransferByteCount = strtoul( argv[2],NULL,0 );
+	// 	  if (argc > 2) data.hdr.s.TransferByteCount = strtoul( argv[optind++],NULL,0 );
 	// 	  data.hdr.s.Valid = 1;
 	// 	  data.hdr.s.PacketType = 5;  // could be overwritten below
 	// 	  data.hdr.s.LinkID = 0;

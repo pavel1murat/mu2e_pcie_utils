@@ -9,14 +9,15 @@
  *    make mu2edev.o CFLAGS='-g -Wall -std=c++0x'
  */
 
+
+#include "TRACE/tracemf.h"
 #define TRACE_NAME "mu2esim"
+
 #include "mu2esim.h"
 #include "DTC_Registers.h"
 
 #include <cmath>
 #include <vector>
-
-#include "trace.h"
 
 #define THREADED_CFO_EMULATOR 1
 

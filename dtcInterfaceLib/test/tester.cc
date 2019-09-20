@@ -5,7 +5,7 @@
 #include "dtcInterfaceLib/DTC.h"
 #include "dtcInterfaceLib/DTCSoftwareCFO.h"
 
-#include "trace.h"
+#include "TRACE/tracemf.h"
 
 #include "fragmentTester.h"
 

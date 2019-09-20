@@ -16,8 +16,8 @@
 #include <set>
 #include <string>
 
+#include "TRACE/tracemf.h"
 #define TRACE_NAME "mu2eUtil"
-#include "trace.h"
 
 #include "DTC.h"
 #include "DTCSoftwareCFO.h"
@@ -521,7 +521,7 @@ int main(int argc, char* argv[])
 		auto packet = thisDTC->ReadNextDAQPacket();
 		if (packet)
 		{
-			TLOG(reallyQuiet ? 10 : TLVL_INFO) << packet->toJSON() << '\n';
+			TLOG((reallyQuiet ? 10 : TLVL_INFO)) << packet->toJSON() << '\n';
 			if (rawOutput)
 			{
 				auto rawPacket = packet->ConvertToDataPacket();
@@ -548,7 +548,7 @@ int main(int argc, char* argv[])
 		}
 		for (unsigned ii = 0; ii < number; ++ii)
 		{
-			TLOG(reallyQuiet ? 9 : TLVL_INFO) << "Buffer Read " << ii << std::endl;
+			TLOG((reallyQuiet ? 9 : TLVL_INFO)) << "Buffer Read " << ii << std::endl;
 			mu2e_databuff_t* buffer;
 			auto tmo_ms = 1500;
 			auto sts = device->read_data(DTC_DMA_Engine_DAQ, reinterpret_cast<void**>(&buffer), tmo_ms);
@@ -695,7 +695,7 @@ int main(int argc, char* argv[])
 				readoutRequestTime +=
 					std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(endRequest - startRequest).count();
 			}
-			TLOG(reallyQuiet ? 9 : TLVL_INFO) << "Buffer Read " << std::dec << ii << std::endl;
+			TLOG((reallyQuiet ? 9 : TLVL_INFO)) << "Buffer Read " << std::dec << ii << std::endl;
 			
 			__COUT__ << "Buffer read " << ii << __E__;
 			
@@ -710,7 +710,7 @@ int main(int argc, char* argv[])
 				void* readPtr = &buffer[0];
 				auto bufSize = static_cast<uint16_t>(*static_cast<uint64_t*>(readPtr));
 				readPtr = static_cast<uint8_t*>(readPtr) + 8;
-				TLOG(reallyQuiet ? 9 : TLVL_INFO) << "Buffer reports DMA size of " << std::dec << bufSize << " bytes. Device driver reports read of "
+				TLOG((reallyQuiet ? 9 : TLVL_INFO)) << "Buffer reports DMA size of " << std::dec << bufSize << " bytes. Device driver reports read of "
 												  << sts << " bytes," << std::endl;
 
 				TLOG(TLVL_TRACE) << "util - bufSize is " << bufSize;
@@ -819,7 +819,7 @@ int main(int argc, char* argv[])
 
 		for (; ii < number; ++ii)
 		{
-			TLOG(reallyQuiet ? 10 : TLVL_INFO) << "util_main: DTC Read " << ii << ": ";
+			TLOG((reallyQuiet ? 10 : TLVL_INFO)) << "util_main: DTC Read " << ii << ": ";
 			if (syncRequests)
 			{
 				auto startRequest = std::chrono::steady_clock::now();
@@ -859,7 +859,7 @@ int main(int argc, char* argv[])
 					{
 						expectedTS += incrementTimestamp ? 1 : 0;
 					}
-					TLOG(reallyQuiet ? 19 : TLVL_INFO) << h2.toJSON();
+					TLOG((reallyQuiet ? 19 : TLVL_INFO)) << h2.toJSON();
 					if (rawOutput)
 					{
 						auto rawPacket = h2.ConvertToDataPacket();
@@ -869,7 +869,7 @@ int main(int argc, char* argv[])
 					for (auto jj = 0; jj < h2.GetPacketCount(); ++jj)
 					{
 						auto packet = DTC_DataPacket(reinterpret_cast<uint8_t*>(data[i].blockPointer) + (jj + 1) * 16);
-						TLOG(quiet ? 8 : TLVL_INFO) << "\t" << packet.toJSON() << std::endl;
+						TLOG((quiet ? 8 : TLVL_INFO)) << "\t" << packet.toJSON() << std::endl;
 						if (rawOutput)
 						{
 							outputStream << packet;
@@ -880,7 +880,7 @@ int main(int argc, char* argv[])
 			else
 			{
 				// TRACE_CNTL("modeM", 0L);
-				TLOG(reallyQuiet ? 9 : TLVL_WARNING) << "no data returned\n";
+				TLOG((reallyQuiet ? 9 : TLVL_WARNING)) << "no data returned\n";
 				// return (0);
 				// break;
 				usleep(100000);

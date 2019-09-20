@@ -7,7 +7,7 @@
 #include <iomanip>  // std::setw, std::setfill
 #include <sstream>  // Convert uint to hex string
 
-#include "trace.h"
+#include "TRACE/tracemf.h"
 
 #define DTC_TLOG(lvl) TLOG(lvl) << "DTC " << device_.getDTCID() << ": "
 
@@ -5027,7 +5027,7 @@ void DTCLib::DTC_Registers::SetDDROscillatorParameters_(uint64_t program)
 	WriteDDRIICInterface(DTC_IICDDRBusAddress_DDROscillator, 0x87, 0x40);
 }
 
-bool DTCLib::DTC_Registers::WaitForLinkReady_(DTC_Link_ID const& link, size_t interval, double timeout)
+bool DTCLib::DTC_Registers::WaitForLinkReady_(DTC_Link_ID const& link, size_t interval, double timeout /*seconds*/)
 {
 	auto start = std::chrono::steady_clock::now();
 	auto last_print = start;
@@ -5039,12 +5039,12 @@ bool DTCLib::DTC_Registers::WaitForLinkReady_(DTC_Link_ID const& link, size_t in
 		ready = ReadSERDESPLLLocked(link) && ReadResetRXSERDESDone(link) && ReadResetTXSERDESDone(link) && ReadSERDESRXCDRLock(link);
 		if (std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(std::chrono::steady_clock::now() - last_print).count() > 5.0)
 		{
-			DTC_TLOG(TLVL_DEBUG) << "WaitForLinkReady_: Link " << link << ": PLL Locked: " << std::boolalpha << ReadSERDESPLLLocked(link) << ", RX Reset Done: " << ReadResetRXSERDESDone(link) << ", TX Reset Done: " << ReadResetTXSERDESDone(link) << ", CDR Lock: " << ReadSERDESRXCDRLock(link);
+			DTC_TLOG(TLVL_DEBUG) << "DTC_Registers: WaitForLinkReady_: ROC Link " << link << ": PLL Locked: " << std::boolalpha << ReadSERDESPLLLocked(link) << ", RX Reset Done: " << ReadResetRXSERDESDone(link) << ", TX Reset Done: " << ReadResetTXSERDESDone(link) << ", CDR Lock: " << ReadSERDESRXCDRLock(link);
 			last_print = std::chrono::steady_clock::now();
 		}
 		if (std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(std::chrono::steady_clock::now() - start).count() > timeout)
 		{
-			DTC_TLOG(TLVL_ERROR) << "WaitForLinkReady_ ABORTING: Link " << link << ": PLL Locked: " << std::boolalpha << ReadSERDESPLLLocked(link) << ", RX Reset Done: " << ReadResetRXSERDESDone(link) << ", TX Reset Done: " << ReadResetTXSERDESDone(link) << ", CDR Lock: " << ReadSERDESRXCDRLock(link);
+			DTC_TLOG(TLVL_ERROR) << "DTC_Registers: WaitForLinkReady_ ABORTING: ROC Link " << link << ": PLL Locked: " << std::boolalpha << ReadSERDESPLLLocked(link) << ", RX Reset Done: " << ReadResetRXSERDESDone(link) << ", TX Reset Done: " << ReadResetTXSERDESDone(link) << ", CDR Lock: " << ReadSERDESRXCDRLock(link);
 			return false;
 		}
 	}
