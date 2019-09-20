@@ -242,20 +242,21 @@ int main(int argc, char* argv[])
 
 	if (op == "write_program")
 	{
-		std::vector<std::string> lines;
-		std::ifstream ifstr(inputFile);
-		while (!ifstr.eof())
-		{
-			std::string line;
-			getline(ifstr, line);
-			lines.push_back(line);
-		}
-
-		std::deque<char> inputBytes;
 		mu2e_databuff_t inputData;
 
 		if (compileInputFile)
 		{
+			std::vector<std::string> lines;
+			std::ifstream ifstr(inputFile);
+			while (!ifstr.eof())
+			{
+				std::string line;
+				getline(ifstr, line);
+				lines.push_back(line);
+			}
+			ifstr.close();
+
+			std::deque<char> inputBytes;
 			auto compiler = new CFO_Compiler(clockSpeed);
 			inputBytes = compiler->processFile(lines);
 
@@ -281,17 +282,14 @@ int main(int argc, char* argv[])
 		}
 		else
 		{
-			std::string input = "";
-			bool first = true;
-			for (auto& line : lines) {
-		
-				input += (first ? "" : "\n") + line;
-				first = false;
-			}
-			auto inputSize = input.size();
+			std::ifstream file(inputFile, std::ios::binary | std::ios::ate);
+			auto inputSize = file.tellg();
+			uint64_t dmaSize = static_cast<uint64_t>(inputSize) + 8;
+			file.seekg(0, std::ios::beg);
 			//*reinterpret_cast<uint64_t*>(inputData) = input.size();
-			memcpy(&inputData[0], &inputSize, sizeof(uint64_t));
-			memcpy(&inputData[8], &input[0], input.size());
+			memcpy(&inputData[0], &dmaSize, sizeof(uint64_t));
+			file.read(reinterpret_cast<char*>(&inputData[8]), inputSize);
+			file.close();
 		}
 
 		if (!rawOutput)
