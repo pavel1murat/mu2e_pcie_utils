@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
 		exit(0);
 	}
 	cmd = argv[optind++];
-	TRACE(2,"cmd=%s", cmd);
+	TRACE(TLVL_TRACE,"cmd=%s", cmd);
 	//	TRACE(2,"opt_packets=%i", opt_packets);
 
 	if (dtc == -1) {
