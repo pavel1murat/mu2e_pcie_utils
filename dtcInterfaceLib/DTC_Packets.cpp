@@ -730,7 +730,8 @@ DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket in)
 	if (packetType_ != DTC_PacketType_DataHeader)
 	{
 		auto ex = DTC_WrongPacketTypeException(DTC_PacketType_DataHeader, packetType_);
-		TLOG(TLVL_ERROR) << ex.what();
+		TLOG(TLVL_ERROR) << "Unexpected packet type encountered: " + std::to_string(packetType_) + " != " + std::to_string(DTC_PacketType_DataHeader) +
+								" (expected)";
 		throw ex;
 	}
 	auto arr = in.GetData();
