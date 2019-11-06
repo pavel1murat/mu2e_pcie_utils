@@ -303,15 +303,16 @@ class DTC_DMAPacket
 protected:
 	uint16_t byteCount_;         ///< Byte count of current block
 	bool valid_;                 ///< Whether the DTC believes the packet to be valid
+	uint8_t subsystemID_;		///< Subsystem ID (Data Header packet only)
 	DTC_Link_ID linkID_;         ///< Link identifier of packet
 	DTC_PacketType packetType_;  ///< Packet type
-	uint8_t hopCount_;           ///< Hop count (Subsystem ID for DataHeader packet)
+	uint8_t hopCount_;           ///< Hop count
 public:
 	/// <summary>
 	/// DTC_DMAPacket default constructor. Fills in header fields with default (invalid) values.
 	/// </summary>
 	DTC_DMAPacket()
-		: byteCount_(0), valid_(false), linkID_(DTC_Link_Unused), packetType_(DTC_PacketType_Invalid), hopCount_(0) {}
+		: byteCount_(0), valid_(false), subsystemID_(0), linkID_(DTC_Link_Unused), packetType_(DTC_PacketType_Invalid), hopCount_(0) {}
 
 	/// <summary>
 	/// Create a DTC_DMAPacket with the given parameters
@@ -321,7 +322,7 @@ public:
 	/// <param name="byteCount">Block byte count. Default is one packet, 16 bytes</param>
 	/// <param name="valid">Valid flag for packet, default true</param>
 	/// <param name="hopCount">Hop count (Subsystem ID) for packet, default 0</param>
-	DTC_DMAPacket(DTC_PacketType type, DTC_Link_ID link, uint16_t byteCount = 16, bool valid = true, uint8_t hopCount = 0);
+	DTC_DMAPacket(DTC_PacketType type, DTC_Link_ID link, uint16_t byteCount = 16, bool valid = true, uint8_t subsystemID = 0, uint8_t hopCount = 0);
 
 	/// <summary>
 	/// Construct a DTC_DMAPacket using the data in the given DataPacket
@@ -392,12 +393,10 @@ public:
 	/// <summary>
 	/// Gets the Hop Count of the packet
 	///
-	/// This method should not be used if the packet is a DataHeader packet
 	/// </summary>
 	/// <returns>The Hop count of the packet</returns>
 	uint8_t GetHopCount() const
 	{
-		assert(GetPacketType() != DTC_PacketType_DataHeader);
 		return hopCount_;
 	}
 	/// <summary>
@@ -407,9 +406,7 @@ public:
 	/// </summary>
 	/// <returns>Subsystem ID stored in the packet</returns>
 	uint8_t GetSubsystemID() const
-	{
-		assert(GetPacketType() == DTC_PacketType_DataHeader);
-		return hopCount_;
+	{	return subsystemID_;
 	}
 
 	/// <summary>

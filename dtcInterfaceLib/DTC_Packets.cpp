@@ -110,8 +110,8 @@ bool DTCLib::DTC_DataPacket::Equals(const DTC_DataPacket& other) const
 	return equal;
 }
 
-DTCLib::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Link_ID link, uint16_t byteCount, bool valid, uint8_t hopCount)
-	: byteCount_(byteCount), valid_(valid), linkID_(link), packetType_(type), hopCount_(hopCount) {}
+DTCLib::DTC_DMAPacket::DTC_DMAPacket(DTC_PacketType type, DTC_Link_ID link, uint16_t byteCount, bool valid, uint8_t subsystemID, uint8_t hopCount)
+	: byteCount_(byteCount), valid_(valid), subsystemID_(subsystemID), linkID_(link), packetType_(type), hopCount_(hopCount) {}
 
 DTCLib::DTC_DataPacket DTCLib::DTC_DMAPacket::ConvertToDataPacket() const
 {
@@ -145,6 +145,7 @@ DTCLib::DTC_DMAPacket::DTC_DMAPacket(const DTC_DataPacket in)
 	auto word3 = in.GetData()[3];
 	uint8_t linkID = word3 & 0xF;
 	valid_ = (word3 & 0x80) == 0x80;
+	subsystemID_ = (word3 >> 4) & 0x7;
 
 	byteCount_ = in.GetData()[0] + (in.GetData()[1] << 8);
 	hopCount_ = hopCount;
@@ -158,17 +159,11 @@ std::string DTCLib::DTC_DMAPacket::headerJSON() const
 	std::stringstream ss;
 	ss << "\"byteCount\": " << std::hex << "0x" << byteCount_ << ",";
 	ss << "\"isValid\": " << valid_ << ",";
+	ss << "\"subsystemID\": " << std::hex << "0x" << subsystemID_ << ",";
 	ss << "\"linkID\": " << std::dec << linkID_ << ",";
 	ss << "\"packetType\": " << packetType_ << ",";
 
-	if (packetType_ != DTC_PacketType_DataHeader)
-	{
-		ss << "\"hopCount\": " << std::hex << "0x" << hopCount_ ;
-	}
-	else
-	{
-		ss << "\"subsystemID\": " << std::hex << "0x" << hopCount_ ;
-	}
+	ss << "\"hopCount\": " << std::hex << "0x" << hopCount_;
 
 	return ss.str();
 }
@@ -179,7 +174,8 @@ std::string DTCLib::DTC_DMAPacket::headerPacketFormat() const
 	ss << std::setfill('0') << std::hex;
 	ss << "0x" << std::setw(6) << ((byteCount_ & 0xFF00) >> 8) << "\t"
 	   << "0x" << std::setw(6) << (byteCount_ & 0xFF) << std::endl;
-	ss << std::setw(1) << static_cast<int>(valid_) << "   "
+	ss << std::setw(1) << static_cast<int>(valid_) << " "
+	   << std::setw(2) << std::dec << static_cast<int>(subsystemID_) << std::hex << " "
 	   << "0x" << std::setw(2) << linkID_ << "\t";
 	ss << "0x" << std::setw(2) << packetType_ << "0x" << std::setw(2) << 0 << std::endl;
 	return ss.str();
@@ -733,7 +729,7 @@ DTCLib::DTC_DataPacket DTCLib::DTC_DCSReplyPacket::ConvertToDataPacket() const
 DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_Link_ID link, uint16_t packetCount, DTC_DataStatus status,
 												   uint8_t dtcid, DTC_Subsystem subsystemid, uint8_t packetVersion, DTC_Timestamp timestamp,
 												   uint8_t evbMode)
-	: DTC_DMAPacket(DTC_PacketType_DataHeader, link, (1 + packetCount) * 16,true,subsystemid), packetCount_(packetCount), timestamp_(timestamp), status_(status), dataPacketVersion_(packetVersion), dtcId_(dtcid), evbMode_(evbMode) {}
+	: DTC_DMAPacket(DTC_PacketType_DataHeader, link, (1 + packetCount) * 16, true, subsystemid), packetCount_(packetCount), timestamp_(timestamp), status_(status), dataPacketVersion_(packetVersion), dtcId_(dtcid), evbMode_(evbMode) {}
 
 DTCLib::DTC_DataHeaderPacket::DTC_DataHeaderPacket(DTC_DataPacket in)
 	: DTC_DMAPacket(in)
