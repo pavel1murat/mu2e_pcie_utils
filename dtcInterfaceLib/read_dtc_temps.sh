@@ -6,8 +6,13 @@ PCIE_QUALS=${PCIE_QUALS:-e19:s87:prof}
 DTC_TEMP_THRESHOLD=${DTC_TEMP_THRESHOLD:-65}
 FIREFLY_TEMP_THRESHOLD=${FIREFLY_TEMP_THRESHOLD:-65}
 FIREFLY_MAX_TEMP=120
+VERBOSE_SET=${VERBOSE+1}
 VERBOSE=${VERBOSE:-0}
 
+# Default to verbose if run interactively
+if [ -z "$VERBOSE_SET" ] && [ $VERBOSE -eq 0 ] && [ -t 0 ];then
+  VERBOSE=1
+fi
 
 # From NOvA's Loadshed script
 MAIL_RECIPIENTS_ERROR="eflumerf@fnal.gov,mu2e_tdaq_developers@fnal.gov" # comma-separated list
@@ -90,6 +95,9 @@ for ii in {0..3}; do
 
     if [ ${#errstring} -gt 0 ]; then
       send_error_mail "Temperature Errors on DTC $ii on $HOSTNAME" "$errstring"
+      if [ $VERBOSE -ne 0 ];then
+        echo "Temperature Errors on DTC $ii on $HOSTNAME: $errstring" >&2
+      fi
     fi
   fi
 
