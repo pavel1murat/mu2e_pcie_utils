@@ -9,7 +9,7 @@ VERBOSE=${VERBOSE:-0}
 
 
 # From NOvA's Loadshed script
-MAIL_RECIPIENTS_ERROR="eflumerf@fnal.gov" # comma-separated list
+MAIL_RECIPIENTS_ERROR="eflumerf@fnal.gov,mu2e_tdaq_developers@fnal.gov" # comma-separated list
 function send_error_mail()
 {
         echo "$2"| mail -s "`date`: $1" $MAIL_RECIPIENTS_ERROR
