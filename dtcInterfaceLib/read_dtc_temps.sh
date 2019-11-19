@@ -5,6 +5,7 @@ PCIE_VERSION=${PCIE_VERSION:-v2_02_06}
 PCIE_QUALS=${PCIE_QUALS:-e19:s87:prof}
 DTC_TEMP_THRESHOLD=${DTC_TEMP_THRESHOLD:-65}
 FIREFLY_TEMP_THRESHOLD=${FIREFLY_TEMP_THRESHOLD:-65}
+FIREFLY_MAX_TEMP=120
 VERBOSE=${VERBOSE:-0}
 
 
@@ -53,7 +54,7 @@ for ii in {0..3}; do
     if [[ $VERBOSE -ne 0 ]]; then
       echo "RX Firefly temperature: $tempvalue"
     fi
-    if [[ $tempvalue -gt $FIREFLY_TEMP_THRESHOLD ]]; then
+    if [[ $tempvalue -gt $FIREFLY_TEMP_THRESHOLD ]] && [[ $tempvalue -le $FIREFLY_MAX_TEMP ]]; then
       errstring="${errstring+$errstring$'\n'}RX Firefly Overtemp $HOSTNAME:/dev/mu2e$ii: $tempvalue!"
     fi
 
@@ -68,7 +69,7 @@ for ii in {0..3}; do
     if [[ $VERBOSE -ne 0 ]]; then
       echo "TX Firefly temperature: $tempvalue"
     fi
-    if [[ $tempvalue -gt $FIREFLY_TEMP_THRESHOLD ]]; then
+    if [[ $tempvalue -gt $FIREFLY_TEMP_THRESHOLD ]] && [[ $tempvalue -le $FIREFLY_MAX_TEMP ]]; then
       errstring="${errstring+$errstring$'\n'}TX Firefly Overtemp $HOSTNAME:/dev/mu2e$ii: $tempvalue!"
     fi
     
@@ -83,7 +84,7 @@ for ii in {0..3}; do
     if [[ $VERBOSE -ne 0 ]]; then
       echo "TX/RX Firefly temperature: $tempvalue"
     fi
-    if [[ $tempvalue -gt $FIREFLY_TEMP_THRESHOLD ]]; then
+    if [[ $tempvalue -gt $FIREFLY_TEMP_THRESHOLD ]] && [[ $tempvalue -le $FIREFLY_MAX_TEMP ]]; then
       errstring="${errstring+$errstring$'\n'}TX/RX Firefly Overtemp $HOSTNAME:/dev/mu2e$ii: $tempvalue!"
     fi
 
