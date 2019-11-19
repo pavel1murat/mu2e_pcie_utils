@@ -9,7 +9,7 @@ VERBOSE=${VERBOSE:-0}
 
 
 # From NOvA's Loadshed script
-MAIL_RECIPIENTS_ERROR="eflumerf@fnal.gov,mu2e_tdaq_developers@fnal.gov" # comma-separated list
+MAIL_RECIPIENTS_ERROR="eflumerf@fnal.gov" # comma-separated list
 function send_error_mail()
 {
         echo "$2"| mail -s "`date`: $1" $MAIL_RECIPIENTS_ERROR
@@ -27,7 +27,6 @@ for ii in {0..3}; do
       echo "Reading temperatures for $HOSTNAME DTC $ii"
     fi
 
-    errstring=
     dtctemp=`my_cntl read 0x9010|grep 0x`
     tempvalue=`echo "print int(round(($dtctemp * 503.975 / 4096) - 273.15))"|python -`
 
@@ -55,7 +54,7 @@ for ii in {0..3}; do
       echo "RX Firefly temperature: $tempvalue"
     fi
     if [[ $tempvalue -gt $FIREFLY_TEMP_THRESHOLD ]]; then
-      errstring="${errstring+$errstring\n}RX Firefly Overtemp $HOSTNAME:/dev/mu2e$ii: $tempvalue!"
+      errstring="${errstring+$errstring$'\n'}RX Firefly Overtemp $HOSTNAME:/dev/mu2e$ii: $tempvalue!"
     fi
 
     # TX Firefly
@@ -70,7 +69,7 @@ for ii in {0..3}; do
       echo "TX Firefly temperature: $tempvalue"
     fi
     if [[ $tempvalue -gt $FIREFLY_TEMP_THRESHOLD ]]; then
-      errstring="${errstring+$errstring\n}TX Firefly Overtemp $HOSTNAME:/dev/mu2e$ii: $tempvalue!"
+      errstring="${errstring+$errstring$'\n'}TX Firefly Overtemp $HOSTNAME:/dev/mu2e$ii: $tempvalue!"
     fi
     
     # TX/RX Firefly
@@ -85,7 +84,7 @@ for ii in {0..3}; do
       echo "TX/RX Firefly temperature: $tempvalue"
     fi
     if [[ $tempvalue -gt $FIREFLY_TEMP_THRESHOLD ]]; then
-      errstring="${errstring+$errstring\n}TX/RX Firefly Overtemp $HOSTNAME:/dev/mu2e$ii: $tempvalue!"
+      errstring="${errstring+$errstring$'\n'}TX/RX Firefly Overtemp $HOSTNAME:/dev/mu2e$ii: $tempvalue!"
     fi
 
     if [ ${#errstring} -gt 0 ]; then
