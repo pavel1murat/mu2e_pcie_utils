@@ -4,6 +4,7 @@
 PCIE_VERSION=${PCIE_VERSION:-v2_02_06}
 PCIE_QUALS=${PCIE_QUALS:-e19:s87:prof}
 DTC_TEMP_THRESHOLD=${DTC_TEMP_THRESHOLD:-65}
+DTC_MAX_TEMP=255
 FIREFLY_TEMP_THRESHOLD=${FIREFLY_TEMP_THRESHOLD:-65}
 FIREFLY_MAX_TEMP=120
 VERBOSE_SET=${VERBOSE+1}
@@ -39,7 +40,7 @@ for ii in {0..3}; do
     if [[ $VERBOSE -ne 0 ]]; then
       echo "DTC Temperature: $tempvalue"
     fi
-    if [[ $tempvalue -gt $DTC_TEMP_THRESHOLD ]]; then
+    if [[ $tempvalue -gt $DTC_TEMP_THRESHOLD ]] && [[ $tempvalue -le $DTC_MAX_TEMP ]]; then
        errstring="DTC Overtemp $HOSTNAME:/dev/mu2e$ii: $tempvalue!"
     fi
 
