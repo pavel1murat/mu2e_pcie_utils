@@ -3,13 +3,18 @@
 # Configuration
 PCIE_VERSION=${PCIE_VERSION:-v2_02_06}
 PCIE_QUALS=${PCIE_QUALS:-e19:s87:prof}
+EPICS_VERSION=${EPICS_VERSION:-v3_15_5}
+EPICS_QUALS=${EPICS_QUALS:-e14}
 DTC_TEMP_THRESHOLD=${DTC_TEMP_THRESHOLD:-65}
 DTC_MAX_TEMP=255
 FIREFLY_TEMP_THRESHOLD=${FIREFLY_TEMP_THRESHOLD:-65}
 FIREFLY_MAX_TEMP=120
 VERBOSE_SET=${VERBOSE+1}
 VERBOSE=${VERBOSE:-0}
-
+HOSTID=`hostname|sed 's/^mu2e//'|sed 's/[.].*$//'`
+export EPICS_CA_AUTO_ADDR_LIST=NO
+export EPICS_CA_ADDR_LIST=192.168.157.0
+  
 # Default to verbose if run interactively
 if [ -z "$VERBOSE_SET" ] && [ $VERBOSE -eq 0 ] && [ -t 0 ];then
   VERBOSE=1
@@ -24,6 +29,7 @@ function send_error_mail()
 
 
 source /mu2e/ups/setup
+setup epics $EPICS_VERSION -q$EPICS_QUALS
 setup pcie_linux_kernel_module $PCIE_VERSION -q$PCIE_QUALS
 
 for ii in {0..3}; do
@@ -42,6 +48,9 @@ for ii in {0..3}; do
     fi
     if [[ $tempvalue -gt $DTC_TEMP_THRESHOLD ]] && [[ $tempvalue -le $DTC_MAX_TEMP ]]; then
        errstring="DTC Overtemp $HOSTNAME:/dev/mu2e$ii: $tempvalue!"
+    fi
+    if [[ ${#EPICS_BASE} -ne 0 ]]; then
+	caput Mu2e:CompStatus:$HOSTID:DTC$ii:dtctemp $tempvalue
     fi
 
     # RX Firefly
@@ -63,6 +72,9 @@ for ii in {0..3}; do
     if [[ $tempvalue -gt $FIREFLY_TEMP_THRESHOLD ]] && [[ $tempvalue -le $FIREFLY_MAX_TEMP ]]; then
       errstring="${errstring+$errstring$'\n'}RX Firefly Overtemp $HOSTNAME:/dev/mu2e$ii: $tempvalue!"
     fi
+    if [[ ${#EPICS_BASE} -ne 0 ]]; then
+	caput Mu2e:CompStatus:$HOSTID:DTC$ii:rxtemp $tempvalue
+    fi
 
     # TX Firefly
     my_cntl write 0x93a0 0x00000100 >/dev/null 2>&1
@@ -78,6 +90,9 @@ for ii in {0..3}; do
     if [[ $tempvalue -gt $FIREFLY_TEMP_THRESHOLD ]] && [[ $tempvalue -le $FIREFLY_MAX_TEMP ]]; then
       errstring="${errstring+$errstring$'\n'}TX Firefly Overtemp $HOSTNAME:/dev/mu2e$ii: $tempvalue!"
     fi
+    if [[ ${#EPICS_BASE} -ne 0 ]]; then
+	caput Mu2e:CompStatus:$HOSTID:DTC$ii:txtemp $tempvalue
+    fi
     
     # TX/RX Firefly
     my_cntl write 0x93a0 0x00000400 >/dev/null 2>&1
@@ -92,6 +107,9 @@ for ii in {0..3}; do
     fi
     if [[ $tempvalue -gt $FIREFLY_TEMP_THRESHOLD ]] && [[ $tempvalue -le $FIREFLY_MAX_TEMP ]]; then
       errstring="${errstring+$errstring$'\n'}TX/RX Firefly Overtemp $HOSTNAME:/dev/mu2e$ii: $tempvalue!"
+    fi
+    if [[ ${#EPICS_BASE} -ne 0 ]]; then
+	caput Mu2e:CompStatus:$HOSTID:DTC$ii:rxtxtemp $tempvalue
     fi
 
     if [ ${#errstring} -gt 0 ]; then
