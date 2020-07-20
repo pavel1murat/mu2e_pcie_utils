@@ -50,7 +50,7 @@ for ii in {0..3}; do
        errstring="DTC Overtemp $HOSTNAME:/dev/mu2e$ii: $tempvalue!"
     fi
     if [[ ${#EPICS_BASE} -ne 0 ]]; then
-	caput Mu2e:CompStatus:$HOSTID:DTC$ii:dtctemp $tempvalue
+	caput Mu2e:CompStatus:$HOSTID:DTC$ii:dtctemp $tempvalue >/dev/null
     fi
 
     # RX Firefly
@@ -73,7 +73,7 @@ for ii in {0..3}; do
       errstring="${errstring+$errstring$'\n'}RX Firefly Overtemp $HOSTNAME:/dev/mu2e$ii: $tempvalue!"
     fi
     if [[ ${#EPICS_BASE} -ne 0 ]]; then
-	caput Mu2e:CompStatus:$HOSTID:DTC$ii:rxtemp $tempvalue
+	caput Mu2e:CompStatus:$HOSTID:DTC$ii:rxtemp $tempvalue >/dev/null
     fi
 
     # TX Firefly
@@ -91,7 +91,7 @@ for ii in {0..3}; do
       errstring="${errstring+$errstring$'\n'}TX Firefly Overtemp $HOSTNAME:/dev/mu2e$ii: $tempvalue!"
     fi
     if [[ ${#EPICS_BASE} -ne 0 ]]; then
-	caput Mu2e:CompStatus:$HOSTID:DTC$ii:txtemp $tempvalue
+	caput Mu2e:CompStatus:$HOSTID:DTC$ii:txtemp $tempvalue >/dev/null
     fi
     
     # TX/RX Firefly
@@ -109,7 +109,7 @@ for ii in {0..3}; do
       errstring="${errstring+$errstring$'\n'}TX/RX Firefly Overtemp $HOSTNAME:/dev/mu2e$ii: $tempvalue!"
     fi
     if [[ ${#EPICS_BASE} -ne 0 ]]; then
-	caput Mu2e:CompStatus:$HOSTID:DTC$ii:rxtxtemp $tempvalue
+	caput Mu2e:CompStatus:$HOSTID:DTC$ii:rxtxtemp $tempvalue >/dev/null
     fi
 
     if [ ${#errstring} -gt 0 ]; then
