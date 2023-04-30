@@ -22,7 +22,8 @@ messagefacility v2_10_01    s123
 messagefacility v2_10_01    s122
 messagefacility v2_09_00    s118
 messagefacility	v2_08_04	s112
-TRACE			v3_17_09
+#TRACE			v3_17_09
+TRACE			v3_17_07
 cetmodules		v3_21_01	-	only_for_build
 end_product_list
 

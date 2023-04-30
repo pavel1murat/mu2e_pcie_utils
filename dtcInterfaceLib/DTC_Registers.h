@@ -1343,8 +1343,10 @@ public:
 	uint64_t ReadCurrentProgram(DTC_OscillatorType oscillator);
 	void WriteCurrentFrequency(double freq, DTC_OscillatorType oscillator);
 	void WriteCurrentProgram(uint64_t program, DTC_OscillatorType oscillator);
-
-private:
+//-----------------------------------------------------------------------------
+// 2023-04-22 P.Murat: to avoid development of parallel low-level interfaces, 
+//                     the functions below should be kept public
+//-----------------------------------------------------------------------------
 	void WriteRegister_(uint32_t data, const DTC_Register& address);
 	uint32_t ReadRegister_(const DTC_Register& address);
 
@@ -1357,6 +1359,7 @@ private:
 		return !val;
 	}
 
+private:
 	int DecodeHighSpeedDivider_(int input);
 	int DecodeOutputDivider_(int input) { return input + 1; }
 	double DecodeRFREQ_(uint64_t input) { return input / 268435456.0; }

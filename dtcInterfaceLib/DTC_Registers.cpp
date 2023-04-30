@@ -145,8 +145,12 @@ DTCLib::DTC_SimMode DTCLib::DTC_Registers::SetSimMode(std::string expectedDesign
 		ClearCFOEmulationMode();
 	}
 	ReadMinDMATransferLength();
+//-----------------------------------------------------------------------------
+// 2023-04-22 P.Murat: move check of a lock loss here, to perform it in one place
+//-----------------------------------------------------------------------------
+	uint32_t loss_of_lock = ReadRegister_(DTC_Register_RXCDRUnlockCount_CFOLink); // 0x93c8 read loss-of-lock counter
 
-	TLOG(TLVL_DEBUG) << "Done setting device registers";
+	TLOG(TLVL_DEBUG) << "Done setting device registers, loss of lock=" << loss_of_lock;
 	return simMode_;
 }
 
